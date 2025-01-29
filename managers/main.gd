@@ -1,0 +1,13 @@
+extends Node
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	pass # Replace with function body.
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta: float) -> void:
+	if Global.power_manager != null:
+		Global.power_manager.power_modules(delta)
+	pass

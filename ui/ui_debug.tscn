@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3 uid="uid://umcjs6xyrnek"]
+
+[ext_resource type="Script" path="res://ui/ui_debug.gd" id="1_fp81m"]
+
+[node name="UiDebug" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_fp81m")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -176.0
+offset_top = 16.0
+offset_right = -13.0
+offset_bottom = 66.0
+grow_horizontal = 0
+metadata/_edit_group_ = true
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Mouse Pos:"
+
+[node name="MousePosition" type="Label" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "(xxx, yyy)"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+text = "Cur Cell:"
+
+[node name="HoveredCell" type="Label" parent="VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+text = "(xxx, yyy)"

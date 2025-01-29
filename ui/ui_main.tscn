@@ -1,0 +1,88 @@
+[gd_scene load_steps=5 format=3 uid="uid://ce6npnqw8s3mu"]
+
+[ext_resource type="Script" path="res://ui/ui_main.gd" id="1_2bqpn"]
+[ext_resource type="PackedScene" uid="uid://bi50k1hocy0ud" path="res://ui/module_button.tscn" id="2_gmr23"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u8vfh"]
+bg_color = Color(0.0367339, 0.13205, 0.257585, 1)
+border_width_left = 6
+border_width_top = 6
+border_width_right = 6
+border_width_bottom = 6
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_size = 6
+shadow_offset = Vector2(-3, -3)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xdhp5"]
+bg_color = Color(0.0782779, 0.271425, 7.21961e-08, 1)
+border_width_left = 6
+border_width_top = 6
+border_width_right = 6
+border_width_bottom = 6
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_size = 6
+shadow_offset = Vector2(-3, -3)
+
+[node name="UiMain" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_2bqpn")
+module_button = ExtResource("2_gmr23")
+
+[node name="Modules" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 192.0
+offset_bottom = -24.0
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_u8vfh")
+
+[node name="MarginContainer" type="MarginContainer" parent="Modules"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ButtonContainer" type="VBoxContainer" parent="Modules/MarginContainer"]
+layout_mode = 2
+
+[node name="ModuleButton" parent="Modules/MarginContainer/ButtonContainer" instance=ExtResource("2_gmr23")]
+layout_mode = 2
+
+[node name="ModuleButton2" parent="Modules/MarginContainer/ButtonContainer" instance=ExtResource("2_gmr23")]
+layout_mode = 2
+
+[node name="Resources" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -208.0
+offset_top = -112.0
+offset_right = 208.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_xdhp5")

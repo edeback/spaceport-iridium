@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3 uid="uid://7cg1tp80w7sk"]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_lcb3o"]
+[ext_resource type="Shader" path="res://shaders/previewable.gdshader" id="2_535f1"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fgich"]
+shader = ExtResource("2_535f1")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_g5vmb"]
+resource_local_to_scene = true
+size = Vector2(62, 126)
+
+[node name="Module" instance=ExtResource("1_lcb3o")]
+size = Vector2i(1, 2)
+connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 2), Vector2i(-1, 1), Vector2i(-1, 0)])
+
+[node name="Offset" parent="." index="0"]
+position = Vector2(32, 64)
+metadata/_edit_group_ = true
+
+[node name="Sprite" parent="Offset" index="0"]
+material = SubResource("ShaderMaterial_fgich")
+position = Vector2(0, 1.90735e-06)
+region_rect = Rect2(0, 64, 64, 128)
+
+[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
+shape = SubResource("RectangleShape2D_g5vmb")

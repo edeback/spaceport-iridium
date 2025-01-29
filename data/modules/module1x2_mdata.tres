@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ModuleData" load_steps=4 format=3 uid="uid://ciwym6br2xxyq"]
+
+[ext_resource type="Script" path="res://data/modules/module_data.gd" id="1_5bs1e"]
+[ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="1_n383g"]
+[ext_resource type="PackedScene" uid="uid://7cg1tp80w7sk" path="res://modules/templates/module_1x2.tscn" id="2_ike76"]
+
+[resource]
+script = ExtResource("1_5bs1e")
+name = "1x2"
+scene = ExtResource("2_ike76")
+icon = ExtResource("1_n383g")

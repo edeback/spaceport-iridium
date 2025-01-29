@@ -1,0 +1,41 @@
+[gd_scene load_steps=10 format=3 uid="uid://cgnfy2cj4760l"]
+
+[ext_resource type="Script" path="res://managers/main.gd" id="1_lvssd"]
+[ext_resource type="Resource" uid="uid://bv4wtnibgy04x" path="res://data/modules/module1x1_mdata.tres" id="2_8e6kl"]
+[ext_resource type="Script" path="res://managers/camera.gd" id="3_055fr"]
+[ext_resource type="Script" path="res://managers/path_manager.gd" id="3_nkgie"]
+[ext_resource type="Script" path="res://managers/power_manager.gd" id="4_deici"]
+[ext_resource type="PackedScene" uid="uid://umcjs6xyrnek" path="res://ui/ui_debug.tscn" id="4_m3cse"]
+[ext_resource type="PackedScene" uid="uid://ce6npnqw8s3mu" path="res://ui/ui_main.tscn" id="5_uwp6h"]
+[ext_resource type="Script" path="res://managers/world_manager.gd" id="6_i5kyc"]
+[ext_resource type="PackedScene" uid="uid://dbdc66ow44ldq" path="res://ui/ui_in_game.tscn" id="9_ipixf"]
+
+[node name="Main" type="Node"]
+script = ExtResource("1_lvssd")
+
+[node name="Managers" type="Node" parent="."]
+
+[node name="WorldManager" type="Node" parent="Managers"]
+script = ExtResource("6_i5kyc")
+start_module = ExtResource("2_8e6kl")
+
+[node name="PathManager" type="Node" parent="Managers"]
+script = ExtResource("3_nkgie")
+
+[node name="PowerManager" type="Node" parent="Managers"]
+script = ExtResource("4_deici")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(961, 542)
+script = ExtResource("3_055fr")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="UiDebug" parent="CanvasLayer" instance=ExtResource("4_m3cse")]
+
+[node name="UiMain" parent="CanvasLayer" instance=ExtResource("5_uwp6h")]
+
+[node name="UiInGame" parent="." instance=ExtResource("9_ipixf")]
+
+[node name="CanvasModulate" type="CanvasModulate" parent="."]
+color = Color(0.552956, 0.552956, 0.552956, 1)

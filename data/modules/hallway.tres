@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ModuleData" load_steps=4 format=3 uid="uid://dutod605eq6sx"]
+
+[ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="1_71nqn"]
+[ext_resource type="PackedScene" uid="uid://bh5xdj8qfdiig" path="res://modules/hallway.tscn" id="2_s7lcn"]
+[ext_resource type="Script" path="res://data/modules/module_data.gd" id="3_0o66g"]
+
+[resource]
+script = ExtResource("3_0o66g")
+name = "Hallway"
+scene = ExtResource("2_s7lcn")
+icon = ExtResource("1_71nqn")

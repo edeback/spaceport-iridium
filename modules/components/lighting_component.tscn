@@ -1,0 +1,15 @@
+[gd_scene load_steps=4 format=3 uid="uid://bdhxtl1pfbray"]
+
+[ext_resource type="Script" path="res://modules/components/lighting_component.gd" id="1_5dqj6"]
+[ext_resource type="Texture2D" uid="uid://5gurna27yq3r" path="res://modules/textures/pointlight.tres" id="2_kjlkb"]
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_pru2k"]
+blend_mode = 1
+
+[node name="LightingComponent" type="Node2D"]
+script = ExtResource("1_5dqj6")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+visible = false
+material = SubResource("CanvasItemMaterial_pru2k")
+texture = ExtResource("2_kjlkb")
