@@ -1,0 +1,224 @@
+{
+  "main": {
+    "id": "8624b8b6708096f1",
+    "type": "split",
+    "children": [
+      {
+        "id": "de253ffc3cd0159a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a54b5db5a8063432",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Spaceport Iridium/Game Mechanics/Resources/Overview.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Overview"
+            }
+          },
+          {
+            "id": "e340013e7ae1d446",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Spaceport Iridium/Game Mechanics/Modules/Overview.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Overview"
+            }
+          },
+          {
+            "id": "08a9b994528ab1ca",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Random Notes.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Random Notes"
+            }
+          },
+          {
+            "id": "d6ff028e44612a44",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Spaceport Iridium/Roadmap.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Roadmap"
+            }
+          }
+        ],
+        "currentTab": 3
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "31261f80ca27f4f1",
+    "type": "split",
+    "children": [
+      {
+        "id": "81829b978d22ed03",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "cf9c918be843db58",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "6bfc6415bfc54f99",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "31801c4dbb5f8285",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "4c1b40e4d09db25f",
+    "type": "split",
+    "children": [
+      {
+        "id": "23cff862c5d41b9b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "fb192b0e1f841001",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Power System.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Power System"
+            }
+          },
+          {
+            "id": "2acc1eb6ce110470",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Power System.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Power System"
+            }
+          },
+          {
+            "id": "abe4b052be8e42b5",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "55fbb382c332596d",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Power System.md"
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Power System"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false
+    }
+  },
+  "active": "d6ff028e44612a44",
+  "lastOpenFiles": [
+    "Spaceport Iridium/Notes from SimTower.md",
+    "Spaceport Iridium/Notes from Project Highrise.md",
+    "Spaceport Iridium/Roadmap.md",
+    "Spaceport Iridium/Game Mechanics/Resources/Overview.md",
+    "Random Notes.md",
+    "Power System.md",
+    "Spaceport Iridium/Game Mechanics/Modules/Overview.md",
+    "Spaceport Iridium/Game Mechanics/Story/Tutorial.md",
+    "Spaceport Iridium/Game Mechanics/Story",
+    "Spaceport Iridium/Game Mechanics/Modules",
+    "Spaceport Iridium/Game Mechanics",
+    "Spaceport Iridium/Game Mechanics/Resources",
+    "Spaceport Iridium"
+  ]
+}
