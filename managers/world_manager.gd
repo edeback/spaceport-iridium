@@ -81,3 +81,7 @@ func get_overlaps(cell: Vector2i, size: Vector2i = Vector2i(1,1), max_values: in
 					if overlaps.size() >= max_values:
 						return overlaps
 	return overlaps
+
+func get_module_by_id(id: int) -> ModuleBase:
+	return id_to_module.get(id)
+	

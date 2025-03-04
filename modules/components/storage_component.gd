@@ -2,14 +2,16 @@ class_name StorageComponent
 extends ComponentBase
 
 @export var stored_resource: ResourceData
-@export var max_stored: int
+@export var max_stored: int = 10
 
 @export var accepts_imports: bool = true
 @export var accepts_exports: bool = true
 
-@export var cur_stored: int
+@export var cur_stored: int = 0
 
-var stock_reserved: int
+@export var import_job: JobData
+
+var stock_reserved: int = 0
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -19,6 +21,8 @@ func _ready() -> void:
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
+	if cur_stored < max_stored and accepts_imports and import_job != null:
+		Global.job_manager.add_job(owner_module, import_job)
 	pass
 
 func can_withdraw(resource: ResourceData, quantity: int = 1) -> bool:

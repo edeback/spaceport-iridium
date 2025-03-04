@@ -23,6 +23,8 @@ var components: Array[ComponentBase]
 
 var module_connections = {}
 
+var jobs = {}
+
 
 const SHADER_PARAM_PREVIEW = "PREVIEW"
 const SHADER_PARAM_PLACEABLE = "PLACEABLE"
@@ -62,6 +64,7 @@ func _ready() -> void:
 		nameplate.text = module_data.name
 	else:
 		nameplate.text = ""
+	add_to_group("module")
 	SignalBus.module_added.emit(self)
 
 

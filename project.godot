@@ -31,7 +31,6 @@ config/icon="res://icon.svg"
 
 Global="*res://managers/global.gd"
 SignalBus="*res://managers/signal_bus.gd"
-Panku="*res://addons/panku_console/console.tscn"
 
 [debug]
 
@@ -50,7 +49,7 @@ project/assembly_name="Spaceport Iridium"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/panku_console/plugin.cfg", "res://addons/resources_spreadsheet_view/plugin.cfg", "res://addons/script-ide/plugin.cfg")
+enabled=PackedStringArray("res://addons/resources_spreadsheet_view/plugin.cfg", "res://addons/script-ide/plugin.cfg")
 
 [gui]
 

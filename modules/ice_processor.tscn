@@ -10,7 +10,7 @@
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="6_we48w"]
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="7_36gln"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_moxkg"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_a1sc7"]
 shader = ExtResource("2_mvk5k")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -23,7 +23,7 @@ size = Vector2(62, 62)
 [node name="Module" instance=ExtResource("1_ls5ja")]
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_moxkg")
+material = SubResource("ShaderMaterial_a1sc7")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_my7lf")
@@ -40,10 +40,10 @@ power_consumer = NodePath("../PowerConsumptionComponent")
 
 [node name="InputStorage" parent="." index="2" instance=ExtResource("5_j14n4")]
 stored_resource = ExtResource("6_we48w")
-max_stored = 10
+accepts_exports = false
 
 [node name="OutputStorage" parent="." index="3" instance=ExtResource("5_j14n4")]
 stored_resource = ExtResource("7_36gln")
-max_stored = 10
+accepts_imports = false
 
 [node name="PowerConsumptionComponent" parent="." index="4" instance=ExtResource("6_cb1ki")]

@@ -7,7 +7,7 @@ var astar:AStar2D = AStar2D.new()
 var debug_path: PackedVector2Array
 var selected_modules = {}
 
-var recheck_pathfinding = false
+var recheck_pathfinding: bool = false
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -52,12 +52,21 @@ func _on_module_selected(module: ModuleBase) -> void:
 
 func check_pathfinding() -> void:
 	if selected_modules.size() == 2:
-		run_pathfinding()
+		var modules = selected_modules.keys()
+		debug_path = run_pathfinding(modules[0], modules[1])
+		ui_in_game.debug_path = debug_path
 	else:
 		debug_path = []
 		ui_in_game.debug_path = debug_path
 	
-func run_pathfinding() -> void:
-	var modules = selected_modules.keys()
-	debug_path = astar.get_point_path(modules[0].module_id, modules[1].module_id)
-	ui_in_game.debug_path = debug_path
+func run_pathfinding(start_module: ModuleBase, end_module: ModuleBase) -> PackedVector2Array:
+	return astar.get_point_path(start_module.module_id, end_module.module_id)
+	
+func get_closest_point_id(start_position: Vector2) -> int:
+	return astar.get_closest_point(start_position)
+
+func get_closest_module_by_cell(start_cell: Vector2i) -> ModuleBase:
+	return Global.world_manager.get_module_by_id(astar.get_closest_point(start_cell))
+	
+func get_closest_module_by_position(start_position: Vector2) -> ModuleBase:
+	return get_closest_module_by_cell(Global.world_to_cell(start_position))

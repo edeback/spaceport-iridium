@@ -6,7 +6,7 @@
 Maybe two views?
 - Inside modules
 - Transportation
-	- Hallways, stairs (service tubes?), turbolift, teleporter
+	- Hallways, stairs (service tubes?), turbolift, teleporter (it's own module, not transport layer)
 - Can switch between views
 	- Transportation cutaway (see hallways, turbolift doors)
 	- Transportation detail (click on turbolift to see tubes, click on teleporter to see connections)
@@ -19,7 +19,7 @@ Maybe two views?
 		- Modules have specific cells that are the "doorway" cells, where pawns can come in/out
 		- Modules are placed with hallways attached if transport doesn't already exist there
 	- Transport layer
-		- Hallways/stairs/lift/teleporter
+		- Hallways/stairs/lift/(not teleporter)
 		- Must be placed on a module
 		- When a module is removed, the transport stays
 		- Transport can be removed separately of a module

@@ -12,6 +12,7 @@ var current_module: ModuleData:
 var world_manager: WorldManager
 var path_manager: PathManager
 var power_manager: PowerManager
+var job_manager: JobManager
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
