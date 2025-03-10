@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://d0eqhw20qtp8"]
 
-[ext_resource type="Script" path="res://addons/fader/fader.gd" id="1_hbklr"]
+[ext_resource type="Script" uid="uid://cgafwyb74lhlt" path="res://addons/fader/fader.gd" id="1_hbklr"]
 
 [node name="Fader" type="CanvasLayer"]
 layer = 100

@@ -2,7 +2,7 @@ extends Control
 
 @export var module_button: PackedScene
 
-@onready var button_container: VBoxContainer = $Modules/MarginContainer/ButtonContainer
+@export var button_container: VBoxContainer
 
 var module_datas: Array[ModuleData]
 var preview_model : ModuleBase
@@ -16,6 +16,7 @@ func load_moduledatas() -> void:
 	var current_buttons = button_container.get_children()
 	for node in current_buttons:
 		button_container.remove_child(node)
+		node.queue_free()
 	module_datas.clear()
 	for file_name in DirAccess.get_files_at("res://data/modules/"):
 		if file_name.get_extension() == "tres":

@@ -44,7 +44,7 @@ func _update_shader() -> void:
 
 func update_placeable(module_cell: Vector2i) -> void:
 	# Footprint must not overlap
-	if Global.world_manager.has_overlaps(module_cell, module_size):
+	if Global.world_manager.is_blocked(module_cell, module_size):
 		can_place = false
 		return
 	# Must be connected to at least one other module

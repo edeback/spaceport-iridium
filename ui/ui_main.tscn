@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://ce6npnqw8s3mu"]
 
-[ext_resource type="Script" path="res://ui/ui_main.gd" id="1_2bqpn"]
-[ext_resource type="PackedScene" uid="uid://bi50k1hocy0ud" path="res://ui/module_button.tscn" id="2_gmr23"]
+[ext_resource type="Script" uid="uid://de484prd4xlyv" path="res://ui/ui_main.gd" id="1_2bqpn"]
+[ext_resource type="PackedScene" uid="uid://bi50k1hocy0ud" path="res://ui/buttons/module_button.tscn" id="2_gmr23"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u8vfh"]
 bg_color = Color(0.0367339, 0.13205, 0.257585, 1)
@@ -31,7 +31,7 @@ corner_radius_bottom_left = 16
 shadow_size = 6
 shadow_offset = Vector2(-3, -3)
 
-[node name="UiMain" type="Control"]
+[node name="UiMain" type="Control" node_paths=PackedStringArray("button_container")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -40,6 +40,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_2bqpn")
 module_button = ExtResource("2_gmr23")
+button_container = NodePath("Modules/MarginContainer/ButtonContainer")
 
 [node name="Modules" type="Panel" parent="."]
 layout_mode = 1

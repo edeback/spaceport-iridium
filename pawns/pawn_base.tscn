@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://ddoebv5qw5lfm"]
 
-[ext_resource type="Script" path="res://pawns/pawn_base.gd" id="1_4rv7m"]
+[ext_resource type="Script" uid="uid://ddgc25wxbd8dx" path="res://pawns/pawn_base.gd" id="1_4rv7m"]
 [ext_resource type="Texture2D" uid="uid://dfjrqt380rc2o" path="res://assets/external/kenney_toon-characters-1/Robot/Tilesheet/character_robot_sheet.png" id="2_tngjo"]
 
 [node name="PawnBase" type="Node2D"]

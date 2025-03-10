@@ -20,6 +20,6 @@ func _process(delta: float) -> void:
 
 
 func _on_pressed() -> void:
-	Global.current_module = module_data
+	Global.ui_in_game.change_input_mode(UIInGame.InputMode.Module, module_data)
 	#Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	pass # Replace with function body.

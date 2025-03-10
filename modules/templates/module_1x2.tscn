@@ -1,9 +1,9 @@
 [gd_scene load_steps=5 format=3 uid="uid://7cg1tp80w7sk"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_lcb3o"]
-[ext_resource type="Shader" path="res://shaders/previewable.gdshader" id="2_535f1"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_535f1"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_fgich"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mpksg"]
 shader = ExtResource("2_535f1")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -22,7 +22,7 @@ position = Vector2(32, 64)
 metadata/_edit_group_ = true
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_fgich")
+material = SubResource("ShaderMaterial_mpksg")
 position = Vector2(0, 1.90735e-06)
 region_rect = Rect2(0, 64, 64, 128)
 

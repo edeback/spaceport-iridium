@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://ge73mk14adfq"]
 
-[ext_resource type="Script" path="res://modules/components/power_generation_component.gd" id="1_vi0vb"]
+[ext_resource type="Script" uid="uid://c21hu1pihnukm" path="res://modules/components/power_generation_component.gd" id="1_vi0vb"]
 
 [node name="PowerGenerationComponent" type="Node"]
 script = ExtResource("1_vi0vb")

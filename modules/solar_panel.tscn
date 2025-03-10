@@ -1,10 +1,10 @@
 [gd_scene load_steps=6 format=3 uid="uid://dxnloxeyu3aru"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_ldvtf"]
-[ext_resource type="Shader" path="res://shaders/previewable.gdshader" id="2_elnck"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_elnck"]
 [ext_resource type="PackedScene" uid="uid://ge73mk14adfq" path="res://modules/components/power_generation_component.tscn" id="3_y6uab"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_fdkxu"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0n7jg"]
 shader = ExtResource("2_elnck")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -15,9 +15,10 @@ resource_local_to_scene = true
 size = Vector2(62, 62)
 
 [node name="Module" instance=ExtResource("1_ldvtf")]
+blocks_building = null
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_fdkxu")
+material = SubResource("ShaderMaterial_0n7jg")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_15wy0")

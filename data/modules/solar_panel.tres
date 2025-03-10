@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="1_x7fuj"]
 [ext_resource type="PackedScene" uid="uid://dxnloxeyu3aru" path="res://modules/solar_panel.tscn" id="2_7kodw"]
-[ext_resource type="Script" path="res://data/modules/module_data.gd" id="3_6le0c"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_6le0c"]
 
 [resource]
 script = ExtResource("3_6le0c")

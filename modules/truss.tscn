@@ -1,0 +1,29 @@
+[gd_scene load_steps=7 format=3 uid="uid://busc6m38p1r8j"]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_uwdk4"]
+[ext_resource type="Script" uid="uid://dt78mjhj8i6cf" path="res://modules/truss.gd" id="2_m657s"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_ykycx"]
+[ext_resource type="Texture2D" uid="uid://wydp85db7mim" path="res://assets/sprites/icon_truss_structure.png" id="4_uwdk4"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_uwdk4"]
+shader = ExtResource("2_ykycx")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_2hsxi"]
+resource_local_to_scene = true
+size = Vector2(62, 62)
+
+[node name="Module" instance=ExtResource("1_uwdk4")]
+script = ExtResource("2_m657s")
+replacement_on_delete = null
+blocks_building = false
+
+[node name="Sprite" parent="Offset" index="0"]
+visible = false
+material = SubResource("ShaderMaterial_uwdk4")
+texture = ExtResource("4_uwdk4")
+
+[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
+shape = SubResource("RectangleShape2D_2hsxi")

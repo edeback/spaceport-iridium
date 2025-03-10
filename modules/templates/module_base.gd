@@ -15,6 +15,7 @@ extends Node2D
 	set(new_points):
 		connection_points = new_points
 		queue_redraw()
+@export var blocks_building: bool = true
 
 var module_id: int = -1
 var module_cell: Vector2i
@@ -65,8 +66,21 @@ func _ready() -> void:
 	else:
 		nameplate.text = ""
 	add_to_group("module")
-	SignalBus.module_added.emit(self)
+	on_place()
+	if SignalBus:
+		SignalBus.module_added.emit(self)
 
+func on_place() -> void:
+	if Global:
+		var cells = []
+		for x in size.x:
+			for y in size.y:
+				cells.append(module_cell + Vector2i(x, y))
+		Global.tilemap.set_cells_terrain_connect(cells, 0, 0)
+	pass
+	
+func pre_delete() -> void:
+	pass
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 #func _process(delta: float) -> void:

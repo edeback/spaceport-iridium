@@ -1,11 +1,12 @@
-[gd_scene load_steps=7 format=3 uid="uid://bh5xdj8qfdiig"]
+[gd_scene load_steps=8 format=3 uid="uid://bh5xdj8qfdiig"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_o4d0g"]
-[ext_resource type="Shader" path="res://shaders/previewable.gdshader" id="2_7utsr"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_7utsr"]
+[ext_resource type="PackedScene" uid="uid://busc6m38p1r8j" path="res://modules/truss.tscn" id="2_k8o6q"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="3_0sngh"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_4lt73"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_m7d68"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_k8o6q"]
 shader = ExtResource("2_7utsr")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -16,9 +17,10 @@ resource_local_to_scene = true
 size = Vector2(62, 62)
 
 [node name="Module" instance=ExtResource("1_o4d0g")]
+replacement_on_delete = ExtResource("2_k8o6q")
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_m7d68")
+material = SubResource("ShaderMaterial_k8o6q")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_2hsxi")

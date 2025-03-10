@@ -1,18 +1,13 @@
 extends Node
 
-signal current_module_changed
-
 const CELL_SIZE: Vector2i = Vector2i(64, 64)
-
-var current_module: ModuleData:
-	set(new_module):
-		current_module = new_module
-		current_module_changed.emit()
 
 var world_manager: WorldManager
 var path_manager: PathManager
 var power_manager: PowerManager
 var job_manager: JobManager
+var ui_in_game: UIInGame
+var tilemap: TileMapLayer
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -29,6 +24,10 @@ func world_to_cell(position: Vector2) -> Vector2i:
 func cell_to_world(cell: Vector2i, use_half_offset: bool = false) -> Vector2i:
 	return cell * CELL_SIZE + (Vector2i.ONE * CELL_SIZE / 2 if use_half_offset else Vector2i.ZERO)
 
+func world_to_tilemap_cell(position: Vector2) -> Vector2i:
+	if tilemap != null:
+		return tilemap.local_to_map(position)
+	return Vector2i()
 
 # All the below functions don't really work as they don't read values that aren't overridden
 # Need to figure out how to find the base class

@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://c3a066r5j2dga"]
 
-[ext_resource type="Script" path="res://modules/components/power_consumption_component.gd" id="1_gmv4m"]
+[ext_resource type="Script" uid="uid://dkcqbxgax5epf" path="res://modules/components/power_consumption_component.gd" id="1_gmv4m"]
 
 [node name="PowerConsumptionComponent" type="Node"]
 script = ExtResource("1_gmv4m")

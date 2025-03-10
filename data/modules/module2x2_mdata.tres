@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ModuleData" load_steps=4 format=3 uid="uid://c4yjhkqp1vnod"]
 
-[ext_resource type="Script" path="res://data/modules/module_data.gd" id="1_8fipy"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="1_8fipy"]
 [ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="1_e7d2h"]
 [ext_resource type="PackedScene" uid="uid://c4cgh4tautltt" path="res://modules/templates/module_2x2.tscn" id="2_48hfl"]
 

@@ -1,21 +1,42 @@
+class_name UIInGame
 extends Control
 
 @onready var selector: Node2D = $Selector
 @onready var preview_module: PreviewModule = $Selector/PreviewModule
+@onready var structure_tile_map: TileMapLayer = $"../StructureTileMap"
 
 var debug_path: PackedVector2Array:
 	set(new_path):
 		debug_path = new_path
 		queue_redraw()
+		
+enum InputMode {None, Module, Structure}
+
+var cur_input_mode: InputMode = InputMode.None
+var cur_module: ModuleData = null
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	Global.current_module_changed.connect(current_module_changed)
+	Global.ui_in_game = self
 	pass # Replace with function body.
 
+func change_input_mode(mode: InputMode, module: ModuleData = null) -> void:
+	cur_input_mode = mode
+	cur_module = module
+	preview_module.module_data = module
+	pass
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
+	match cur_input_mode:
+		InputMode.None:
+			pass
+		InputMode.Module:
+			update_module_placement()
+		InputMode.Structure:
+			update_structure_placement()
+
+func update_module_placement() -> void:
 	var hovered_cell = Global.world_to_cell(get_global_mouse_position())
 	if preview_module != null:
 		preview_module.update_placeable(hovered_cell)
@@ -26,14 +47,14 @@ func _process(delta: float) -> void:
 		selector.position = get_global_mouse_position()
 	if Input.is_action_just_pressed("build"):
 		if preview_module != null and preview_module.can_place:
-			Global.world_manager.add_module(Global.current_module, hovered_cell)
+			Global.world_manager.add_module(cur_module, hovered_cell)
 		else:
 			select_module(hovered_cell)
 	if Input.is_action_just_pressed("remove"):
 		Global.world_manager.remove_module_by_cell(hovered_cell)
 
-func current_module_changed() -> void:
-	preview_module.module_data = Global.current_module
+func update_structure_placement() -> void:
+	pass
 
 func select_module(cell: Vector2i) -> void:
 	var selected_module = Global.world_manager.cell_to_module.get(cell)

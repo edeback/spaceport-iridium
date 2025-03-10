@@ -2,6 +2,7 @@ extends Control
 
 @onready var mouse_position: Label = $VBoxContainer/HBoxContainer/MousePosition
 @onready var hovered_cell: Label = $VBoxContainer/HBoxContainer2/HoveredCell
+@onready var tilemap_cell: Label = $VBoxContainer/HBoxContainer3/TilemapCell
 
 #var debug_path: PackedVector2Array:
 	#set(new_path):
@@ -11,9 +12,12 @@ extends Control
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	var mouse_pos = get_global_mouse_position()
-	var cell = Global.world_to_cell(mouse_pos)
-	mouse_position.text = str(mouse_pos)
+	var local_mouse_pos = Global.tilemap.get_local_mouse_position()
+	var cell = Global.world_to_cell(local_mouse_pos)
+	var t_cell = Global.world_to_tilemap_cell(local_mouse_pos)
+	mouse_position.text = str(local_mouse_pos)
 	hovered_cell.text = str(cell)
+	tilemap_cell.text = str(t_cell)
 
 #func _draw() -> void:	 		
 	#var last_point = null

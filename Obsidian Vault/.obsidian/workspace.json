@@ -76,9 +76,23 @@
               "icon": "lucide-file",
               "title": "Roadmap"
             }
+          },
+          {
+            "id": "3459cd47346b71ec",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Spaceport Iridium/Roadmap.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Roadmap"
+            }
           }
         ],
-        "currentTab": 4
+        "currentTab": 5
       }
     ],
     "direction": "vertical"
@@ -220,7 +234,7 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "3a545b22e262f8d5",
+  "active": "3459cd47346b71ec",
   "lastOpenFiles": [
     "Power System.md",
     "Random Notes.md",

@@ -1,8 +1,10 @@
 extends Node
 
+@onready var structure_tile_map: TileMapLayer = $StructureTileMap
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	Global.tilemap = structure_tile_map
 	pass # Replace with function body.
 
 

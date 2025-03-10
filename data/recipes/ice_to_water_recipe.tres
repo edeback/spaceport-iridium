@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="RecipeData" load_steps=4 format=3 uid="uid://dgpswv183ebv6"]
 
-[ext_resource type="Script" path="res://data/recipes/recipe_data.gd" id="1_r4hde"]
+[ext_resource type="Script" uid="uid://by2n6rwcttgyx" path="res://data/recipes/recipe_data.gd" id="1_r4hde"]
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="1_tiwgf"]
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="2_ixn0u"]
 

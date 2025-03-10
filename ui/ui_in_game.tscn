@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://dbdc66ow44ldq"]
 
-[ext_resource type="Script" path="res://ui/ui_in_game.gd" id="1_di4q1"]
+[ext_resource type="Script" uid="uid://ctskq23b3fuly" path="res://ui/ui_in_game.gd" id="1_di4q1"]
 [ext_resource type="Texture2D" uid="uid://ctuwi20uk7fdo" path="res://assets/external/2D Sci-Fi Platform Builder/2-PNG Files/Props/energy2.png" id="2_ds88o"]
 [ext_resource type="PackedScene" uid="uid://fm1pchsof76e" path="res://ui/preview_module.tscn" id="3_204sb"]
 

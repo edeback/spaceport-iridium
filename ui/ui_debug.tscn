@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://umcjs6xyrnek"]
 
-[ext_resource type="Script" path="res://ui/ui_debug.gd" id="1_fp81m"]
+[ext_resource type="Script" uid="uid://chmrohbecbn0g" path="res://ui/ui_debug.gd" id="1_fp81m"]
 
 [node name="UiDebug" type="Control"]
 layout_mode = 3
@@ -42,5 +42,16 @@ layout_mode = 2
 text = "Cur Cell:"
 
 [node name="HoveredCell" type="Label" parent="VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+text = "(xxx, yyy)"
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer3"]
+layout_mode = 2
+text = "Tilemap Cell:"
+
+[node name="TilemapCell" type="Label" parent="VBoxContainer/HBoxContainer3"]
 layout_mode = 2
 text = "(xxx, yyy)"

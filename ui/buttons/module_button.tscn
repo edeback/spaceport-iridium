@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://bi50k1hocy0ud"]
 
-[ext_resource type="Script" path="res://ui/module_button.gd" id="1_5kvtd"]
+[ext_resource type="Script" uid="uid://dm82228rpifsx" path="res://ui/buttons/module_button.gd" id="1_5kvtd"]
 [ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="1_nr7ay"]
 
 [node name="ModuleButton" type="Button"]

@@ -4,8 +4,8 @@ extends Node
 @export var start_module: ModuleData
 
 var last_id : int = 0
-var cell_to_module = {}
-var id_to_module = {}
+var cell_to_module: Dictionary[Vector2i, ModuleBase] = {}
+var id_to_module: Dictionary[int, ModuleBase] = {}
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -29,11 +29,9 @@ func _get_next_id() -> int:
 func add_module(module_data: ModuleData, cell: Vector2i) -> void:
 	var new_module = module_data.scene.instantiate()
 	new_module.get_instance_id()
-	for x in new_module.size.x:
-		for y in new_module.size.y:
-			if cell_to_module.has(cell + Vector2i(x, y)):
-				print("Warning, attempted to add module where one exists at: " + str(cell + Vector2i(x, y)))
-				return
+	if is_blocked(cell, new_module.size):
+		print("Warning, attempted to add module where one exists at: " + str(cell))
+		return
 	new_module.position = Vector2(cell * Global.CELL_SIZE)
 	var module_id = _get_next_id()
 	new_module.module_id = module_id
@@ -47,6 +45,9 @@ func add_module(module_data: ModuleData, cell: Vector2i) -> void:
 	new_module.make_connections()
 
 func remove_module(module: ModuleBase) -> bool:
+	#var replacement_module = module.replacement_on_delete
+	#var replacement_location = module.module_cell
+	module.pre_delete()
 	SignalBus.module_removed.emit(module)
 	module.remove_connections()
 	for x in module.size.x:
@@ -55,12 +56,22 @@ func remove_module(module: ModuleBase) -> bool:
 	id_to_module.erase(module.module_id)
 	remove_child(module)
 	module.queue_free()
+	#if replacement_module:
+	#	add_module(replacement_module, replacement_location)
 	return true
 
 func remove_module_by_cell(cell: Vector2i) -> void:
 	var module = cell_to_module.get(cell)
 	if module != null:
 		remove_module(module)
+		
+func is_blocked(cell: Vector2i, size: Vector2i = Vector2i(1,1)) -> bool:
+	for x in size.x:
+		for y in size.y:
+			var module = cell_to_module.get(cell + Vector2i(x, y))
+			if module != null and module.blocks_building:
+				return true
+	return false
 
 func has_overlaps(cell: Vector2i, size: Vector2i = Vector2i(1,1)) -> bool:
 	for x in size.x:

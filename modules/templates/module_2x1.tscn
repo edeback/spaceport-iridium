@@ -1,9 +1,9 @@
 [gd_scene load_steps=5 format=3 uid="uid://drvd8opv6enr8"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_pq36e"]
-[ext_resource type="Shader" path="res://shaders/previewable.gdshader" id="2_fx0tu"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_fx0tu"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_qqgeo"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_llliq"]
 shader = ExtResource("2_fx0tu")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -16,13 +16,14 @@ size = Vector2(126, 62)
 [node name="Module" instance=ExtResource("1_pq36e")]
 size = Vector2i(2, 1)
 connection_points = Array[Vector2i]([Vector2i(2, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(1, 1)])
+blocks_building = null
 
 [node name="Offset" parent="." index="0"]
 position = Vector2(64, 32)
 metadata/_edit_group_ = true
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_qqgeo")
+material = SubResource("ShaderMaterial_llliq")
 region_rect = Rect2(128, 0, 128, 64)
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
