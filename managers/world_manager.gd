@@ -45,8 +45,9 @@ func add_module(module_data: ModuleData, cell: Vector2i) -> void:
 	new_module.make_connections()
 
 func remove_module(module: ModuleBase) -> bool:
-	#var replacement_module = module.replacement_on_delete
-	#var replacement_location = module.module_cell
+	var replacement_module = module.replacement_on_delete
+	var replacement_location = module.module_cell
+	var replacement_size = module.size
 	module.pre_delete()
 	SignalBus.module_removed.emit(module)
 	module.remove_connections()
@@ -56,8 +57,10 @@ func remove_module(module: ModuleBase) -> bool:
 	id_to_module.erase(module.module_id)
 	remove_child(module)
 	module.queue_free()
-	#if replacement_module:
-	#	add_module(replacement_module, replacement_location)
+	if replacement_module:
+		for x in replacement_size.x:
+			for y in replacement_size.y:
+				add_module(replacement_module, replacement_location + Vector2i(x,y))
 	return true
 
 func remove_module_by_cell(cell: Vector2i) -> void:

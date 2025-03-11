@@ -5,6 +5,7 @@ extends Node2D
 @export var sprite: Sprite2D
 @onready var footprint: Area2D = $Offset/Footprint
 @onready var nameplate: Label = $Offset/Sprite/Nameplate
+@export var replacement_on_delete: ModuleData
 
 @export var size: Vector2i = Vector2i(1, 1)
 @export var show_debug: bool = true:
