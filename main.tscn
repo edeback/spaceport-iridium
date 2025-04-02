@@ -354,8 +354,9 @@ terrain_set_0/terrain_0/name = "Terrain 0"
 terrain_set_0/terrain_0/color = Color(0.5, 0.34375, 0.25, 1)
 sources/2 = SubResource("TileSetAtlasSource_dg77c")
 
-[node name="Main" type="Node"]
+[node name="Main" type="Node" node_paths=PackedStringArray("structure_tile_map")]
 script = ExtResource("1_lvssd")
+structure_tile_map = NodePath("ModuleLayer/StructureTileMap")
 
 [node name="Managers" type="Node" parent="."]
 
@@ -373,20 +374,24 @@ script = ExtResource("4_deici")
 position = Vector2(961, 542)
 script = ExtResource("3_055fr")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="ModuleLayer" type="CanvasLayer" parent="."]
+follow_viewport_enabled = true
 
-[node name="UiDebug" parent="CanvasLayer" instance=ExtResource("4_m3cse")]
+[node name="CanvasModulate" type="CanvasModulate" parent="ModuleLayer"]
+color = Color(0.552941, 0.552941, 0.552941, 1)
 
-[node name="UiMain" parent="CanvasLayer" instance=ExtResource("5_uwp6h")]
+[node name="UiInGame" parent="ModuleLayer" instance=ExtResource("9_ipixf")]
 
-[node name="UiInGame" parent="." instance=ExtResource("9_ipixf")]
-
-[node name="CanvasModulate" type="CanvasModulate" parent="."]
-color = Color(0.552956, 0.552956, 0.552956, 1)
-
-[node name="PawnBase" parent="." instance=ExtResource("10_emvbo")]
+[node name="PawnBase" parent="ModuleLayer" instance=ExtResource("10_emvbo")]
 position = Vector2(407, 250)
 
-[node name="StructureTileMap" type="TileMapLayer" parent="."]
+[node name="StructureTileMap" type="TileMapLayer" parent="ModuleLayer"]
 z_index = -1
 tile_set = SubResource("TileSet_4c57u")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="UiDebug" parent="HUD" instance=ExtResource("4_m3cse")]
+
+[node name="UiMain" parent="HUD" instance=ExtResource("5_uwp6h")]

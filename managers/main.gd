@@ -1,6 +1,6 @@
 extends Node
 
-@onready var structure_tile_map: TileMapLayer = $StructureTileMap
+@export var structure_tile_map: TileMapLayer
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:

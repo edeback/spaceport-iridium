@@ -2,6 +2,7 @@ class_name WorldManager
 extends Node
 
 @export var start_module: ModuleData
+@onready var module_layer: CanvasLayer = $"../../ModuleLayer"
 
 var last_id : int = 0
 var cell_to_module: Dictionary[Vector2i, ModuleBase] = {}
@@ -37,7 +38,7 @@ func add_module(module_data: ModuleData, cell: Vector2i) -> void:
 	new_module.module_id = module_id
 	new_module.module_cell = cell
 	new_module.module_data = module_data
-	add_child(new_module)
+	module_layer.add_child(new_module)
 	for x in new_module.size.x:
 		for y in new_module.size.y:
 			cell_to_module[cell + Vector2i(x, y)] = new_module
@@ -55,7 +56,7 @@ func remove_module(module: ModuleBase) -> bool:
 		for y in module.size.y:
 			cell_to_module.erase(module.module_cell + Vector2i(x,y))
 	id_to_module.erase(module.module_id)
-	remove_child(module)
+	module_layer.remove_child(module)
 	module.queue_free()
 	if replacement_module:
 		for x in replacement_size.x:

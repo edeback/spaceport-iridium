@@ -11,7 +11,7 @@
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="6_we48w"]
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="7_36gln"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_o50cv"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_dtgut"]
 shader = ExtResource("2_mvk5k")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -25,7 +25,7 @@ size = Vector2(62, 62)
 replacement_on_delete = ExtResource("2_dtgut")
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_o50cv")
+material = SubResource("ShaderMaterial_dtgut")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_my7lf")

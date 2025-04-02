@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://cnyrsr2kw7fcm"]
+[gd_scene load_steps=9 format=3 uid="uid://cnyrsr2kw7fcm"]
 
 [ext_resource type="Script" uid="uid://cjcw3ff5aka4c" path="res://modules/templates/module_base.gd" id="1_du6xs"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_5bxic"]
@@ -14,10 +14,30 @@ shader_parameter/SELECTED = false
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
-[node name="Module" type="Node2D" node_paths=PackedStringArray("sprite")]
+[sub_resource type="Curve2D" id="Curve2D_x0mcu"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 0, 56, 0, 0, 0, 0, 32, 56)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_ln6ba"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 32, 56, 0, 0, 0, 0, 32, 48)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_vdk3v"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 32, 56, 0, 0, 0, 0, 64, 56)
+}
+point_count = 2
+
+[node name="Module" type="Node2D" node_paths=PackedStringArray("sprite", "walking_paths", "door_location")]
 script = ExtResource("1_du6xs")
 sprite = NodePath("Offset/Sprite")
 connection_points = Array[Vector2i]([Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)])
+walking_paths = [NodePath("Path2D"), NodePath("Path2D2"), NodePath("Path2D3")]
+door_location = NodePath("Door")
 
 [node name="Offset" type="Node2D" parent="."]
 position = Vector2(32, 32)
@@ -47,3 +67,15 @@ horizontal_alignment = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Offset/Footprint"]
 shape = SubResource("RectangleShape2D_aotpw")
+
+[node name="Path2D" type="Path2D" parent="."]
+curve = SubResource("Curve2D_x0mcu")
+
+[node name="Path2D2" type="Path2D" parent="."]
+curve = SubResource("Curve2D_ln6ba")
+
+[node name="Path2D3" type="Path2D" parent="."]
+curve = SubResource("Curve2D_vdk3v")
+
+[node name="Door" type="Marker2D" parent="."]
+position = Vector2(32, 48)

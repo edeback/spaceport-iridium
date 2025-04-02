@@ -1,7 +1,7 @@
 class_name PathManager
 extends Node
 
-@onready var ui_in_game: Control = $"../../UiInGame"
+@onready var ui_in_game: UIInGame = $"../../InWorld/UiInGame"
 
 var astar:AStar2D = AStar2D.new()
 var debug_path: PackedVector2Array

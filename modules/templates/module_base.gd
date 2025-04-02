@@ -18,6 +18,9 @@ extends Node2D
 		queue_redraw()
 @export var blocks_building: bool = true
 
+@export var walking_paths: Array[Path2D]
+@export var door_location: Marker2D
+
 var module_id: int = -1
 var module_cell: Vector2i
 var module_data: ModuleData
@@ -142,6 +145,15 @@ func connect_to(other_module: ModuleBase) -> void:
 	
 func disconnect_from(other_module: ModuleBase) -> void:
 	module_connections.erase(other_module)
+	
+func get_paths() -> void:
+	for path in walking_paths:
+		var point_count = path.curve.point_count
+		# Two points make a line, don't support single points yet
+		if point_count > 1:
+			path.curve.get_point_position(0)
+			path.curve.get_point_position(point_count - 1)
+	pass
 	
 	
 func _draw() -> void:

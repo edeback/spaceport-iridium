@@ -12,12 +12,13 @@ extends Control
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	var mouse_pos = get_global_mouse_position()
-	var local_mouse_pos = Global.tilemap.get_local_mouse_position()
-	var cell = Global.world_to_cell(local_mouse_pos)
-	var t_cell = Global.world_to_tilemap_cell(local_mouse_pos)
-	mouse_position.text = str(local_mouse_pos)
-	hovered_cell.text = str(cell)
-	tilemap_cell.text = str(t_cell)
+	if Global.tilemap:
+		var local_mouse_pos = Global.tilemap.get_local_mouse_position()
+		var cell = Global.world_to_cell(local_mouse_pos)
+		var t_cell = Global.world_to_tilemap_cell(local_mouse_pos)
+		mouse_position.text = str(local_mouse_pos)
+		hovered_cell.text = str(cell)
+		tilemap_cell.text = str(t_cell)
 
 #func _draw() -> void:	 		
 	#var last_point = null
