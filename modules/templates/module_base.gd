@@ -135,7 +135,7 @@ func make_connections() -> void:
 	for module in connected_modules:
 		module_connections[module] = 1
 		module.connect_to(self)
-		SignalBus.module_connection_added.emit(module_id, module.module_id)
+		SignalBus.module_connection_added.emit(self, module, module_cell.distance_to(module.module_cell))
 
 func remove_connections() -> void:
 	for module in module_connections:

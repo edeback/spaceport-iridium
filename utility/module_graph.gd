@@ -111,7 +111,7 @@ func pathfind(start: ModuleBase, end: ModuleBase) -> Array[ModuleBase]:
 			var new_cost = cost_so_far[current] + current.edges[next]
 			if not cost_so_far.has(next) or new_cost < cost_so_far[next]:
 				cost_so_far[next] = new_cost
-				var prio = new_cost + next.dist_squared_to(end_vertex)
+				var prio = new_cost + _heuristic(next, end_vertex)
 				frontier.insert(next, prio)
 				came_from[next] = current
 				
@@ -125,6 +125,7 @@ func pathfind(start: ModuleBase, end: ModuleBase) -> Array[ModuleBase]:
 	while cur_vertex != start_vertex:
 		path.append(cur_vertex.module)
 		cur_vertex = came_from[cur_vertex]
+	path.append(start)
 	path.reverse()
 	return path
 
@@ -134,3 +135,8 @@ func get_point_path(start: ModuleBase, end: ModuleBase) -> PackedVector2Array:
 	for module: ModuleBase in module_path:
 		point_path.append(module.module_cell)
 	return point_path
+
+func _heuristic(start: ModuleGraphVertex, end: ModuleGraphVertex) -> float:
+	# return start.dist_squared_to(end)
+	return 0 # Otherwise we never check teleporters...
+	#return start.dist_to(end)

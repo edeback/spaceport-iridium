@@ -3,8 +3,8 @@ extends Node
 
 signal module_added(new_module: ModuleBase)
 signal module_removed(removed_module: ModuleBase)
-signal module_connection_added(from: int, to: int)
-signal module_connection_removed(from: int, to: int)
+signal module_connection_added(from: ModuleBase, to: ModuleBase, distance: float) # todo maybe: distance calculated dynamically
+signal module_connection_removed(from: ModuleBase, to: ModuleBase)
 signal module_selected(selected_module: ModuleBase)
 
 

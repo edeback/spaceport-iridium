@@ -38,14 +38,12 @@ func _on_module_removed(module: ModuleBase) -> void:
 	selected_modules.erase(module)
 	recheck_pathfinding = true
 	
-func _on_module_connection_added(from: int, to: int) -> void:
-	astar.connect_points(from, to)
-	graph.add_edge(Global.world_manager.get_module_by_id(from), Global.world_manager.get_module_by_id(to), 1)
+func _on_module_connection_added(from: ModuleBase, to: ModuleBase, distance: float) -> void:
+	graph.add_edge(from, to, distance)
 	recheck_pathfinding = true
 	
-func _on_module_connection_removed(from: int, to: int) -> void:
-	astar.disconnect_points(from, to)
-	graph.remove_edge(Global.world_manager.get_module_by_id(from), Global.world_manager.get_module_by_id(to))
+func _on_module_connection_removed(from: ModuleBase, to: ModuleBase) -> void:
+	graph.remove_edge(from, to)
 	recheck_pathfinding = true
 	
 func _on_module_selected(module: ModuleBase) -> void:
