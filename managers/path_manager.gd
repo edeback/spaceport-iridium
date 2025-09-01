@@ -1,9 +1,10 @@
 class_name PathManager
 extends Node
 
-@onready var ui_in_game: UIInGame = $"../../InWorld/UiInGame"
+@onready var ui_in_game: UIInGame = $"../../ModuleLayers/UiInGameLayer/UiInGame"
 
 var astar:AStar2D = AStar2D.new()
+var graph:ModuleGraph = ModuleGraph.new()
 var debug_path: PackedVector2Array
 var selected_modules = {}
 
@@ -28,19 +29,23 @@ func _process(delta: float) -> void:
 	
 func _on_module_added(module: ModuleBase) -> void:
 	astar.add_point(module.module_id, module.module_cell)
+	graph.add_vertex(module)
 	recheck_pathfinding = true
 	
 func _on_module_removed(module: ModuleBase) -> void:
 	astar.remove_point(module.module_id)
+	graph.remove_vertex(module)
 	selected_modules.erase(module)
 	recheck_pathfinding = true
 	
 func _on_module_connection_added(from: int, to: int) -> void:
 	astar.connect_points(from, to)
+	graph.add_edge(Global.world_manager.get_module_by_id(from), Global.world_manager.get_module_by_id(to), 1)
 	recheck_pathfinding = true
 	
 func _on_module_connection_removed(from: int, to: int) -> void:
 	astar.disconnect_points(from, to)
+	graph.remove_edge(Global.world_manager.get_module_by_id(from), Global.world_manager.get_module_by_id(to))
 	recheck_pathfinding = true
 	
 func _on_module_selected(module: ModuleBase) -> void:
@@ -60,13 +65,13 @@ func check_pathfinding() -> void:
 		ui_in_game.debug_path = debug_path
 	
 func run_pathfinding(start_module: ModuleBase, end_module: ModuleBase) -> PackedVector2Array:
-	return astar.get_point_path(start_module.module_id, end_module.module_id)
+	return graph.get_point_path(start_module, end_module)
+	#return astar.get_point_path(start_module.module_id, end_module.module_id)
 	
-func get_closest_point_id(start_position: Vector2) -> int:
-	return astar.get_closest_point(start_position)
 
 func get_closest_module_by_cell(start_cell: Vector2i) -> ModuleBase:
-	return Global.world_manager.get_module_by_id(astar.get_closest_point(start_cell))
+	return graph.get_closest_module_to(start_cell)
+	#return Global.world_manager.get_module_by_id(astar.get_closest_point(start_cell))
 	
 func get_closest_module_by_position(start_position: Vector2) -> ModuleBase:
 	return get_closest_module_by_cell(Global.world_to_cell(start_position))

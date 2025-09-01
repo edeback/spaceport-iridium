@@ -1,16 +1,29 @@
 class_name WorldManager
 extends Node
 
+class LayerData:
+	var canvas: CanvasLayer
+	var cell_to_module: Dictionary[Vector2i, ModuleBase] = {}
+	#var id_to_module: Dictionary[int, ModuleBase] = {}
+
 @export var start_module: ModuleData
-@onready var module_layer: CanvasLayer = $"../../ModuleLayer"
+# Only used for setup. Use layer_data at runtime
+@export var module_layers: Dictionary[ModuleBase.InteractionLayer, CanvasLayer]
+
+var layer_data: Dictionary[ModuleBase.InteractionLayer, LayerData]
 
 var last_id : int = 0
-var cell_to_module: Dictionary[Vector2i, ModuleBase] = {}
+#var cell_to_module: Dictionary[Vector2i, ModuleBase] = {}
 var id_to_module: Dictionary[int, ModuleBase] = {}
+var active_layer: ModuleBase.InteractionLayer = ModuleBase.InteractionLayer.MODULE
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	Global.world_manager = self
+	for layer in module_layers:
+		var new_data = LayerData.new()
+		new_data.canvas = module_layers[layer]
+		layer_data[layer] = new_data
 	_startup()
 	pass # Replace with function body.
 
@@ -26,22 +39,29 @@ func _process(delta: float) -> void:
 func _get_next_id() -> int:
 	last_id = last_id + 1
 	return last_id
+	
+func get_module_by_cell_active_layer(cell: Vector2i) -> ModuleBase:
+	return get_module_by_cell(active_layer, cell)
+
+func get_module_by_cell(layer: ModuleBase.InteractionLayer, cell: Vector2i) -> ModuleBase:
+	return layer_data[layer].cell_to_module.get(cell)
 
 func add_module(module_data: ModuleData, cell: Vector2i) -> void:
 	var new_module = module_data.scene.instantiate()
 	new_module.get_instance_id()
-	if is_blocked(cell, new_module.size):
+	if is_blocked(new_module.interaction_layer, cell, new_module.size):
 		print("Warning, attempted to add module where one exists at: " + str(cell))
+		new_module.free()
 		return
 	new_module.position = Vector2(cell * Global.CELL_SIZE)
 	var module_id = _get_next_id()
 	new_module.module_id = module_id
 	new_module.module_cell = cell
 	new_module.module_data = module_data
-	module_layer.add_child(new_module)
+	module_layers[new_module.interaction_layer].add_child(new_module)
 	for x in new_module.size.x:
 		for y in new_module.size.y:
-			cell_to_module[cell + Vector2i(x, y)] = new_module
+			layer_data[new_module.interaction_layer].cell_to_module[cell + Vector2i(x, y)] = new_module
 	id_to_module[module_id] = new_module
 	new_module.make_connections()
 
@@ -54,9 +74,9 @@ func remove_module(module: ModuleBase) -> bool:
 	module.remove_connections()
 	for x in module.size.x:
 		for y in module.size.y:
-			cell_to_module.erase(module.module_cell + Vector2i(x,y))
+			layer_data[module.interaction_layer].cell_to_module.erase(module.module_cell + Vector2i(x,y))
 	id_to_module.erase(module.module_id)
-	module_layer.remove_child(module)
+	layer_data[module.interaction_layer].canvas.remove_child(module)
 	module.queue_free()
 	if replacement_module:
 		for x in replacement_size.x:
@@ -64,32 +84,35 @@ func remove_module(module: ModuleBase) -> bool:
 				add_module(replacement_module, replacement_location + Vector2i(x,y))
 	return true
 
-func remove_module_by_cell(cell: Vector2i) -> void:
-	var module = cell_to_module.get(cell)
+func remove_module_by_cell_active_layer(cell: Vector2i) -> void:
+	remove_module_by_cell(active_layer, cell)
+	
+func remove_module_by_cell(layer: ModuleBase.InteractionLayer, cell: Vector2i) -> void:
+	var module = layer_data[layer].cell_to_module.get(cell)
 	if module != null:
 		remove_module(module)
 		
-func is_blocked(cell: Vector2i, size: Vector2i = Vector2i(1,1)) -> bool:
+func is_blocked(layer: ModuleBase.InteractionLayer, cell: Vector2i, size: Vector2i = Vector2i(1,1)) -> bool:
 	for x in size.x:
 		for y in size.y:
-			var module = cell_to_module.get(cell + Vector2i(x, y))
+			var module = layer_data[layer].cell_to_module.get(cell + Vector2i(x, y))
 			if module != null and module.blocks_building:
 				return true
 	return false
 
-func has_overlaps(cell: Vector2i, size: Vector2i = Vector2i(1,1)) -> bool:
+func has_overlaps(layer: ModuleBase.InteractionLayer, cell: Vector2i, size: Vector2i = Vector2i(1,1)) -> bool:
 	for x in size.x:
 		for y in size.y:
-			if cell_to_module.has(cell + Vector2i(x, y)):
+			if layer_data[layer].cell_to_module.has(cell + Vector2i(x, y)):
 				return true
 	return false
 
-func get_overlaps(cell: Vector2i, size: Vector2i = Vector2i(1,1), max_values: int = 0) -> Array[ModuleBase]:
+func get_overlaps(layer: ModuleBase.InteractionLayer, cell: Vector2i, size: Vector2i = Vector2i(1,1), max_values: int = 0) -> Array[ModuleBase]:
 	# TODO: Typed dictionaries are in Godot 4.4! Maybe someday we'll get sets too!
 	var overlaps: Array[ModuleBase] = []
 	for x in size.x:
 		for y in size.y:
-			var overlap_module = cell_to_module.get(cell + Vector2i(x, y))
+			var overlap_module = layer_data[layer].cell_to_module.get(cell + Vector2i(x, y))
 			if overlap_module != null && !overlaps.has(overlap_module):
 				overlaps.append(overlap_module)
 				if max_values > 0:
@@ -100,3 +123,16 @@ func get_overlaps(cell: Vector2i, size: Vector2i = Vector2i(1,1), max_values: in
 func get_module_by_id(id: int) -> ModuleBase:
 	return id_to_module.get(id)
 	
+func show_module_layer(layer: ModuleBase.InteractionLayer) -> void:
+	for module_layer in module_layers:
+		if module_layer == layer:
+			module_layers[module_layer].visible = true
+		else:
+			module_layers[module_layer].visible = false
+
+func set_module_layer_visibility(layer: ModuleBase.InteractionLayer, visibility: bool) -> void:
+	module_layers[layer].visible = visibility
+	if(visibility):
+		active_layer = layer
+	else:
+		active_layer = ModuleBase.InteractionLayer.MODULE

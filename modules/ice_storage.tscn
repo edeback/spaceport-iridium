@@ -17,8 +17,6 @@ size = Vector2(62, 62)
 
 [node name="Module" instance=ExtResource("1_f6a3l")]
 replacement_on_delete = ExtResource("2_lm4np")
-doors = Array[Vector2i]([])
-hallways = Array[Vector2i]([])
 
 [node name="Sprite" parent="Offset" index="0"]
 material = SubResource("ShaderMaterial_lm4np")

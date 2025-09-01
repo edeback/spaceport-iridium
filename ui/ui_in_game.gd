@@ -51,13 +51,13 @@ func update_module_placement() -> void:
 		else:
 			select_module(hovered_cell)
 	if Input.is_action_just_pressed("remove"):
-		Global.world_manager.remove_module_by_cell(hovered_cell)
+		Global.world_manager.remove_module_by_cell_active_layer(hovered_cell)
 
 func update_structure_placement() -> void:
 	pass
 
 func select_module(cell: Vector2i) -> void:
-	var selected_module = Global.world_manager.cell_to_module.get(cell)
+	var selected_module = Global.world_manager.get_module_by_cell_active_layer(cell)
 	if selected_module != null:
 		selected_module.selected = !selected_module.selected
 

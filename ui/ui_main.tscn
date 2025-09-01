@@ -87,3 +87,11 @@ offset_right = 208.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_xdhp5")
+
+[node name="CheckButton" type="CheckButton" parent="Resources"]
+layout_mode = 0
+offset_right = 44.0
+offset_bottom = 24.0
+text = "Show Transport Layer"
+
+[connection signal="toggled" from="Resources/CheckButton" to="." method="_on_check_button_toggled"]

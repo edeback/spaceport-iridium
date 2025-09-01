@@ -31,3 +31,8 @@ func create_module_buttons() -> void:
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	pass
+
+
+func _on_check_button_toggled(toggled_on: bool) -> void:
+	#Global.world_manager.show_module_layer(ModuleBase.InteractionLayer.TRANSPORT if toggled_on else ModuleBase.InteractionLayer.MODULE)
+	Global.world_manager.set_module_layer_visibility(ModuleBase.InteractionLayer.TRANSPORT, toggled_on)

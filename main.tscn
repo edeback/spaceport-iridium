@@ -356,13 +356,17 @@ sources/2 = SubResource("TileSetAtlasSource_dg77c")
 
 [node name="Main" type="Node" node_paths=PackedStringArray("structure_tile_map")]
 script = ExtResource("1_lvssd")
-structure_tile_map = NodePath("ModuleLayer/StructureTileMap")
+structure_tile_map = NodePath("ModuleLayers/ModuleLayer/StructureTileMap")
 
 [node name="Managers" type="Node" parent="."]
 
-[node name="WorldManager" type="Node" parent="Managers"]
+[node name="WorldManager" type="Node" parent="Managers" node_paths=PackedStringArray("module_layers")]
 script = ExtResource("6_i5kyc")
 start_module = ExtResource("2_8e6kl")
+module_layers = {
+0: NodePath("../../ModuleLayers/ModuleLayer"),
+1: NodePath("../../ModuleLayers/TransportLayer")
+}
 
 [node name="PathManager" type="Node" parent="Managers"]
 script = ExtResource("3_nkgie")
@@ -374,20 +378,37 @@ script = ExtResource("4_deici")
 position = Vector2(961, 542)
 script = ExtResource("3_055fr")
 
-[node name="ModuleLayer" type="CanvasLayer" parent="."]
+[node name="ModuleLayers" type="Node" parent="."]
+
+[node name="ModuleLayer" type="CanvasLayer" parent="ModuleLayers"]
+layer = 0
 follow_viewport_enabled = true
 
-[node name="CanvasModulate" type="CanvasModulate" parent="ModuleLayer"]
+[node name="CanvasModulate" type="CanvasModulate" parent="ModuleLayers/ModuleLayer"]
 color = Color(0.552941, 0.552941, 0.552941, 1)
 
-[node name="UiInGame" parent="ModuleLayer" instance=ExtResource("9_ipixf")]
-
-[node name="PawnBase" parent="ModuleLayer" instance=ExtResource("10_emvbo")]
-position = Vector2(407, 250)
-
-[node name="StructureTileMap" type="TileMapLayer" parent="ModuleLayer"]
+[node name="StructureTileMap" type="TileMapLayer" parent="ModuleLayers/ModuleLayer"]
 z_index = -1
 tile_set = SubResource("TileSet_4c57u")
+
+[node name="TransportLayer" type="CanvasLayer" parent="ModuleLayers"]
+follow_viewport_enabled = true
+
+[node name="CanvasModulate" type="CanvasModulate" parent="ModuleLayers/TransportLayer"]
+color = Color(0.552941, 0.552941, 0.552941, 1)
+
+[node name="PawnLayer" type="CanvasLayer" parent="ModuleLayers"]
+layer = 2
+follow_viewport_enabled = true
+
+[node name="PawnBase" parent="ModuleLayers/PawnLayer" instance=ExtResource("10_emvbo")]
+position = Vector2(407, 250)
+
+[node name="UiInGameLayer" type="CanvasLayer" parent="ModuleLayers"]
+layer = 10
+follow_viewport_enabled = true
+
+[node name="UiInGame" parent="ModuleLayers/UiInGameLayer" instance=ExtResource("9_ipixf")]
 
 [node name="HUD" type="CanvasLayer" parent="."]
 layer = 10

@@ -2,6 +2,8 @@
 class_name ModuleBase
 extends Node2D
 
+enum InteractionLayer { MODULE, TRANSPORT }
+
 @export var sprite: Sprite2D
 @onready var footprint: Area2D = $Offset/Footprint
 @onready var nameplate: Label = $Offset/Sprite/Nameplate
@@ -20,6 +22,8 @@ extends Node2D
 
 @export var walking_paths: Array[Path2D]
 @export var door_location: Marker2D
+
+@export var interaction_layer: InteractionLayer = InteractionLayer.MODULE
 
 var module_id: int = -1
 var module_cell: Vector2i
@@ -105,7 +109,7 @@ func _update_shader() -> void:
 		
 func update_placeable() -> void:
 	# Footprint must not overlap
-	if Global.world_manager.has_overlaps(module_cell, size):
+	if Global.world_manager.has_overlaps(interaction_layer, module_cell, size):
 		can_place = false
 		return
 	# Must be connected to at least one other module
@@ -114,14 +118,14 @@ func update_placeable() -> void:
 
 func _has_possible_connections() -> bool:
 	for point in connection_points:
-		if Global.world_manager.has_overlaps(module_cell + point):
+		if Global.world_manager.has_overlaps(interaction_layer, module_cell + point):
 			return true
 	return false
 
 func _find_connections() -> Array[ModuleBase]:
 	var connected_modules:Array[ModuleBase] = []
 	for point in connection_points:
-		for module in Global.world_manager.get_overlaps(module_cell + point):
+		for module in Global.world_manager.get_overlaps(interaction_layer, module_cell + point):
 			if module != self:
 				connected_modules.append(module)
 	return connected_modules

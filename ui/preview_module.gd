@@ -8,6 +8,7 @@ const SHADER_PARAM_PLACEABLE = "PLACEABLE"
 
 var module_size: Vector2i
 var connection_points: Array[Vector2i]
+var module_layer: ModuleBase.InteractionLayer
 
 
 var module_data: ModuleData:
@@ -21,6 +22,7 @@ var module_data: ModuleData:
 			var temp_module = module_data.scene.instantiate()
 			module_size = temp_module.size
 			connection_points = temp_module.connection_points
+			module_layer = temp_module.interaction_layer
 			sprite.texture = temp_module.sprite.texture
 			sprite.offset = temp_module.sprite.offset
 			sprite.region_enabled = temp_module.sprite.region_enabled
@@ -43,16 +45,24 @@ func _update_shader() -> void:
 
 
 func update_placeable(module_cell: Vector2i) -> void:
+	# Must be in right layer
+	if Global.world_manager.active_layer != module_layer:
+		can_place = false
+		return
 	# Footprint must not overlap
-	if Global.world_manager.is_blocked(module_cell, module_size):
+	if Global.world_manager.is_blocked(module_layer, module_cell, module_size):
 		can_place = false
 		return
 	# Must be connected to at least one other module
 	can_place = _has_possible_connections(module_cell)
 
 func _has_possible_connections(module_cell: Vector2i) -> bool:
+	# For transport, check that we're over a regular module
+	if module_layer == ModuleBase.InteractionLayer.TRANSPORT:
+		return Global.world_manager.has_overlaps(ModuleBase.InteractionLayer.MODULE, module_cell)
+		
 	for point in connection_points:
-		if Global.world_manager.has_overlaps(module_cell + point):
+		if Global.world_manager.has_overlaps(module_layer, module_cell + point):
 			return true
 	return false
 

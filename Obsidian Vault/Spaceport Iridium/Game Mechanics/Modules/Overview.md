@@ -1,6 +1,6 @@
 
 
-Support Structure (Substructure?)
+Support Structure (Substructure?) - Truss
 - Required(?)) foundation for other modules
 - Empty support is very low cost to maintain
 - SS is removed when a module is built over it
@@ -8,9 +8,15 @@ Support Structure (Substructure?)
 
 Movement:
 
+Bulkhead
+- Impassible
+- Some sections of modules have this instead of hallways(?)
+	- Like mostly-exterior modules (solar panel) or parts of multi-block modules(?)
+
 Hallway
 - Empty but habitable space that people can walk through
 - Low cost to maintain
+- All modules have embedded hallway in/on them
 
 Promenade
 - Double-level hallway, effectively
