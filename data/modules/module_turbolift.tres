@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ModuleData" load_steps=4 format=3 uid="uid://bcplqx4pradfr"]
+
+[ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="1_temny"]
+[ext_resource type="PackedScene" uid="uid://cdg7n780yglrf" path="res://modules/transport/module_turbolift.tscn" id="2_temny"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_tptkj"]
+
+[resource]
+script = ExtResource("3_tptkj")
+name = "Turbolift"
+scene = ExtResource("2_temny")
+icon = ExtResource("1_temny")

@@ -1,0 +1,29 @@
+[gd_scene load_steps=7 format=3 uid="uid://cdg7n780yglrf"]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_6ys41"]
+[ext_resource type="Script" uid="uid://cisi2gmfvwhy2" path="res://modules/transport/module_turbolift.gd" id="2_6ys41"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_hevvg"]
+[ext_resource type="Texture2D" uid="uid://bxitki6fh050n" path="res://assets/external/2D Sci-Fi Platform Builder/2-PNG Files/Environment/ElevatorClosed.png" id="4_vm5pc"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_80vqc"]
+shader = ExtResource("3_hevvg")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gd6ts"]
+resource_local_to_scene = true
+size = Vector2(62, 62)
+
+[node name="Module" instance=ExtResource("1_6ys41")]
+script = ExtResource("2_6ys41")
+interaction_layer = 1
+
+[node name="Sprite" parent="Offset" index="0"]
+material = SubResource("ShaderMaterial_80vqc")
+scale = Vector2(0.125, 0.125)
+texture = ExtResource("4_vm5pc")
+region_enabled = false
+
+[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
+shape = SubResource("RectangleShape2D_gd6ts")

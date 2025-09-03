@@ -18,6 +18,7 @@ var module_data: ModuleData:
 		module_data = new_value
 		if module_data == null:
 			sprite.texture = default_texture
+			sprite.visible = false
 		else:
 			var temp_module = module_data.scene.instantiate()
 			module_size = temp_module.size
@@ -27,7 +28,9 @@ var module_data: ModuleData:
 			sprite.offset = temp_module.sprite.offset
 			sprite.region_enabled = temp_module.sprite.region_enabled
 			sprite.region_rect = temp_module.sprite.region_rect
+			sprite.transform = temp_module.sprite.transform
 			sprite.centered = false
+			sprite.visible = true
 			temp_module.queue_free()
 		
 

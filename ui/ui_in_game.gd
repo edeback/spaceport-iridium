@@ -10,7 +10,7 @@ var debug_path: PackedVector2Array:
 		debug_path = new_path
 		queue_redraw()
 		
-enum InputMode {None, Module, Structure}
+enum InputMode {None, Module, Structure, Turbolift}
 
 var cur_input_mode: InputMode = InputMode.None
 var cur_module: ModuleData = null
@@ -30,11 +30,13 @@ func change_input_mode(mode: InputMode, module: ModuleData = null) -> void:
 func _process(delta: float) -> void:
 	match cur_input_mode:
 		InputMode.None:
-			pass
+			update_module_placement()
 		InputMode.Module:
 			update_module_placement()
 		InputMode.Structure:
 			update_structure_placement()
+		InputMode.Turbolift:
+			Global.turbolift_manager.update_turboshaft_placement(get_global_mouse_position())
 
 func update_module_placement() -> void:
 	var hovered_cell = Global.world_to_cell(get_global_mouse_position())
@@ -56,10 +58,12 @@ func update_module_placement() -> void:
 func update_structure_placement() -> void:
 	pass
 
+
+
 func select_module(cell: Vector2i) -> void:
 	var selected_module = Global.world_manager.get_module_by_cell_active_layer(cell)
 	if selected_module != null:
-		selected_module.selected = !selected_module.selected
+		selected_module.on_select(!selected_module.selected)
 
 func _draw() -> void:	 		
 	var last_point = null

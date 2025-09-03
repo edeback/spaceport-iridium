@@ -90,6 +90,9 @@ func on_place() -> void:
 func pre_delete() -> void:
 	pass
 
+func on_select(new_selected: bool) -> void:
+	self.selected = new_selected
+	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 #func _process(delta: float) -> void:
 	#if previewing:
@@ -159,6 +162,8 @@ func get_paths() -> void:
 			path.curve.get_point_position(point_count - 1)
 	pass
 	
+func get_global_center() -> Vector2:
+	return global_position + Vector2(Global.CELL_SIZE * size) / 2
 	
 func _draw() -> void:
 	if show_debug && Engine.is_editor_hint():
