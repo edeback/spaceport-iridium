@@ -9,3 +9,6 @@ Or actually each tile should have solid/sparse for each side!
 Modules could show an "exterior" cover when not hovered, and then show the "interior" (plus people?) when hovered
 
 Deferred emit for SignalBus?
+
+
+Big asteroid you can build around?
