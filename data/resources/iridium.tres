@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ResourceData" load_steps=3 format=3 uid="uid://b27jc67v174pi"]
+
+[ext_resource type="Texture2D" uid="uid://dndbetb7emkl1" path="res://ui/icons/iridium.svg" id="1_2f26a"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_8ktpq"]
+
+[resource]
+script = ExtResource("2_8ktpq")
+name = "Iridium"
+icon = ExtResource("1_2f26a")

@@ -66,6 +66,8 @@ func add_module(module_data: ModuleData, cell: Vector2i) -> void:
 	new_module.make_connections()
 
 func remove_module(module: ModuleBase) -> bool:
+	if module.can_delete == false:
+		return false
 	var replacement_module = module.replacement_on_delete
 	var replacement_location = module.module_cell
 	var replacement_size = module.size

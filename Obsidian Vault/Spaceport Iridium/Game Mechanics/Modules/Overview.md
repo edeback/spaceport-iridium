@@ -44,16 +44,6 @@ Shuttle Docking Bay
 Docking Ring/Pylon
 - Allows larger ships to dock/undock
 
-Energy:
-
-Solar panel
-- Requires no fuel
-- Output dependent on sunlight incidence
-- Station starts with two
-
-Fusion reactor
-- Requires hydrogen fuel
-
 Mining/Processing:
 
 Storeroom
@@ -67,6 +57,10 @@ Promenade
 
 Holodeck
 
+Residences:
+- Self-contained with showers and toilets (probably?)
+
+Food:
 
 Combat:
 
@@ -74,3 +68,7 @@ Ablative Armor
 
 
 Shields
+
+
+Other notes:
+Modules can be improved (tech tree style?)

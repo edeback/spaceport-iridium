@@ -1,7 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://ce6npnqw8s3mu"]
+[gd_scene load_steps=6 format=3 uid="uid://ce6npnqw8s3mu"]
 
 [ext_resource type="Script" uid="uid://de484prd4xlyv" path="res://ui/ui_main.gd" id="1_2bqpn"]
-[ext_resource type="PackedScene" uid="uid://bi50k1hocy0ud" path="res://ui/buttons/module_button.tscn" id="2_gmr23"]
+[ext_resource type="PackedScene" uid="uid://c7x5q4maw36vx" path="res://ui/buttons/module_button_group.tscn" id="3_ka3re"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u8vfh"]
 bg_color = Color(0.0367339, 0.13205, 0.257585, 1)
@@ -16,6 +16,8 @@ corner_radius_bottom_right = 16
 corner_radius_bottom_left = 16
 shadow_size = 6
 shadow_offset = Vector2(-3, -3)
+
+[sub_resource type="FoldableGroup" id="FoldableGroup_ka3re"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xdhp5"]
 bg_color = Color(0.0782779, 0.271425, 7.21961e-08, 1)
@@ -39,7 +41,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_2bqpn")
-module_button = ExtResource("2_gmr23")
+button_group = ExtResource("3_ka3re")
 button_container = NodePath("Modules/MarginContainer/ButtonContainer")
 
 [node name="Modules" type="Panel" parent="."]
@@ -68,11 +70,9 @@ theme_override_constants/margin_bottom = 8
 [node name="ButtonContainer" type="VBoxContainer" parent="Modules/MarginContainer"]
 layout_mode = 2
 
-[node name="ModuleButton" parent="Modules/MarginContainer/ButtonContainer" instance=ExtResource("2_gmr23")]
+[node name="FoldableContainer" parent="Modules/MarginContainer/ButtonContainer" instance=ExtResource("3_ka3re")]
 layout_mode = 2
-
-[node name="ModuleButton2" parent="Modules/MarginContainer/ButtonContainer" instance=ExtResource("2_gmr23")]
-layout_mode = 2
+foldable_group = SubResource("FoldableGroup_ka3re")
 
 [node name="Resources" type="Panel" parent="."]
 layout_mode = 1

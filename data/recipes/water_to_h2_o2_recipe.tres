@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=6 format=3 uid="uid://brc6i1biu0lme"]
+
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_nkldc"]
+[ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="2_0oe1p"]
+[ext_resource type="Resource" uid="uid://tf727fx7vlah" path="res://data/resources/oxygen.tres" id="3_0oe1p"]
+[ext_resource type="Script" uid="uid://by2n6rwcttgyx" path="res://data/recipes/recipe_data.gd" id="3_s37rr"]
+[ext_resource type="Resource" uid="uid://1an3ftgpeh6u" path="res://data/resources/hydrogen.tres" id="4_s37rr"]
+
+[resource]
+script = ExtResource("3_s37rr")
+name = "Electrolyze Water"
+inputs = Dictionary[ExtResource("1_nkldc"), float]({
+ExtResource("2_0oe1p"): 1.0
+})
+outputs = Dictionary[ExtResource("1_nkldc"), float]({
+ExtResource("3_0oe1p"): 0.5,
+ExtResource("4_s37rr"): 1.0
+})

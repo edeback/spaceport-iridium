@@ -9,3 +9,4 @@ script = ExtResource("3_wba7j")
 name = "Teleporter"
 scene = ExtResource("2_kwiev")
 icon = ExtResource("1_kwiev")
+tags = Array[String](["Transportation"])

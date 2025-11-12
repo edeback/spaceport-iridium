@@ -1,0 +1,58 @@
+[gd_scene load_steps=15 format=3 uid="uid://ppwwsqiw58st"]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_ktyew"]
+[ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/hallway.tres" id="2_0b3hx"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_p0wkb"]
+[ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_yk73m"]
+[ext_resource type="PackedScene" uid="uid://c63swhm7yiir" path="res://modules/components/processor_component.tscn" id="5_utp5g"]
+[ext_resource type="Resource" uid="uid://brc6i1biu0lme" path="res://data/recipes/water_to_h2_o2_recipe.tres" id="6_p0wkb"]
+[ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="7_53sak"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="8_yk73m"]
+[ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="9_b3bym"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="10_0wkqy"]
+[ext_resource type="Resource" uid="uid://tf727fx7vlah" path="res://data/resources/oxygen.tres" id="10_utp5g"]
+[ext_resource type="Resource" uid="uid://1an3ftgpeh6u" path="res://data/resources/hydrogen.tres" id="11_4tsoe"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_p0wkb"]
+shader = ExtResource("3_p0wkb")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_my7lf"]
+resource_local_to_scene = true
+size = Vector2(62, 62)
+
+[node name="Module" instance=ExtResource("1_ktyew")]
+replacement_on_delete = ExtResource("2_0b3hx")
+
+[node name="Sprite" parent="Offset" index="0"]
+material = SubResource("ShaderMaterial_p0wkb")
+
+[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
+shape = SubResource("RectangleShape2D_my7lf")
+
+[node name="LightingComponent" parent="Offset" index="2" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_yk73m")]
+power_consumption_component = NodePath("../../PowerConsumptionComponent")
+
+[node name="ProcessorComponent" parent="." index="1" node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("5_utp5g")]
+recipe = ExtResource("6_p0wkb")
+input_storage = NodePath("../InputStorage")
+output_storage = NodePath("../OutputStorage")
+time_to_process = 10.0
+power_consumer = NodePath("../PowerConsumptionComponent")
+continuous = true
+
+[node name="InputStorage" parent="." index="2" instance=ExtResource("7_53sak")]
+offset_left = -32.0
+offset_right = -32.0
+stored_resources = Array[ExtResource("8_yk73m")]([ExtResource("9_b3bym")])
+accepts_exports = false
+
+[node name="OutputStorage" parent="." index="3" instance=ExtResource("7_53sak")]
+stored_resources = Array[ExtResource("8_yk73m")]([ExtResource("10_utp5g"), ExtResource("11_4tsoe")])
+max_stored = 15.0
+accepts_imports = false
+
+[node name="PowerConsumptionComponent" parent="." index="4" instance=ExtResource("10_0wkqy")]
+power_consumption = 50.0

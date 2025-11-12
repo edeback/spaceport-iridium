@@ -9,3 +9,4 @@ script = ExtResource("1_svtmq")
 name = "2x1"
 scene = ExtResource("2_2b7qh")
 icon = ExtResource("1_64hwt")
+tags = Array[String](["Test"])

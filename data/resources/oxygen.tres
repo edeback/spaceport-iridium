@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ResourceData" load_steps=3 format=3 uid="uid://tf727fx7vlah"]
+
+[ext_resource type="Texture2D" uid="uid://em32jg7ghdyl" path="res://ui/icons/oxygen.png" id="1_0myac"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_u5mhu"]
+
+[resource]
+script = ExtResource("2_u5mhu")
+name = "Oxygen"
+icon = ExtResource("1_0myac")

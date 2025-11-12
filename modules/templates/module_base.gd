@@ -19,6 +19,7 @@ enum InteractionLayer { MODULE, TRANSPORT }
 		connection_points = new_points
 		queue_redraw()
 @export var blocks_building: bool = true
+@export var can_delete: bool = true
 
 @export var walking_paths: Array[Path2D]
 @export var door_location: Marker2D

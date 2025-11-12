@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ResourceData" load_steps=3 format=3 uid="uid://rjmkhu8it1sc"]
+
+[ext_resource type="Texture2D" uid="uid://cot22vuhy2soq" path="res://ui/icons/industrial_metal.svg" id="1_yc37q"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_vbfod"]
+
+[resource]
+script = ExtResource("2_vbfod")
+name = "Industrial Metals"
+icon = ExtResource("1_yc37q")

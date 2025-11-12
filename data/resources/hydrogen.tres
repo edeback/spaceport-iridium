@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ResourceData" load_steps=3 format=3 uid="uid://1an3ftgpeh6u"]
+
+[ext_resource type="Texture2D" uid="uid://t17ctqb24yld" path="res://ui/icons/hydrogen.png" id="1_r2jc5"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_6xiqs"]
+
+[resource]
+script = ExtResource("2_6xiqs")
+name = "Hydrogen"
+icon = ExtResource("1_r2jc5")

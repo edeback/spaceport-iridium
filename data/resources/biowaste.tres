@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ResourceData" load_steps=3 format=3 uid="uid://8t3hl170s6gi"]
+
+[ext_resource type="Texture2D" uid="uid://cutwf18bumoi5" path="res://ui/icons/biohazard.svg" id="1_7gaxm"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_nqete"]
+
+[resource]
+script = ExtResource("2_nqete")
+name = "Biowaste"
+icon = ExtResource("1_7gaxm")

@@ -12,3 +12,24 @@ Deferred emit for SignalBus?
 
 
 Big asteroid you can build around?
+
+
+
+Excursions/Expeditions?
+- basically ways to send out crews "elsewhere" to acquire resources etc
+
+Foreign relations?
+- Communicate/deal with other stations/planets in your system
+
+Travel?
+- Warp entire station to new system
+
+"Science tree"?
+- Instead of science, most new options will be purchasable (licensing rights)
+- But maybe science lab for other unique options?
+
+Trading
+- Passing traders, or trading stations in-system
+
+Overflowing storage:
+- Vent gasses, dump other items into space?

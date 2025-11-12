@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ResourceData" load_steps=3 format=3 uid="uid://r1wxv54l67wc"]
+
+[ext_resource type="Texture2D" uid="uid://briilrlnsabt7" path="res://ui/icons/biomass.svg" id="1_tf8hw"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_if2j3"]
+
+[resource]
+script = ExtResource("2_if2j3")
+name = "Biomass"
+icon = ExtResource("1_tf8hw")

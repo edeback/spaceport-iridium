@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ResourceData" load_steps=3 format=3 uid="uid://537kofkc4wn1"]
+
+[ext_resource type="Texture2D" uid="uid://ck5fpgwnd5vuw" path="res://ui/icons/carbon.svg" id="1_ak25u"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_r1bmp"]
+
+[resource]
+script = ExtResource("2_r1bmp")
+name = "Carbon"
+icon = ExtResource("1_ak25u")

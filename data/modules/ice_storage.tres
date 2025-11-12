@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ModuleData" load_steps=4 format=3 uid="uid://dllfkgbldfp0l"]
 
 [ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="1_qfvp5"]
-[ext_resource type="PackedScene" uid="uid://b4cetigui76bi" path="res://modules/ice_storage.tscn" id="2_w13qv"]
+[ext_resource type="PackedScene" uid="uid://b4cetigui76bi" path="res://modules/storage/ice_storage.tscn" id="2_w13qv"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_h56pf"]
 
 [resource]
@@ -9,3 +9,4 @@ script = ExtResource("3_h56pf")
 name = "Ice Storage"
 scene = ExtResource("2_w13qv")
 icon = ExtResource("1_qfvp5")
+tags = Array[String](["Storage"])

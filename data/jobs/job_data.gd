@@ -4,7 +4,7 @@ extends Resource
 @export var name: String = ""
 @export var description: String = ""
 @export var resource_data: ResourceData
-@export var amount: int = 1
+@export var amount: float = 1.0
 
 var origin: Vector2i
 var destination: Vector2i
@@ -28,11 +28,11 @@ func process_job() -> void:
 			
 func _job_gather() -> void:
 	var min_distance: int = 0
-	var storage_component: StorageComponent = null
+	var storage_component: MultiStorageComponent = null
 	var storage_nodes = worker.get_tree().get_nodes_in_group("resource_storage")
 	for node in storage_nodes:
-		var storage = node as StorageComponent
-		if storage.accepts_exports and storage.stored_resource == resource_data and storage.can_withdraw(resource_data, amount):
+		var storage = node as MultiStorageComponent
+		if storage.accepts_exports and storage.stored_resources.has(resource_data) and storage.can_withdraw(resource_data, amount):
 			var new_distance = storage_component.owner_module.module_cell.distance_squared_to(worker.cell)
 			if storage_component ==  null or new_distance < min_distance:
 				storage_component = storage

@@ -49,6 +49,7 @@ Create pawns
 - Can hold item(s?)
 	- Maybe a carrying capacity? Would need items to have weight/encumbrance
 - Modules will need max occupancy numbers
+- Could be human or robotic
 
 Hook up walkways for modules
 - Path along the modules used for pawns to walk to/from

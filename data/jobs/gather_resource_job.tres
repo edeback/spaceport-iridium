@@ -9,4 +9,3 @@ script = ExtResource("1_hio5m")
 name = "Gather Ice"
 description = "Gather Ice!"
 resource_data = ExtResource("1_sqwwb")
-amount = 1

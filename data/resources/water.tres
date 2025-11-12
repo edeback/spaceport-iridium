@@ -7,5 +7,3 @@
 script = ExtResource("1_bjfdg")
 name = "Water"
 icon = ExtResource("1_gd1xi")
-show_test = false
-test_val = ""
