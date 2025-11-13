@@ -427,7 +427,7 @@ follow_viewport_enabled = true
 position = Vector2(407, 250)
 
 [node name="UiInGameLayer" type="CanvasLayer" parent="ModuleLayers"]
-layer = 10
+layer = 9
 follow_viewport_enabled = true
 
 [node name="UiInGame" parent="ModuleLayers/UiInGameLayer" instance=ExtResource("9_ipixf")]
@@ -436,5 +436,7 @@ follow_viewport_enabled = true
 layer = 10
 
 [node name="UiDebug" parent="HUD" instance=ExtResource("4_m3cse")]
+mouse_filter = 1
 
 [node name="UiMain" parent="HUD" instance=ExtResource("5_uwp6h")]
+mouse_filter = 1

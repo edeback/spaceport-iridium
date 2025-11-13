@@ -26,6 +26,17 @@ func change_input_mode(mode: InputMode, module: ModuleData = null) -> void:
 	preview_module.module_data = module
 	pass
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var hovered_cell = Global.world_to_cell(get_global_mouse_position())
+		if event.is_action_pressed("build"):
+			if preview_module != null and preview_module.can_place:
+				Global.world_manager.add_module(cur_module, preview_module.last_cell)
+			else:
+				select_module(hovered_cell)
+		if event.is_action_pressed("remove"):
+			Global.world_manager.remove_module_by_cell_active_layer(hovered_cell)
+	pass
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	match cur_input_mode:
@@ -47,13 +58,6 @@ func update_module_placement() -> void:
 		selector.position = snapped_position
 	else:
 		selector.position = get_global_mouse_position()
-	if Input.is_action_just_pressed("build"):
-		if preview_module != null and preview_module.can_place:
-			Global.world_manager.add_module(cur_module, hovered_cell)
-		else:
-			select_module(hovered_cell)
-	if Input.is_action_just_pressed("remove"):
-		Global.world_manager.remove_module_by_cell_active_layer(hovered_cell)
 
 func update_structure_placement() -> void:
 	pass

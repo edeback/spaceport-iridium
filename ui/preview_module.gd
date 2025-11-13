@@ -9,7 +9,7 @@ const SHADER_PARAM_PLACEABLE = "PLACEABLE"
 var module_size: Vector2i
 var connection_points: Array[Vector2i]
 var module_layer: ModuleBase.InteractionLayer
-
+var last_cell: Vector2i
 
 var module_data: ModuleData:
 	get:
@@ -58,6 +58,7 @@ func update_placeable(module_cell: Vector2i) -> void:
 		return
 	# Must be connected to at least one other module
 	can_place = _has_possible_connections(module_cell)
+	last_cell = module_cell
 
 func _has_possible_connections(module_cell: Vector2i) -> bool:
 	# For transport, check that we're over a regular module

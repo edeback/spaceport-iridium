@@ -27,7 +27,7 @@ shape = SubResource("RectangleShape2D_5nv3c")
 
 [node name="PowerGenerationComponent" parent="." index="5" node_paths=PackedStringArray("input_storage") instance=ExtResource("4_yku0m")]
 power_output = 2000.0
-resource_consumption_per_second = 0.001
+resource_consumption_per_second = 0.1
 resource_consumed = ExtResource("5_mg4bu")
 input_storage = NodePath("../StorageComponent")
 

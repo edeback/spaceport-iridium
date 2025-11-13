@@ -17,7 +17,7 @@ corner_radius_bottom_left = 16
 shadow_size = 6
 shadow_offset = Vector2(-3, -3)
 
-[sub_resource type="FoldableGroup" id="FoldableGroup_ka3re"]
+[sub_resource type="FoldableGroup" id="FoldableGroup_y2dby"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xdhp5"]
 bg_color = Color(0.0782779, 0.271425, 7.21961e-08, 1)
@@ -72,7 +72,7 @@ layout_mode = 2
 
 [node name="FoldableContainer" parent="Modules/MarginContainer/ButtonContainer" instance=ExtResource("3_ka3re")]
 layout_mode = 2
-foldable_group = SubResource("FoldableGroup_ka3re")
+foldable_group = SubResource("FoldableGroup_y2dby")
 
 [node name="Resources" type="Panel" parent="."]
 layout_mode = 1
