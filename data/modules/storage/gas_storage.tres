@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ModuleData" load_steps=4 format=3 uid="uid://ibkvk5lxr6ut"]
+
+[ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="1_rwlpt"]
+[ext_resource type="PackedScene" uid="uid://c23tc0cwsa53e" path="res://modules/storage/gas_storage.tscn" id="2_rwlpt"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_hmp15"]
+
+[resource]
+script = ExtResource("3_hmp15")
+name = "Gas Storage"
+scene = ExtResource("2_rwlpt")
+icon = ExtResource("1_rwlpt")
+tags = Array[String](["Storage"])

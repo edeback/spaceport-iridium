@@ -50,6 +50,7 @@ stored_resources = Array[ExtResource("8_yk73m")]([ExtResource("9_b3bym")])
 accepts_exports = false
 
 [node name="OutputStorage" parent="." index="3" instance=ExtResource("7_53sak")]
+priority = -1
 stored_resources = Array[ExtResource("8_yk73m")]([ExtResource("10_utp5g"), ExtResource("11_4tsoe")])
 max_stored = 15.0
 accepts_imports = false

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ModuleData" load_steps=4 format=3 uid="uid://b0cfkopyrq5xk"]
+
+[ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="1_gevnb"]
+[ext_resource type="PackedScene" uid="uid://ppwwsqiw58st" path="res://modules/industrial_processors/electrolysis_processor.tscn" id="2_b70be"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_gy8o1"]
+
+[resource]
+script = ExtResource("3_gy8o1")
+name = "Electrolyzer"
+scene = ExtResource("2_b70be")
+icon = ExtResource("1_gevnb")
+tags = Array[String](["Processor"])

@@ -1,6 +1,7 @@
 class_name JobManager
 extends Node
 
+# Sorted low to high prio, as high prio is often removed first
 var job_board: Array[JobData] = []
 
 # Called when the node enters the scene tree for the first time.
@@ -11,10 +12,20 @@ func _ready() -> void:
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
+	# Temp insta-run jobs
+	var current_jobs: Array[JobData] = []
+	for job: JobData in job_board:
+		job.process_job()
+		if !job.is_finished():
+			current_jobs.append(job)
+	job_board = current_jobs
 	pass
 
 func add_job(module: ModuleBase, job_data: JobData) -> void:
-	job_board.insert(job_board.bsearch_custom(job_data.priority, sort_priority_decending), job_data)
+	if job_board.is_empty():
+		job_board.append(job_data)
+	else:
+		job_board.insert(job_board.bsearch_custom(job_data.priority, sort_priority_ascending), job_data)
 	pass
 	
 func remove_job(job_data: JobData) -> void:
@@ -23,8 +34,14 @@ func remove_job(job_data: JobData) -> void:
 
 func find_job() -> JobData:
 	if job_board.size() > 0:
-		return job_board.front()
+		return job_board.back()
 	return null
+	
+func get_job() -> JobData:
+	return job_board.pop_back()
 
 func sort_priority_decending(a: JobData, b: JobData) -> bool:
 	return a.priority > b.priority
+
+func sort_priority_ascending(a: JobData, b: JobData) -> bool:
+	return a.priority < b.priority

@@ -7,7 +7,7 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="5_420y5"]
 [ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/generic_ore.tres" id="6_npkfk"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_facir"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_420y5"]
 shader = ExtResource("3_npkfk")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -21,10 +21,11 @@ size = Vector2(62, 62)
 replacement_on_delete = ExtResource("2_420y5")
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_facir")
+material = SubResource("ShaderMaterial_420y5")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_poxt5")
 
 [node name="StorageComponent" parent="." index="1" instance=ExtResource("4_facir")]
+priority = 0
 stored_resources = Array[ExtResource("5_420y5")]([ExtResource("6_npkfk")])
