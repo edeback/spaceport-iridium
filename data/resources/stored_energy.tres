@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ResourceData" load_steps=3 format=3 uid="uid://bu87eumdgtjdd"]
+
+[ext_resource type="Texture2D" uid="uid://btru6csvic30g" path="res://assets/external/2D Sci-Fi Platform Builder/2-PNG Files/Props/SmallCrateEnergy1.png" id="1_l8ou6"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_rm4fy"]
+
+[resource]
+script = ExtResource("2_rm4fy")
+name = "Stored Energy"
+icon = ExtResource("1_l8ou6")

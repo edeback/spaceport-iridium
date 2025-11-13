@@ -123,12 +123,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/Game Mechanics/Modules/Overview.md",
+                "file": "Spaceport Iridium/Power System.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Overview"
+              "title": "Power System"
             }
           }
         ],
@@ -277,8 +277,10 @@
   },
   "active": "d0be06ee95876c99",
   "lastOpenFiles": [
-    "Spaceport Iridium/Game Mechanics/Modules/Energy.md",
+    "Spaceport Iridium/Notes from SimTower.md",
+    "Spaceport Iridium/Notes from Project Highrise.md",
     "Spaceport Iridium/Game Mechanics/Modules/Overview.md",
+    "Spaceport Iridium/Game Mechanics/Modules/Energy.md",
     "Spaceport Iridium/Random Notes.md",
     "Spaceport Iridium/Power System.md",
     "Spaceport Iridium/Game Mechanics/Resources/Overview.md",
@@ -287,10 +289,8 @@
     "Paper Spacestation/Idea.md",
     "Spaceport Iridium/Roadmap.md",
     "Paper Spacestation/BoardLayout.png",
-    "Spaceport Iridium/Notes from SimTower.md",
     "Paper Spacestation/BoardLayout.png.import",
     "Paper Spacestation",
-    "Spaceport Iridium/Notes from Project Highrise.md",
     "Spaceport Iridium/Game Mechanics/Story",
     "Spaceport Iridium/Game Mechanics/Modules",
     "Spaceport Iridium/Game Mechanics",

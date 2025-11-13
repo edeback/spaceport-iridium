@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://dta4qtsotnc4q"]
+
+[ext_resource type="Script" uid="uid://0mmvbiyyfygw" path="res://modules/components/battery_component.gd" id="1_q0ki3"]
+[ext_resource type="Resource" uid="uid://bu87eumdgtjdd" path="res://data/resources/stored_energy.tres" id="2_a2ogm"]
+
+[node name="BatteryComponent" type="Node"]
+script = ExtResource("1_q0ki3")
+power_resource = ExtResource("2_a2ogm")

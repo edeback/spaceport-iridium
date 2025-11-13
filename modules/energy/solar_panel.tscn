@@ -17,7 +17,6 @@ size = Vector2(62, 62)
 
 [node name="Module" instance=ExtResource("1_ldvtf")]
 replacement_on_delete = ExtResource("2_w7u4q")
-can_delete = null
 
 [node name="Sprite" parent="Offset" index="0"]
 material = SubResource("ShaderMaterial_05gba")

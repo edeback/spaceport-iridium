@@ -16,6 +16,9 @@ func _ready() -> void:
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	pass
+	
+func desired_power(delta: float) -> float:
+	return delta * power_consumption
 
 func consume_power(delta: float, input_power: float) -> float:
 	var consumption = delta * power_consumption
