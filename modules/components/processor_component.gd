@@ -13,6 +13,8 @@ var current_process_time: float = 0
 
 var last_error: String = ""
 
+signal processor_progress_changed(new_progress: float)
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	assert(recipe != null, "Processor must have recipe!")
@@ -21,6 +23,7 @@ func _ready() -> void:
 	assert(power_consumer != null, "Processor must have power_consumer!")
 	assert(time_to_process > 0, "Processor time_to_process must be > 0!")
 	add_to_group("processor")
+	super()
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -72,6 +75,7 @@ func _continuous_processing(delta: float) -> void:
 func _stepwise_processing(delta: float) -> void:
 	if processing:
 		current_process_time += delta
+		processor_progress_changed.emit(current_process_time / time_to_process)
 		if current_process_time >= time_to_process:
 			var can_output: bool = true
 			for ingredient in recipe.outputs:
@@ -87,11 +91,21 @@ func _stepwise_processing(delta: float) -> void:
 					doublecheck = doublecheck and output_storage.deposit(ingredient, amount)
 				print("Processor completed with recipe " + recipe.name)
 				assert(doublecheck, "Somehow couldn't output items when there was room!")
+				processor_progress_changed.emit(0)
 				processing = false
 				current_process_time = 0
 	else:
 		if _satisfies_recipe():
 			_withdraw_inputs()
 			print("Processor starting with recipe " + recipe.name)
+			processor_progress_changed.emit(0)
 			processing = true
 			current_process_time = 0
+
+func has_ui() -> bool:
+	return true
+	
+func get_ui() -> ModuleComponentUI:
+	var ui: ProcessorComponentUI = ui_info_panel_element.instantiate() as ProcessorComponentUI
+	ui.set_processor_component(self)
+	return ui

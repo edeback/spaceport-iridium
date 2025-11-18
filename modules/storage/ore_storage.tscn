@@ -18,6 +18,7 @@ resource_local_to_scene = true
 size = Vector2(62, 62)
 
 [node name="Module" instance=ExtResource("1_pjalf")]
+in_game_name = "Ore Storage"
 replacement_on_delete = ExtResource("2_420y5")
 
 [node name="Sprite" parent="Offset" index="0"]
@@ -26,6 +27,6 @@ material = SubResource("ShaderMaterial_420y5")
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_poxt5")
 
-[node name="StorageComponent" parent="." index="1" instance=ExtResource("4_facir")]
+[node name="Ore Storage" parent="." index="1" instance=ExtResource("4_facir")]
 priority = 0
 stored_resources = Array[ExtResource("5_420y5")]([ExtResource("6_npkfk")])

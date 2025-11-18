@@ -1,0 +1,50 @@
+[gd_scene load_steps=3 format=3 uid="uid://bfsvbpnemihue"]
+
+[ext_resource type="Script" uid="uid://bqpuv7wysl1nf" path="res://ui/windows/ui_storage_component.gd" id="1_6j2gs"]
+[ext_resource type="PackedScene" uid="uid://dprv5w0bvxvvb" path="res://ui/windows/storage_resource_line.tscn" id="2_4o4nm"]
+
+[node name="Storage" type="PanelContainer" node_paths=PackedStringArray("resource_container")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -1851.0
+offset_bottom = -1028.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_6j2gs")
+resource_container = NodePath("MarginContainer/VSplitContainer/MarginContainer/ResourceContainer")
+resource_line = ExtResource("2_4o4nm")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
+
+[node name="VSplitContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VSplitContainer"]
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 8
+text = "Storage"
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VSplitContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
+
+[node name="ResourceContainer" type="VBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/ResourceContainer" instance=ExtResource("2_4o4nm")]
+layout_mode = 2
+
+[node name="HBoxContainer2" parent="MarginContainer/VSplitContainer/MarginContainer/ResourceContainer" instance=ExtResource("2_4o4nm")]
+layout_mode = 2

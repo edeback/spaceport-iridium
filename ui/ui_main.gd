@@ -12,6 +12,7 @@ const MODULE_PATH: String = "res://data/modules/"
 func _ready() -> void:
 	load_moduledatas()
 	create_module_button_groups()
+	Global.world_manager.set_module_layer_visibility(ModuleBase.InteractionLayer.TRANSPORT, false)
 
 func get_all_file_paths(path: String) -> Array[String]:
 	var file_paths: Array[String] = []

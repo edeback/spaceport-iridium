@@ -22,6 +22,8 @@ var import_jobs: Array[JobData] = []
 
 const SMALL_FLOAT: float = 0.000001
 
+signal storage_changed(resource: ResourceData, new_value: float)
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	add_to_group("resource_storage")
@@ -78,7 +80,9 @@ func can_withdraw(resource: ResourceData, quantity: float = 1.0, use_reserve: bo
 	
 func withdraw(resource: ResourceData, quantity: float = 1.0, use_reserve: bool = false) -> bool:
 	if can_withdraw(resource, quantity, use_reserve):
-		cur_stored[resource] = max(cur_stored[resource] - quantity, 0)
+		var new_value: float = max(cur_stored[resource] - quantity, 0)
+		cur_stored[resource] = new_value
+		emit_signal("storage_changed", resource, new_value)
 		return true
 	return false
 	
@@ -104,10 +108,12 @@ func can_deposit(resource: ResourceData, quantity: float = 1.0, use_reserve: boo
 
 func deposit(resource: ResourceData, quantity: float = 1.0, only_if_room: bool = false, use_reserve: bool = false) -> bool:
 	if stored_resources.has(resource):
-		var space_available: float = space_available(use_reserve)
-		if only_if_room and (space_available < quantity):
-			return false
-		cur_stored[resource] = cur_stored.get_or_add(resource, 0) + clampf(quantity, 0, space_available)
+		var free_space: float = space_available(use_reserve)
+		if only_if_room and (free_space < quantity):
+			return false 
+		var new_value: float = cur_stored.get_or_add(resource, 0) + clampf(quantity, 0, free_space)
+		cur_stored[resource] = new_value
+		emit_signal("storage_changed", resource, new_value)
 		return true
 	return false
 	
@@ -119,7 +125,13 @@ func deposit_job(job: JobData) -> bool:
 			return true
 	return false
 	
+func has_ui() -> bool:
+	return true
 	
+func get_ui() -> ModuleComponentUI:
+	var panel_element: UIStorageComponent = ui_info_panel_element.instantiate() as UIStorageComponent
+	panel_element.set_storage_component(self)
+	return panel_element
 			
 #func reserve_stock_for_export(resource: ResourceData, quantity: float = 1.0) -> bool:
 #	stock_reserved[resource] = stock_reserved.get_or_add(resource, 0) + quantity

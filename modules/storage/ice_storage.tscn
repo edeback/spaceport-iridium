@@ -18,6 +18,7 @@ resource_local_to_scene = true
 size = Vector2(62, 62)
 
 [node name="Module" instance=ExtResource("1_1e2os")]
+in_game_name = "Ice Storage"
 replacement_on_delete = ExtResource("2_y0gyy")
 
 [node name="Sprite" parent="Offset" index="0"]
@@ -26,7 +27,7 @@ material = SubResource("ShaderMaterial_y0gyy")
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_poxt5")
 
-[node name="StorageComponent" parent="." index="1" instance=ExtResource("4_m1s5m")]
+[node name="Ice Storage" parent="." index="1" instance=ExtResource("4_m1s5m")]
 priority = 0
 stored_resources = Array[ExtResource("5_y0gyy")]([ExtResource("5_gfhpw")])
 cur_stored = Dictionary[ExtResource("5_y0gyy"), float]({

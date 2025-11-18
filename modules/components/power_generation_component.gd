@@ -28,3 +28,12 @@ func generate_power(delta: float) -> float:
 	else:
 		return power_output * delta
 	return 0
+
+func has_ui() -> bool:
+	return true
+	
+func get_ui() -> ModuleComponentUI:
+	var ui: PowerGenerationComponentUI = ui_info_panel_element.instantiate() as PowerGenerationComponentUI
+	ui.set_power_generation_component(self)
+	return ui
+	

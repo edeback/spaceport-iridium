@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://dv4tc336q1520"]
+
+[ext_resource type="Texture2D" uid="uid://2m4yx21vn1ps" path="res://assets/external/craftpix_space_shooter/You_Win/Window.png" id="1_4toqr"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_178t2"]
+texture = ExtResource("1_4toqr")
+
+[node name="PopupPanel" type="PopupPanel"]
+oversampling_override = 1.0
+visible = true
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 96.0
+offset_bottom = 96.0
+theme_override_styles/panel = SubResource("StyleBoxTexture_178t2")

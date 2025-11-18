@@ -37,3 +37,11 @@ func set_power(power: bool) -> void:
 		if power:
 			powered = true
 			animation_player.play("RESET")
+
+func has_ui() -> bool:
+	return true
+	
+func get_ui() -> ModuleComponentUI:
+	var ui: PowerConsumptionComponentUI = ui_info_panel_element.instantiate() as PowerConsumptionComponentUI
+	ui.set_power_consumption_component(self)
+	return ui

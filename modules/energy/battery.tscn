@@ -8,7 +8,7 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="6_3rf3g"]
 [ext_resource type="Resource" uid="uid://bu87eumdgtjdd" path="res://data/resources/stored_energy.tres" id="7_g7cqe"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_mrvaa"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_n0fs3"]
 shader = ExtResource("3_48ebp")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -22,7 +22,7 @@ size = Vector2(62, 62)
 replacement_on_delete = ExtResource("2_gm5wv")
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_mrvaa")
+material = SubResource("ShaderMaterial_n0fs3")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_15wy0")

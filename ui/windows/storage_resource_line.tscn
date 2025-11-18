@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3 uid="uid://dprv5w0bvxvvb"]
+
+[ext_resource type="Script" uid="uid://8o5roogmn3fd" path="res://ui/windows/storage_resource_line.gd" id="1_b4rr0"]
+
+[node name="HBoxContainer" type="HBoxContainer" node_paths=PackedStringArray("stored_resource_name", "stored_resource_value")]
+script = ExtResource("1_b4rr0")
+stored_resource_name = NodePath("StoredName")
+stored_resource_value = NodePath("StoredValue")
+
+[node name="StoredName" type="Label" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "Water"
+
+[node name="StoredValue" type="Label" parent="."]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "4"

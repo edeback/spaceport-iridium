@@ -5,6 +5,9 @@ extends Control
 @onready var preview_module: PreviewModule = $Selector/PreviewModule
 @onready var structure_tile_map: TileMapLayer = $"../StructureTileMap"
 
+@export var module_info_panel: PackedScene
+var cur_module_info_panel: ModuleInfoIngamePanel
+
 var debug_path: PackedVector2Array:
 	set(new_path):
 		debug_path = new_path
@@ -65,9 +68,21 @@ func update_structure_placement() -> void:
 
 
 func select_module(cell: Vector2i) -> void:
-	var selected_module = Global.world_manager.get_module_by_cell_active_layer(cell)
+	var selected_module: ModuleBase = Global.world_manager.get_module_by_cell_active_layer(cell)
 	if selected_module != null:
 		selected_module.on_select(!selected_module.selected)
+		if cur_module_info_panel != null:
+			var last_module: ModuleBase = cur_module_info_panel.module_viewed
+			cur_module_info_panel.queue_free()
+			cur_module_info_panel = null
+			if last_module == selected_module:
+				# Just toggle off the panel if we're clicking the same module
+				return
+		var new_info_panel: ModuleInfoIngamePanel = module_info_panel.instantiate() as ModuleInfoIngamePanel
+		new_info_panel.set_module(selected_module)
+		add_child(new_info_panel)
+		new_info_panel.set_position(Global.cell_to_world(cell))
+		cur_module_info_panel = new_info_panel
 
 func _draw() -> void:	 		
 	var last_point = null

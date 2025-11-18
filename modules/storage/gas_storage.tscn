@@ -8,7 +8,7 @@
 [ext_resource type="Resource" uid="uid://tf727fx7vlah" path="res://data/resources/oxygen.tres" id="6_makij"]
 [ext_resource type="Resource" uid="uid://1an3ftgpeh6u" path="res://data/resources/hydrogen.tres" id="7_f3rol"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_21ioq"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_makij"]
 shader = ExtResource("3_f3rol")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -19,14 +19,15 @@ resource_local_to_scene = true
 size = Vector2(62, 62)
 
 [node name="Module" instance=ExtResource("1_jvpar")]
+in_game_name = "Gas Storage"
 replacement_on_delete = ExtResource("2_makij")
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_21ioq")
+material = SubResource("ShaderMaterial_makij")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_poxt5")
 
-[node name="StorageComponent" parent="." index="1" instance=ExtResource("4_21ioq")]
+[node name="Gas Storage" parent="." index="1" instance=ExtResource("4_21ioq")]
 priority = 0
 stored_resources = Array[ExtResource("5_vitln")]([ExtResource("6_makij"), ExtResource("7_f3rol")])
