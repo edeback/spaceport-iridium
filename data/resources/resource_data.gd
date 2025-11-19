@@ -4,6 +4,8 @@ extends Resource
 
 @export var name: String = ""
 @export var icon: Texture2D
+@export var sub_resources: Dictionary[ResourceData, float]
+@export var base_resource: ResourceData
 
 @export var show_test: bool = false:
 	set(value):

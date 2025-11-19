@@ -18,6 +18,7 @@ resource_local_to_scene = true
 size = Vector2(126, 190)
 
 [node name="Module" instance=ExtResource("1_j1fwt")]
+in_game_name = "Fusion Reactor"
 
 [node name="Sprite" parent="Offset" index="0"]
 material = SubResource("ShaderMaterial_f8t3n")

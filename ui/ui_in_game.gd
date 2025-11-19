@@ -70,7 +70,8 @@ func update_structure_placement() -> void:
 func select_module(cell: Vector2i) -> void:
 	var selected_module: ModuleBase = Global.world_manager.get_module_by_cell_active_layer(cell)
 	if selected_module != null:
-		selected_module.on_select(!selected_module.selected)
+		# Temp comment out this so we just see info panels
+		#selected_module.on_select(!selected_module.selected)
 		if cur_module_info_panel != null:
 			var last_module: ModuleBase = cur_module_info_panel.module_viewed
 			cur_module_info_panel.queue_free()

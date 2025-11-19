@@ -11,8 +11,6 @@ extends ComponentBase
 var processing: bool = false
 var current_process_time: float = 0
 
-var last_error: String = ""
-
 signal processor_progress_changed(new_progress: float)
 
 # Called when the node enters the scene tree for the first time.
@@ -70,6 +68,7 @@ func _continuous_processing(delta: float) -> void:
 	if _satisfies_recipe(fraction_of_recipe):
 		_withdraw_inputs(fraction_of_recipe)
 		_deposit_outputs(fraction_of_recipe)
+		last_error = ""
 	return
 
 func _stepwise_processing(delta: float) -> void:
@@ -83,7 +82,7 @@ func _stepwise_processing(delta: float) -> void:
 				if !output_storage.can_deposit(ingredient, amount):
 					last_error = "No space for output!"
 					can_output = false
-					break
+					return
 			if can_output:
 				var doublecheck: bool = true
 				for ingredient in recipe.outputs:
@@ -94,6 +93,7 @@ func _stepwise_processing(delta: float) -> void:
 				processor_progress_changed.emit(0)
 				processing = false
 				current_process_time = 0
+		last_error = ""
 	else:
 		if _satisfies_recipe():
 			_withdraw_inputs()
@@ -101,6 +101,7 @@ func _stepwise_processing(delta: float) -> void:
 			processor_progress_changed.emit(0)
 			processing = true
 			current_process_time = 0
+			last_error = ""
 
 func has_ui() -> bool:
 	return true

@@ -16,6 +16,7 @@ resource_local_to_scene = true
 size = Vector2(62, 62)
 
 [node name="Module" instance=ExtResource("1_ldvtf")]
+in_game_name = "Solar Panel"
 replacement_on_delete = ExtResource("2_w7u4q")
 
 [node name="Sprite" parent="Offset" index="0"]

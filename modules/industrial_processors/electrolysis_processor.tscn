@@ -24,6 +24,7 @@ resource_local_to_scene = true
 size = Vector2(62, 62)
 
 [node name="Module" instance=ExtResource("1_ktyew")]
+in_game_name = "Electrolysis Processor"
 replacement_on_delete = ExtResource("2_0b3hx")
 
 [node name="Sprite" parent="Offset" index="0"]

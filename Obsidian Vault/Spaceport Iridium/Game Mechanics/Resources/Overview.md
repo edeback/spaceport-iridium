@@ -28,9 +28,14 @@ Processible Resources
 		- Some modules?
 		- Maybe just trash?
 	- Water (from Ice, not ore, and from comets)
-		- Used for some modules to operateresour
+		- Used for some modules to operate
+		- Turned into hydrogen/oxygen
 - These start as gasses and require special equipment (magscoops)
 	- Oxygen
 	- Hydrogen
 		- Thrusters(?)
 		- Power Generation (with fusion reactor)
+
+
+Storage
+- Should be able to 'vent' resources that you don't want

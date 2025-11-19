@@ -4,7 +4,6 @@ extends Node2D
 
 enum InteractionLayer { MODULE, TRANSPORT }
 
-@export var in_game_name: String
 @export var sprite: Sprite2D
 @onready var footprint: Area2D = $Offset/Footprint
 @onready var nameplate: Label = $Offset/Sprite/Nameplate

@@ -31,3 +31,6 @@ func set_processor_component(component: ProcessorComponent) -> void:
 
 func on_process_progress_changed(new_progress: float) -> void:
 	processor_progress_bar.value = new_progress
+
+func on_powered_changed(new_powered: bool) -> void:
+	pass

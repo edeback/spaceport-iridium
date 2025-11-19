@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ResourceData" load_steps=3 format=3 uid="uid://bwm1nd0ra2f1x"]
+
+[ext_resource type="Texture2D" uid="uid://cc0ns2prdb577" path="res://ui/icons/credit_symbol.svg" id="1_bjdx1"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_qhd7a"]
+
+[resource]
+script = ExtResource("2_qhd7a")
+name = "Credits"
+icon = ExtResource("1_bjdx1")

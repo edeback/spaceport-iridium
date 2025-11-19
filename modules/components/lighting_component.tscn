@@ -10,6 +10,5 @@ blend_mode = 1
 script = ExtResource("1_5dqj6")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-visible = false
 material = SubResource("CanvasItemMaterial_pru2k")
 texture = ExtResource("2_kjlkb")

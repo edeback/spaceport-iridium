@@ -12,7 +12,7 @@
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="10_64yxw"]
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="10_mgbfp"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_k607o"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mgbfp"]
 shader = ExtResource("3_k607o")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -26,7 +26,7 @@ size = Vector2(62, 62)
 replacement_on_delete = ExtResource("2_mgbfp")
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_k607o")
+material = SubResource("ShaderMaterial_mgbfp")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_my7lf")

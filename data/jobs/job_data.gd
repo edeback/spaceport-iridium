@@ -42,9 +42,13 @@ func _job_start() -> void:
 	var storage_nodes: Array[Node] = requester.get_tree().get_nodes_in_group("resource_storage")
 	for node in storage_nodes:
 		var storage: MultiStorageComponent = node as MultiStorageComponent
-		if storage.accepts_exports and storage.stored_resources.has(resource_data) and storage.priority < deposit_storage.priority and storage.can_withdraw(resource_data, amount):
-			storage_component = storage
-			break
+		storage.find_first_stored_resource_with_base(resource_data, amount)
+		if storage.accepts_exports and storage.can_store_resource(resource_data) and storage.priority < deposit_storage.priority:
+			var available_resource: ResourceData = storage.find_first_stored_resource_with_base(resource_data, amount)
+			if available_resource != null:
+				resource_data = available_resource
+				storage_component = storage
+				break
 			#var new_distance = storage.owner_module.module_cell.distance_squared_to(worker.cell)
 			#if storage_component ==  null or new_distance < min_distance:
 			#	storage_component = storage

@@ -3,6 +3,10 @@ extends Control
 @export var button_group: PackedScene
 @export var button_container: VBoxContainer
 
+@export var resource_display_container: HBoxContainer
+@export var resource_display_ui: PackedScene
+@export var resources_to_display: Array[ResourceData]
+
 var module_data_groups: Dictionary = {}
 var preview_model : ModuleBase
 
@@ -12,6 +16,7 @@ const MODULE_PATH: String = "res://data/modules/"
 func _ready() -> void:
 	load_moduledatas()
 	create_module_button_groups()
+	create_resource_display()
 	Global.world_manager.set_module_layer_visibility(ModuleBase.InteractionLayer.TRANSPORT, false)
 
 func get_all_file_paths(path: String) -> Array[String]:
@@ -49,6 +54,14 @@ func create_module_button_groups() -> void:
 		var new_button_group = button_group.instantiate() as ModuleButtonGroup
 		new_button_group.setup_group(module_data_group, module_data_groups[module_data_group])
 		button_container.add_child(new_button_group)
+		
+func create_resource_display() -> void:
+	for node: Node in resource_display_container.get_children():
+		node.queue_free()
+	for resource_data: ResourceData in resources_to_display:
+		var resource_ui: ResourceDisplayUI = resource_display_ui.instantiate() as ResourceDisplayUI
+		resource_ui.set_resource(resource_data)
+		resource_display_container.add_child(resource_ui)
 		
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:

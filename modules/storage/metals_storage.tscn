@@ -1,0 +1,35 @@
+[gd_scene load_steps=13 format=3 uid="uid://cnx7ivsd0eyf6"]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_1or0d"]
+[ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/hallway.tres" id="2_jgyda"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_2eetl"]
+[ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="4_o6h8v"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="5_v8eig"]
+[ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="6_v8eig"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/industrial_metals.tres" id="7_rpgd2"]
+[ext_resource type="Resource" uid="uid://b27jc67v174pi" path="res://data/resources/iridium.tres" id="8_l01oe"]
+[ext_resource type="Resource" uid="uid://c56jj6kgs36sx" path="res://data/resources/precious_metals.tres" id="9_exq2j"]
+[ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicates.tres" id="10_26e5y"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1or0d"]
+shader = ExtResource("3_2eetl")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_poxt5"]
+resource_local_to_scene = true
+size = Vector2(62, 62)
+
+[node name="Module" instance=ExtResource("1_1or0d")]
+replacement_on_delete = ExtResource("2_jgyda")
+
+[node name="Sprite" parent="Offset" index="0"]
+material = SubResource("ShaderMaterial_1or0d")
+
+[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
+shape = SubResource("RectangleShape2D_poxt5")
+
+[node name="Metals Storage" parent="." index="1" instance=ExtResource("4_o6h8v")]
+priority = 0
+stored_resources = Array[ExtResource("5_v8eig")]([ExtResource("6_v8eig"), ExtResource("7_rpgd2"), ExtResource("8_l01oe"), ExtResource("9_exq2j"), ExtResource("10_26e5y")])

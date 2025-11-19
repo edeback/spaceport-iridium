@@ -26,7 +26,7 @@ func generate_power(delta: float) -> float:
 			input_storage.withdraw(resource_consumed, consumption_amount)
 			return power_output
 	else:
-		return power_output * delta
+		return power_output
 	return 0
 
 func has_ui() -> bool:

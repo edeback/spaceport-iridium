@@ -121,12 +121,14 @@
             "id": "d0be06ee95876c99",
             "type": "leaf",
             "state": {
-              "type": "image",
+              "type": "markdown",
               "state": {
-                "file": "Paper Spacestation/BoardLayout.png"
+                "file": "Spaceport Iridium/Game Mechanics/Resources/Resource Gathering.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-image",
-              "title": "BoardLayout"
+              "icon": "lucide-file",
+              "title": "Resource Gathering"
             }
           }
         ],
@@ -276,18 +278,19 @@
   "active": "d0be06ee95876c99",
   "lastOpenFiles": [
     "Spaceport Iridium/Game Mechanics/Modules/Overview.md",
-    "Spaceport Iridium/Untitled.canvas",
+    "Spaceport Iridium/Game Mechanics/Resources/Overview.md",
+    "Spaceport Iridium/Game Mechanics/Resources/Resource Gathering.md",
+    "Spaceport Iridium/Game Mechanics/Modules/Energy.md",
+    "Spaceport Iridium/Roadmap.md",
+    "Spaceport Iridium/Random Notes.md",
     "Spaceport Iridium/Power System.md",
     "Spaceport Iridium/Notes from SimTower.md",
     "Spaceport Iridium/Notes from Project Highrise.md",
-    "Spaceport Iridium/Game Mechanics/Modules/Energy.md",
-    "Spaceport Iridium/Random Notes.md",
-    "Spaceport Iridium/Game Mechanics/Resources/Overview.md",
-    "Spaceport Iridium/Game Mechanics/Story/Tutorial.md",
     "Spaceport Iridium/In progress.md",
-    "Paper Spacestation/Idea.md",
-    "Spaceport Iridium/Roadmap.md",
+    "Spaceport Iridium/Game Mechanics/Story/Tutorial.md",
     "Paper Spacestation/BoardLayout.png",
+    "Paper Spacestation/Idea.md",
+    "Spaceport Iridium/Untitled.canvas",
     "Paper Spacestation/BoardLayout.png.import",
     "Paper Spacestation",
     "Spaceport Iridium/Game Mechanics/Story",

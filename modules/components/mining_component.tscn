@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://udm67iu3w25e"]
+
+[ext_resource type="Script" uid="uid://0ha8qo8v7a5v" path="res://modules/components/mining_component.gd" id="1_klg84"]
+
+[node name="MiningComponent" type="Node"]
+script = ExtResource("1_klg84")

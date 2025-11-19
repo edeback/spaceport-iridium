@@ -28,7 +28,6 @@ material = SubResource("ShaderMaterial_n0fs3")
 shape = SubResource("RectangleShape2D_15wy0")
 
 [node name="BatteryComponent" parent="." index="5" node_paths=PackedStringArray("energy_storage") instance=ExtResource("4_n0fs3")]
-power_per_resource = 10.0
 energy_storage = NodePath("../StorageComponent")
 
 [node name="StorageComponent" parent="." index="6" instance=ExtResource("5_84gs8")]

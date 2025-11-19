@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://bqpuv7wysl1nf" path="res://ui/windows/ui_storage_component.gd" id="1_6j2gs"]
 [ext_resource type="PackedScene" uid="uid://dprv5w0bvxvvb" path="res://ui/windows/storage_resource_line.tscn" id="2_4o4nm"]
 
-[node name="Storage" type="PanelContainer" node_paths=PackedStringArray("resource_container")]
+[node name="Storage" type="PanelContainer" node_paths=PackedStringArray("resource_container", "priority_value")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -14,6 +14,7 @@ grow_vertical = 2
 script = ExtResource("1_6j2gs")
 resource_container = NodePath("MarginContainer/VSplitContainer/MarginContainer/ResourceContainer")
 resource_line = ExtResource("2_4o4nm")
+priority_value = NodePath("MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer/PriorityValue")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2
@@ -24,12 +25,6 @@ theme_override_constants/margin_bottom = 2
 
 [node name="VSplitContainer" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
-
-[node name="Label" type="Label" parent="MarginContainer/VSplitContainer"]
-visible = false
-layout_mode = 2
-theme_override_font_sizes/font_size = 8
-text = "Storage"
 
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VSplitContainer"]
 layout_mode = 2
@@ -48,3 +43,20 @@ layout_mode = 2
 
 [node name="HBoxContainer2" parent="MarginContainer/VSplitContainer/MarginContainer/ResourceContainer" instance=ExtResource("2_4o4nm")]
 layout_mode = 2
+
+[node name="MarginContainer2" type="MarginContainer" parent="MarginContainer/VSplitContainer"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer2"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer"]
+layout_mode = 2
+text = "Priority: "
+
+[node name="PriorityValue" type="SpinBox" parent="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer"]
+layout_mode = 2
+min_value = -100.0
+value = 1.0
+rounded = true
+alignment = 2

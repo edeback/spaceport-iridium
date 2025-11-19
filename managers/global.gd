@@ -7,6 +7,7 @@ var path_manager: PathManager
 var power_manager: PowerManager
 var job_manager: JobManager
 var turbolift_manager: TurboliftManager
+var resource_manager: ResourceManager
 var ui_in_game: UIInGame
 var tilemap: TileMapLayer
 
