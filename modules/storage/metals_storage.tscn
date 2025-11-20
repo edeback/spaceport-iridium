@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://cnx7ivsd0eyf6"]
+[gd_scene load_steps=15 format=3 uid="uid://cnx7ivsd0eyf6"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_1or0d"]
 [ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/hallway.tres" id="2_jgyda"]
@@ -10,8 +10,10 @@
 [ext_resource type="Resource" uid="uid://b27jc67v174pi" path="res://data/resources/iridium.tres" id="8_l01oe"]
 [ext_resource type="Resource" uid="uid://c56jj6kgs36sx" path="res://data/resources/precious_metals.tres" id="9_exq2j"]
 [ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicates.tres" id="10_26e5y"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="11_l01oe"]
+[ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="12_exq2j"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_1or0d"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_26e5y"]
 shader = ExtResource("3_2eetl")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -25,11 +27,19 @@ size = Vector2(62, 62)
 replacement_on_delete = ExtResource("2_jgyda")
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_1or0d")
+material = SubResource("ShaderMaterial_26e5y")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_poxt5")
 
-[node name="Metals Storage" parent="." index="1" instance=ExtResource("4_o6h8v")]
+[node name="Metals Storage" parent="." index="1" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_o6h8v")]
 priority = 0
 stored_resources = Array[ExtResource("5_v8eig")]([ExtResource("6_v8eig"), ExtResource("7_rpgd2"), ExtResource("8_l01oe"), ExtResource("9_exq2j"), ExtResource("10_26e5y")])
+power_consumption_component = NodePath("../PowerConsumptionComponent")
+
+[node name="PowerConsumptionComponent" parent="." index="6" instance=ExtResource("11_l01oe")]
+power_consumption = 5.0
+
+[node name="LightingComponent" parent="." index="7" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("12_exq2j")]
+position = Vector2(32, 32)
+power_consumption_component = NodePath("../PowerConsumptionComponent")

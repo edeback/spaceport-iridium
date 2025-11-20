@@ -4,6 +4,7 @@ extends ComponentBase
 @export var priority: int = 1
 @export var stored_resources: Array[ResourceData]
 @export var max_stored: float = 10
+@export var power_consumption_component: PowerConsumptionComponent
 
 @export var accepts_imports: bool = true
 @export var accepts_exports: bool = true
@@ -34,6 +35,14 @@ func _ready() -> void:
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
+	var test_total_stored: float = 0
+	for resource in cur_stored:
+		test_total_stored += cur_stored[resource]
+	storage_ui.value = test_total_stored / max_stored
+	if power_consumption_component and not power_consumption_component.powered:
+		last_error = "No power!"
+		return
+	last_error = ""
 	if accepts_imports and space_available() > 1.0:
 		for resource: ResourceData in stored_resources:
 			if !import_job.has(resource):
@@ -46,10 +55,6 @@ func _process(delta: float) -> void:
 				import_job[resource] = new_job
 		#Global.job_manager.add_job(owner_module, import_job)
 		pass
-	var test_total_stored: float = 0
-	for resource in cur_stored:
-		test_total_stored += cur_stored[resource]
-	storage_ui.value = test_total_stored / max_stored
 	
 func _exit_tree() -> void:
 	for resource: ResourceData in stored_resources:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://ds2rlocc6y560"]
+[gd_scene load_steps=11 format=3 uid="uid://ds2rlocc6y560"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_pjalf"]
 [ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/hallway.tres" id="2_420y5"]
@@ -6,8 +6,10 @@
 [ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="4_facir"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="5_420y5"]
 [ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/generic_ore.tres" id="6_npkfk"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="7_facir"]
+[ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="8_rxmpx"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_420y5"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_g4dqv"]
 shader = ExtResource("3_npkfk")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -18,15 +20,22 @@ resource_local_to_scene = true
 size = Vector2(62, 62)
 
 [node name="Module" instance=ExtResource("1_pjalf")]
-in_game_name = "Ore Storage"
 replacement_on_delete = ExtResource("2_420y5")
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_420y5")
+material = SubResource("ShaderMaterial_g4dqv")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_poxt5")
 
-[node name="Ore Storage" parent="." index="1" instance=ExtResource("4_facir")]
+[node name="Ore Storage" parent="." index="1" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_facir")]
 priority = 0
 stored_resources = Array[ExtResource("5_420y5")]([ExtResource("6_npkfk")])
+power_consumption_component = NodePath("../PowerConsumptionComponent")
+
+[node name="PowerConsumptionComponent" parent="." index="6" instance=ExtResource("7_facir")]
+power_consumption = 5.0
+
+[node name="LightingComponent" parent="." index="7" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("8_rxmpx")]
+position = Vector2(32, 32)
+power_consumption_component = NodePath("../PowerConsumptionComponent")

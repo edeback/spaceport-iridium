@@ -29,7 +29,7 @@ func _ready() -> void:
 
 func _startup() -> void:
 	await get_tree().create_timer(1.0).timeout
-	add_module(start_module, Vector2i(5,5))
+	add_module(start_module, Vector2i(15,8))
 	
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.

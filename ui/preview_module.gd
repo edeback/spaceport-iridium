@@ -10,6 +10,7 @@ var module_size: Vector2i
 var connection_points: Array[Vector2i]
 var module_layer: ModuleBase.InteractionLayer
 var last_cell: Vector2i
+var offset: Vector2 = Vector2(0, 0)
 
 var module_data: ModuleData:
 	get:
@@ -20,7 +21,7 @@ var module_data: ModuleData:
 			sprite.texture = default_texture
 			sprite.visible = false
 		else:
-			var temp_module = module_data.scene.instantiate()
+			var temp_module: ModuleBase = module_data.scene.instantiate() as ModuleBase
 			module_size = temp_module.size
 			connection_points = temp_module.connection_points
 			module_layer = temp_module.interaction_layer
@@ -29,8 +30,9 @@ var module_data: ModuleData:
 			sprite.region_enabled = temp_module.sprite.region_enabled
 			sprite.region_rect = temp_module.sprite.region_rect
 			sprite.transform = temp_module.sprite.transform
-			sprite.centered = false
+			sprite.centered = true
 			sprite.visible = true
+			offset = temp_module.offset.position
 			temp_module.queue_free()
 		
 

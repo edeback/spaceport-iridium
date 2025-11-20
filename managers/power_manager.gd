@@ -4,6 +4,8 @@ extends Node
 var power_generators: Array[PowerGenerationComponent]
 var power_consumers: Array[PowerConsumptionComponent]
 
+signal power_updated(desired: float, generated: float)
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	Global.power_manager = self
@@ -40,6 +42,8 @@ func power_modules(delta: float) -> void:
 		var generator: PowerGenerationComponent = node as PowerGenerationComponent
 		if generator != null:
 			power_generated += generator.generate_power(delta)
+	
+	power_updated.emit(desired_power, power_generated)
 	
 	var power_needed: float = desired_power - power_generated
 	var batteries: Array[Node] = get_tree().get_nodes_in_group("battery")

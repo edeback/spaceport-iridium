@@ -15,6 +15,8 @@ var debug_path: PackedVector2Array:
 		
 enum InputMode {None, Module, Structure, Turbolift}
 
+signal input_mode_changed(new_mode: InputMode)
+
 var cur_input_mode: InputMode = InputMode.None
 var cur_module: ModuleData = null
 
@@ -24,27 +26,30 @@ func _ready() -> void:
 	pass # Replace with function body.
 
 func change_input_mode(mode: InputMode, module: ModuleData = null) -> void:
+	#Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	cur_input_mode = mode
 	cur_module = module
 	preview_module.module_data = module
+	input_mode_changed.emit(mode)
 	pass
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var hovered_cell = Global.world_to_cell(get_global_mouse_position())
 		if event.is_action_pressed("build"):
-			if preview_module != null and preview_module.can_place:
+			if cur_module != null and preview_module != null and preview_module.can_place:
 				Global.world_manager.add_module(cur_module, preview_module.last_cell)
 			else:
 				select_module(hovered_cell)
 		if event.is_action_pressed("remove"):
 			Global.world_manager.remove_module_by_cell_active_layer(hovered_cell)
 	pass
+	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	match cur_input_mode:
 		InputMode.None:
-			update_module_placement()
+			pass
 		InputMode.Module:
 			update_module_placement()
 		InputMode.Structure:
@@ -53,19 +58,17 @@ func _process(delta: float) -> void:
 			Global.turbolift_manager.update_turboshaft_placement(get_global_mouse_position())
 
 func update_module_placement() -> void:
-	var hovered_cell = Global.world_to_cell(get_global_mouse_position())
 	if preview_module != null:
+		var hovered_cell: Vector2i = Global.world_to_cell(get_global_mouse_position() - preview_module.offset + Vector2(Global.CELL_SIZE) / 2)
 		preview_module.update_placeable(hovered_cell)
-	if preview_module != null and preview_module.can_place:
-		var snapped_position = Global.CELL_SIZE * hovered_cell
-		selector.position = snapped_position
-	else:
-		selector.position = get_global_mouse_position()
+		if preview_module.can_place:
+			var snapped_position = Global.cell_to_world(hovered_cell)
+			selector.position = snapped_position + preview_module.offset
+		else:
+			selector.position = get_global_mouse_position()
 
 func update_structure_placement() -> void:
 	pass
-
-
 
 func select_module(cell: Vector2i) -> void:
 	var selected_module: ModuleBase = Global.world_manager.get_module_by_cell_active_layer(cell)

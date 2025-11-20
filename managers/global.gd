@@ -22,7 +22,7 @@ func _process(delta: float) -> void:
 func world_to_cell(position: Vector2) -> Vector2i:
 	return Vector2i(floor((position.x) / CELL_SIZE.x), floor((position.y) / CELL_SIZE.y))
 	
-func cell_to_world(cell: Vector2i, use_half_offset: bool = false) -> Vector2i:
+func cell_to_world(cell: Vector2i, use_half_offset: bool = false) -> Vector2:
 	return cell * CELL_SIZE + (Vector2i.ONE * CELL_SIZE / 2 if use_half_offset else Vector2i.ZERO)
 
 func world_to_tilemap_cell(position: Vector2) -> Vector2i:

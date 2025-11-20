@@ -23,6 +23,7 @@ enum InteractionLayer { MODULE, TRANSPORT }
 
 @export var walking_paths: Array[Path2D]
 @export var door_location: Marker2D
+@export var offset: Node2D
 
 @export var interaction_layer: InteractionLayer = InteractionLayer.MODULE
 

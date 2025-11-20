@@ -28,3 +28,6 @@ region_rect = Rect2(0, 0, 128, 192)
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_mn0da")
+
+[node name="Center" parent="." index="5"]
+position = Vector2(64, 96)

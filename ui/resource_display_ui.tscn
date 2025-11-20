@@ -7,7 +7,7 @@
 size_flags_horizontal = 4
 size_flags_vertical = 4
 script = ExtResource("1_7mpcr")
-icon_texture = NodePath("MarginContainer/VBoxContainer/ResourceIcon")
+icon_texture = NodePath("MarginContainer/VBoxContainer/PanelContainer/ResourceIcon")
 resource_name_label = NodePath("MarginContainer/VBoxContainer/ResourceName")
 resource_available_label = NodePath("MarginContainer/VBoxContainer/ResourceAvailable")
 
@@ -22,7 +22,12 @@ theme_override_constants/margin_bottom = 2
 layout_mode = 2
 size_flags_vertical = 4
 
-[node name="ResourceIcon" type="TextureRect" parent="MarginContainer/VBoxContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="ResourceIcon" type="TextureRect" parent="MarginContainer/VBoxContainer/PanelContainer"]
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 size_flags_horizontal = 4

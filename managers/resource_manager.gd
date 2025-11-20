@@ -8,7 +8,15 @@ var resource_storage_components: Dictionary = {}
 
 var resources_changed: Array[ResourceData] = []
 
+@export_storage var credits: int = 0:
+	get():
+		return credits
+	set(new_credits):
+		credits = new_credits
+		credits_changed.emit(credits)
+
 signal resource_changed(resource: ResourceData, new_value: float)
+signal credits_changed(new_credits: int)
 
 func _ready() -> void:
 	Global.resource_manager = self
