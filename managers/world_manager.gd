@@ -56,11 +56,11 @@ func add_module(module_data: ModuleData, cell: Vector2i) -> void:
 	# Note this only works for one-cell modules but right now only matters for those
 	var existing_module: ModuleBase = get_module_by_cell(new_module.interaction_layer, cell)
 	if existing_module != null:
-		var replacement_module: ModuleData = existing_module.build_overlapping(module_data)
+		var replacement_module: PackedScene = module_data.combo_scene.get(existing_module.module_data.scene)
 		remove_module(existing_module)
 		if replacement_module != null:
 			new_module.free()
-			new_module = replacement_module.scene.instantiate()
+			new_module = replacement_module.instantiate()
 	new_module.position = Vector2(cell * Global.CELL_SIZE)
 	var module_id = _get_next_id()
 	new_module.module_id = module_id

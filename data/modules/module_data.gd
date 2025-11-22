@@ -9,3 +9,6 @@ extends Resource
 @export var multiplacement: bool = false
 ## If hidden, does not show in UI
 @export var hidden: bool = false
+
+## If you place this on a combo scene, it produces the combined scene instead
+@export var combo_scene: Dictionary[PackedScene, PackedScene] = {}
