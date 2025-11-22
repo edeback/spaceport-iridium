@@ -78,3 +78,6 @@ func _on_info_button_pressed() -> void:
 
 func _on_input_mode_changed(new_mode: UIInGame.InputMode) -> void:
 	%ModuleInfoButton.disabled = (new_mode != UIInGame.InputMode.Module)
+
+func _on_interaction_layer_changed(new_layer: int) -> void:
+	Global.world_manager.show_module_layer(new_layer)

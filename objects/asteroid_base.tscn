@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://cvrcrbshj8cre"]
+
+[ext_resource type="Script" uid="uid://cbikuxxna03ab" path="res://objects/asteroid_base.gd" id="1_gwhge"]
+[ext_resource type="Texture2D" uid="uid://cmbwcxe4uwwwt" path="res://assets/sprites/asteroid.png" id="1_yx8kc"]
+
+[node name="AsteroidBase" type="Node2D"]
+script = ExtResource("1_gwhge")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(-7, -8)
+texture = ExtResource("1_yx8kc")

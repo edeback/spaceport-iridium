@@ -47,7 +47,7 @@ corner_radius_bottom_left = 16
 shadow_size = 6
 shadow_offset = Vector2(-3, -3)
 
-[sub_resource type="FoldableGroup" id="FoldableGroup_rtsem"]
+[sub_resource type="FoldableGroup" id="FoldableGroup_1h8lm"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1h8lm"]
 content_margin_left = 4.0
@@ -83,7 +83,7 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_2bqpn")
 button_group = ExtResource("3_ka3re")
-button_container = NodePath("Modules/MarginContainer/VBoxContainer/ButtonContainer")
+button_container = NodePath("VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer")
 resource_display_container = NodePath("ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer")
 resource_display_ui = ExtResource("4_wyidc")
 resources_to_display = Array[ExtResource("4_pqeum")]([ExtResource("5_rtsem"), ExtResource("6_b5r2u"), ExtResource("7_1h8lm"), ExtResource("8_xyc40"), ExtResource("9_pset1"), ExtResource("10_j1br4"), ExtResource("11_lnfpq"), ExtResource("12_6re3r"), ExtResource("13_0sakr"), ExtResource("14_p3y7p")])
@@ -234,40 +234,58 @@ layout_mode = 2
 [node name="PanelContainer6" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" instance=ExtResource("4_wyidc")]
 layout_mode = 2
 
-[node name="Modules" type="Panel" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 192.0
-offset_bottom = -24.0
+offset_right = 176.0
 grow_vertical = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="VBoxContainer"]
+layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_u8vfh")
 
-[node name="MarginContainer" type="MarginContainer" parent="Modules"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/PanelContainer/MarginContainer"]
+layout_mode = 2
+
+[node name="OptionButton" type="OptionButton" parent="VBoxContainer/PanelContainer/MarginContainer/HBoxContainer"]
+layout_mode = 2
+selected = 0
+item_count = 2
+popup/item_0/text = "Modules"
+popup/item_0/id = 0
+popup/item_1/text = "Transportation"
+popup/item_1/id = 1
+
+[node name="Modules" type="PanelContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_u8vfh")
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules"]
+layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Modules/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/Modules/MarginContainer"]
 layout_mode = 2
 
-[node name="ButtonContainer" type="VBoxContainer" parent="Modules/MarginContainer/VBoxContainer"]
+[node name="ButtonContainer" type="VBoxContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="FoldableContainer" parent="Modules/MarginContainer/VBoxContainer/ButtonContainer" instance=ExtResource("3_ka3re")]
+[node name="FoldableContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer" instance=ExtResource("3_ka3re")]
 layout_mode = 2
-foldable_group = SubResource("FoldableGroup_rtsem")
+foldable_group = SubResource("FoldableGroup_1h8lm")
 
-[node name="MarginContainer" type="MarginContainer" parent="Modules/MarginContainer/VBoxContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 10
 theme_override_constants/margin_left = 4
@@ -275,7 +293,7 @@ theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 4
 
-[node name="ModuleInfoButton" type="Button" parent="Modules/MarginContainer/VBoxContainer/MarginContainer"]
+[node name="ModuleInfoButton" type="Button" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer/MarginContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 10
@@ -284,4 +302,5 @@ shortcut = SubResource("Shortcut_xyc40")
 text = "Module Info"
 
 [connection signal="toggled" from="Resources/CheckButton" to="." method="_on_check_button_toggled"]
-[connection signal="pressed" from="Modules/MarginContainer/VBoxContainer/MarginContainer/ModuleInfoButton" to="." method="_on_info_button_pressed"]
+[connection signal="item_selected" from="VBoxContainer/PanelContainer/MarginContainer/HBoxContainer/OptionButton" to="." method="_on_interaction_layer_changed"]
+[connection signal="pressed" from="VBoxContainer/Modules/MarginContainer/VBoxContainer/MarginContainer/ModuleInfoButton" to="." method="_on_info_button_pressed"]
