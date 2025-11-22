@@ -1,8 +1,8 @@
 [gd_scene load_steps=1049 format=3 uid="uid://cgnfy2cj4760l"]
 
 [ext_resource type="Script" uid="uid://nwr8gusqocd6" path="res://managers/main.gd" id="1_lvssd"]
-[ext_resource type="Resource" uid="uid://bv4wtnibgy04x" path="res://data/modules/module1x1_mdata.tres" id="2_8e6kl"]
 [ext_resource type="Script" uid="uid://dcanuqi7bdrfp" path="res://managers/camera.gd" id="3_055fr"]
+[ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/hallways/hallway.tres" id="3_82xsv"]
 [ext_resource type="Script" uid="uid://d0hud6eqhyh68" path="res://managers/path_manager.gd" id="3_nkgie"]
 [ext_resource type="Script" uid="uid://dvf7wnwvh6siv" path="res://managers/power_manager.gd" id="4_deici"]
 [ext_resource type="PackedScene" uid="uid://umcjs6xyrnek" path="res://ui/ui_debug.tscn" id="4_m3cse"]
@@ -7555,7 +7555,7 @@ structure_tile_map = NodePath("ModuleLayers/ModuleLayer/StructureTileMap")
 
 [node name="WorldManager" type="Node" parent="Managers" node_paths=PackedStringArray("module_layers")]
 script = ExtResource("6_i5kyc")
-start_module = ExtResource("2_8e6kl")
+start_module = ExtResource("3_82xsv")
 module_layers = {
 0: NodePath("../../ModuleLayers/ModuleLayer"),
 1: NodePath("../../ModuleLayers/TransportLayer")

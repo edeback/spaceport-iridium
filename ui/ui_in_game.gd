@@ -13,12 +13,15 @@ var debug_path: PackedVector2Array:
 		debug_path = new_path
 		queue_redraw()
 		
-enum InputMode {None, Module, Structure, Turbolift}
+enum InputMode {None, Module, Structure, Turbolift, Multiplace}
 
 signal input_mode_changed(new_mode: InputMode)
 
 var cur_input_mode: InputMode = InputMode.None
 var cur_module: ModuleData = null
+
+var multiplace_start: Vector2i
+var preview_multimodules: Array[PreviewModule] = []
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -38,7 +41,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		var hovered_cell = Global.world_to_cell(get_global_mouse_position())
 		if event.is_action_pressed("build"):
 			if cur_module != null and preview_module != null and preview_module.can_place:
-				Global.world_manager.add_module(cur_module, preview_module.last_cell)
+				if cur_module.multiplacement:
+					preview_module.visible = false
+					cur_input_mode = InputMode.Multiplace
+					multiplace_start = hovered_cell
+				else:
+					Global.world_manager.add_module(cur_module, preview_module.last_cell)
 			else:
 				select_module(hovered_cell)
 		if event.is_action_pressed("remove"):
@@ -56,14 +64,57 @@ func _process(delta: float) -> void:
 			update_structure_placement()
 		InputMode.Turbolift:
 			Global.turbolift_manager.update_turboshaft_placement(get_global_mouse_position())
+		InputMode.Multiplace:
+			update_multiplacement()
+			if Input.is_action_just_released("build"):
+				finalize_multiplacement()
+				
+			
+func update_multiplacement() -> void:
+	var hovered_cell: Vector2i = Global.world_to_cell(get_global_mouse_position() - preview_module.offset + Vector2(Global.CELL_SIZE) / 2)
+	var xrange: int = hovered_cell.x - multiplace_start.x
+	var yrange: int = hovered_cell.y - multiplace_start.y
+	var xdirection: int = 1 if xrange > 0 else -1
+	var ydirection: int = 1 if yrange > 0 else -1
+	if abs(yrange) > abs(xrange):
+		xrange = 0
+		yrange = abs(yrange)
+	else:
+		xrange = abs(xrange)
+		yrange = 0
+	for x: int in range(xrange + 1):
+		for y: int in range(yrange + 1):
+			var cell: Vector2i = Vector2i(multiplace_start.x + x * xdirection, multiplace_start.y + y * ydirection)
+			if preview_multimodules.size() < x + y + 1:
+				preview_multimodules.append(preview_module.duplicate())
+				add_child(preview_multimodules.back())
+			var previewmod: PreviewModule = preview_multimodules.get(x + y)
+			previewmod.visible = true
+			var snapped_position: Vector2 = Global.cell_to_world(cell) + preview_module.offset
+			previewmod.position = snapped_position
+			previewmod.module_data = preview_module.module_data
+			previewmod.update_placeable(cell, true)
+	for i: int in range(preview_multimodules.size(), xrange + yrange + 1, -1):
+		var previewmod = preview_multimodules.pop_back()
+		if previewmod != null:
+			previewmod.queue_free()
+			
+func finalize_multiplacement() -> void:
+	for mod: PreviewModule in preview_multimodules:
+		if mod and mod.can_place:
+			Global.world_manager.add_module(cur_module, mod.last_cell)
+			mod.queue_free()
+	preview_multimodules.clear()
+	cur_input_mode = InputMode.Module
+	preview_module.visible = true
 
 func update_module_placement() -> void:
 	if preview_module != null:
 		var hovered_cell: Vector2i = Global.world_to_cell(get_global_mouse_position() - preview_module.offset + Vector2(Global.CELL_SIZE) / 2)
 		preview_module.update_placeable(hovered_cell)
 		if preview_module.can_place:
-			var snapped_position = Global.cell_to_world(hovered_cell)
-			selector.position = snapped_position + preview_module.offset
+			var snapped_position: Vector2 = Global.cell_to_world(hovered_cell) + preview_module.offset
+			selector.position = snapped_position
 		else:
 			selector.position = get_global_mouse_position()
 

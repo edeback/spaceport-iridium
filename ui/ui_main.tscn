@@ -88,28 +88,6 @@ resource_display_container = NodePath("ResourceDisplayPanel/MarginContainer/HBox
 resource_display_ui = ExtResource("4_wyidc")
 resources_to_display = Array[ExtResource("4_pqeum")]([ExtResource("5_rtsem"), ExtResource("6_b5r2u"), ExtResource("7_1h8lm"), ExtResource("8_xyc40"), ExtResource("9_pset1"), ExtResource("10_j1br4"), ExtResource("11_lnfpq"), ExtResource("12_6re3r"), ExtResource("13_0sakr"), ExtResource("14_p3y7p")])
 
-[node name="Resources" type="Panel" parent="."]
-visible = false
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -208.0
-offset_top = -112.0
-offset_right = 208.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_styles/panel = SubResource("StyleBoxFlat_xdhp5")
-
-[node name="CheckButton" type="CheckButton" parent="Resources"]
-visible = false
-layout_mode = 0
-offset_right = 44.0
-offset_bottom = 24.0
-text = "Show Transport Layer"
-
 [node name="ResourceDisplayPanel" type="PanelContainer" parent="."]
 layout_mode = 1
 anchors_preset = 7
@@ -301,6 +279,5 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_1h8lm")
 shortcut = SubResource("Shortcut_xyc40")
 text = "Module Info"
 
-[connection signal="toggled" from="Resources/CheckButton" to="." method="_on_check_button_toggled"]
 [connection signal="item_selected" from="VBoxContainer/PanelContainer/MarginContainer/HBoxContainer/OptionButton" to="." method="_on_interaction_layer_changed"]
 [connection signal="pressed" from="VBoxContainer/Modules/MarginContainer/VBoxContainer/MarginContainer/ModuleInfoButton" to="." method="_on_info_button_pressed"]

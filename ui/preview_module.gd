@@ -49,7 +49,7 @@ func _update_shader() -> void:
 		sprite.material.set_shader_parameter(SHADER_PARAM_PLACEABLE, can_place)
 
 
-func update_placeable(module_cell: Vector2i) -> void:
+func update_placeable(module_cell: Vector2i, ignore_connections: bool = false) -> void:
 	# Must be in right layer
 	if Global.world_manager.active_layer != module_layer:
 		can_place = false
@@ -59,13 +59,17 @@ func update_placeable(module_cell: Vector2i) -> void:
 		can_place = false
 		return
 	# Must be connected to at least one other module
-	can_place = _has_possible_connections(module_cell)
-	last_cell = module_cell
+	if ignore_connections:
+		can_place = true
+	else:
+		can_place = _has_possible_connections(module_cell)
+	if can_place:
+		last_cell = module_cell
 
 func _has_possible_connections(module_cell: Vector2i) -> bool:
 	# For transport, check that we're over a regular module
-	if module_layer == ModuleBase.InteractionLayer.TRANSPORT:
-		return Global.world_manager.has_overlaps(ModuleBase.InteractionLayer.MODULE, module_cell)
+	#if module_layer == ModuleBase.InteractionLayer.TRANSPORT:
+	#	return Global.world_manager.has_overlaps(ModuleBase.InteractionLayer.MODULE, module_cell)
 		
 	for point in connection_points:
 		if Global.world_manager.has_overlaps(module_layer, module_cell + point):

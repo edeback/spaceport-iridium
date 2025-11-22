@@ -43,6 +43,8 @@ func load_moduledatas() -> void:
 	var file_paths: Array[String] = get_all_file_paths(MODULE_PATH)
 	for file_path: String in file_paths:
 		var module_data: ModuleData = ResourceLoader.load(file_path, "ModuleData")
+		if module_data.hidden:
+			continue
 		if module_data.tags.size() == 0:
 			module_data_groups.get_or_add("", []).append(module_data)
 		for tag: String in module_data.tags:
@@ -80,4 +82,4 @@ func _on_input_mode_changed(new_mode: UIInGame.InputMode) -> void:
 	%ModuleInfoButton.disabled = (new_mode != UIInGame.InputMode.Module)
 
 func _on_interaction_layer_changed(new_layer: int) -> void:
-	Global.world_manager.show_module_layer(new_layer)
+	Global.world_manager.set_module_layer_visibility(new_layer, true)

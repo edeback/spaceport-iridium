@@ -1,0 +1,35 @@
+[gd_scene load_steps=8 format=3 uid="uid://bumnppjakup3u"]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_a8hmj"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_46xsl"]
+[ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_b0i46"]
+[ext_resource type="Texture2D" uid="uid://bganxvwxqhuaq" path="res://assets/sprites/hallway_and_shaft.png" id="4_fthly"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="5_bjwhg"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_46xsl"]
+shader = ExtResource("3_46xsl")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_2hsxi"]
+resource_local_to_scene = true
+size = Vector2(62, 62)
+
+[node name="Module" instance=ExtResource("1_a8hmj")]
+blocks_building = false
+interaction_layer = 1
+
+[node name="Sprite" parent="Offset" index="0"]
+material = SubResource("ShaderMaterial_46xsl")
+texture = ExtResource("4_fthly")
+region_rect = Rect2(64, 0, 64, 64)
+
+[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
+shape = SubResource("RectangleShape2D_2hsxi")
+
+[node name="LightingComponent" parent="Offset" index="2" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_b0i46")]
+power_consumption_component = NodePath("../../PowerConsumptionComponent")
+
+[node name="PowerConsumptionComponent" parent="." index="1" instance=ExtResource("5_bjwhg")]
+power_consumption = 5.0

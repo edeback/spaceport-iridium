@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ModuleData" load_steps=4 format=3 uid="uid://ceiby1c5gmq2b"]
+
+[ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="1_awf2i"]
+[ext_resource type="PackedScene" uid="uid://ivs2xw263s0v" path="res://modules/hallways/shaft.tscn" id="2_awf2i"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_1o3w3"]
+
+[resource]
+script = ExtResource("3_1o3w3")
+name = "Shaft"
+scene = ExtResource("2_awf2i")
+icon = ExtResource("1_awf2i")
+tags = Array[String](["Transportation"])
+multiplacement = true

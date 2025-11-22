@@ -14,6 +14,8 @@ enum InteractionLayer { MODULE, TRANSPORT }
 	set(new_show_debug):
 		show_debug = new_show_debug
 		queue_redraw()
+		
+		
 @export var connection_points: Array[Vector2i]:
 	set(new_points):
 		connection_points = new_points
@@ -26,6 +28,8 @@ enum InteractionLayer { MODULE, TRANSPORT }
 @export var offset: Node2D
 
 @export var interaction_layer: InteractionLayer = InteractionLayer.MODULE
+
+@export var overlap_replacement: Dictionary[ModuleData, ModuleData] = {}
 
 var module_id: int = -1
 var module_cell: Vector2i
@@ -171,3 +175,6 @@ func _draw() -> void:
 	if show_debug && Engine.is_editor_hint():
 		for point in connection_points:
 			draw_circle(Vector2(point * Vector2i(64, 64)) +  Vector2(32, 32), 16, Color.GREEN)
+
+func build_overlapping(other_module: ModuleData) -> ModuleData:
+	return overlap_replacement.get(other_module)

@@ -1,7 +1,7 @@
 [gd_scene load_steps=12 format=3 uid="uid://c23tc0cwsa53e"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_jvpar"]
-[ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/hallway.tres" id="2_makij"]
+[ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/hallways/hallway.tres" id="2_makij"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_f3rol"]
 [ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="4_21ioq"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="5_vitln"]
@@ -10,7 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="8_21ioq"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="9_vitln"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_s6hyo"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_21ioq"]
 shader = ExtResource("3_f3rol")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -24,7 +24,7 @@ size = Vector2(62, 62)
 replacement_on_delete = ExtResource("2_makij")
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_s6hyo")
+material = SubResource("ShaderMaterial_21ioq")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_poxt5")
