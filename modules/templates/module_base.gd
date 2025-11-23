@@ -33,6 +33,7 @@ var module_id: int = -1
 var module_cell: Vector2i
 var module_data: ModuleData
 var components: Array[ComponentBase]
+var is_horizontal: bool = true
 
 var module_connections = {}
 
@@ -173,3 +174,9 @@ func _draw() -> void:
 	if show_debug && Engine.is_editor_hint():
 		for point in connection_points:
 			draw_circle(Vector2(point * Vector2i(64, 64)) +  Vector2(32, 32), 16, Color.GREEN)
+
+func get_sprite(_is_horizontal: bool = true) -> Sprite2D:
+	return sprite
+
+func overlap_module(_new_module: ModuleData, _is_horizontal: bool) -> void:
+	pass

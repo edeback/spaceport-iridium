@@ -90,6 +90,7 @@ func update_multiplacement() -> void:
 				add_child(preview_multimodules.back())
 			var previewmod: PreviewModule = preview_multimodules.get(x + y)
 			previewmod.visible = true
+			previewmod.is_horizontal = yrange == 0
 			var snapped_position: Vector2 = Global.cell_to_world(cell) + preview_module.offset
 			previewmod.position = snapped_position
 			previewmod.module_data = preview_module.module_data
@@ -102,7 +103,7 @@ func update_multiplacement() -> void:
 func finalize_multiplacement() -> void:
 	for mod: PreviewModule in preview_multimodules:
 		if mod and mod.can_place:
-			Global.world_manager.add_module(cur_module, mod.last_cell)
+			Global.world_manager.add_module(cur_module, mod.last_cell, mod.is_horizontal)
 			mod.queue_free()
 	preview_multimodules.clear()
 	cur_input_mode = InputMode.Module

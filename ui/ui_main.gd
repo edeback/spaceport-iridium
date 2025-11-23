@@ -17,7 +17,7 @@ func _ready() -> void:
 	load_moduledatas()
 	create_module_button_groups()
 	create_resource_display()
-	Global.world_manager.set_module_layer_visibility(ModuleBase.InteractionLayer.TRANSPORT, false)
+	Global.world_manager.show_module_layer(ModuleBase.InteractionLayer.MODULE)
 	Global.ui_in_game.input_mode_changed.connect(_on_input_mode_changed)
 
 func get_all_file_paths(path: String) -> Array[String]:
@@ -82,4 +82,4 @@ func _on_input_mode_changed(new_mode: UIInGame.InputMode) -> void:
 	%ModuleInfoButton.disabled = (new_mode != UIInGame.InputMode.Module)
 
 func _on_interaction_layer_changed(new_layer: int) -> void:
-	Global.world_manager.set_module_layer_visibility(new_layer, true)
+	Global.world_manager.show_module_layer(new_layer)

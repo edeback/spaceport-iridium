@@ -46,8 +46,8 @@ func get_module_by_cell_active_layer(cell: Vector2i) -> ModuleBase:
 func get_module_by_cell(layer: ModuleBase.InteractionLayer, cell: Vector2i) -> ModuleBase:
 	return layer_data[layer].cell_to_module.get(cell)
 
-func add_module(module_data: ModuleData, cell: Vector2i) -> void:
-	var new_module = module_data.scene.instantiate()
+func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true) -> void:
+	var new_module: ModuleBase = module_data.scene.instantiate()
 	new_module.get_instance_id()
 	if is_blocked(new_module.interaction_layer, cell, new_module.size):
 		print("Warning, attempted to add module where one exists at: " + str(cell))
@@ -56,16 +56,15 @@ func add_module(module_data: ModuleData, cell: Vector2i) -> void:
 	# Note this only works for one-cell modules but right now only matters for those
 	var existing_module: ModuleBase = get_module_by_cell(new_module.interaction_layer, cell)
 	if existing_module != null:
-		var replacement_module: PackedScene = module_data.combo_scene.get(existing_module.module_data.scene)
-		remove_module(existing_module)
-		if replacement_module != null:
-			new_module.free()
-			new_module = replacement_module.instantiate()
+		existing_module.overlap_module(module_data, is_horizontal)
+		new_module.free()
+		return
 	new_module.position = Vector2(cell * Global.CELL_SIZE)
 	var module_id = _get_next_id()
 	new_module.module_id = module_id
 	new_module.module_cell = cell
 	new_module.module_data = module_data
+	new_module.is_horizontal = is_horizontal
 	module_layers[new_module.interaction_layer].add_child(new_module)
 	for x in new_module.size.x:
 		for y in new_module.size.y:
@@ -134,15 +133,20 @@ func get_module_by_id(id: int) -> ModuleBase:
 	return id_to_module.get(id)
 	
 func show_module_layer(layer: ModuleBase.InteractionLayer) -> void:
+	active_layer = layer
 	for module_layer in module_layers:
 		if module_layer == layer:
 			module_layers[module_layer].visible = true
+			var mod: CanvasModulate = module_layers[module_layer].get_node("CanvasModulate") as CanvasModulate
+			mod.color.a = 1
 		else:
-			module_layers[module_layer].visible = false
+			module_layers[module_layer].visible = true
+			var mod: CanvasModulate = module_layers[module_layer].get_node("CanvasModulate") as CanvasModulate
+			mod.color.a = 0.1
 
 func set_module_layer_visibility(layer: ModuleBase.InteractionLayer, visibility: bool) -> void:
 	module_layers[layer].visible = visibility
-	if(visibility):
+	if visibility:
 		active_layer = layer
 	else:
 		active_layer = ModuleBase.InteractionLayer.MODULE

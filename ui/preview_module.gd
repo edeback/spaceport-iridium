@@ -11,6 +11,7 @@ var connection_points: Array[Vector2i]
 var module_layer: ModuleBase.InteractionLayer
 var last_cell: Vector2i
 var offset: Vector2 = Vector2(0, 0)
+var is_horizontal: bool = true
 
 var module_data: ModuleData:
 	get:
@@ -25,11 +26,12 @@ var module_data: ModuleData:
 			module_size = temp_module.size
 			connection_points = temp_module.connection_points
 			module_layer = temp_module.interaction_layer
-			sprite.texture = temp_module.sprite.texture
-			sprite.offset = temp_module.sprite.offset
-			sprite.region_enabled = temp_module.sprite.region_enabled
-			sprite.region_rect = temp_module.sprite.region_rect
-			sprite.transform = temp_module.sprite.transform
+			var temp_sprite: Sprite2D = temp_module.get_sprite(is_horizontal)
+			sprite.texture = temp_sprite.texture
+			sprite.offset = temp_sprite.offset
+			sprite.region_enabled = temp_sprite.region_enabled
+			sprite.region_rect = temp_sprite.region_rect
+			sprite.transform = temp_sprite.transform
 			sprite.centered = true
 			sprite.visible = true
 			offset = temp_module.offset.position
@@ -67,9 +69,9 @@ func update_placeable(module_cell: Vector2i, ignore_connections: bool = false) -
 		last_cell = module_cell
 
 func _has_possible_connections(module_cell: Vector2i) -> bool:
-	# For transport, check that we're over a regular module
-	#if module_layer == ModuleBase.InteractionLayer.TRANSPORT:
-	#	return Global.world_manager.has_overlaps(ModuleBase.InteractionLayer.MODULE, module_cell)
+	# For modules, can also be over a hallway
+	if module_layer == ModuleBase.InteractionLayer.MODULE:
+		return Global.world_manager.has_overlaps(ModuleBase.InteractionLayer.TRANSPORT, module_cell)
 		
 	for point in connection_points:
 		if Global.world_manager.has_overlaps(module_layer, module_cell + point):

@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://bh5xdj8qfdiig"]
+[gd_scene load_steps=10 format=3 uid="uid://bh5xdj8qfdiig"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_fsw0g"]
 [ext_resource type="Script" uid="uid://csv0c8amfvt5u" path="res://modules/hallways/hallway.gd" id="2_eidsi"]
@@ -7,7 +7,13 @@
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_jxdbx"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="5_eidsi"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_gavq1"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6yc0r"]
+shader = ExtResource("3_gfe75")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gfe75"]
 shader = ExtResource("3_gfe75")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -17,22 +23,73 @@ shader_parameter/SELECTED = false
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
-[node name="Module" instance=ExtResource("1_fsw0g")]
+[node name="Module" node_paths=PackedStringArray("corrodor_dictionary") instance=ExtResource("1_fsw0g")]
 script = ExtResource("2_eidsi")
-connection_points = Array[Vector2i]([Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 0)])
+corrodor_dictionary = {
+1: NodePath("Offset/Hallway"),
+2: NodePath("Offset/Shaft"),
+3: NodePath("Offset/HallwayAndShaft")
+}
+connection_points = Array[Vector2i]([Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(0, 1)])
 blocks_building = false
 interaction_layer = 1
 
-[node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_gavq1")
+[node name="Hallway" type="Node2D" parent="Offset" index="0"]
+visible = false
+
+[node name="Sprite2D" type="Sprite2D" parent="Offset/Hallway" index="0"]
+material = SubResource("ShaderMaterial_6yc0r")
 texture = ExtResource("4_6yc0r")
+region_enabled = true
+region_rect = Rect2(0, 0, 64, 64)
+
+[node name="Shaft" type="Node2D" parent="Offset" index="1"]
+visible = false
+
+[node name="Sprite2D" type="Sprite2D" parent="Offset/Shaft" index="0"]
+material = SubResource("ShaderMaterial_6yc0r")
+texture = ExtResource("4_6yc0r")
+region_enabled = true
+region_rect = Rect2(128, 0, 64, 64)
+
+[node name="HallwayAndShaft" type="Node2D" parent="Offset" index="2"]
+visible = false
+
+[node name="Sprite2D" type="Sprite2D" parent="Offset/HallwayAndShaft" index="0"]
+material = SubResource("ShaderMaterial_6yc0r")
+texture = ExtResource("4_6yc0r")
+region_enabled = true
+region_rect = Rect2(64, 0, 64, 64)
+
+[node name="Door" type="Node2D" parent="Offset" index="3"]
+visible = false
+
+[node name="Sprite2D" type="Sprite2D" parent="Offset/Door" index="0"]
+material = SubResource("ShaderMaterial_6yc0r")
+texture = ExtResource("4_6yc0r")
+region_enabled = true
+region_rect = Rect2(192, 0, 64, 64)
+
+[node name="LightingComponent" parent="Offset" index="4" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_jxdbx")]
+scale = Vector2(0.5, 0.5)
+power_consumption_component = NodePath("../../PowerConsumptionComponent")
+
+[node name="Sprite" parent="Offset" index="5"]
+material = SubResource("ShaderMaterial_gfe75")
+texture = null
+region_enabled = false
+
+[node name="Nameplate" parent="Offset/Sprite" index="0"]
+offset_left = 0.0
+offset_top = -0.5
+offset_right = 0.0
+offset_bottom = 22.5
+
+[node name="Footprint" parent="Offset" index="6"]
+visible = false
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_2hsxi")
-
-[node name="LightingComponent" parent="Offset" index="2" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_jxdbx")]
-scale = Vector2(1, 0.5)
-power_consumption_component = NodePath("../../PowerConsumptionComponent")
 
 [node name="PowerConsumptionComponent" parent="." index="1" instance=ExtResource("5_eidsi")]
 power_consumption = 5.0
