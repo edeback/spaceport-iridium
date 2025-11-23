@@ -10,6 +10,8 @@ class LayerData:
 # Only used for setup. Use layer_data at runtime
 @export var module_layers: Dictionary[ModuleBase.InteractionLayer, CanvasLayer]
 
+@export var replacement_module: ModuleData
+
 var layer_data: Dictionary[ModuleBase.InteractionLayer, LayerData]
 
 var last_id : int = 0
@@ -54,13 +56,15 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 		new_module.free()
 		return
 	# Note this only works for one-cell modules but right now only matters for those
-	var existing_module: ModuleBase = get_module_by_cell(new_module.interaction_layer, cell)
-	if existing_module != null:
-		existing_module.overlap_module(module_data, is_horizontal)
+	var cancel_add: bool = false
+	for existing_module: ModuleBase in get_overlaps(new_module.interaction_layer, cell, new_module.size):
+		if existing_module != null:
+			cancel_add = cancel_add or existing_module.overlap_module(module_data, is_horizontal)
+	if cancel_add:
 		new_module.free()
 		return
 	new_module.position = Vector2(cell * Global.CELL_SIZE)
-	var module_id = _get_next_id()
+	var module_id: int = _get_next_id()
 	new_module.module_id = module_id
 	new_module.module_cell = cell
 	new_module.module_data = module_data
@@ -75,9 +79,8 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 func remove_module(module: ModuleBase) -> bool:
 	if module.can_delete == false:
 		return false
-	var replacement_module = module.replacement_on_delete
-	var replacement_location = module.module_cell
-	var replacement_size = module.size
+	var replacement_location: Vector2i = module.module_cell
+	var replacement_size: Vector2i = module.size
 	module.pre_delete()
 	SignalBus.module_removed.emit(module)
 	module.remove_connections()
@@ -87,7 +90,7 @@ func remove_module(module: ModuleBase) -> bool:
 	id_to_module.erase(module.module_id)
 	layer_data[module.interaction_layer].canvas.remove_child(module)
 	module.queue_free()
-	if replacement_module:
+	if module.module_data != replacement_module and module.interaction_layer == ModuleBase.InteractionLayer.MODULE:
 		for x in replacement_size.x:
 			for y in replacement_size.y:
 				add_module(replacement_module, replacement_location + Vector2i(x,y))
@@ -97,7 +100,7 @@ func remove_module_by_cell_active_layer(cell: Vector2i) -> void:
 	remove_module_by_cell(active_layer, cell)
 	
 func remove_module_by_cell(layer: ModuleBase.InteractionLayer, cell: Vector2i) -> void:
-	var module = layer_data[layer].cell_to_module.get(cell)
+	var module: ModuleBase = layer_data[layer].cell_to_module.get(cell)
 	if module != null:
 		remove_module(module)
 		

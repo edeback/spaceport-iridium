@@ -1,11 +1,30 @@
-[gd_scene load_steps=10 format=3 uid="uid://bh5xdj8qfdiig"]
+[gd_scene load_steps=14 format=3 uid="uid://bh5xdj8qfdiig"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_fsw0g"]
 [ext_resource type="Script" uid="uid://csv0c8amfvt5u" path="res://modules/hallways/hallway.gd" id="2_eidsi"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_gfe75"]
+[ext_resource type="Script" uid="uid://h3manxxvo75r" path="res://modules/hallways/corridor_data.gd" id="3_jxdbx"]
 [ext_resource type="Texture2D" uid="uid://bganxvwxqhuaq" path="res://assets/sprites/hallway_and_shaft.png" id="4_6yc0r"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_jxdbx"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="5_eidsi"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gfe75"]
+shader = ExtResource("3_gfe75")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_jxdbx"]
+shader = ExtResource("3_gfe75")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_eidsi"]
+shader = ExtResource("3_gfe75")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_6yc0r"]
 shader = ExtResource("3_gfe75")
@@ -13,7 +32,7 @@ shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_gfe75"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gavq1"]
 shader = ExtResource("3_gfe75")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -23,59 +42,92 @@ shader_parameter/SELECTED = false
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
-[node name="Module" node_paths=PackedStringArray("corrodor_dictionary") instance=ExtResource("1_fsw0g")]
+[node name="Module" node_paths=PackedStringArray("corridor_dictionary", "door") instance=ExtResource("1_fsw0g")]
 script = ExtResource("2_eidsi")
-corrodor_dictionary = {
+corridor_dictionary = {
 1: NodePath("Offset/Hallway"),
 2: NodePath("Offset/Shaft"),
 3: NodePath("Offset/HallwayAndShaft")
 }
+current_type = 0
+door = NodePath("Offset/Door")
 connection_points = Array[Vector2i]([Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(0, 1)])
 blocks_building = false
+doors = null
 interaction_layer = 1
 
 [node name="Hallway" type="Node2D" parent="Offset" index="0"]
 visible = false
+script = ExtResource("3_jxdbx")
+connection_points = Array[Vector2i]([Vector2i(1, 0), Vector2i(-1, 0)])
 
 [node name="Sprite2D" type="Sprite2D" parent="Offset/Hallway" index="0"]
-material = SubResource("ShaderMaterial_6yc0r")
+material = SubResource("ShaderMaterial_gfe75")
 texture = ExtResource("4_6yc0r")
 region_enabled = true
 region_rect = Rect2(0, 0, 64, 64)
 
+[node name="LightingComponent" parent="Offset/Hallway" index="1" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_jxdbx")]
+z_index = 2
+scale = Vector2(1, 0.5)
+power_consumption_component = NodePath("../../../PowerConsumptionComponent")
+
 [node name="Shaft" type="Node2D" parent="Offset" index="1"]
 visible = false
+script = ExtResource("3_jxdbx")
+connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(0, 1)])
 
 [node name="Sprite2D" type="Sprite2D" parent="Offset/Shaft" index="0"]
-material = SubResource("ShaderMaterial_6yc0r")
+material = SubResource("ShaderMaterial_jxdbx")
 texture = ExtResource("4_6yc0r")
 region_enabled = true
 region_rect = Rect2(128, 0, 64, 64)
 
+[node name="LightingComponent2" parent="Offset/Shaft" index="1" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_jxdbx")]
+z_index = 2
+scale = Vector2(0.5, 1)
+power_consumption_component = NodePath("../../../PowerConsumptionComponent")
+
 [node name="HallwayAndShaft" type="Node2D" parent="Offset" index="2"]
 visible = false
+script = ExtResource("3_jxdbx")
+connection_points = Array[Vector2i]([Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(0, 1)])
 
 [node name="Sprite2D" type="Sprite2D" parent="Offset/HallwayAndShaft" index="0"]
-material = SubResource("ShaderMaterial_6yc0r")
+material = SubResource("ShaderMaterial_eidsi")
 texture = ExtResource("4_6yc0r")
 region_enabled = true
 region_rect = Rect2(64, 0, 64, 64)
+
+[node name="LightingComponent3" parent="Offset/HallwayAndShaft" index="1" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_jxdbx")]
+z_index = 2
+position = Vector2(-24, 0)
+scale = Vector2(0.25, 0.5)
+power_consumption_component = NodePath("../../../PowerConsumptionComponent")
+
+[node name="LightingComponent5" parent="Offset/HallwayAndShaft" index="2" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_jxdbx")]
+z_index = 2
+position = Vector2(24, 0)
+scale = Vector2(0.25, 0.5)
+power_consumption_component = NodePath("../../../PowerConsumptionComponent")
+
+[node name="LightingComponent4" parent="Offset/HallwayAndShaft" index="3" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_jxdbx")]
+z_index = 2
+scale = Vector2(0.5, 1)
+power_consumption_component = NodePath("../../../PowerConsumptionComponent")
 
 [node name="Door" type="Node2D" parent="Offset" index="3"]
 visible = false
 
 [node name="Sprite2D" type="Sprite2D" parent="Offset/Door" index="0"]
+z_index = 1
 material = SubResource("ShaderMaterial_6yc0r")
 texture = ExtResource("4_6yc0r")
 region_enabled = true
 region_rect = Rect2(192, 0, 64, 64)
 
-[node name="LightingComponent" parent="Offset" index="4" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_jxdbx")]
-scale = Vector2(0.5, 0.5)
-power_consumption_component = NodePath("../../PowerConsumptionComponent")
-
-[node name="Sprite" parent="Offset" index="5"]
-material = SubResource("ShaderMaterial_gfe75")
+[node name="Sprite" parent="Offset" index="4"]
+material = SubResource("ShaderMaterial_gavq1")
 texture = null
 region_enabled = false
 
@@ -85,7 +137,7 @@ offset_top = -0.5
 offset_right = 0.0
 offset_bottom = 22.5
 
-[node name="Footprint" parent="Offset" index="6"]
+[node name="Footprint" parent="Offset" index="5"]
 visible = false
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]

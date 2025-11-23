@@ -27,6 +27,8 @@ enum InteractionLayer { MODULE, TRANSPORT }
 @export var door_location: Marker2D
 @export var offset: Node2D
 
+@export var doors: Array[Vector2i] = []
+
 @export var interaction_layer: InteractionLayer = InteractionLayer.MODULE
 
 var module_id: int = -1
@@ -35,7 +37,7 @@ var module_data: ModuleData
 var components: Array[ComponentBase]
 var is_horizontal: bool = true
 
-var module_connections = {}
+var module_connections: Dictionary[ModuleBase, bool] = {}
 
 var jobs = {}
 
@@ -106,14 +108,14 @@ func on_select(new_selected: bool) -> void:
 		#can_place = true
 	#pass
 	
-func _physics_process(delta: float) -> void:
-	pass
+#func _physics_process(delta: float) -> void:
+#	pass
 	
 func _update_shader() -> void:
-	if (sprite && sprite.material != null):
-		sprite.material.set_shader_parameter(SHADER_PARAM_PREVIEW, previewing)
-		sprite.material.set_shader_parameter(SHADER_PARAM_PLACEABLE, can_place)
-		sprite.material.set_shader_parameter(SHADER_PARAM_SELECTED, selected)
+	if (get_sprite() && get_sprite().material != null):
+		get_sprite().material.set_shader_parameter(SHADER_PARAM_PREVIEW, previewing)
+		get_sprite().material.set_shader_parameter(SHADER_PARAM_PLACEABLE, can_place)
+		get_sprite().material.set_shader_parameter(SHADER_PARAM_SELECTED, selected)
 		
 func update_placeable() -> void:
 	# Footprint must not overlap
@@ -125,25 +127,45 @@ func update_placeable() -> void:
 	return 
 
 func _has_possible_connections() -> bool:
-	for point in connection_points:
+	for point in get_connection_points():
 		if Global.world_manager.has_overlaps(interaction_layer, module_cell + point):
 			return true
 	return false
+	
+func can_connect(other_module: ModuleBase) -> bool:
+	return _find_connections().has(other_module)
 
 func _find_connections() -> Array[ModuleBase]:
 	var connected_modules:Array[ModuleBase] = []
-	for point in connection_points:
+	for point in get_connection_points():
 		for module in Global.world_manager.get_overlaps(interaction_layer, module_cell + point):
 			if module != self:
 				connected_modules.append(module)
 	return connected_modules
 	
 func make_connections() -> void:
-	var connected_modules = _find_connections()
+	var connected_modules: Array[ModuleBase] = _find_connections()
 	for module in connected_modules:
-		module_connections[module] = 1
-		module.connect_to(self)
-		SignalBus.module_connection_added.emit(self, module, module_cell.distance_to(module.module_cell))
+		if module.can_connect(self):
+			module_connections[module] = true
+			module.connect_to(self)
+			SignalBus.module_connection_added.emit(self, module, module_cell.distance_to(module.module_cell))
+	connect_doors()
+			
+func has_door(cell_to_check: Vector2i) -> bool:
+	for point: Vector2i in doors:
+		if point + module_cell == cell_to_check:
+			return true
+	return false
+			
+func connect_doors() -> void:
+	var layer_to_check: InteractionLayer = (1 - interaction_layer) as InteractionLayer
+	for point: Vector2i in doors:
+		for module: ModuleBase in Global.world_manager.get_overlaps(layer_to_check, module_cell + point):
+			if module != self and module.has_door(module_cell + point):
+				connect_door_to(module)
+				module.connect_door_to(self)
+				SignalBus.module_connection_added.emit(self, module, 1)
 
 func remove_connections() -> void:
 	for module in module_connections:
@@ -153,14 +175,17 @@ func remove_connections() -> void:
 	module_connections.clear()
 
 func connect_to(other_module: ModuleBase) -> void:
-	module_connections[other_module] = 1
+	module_connections[other_module] = true
 	
 func disconnect_from(other_module: ModuleBase) -> void:
 	module_connections.erase(other_module)
 	
+func connect_door_to(other_module: ModuleBase) -> void:
+	module_connections[other_module] = true
+	
 func get_paths() -> void:
 	for path in walking_paths:
-		var point_count = path.curve.point_count
+		var point_count: int = path.curve.point_count
 		# Two points make a line, don't support single points yet
 		if point_count > 1:
 			path.curve.get_point_position(0)
@@ -170,13 +195,17 @@ func get_paths() -> void:
 func get_global_center() -> Vector2:
 	return global_position + Vector2(Global.CELL_SIZE * size) / 2
 	
+func get_connection_points() -> Array[Vector2i]:
+	return connection_points
+	
 func _draw() -> void:
 	if show_debug && Engine.is_editor_hint():
-		for point in connection_points:
+		for point in get_connection_points():
 			draw_circle(Vector2(point * Vector2i(64, 64)) +  Vector2(32, 32), 16, Color.GREEN)
 
-func get_sprite(_is_horizontal: bool = true) -> Sprite2D:
+func get_sprite() -> Sprite2D:
 	return sprite
 
-func overlap_module(_new_module: ModuleData, _is_horizontal: bool) -> void:
-	pass
+## True if this overlap requires us to cancel a build
+func overlap_module(_new_module: ModuleData, _is_horizontal: bool) -> bool:
+	return true

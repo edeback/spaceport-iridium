@@ -24,9 +24,10 @@ var module_data: ModuleData:
 		else:
 			var temp_module: ModuleBase = module_data.scene.instantiate() as ModuleBase
 			module_size = temp_module.size
-			connection_points = temp_module.connection_points
+			temp_module.is_horizontal = is_horizontal
+			connection_points = temp_module.get_connection_points()
 			module_layer = temp_module.interaction_layer
-			var temp_sprite: Sprite2D = temp_module.get_sprite(is_horizontal)
+			var temp_sprite: Sprite2D = temp_module.get_sprite()
 			sprite.texture = temp_sprite.texture
 			sprite.offset = temp_sprite.offset
 			sprite.region_enabled = temp_sprite.region_enabled
@@ -69,13 +70,14 @@ func update_placeable(module_cell: Vector2i, ignore_connections: bool = false) -
 		last_cell = module_cell
 
 func _has_possible_connections(module_cell: Vector2i) -> bool:
-	# For modules, can also be over a hallway
-	if module_layer == ModuleBase.InteractionLayer.MODULE:
-		return Global.world_manager.has_overlaps(ModuleBase.InteractionLayer.TRANSPORT, module_cell)
-		
 	for point in connection_points:
 		if Global.world_manager.has_overlaps(module_layer, module_cell + point):
 			return true
+	
+	# For modules, can also be over a hallway
+	if module_layer == ModuleBase.InteractionLayer.MODULE:
+		return Global.world_manager.has_overlaps(ModuleBase.InteractionLayer.TRANSPORT, module_cell, module_size)
+		
 	return false
 
 func _ready() -> void:

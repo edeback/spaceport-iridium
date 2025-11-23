@@ -8,7 +8,7 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="6_f8t3n"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="7_yku0m"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ndyxb"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yku0m"]
 shader = ExtResource("3_f8t3n")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -21,7 +21,7 @@ size = Vector2(126, 190)
 [node name="Module" instance=ExtResource("1_j1fwt")]
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_ndyxb")
+material = SubResource("ShaderMaterial_yku0m")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_5nv3c")

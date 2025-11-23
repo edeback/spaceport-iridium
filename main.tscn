@@ -1,10 +1,11 @@
-[gd_scene load_steps=1049 format=3 uid="uid://cgnfy2cj4760l"]
+[gd_scene load_steps=1050 format=3 uid="uid://cgnfy2cj4760l"]
 
 [ext_resource type="Script" uid="uid://nwr8gusqocd6" path="res://managers/main.gd" id="1_lvssd"]
 [ext_resource type="Script" uid="uid://dcanuqi7bdrfp" path="res://managers/camera.gd" id="3_055fr"]
 [ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/hallways/hallway.tres" id="3_82xsv"]
 [ext_resource type="Script" uid="uid://d0hud6eqhyh68" path="res://managers/path_manager.gd" id="3_nkgie"]
 [ext_resource type="Script" uid="uid://dvf7wnwvh6siv" path="res://managers/power_manager.gd" id="4_deici"]
+[ext_resource type="Resource" uid="uid://p3ja7r43eh6c" path="res://data/modules/truss.tres" id="4_getpj"]
 [ext_resource type="PackedScene" uid="uid://umcjs6xyrnek" path="res://ui/ui_debug.tscn" id="4_m3cse"]
 [ext_resource type="PackedScene" uid="uid://ce6npnqw8s3mu" path="res://ui/ui_main.tscn" id="5_uwp6h"]
 [ext_resource type="Script" uid="uid://6mx2qi4ecq8b" path="res://managers/turbolift_manager.gd" id="6_dg77c"]
@@ -7560,6 +7561,7 @@ module_layers = {
 0: NodePath("../../ModuleLayers/ModuleLayer"),
 1: NodePath("../../ModuleLayers/TransportLayer")
 }
+replacement_module = ExtResource("4_getpj")
 
 [node name="PathManager" type="Node" parent="Managers"]
 script = ExtResource("3_nkgie")
@@ -7676,7 +7678,6 @@ layer = 2
 follow_viewport_enabled = true
 
 [node name="PawnBase" parent="ModuleLayers/PawnLayer" instance=ExtResource("10_emvbo")]
-visible = false
 position = Vector2(407, 250)
 
 [node name="UiInGameLayer" type="CanvasLayer" parent="ModuleLayers"]
