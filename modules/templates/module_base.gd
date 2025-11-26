@@ -82,11 +82,11 @@ func _ready() -> void:
 		nameplate.text = ""
 	add_to_group("module")
 	on_place()
-	if SignalBus:
+	if SignalBus.is_node_ready():
 		SignalBus.module_added.emit(self)
 
 func on_place() -> void:
-	if Global:
+	if Global.is_node_ready():
 		var cells = []
 		for x in size.x:
 			for y in size.y:
@@ -202,6 +202,9 @@ func _draw() -> void:
 	if show_debug && Engine.is_editor_hint():
 		for point in get_connection_points():
 			draw_circle(Vector2(point * Vector2i(64, 64)) +  Vector2(32, 32), 16, Color.GREEN)
+		for point in doors:
+			draw_rect(Rect2(Vector2(point * Vector2i(64, 64)) +  Vector2(22, 16), Vector2(20, 32)), Color.RED)
+			#draw_string(ThemeDB.fallback_font, Vector2(point * Vector2i(64, 64)) +  Vector2(32, 32), "Door", HORIZONTAL_ALIGNMENT_CENTER, -1, 16, Color.RED)
 
 func get_sprite() -> Sprite2D:
 	return sprite

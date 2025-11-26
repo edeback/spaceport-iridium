@@ -6,8 +6,8 @@
 
 [resource]
 script = ExtResource("3_0o66g")
-name = "Corrodor"
+name = "Corridor"
 scene = ExtResource("2_s7lcn")
 icon = ExtResource("1_71nqn")
-tags = Array[String](["Transportation"])
+tags = Array[String](["Corridor"])
 multiplacement = true

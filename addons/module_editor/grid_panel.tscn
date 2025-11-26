@@ -1,0 +1,63 @@
+[gd_scene load_steps=4 format=3 uid="uid://chspmkhlmun4x"]
+
+[ext_resource type="Script" uid="uid://cakj364ina7a7" path="res://addons/module_editor/grid_panel.gd" id="1_f62mt"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_f62mt"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.72464263, 0.7246426, 0.7246426, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fapes"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.9037189, 0.8640441, 0.55176675, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_detail = 5
+
+[node name="GridPanel" type="VBoxContainer" node_paths=PackedStringArray("grid_container", "base_button")]
+offset_right = 160.0
+offset_bottom = 320.0
+script = ExtResource("1_f62mt")
+grid_container = NodePath("GridContainer")
+base_button = NodePath("Button")
+
+[node name="GridContainer" type="GridContainer" parent="."]
+layout_mode = 2
+theme_override_constants/h_separation = 0
+theme_override_constants/v_separation = 0
+columns = 5
+
+[node name="Button" type="Button" parent="."]
+visible = false
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+focus_mode = 0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_f62mt")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_fapes")
+theme_override_styles/hover = SubResource("StyleBoxFlat_f62mt")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_fapes")
+toggle_mode = true
+text = "-1, -1"
+expand_icon = true
