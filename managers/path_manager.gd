@@ -1,12 +1,11 @@
 class_name PathManager
 extends Node
 
-@onready var ui_in_game: UIInGame = $"../../ModuleLayers/UiInGameLayer/UiInGame"
+@onready var ui_in_game: UIInGame = $"../../ForegroundLayers/UiInGameLayer/UiInGame"
 
-var astar:AStar2D = AStar2D.new()
 var graph:ModuleGraph = ModuleGraph.new()
 var debug_path: PackedVector2Array
-var selected_modules = {}
+var selected_modules: Array[ModuleBase] = []
 
 var recheck_pathfinding: bool = false
 
@@ -22,18 +21,16 @@ func _ready() -> void:
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if recheck_pathfinding:
 		recheck_pathfinding = false
 		check_pathfinding()
 	
 func _on_module_added(module: ModuleBase) -> void:
-	astar.add_point(module.module_id, module.module_cell)
 	graph.add_vertex(module)
 	recheck_pathfinding = true
 	
 func _on_module_removed(module: ModuleBase) -> void:
-	astar.remove_point(module.module_id)
 	graph.remove_vertex(module)
 	selected_modules.erase(module)
 	recheck_pathfinding = true
@@ -48,24 +45,33 @@ func _on_module_connection_removed(from: ModuleBase, to: ModuleBase) -> void:
 	
 func _on_module_selected(module: ModuleBase) -> void:
 	if module.selected:
-		selected_modules[module] = 1
+		selected_modules.append(module)
 	else:
 		selected_modules.erase(module)
 	recheck_pathfinding = true
 
 func check_pathfinding() -> void:
-	if selected_modules.size() == 2:
-		var modules = selected_modules.keys()
-		debug_path = run_pathfinding(modules[0], modules[1])
+	if selected_modules.size() > 1:
+		debug_path = []
+		for index in range(selected_modules.size() - 1):
+			debug_path.append_array(run_pathfinding(selected_modules[index], selected_modules[index + 1]))
 		ui_in_game.debug_path = debug_path
 	else:
 		debug_path = []
 		ui_in_game.debug_path = debug_path
 	
+func _module_path_to_point_path(path: Array[ModuleBase]) -> PackedVector2Array:
+	var point_path: PackedVector2Array = []
+	for module: ModuleBase in path:
+		point_path.append(module.module_cell)
+	return point_path
+	
 func run_pathfinding(start_module: ModuleBase, end_module: ModuleBase) -> PackedVector2Array:
-	return graph.get_point_path(start_module, end_module)
+	return _module_path_to_point_path(graph.pathfind(start_module, end_module))
 	#return astar.get_point_path(start_module.module_id, end_module.module_id)
 	
+func run_pathfinding_to_type(start_module: ModuleBase, end_type: ModuleData) -> PackedVector2Array:
+	return _module_path_to_point_path(graph.pathfind_to_type(start_module, end_type))
 
 func get_closest_module_by_cell(start_cell: Vector2i) -> ModuleBase:
 	return graph.get_closest_module_to(start_cell)

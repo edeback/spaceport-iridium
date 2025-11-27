@@ -26,7 +26,8 @@ func overlap_module(new_module: ModuleData, new_horizontal: bool) -> bool:
 	return true
 
 func _ready() -> void:
-	apply_corridor_type(CorridorType.HALLWAY if is_horizontal else CorridorType.SHAFT)
+	if not Engine.is_editor_hint():
+		apply_corridor_type(CorridorType.HALLWAY if is_horizontal else CorridorType.SHAFT)
 	for corridor_data: CorridorData in corridor_dictionary.values():
 		var sub_sprite: Sprite2D = corridor_data.get_node("Sprite2D")
 		if (sub_sprite && sub_sprite.material != null):

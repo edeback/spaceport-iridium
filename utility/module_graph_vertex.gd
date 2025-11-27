@@ -10,7 +10,7 @@ var location: Vector2
 var edges: Dictionary[ModuleGraphVertex, EdgeData]
 var subgraph: int
 
-func add_edge(destination: ModuleGraphVertex, cost: float, data: Variant = null):
+func add_edge(destination: ModuleGraphVertex, cost: float, data: Variant = null) -> void:
 	var new_edge:EdgeData = EdgeData.new()
 	new_edge.cost = cost
 	new_edge.data = data

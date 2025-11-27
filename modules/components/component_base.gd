@@ -1,5 +1,5 @@
 class_name ComponentBase
-extends Node
+extends Node2D
 
 @export var ui_info_panel_element: PackedScene
 

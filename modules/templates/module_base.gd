@@ -31,6 +31,7 @@ var module_id: int = -1
 var module_cell: Vector2i
 var module_data: ModuleData
 var components: Array[ComponentBase]
+var path_component: PathComponent
 var is_horizontal: bool = true
 
 var module_connections: Dictionary[ModuleBase, bool] = {}
@@ -165,7 +166,6 @@ func connect_doors() -> void:
 
 func remove_connections() -> void:
 	for module in module_connections:
-		Global.path_manager.astar.disconnect_points(module_id, module.module_id)
 		module.disconnect_from(self)
 		if module_connections[module]:
 			module.disconnect_door_to(self)

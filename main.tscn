@@ -7550,7 +7550,7 @@ sources/2 = SubResource("TileSetAtlasSource_dg77c")
 
 [node name="Main" type="Node" node_paths=PackedStringArray("structure_tile_map")]
 script = ExtResource("1_lvssd")
-structure_tile_map = NodePath("ModuleLayers/ModuleLayer/StructureTileMap")
+structure_tile_map = NodePath("ForegroundLayers/ModuleLayer/StructureTileMap")
 
 [node name="Managers" type="Node" parent="."]
 
@@ -7558,8 +7558,8 @@ structure_tile_map = NodePath("ModuleLayers/ModuleLayer/StructureTileMap")
 script = ExtResource("6_i5kyc")
 start_module = ExtResource("3_82xsv")
 module_layers = {
-0: NodePath("../../ModuleLayers/ModuleLayer"),
-1: NodePath("../../ModuleLayers/TransportLayer")
+0: NodePath("../../ForegroundLayers/ModuleLayer"),
+1: NodePath("../../ForegroundLayers/TransportLayer")
 }
 replacement_module = ExtResource("4_getpj")
 
@@ -7604,26 +7604,26 @@ script = ExtResource("3_055fr")
 
 [node name="BackgroundLayers" type="Node" parent="."]
 
-[node name="BackgroundLayer" type="CanvasLayer" parent="BackgroundLayers"]
+[node name="BackgroundLayers" type="CanvasLayer" parent="BackgroundLayers"]
 layer = -10
 
-[node name="BackgroundStars" type="Parallax2D" parent="BackgroundLayers/BackgroundLayer"]
+[node name="BackgroundStars" type="Parallax2D" parent="BackgroundLayers/BackgroundLayers"]
 texture_filter = 1
 scroll_scale = Vector2(0.05, 0.05)
 repeat_size = Vector2(2048, 2048)
 repeat_times = 2
 follow_viewport = false
 
-[node name="Sprite2D" type="Sprite2D" parent="BackgroundLayers/BackgroundLayer/BackgroundStars"]
+[node name="Sprite2D" type="Sprite2D" parent="BackgroundLayers/BackgroundLayers/BackgroundStars"]
 texture = ExtResource("10_vivmo")
 centered = false
 
-[node name="LocalStar" type="Parallax2D" parent="BackgroundLayers/BackgroundLayer"]
+[node name="LocalStar" type="Parallax2D" parent="BackgroundLayers/BackgroundLayers"]
 texture_filter = 1
 scroll_scale = Vector2(0.1, 0.1)
 follow_viewport = false
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="BackgroundLayers/BackgroundLayer/LocalStar"]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="BackgroundLayers/BackgroundLayers/LocalStar"]
 position = Vector2(100, 100)
 scale = Vector2(2, 2)
 sprite_frames = SubResource("SpriteFrames_gncs7")
@@ -7632,12 +7632,12 @@ frame = 72
 frame_progress = 0.17415509
 centered = false
 
-[node name="Planet" type="Parallax2D" parent="BackgroundLayers/BackgroundLayer"]
+[node name="Planet" type="Parallax2D" parent="BackgroundLayers/BackgroundLayers"]
 texture_filter = 1
 scroll_scale = Vector2(0.15, 0.15)
 follow_viewport = false
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="BackgroundLayers/BackgroundLayer/Planet"]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="BackgroundLayers/BackgroundLayers/Planet"]
 position = Vector2(600, 350)
 sprite_frames = SubResource("SpriteFrames_madyc")
 autoplay = "default"
@@ -7654,38 +7654,38 @@ position = Vector2(-204, 1308)
 [node name="AsteroidEnd" type="Marker2D" parent="BackgroundLayers/AsteroidLayer"]
 position = Vector2(-123, -405)
 
-[node name="ModuleLayers" type="Node" parent="."]
+[node name="ForegroundLayers" type="Node" parent="."]
 
-[node name="ModuleLayer" type="CanvasLayer" parent="ModuleLayers"]
+[node name="ModuleLayer" type="CanvasLayer" parent="ForegroundLayers"]
 layer = 0
 follow_viewport_enabled = true
 
-[node name="CanvasModulate" type="CanvasModulate" parent="ModuleLayers/ModuleLayer"]
+[node name="CanvasModulate" type="CanvasModulate" parent="ForegroundLayers/ModuleLayer"]
 color = Color(0.552941, 0.552941, 0.552941, 1)
 
-[node name="StructureTileMap" type="TileMapLayer" parent="ModuleLayers/ModuleLayer"]
+[node name="StructureTileMap" type="TileMapLayer" parent="ForegroundLayers/ModuleLayer"]
 z_index = -1
 tile_set = SubResource("TileSet_4c57u")
 
-[node name="TransportLayer" type="CanvasLayer" parent="ModuleLayers"]
+[node name="TransportLayer" type="CanvasLayer" parent="ForegroundLayers"]
 follow_viewport_enabled = true
 
-[node name="CanvasModulate" type="CanvasModulate" parent="ModuleLayers/TransportLayer"]
+[node name="CanvasModulate" type="CanvasModulate" parent="ForegroundLayers/TransportLayer"]
 color = Color(0.552941, 0.552941, 0.552941, 1)
 
-[node name="PawnLayer" type="CanvasLayer" parent="ModuleLayers"]
+[node name="PawnLayer" type="CanvasLayer" parent="ForegroundLayers"]
 layer = 2
 visible = false
 follow_viewport_enabled = true
 
-[node name="PawnBase" parent="ModuleLayers/PawnLayer" instance=ExtResource("10_emvbo")]
+[node name="PawnBase" parent="ForegroundLayers/PawnLayer" instance=ExtResource("10_emvbo")]
 position = Vector2(407, 250)
 
-[node name="UiInGameLayer" type="CanvasLayer" parent="ModuleLayers"]
+[node name="UiInGameLayer" type="CanvasLayer" parent="ForegroundLayers"]
 layer = 9
 follow_viewport_enabled = true
 
-[node name="UiInGame" parent="ModuleLayers/UiInGameLayer" instance=ExtResource("9_ipixf")]
+[node name="UiInGame" parent="ForegroundLayers/UiInGameLayer" instance=ExtResource("9_ipixf")]
 mouse_filter = 1
 
 [node name="HUD" type="CanvasLayer" parent="."]

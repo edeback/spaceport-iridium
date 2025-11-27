@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" uid="uid://d18v64pj3n5v4" path="res://modules/components/ore_processor_component.gd" id="1_jiwd3"]
 
-[node name="ProcessorComponent" type="Node"]
+[node name="ProcessorComponent" type="Node2D"]
 script = ExtResource("1_jiwd3")

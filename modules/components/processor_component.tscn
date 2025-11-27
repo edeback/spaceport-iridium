@@ -3,6 +3,6 @@
 [ext_resource type="Script" uid="uid://ccllhshj2dwgq" path="res://modules/components/processor_component.gd" id="1_od84g"]
 [ext_resource type="PackedScene" uid="uid://c4yrhq6oqft0h" path="res://ui/windows/processor_component_ui.tscn" id="2_6yogk"]
 
-[node name="ProcessorComponent" type="Node"]
+[node name="ProcessorComponent" type="Node2D"]
 script = ExtResource("1_od84g")
 ui_info_panel_element = ExtResource("2_6yogk")

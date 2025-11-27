@@ -24,6 +24,8 @@ var active_layer: InteractionLayer = InteractionLayer.MODULE:
 		if active_layer != new_layer:
 			active_layer = new_layer
 			active_layer_changed.emit(active_layer)
+			
+var modules_by_type: Dictionary = {}
 		
 signal active_layer_changed(new_layer: InteractionLayer)
 
@@ -55,6 +57,19 @@ func get_module_by_cell_active_layer(cell: Vector2i) -> ModuleBase:
 
 func get_module_by_cell(layer: InteractionLayer, cell: Vector2i) -> ModuleBase:
 	return layer_data[layer].cell_to_module.get(cell)
+	
+func get_modules_by_type(module_data: ModuleData) -> Array[ModuleBase]:
+	return modules_by_type.get_or_add(module_data)
+	
+func get_nearest_module_by_type(position: Vector2, module_data: ModuleData) -> ModuleBase:
+	var dist: float = -1
+	var closest_module: ModuleBase = null
+	for module: ModuleBase in get_modules_by_type(module_data):
+		var new_dist: float = module.position.distance_squared_to(position)
+		if dist < 0 or new_dist < dist:
+			dist = new_dist
+			closest_module = module
+	return closest_module
 
 func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true) -> void:
 	var new_module: ModuleBase = module_data.scene.instantiate()
@@ -82,6 +97,8 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 		for y in new_module.size.y:
 			layer_data[module_data.interaction_layer].cell_to_module[cell + Vector2i(x, y)] = new_module
 	id_to_module[module_id] = new_module
+	var module_array: Array = modules_by_type.get_or_add(module_data, [])
+	module_array.append(new_module)
 	new_module.make_connections()
 
 func remove_module(module: ModuleBase) -> bool:
@@ -97,6 +114,8 @@ func remove_module(module: ModuleBase) -> bool:
 			layer_data[module.module_data.interaction_layer].cell_to_module.erase(module.module_cell + Vector2i(x,y))
 	id_to_module.erase(module.module_id)
 	layer_data[module.module_data.interaction_layer].canvas.remove_child(module)
+	var module_array: Array = modules_by_type.get_or_add(module.module_data, [])
+	module_array.erase(module)
 	module.queue_free()
 	if module.module_data != replacement_module and module.module_data.interaction_layer == InteractionLayer.MODULE:
 		for x in replacement_size.x:
