@@ -55,3 +55,7 @@ func get_connection_points() -> Array[Vector2i]:
 func connect_door_to(other_module: ModuleBase) -> void:
 	super(other_module)
 	door.visible = true
+
+func disconnect_door_to(other_module: ModuleBase) -> void:
+	super(other_module)
+	door.visible = false

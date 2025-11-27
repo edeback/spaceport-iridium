@@ -9,6 +9,7 @@ extends Control
 
 var module_data_groups: Dictionary = {}
 var preview_model : ModuleBase
+var skip_emit: bool = false
 
 const MODULE_PATH: String = "res://data/modules/"
 
@@ -17,7 +18,8 @@ func _ready() -> void:
 	load_moduledatas()
 	create_module_button_groups()
 	create_resource_display()
-	Global.world_manager.show_module_layer(ModuleBase.InteractionLayer.MODULE)
+	Global.world_manager.show_module_layer(WorldManager.InteractionLayer.MODULE)
+	Global.world_manager.active_layer_changed.connect(_on_active_layer_changed)
 	Global.ui_in_game.input_mode_changed.connect(_on_input_mode_changed)
 
 func get_all_file_paths(path: String) -> Array[String]:
@@ -72,8 +74,8 @@ func _process(delta: float) -> void:
 
 
 func _on_check_button_toggled(toggled_on: bool) -> void:
-	#Global.world_manager.show_module_layer(ModuleBase.InteractionLayer.TRANSPORT if toggled_on else ModuleBase.InteractionLayer.MODULE)
-	Global.world_manager.set_module_layer_visibility(ModuleBase.InteractionLayer.TRANSPORT, toggled_on)
+	#Global.world_manager.show_module_layer(WorldManager.InteractionLayer.TRANSPORT if toggled_on else WorldManager.InteractionLayer.MODULE)
+	Global.world_manager.set_module_layer_visibility(WorldManager.InteractionLayer.CORRIDOR, toggled_on)
 
 func _on_info_button_pressed() -> void:
 	Global.ui_in_game.change_input_mode(UIInGame.InputMode.None)
@@ -81,5 +83,12 @@ func _on_info_button_pressed() -> void:
 func _on_input_mode_changed(new_mode: UIInGame.InputMode) -> void:
 	%ModuleInfoButton.disabled = (new_mode != UIInGame.InputMode.Module)
 
+func _on_active_layer_changed(new_layer: WorldManager.InteractionLayer) -> void:
+	skip_emit = true
+	%InteractionLayerOptions.selected = new_layer
+	skip_emit = false
+	
+
 func _on_interaction_layer_changed(new_layer: int) -> void:
-	Global.world_manager.show_module_layer(new_layer)
+	if not skip_emit:
+		Global.world_manager.show_module_layer(new_layer)

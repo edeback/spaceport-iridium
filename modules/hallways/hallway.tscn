@@ -53,9 +53,9 @@ current_type = 0
 door = NodePath("Offset/Door")
 connection_points = Array[Vector2i]([Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(0, 1)])
 blocks_building = false
-interaction_layer = 1
 
 [node name="Hallway" type="Node2D" parent="Offset" index="0"]
+visible = false
 script = ExtResource("3_jxdbx")
 connection_points = Array[Vector2i]([Vector2i(1, 0), Vector2i(-1, 0)])
 

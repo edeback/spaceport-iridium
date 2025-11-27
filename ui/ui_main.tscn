@@ -233,7 +233,8 @@ theme_override_constants/margin_bottom = 4
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/PanelContainer/MarginContainer"]
 layout_mode = 2
 
-[node name="OptionButton" type="OptionButton" parent="VBoxContainer/PanelContainer/MarginContainer/HBoxContainer"]
+[node name="InteractionLayerOptions" type="OptionButton" parent="VBoxContainer/PanelContainer/MarginContainer/HBoxContainer"]
+unique_name_in_owner = true
 layout_mode = 2
 selected = 0
 item_count = 2
@@ -279,5 +280,5 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_1h8lm")
 shortcut = SubResource("Shortcut_xyc40")
 text = "Module Info"
 
-[connection signal="item_selected" from="VBoxContainer/PanelContainer/MarginContainer/HBoxContainer/OptionButton" to="." method="_on_interaction_layer_changed"]
+[connection signal="item_selected" from="VBoxContainer/PanelContainer/MarginContainer/HBoxContainer/InteractionLayerOptions" to="." method="_on_interaction_layer_changed"]
 [connection signal="pressed" from="VBoxContainer/Modules/MarginContainer/VBoxContainer/MarginContainer/ModuleInfoButton" to="." method="_on_info_button_pressed"]

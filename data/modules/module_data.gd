@@ -9,3 +9,5 @@ extends Resource
 @export var multiplacement: bool = false
 ## If hidden, does not show in UI
 @export var hidden: bool = false
+
+@export var interaction_layer: WorldManager.InteractionLayer = WorldManager.InteractionLayer.MODULE

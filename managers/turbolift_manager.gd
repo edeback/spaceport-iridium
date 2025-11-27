@@ -11,7 +11,7 @@ var start_lift: ModuleTurbolift = null
 func _ready() -> void:
 	Global.turbolift_manager = self
 	SignalBus.module_removed.connect(_on_module_removed)
-	default_shaft.reparent(Global.world_manager.layer_data[ModuleBase.InteractionLayer.TRANSPORT].canvas)
+	default_shaft.reparent(Global.world_manager.layer_data[WorldManager.InteractionLayer.CORRIDOR].canvas)
 
 func add_turboshaft(start: ModuleTurbolift, end: ModuleTurbolift) -> void:
 	var existing_shaft = lift_graph.get_edge(start, end)
@@ -25,8 +25,8 @@ func add_turboshaft(start: ModuleTurbolift, end: ModuleTurbolift) -> void:
 	newline.clear_points()
 	newline.add_point(start.get_global_center())
 	newline.add_point(end.get_global_center())
-	#newline.reparent(Global.world_manager.layer_data[ModuleBase.InteractionLayer.TRANSPORT].canvas)
-	Global.world_manager.layer_data[ModuleBase.InteractionLayer.TRANSPORT].canvas.add_child(newline)
+	#newline.reparent(Global.world_manager.layer_data[InteractionLayer.TRANSPORT].canvas)
+	Global.world_manager.layer_data[WorldManager.InteractionLayer.CORRIDOR].canvas.add_child(newline)
 	lift_graph.add_edge(start, end, 1, newline)
 	SignalBus.module_connection_added.emit(start, end, start.module_cell.distance_to(end.module_cell) / 2)
 	pass

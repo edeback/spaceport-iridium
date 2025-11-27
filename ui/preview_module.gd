@@ -8,7 +8,7 @@ const SHADER_PARAM_PLACEABLE = "PLACEABLE"
 
 var module_size: Vector2i
 var connection_points: Array[Vector2i]
-var module_layer: ModuleBase.InteractionLayer
+var module_layer: WorldManager.InteractionLayer
 var last_cell: Vector2i
 var offset: Vector2 = Vector2(0, 0)
 var is_horizontal: bool = true
@@ -26,7 +26,7 @@ var module_data: ModuleData:
 			module_size = temp_module.size
 			temp_module.is_horizontal = is_horizontal
 			connection_points = temp_module.get_connection_points()
-			module_layer = temp_module.interaction_layer
+			module_layer = module_data.interaction_layer
 			var temp_sprite: Sprite2D = temp_module.get_sprite()
 			sprite.texture = temp_sprite.texture
 			sprite.offset = temp_sprite.offset
@@ -75,8 +75,8 @@ func _has_possible_connections(module_cell: Vector2i) -> bool:
 			return true
 	
 	# For modules, can also be over a hallway
-	if module_layer == ModuleBase.InteractionLayer.MODULE:
-		return Global.world_manager.has_overlaps(ModuleBase.InteractionLayer.TRANSPORT, module_cell, module_size)
+	if module_layer == WorldManager.InteractionLayer.MODULE:
+		return Global.world_manager.has_overlaps(WorldManager.InteractionLayer.CORRIDOR, module_cell, module_size)
 		
 	return false
 

@@ -11,3 +11,4 @@ scene = ExtResource("2_s7lcn")
 icon = ExtResource("1_71nqn")
 tags = Array[String](["Corridor"])
 multiplacement = true
+interaction_layer = 1

@@ -15,7 +15,6 @@ var module: ModuleBase
 func init_from_editor(editor_in: EditorProperty) -> void:
 	editor = editor_in
 	module = editor.get_edited_object() as ModuleBase
-	print(editor.get_edited_object())
 	refresh()
 	pass
 

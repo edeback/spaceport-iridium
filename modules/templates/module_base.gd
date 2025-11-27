@@ -2,8 +2,6 @@
 class_name ModuleBase
 extends Node2D
 
-enum InteractionLayer { MODULE, TRANSPORT }
-
 @export var sprite: Sprite2D
 @onready var footprint: Area2D = $Offset/Footprint
 @onready var nameplate: Label = $Offset/Sprite/Nameplate
@@ -28,8 +26,6 @@ enum InteractionLayer { MODULE, TRANSPORT }
 @export var offset: Node2D
 
 @export var doors: Array[Vector2i] = []
-
-@export var interaction_layer: InteractionLayer = InteractionLayer.MODULE
 
 var module_id: int = -1
 var module_cell: Vector2i
@@ -119,7 +115,7 @@ func _update_shader() -> void:
 		
 func update_placeable() -> void:
 	# Footprint must not overlap
-	if Global.world_manager.has_overlaps(interaction_layer, module_cell, size):
+	if Global.world_manager.has_overlaps(module_data.interaction_layer, module_cell, size):
 		can_place = false
 		return
 	# Must be connected to at least one other module
@@ -128,7 +124,7 @@ func update_placeable() -> void:
 
 func _has_possible_connections() -> bool:
 	for point in get_connection_points():
-		if Global.world_manager.has_overlaps(interaction_layer, module_cell + point):
+		if Global.world_manager.has_overlaps(module_data.interaction_layer, module_cell + point):
 			return true
 	return false
 	
@@ -138,7 +134,7 @@ func can_connect(other_module: ModuleBase) -> bool:
 func _find_connections() -> Array[ModuleBase]:
 	var connected_modules:Array[ModuleBase] = []
 	for point in get_connection_points():
-		for module in Global.world_manager.get_overlaps(interaction_layer, module_cell + point):
+		for module in Global.world_manager.get_overlaps(module_data.interaction_layer, module_cell + point):
 			if module != self:
 				connected_modules.append(module)
 	return connected_modules
@@ -147,7 +143,7 @@ func make_connections() -> void:
 	var connected_modules: Array[ModuleBase] = _find_connections()
 	for module in connected_modules:
 		if module.can_connect(self):
-			module_connections[module] = true
+			connect_to(module)
 			module.connect_to(self)
 			SignalBus.module_connection_added.emit(self, module, module_cell.distance_to(module.module_cell))
 	connect_doors()
@@ -159,7 +155,7 @@ func has_door(cell_to_check: Vector2i) -> bool:
 	return false
 			
 func connect_doors() -> void:
-	var layer_to_check: InteractionLayer = (1 - interaction_layer) as InteractionLayer
+	var layer_to_check: WorldManager.InteractionLayer = (1 - module_data.interaction_layer) as WorldManager.InteractionLayer
 	for point: Vector2i in doors:
 		for module: ModuleBase in Global.world_manager.get_overlaps(layer_to_check, module_cell + point):
 			if module != self and module.has_door(module_cell + point):
@@ -171,18 +167,23 @@ func remove_connections() -> void:
 	for module in module_connections:
 		Global.path_manager.astar.disconnect_points(module_id, module.module_id)
 		module.disconnect_from(self)
+		if module_connections[module]:
+			module.disconnect_door_to(self)
 		SignalBus.module_connection_removed.emit(module_id, module.module_id)
 	module_connections.clear()
 
 func connect_to(other_module: ModuleBase) -> void:
-	module_connections[other_module] = true
+	module_connections[other_module] = false
 	
 func disconnect_from(other_module: ModuleBase) -> void:
 	module_connections.erase(other_module)
 	
 func connect_door_to(other_module: ModuleBase) -> void:
 	module_connections[other_module] = true
-	
+
+func disconnect_door_to(_other_module: ModuleBase) -> void:
+	pass
+
 func get_paths() -> void:
 	for path in walking_paths:
 		var point_count: int = path.curve.point_count

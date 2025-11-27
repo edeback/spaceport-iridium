@@ -43,12 +43,11 @@ layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_top = -150.0
-offset_right = 300.0
+offset_right = 16.0
+offset_bottom = 16.0
 grow_vertical = 0
 
 [node name="BaseScreen" type="MarginContainer" parent="MarginContainer"]
-custom_minimum_size = Vector2(300, 150)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4

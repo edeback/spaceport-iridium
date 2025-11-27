@@ -34,6 +34,8 @@ func change_input_mode(mode: InputMode, module: ModuleData = null) -> void:
 	cur_module = module
 	preview_module.module_data = module
 	input_mode_changed.emit(mode)
+	if module:
+		Global.world_manager.show_module_layer(module.interaction_layer)
 	pass
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -102,8 +104,9 @@ func update_multiplacement() -> void:
 			
 func finalize_multiplacement() -> void:
 	for mod: PreviewModule in preview_multimodules:
-		if mod and mod.can_place:
-			Global.world_manager.add_module(cur_module, mod.last_cell, mod.is_horizontal)
+		if mod:
+			if mod.can_place:
+				Global.world_manager.add_module(cur_module, mod.last_cell, mod.is_horizontal)
 			mod.queue_free()
 	preview_multimodules.clear()
 	cur_input_mode = InputMode.Module
