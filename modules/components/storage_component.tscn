@@ -29,15 +29,12 @@ border_width_bottom = 1
 border_color = Color(0, 0, 0, 1)
 corner_detail = 6
 
-[node name="StorageComponent" type="Control" node_paths=PackedStringArray("storage_ui")]
-layout_mode = 3
-anchors_preset = 0
+[node name="StorageComponent" type="Node2D" node_paths=PackedStringArray("storage_ui")]
 script = ExtResource("1_hrwh1")
 storage_ui = NodePath("ProgressBar")
 ui_info_panel_element = ExtResource("2_5elv5")
 
 [node name="ProgressBar" type="ProgressBar" parent="."]
-layout_mode = 0
 offset_left = 42.0
 offset_top = 8.0
 offset_right = 54.0

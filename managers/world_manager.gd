@@ -58,8 +58,8 @@ func get_module_by_cell_active_layer(cell: Vector2i) -> ModuleBase:
 func get_module_by_cell(layer: InteractionLayer, cell: Vector2i) -> ModuleBase:
 	return layer_data[layer].cell_to_module.get(cell)
 	
-func get_modules_by_type(module_data: ModuleData) -> Array[ModuleBase]:
-	return modules_by_type.get_or_add(module_data)
+func get_modules_by_type(module_data: ModuleData) -> Array:
+	return modules_by_type.get_or_add(module_data, [])
 	
 func get_nearest_module_by_type(position: Vector2, module_data: ModuleData) -> ModuleBase:
 	var dist: float = -1
@@ -92,13 +92,13 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 	new_module.module_cell = cell
 	new_module.module_data = module_data
 	new_module.is_horizontal = is_horizontal
-	module_layers[module_data.interaction_layer].add_child(new_module)
 	for x in new_module.size.x:
 		for y in new_module.size.y:
 			layer_data[module_data.interaction_layer].cell_to_module[cell + Vector2i(x, y)] = new_module
 	id_to_module[module_id] = new_module
 	var module_array: Array = modules_by_type.get_or_add(module_data, [])
 	module_array.append(new_module)
+	module_layers[module_data.interaction_layer].add_child(new_module)
 	new_module.make_connections()
 
 func remove_module(module: ModuleBase) -> bool:

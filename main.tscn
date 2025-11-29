@@ -7675,7 +7675,6 @@ color = Color(0.552941, 0.552941, 0.552941, 1)
 
 [node name="PawnLayer" type="CanvasLayer" parent="ForegroundLayers"]
 layer = 2
-visible = false
 follow_viewport_enabled = true
 
 [node name="PawnBase" parent="ForegroundLayers/PawnLayer" instance=ExtResource("10_emvbo")]

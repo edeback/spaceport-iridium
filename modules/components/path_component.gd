@@ -4,6 +4,11 @@ extends ComponentBase
 
 var astar: AStar2D = AStar2D.new()
 
+class PathTraversalEdgeData:
+	var start_pos: Vector2
+	var end_pos: Vector2
+	var edge_meta: String
+
 @export var show_debug: bool = false
 
 @export var connection_points: Array[Vector2i]:
@@ -36,6 +41,28 @@ func _ready() -> void:
 	for edge in path_edges:
 		astar.connect_points(edge.x, edge.y)
 	owner_module.path_component = self
+	
+func get_path_through_module(start_module: ModuleBase, end_module: ModuleBase) -> Array[PathTraversalEdgeData]:
+	var path: Array[PathTraversalEdgeData] = []
+	var start_index: int = -1
+	if module_connections.has(start_module):
+		start_index = module_connections[start_module]
+	var end_index: int = -1
+	if module_connections.has(end_module):
+		end_index = module_connections[end_module]
+	if start_index != -1 and end_index != -1 and start_index != end_index:
+		var id_path: PackedInt64Array = astar.get_id_path(start_index, end_index)
+		for index in range(id_path.size() - 1):
+			var edge_data: PathTraversalEdgeData = PathTraversalEdgeData.new()
+			edge_data.start_pos = path_points[id_path[index]]
+			edge_data.end_pos = path_points[id_path[index + 1]]
+			# Gotta check which way we put it in the path_edges dict
+			if path_edges.has(Vector2i(id_path[index], id_path[index + 1])):
+				edge_data.edge_meta = path_edges[Vector2i(id_path[index], id_path[index + 1])]
+			elif path_edges.has(Vector2i(id_path[index + 1], id_path[index])):
+				edge_data.edge_meta = path_edges[Vector2i(id_path[index + 1], id_path[index])]
+			path.append(edge_data)
+	return path
 
 ## Do we maybe have any connection?
 func _has_possible_connections() -> bool:

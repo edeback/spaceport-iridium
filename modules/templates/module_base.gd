@@ -78,13 +78,13 @@ func _ready() -> void:
 	else:
 		nameplate.text = ""
 	add_to_group("module")
-	on_place()
 	if SignalBus.is_node_ready():
 		SignalBus.module_added.emit(self)
+	on_place()
 
 func on_place() -> void:
-	if Global.is_node_ready():
-		var cells = []
+	if Global.is_node_ready() and module_data.interaction_layer == WorldManager.InteractionLayer.MODULE:
+		var cells: Array[Vector2i] = []
 		for x in size.x:
 			for y in size.y:
 				cells.append(module_cell + Vector2i(x, y))

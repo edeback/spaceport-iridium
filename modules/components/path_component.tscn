@@ -15,4 +15,4 @@ Vector2i(3, 4): "",
 Vector2i(4, 5): "",
 Vector2i(5, 6): ""
 })
-door_indices = null
+door_indices = Array[int]([6])

@@ -4,6 +4,8 @@ extends ModuleBase
 
 enum CorridorType { NONE, HALLWAY, SHAFT, HALLWAY_AND_SHAFT }
 
+var truss: ModuleData = preload("res://data/modules/truss.tres")
+
 @export var corridor_dictionary: Dictionary[CorridorType, CorridorData] = {}
 
 @export var current_type: CorridorType = CorridorType.NONE:
@@ -33,6 +35,12 @@ func _ready() -> void:
 		if (sub_sprite && sub_sprite.material != null):
 			sub_sprite.material = sub_sprite.material.duplicate()
 	super()
+	
+func on_place() -> void:
+	super()
+	if Global.world_manager.get_module_by_cell(WorldManager.InteractionLayer.MODULE, module_cell) == null:
+		# add a truss segment below
+		Global.world_manager.add_module(truss, module_cell)
 	
 func apply_corridor_type(new_type: CorridorType) -> void:
 	if new_type == current_type:

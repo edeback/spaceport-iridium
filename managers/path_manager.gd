@@ -60,18 +60,28 @@ func check_pathfinding() -> void:
 		debug_path = []
 		ui_in_game.debug_path = debug_path
 	
-func _module_path_to_point_path(path: Array[ModuleBase]) -> PackedVector2Array:
+func _module_path_to_point_path(path: Array[ModuleBase], use_global_position: bool = false) -> PackedVector2Array:
 	var point_path: PackedVector2Array = []
 	for module: ModuleBase in path:
-		point_path.append(module.module_cell)
+		if use_global_position:
+			point_path.append(Global.cell_to_world(module.module_cell))
+		else:
+			point_path.append(module.module_cell)
 	return point_path
-	
-func run_pathfinding(start_module: ModuleBase, end_module: ModuleBase) -> PackedVector2Array:
-	return _module_path_to_point_path(graph.pathfind(start_module, end_module))
+
+## Normally in cells, can convert to global
+func run_pathfinding(start_module: ModuleBase, end_module: ModuleBase, use_global_position: bool = false) -> PackedVector2Array:
+	return _module_path_to_point_path(graph.pathfind(start_module, end_module), use_global_position)
 	#return astar.get_point_path(start_module.module_id, end_module.module_id)
 	
-func run_pathfinding_to_type(start_module: ModuleBase, end_type: ModuleData) -> PackedVector2Array:
-	return _module_path_to_point_path(graph.pathfind_to_type(start_module, end_type))
+func run_pathfinding_to_type(start_module: ModuleBase, end_type: ModuleData, use_global_position: bool = false) -> PackedVector2Array:
+	return _module_path_to_point_path(graph.pathfind_to_type(start_module, end_type), use_global_position)
+	
+func run_pathfinding_by_module(start_module: ModuleBase, end_module: ModuleBase) -> Array[ModuleBase]:
+	return graph.pathfind(start_module, end_module)
+	
+func run_pathfinding_to_type_by_module(start_module: ModuleBase, end_type: ModuleData) -> Array[ModuleBase]:
+	return graph.pathfind_to_type(start_module, end_type)
 
 func get_closest_module_by_cell(start_cell: Vector2i) -> ModuleBase:
 	return graph.get_closest_module_to(start_cell)
