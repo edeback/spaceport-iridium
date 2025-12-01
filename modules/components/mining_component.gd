@@ -12,6 +12,7 @@ var output_resource: ResourceData
 
 var processing: bool = false
 var current_process_time: float = 0
+var mining_job: Job_MineAsteroid = null
 
 signal processor_progress_changed(new_progress: float)
 
@@ -22,12 +23,12 @@ func _ready() -> void:
 	assert(power_consumer != null, "Processor must have power_consumer!")
 	assert(time_to_process > 0, "Processor time_to_process must be > 0!")
 	add_to_group("processor")
-	output_resource = base_output_resource.duplicate()
-	output_resource.base_resource = base_output_resource
-	var mutiple: float = 0.0
-	for resource_data: ResourceData in sub_resources:
-		mutiple += 0.1
-		output_resource.sub_resources[resource_data] = mutiple
+	#output_resource = base_output_resource.duplicate()
+	#output_resource.base_resource = base_output_resource
+	#var mutiple: float = 0.0
+	#for resource_data: ResourceData in sub_resources:
+		#mutiple += 0.1
+		#output_resource.sub_resources[resource_data] = mutiple
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -36,14 +37,22 @@ func _process(delta: float) -> void:
 		# Do nothing if unpowered
 		last_error = "No power!"
 		return
-	if continuous:
-		_continuous_processing(delta)
-	else:
-		_stepwise_processing(delta)
+	if mining_job == null and _can_output(1.0):
+		mining_job = Job_MineAsteroid.new()
+		mining_job.requesting_module = owner_module
+		mining_job.job_end.connect(mining_job_complete)
+		Global.job_manager.add_job(mining_job)
+	#if continuous:
+		#_continuous_processing(delta)
+	#else:
+		#_stepwise_processing(delta)
 	pass
 
+func mining_job_complete() -> void:
+	mining_job = null
+
 func _can_output(fraction: float = 1.0) -> bool:
-	return output_storage.can_deposit(output_resource, fraction)
+	return output_storage.space_available() >= fraction
 	
 func _deposit_outputs(fraction: float = 1.0) -> void:
 	var doublecheck: bool = output_storage.deposit(output_resource, fraction)

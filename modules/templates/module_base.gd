@@ -1,6 +1,6 @@
 @tool
 class_name ModuleBase
-extends Node2D
+extends ObjectBase
 
 @export var sprite: Sprite2D
 @onready var footprint: Area2D = $Offset/Footprint
@@ -30,7 +30,6 @@ extends Node2D
 var module_id: int = -1
 var module_cell: Vector2i
 var module_data: ModuleData
-var components: Array[ComponentBase]
 var path_component: PathComponent
 var is_horizontal: bool = true
 
@@ -141,6 +140,9 @@ func _find_connections() -> Array[ModuleBase]:
 	return connected_modules
 	
 func make_connections() -> void:
+	if path_component != null:
+		path_component.make_connections()
+		return
 	var connected_modules: Array[ModuleBase] = _find_connections()
 	for module in connected_modules:
 		if module.can_connect(self):
@@ -169,7 +171,7 @@ func remove_connections() -> void:
 		module.disconnect_from(self)
 		if module_connections[module]:
 			module.disconnect_door_to(self)
-		SignalBus.module_connection_removed.emit(module_id, module.module_id)
+		SignalBus.module_connection_removed.emit(self, module)
 	module_connections.clear()
 
 func connect_to(other_module: ModuleBase) -> void:

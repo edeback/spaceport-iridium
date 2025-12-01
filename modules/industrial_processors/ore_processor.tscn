@@ -43,14 +43,12 @@ scale = Vector2(2, 1)
 power_consumption_component = NodePath("../PowerConsumptionComponent")
 
 [node name="Input Storage" parent="." index="7" instance=ExtResource("5_83mgx")]
-offset_left = -32.0
-offset_right = -32.0
+position = Vector2(-32, 0)
 stored_resources = Array[ExtResource("8_arklq")]([ExtResource("3_560w6")])
 accepts_exports = false
 
 [node name="Output Storage" parent="." index="8" instance=ExtResource("5_83mgx")]
-offset_left = 64.0
-offset_right = 64.0
+position = Vector2(64, 0)
 priority = -1
 stored_resources = Array[ExtResource("8_arklq")]([ExtResource("9_8w55x"), ExtResource("10_vgcqb"), ExtResource("11_85tfa"), ExtResource("12_lqugb"), ExtResource("13_xsx6o"), ExtResource("14_q5qum")])
 accepts_imports = false

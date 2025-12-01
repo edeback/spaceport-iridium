@@ -3,7 +3,6 @@ extends Control
 
 @onready var selector: Node2D = $Selector
 @onready var preview_module: PreviewModule = $Selector/PreviewModule
-@onready var structure_tile_map: TileMapLayer = $"../StructureTileMap"
 
 @export var module_info_panel: PackedScene
 var cur_module_info_panel: ModuleInfoIngamePanel

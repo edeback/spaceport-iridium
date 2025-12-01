@@ -42,6 +42,19 @@ func _ready() -> void:
 		astar.connect_points(edge.x, edge.y)
 	owner_module.path_component = self
 	
+func get_closest_path_point(local_vec: Vector2) -> Vector2i:
+	var index: int = astar.get_closest_point(local_vec)
+	if index >= 0:
+		return path_points[index]
+	return Vector2i.ZERO
+	
+func get_connection_point_from(prev_module: ModuleBase) -> Vector2i:
+	if module_connections.has(prev_module):
+		var connection_index: int = module_connections[prev_module]
+		if connection_index < path_points.size():
+			return path_points[connection_index]
+	return Vector2i.ZERO
+	
 func get_path_through_module(start_module: ModuleBase, end_module: ModuleBase) -> Array[PathTraversalEdgeData]:
 	var path: Array[PathTraversalEdgeData] = []
 	var start_index: int = -1
@@ -124,7 +137,7 @@ func connect_doors() -> void:
 	for index: int in door_indices:
 		var door_cell: Vector2i = Global.world_to_cell(path_points[index])
 		for module: ModuleBase in Global.world_manager.get_overlaps(layer_to_check, owner_module.module_cell + door_cell):
-			if module != owner_module and module.path_component.try_connect_door(owner_module, owner_module.module_cell + door_cell):
+			if module != owner_module and module.path_component and module.path_component.try_connect_door(owner_module, owner_module.module_cell + door_cell):
 				module_connections[module] = index
 				door_connected.emit(door_cell)
 				SignalBus.module_connection_added.emit(owner_module, module, 1)

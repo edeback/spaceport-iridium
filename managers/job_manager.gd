@@ -2,46 +2,43 @@ class_name JobManager
 extends Node
 
 # Sorted low to high prio, as high prio is often removed first
-var job_board: Array[JobData] = []
+var job_board: Array[JobBase] = []
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	Global.job_manager = self
-	pass # Replace with function body.
-
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	# Temp insta-run jobs
-	var current_jobs: Array[JobData] = []
-	for job: JobData in job_board:
-		job.process_job()
-		if !job.is_finished():
-			current_jobs.append(job)
-	job_board = current_jobs
-	pass
+#func _process(delta: float) -> void:
+	## Temp insta-run jobs
+	#for index in range(job_board.size() -1, -1, -1):
+		#var job: JobBase = job_board[index]
+		#job.process_job(delta)
+		#if !job.is_finished():
+			#job_board.erase(job)
+	#pass
 
-func add_job(module: ModuleBase, job_data: JobData) -> void:
+func add_job(job_data: JobBase) -> void:
 	if job_board.is_empty():
 		job_board.append(job_data)
 	else:
-		job_board.insert(job_board.bsearch_custom(job_data.priority, sort_priority_ascending), job_data)
+		job_board.insert(job_board.bsearch_custom(job_data, sort_priority_ascending), job_data)
 	pass
 	
-func remove_job(job_data: JobData) -> void:
+func remove_job(job_data: JobBase) -> void:
 	job_board.erase(job_data)
 	pass
 
-func find_job() -> JobData:
-	if job_board.size() > 0:
-		return job_board.back()
-	return null
+#func find_job() -> JobBase:
+	#if job_board.size() > 0:
+		#return job_board.back()
+	#return null
 	
-func get_job() -> JobData:
+func get_job() -> JobBase:
 	return job_board.pop_back()
 
-func sort_priority_decending(a: JobData, b: JobData) -> bool:
+func sort_priority_decending(a: JobBase, b: JobBase) -> bool:
 	return a.priority > b.priority
 
-func sort_priority_ascending(a: JobData, b: JobData) -> bool:
+func sort_priority_ascending(a: JobBase, b: JobBase) -> bool:
 	return a.priority < b.priority
