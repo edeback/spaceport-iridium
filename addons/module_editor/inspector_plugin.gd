@@ -3,7 +3,7 @@ extends EditorInspectorPlugin
 var grid_panel = preload("res://addons/module_editor/grid_panel.tscn")
 
 func _can_handle(object: Object) -> bool:
-	return object is ModuleBase
+	return object is ModuleBase or object is StructureComponent
 	
 func _parse_begin(object: Object) -> void:
 	pass

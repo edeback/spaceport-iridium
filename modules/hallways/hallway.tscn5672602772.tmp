@@ -10,12 +10,6 @@
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="5_eidsi"]
 [ext_resource type="PackedScene" uid="uid://cbryy1xran3ym" path="res://modules/components/structure_component.tscn" id="8_eidsi"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_eidsi"]
-shader = ExtResource("3_gfe75")
-shader_parameter/PREVIEW = false
-shader_parameter/PLACEABLE = true
-shader_parameter/SELECTED = false
-
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_gavq1"]
 shader = ExtResource("3_gfe75")
 shader_parameter/PREVIEW = false
@@ -28,13 +22,19 @@ shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xa3dt"]
+shader = ExtResource("3_gfe75")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_6yc0r"]
 shader = ExtResource("3_gfe75")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_xa3dt"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hs38r"]
 shader = ExtResource("3_gfe75")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -44,7 +44,7 @@ shader_parameter/SELECTED = false
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
-[node name="Module" node_paths=PackedStringArray("corridor_dictionary", "door") instance=ExtResource("1_fsw0g")]
+[node name="Module" node_paths=PackedStringArray("corridor_dictionary", "door", "components") instance=ExtResource("1_fsw0g")]
 script = ExtResource("2_eidsi")
 corridor_dictionary = {
 1: NodePath("Offset/Hallway"),
@@ -54,6 +54,7 @@ corridor_dictionary = {
 current_type = 0
 door = NodePath("Offset/Door")
 blocks_building = false
+components = [NodePath("PathComponent"), null, NodePath("PathComponent"), NodePath("PathComponent"), NodePath("Offset/Hallway/PathComponent"), NodePath("Offset/Shaft/PathComponent"), NodePath("Offset/HallwayAndShaft/PathComponent"), NodePath("PathComponent"), NodePath("StructureComponent")]
 
 [node name="Hallway" type="Node2D" parent="Offset" index="0"]
 visible = false
@@ -61,7 +62,7 @@ script = ExtResource("3_jxdbx")
 connection_points = Array[Vector2i]([Vector2i(1, 0), Vector2i(-1, 0)])
 
 [node name="Sprite2D" type="Sprite2D" parent="Offset/Hallway" index="0"]
-material = SubResource("ShaderMaterial_eidsi")
+material = SubResource("ShaderMaterial_gavq1")
 texture = ExtResource("4_6yc0r")
 region_enabled = true
 region_rect = Rect2(0, 0, 64, 64)
@@ -93,7 +94,7 @@ script = ExtResource("3_jxdbx")
 connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(0, 1)])
 
 [node name="Sprite2D" type="Sprite2D" parent="Offset/Shaft" index="0"]
-material = SubResource("ShaderMaterial_gavq1")
+material = SubResource("ShaderMaterial_q8ico")
 texture = ExtResource("4_6yc0r")
 region_enabled = true
 region_rect = Rect2(128, 0, 64, 64)
@@ -126,7 +127,7 @@ script = ExtResource("3_jxdbx")
 connection_points = Array[Vector2i]([Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(0, 1)])
 
 [node name="Sprite2D" type="Sprite2D" parent="Offset/HallwayAndShaft" index="0"]
-material = SubResource("ShaderMaterial_q8ico")
+material = SubResource("ShaderMaterial_xa3dt")
 texture = ExtResource("4_6yc0r")
 region_enabled = true
 region_rect = Rect2(64, 0, 64, 64)
@@ -168,7 +169,7 @@ region_enabled = true
 region_rect = Rect2(192, 0, 64, 64)
 
 [node name="Sprite" parent="Offset" index="4"]
-material = SubResource("ShaderMaterial_xa3dt")
+material = SubResource("ShaderMaterial_hs38r")
 texture = null
 region_enabled = false
 

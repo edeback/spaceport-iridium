@@ -25,8 +25,9 @@ shader_parameter/SELECTED = false
 resource_local_to_scene = true
 size = Vector2(126, 62)
 
-[node name="OreProcessor" instance=ExtResource("1_06jma")]
+[node name="OreProcessor" node_paths=PackedStringArray("components") instance=ExtResource("1_06jma")]
 blocks_building = true
+components = [NodePath("PathComponent"), NodePath("PathComponent"), NodePath("StructureComponent")]
 
 [node name="Sprite" parent="Offset" index="0"]
 material = SubResource("ShaderMaterial_pj0q4")
@@ -34,27 +35,30 @@ material = SubResource("ShaderMaterial_pj0q4")
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_83mgx")
 
-[node name="PowerConsumptionComponent" parent="." index="5" instance=ExtResource("3_gtfxg")]
+[node name="PowerConsumptionComponent" parent="." index="2" instance=ExtResource("3_gtfxg")]
 power_consumption = 40.0
 
-[node name="LightingComponent" parent="." index="6" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_ohxey")]
+[node name="LightingComponent" parent="." index="3" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_ohxey")]
 position = Vector2(64, 32)
 scale = Vector2(2, 1)
 power_consumption_component = NodePath("../PowerConsumptionComponent")
 
-[node name="Input Storage" parent="." index="7" instance=ExtResource("5_83mgx")]
+[node name="Input Storage" parent="." index="4" instance=ExtResource("5_83mgx")]
 position = Vector2(-32, 0)
 stored_resources = Array[ExtResource("8_arklq")]([ExtResource("3_560w6")])
 accepts_exports = false
 
-[node name="Output Storage" parent="." index="8" instance=ExtResource("5_83mgx")]
+[node name="Output Storage" parent="." index="5" instance=ExtResource("5_83mgx")]
 position = Vector2(64, 0)
 priority = -1
 stored_resources = Array[ExtResource("8_arklq")]([ExtResource("9_8w55x"), ExtResource("10_vgcqb"), ExtResource("11_85tfa"), ExtResource("12_lqugb"), ExtResource("13_xsx6o"), ExtResource("14_q5qum")])
 accepts_imports = false
 
-[node name="ProcessorComponent" parent="." index="9" node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("14_pj0q4")]
+[node name="ProcessorComponent" parent="." index="6" node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("14_pj0q4")]
 base_resource = ExtResource("3_560w6")
 input_storage = NodePath("../Input Storage")
 output_storage = NodePath("../Output Storage")
 power_consumer = NodePath("../PowerConsumptionComponent")
+
+[node name="StructureComponent" parent="." index="7"]
+size = Vector2i(2, 1)

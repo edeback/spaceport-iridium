@@ -29,13 +29,19 @@ func remove_job(job_data: JobBase) -> void:
 	job_board.erase(job_data)
 	pass
 
-#func find_job() -> JobBase:
-	#if job_board.size() > 0:
-		#return job_board.back()
-	#return null
+func find_job(pawn: PawnBase) -> JobBase:
+	for index: int in range(job_board.size() - 1, -1, -1):
+		var job_to_do: JobBase = job_board[index]
+		if job_to_do.can_do_job(pawn):
+			job_board.remove_at(index)
+			return job_to_do
+	return null
 	
-func get_job() -> JobBase:
-	return job_board.pop_back()
+func re_sort_jobs() -> void:
+	job_board.sort_custom(sort_priority_ascending)
+	
+#func get_job() -> JobBase:
+	#return job_board.pop_back()
 
 func sort_priority_decending(a: JobBase, b: JobBase) -> bool:
 	return a.priority > b.priority

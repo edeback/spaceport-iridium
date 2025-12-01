@@ -1,4 +1,4 @@
-[gd_scene load_steps=1050 format=3 uid="uid://cgnfy2cj4760l"]
+[gd_scene load_steps=1051 format=3 uid="uid://cgnfy2cj4760l"]
 
 [ext_resource type="Script" uid="uid://nwr8gusqocd6" path="res://managers/main.gd" id="1_lvssd"]
 [ext_resource type="Script" uid="uid://dcanuqi7bdrfp" path="res://managers/camera.gd" id="3_055fr"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://ce6npnqw8s3mu" path="res://ui/ui_main.tscn" id="5_uwp6h"]
 [ext_resource type="Script" uid="uid://6mx2qi4ecq8b" path="res://managers/turbolift_manager.gd" id="6_dg77c"]
 [ext_resource type="Script" uid="uid://bsy2db6ssn3vt" path="res://managers/world_manager.gd" id="6_i5kyc"]
+[ext_resource type="Script" uid="uid://cyou4qqxr66bq" path="res://managers/structure_manager.gd" id="6_ryguw"]
 [ext_resource type="Texture2D" uid="uid://cd1lyx4unl47d" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Parts/spaceParts_089.png" id="7_ycdy4"]
 [ext_resource type="Script" uid="uid://cx2dttwf32bok" path="res://managers/job_manager.gd" id="8_w48qg"]
 [ext_resource type="Script" uid="uid://d1myskwk0m3o0" path="res://managers/resource_manager.gd" id="9_074og"]
@@ -7565,6 +7566,9 @@ replacement_module = ExtResource("4_getpj")
 
 [node name="PathManager" type="Node" parent="Managers"]
 script = ExtResource("3_nkgie")
+
+[node name="StructureManager" type="Node" parent="Managers"]
+script = ExtResource("6_ryguw")
 
 [node name="PowerManager" type="Node" parent="Managers"]
 script = ExtResource("4_deici")

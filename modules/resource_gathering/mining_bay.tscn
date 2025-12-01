@@ -25,7 +25,8 @@ shader_parameter/SELECTED = false
 resource_local_to_scene = true
 size = Vector2(126, 126)
 
-[node name="Module" instance=ExtResource("1_4oagm")]
+[node name="Module" node_paths=PackedStringArray("components") instance=ExtResource("1_4oagm")]
+components = [NodePath("PathComponent"), NodePath("PathComponent"), NodePath("StructureComponent")]
 
 [node name="Sprite" parent="Offset" index="0"]
 material = SubResource("ShaderMaterial_5m057")
@@ -33,21 +34,21 @@ material = SubResource("ShaderMaterial_5m057")
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_y7hho")
 
-[node name="MiningComponent" parent="." index="5" node_paths=PackedStringArray("output_storage", "power_consumer") instance=ExtResource("3_y7hho")]
+[node name="MiningComponent" parent="." index="2" node_paths=PackedStringArray("output_storage", "power_consumer") instance=ExtResource("3_y7hho")]
 output_storage = NodePath("../StorageComponent")
 power_consumer = NodePath("../PowerConsumptionComponent")
 base_output_resource = ExtResource("4_paxrx")
 sub_resources = Array[ExtResource("5_5m057")]([ExtResource("6_2l5du"), ExtResource("7_krpv1"), ExtResource("8_0tx88"), ExtResource("9_wt5jo"), ExtResource("10_cyani"), ExtResource("11_avr65")])
 
-[node name="PowerConsumptionComponent" parent="." index="6" instance=ExtResource("4_w1qq0")]
+[node name="PowerConsumptionComponent" parent="." index="3" instance=ExtResource("4_w1qq0")]
 power_consumption = 30.0
 
-[node name="StorageComponent" parent="." index="7" instance=ExtResource("5_hpqm1")]
+[node name="StorageComponent" parent="." index="4" instance=ExtResource("5_hpqm1")]
 priority = -1
 stored_resources = Array[ExtResource("5_5m057")]([ExtResource("4_paxrx")])
 accepts_imports = false
 
-[node name="LightingComponent" parent="." index="8" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("14_5m057")]
+[node name="LightingComponent" parent="." index="5" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("14_5m057")]
 position = Vector2(64, 64)
 scale = Vector2(2, 2)
 power_consumption_component = NodePath("../PowerConsumptionComponent")

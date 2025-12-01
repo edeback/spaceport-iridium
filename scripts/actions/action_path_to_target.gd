@@ -95,7 +95,10 @@ func extract_position(index: int) -> Vector2:
 		return Vector2.ZERO
 	if path_variant[index] is ModuleBase:
 		var module: ModuleBase = path_variant[index] as ModuleBase
-		return module.position
+		if index > 0 and path_variant[index - 1] is ModuleBase:
+			var prev_mod: ModuleBase = path_variant[index - 1] as ModuleBase
+			return Vector2(module.get_path_component().get_connection_point_from(prev_mod)) + module.position
+		return Global.cell_to_world(module.module_cell, true)
 	elif path_variant[index] is Node2D:
 		var node: Node2D = path_variant[index] as Node2D
 		return node.position
@@ -121,8 +124,8 @@ func check_enter_sub_path() -> void:
 			var last_module: ModuleBase = path_variant[next_path_index - 1] as ModuleBase
 			var current_module: ModuleBase = path_variant[next_path_index] as ModuleBase
 			var next_module: ModuleBase = path_variant[next_path_index + 1] as ModuleBase
-			if current_module.path_component != null:
-				sub_path = current_module.path_component.get_path_through_module(last_module, next_module)
+			if current_module.get_path_component() != null:
+				sub_path = current_module.get_path_component().get_path_through_module(last_module, next_module)
 				if sub_path.size() > 0:
 					sub_path_index = 0
 					in_sub_path = true
@@ -136,7 +139,7 @@ func move(delta: float) -> void:
 				in_sub_path = false
 				reached_next_node()
 				continue
-			var next_path_position: Vector2 = extract_position(next_path_index) + sub_path[sub_path_index].end_pos
+			var next_path_position: Vector2 = path_variant[next_path_index].position + sub_path[sub_path_index].end_pos
 			var travel_vector: Vector2 = next_path_position - next_position
 			var dist_to_next_point: float = travel_vector.length()
 			if dist_to_next_point <= dist_to_travel + 0.0001:

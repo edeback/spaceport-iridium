@@ -37,6 +37,7 @@ func _process(delta: float) -> void:
 		# Do nothing if unpowered
 		last_error = "No power!"
 		return
+	last_error = ""
 	if mining_job == null and _can_output(1.0):
 		mining_job = Job_MineAsteroid.new()
 		mining_job.requesting_module = owner_module
@@ -47,6 +48,11 @@ func _process(delta: float) -> void:
 	#else:
 		#_stepwise_processing(delta)
 	pass
+
+func _exit_tree() -> void:
+	if mining_job != null:
+		mining_job.cancel(true)
+		mining_job = null
 
 func mining_job_complete() -> void:
 	mining_job = null

@@ -1,10 +1,19 @@
 extends Node
 
 
+@warning_ignore("unused_signal")
 signal module_added(new_module: ModuleBase)
+@warning_ignore("unused_signal")
 signal module_removed(removed_module: ModuleBase)
-signal module_connection_added(from: ModuleBase, to: ModuleBase, distance: float) # todo maybe: distance calculated dynamically
-signal module_connection_removed(from: ModuleBase, to: ModuleBase)
+@warning_ignore("unused_signal")
+signal module_path_connection_added(from: ModuleBase, to: ModuleBase, distance: float) # todo maybe: distance calculated dynamically
+@warning_ignore("unused_signal")
+signal module_path_connection_removed(from: ModuleBase, to: ModuleBase)
+@warning_ignore("unused_signal")
+signal module_structure_connection_added(from: ModuleBase, to: ModuleBase, distance: float)
+@warning_ignore("unused_signal")
+signal module_structure_connection_removed(from: ModuleBase, to: ModuleBase)
+@warning_ignore("unused_signal")
 signal module_selected(selected_module: ModuleBase)
 
 

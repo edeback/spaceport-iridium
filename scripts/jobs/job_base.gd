@@ -7,6 +7,9 @@ var priority: int = 0
 
 signal job_end
 
+func can_do_job(_pawn: PawnBase) -> bool:
+	return true
+
 func start_job(_pawn: PawnBase) -> void:
 	pass
 

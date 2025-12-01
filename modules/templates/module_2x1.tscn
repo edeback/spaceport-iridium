@@ -13,10 +13,9 @@ shader_parameter/SELECTED = false
 resource_local_to_scene = true
 size = Vector2(126, 62)
 
-[node name="Module" instance=ExtResource("1_pq36e")]
+[node name="Module" node_paths=PackedStringArray("components") instance=ExtResource("1_pq36e")]
 size = Vector2i(2, 1)
-connection_points = Array[Vector2i]([Vector2i(2, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(1, 1)])
-blocks_building = null
+components = [NodePath("PathComponent"), NodePath("PathComponent"), NodePath("PathComponent"), NodePath("StructureComponent")]
 
 [node name="Offset" parent="." index="0"]
 position = Vector2(64, 32)
@@ -28,3 +27,7 @@ region_rect = Rect2(128, 0, 128, 64)
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_oufhr")
+
+[node name="StructureComponent" parent="." index="2"]
+connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(1, -1), Vector2i(-1, 0), Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1)])
+size = Vector2i(2, 1)

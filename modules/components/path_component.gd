@@ -9,7 +9,10 @@ class PathTraversalEdgeData:
 	var end_pos: Vector2
 	var edge_meta: String
 
-@export var show_debug: bool = false
+@export var show_debug: bool = false:
+	set(new_show):
+		show_debug = new_show
+		queue_redraw()
 
 @export var connection_points: Array[Vector2i]:
 	set(new_points):
@@ -40,7 +43,6 @@ func _ready() -> void:
 		astar.add_point(index, path_points[index])
 	for edge in path_edges:
 		astar.connect_points(edge.x, edge.y)
-	owner_module.path_component = self
 	
 func get_closest_path_point(local_vec: Vector2) -> Vector2i:
 	var index: int = astar.get_closest_point(local_vec)
@@ -87,18 +89,18 @@ func _has_possible_connections() -> bool:
 ## Find the index of a connection between this and another module. -1 if not found
 func _find_connection(other_module: ModuleBase) -> int:
 	for index: int in connection_points.size():
-		for module in Global.world_manager.get_overlaps(owner_module.module_data.interaction_layer, owner_module.module_cell + connection_points[index]):
-			if module == other_module:
-				return index
+		var module: ModuleBase = Global.world_manager.get_module_by_cell(owner_module.module_data.interaction_layer, owner_module.module_cell + connection_points[index])
+		if module != null and module == other_module:
+			return index
 	return -1
 
 ## Returns a mapping of connected modules -> their connection point
 func _find_connections() -> Dictionary[ModuleBase, int]:
 	var connected_modules: Dictionary[ModuleBase, int] = {}
 	for index: int in connection_points.size():
-		for module in Global.world_manager.get_overlaps(owner_module.module_data.interaction_layer, owner_module.module_cell + connection_points[index]):
-			if module != self:
-				connected_modules[module] = index
+		var module: ModuleBase = Global.world_manager.get_module_by_cell(owner_module.module_data.interaction_layer, owner_module.module_cell + connection_points[index])
+		if module != null and module != self:
+			connected_modules[module] = index
 	return connected_modules
 	
 ## Connect to the other module if we can, return if successful
@@ -112,10 +114,13 @@ func try_connect(other_module: ModuleBase) -> bool:
 func make_connections() -> void:
 	var connected_modules: Dictionary[ModuleBase, int] = _find_connections()
 	for module in connected_modules:
-		if module.path_component.try_connect(owner_module):
+		if module.get_path_component().try_connect(owner_module):
 			module_connections[module] = connected_modules[module]
-			SignalBus.module_connection_added.emit(owner_module, module, owner_module.module_cell.distance_to(module.module_cell))
+			SignalBus.module_path_connection_added.emit(owner_module, module, owner_module.module_cell.distance_to(module.module_cell))
 	connect_doors()
+	
+func manual_connection(other_module: ModuleBase, connection_index: int) -> void:
+	module_connections[other_module] = connection_index
 			
 func has_door(cell_to_check: Vector2i) -> bool:
 	for index: int in door_indices:
@@ -129,6 +134,7 @@ func try_connect_door(other_module: ModuleBase, cell_to_check: Vector2i) -> bool
 		var door_cell: Vector2i = Global.world_to_cell(path_points[index])
 		if door_cell + owner_module.module_cell == cell_to_check:
 			module_connections[other_module] = index
+			door_connected.emit(door_cell)
 			return true
 	return false
 			
@@ -137,20 +143,22 @@ func connect_doors() -> void:
 	for index: int in door_indices:
 		var door_cell: Vector2i = Global.world_to_cell(path_points[index])
 		for module: ModuleBase in Global.world_manager.get_overlaps(layer_to_check, owner_module.module_cell + door_cell):
-			if module != owner_module and module.path_component and module.path_component.try_connect_door(owner_module, owner_module.module_cell + door_cell):
+			if module != owner_module and module.get_path_component() and module.get_path_component().try_connect_door(owner_module, owner_module.module_cell + door_cell):
 				module_connections[module] = index
 				door_connected.emit(door_cell)
-				SignalBus.module_connection_added.emit(owner_module, module, 1)
+				SignalBus.module_path_connection_added.emit(owner_module, module, 1)
 
 func remove_connections() -> void:
 	for module in module_connections:
-		module.path_component.disconnect_from(owner_module)
+		module.get_path_component().disconnect_from(owner_module)
 		if door_indices.has(module_connections[module]):
 			door_disconnected.emit(Global.world_to_cell(path_points[module_connections[module]]))
-		SignalBus.module_connection_removed.emit(owner_module.module_id, module.module_id)
+		SignalBus.module_path_connection_removed.emit(owner_module.module_id, module.module_id)
 	module_connections.clear()
 	
 func disconnect_from(other_module: ModuleBase) -> void:
+	if door_indices.has(module_connections[other_module]):
+		door_disconnected.emit(Global.world_to_cell(path_points[module_connections[other_module]]))
 	module_connections.erase(other_module)
 
 

@@ -13,29 +13,22 @@ extends ObjectBase
 		show_debug = new_show_debug
 		queue_redraw()
 		
-		
-@export var connection_points: Array[Vector2i]:
-	set(new_points):
-		connection_points = new_points
-		queue_redraw()
 @export var blocks_building: bool = true
 @export var can_delete: bool = true
 
-@export var walking_paths: Array[Path2D]
-@export var door_location: Marker2D
 @export var offset: Node2D
-
-@export var doors: Array[Vector2i] = []
 
 var module_id: int = -1
 var module_cell: Vector2i
 var module_data: ModuleData
-var path_component: PathComponent
 var is_horizontal: bool = true
 
 var module_connections: Dictionary[ModuleBase, bool] = {}
 
 var jobs = {}
+
+var _cached_path_component: PathComponent = null
+var _cached_structure_component: StructureComponent = null
 
 
 const SHADER_PARAM_PREVIEW = "PREVIEW"
@@ -113,101 +106,33 @@ func _update_shader() -> void:
 		get_sprite().material.set_shader_parameter(SHADER_PARAM_PLACEABLE, can_place)
 		get_sprite().material.set_shader_parameter(SHADER_PARAM_SELECTED, selected)
 		
-func update_placeable() -> void:
-	# Footprint must not overlap
-	if Global.world_manager.has_overlaps(module_data.interaction_layer, module_cell, size):
-		can_place = false
-		return
-	# Must be connected to at least one other module
-	can_place = _has_possible_connections()
-	return 
-
-func _has_possible_connections() -> bool:
-	for point in get_connection_points():
-		if Global.world_manager.has_overlaps(module_data.interaction_layer, module_cell + point):
-			return true
-	return false
+func get_path_component() -> PathComponent:
+	if _cached_path_component:
+		return _cached_path_component
+	_cached_path_component = get_node("PathComponent")
+	return _cached_path_component
 	
-func can_connect(other_module: ModuleBase) -> bool:
-	return _find_connections().has(other_module)
-
-func _find_connections() -> Array[ModuleBase]:
-	var connected_modules:Array[ModuleBase] = []
-	for point in get_connection_points():
-		for module in Global.world_manager.get_overlaps(module_data.interaction_layer, module_cell + point):
-			if module != self:
-				connected_modules.append(module)
-	return connected_modules
+func get_structure_component() -> StructureComponent:
+	if _cached_structure_component:
+		return _cached_structure_component
+	_cached_structure_component = get_node("StructureComponent")
+	return _cached_structure_component
 	
 func make_connections() -> void:
-	if path_component != null:
-		path_component.make_connections()
-		return
-	var connected_modules: Array[ModuleBase] = _find_connections()
-	for module in connected_modules:
-		if module.can_connect(self):
-			connect_to(module)
-			module.connect_to(self)
-			SignalBus.module_connection_added.emit(self, module, module_cell.distance_to(module.module_cell))
-	connect_doors()
-			
-func has_door(cell_to_check: Vector2i) -> bool:
-	for point: Vector2i in doors:
-		if point + module_cell == cell_to_check:
-			return true
-	return false
-			
-func connect_doors() -> void:
-	var layer_to_check: WorldManager.InteractionLayer = (1 - module_data.interaction_layer) as WorldManager.InteractionLayer
-	for point: Vector2i in doors:
-		for module: ModuleBase in Global.world_manager.get_overlaps(layer_to_check, module_cell + point):
-			if module != self and module.has_door(module_cell + point):
-				connect_door_to(module)
-				module.connect_door_to(self)
-				SignalBus.module_connection_added.emit(self, module, 1)
+	if get_path_component() != null:
+		get_path_component().make_connections()
+	if get_structure_component() != null:
+		get_structure_component().make_connections()
 
 func remove_connections() -> void:
-	for module in module_connections:
-		module.disconnect_from(self)
-		if module_connections[module]:
-			module.disconnect_door_to(self)
-		SignalBus.module_connection_removed.emit(self, module)
-	module_connections.clear()
-
-func connect_to(other_module: ModuleBase) -> void:
-	module_connections[other_module] = false
-	
-func disconnect_from(other_module: ModuleBase) -> void:
-	module_connections.erase(other_module)
-	
-func connect_door_to(other_module: ModuleBase) -> void:
-	module_connections[other_module] = true
-
-func disconnect_door_to(_other_module: ModuleBase) -> void:
-	pass
-
-func get_paths() -> void:
-	for path in walking_paths:
-		var point_count: int = path.curve.point_count
-		# Two points make a line, don't support single points yet
-		if point_count > 1:
-			path.curve.get_point_position(0)
-			path.curve.get_point_position(point_count - 1)
-	pass
+	if get_path_component() != null:
+		get_path_component().remove_connections()
+	if get_structure_component() != null:
+		get_structure_component().remove_connections()
 	
 func get_global_center() -> Vector2:
 	return global_position + Vector2(Global.CELL_SIZE * size) / 2
 	
-func get_connection_points() -> Array[Vector2i]:
-	return connection_points
-	
-func _draw() -> void:
-	if show_debug && Engine.is_editor_hint():
-		for point in get_connection_points():
-			draw_circle(Vector2(point * Vector2i(64, 64)) +  Vector2(32, 32), 16, Color.GREEN)
-		for point in doors:
-			draw_rect(Rect2(Vector2(point * Vector2i(64, 64)) +  Vector2(22, 16), Vector2(20, 32)), Color.RED)
-			#draw_string(ThemeDB.fallback_font, Vector2(point * Vector2i(64, 64)) +  Vector2(32, 32), "Door", HORIZONTAL_ALIGNMENT_CENTER, -1, 16, Color.RED)
 
 func get_sprite() -> Sprite2D:
 	return sprite

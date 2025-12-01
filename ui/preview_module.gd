@@ -25,7 +25,7 @@ var module_data: ModuleData:
 			var temp_module: ModuleBase = module_data.scene.instantiate() as ModuleBase
 			module_size = temp_module.size
 			temp_module.is_horizontal = is_horizontal
-			connection_points = temp_module.get_connection_points()
+			connection_points = temp_module.get_structure_component().connection_points
 			module_layer = module_data.interaction_layer
 			var temp_sprite: Sprite2D = temp_module.get_sprite()
 			sprite.texture = temp_sprite.texture

@@ -80,6 +80,13 @@ func _exit_tree() -> void:
 			#reserved += job.amount
 	#return reserved
 	
+func update_priority(new_priority: int) -> void:
+	if priority != new_priority:
+		priority = new_priority
+		for job: Job_GetResource in default_import_jobs.values():
+			job.priority = priority
+		
+	
 func find_first_stored_resource_with_base(base_resource: ResourceData, minimum: float = 0) -> ResourceData:
 	for resource: ResourceData in cur_stored:
 		if resource == base_resource or resource.base_resource == base_resource:
@@ -134,8 +141,9 @@ func add_withdraw_job(job: Job_GetResource) -> bool:
 	return false
 	
 func cancel_withdraw_job(job: Job_GetResource) -> void:
-	export_jobs.erase(job)
-	cur_reserved_withdraw[job.resource_data] = cur_reserved_withdraw.get_or_add(job.resource_data, 0) - job.amount
+	if export_jobs.has(job):
+		export_jobs.erase(job)
+		cur_reserved_withdraw[job.resource_data] = cur_reserved_withdraw.get_or_add(job.resource_data, 0) - job.amount
 	
 func complete_withdraw_job(job: Job_GetResource) -> bool:
 	if export_jobs.has(job):

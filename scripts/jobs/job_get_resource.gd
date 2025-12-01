@@ -16,6 +16,23 @@ var action: Action_PathToTarget = null
 enum JobState { Start, GoToResource, GatherResource, ReturnWithResource, DepositResource, Finished, Failed }
 var job_state: JobState = JobState.Start
 
+func can_do_job(_pawn: PawnBase) -> bool:
+	var storage_component: MultiStorageComponent = null
+	var storage_nodes: Array[Node] = requester.get_tree().get_nodes_in_group("resource_storage")
+	for node in storage_nodes:
+		var storage: MultiStorageComponent = node as MultiStorageComponent
+		if storage.accepts_exports and storage.priority < deposit_storage.priority:
+			var available_resource: ResourceData = storage.find_first_stored_resource_with_base(resource_data, amount)
+			if available_resource != null:
+				storage_component = storage
+				break
+	if storage_component != null:
+		var test_action: Action_PathToTarget = Action_PathToTarget.new()
+		test_action.initialize_action(_pawn, storage_component.owner_module)
+		var failed: bool = test_action.is_failed()
+		return not failed
+	return false
+
 func start_job(_pawn: PawnBase) -> void:
 	pawn = _pawn
 	if job_state != JobState.Failed:

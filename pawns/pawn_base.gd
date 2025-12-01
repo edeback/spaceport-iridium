@@ -22,7 +22,7 @@ func _ready() -> void:
 	pass # Replace with function body.
 
 func start_job() -> void:
-	current_job = Global.job_manager.get_job()
+	current_job = Global.job_manager.find_job(self)
 	if current_job:
 		current_job.start_job(self)
 	#var processors: Array[Node] = get_tree().get_nodes_in_group("processor")

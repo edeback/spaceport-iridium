@@ -52,19 +52,33 @@ func apply_corridor_type(new_type: CorridorType) -> void:
 		corridor_dictionary[new_type].visible = true
 		return
 	corridor_dictionary[current_type].visible = false
+	remove_connections()
 	current_type = CorridorType.HALLWAY_AND_SHAFT
 	corridor_dictionary[current_type].visible = true
 	make_connections()
-
-func get_connection_points() -> Array[Vector2i]:
+	
+func make_connections() -> void:
+	get_path_component().door_connected.connect(door_connected_to)
+	get_path_component().door_disconnected.connect(door_disconnected_to)
+	super()
+	
+func remove_connections() -> void:
+	super()
+	get_path_component().door_connected.disconnect(door_connected_to)
+	get_path_component().door_disconnected.disconnect(door_disconnected_to)
+	
+func get_path_component() -> PathComponent:
 	if current_type == CorridorType.NONE:
-		return connection_points
-	return corridor_dictionary[current_type].connection_points
-
-func connect_door_to(other_module: ModuleBase) -> void:
-	super(other_module)
+		return null
+	return corridor_dictionary[current_type].get_node("PathComponent")
+	
+func get_structure_component() -> StructureComponent:
+	if current_type == CorridorType.NONE:
+		return corridor_dictionary[CorridorType.HALLWAY_AND_SHAFT].get_node("StructureComponent")
+	return corridor_dictionary[current_type].get_node("StructureComponent")
+	
+func door_connected_to(_cell: Vector2i) -> void:
 	door.visible = true
-
-func disconnect_door_to(other_module: ModuleBase) -> void:
-	super(other_module)
+	
+func door_disconnected_to(_cell: Vector2i) -> void:
 	door.visible = false

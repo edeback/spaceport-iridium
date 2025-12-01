@@ -10,20 +10,24 @@ var grid_size: Vector2i = Vector2i(5, 5)
 var button_dictionary: Dictionary[Vector2i, Button] = {}
 
 var editor: EditorProperty
-var module: ModuleBase
+var object: Object
 
 func init_from_editor(editor_in: EditorProperty) -> void:
 	editor = editor_in
-	module = editor.get_edited_object() as ModuleBase
+	object = editor.get_edited_object()
+	#if edited_object is ModuleBase:
+		#module = edited_object as ModuleBase
+	#elif edited_object is StructureComponent:
+		#module = (edited_object as StructureComponent).owner_module
 	refresh()
 	pass
 
 func refresh() -> void:
-	if module.size != last_size:
-		last_size = module.size
-		set_up(module.size, module.get(editor.get_edited_property()))
+	if object.size != last_size:
+		last_size = object.size
+		set_up(object.size, object.get(editor.get_edited_property()))
 	else:
-		var enabled: Array[Vector2i] = module.get(editor.get_edited_property())
+		var enabled: Array[Vector2i] = object.get(editor.get_edited_property())
 		for pos in button_dictionary:
 			button_dictionary[pos].set_pressed_no_signal(enabled.has(pos))
 

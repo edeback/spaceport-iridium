@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_8o78f"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_8ojg0"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_y8q4r"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_k6ruk"]
 shader = ExtResource("2_8ojg0")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -13,18 +13,22 @@ shader_parameter/SELECTED = false
 resource_local_to_scene = true
 size = Vector2(126, 126)
 
-[node name="Module" instance=ExtResource("1_8o78f")]
+[node name="Module" node_paths=PackedStringArray("components") instance=ExtResource("1_8o78f")]
 size = Vector2i(2, 2)
-connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(1, -1), Vector2i(2, 0), Vector2i(2, 1), Vector2i(1, 2), Vector2i(0, 2), Vector2i(-1, 1), Vector2i(-1, 0)])
+components = [NodePath("PathComponent"), NodePath("PathComponent"), NodePath("PathComponent"), NodePath("StructureComponent")]
 
 [node name="Offset" parent="." index="0"]
 position = Vector2(64, 64)
 metadata/_edit_group_ = true
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_y8q4r")
+material = SubResource("ShaderMaterial_k6ruk")
 position = Vector2(-1.90735e-06, -1.90735e-06)
 region_rect = Rect2(128, 128, 128, 128)
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_mn0da")
+
+[node name="StructureComponent" parent="." index="2"]
+connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(1, -1), Vector2i(-1, 0), Vector2i(2, 0), Vector2i(-1, 1), Vector2i(2, 1), Vector2i(0, 2), Vector2i(1, 2)])
+size = Vector2i(2, 2)

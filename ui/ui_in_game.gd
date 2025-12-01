@@ -22,6 +22,8 @@ var cur_module: ModuleData = null
 var multiplace_start: Vector2i
 var preview_multimodules: Array[PreviewModule] = []
 
+var last_hovered_cell: Vector2i
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	Global.ui_in_game = self
@@ -39,7 +41,7 @@ func change_input_mode(mode: InputMode, module: ModuleData = null) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
-		var hovered_cell = Global.world_to_cell(get_global_mouse_position())
+		var hovered_cell: Vector2i = Global.world_to_cell(get_global_mouse_position())
 		if event.is_action_pressed("build"):
 			if cur_module != null and preview_module != null and preview_module.can_place:
 				if cur_module.multiplacement:
@@ -73,6 +75,9 @@ func _process(delta: float) -> void:
 			
 func update_multiplacement() -> void:
 	var hovered_cell: Vector2i = Global.world_to_cell(get_global_mouse_position() - preview_module.offset + Vector2(Global.CELL_SIZE) / 2)
+	if last_hovered_cell == hovered_cell and preview_multimodules.size() > 0:
+		return
+	last_hovered_cell = hovered_cell
 	var xrange: int = hovered_cell.x - multiplace_start.x
 	var yrange: int = hovered_cell.y - multiplace_start.y
 	var xdirection: int = 1 if xrange > 0 else -1
@@ -97,7 +102,7 @@ func update_multiplacement() -> void:
 			previewmod.module_data = preview_module.module_data
 			previewmod.update_placeable(cell, true)
 	for i: int in range(preview_multimodules.size(), xrange + yrange + 1, -1):
-		var previewmod = preview_multimodules.pop_back()
+		var previewmod: PreviewModule = preview_multimodules.pop_back()
 		if previewmod != null:
 			previewmod.queue_free()
 			
@@ -116,10 +121,12 @@ func update_module_placement() -> void:
 		var hovered_cell: Vector2i = Global.world_to_cell(get_global_mouse_position() - preview_module.offset + Vector2(Global.CELL_SIZE) / 2)
 		preview_module.update_placeable(hovered_cell)
 		if preview_module.can_place:
-			var snapped_position: Vector2 = Global.cell_to_world(hovered_cell) + preview_module.offset
-			selector.position = snapped_position
+			if hovered_cell != last_hovered_cell:
+				var snapped_position: Vector2 = Global.cell_to_world(hovered_cell) + preview_module.offset
+				selector.position = snapped_position
 		else:
 			selector.position = get_global_mouse_position()
+		last_hovered_cell = hovered_cell
 
 func update_structure_placement() -> void:
 	pass

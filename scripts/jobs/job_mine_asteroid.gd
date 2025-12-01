@@ -18,6 +18,15 @@ func setup(_module: ModuleBase) -> void:
 	state = MineAsteroidState.Starting
 	SignalBus.module_removed.connect(_module_removed)
 	
+func can_do_job(_pawn: PawnBase) -> bool:
+	var asteroids: Array[Node] = _pawn.get_tree().get_nodes_in_group("asteroid")
+	var test_asteroid: AsteroidBase = asteroids.pick_random() as AsteroidBase
+	var test_action: Action_PathToTarget = Action_PathToTarget.new()
+	test_action.initialize_action(_pawn, test_asteroid)
+	var failed: bool = test_action.is_failed()
+	test_action.free()
+	return not failed
+	
 func start_job(_pawn: PawnBase) -> void:
 	pawn = _pawn
 	if state != MineAsteroidState.Failed:
@@ -42,10 +51,14 @@ func process_job(delta: float) -> void:
 	
 func get_asteroid() -> void:
 	var asteroids: Array[Node] = pawn.get_tree().get_nodes_in_group("asteroid")
-	if asteroids.size() == 0:
+	asteroid = null
+	for test_asteroid: AsteroidBase in asteroids: 
+		if not test_asteroid.is_empty():
+			asteroid = test_asteroid
+			break
+	if asteroid == null:
 		state = MineAsteroidState.Failed
 		return
-	asteroid = asteroids.pick_random() as AsteroidBase
 	asteroid.despawning.connect(_asteroid_despawned)
 	state = MineAsteroidState.MovingToAsteroid
 	
