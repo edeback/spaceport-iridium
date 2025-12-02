@@ -11,7 +11,7 @@ func _ready() -> void:
 	SignalBus.module_removed.connect(_on_module_removed)
 	SignalBus.module_structure_connection_added.connect(_on_module_connection_added)
 	SignalBus.module_structure_connection_removed.connect(_on_module_connection_removed)
-	pass # Replace with function body.
+	Global.structure_manager = self
 	
 func _on_module_added(module: ModuleBase) -> void:
 	graph.add_vertex(module)
@@ -54,3 +54,14 @@ func get_closest_module_by_cell(start_cell: Vector2i) -> ModuleBase:
 	
 func get_closest_module_by_position(start_position: Vector2) -> ModuleBase:
 	return get_closest_module_by_cell(Global.world_to_cell(start_position))
+
+## Can we remove this module without "breaking" the structure?
+func can_remove_module(module: ModuleBase) -> bool:
+	if graph.is_blocked(module):
+		return true
+	var can_remove: bool = false
+	graph.block_vertex(module)
+	if graph.last_subgraph == 1:
+		can_remove = true
+	graph.unblock_vertex(module)
+	return can_remove

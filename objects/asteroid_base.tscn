@@ -26,5 +26,6 @@ texture = ExtResource("1_yx8kc")
 [node name="StorageComponent" parent="." instance=ExtResource("3_4ts3b")]
 position = Vector2(-13, -41)
 stored_resources = Array[ExtResource("4_iee0s")]([ExtResource("5_da4ob")])
+include_in_stats = false
 accepts_imports = false
 accepts_exports = false

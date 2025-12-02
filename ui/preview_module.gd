@@ -70,15 +70,13 @@ func update_placeable(module_cell: Vector2i, ignore_connections: bool = false) -
 		last_cell = module_cell
 
 func _has_possible_connections(module_cell: Vector2i) -> bool:
+	# Explicit connection points
 	for point in connection_points:
 		if Global.world_manager.has_overlaps(module_layer, module_cell + point):
 			return true
 	
-	# For modules, can also be over a hallway
-	if module_layer == WorldManager.InteractionLayer.MODULE:
-		return Global.world_manager.has_overlaps(WorldManager.InteractionLayer.CORRIDOR, module_cell, module_size)
-		
-	return false
+	# Cross-layer connections (overlaps)
+	return Global.world_manager.has_overlaps(1 - module_layer, module_cell, module_size)
 
 func _ready() -> void:
 	sprite.texture = default_texture

@@ -26,17 +26,17 @@ material = SubResource("ShaderMaterial_yku0m")
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_5nv3c")
 
-[node name="PowerGenerationComponent" parent="." index="5" node_paths=PackedStringArray("input_storage") instance=ExtResource("4_yku0m")]
+[node name="PowerGenerationComponent" parent="." index="3" node_paths=PackedStringArray("input_storage") instance=ExtResource("4_yku0m")]
 power_output = 2000.0
-resource_consumption_per_second = 0.1
+resource_consumption_per_second = 0.01
 resource_consumed = ExtResource("5_mg4bu")
 input_storage = NodePath("../StorageComponent")
 
-[node name="StorageComponent" parent="." index="6" instance=ExtResource("4_5nv3c")]
+[node name="StorageComponent" parent="." index="4" instance=ExtResource("4_5nv3c")]
 stored_resources = Array[ExtResource("6_f8t3n")]([ExtResource("5_mg4bu")])
 accepts_exports = false
 
-[node name="LightingComponent" parent="." index="7" node_paths=PackedStringArray("power_generation_component") instance=ExtResource("7_yku0m")]
+[node name="LightingComponent" parent="." index="5" node_paths=PackedStringArray("power_generation_component") instance=ExtResource("7_yku0m")]
 position = Vector2(64, 96)
 scale = Vector2(2, 3)
 power_generation_component = NodePath("../PowerGenerationComponent")

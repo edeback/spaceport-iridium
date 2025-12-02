@@ -5,7 +5,7 @@ signal graph_changed
 
 var _vertices: Dictionary[ModuleBase, ModuleGraphVertex]
 
-static var last_subgraph: int = 0
+var last_subgraph: int = 0
 
 func add_vertex(vertex: ModuleBase) -> void:
 	if _vertices.has(vertex):
@@ -18,6 +18,21 @@ func add_vertex(vertex: ModuleBase) -> void:
 	new_vertex.subgraph = last_subgraph
 	_vertices[vertex] = new_vertex
 	_emit_graph_changed()
+	
+func block_vertex(vertex: ModuleBase) -> void:
+	if _vertices.has(vertex):
+		_vertices[vertex].blocked = true
+		_rebuild_subgraphs()
+		
+func unblock_vertex(vertex: ModuleBase) -> void:
+	if _vertices.has(vertex):
+		_vertices[vertex].blocked = false
+		_rebuild_subgraphs()
+		
+func is_blocked(vertex: ModuleBase) -> bool:
+	if _vertices.has(vertex):
+		return _vertices[vertex].blocked
+	return false
 	
 func remove_vertex(vertex: ModuleBase) -> void:
 	var old_vertex: ModuleGraphVertex = _vertices.get(vertex) as ModuleGraphVertex
@@ -66,7 +81,7 @@ func get_edge(start: ModuleBase, end: ModuleBase) -> ModuleGraphVertex.EdgeData:
 	return null
 
 func _emit_graph_changed() -> void:
-	emit_signal("graph_changed")
+	graph_changed.emit()
 
 func _assign_subgraph_from(start: ModuleGraphVertex, subgraph: int) -> void:
 	if start.subgraph == subgraph:
@@ -75,6 +90,8 @@ func _assign_subgraph_from(start: ModuleGraphVertex, subgraph: int) -> void:
 	var frontier: Array[ModuleGraphVertex] = start.edges.keys()
 	while !frontier.is_empty():
 		var next: ModuleGraphVertex = frontier.pop_front() as ModuleGraphVertex
+		if next.blocked:
+			continue
 		if next.subgraph == subgraph:
 			continue
 		next.subgraph = subgraph
@@ -85,6 +102,8 @@ func _rebuild_subgraphs() -> void:
 	for vertex: ModuleGraphVertex in _vertices.values():
 		vertex.subgraph = cur_subgraph
 	for vertex: ModuleGraphVertex in _vertices.values():
+		if vertex.blocked:
+			continue
 		if vertex.subgraph == 0:
 			cur_subgraph += 1
 			_assign_subgraph_from(vertex, cur_subgraph)
@@ -103,7 +122,7 @@ func get_closest_module_to(vector: Vector2) -> ModuleBase:
 func pathfind(start: ModuleBase, end: ModuleBase) -> Array[ModuleBase]:
 	var start_vertex: ModuleGraphVertex = _vertices.get(start)
 	var end_vertex: ModuleGraphVertex = _vertices.get(end)
-	if start_vertex == null or end_vertex == null:
+	if start_vertex == null or end_vertex == null or start_vertex.blocked or end_vertex.blocked:
 		return []
 	if start_vertex.subgraph != end_vertex.subgraph:
 		return []
@@ -119,6 +138,8 @@ func pathfind(start: ModuleBase, end: ModuleBase) -> Array[ModuleBase]:
 			break
 		
 		for next: ModuleGraphVertex in current.edges.keys():
+			if next.blocked:
+				continue
 			var new_cost: float = cost_so_far[current] + current.edges[next].cost
 			if not cost_so_far.has(next) or new_cost < cost_so_far[next]:
 				cost_so_far[next] = new_cost
@@ -163,6 +184,8 @@ func pathfind_to_type(start: ModuleBase, end_type: ModuleData) -> Array[ModuleBa
 			break
 		
 		for next: ModuleGraphVertex in current.edges.keys():
+			if next.blocked:
+				continue
 			var new_cost: float = cost_so_far[current] + current.edges[next].cost
 			if not cost_so_far.has(next) or new_cost < cost_so_far[next]:
 				cost_so_far[next] = new_cost
@@ -201,6 +224,8 @@ func pathfind_to_func(start: ModuleBase, end_func: Callable) -> Array[ModuleBase
 			break
 		
 		for next: ModuleGraphVertex in current.edges.keys():
+			if next.blocked:
+				continue
 			var new_cost: float = cost_so_far[current] + current.edges[next].cost
 			if not cost_so_far.has(next) or new_cost < cost_so_far[next]:
 				cost_so_far[next] = new_cost

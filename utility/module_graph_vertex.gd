@@ -9,6 +9,7 @@ var module: ModuleBase
 var location: Vector2
 var edges: Dictionary[ModuleGraphVertex, EdgeData]
 var subgraph: int
+var blocked: bool = false
 
 func add_edge(destination: ModuleGraphVertex, cost: float, data: Variant = null) -> void:
 	var new_edge:EdgeData = EdgeData.new()

@@ -58,6 +58,7 @@ connection_points = Array[Vector2i]([])
 path_points = Array[Vector2i]([Vector2i(32, 32)])
 path_edges = Dictionary[Vector2i, String]({})
 door_indices = Array[int]([0])
+door_required = true
 
 [node name="StructureComponent" parent="." instance=ExtResource("5_ln6ba")]
 connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, 1)])

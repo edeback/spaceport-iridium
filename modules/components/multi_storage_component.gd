@@ -6,6 +6,8 @@ extends ComponentBase
 @export var max_stored: float = 10
 @export var power_consumption_component: PowerConsumptionComponent
 
+@export var include_in_stats: bool = true
+
 @export var accepts_imports: bool = true
 @export var accepts_exports: bool = true
 
@@ -32,8 +34,9 @@ signal storage_changed(resource: ResourceData, new_value: float)
 func _ready() -> void:
 	super()
 	add_to_group("resource_storage")
-	for resource: ResourceData in stored_resources:
-		Global.resource_manager.register_component(resource, self)
+	if include_in_stats:
+		for resource: ResourceData in stored_resources:
+			Global.resource_manager.register_component(resource, self)
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -60,8 +63,9 @@ func _process(_delta: float) -> void:
 		pass
 	
 func _exit_tree() -> void:
-	for resource: ResourceData in stored_resources:
-		Global.resource_manager.unregister_component(resource, self)
+	if include_in_stats:
+		for resource: ResourceData in stored_resources:
+			Global.resource_manager.unregister_component(resource, self)
 	for job: Job_GetResource in export_jobs:
 		job.cancel(true)
 	export_jobs.clear()

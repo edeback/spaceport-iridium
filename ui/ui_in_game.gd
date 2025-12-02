@@ -57,7 +57,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	pass
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	match cur_input_mode:
 		InputMode.None:
 			pass
@@ -114,14 +114,15 @@ func finalize_multiplacement() -> void:
 			mod.queue_free()
 	preview_multimodules.clear()
 	cur_input_mode = InputMode.Module
+	update_module_placement(true)
 	preview_module.visible = true
 
-func update_module_placement() -> void:
+func update_module_placement(force: bool = false) -> void:
 	if preview_module != null:
 		var hovered_cell: Vector2i = Global.world_to_cell(get_global_mouse_position() - preview_module.offset + Vector2(Global.CELL_SIZE) / 2)
-		preview_module.update_placeable(hovered_cell)
+		if hovered_cell != last_hovered_cell or force:
+			preview_module.update_placeable(hovered_cell)
 		if preview_module.can_place:
-			if hovered_cell != last_hovered_cell:
 				var snapped_position: Vector2 = Global.cell_to_world(hovered_cell) + preview_module.offset
 				selector.position = snapped_position
 		else:
@@ -150,7 +151,7 @@ func select_module(cell: Vector2i) -> void:
 		cur_module_info_panel = new_info_panel
 
 func _draw() -> void:	 		
-	var last_point = null
+	var last_point: Variant = null
 	for next_point in debug_path:
 		if last_point == null:
 			last_point = next_point

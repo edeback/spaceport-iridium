@@ -12,7 +12,7 @@ extends ComponentBase
 		connection_points = new_points
 		queue_redraw()
 		
-var module_connections: Dictionary[ModuleBase, int] = {}
+var module_connections: Dictionary[ModuleBase, bool] = {}
 
 @export var size: Vector2i = Vector2i(2, 2)
 
@@ -22,41 +22,50 @@ func _ready() -> void:
 	
 ## Do we maybe have any connection?
 func _has_possible_connections() -> bool:
+	# Connections on this level
 	for point in connection_points:
 		if Global.world_manager.has_overlaps(owner_module.module_data.interaction_layer, owner_module.module_cell + point):
 			return true
+	# Connections cross-level
+	if Global.world_manager.has_overlaps(1 - owner_module.module_data.interaction_layer, owner_module.module_cell, owner_module.size):
+		return true
 	return false
 		
-## Find the index of a connection between this and another module. -1 if not found
-func _find_connection(other_module: ModuleBase) -> int:
+func _has_connection(module: ModuleBase) -> bool:
 	for index: int in connection_points.size():
-		var module: ModuleBase = Global.world_manager.get_module_by_cell(owner_module.module_data.interaction_layer, owner_module.module_cell + connection_points[index])
-		if module != null and module == other_module:
-			return index
-	return -1
+		var test_module: ModuleBase = Global.world_manager.get_module_by_cell(owner_module.module_data.interaction_layer, owner_module.module_cell + connection_points[index])
+		if test_module == module:
+			return true
+	for test_module: ModuleBase in Global.world_manager.get_overlaps(1 - owner_module.module_data.interaction_layer, owner_module.module_cell, owner_module.size):
+		if test_module == module:
+			return true
+	return false
 
-## Returns a mapping of connected modules -> their connection point
-func _find_connections() -> Dictionary[ModuleBase, int]:
-	var connected_modules: Dictionary[ModuleBase, int] = {}
-	for index: int in connection_points.size():
-		var module: ModuleBase = Global.world_manager.get_module_by_cell(owner_module.module_data.interaction_layer, owner_module.module_cell + connection_points[index])
-		if module != null and module != self:
-			connected_modules[module] = index
+## Modules connected to this on this or other layer
+func _find_connections() -> Array[ModuleBase]:
+	var connected_modules: Array[ModuleBase] = []
+	for test_point: Vector2i in connection_points:
+		var test_module: ModuleBase = Global.world_manager.get_module_by_cell(owner_module.module_data.interaction_layer, owner_module.module_cell + test_point)
+		if test_module != null and test_module != self and not connected_modules.has(test_module):
+			connected_modules.append(test_module)
+	# Connections cross-level
+	for test_module: ModuleBase in Global.world_manager.get_overlaps(1 - owner_module.module_data.interaction_layer, owner_module.module_cell, owner_module.size):
+		if not connected_modules.has(test_module):
+			connected_modules.append(test_module)
 	return connected_modules
 	
 ## Connect to the other module if we can, return if successful
 func try_connect(other_module: ModuleBase) -> bool:
-	var connected_index: int = _find_connection(other_module)
-	if connected_index != -1:
-		module_connections[other_module] = connected_index
+	if _has_connection(other_module):
+		module_connections[other_module] = true
 		return true
 	return false
 
 func make_connections() -> void:
-	var connected_modules: Dictionary[ModuleBase, int] = _find_connections()
+	var connected_modules: Array[ModuleBase] = _find_connections()
 	for module in connected_modules:
 		if module.get_structure_component().try_connect(owner_module):
-			module_connections[module] = connected_modules[module]
+			module_connections[module] = true
 			SignalBus.module_structure_connection_added.emit(owner_module, module, owner_module.module_cell.distance_to(module.module_cell))
 	
 func manual_connection(other_module: ModuleBase, connection_index: int) -> void:

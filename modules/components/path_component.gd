@@ -31,6 +31,9 @@ class PathTraversalEdgeData:
 
 ## Which of the path points (by index) are actually doors?
 @export var door_indices: Array[int] = []
+
+## Do we error if no door is connected?
+@export var door_required: bool = false
 		
 var module_connections: Dictionary[ModuleBase, int] = {}
 
@@ -135,7 +138,9 @@ func try_connect_door(other_module: ModuleBase, cell_to_check: Vector2i) -> bool
 		if door_cell + owner_module.module_cell == cell_to_check:
 			module_connections[other_module] = index
 			door_connected.emit(door_cell)
+			check_doors()
 			return true
+	check_doors()
 	return false
 			
 func connect_doors() -> void:
@@ -147,7 +152,21 @@ func connect_doors() -> void:
 				module_connections[module] = index
 				door_connected.emit(door_cell)
 				SignalBus.module_path_connection_added.emit(owner_module, module, 1)
+	check_doors()
 
+func check_doors() -> void:
+	if door_required:
+		var has_door_connected: bool = false
+		var connected_indices: Array[int] = module_connections.values()
+		for index: int in door_indices:
+			if connected_indices.has(index):
+				has_door_connected = true
+				break
+		if has_door_connected:
+			last_error = ""
+		else:
+			last_error = "Door not connected!"
+			
 func remove_connections() -> void:
 	for module in module_connections:
 		module.get_path_component().disconnect_from(owner_module)
@@ -155,11 +174,13 @@ func remove_connections() -> void:
 			door_disconnected.emit(Global.world_to_cell(path_points[module_connections[module]]))
 		SignalBus.module_path_connection_removed.emit(owner_module.module_id, module.module_id)
 	module_connections.clear()
+	check_doors()
 	
 func disconnect_from(other_module: ModuleBase) -> void:
 	if door_indices.has(module_connections[other_module]):
 		door_disconnected.emit(Global.world_to_cell(path_points[module_connections[other_module]]))
 	module_connections.erase(other_module)
+	check_doors()
 
 
 func _draw() -> void:

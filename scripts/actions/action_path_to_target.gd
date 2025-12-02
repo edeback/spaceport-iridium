@@ -166,7 +166,7 @@ func move(delta: float) -> void:
 				break
 	if next_position == pawn.position:
 		# We didn't move, we're done here
-		print ("tried to move but failed? Marking as finished but investigate")
+		#print ("tried to move but failed? Marking as finished but investigate")
 		action_state = PathActionState.Finished
 	if next_path_index >= path_variant.size():
 		# Made it to the last position

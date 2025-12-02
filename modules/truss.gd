@@ -6,5 +6,5 @@ func pre_delete() -> void:
 	pass
 
 func overlap_module(_new_module: ModuleData, _is_horizontal: bool) -> bool:
-	Global.world_manager.remove_module(self)
+	Global.world_manager.remove_module(self, true)
 	return false
