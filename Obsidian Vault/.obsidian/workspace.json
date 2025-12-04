@@ -137,12 +137,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/To Do.md",
+                "file": "Spaceport Iridium/Inspirations.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "To Do"
+              "title": "Inspirations"
             }
           }
         ],
@@ -291,25 +291,26 @@
   },
   "active": "8caa9f37fed1693c",
   "lastOpenFiles": [
-    "Spaceport Iridium/Random Notes.md",
-    "Spaceport Iridium/UI.md",
-    "Spaceport Iridium/Game Loop.md",
-    "Spaceport Iridium/Game Mechanics/Modules/Science.md",
     "Spaceport Iridium/To Do.md",
-    "Spaceport Iridium/Roadmap.md",
-    "Spaceport Iridium/Audio.md",
+    "Spaceport Iridium/Inspirations.md",
     "Spaceport Iridium/Game Mechanics/Modules/Transportation.md",
-    "Spaceport Iridium/Game Mechanics/Resources/Resource Gathering.md",
+    "Spaceport Iridium/Game Mechanics/Modules/Science.md",
     "Spaceport Iridium/Game Mechanics/Modules/Overview.md",
-    "Spaceport Iridium/Game Mechanics/Resources/Overview.md",
     "Spaceport Iridium/Game Mechanics/Modules/Energy.md",
+    "Spaceport Iridium/Random Notes.md",
     "Spaceport Iridium/Power System.md",
+    "Spaceport Iridium/Roadmap.md",
+    "Spaceport Iridium/Game Mechanics/Story/Tutorial.md",
+    "Spaceport Iridium/Game Mechanics/Resources/Overview.md",
+    "Spaceport Iridium/Game Mechanics/Resources/Resource Gathering.md",
+    "Paper Spacestation/Idea.md",
+    "Spaceport Iridium/UI.md",
+    "Spaceport Iridium/Audio.md",
+    "Spaceport Iridium/Game Loop.md",
+    "Spaceport Iridium/In progress.md",
     "Spaceport Iridium/Notes from SimTower.md",
     "Spaceport Iridium/Notes from Project Highrise.md",
-    "Spaceport Iridium/In progress.md",
-    "Spaceport Iridium/Game Mechanics/Story/Tutorial.md",
     "Paper Spacestation/BoardLayout.png",
-    "Paper Spacestation/Idea.md",
     "Spaceport Iridium/Untitled.canvas",
     "Paper Spacestation/BoardLayout.png.import",
     "Paper Spacestation",

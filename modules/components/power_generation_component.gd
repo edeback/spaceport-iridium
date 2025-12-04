@@ -11,14 +11,12 @@ var force_off: bool = false
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	super()
 	assert(resource_consumption_per_second == 0.0 or (input_storage != null and resource_consumed != null), "Processor must either not require resource or have resource storage!")
 	add_to_group("power_generator")
-	super()
 
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
+func get_power_output() -> float:
+	return power_output
 
 func generate_power(delta: float) -> float:
 	if force_off:
@@ -32,10 +30,10 @@ func generate_power(delta: float) -> float:
 		if input_storage.can_withdraw(resource_consumed, consumption_amount):
 			input_storage.withdraw(resource_consumed, consumption_amount)
 			powered = true
-			return power_output
+			return get_power_output()
 	else:
 		powered = true
-		return power_output
+		return get_power_output()
 	powered = false
 	return 0
 

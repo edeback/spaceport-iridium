@@ -54,6 +54,7 @@ corridor_dictionary = {
 current_type = 0
 door = NodePath("Offset/Door")
 blocks_building = false
+structure_check_before_delete = true
 
 [node name="Hallway" type="Node2D" parent="Offset" index="0"]
 visible = false

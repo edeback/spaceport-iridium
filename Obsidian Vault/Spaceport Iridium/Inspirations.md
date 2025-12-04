@@ -1,0 +1,35 @@
+
+SimTower
+Dwarf Fortress
+Rimworld
+Startopia
+
+Ixion
+- Resources:
+	- Basic -> Advanced
+	- Iron -> Alloy (buildings)
+	- Carbon -> Polymer (spaceships/solar panels)
+	- Silicon -> Electronics (advanced construction)
+	- Hydrogen -> power
+	- Ice -> Water (crops) -> Food
+	- -> Waste (recyclable)
+	- -> Cryonic pods (crew members)
+	- -> Science points (research)
+- Can hold ALT or press a button to go to Resource View where location and quantity of resources are shown on screen
+- Buildings
+	- Alloy and (sometimes) Electronics to build
+	- Require power and crew to run
+- Requests
+	- Quests from the crew, basically
+- Crew
+	- Require housing and food, food from specific buildings
+		- Insufficient housing: instability
+		- Insufficient food: starvation then death
+- Ships
+	- Require a docking bay, can store 3 ships
+	- Science ships
+		- Used for interactions in system
+	- Mining ships
+		- Semi-automated, can assign specific resources
+	- Cargo ships
+		- Similar, can assign different resources to carry

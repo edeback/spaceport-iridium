@@ -20,6 +20,7 @@ size = Vector2(62, 62)
 z_index = 1
 script = ExtResource("1_du6xs")
 sprite = NodePath("Offset/Sprite")
+structure_check_before_delete = false
 offset = NodePath("Offset")
 
 [node name="Offset" type="Node2D" parent="."]

@@ -15,6 +15,7 @@ extends ObjectBase
 		
 @export var blocks_building: bool = true
 @export var can_delete: bool = true
+@export var structure_check_before_delete: bool = true
 
 @export var offset: Node2D
 

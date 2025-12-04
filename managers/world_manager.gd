@@ -101,12 +101,12 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 	module_layers[module_data.interaction_layer].add_child(new_module)
 	new_module.make_connections()
 
-func remove_module(module: ModuleBase, bypass_structure_check: bool = false) -> bool:
-	if not bypass_structure_check:
-		if not Global.structure_manager.can_remove_module(module):
-			return false
+func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 	if module.can_delete == false:
 		return false
+	if structure_check and module.structure_check_before_delete:
+		if not Global.structure_manager.can_remove_module(module):
+			return false
 	var replacement_location: Vector2i = module.module_cell
 	var replacement_size: Vector2i = module.size
 	module.pre_delete()

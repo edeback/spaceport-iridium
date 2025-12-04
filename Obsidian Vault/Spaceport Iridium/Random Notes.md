@@ -26,6 +26,7 @@ Travel?
 
 "Science tree"?
 - Instead of science, most new options will be purchasable (licensing rights)
+	- NeoNeutrino Labs, etc
 - But maybe science lab for other unique options?
 
 Trading

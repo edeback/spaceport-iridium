@@ -14,12 +14,12 @@ func _ready() -> void:
 	pass # Replace with function body.
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
-
-
 func _on_pressed() -> void:
 	Global.ui_in_game.change_input_mode(UIInGame.InputMode.Module, module_data)
 	#Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	pass # Replace with function body.
+
+func _make_custom_tooltip(for_text: String) -> Object:
+	var new_tooltip: ModuleButtonTooltip = preload("res://ui/buttons/module_button_tooltip.tscn").instantiate()
+	new_tooltip.set_module_data(module_data)
+	return new_tooltip

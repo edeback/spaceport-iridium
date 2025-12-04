@@ -50,6 +50,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					multiplace_start = hovered_cell
 				else:
 					Global.world_manager.add_module(cur_module, preview_module.last_cell)
+					update_module_placement(true)
 			else:
 				select_module(hovered_cell)
 		if event.is_action_pressed("remove"):

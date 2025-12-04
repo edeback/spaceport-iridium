@@ -1,0 +1,88 @@
+[gd_scene load_steps=4 format=3 uid="uid://ckhv2udgaji5y"]
+
+[ext_resource type="Texture2D" uid="uid://d0as5orqnhkl4" path="res://assets/external/kenney_ui/Vector/Blue/button_square_flat.svg" id="1_tt6jw"]
+[ext_resource type="Script" uid="uid://bgaedwr3fomhg" path="res://ui/buttons/module_button_tooltip.gd" id="1_yhqml"]
+[ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="2_yhqml"]
+
+[node name="ModuleButtonTooltip" type="MarginContainer"]
+script = ExtResource("1_yhqml")
+
+[node name="BaseScreen" type="MarginContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="NinePatchRect" type="NinePatchRect" parent="BaseScreen"]
+self_modulate = Color(0.768243, 0.52438736, 0.7868966, 1)
+layout_mode = 2
+texture = ExtResource("1_tt6jw")
+patch_margin_left = 8
+patch_margin_top = 8
+patch_margin_right = 8
+patch_margin_bottom = 8
+
+[node name="MarginContainer2" type="MarginContainer" parent="BaseScreen"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="VBoxContainer" type="VBoxContainer" parent="BaseScreen/MarginContainer2"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="BaseScreen/MarginContainer2/VBoxContainer"]
+layout_mode = 2
+
+[node name="ModuleName" type="Label" parent="BaseScreen/MarginContainer2/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Module Name"
+
+[node name="Control" type="Control" parent="BaseScreen/MarginContainer2/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(30, 0)
+layout_mode = 2
+
+[node name="ModulePrice" type="Label" parent="BaseScreen/MarginContainer2/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "12345 credits"
+
+[node name="MarginContainer" type="MarginContainer" parent="BaseScreen/MarginContainer2/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = -4
+theme_override_constants/margin_right = -4
+theme_override_constants/margin_bottom = -4
+
+[node name="NinePatchRect" type="NinePatchRect" parent="BaseScreen/MarginContainer2/VBoxContainer/MarginContainer"]
+layout_mode = 2
+texture = ExtResource("1_tt6jw")
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
+
+[node name="MarginContainer" type="MarginContainer" parent="BaseScreen/MarginContainer2/VBoxContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="HBoxContainer" type="HBoxContainer" parent="BaseScreen/MarginContainer2/VBoxContainer/MarginContainer/MarginContainer"]
+layout_mode = 2
+
+[node name="ModuleIcon" type="TextureRect" parent="BaseScreen/MarginContainer2/VBoxContainer/MarginContainer/MarginContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+texture = ExtResource("2_yhqml")
+
+[node name="ModuleDescription" type="Label" parent="BaseScreen/MarginContainer2/VBoxContainer/MarginContainer/MarginContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 12
+text = "Description of the thing
+A second line!"
