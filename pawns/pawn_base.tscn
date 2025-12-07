@@ -1,14 +1,294 @@
-[gd_scene load_steps=3 format=3 uid="uid://ddoebv5qw5lfm"]
+[gd_scene load_steps=52 format=3 uid="uid://ddoebv5qw5lfm"]
 
 [ext_resource type="Script" uid="uid://ddgc25wxbd8dx" path="res://pawns/pawn_base.gd" id="1_4rv7m"]
 [ext_resource type="Texture2D" uid="uid://dfjrqt380rc2o" path="res://assets/external/kenney_toon-characters-1/Robot/Tilesheet/character_robot_sheet.png" id="2_tngjo"]
+[ext_resource type="Texture2D" uid="uid://d23p0x1oq1caw" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idle_1.png" id="3_j6cx7"]
+[ext_resource type="Texture2D" uid="uid://buujr2ip8qex5" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idle_2.png" id="4_wyski"]
+[ext_resource type="Texture2D" uid="uid://bw36upvesmlrl" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idle_3.png" id="5_cl5b7"]
+[ext_resource type="Texture2D" uid="uid://bqeq40t56sfuk" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idle_4.png" id="6_f6jko"]
+[ext_resource type="Texture2D" uid="uid://bt3wngxx7guiu" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idle_5.png" id="7_23ipu"]
+[ext_resource type="Texture2D" uid="uid://b7bfum6tiuylw" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idle_6.png" id="8_nnfmx"]
+[ext_resource type="Texture2D" uid="uid://cx26dhgxvbaub" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idleSit_1.png" id="9_5m10a"]
+[ext_resource type="Texture2D" uid="uid://b1t2284a7m68p" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idleSit_2.png" id="10_u7mnc"]
+[ext_resource type="Texture2D" uid="uid://cf1dm0wxl532" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idleSit_3.png" id="11_oxfsj"]
+[ext_resource type="Texture2D" uid="uid://cp02i5wy4204n" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idleSit_4.png" id="12_dda5j"]
+[ext_resource type="Texture2D" uid="uid://n3rg8ojll57b" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idleSit_5.png" id="13_4dpii"]
+[ext_resource type="Texture2D" uid="uid://dwk4nm3bka7an" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idleSit_6.png" id="14_5vcdf"]
+[ext_resource type="Texture2D" uid="uid://csohvunbyb6lm" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_interact_1.png" id="15_g1hjd"]
+[ext_resource type="Texture2D" uid="uid://btpuvub15ggrh" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_interact_2.png" id="16_t7l5j"]
+[ext_resource type="Texture2D" uid="uid://pcdl0xnjgott" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_interact_3.png" id="17_88b8q"]
+[ext_resource type="Texture2D" uid="uid://bgf24pnovvede" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_interact_4.png" id="18_rmb6i"]
+[ext_resource type="Texture2D" uid="uid://bjn5gdrt6spsq" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_interactBack_1.png" id="19_4y2ut"]
+[ext_resource type="Texture2D" uid="uid://b82o8443n73pt" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_interactBack_2.png" id="20_8etka"]
+[ext_resource type="Texture2D" uid="uid://dkvqkkimhav2t" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_interactBack_3.png" id="21_2pmy4"]
+[ext_resource type="Texture2D" uid="uid://byumewmuxesk6" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_interactBack_4.png" id="22_3h33a"]
+[ext_resource type="Texture2D" uid="uid://bw1h5w6y4ywbf" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_interactSit_1.png" id="23_ocqro"]
+[ext_resource type="Texture2D" uid="uid://cv6335h4p83ot" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_interactSit_2.png" id="24_tmmel"]
+[ext_resource type="Texture2D" uid="uid://cwcbd5mk26u3o" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_interactSit_3.png" id="25_oq5wb"]
+[ext_resource type="Texture2D" uid="uid://bu3nf6l58uo60" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_interactSit_4.png" id="26_v3kjo"]
+[ext_resource type="Texture2D" uid="uid://dyvl5ox41lnab" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_layDown_1.png" id="27_gb42e"]
+[ext_resource type="Texture2D" uid="uid://dmsv8ton208nf" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_layDown_2.png" id="28_dwxb2"]
+[ext_resource type="Texture2D" uid="uid://dqqrwa6qnl1vj" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_layDown_3.png" id="29_lml7f"]
+[ext_resource type="Texture2D" uid="uid://ced028hsob5o2" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_layDown_4.png" id="30_x82hs"]
+[ext_resource type="Texture2D" uid="uid://vtb5uflwvwhb" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_layDown_5.png" id="31_a5vwk"]
+[ext_resource type="Texture2D" uid="uid://b4ye3gncagoe3" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_layDown_6.png" id="32_350cc"]
+[ext_resource type="Texture2D" uid="uid://bxhotwlqeqi7o" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_walk_1.png" id="33_3g1m2"]
+[ext_resource type="Texture2D" uid="uid://p0a10ntxors0" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_walk_2.png" id="34_yjpfr"]
+[ext_resource type="Texture2D" uid="uid://d3pvuvudox7x0" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_walk_3.png" id="35_jelth"]
+[ext_resource type="Texture2D" uid="uid://djg6cet6kfp3s" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_walk_4.png" id="36_y8og8"]
+[ext_resource type="Texture2D" uid="uid://bi2jratik0hn4" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_walk_5.png" id="37_feaka"]
+[ext_resource type="Texture2D" uid="uid://c34uykx6rc5da" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_walk_6.png" id="38_p0eqp"]
+[ext_resource type="Texture2D" uid="uid://cdra5ew47vsrx" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_walk_7.png" id="39_eokgd"]
+[ext_resource type="Texture2D" uid="uid://ygivuayv0dg4" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_walk_8.png" id="40_clhk7"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_o283h"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_j6cx7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_wyski")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_cl5b7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_f6jko")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_23ipu")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_nnfmx")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 3.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_5m10a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_u7mnc")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_oxfsj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_dda5j")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_4dpii")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_5vcdf")
+}],
+"loop": true,
+"name": &"idle_sit",
+"speed": 3.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("15_g1hjd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_t7l5j")
+}, {
+"duration": 1.0,
+"texture": ExtResource("17_88b8q")
+}, {
+"duration": 1.0,
+"texture": ExtResource("18_rmb6i")
+}],
+"loop": true,
+"name": &"interact",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("19_4y2ut")
+}, {
+"duration": 1.0,
+"texture": ExtResource("20_8etka")
+}, {
+"duration": 1.0,
+"texture": ExtResource("21_2pmy4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("22_3h33a")
+}],
+"loop": true,
+"name": &"interact_back",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("23_ocqro")
+}, {
+"duration": 1.0,
+"texture": ExtResource("24_tmmel")
+}, {
+"duration": 1.0,
+"texture": ExtResource("25_oq5wb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("26_v3kjo")
+}],
+"loop": true,
+"name": &"interact_sit",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("27_gb42e")
+}, {
+"duration": 1.0,
+"texture": ExtResource("28_dwxb2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("29_lml7f")
+}, {
+"duration": 1.0,
+"texture": ExtResource("30_x82hs")
+}, {
+"duration": 1.0,
+"texture": ExtResource("31_a5vwk")
+}, {
+"duration": 1.0,
+"texture": ExtResource("32_350cc")
+}],
+"loop": true,
+"name": &"lay_down",
+"speed": 3.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("33_3g1m2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("34_yjpfr")
+}, {
+"duration": 1.0,
+"texture": ExtResource("35_jelth")
+}, {
+"duration": 1.0,
+"texture": ExtResource("36_y8og8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("37_feaka")
+}, {
+"duration": 1.0,
+"texture": ExtResource("38_p0eqp")
+}, {
+"duration": 1.0,
+"texture": ExtResource("39_eokgd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("40_clhk7")
+}],
+"loop": true,
+"name": &"walk",
+"speed": 12.0
+}]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j6cx7"]
+atlas = ExtResource("2_tngjo")
+region = Rect2(0, 0, 96, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wyski"]
+atlas = ExtResource("2_tngjo")
+region = Rect2(0, 512, 96, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cl5b7"]
+atlas = ExtResource("2_tngjo")
+region = Rect2(96, 512, 96, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f6jko"]
+atlas = ExtResource("2_tngjo")
+region = Rect2(192, 512, 96, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_23ipu"]
+atlas = ExtResource("2_tngjo")
+region = Rect2(288, 512, 96, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nnfmx"]
+atlas = ExtResource("2_tngjo")
+region = Rect2(384, 512, 96, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5m10a"]
+atlas = ExtResource("2_tngjo")
+region = Rect2(480, 512, 96, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u7mnc"]
+atlas = ExtResource("2_tngjo")
+region = Rect2(576, 512, 96, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_oxfsj"]
+atlas = ExtResource("2_tngjo")
+region = Rect2(672, 512, 96, 128)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_dda5j"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_j6cx7")
+}],
+"loop": true,
+"name": &"stand",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wyski")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cl5b7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f6jko")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_23ipu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nnfmx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5m10a")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_u7mnc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_oxfsj")
+}],
+"loop": true,
+"name": &"walk",
+"speed": 12.0
+}]
 
 [node name="PawnBase" type="Node2D"]
 script = ExtResource("1_4rv7m")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+visible = false
 texture_filter = 1
 scale = Vector2(0.3, 0.3)
 texture = ExtResource("2_tngjo")
 region_enabled = true
 region_rect = Rect2(16, 32, 64, 96)
+
+[node name="Crew" type="AnimatedSprite2D" parent="."]
+visible = false
+scale = Vector2(0.25, 0.25)
+sprite_frames = SubResource("SpriteFrames_o283h")
+animation = &"idle"
+frame_progress = 0.65374947
+
+[node name="Robot" type="AnimatedSprite2D" parent="."]
+scale = Vector2(0.3, 0.3)
+sprite_frames = SubResource("SpriteFrames_dda5j")
+animation = &"stand"
+offset = Vector2(0, -16)
