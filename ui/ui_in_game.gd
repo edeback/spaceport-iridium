@@ -36,7 +36,10 @@ func change_input_mode(mode: InputMode, module: ModuleData = null) -> void:
 	preview_module.module_data = module
 	input_mode_changed.emit(mode)
 	if module:
+		preview_module.visible = true
 		Global.world_manager.show_module_layer(module.interaction_layer)
+	else:
+		preview_module.visible = false
 	pass
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -49,7 +52,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					cur_input_mode = InputMode.Multiplace
 					multiplace_start = hovered_cell
 				else:
-					Global.world_manager.add_module(cur_module, preview_module.last_cell, true, preview_module.flipped)
+					Global.world_manager.purchase_and_add_module(cur_module, preview_module.last_cell, true, preview_module.flipped)
 					update_module_placement(true)
 			else:
 				select_module(hovered_cell)
@@ -58,6 +61,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		if event.is_action_pressed("flip_module"):
 			preview_module.flipped = not preview_module.flipped
+		if event.is_action_pressed("show_details"):
+			get_tree().call_group("module", "show_label")
+		if event.is_action_released("show_details"):
+			get_tree().call_group("module", "hide_label")
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
@@ -113,7 +120,7 @@ func finalize_multiplacement() -> void:
 	for mod: PreviewModule in preview_multimodules:
 		if mod:
 			if mod.can_place:
-				Global.world_manager.add_module(cur_module, mod.last_cell, mod.is_horizontal)
+				Global.world_manager.purchase_and_add_module(cur_module, mod.last_cell, mod.is_horizontal)
 			mod.queue_free()
 	preview_multimodules.clear()
 	cur_input_mode = InputMode.Module
@@ -140,18 +147,27 @@ func select_module(cell: Vector2i) -> void:
 	if selected_module != null:
 		# Temp comment out this so we just see info panels
 		selected_module.on_select(!selected_module.selected)
-		if cur_module_info_panel != null:
-			var last_module: ModuleBase = cur_module_info_panel.module_viewed
-			cur_module_info_panel.queue_free()
-			cur_module_info_panel = null
-			if last_module == selected_module:
-				# Just toggle off the panel if we're clicking the same module
-				return
-		var new_info_panel: ModuleInfoIngamePanel = module_info_panel.instantiate() as ModuleInfoIngamePanel
-		new_info_panel.set_module(selected_module)
-		add_child(new_info_panel)
-		new_info_panel.set_position(Global.cell_to_world(cell))
-		cur_module_info_panel = new_info_panel
+		toggle_info_panel(selected_module)
+
+		
+func toggle_info_panel(selected_module: ModuleBase) -> void:
+	if cur_module_info_panel != null:
+		var last_module: ModuleBase = cur_module_info_panel.module_viewed
+		cur_module_info_panel.queue_free()
+		cur_module_info_panel = null
+		if last_module == selected_module:
+			# Just toggle off the panel if we're clicking the same module
+			return
+	var new_info_panel: ModuleInfoIngamePanel = module_info_panel.instantiate() as ModuleInfoIngamePanel
+	new_info_panel.set_module(selected_module)
+	add_child(new_info_panel)
+	new_info_panel.set_position(Global.cell_to_world(selected_module.module_cell))
+	cur_module_info_panel = new_info_panel
+
+func close_info_panel() -> void:
+	if cur_module_info_panel != null:
+		cur_module_info_panel.queue_free()
+		cur_module_info_panel = null
 
 func _draw() -> void:	 		
 	var last_point: Variant = null

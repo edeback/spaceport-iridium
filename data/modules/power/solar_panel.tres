@@ -9,4 +9,5 @@ script = ExtResource("3_6le0c")
 name = "Solar Panel"
 scene = ExtResource("2_7kodw")
 icon = ExtResource("1_x7fuj")
+cost = 100
 tags = Array[String](["Power"])

@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://fm1pchsof76e"]
+[gd_scene load_steps=5 format=3 uid="uid://fm1pchsof76e"]
 
 [ext_resource type="Script" uid="uid://pnwwgnska74e" path="res://ui/preview_module.gd" id="1_tnk5a"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_o6355"]
+[ext_resource type="Texture2D" uid="uid://wydp85db7mim" path="res://assets/sprites/icon_truss_structure.png" id="3_i6jwd"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_31o7j"]
 shader = ExtResource("2_o6355")
@@ -14,4 +15,15 @@ script = ExtResource("1_tnk5a")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 material = SubResource("ShaderMaterial_31o7j")
+texture = ExtResource("3_i6jwd")
 centered = false
+
+[node name="ErrorLabel" type="Label" parent="."]
+unique_name_in_owner = true
+offset_top = -32.0
+offset_right = 110.0
+offset_bottom = -4.083334
+theme_override_colors/font_color = Color(0.99487823, 0, 0.117468216, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 20
+text = "Error error!"

@@ -9,4 +9,5 @@ script = ExtResource("3_wba7j")
 name = "Teleporter"
 scene = ExtResource("2_kwiev")
 icon = ExtResource("1_kwiev")
+cost = 1000
 tags = Array[String](["Transportation"])

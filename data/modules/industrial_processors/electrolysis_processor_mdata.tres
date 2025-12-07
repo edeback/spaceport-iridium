@@ -9,4 +9,5 @@ script = ExtResource("3_gy8o1")
 name = "Electrolyzer"
 scene = ExtResource("2_b70be")
 icon = ExtResource("1_gevnb")
+cost = 200
 tags = Array[String](["Processor"])

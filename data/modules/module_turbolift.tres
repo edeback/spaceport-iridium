@@ -10,3 +10,4 @@ name = "Turbolift"
 scene = ExtResource("2_temny")
 icon = ExtResource("1_temny")
 tags = Array[String](["Transportation"])
+hidden = true

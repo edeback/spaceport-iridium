@@ -143,3 +143,11 @@ func get_sprite() -> Sprite2D:
 ## True if this overlap requires us to cancel a build
 func overlap_module(_new_module: ModuleData, _is_horizontal: bool) -> bool:
 	return true
+
+func show_label() -> void:
+	if nameplate != null:
+		nameplate.visible = true
+
+func hide_label() -> void:
+	if nameplate != null:
+		nameplate.visible = false

@@ -9,4 +9,5 @@ script = ExtResource("3_qnek6")
 name = "Fusion Reactor"
 scene = ExtResource("2_remso")
 icon = ExtResource("1_remso")
+cost = 2000
 tags = Array[String](["Power"])

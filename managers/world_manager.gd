@@ -72,6 +72,12 @@ func get_nearest_module_by_type(position: Vector2, module_data: ModuleData) -> M
 			dist = new_dist
 			closest_module = module
 	return closest_module
+	
+func purchase_and_add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false, allow_negative_credits: bool = false) -> void:
+	if not allow_negative_credits and Global.resource_manager.credits < module_data.cost:
+		return
+	Global.resource_manager.credits -= module_data.cost
+	add_module(module_data, cell, is_horizontal, flipped)
 
 func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false) -> void:
 	var module_scene: PackedScene = module_data.scene
@@ -173,15 +179,25 @@ func get_module_by_id(id: int) -> ModuleBase:
 	
 func show_module_layer(layer: InteractionLayer) -> void:
 	active_layer = layer
-	for module_layer in module_layers:
-		if module_layer == layer:
-			module_layers[module_layer].visible = true
-			var mod: CanvasModulate = module_layers[module_layer].get_node("CanvasModulate") as CanvasModulate
-			mod.color.a = 1
-		else:
-			module_layers[module_layer].visible = true
-			var mod: CanvasModulate = module_layers[module_layer].get_node("CanvasModulate") as CanvasModulate
-			mod.color.a = 0.3
+	if layer == InteractionLayer.MODULE:
+		var module_mod: CanvasModulate = module_layers[InteractionLayer.MODULE].get_node("CanvasModulate") as CanvasModulate
+		module_mod.color.a = 1
+		var corridor_mod: CanvasModulate = module_layers[InteractionLayer.CORRIDOR].get_node("CanvasModulate") as CanvasModulate
+		corridor_mod.color.a = 0.3
+	elif layer == InteractionLayer.CORRIDOR:
+		var module_mod: CanvasModulate = module_layers[InteractionLayer.MODULE].get_node("CanvasModulate") as CanvasModulate
+		module_mod.color.a = 0.9
+		var corridor_mod: CanvasModulate = module_layers[InteractionLayer.CORRIDOR].get_node("CanvasModulate") as CanvasModulate
+		corridor_mod.color.a = 1
+	#for module_layer in module_layers:
+		#if module_layer == layer:
+			#module_layers[module_layer].visible = true
+			#var mod: CanvasModulate = module_layers[module_layer].get_node("CanvasModulate") as CanvasModulate
+			#mod.color.a = 1
+		#else:
+			#module_layers[module_layer].visible = true
+			#var mod: CanvasModulate = module_layers[module_layer].get_node("CanvasModulate") as CanvasModulate
+			#mod.color.a = 0.3
 
 func set_module_layer_visibility(layer: InteractionLayer, visibility: bool) -> void:
 	module_layers[layer].visible = visibility

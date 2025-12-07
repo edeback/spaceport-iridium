@@ -10,6 +10,7 @@ script = ExtResource("3_tpos6")
 name = "Airlock"
 scene = ExtResource("2_1gomn")
 icon = ExtResource("1_1gomn")
+cost = 100
 tags = Array[String](["Transportation"])
 flippable = true
 flipped_scene = ExtResource("1_cdc0w")

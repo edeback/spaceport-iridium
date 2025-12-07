@@ -137,12 +137,21 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 
 [node name="CreditsIcon" type="TextureRect" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer/PanelContainer"]
+visible = false
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 texture = ExtResource("15_b5r2u")
 expand_mode = 1
+
+[node name="CreditsButton" type="Button" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer/PanelContainer"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+icon = ExtResource("15_b5r2u")
+flat = true
+icon_alignment = 1
+expand_icon = true
 
 [node name="CreditsNameLabel" type="Label" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -282,11 +291,13 @@ shortcut = SubResource("Shortcut_xyc40")
 text = "Module Info"
 
 [node name="TradeScreen" parent="." instance=ExtResource("19_xyc40")]
+visible = false
 layout_mode = 1
 offset_left = -300.0
 offset_top = -349.5
 offset_right = 300.0
 offset_bottom = 349.5
 
+[connection signal="pressed" from="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer/PanelContainer/CreditsButton" to="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer" method="_on_credits_button_clicked"]
 [connection signal="item_selected" from="VBoxContainer/PanelContainer/MarginContainer/HBoxContainer/InteractionLayerOptions" to="." method="_on_interaction_layer_changed"]
 [connection signal="pressed" from="VBoxContainer/Modules/MarginContainer/VBoxContainer/MarginContainer/ModuleInfoButton" to="." method="_on_info_button_pressed"]

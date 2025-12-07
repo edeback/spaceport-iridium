@@ -8,3 +8,6 @@ func _ready() -> void:
 
 func _on_credits_changed(new_credits: int) -> void:
 	credits_available_label.text = str(new_credits)
+
+func _on_credits_button_clicked() -> void:
+	Global.resource_manager.credits += 1000

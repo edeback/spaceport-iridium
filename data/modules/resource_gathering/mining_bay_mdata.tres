@@ -9,4 +9,5 @@ script = ExtResource("3_nni1g")
 name = "Mining Bay"
 scene = ExtResource("2_qbuko")
 icon = ExtResource("1_tbvrf")
+cost = 400
 tags = Array[String](["Producer"])

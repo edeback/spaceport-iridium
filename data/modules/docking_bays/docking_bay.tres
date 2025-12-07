@@ -8,6 +8,7 @@
 script = ExtResource("1_5lqk0")
 name = "Docking Bay"
 scene = ExtResource("2_11ty0")
+cost = 300
 tags = Array[String](["Dock"])
 flippable = true
 flipped_scene = ExtResource("1_vpvv2")

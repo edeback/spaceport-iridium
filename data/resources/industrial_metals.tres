@@ -5,5 +5,5 @@
 
 [resource]
 script = ExtResource("2_vbfod")
-name = "Industrial Metals"
+name = "Iron"
 icon = ExtResource("1_yc37q")

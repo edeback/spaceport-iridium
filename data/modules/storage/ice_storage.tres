@@ -9,4 +9,5 @@ script = ExtResource("3_h56pf")
 name = "Ice Storage"
 scene = ExtResource("2_w13qv")
 icon = ExtResource("1_qfvp5")
+cost = 100
 tags = Array[String](["Storage"])

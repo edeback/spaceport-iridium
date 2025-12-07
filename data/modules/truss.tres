@@ -9,4 +9,5 @@ script = ExtResource("3_kdg84")
 name = "Truss"
 scene = ExtResource("2_fghsq")
 icon = ExtResource("1_kf4wx")
+cost = 10
 multiplacement = true

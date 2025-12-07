@@ -68,6 +68,8 @@ func update_from_module_data() -> void:
 	sprite.flip_h = temp_sprite.flip_h
 	sprite.flip_v = temp_sprite.flip_v
 	offset = temp_module.offset.position
+	%ErrorLabel.position.x = -offset.x
+	%ErrorLabel.position.y = -offset.y - 32
 	temp_module.queue_free()
 
 func _update_shader() -> void:
@@ -76,16 +78,28 @@ func _update_shader() -> void:
 
 
 func update_placeable(module_cell: Vector2i, ignore_connections: bool = false) -> void:
+	# Must be able to pay
+	if Global.resource_manager.credits < module_data.cost:
+		%ErrorLabel.visible = true
+		%ErrorLabel.text = "Can't afford!"
+		can_place = false
+		return
 	# Must be in right layer
 	if Global.world_manager.active_layer != module_layer:
+		%ErrorLabel.visible = true
+		%ErrorLabel.text = "Wrong layer!"
 		can_place = false
 		return
 	# Footprint must not overlap
 	if Global.world_manager.is_blocked(module_layer, module_cell, module_size):
+		%ErrorLabel.visible = true
+		%ErrorLabel.text = "Blocked!"
 		can_place = false
 		return
 	for point: Vector2i in must_be_clear_points:
 		if Global.world_manager.has_overlaps(module_layer, module_cell + point):
+			%ErrorLabel.visible = true
+			%ErrorLabel.text = "Blocked!"
 			can_place = false
 			return
 	# Must be connected to at least one other module
@@ -94,7 +108,11 @@ func update_placeable(module_cell: Vector2i, ignore_connections: bool = false) -
 	else:
 		can_place = _has_possible_connections(module_cell)
 	if can_place:
+		%ErrorLabel.visible = false
 		last_cell = module_cell
+	else:
+		%ErrorLabel.visible = true
+		%ErrorLabel.text = "Not connected to anything!"
 
 func _has_possible_connections(module_cell: Vector2i) -> bool:
 	# Explicit connection points

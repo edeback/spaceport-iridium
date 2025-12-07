@@ -1,9 +1,16 @@
-[gd_scene load_steps=5 format=3 uid="uid://mroynql4rcbs"]
+[gd_scene load_steps=7 format=3 uid="uid://mroynql4rcbs"]
 
 [ext_resource type="Texture2D" uid="uid://d0as5orqnhkl4" path="res://assets/external/kenney_ui/Vector/Blue/button_square_flat.svg" id="1_0uyp0"]
 [ext_resource type="Script" uid="uid://bncyn6x12jwv6" path="res://ui/windows/trade/trade_screen.gd" id="1_gjp8f"]
 [ext_resource type="PackedScene" uid="uid://tn1loj0n48w6" path="res://ui/windows/trade/trade_resource_row.tscn" id="2_gjp8f"]
 [ext_resource type="Texture2D" uid="uid://cc0ns2prdb577" path="res://ui/icons/credit_symbol.svg" id="4_y6br3"]
+
+[sub_resource type="InputEventKey" id="InputEventKey_y6br3"]
+device = -1
+keycode = 4194305
+
+[sub_resource type="Shortcut" id="Shortcut_v3o23"]
+events = [SubResource("InputEventKey_y6br3")]
 
 [node name="TradeScreen" type="MarginContainer"]
 custom_minimum_size = Vector2(400, 400)
@@ -123,6 +130,7 @@ text = "Submit"
 [node name="CancelButton" type="Button" parent="VBoxContainer/MarginContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 6
+shortcut = SubResource("Shortcut_v3o23")
 text = "Cancel"
 
 [connection signal="pressed" from="VBoxContainer/MarginContainer/HBoxContainer/SubmitButton" to="." method="submit"]
