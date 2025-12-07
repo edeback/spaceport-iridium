@@ -25,8 +25,7 @@ shader_parameter/SELECTED = false
 resource_local_to_scene = true
 size = Vector2(126, 126)
 
-[node name="Module" node_paths=PackedStringArray("components") instance=ExtResource("1_4oagm")]
-components = [NodePath("PathComponent"), NodePath("PathComponent"), NodePath("StructureComponent")]
+[node name="Module" instance=ExtResource("1_4oagm")]
 
 [node name="Sprite" parent="Offset" index="0"]
 material = SubResource("ShaderMaterial_5m057")
@@ -46,6 +45,7 @@ power_consumption = 30.0
 [node name="StorageComponent" parent="." index="4" instance=ExtResource("5_hpqm1")]
 priority = -1
 stored_resources = Array[ExtResource("5_5m057")]([ExtResource("4_paxrx")])
+max_stored = 40.0
 accepts_imports = false
 
 [node name="LightingComponent" parent="." index="5" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("14_5m057")]

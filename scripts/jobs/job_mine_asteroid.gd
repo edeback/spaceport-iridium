@@ -8,6 +8,8 @@ var state: MineAsteroidState = MineAsteroidState.Starting
 var action: Action_PathToTarget = null
 var resource_mined: ResourceData
 var amount_mined: float = 0
+var efficiency: float = 1.0
+var max_mined: float = 5.0
 
 enum MineAsteroidState { Starting, MovingToAsteroid, MineAsteroid, ReturningToModule, DepositMaterial, Finished, Failed }
 
@@ -31,6 +33,15 @@ func start_job(_pawn: PawnBase) -> void:
 	pawn = _pawn
 	if state != MineAsteroidState.Failed:
 		state = MineAsteroidState.Starting
+		
+func cancel(_as_failed: bool) -> void:
+	if _as_failed:
+		state = MineAsteroidState.Failed
+	else:
+		state = MineAsteroidState.Finished
+	if action:
+		action.free()
+		action = null
 	
 func process_job(delta: float) -> void:
 	match state:
@@ -51,6 +62,7 @@ func process_job(delta: float) -> void:
 	
 func get_asteroid() -> void:
 	var asteroids: Array[Node] = pawn.get_tree().get_nodes_in_group("asteroid")
+	asteroids.shuffle()
 	asteroid = null
 	for test_asteroid: AsteroidBase in asteroids: 
 		if not test_asteroid.is_empty():
@@ -66,10 +78,10 @@ func _asteroid_despawned() -> void:
 	asteroid = null
 	# Find a different one!
 	if state < MineAsteroidState.ReturningToModule:
-		
 		state = MineAsteroidState.Starting
-		action.free()
-		action = null
+		if action != null:
+			action.free()
+			action = null
 	# otherwise we don't care, we already came and left already
 
 func _module_removed(module: ModuleBase) -> void:
@@ -99,10 +111,13 @@ func mine_asteroid(delta: float) -> void:
 		resource_mined = asteroid.output_resource
 	# Stay glued to asteroid
 	pawn.position = asteroid.position
-	var new_amount_mined: float = asteroid.mine_resource(delta * 5.0)
+	var new_amount_mined: float = asteroid.mine_resource(delta * efficiency)
 	amount_mined += new_amount_mined
-	if new_amount_mined < 0.0001:
+	if amount_mined >= max_mined:
+		amount_mined = max_mined
 		state = MineAsteroidState.ReturningToModule
+	elif asteroid.is_empty():
+		state = MineAsteroidState.Starting
 		
 func move_to_module(delta: float) -> void:
 	if action == null:

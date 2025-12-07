@@ -167,44 +167,49 @@ func _heuristic(start: ModuleGraphVertex, end: ModuleGraphVertex) -> float:
 	#return start.dist_to(end)
 	
 func pathfind_to_type(start: ModuleBase, end_type: ModuleData) -> Array[ModuleBase]:
+	if end_type == null:
+		return []
 	var start_vertex: ModuleGraphVertex = _vertices.get(start)
 	if start_vertex == null:
 		return []
-	var frontier: ModuleQueue = ModuleQueue.new()
-	frontier.insert(start_vertex, 0)
-	var came_from: Dictionary[ModuleGraphVertex, ModuleGraphVertex]
-	var cost_so_far: Dictionary[ModuleGraphVertex, float]
-	cost_so_far[start_vertex] = 0
+	var type_callable: Callable = func(test_vertext: ModuleGraphVertex) -> bool: return test_vertext.module.module_data == end_type
+	return pathfind_to_func(start, type_callable)
 	
-	var end_vertex: ModuleGraphVertex = null
-	while not frontier.is_empty():
-		var current: ModuleGraphVertex = frontier.extract()
-		if current.module.module_data == end_type:
-			end_vertex = current
-			break
-		
-		for next: ModuleGraphVertex in current.edges.keys():
-			if next.blocked:
-				continue
-			var new_cost: float = cost_so_far[current] + current.edges[next].cost
-			if not cost_so_far.has(next) or new_cost < cost_so_far[next]:
-				cost_so_far[next] = new_cost
-				frontier.insert(next, new_cost)
-				came_from[next] = current
-				
-	# Did we ever find it?
-	if not end_vertex:
-		return []
-	
-	# Reconstruct path
-	var cur_vertex: ModuleGraphVertex = end_vertex
-	var path: Array[ModuleBase] = []
-	while cur_vertex != start_vertex:
-		path.append(cur_vertex.module)
-		cur_vertex = came_from[cur_vertex]
-	path.append(start)
-	path.reverse()
-	return path
+	#var frontier: ModuleQueue = ModuleQueue.new()
+	#frontier.insert(start_vertex, 0)
+	#var came_from: Dictionary[ModuleGraphVertex, ModuleGraphVertex]
+	#var cost_so_far: Dictionary[ModuleGraphVertex, float]
+	#cost_so_far[start_vertex] = 0
+	#
+	#var end_vertex: ModuleGraphVertex = null
+	#while not frontier.is_empty():
+		#var current: ModuleGraphVertex = frontier.extract()
+		#if current.module.module_data == end_type:
+			#end_vertex = current
+			#break
+		#
+		#for next: ModuleGraphVertex in current.edges.keys():
+			#if next.blocked:
+				#continue
+			#var new_cost: float = cost_so_far[current] + current.edges[next].cost
+			#if not cost_so_far.has(next) or new_cost < cost_so_far[next]:
+				#cost_so_far[next] = new_cost
+				#frontier.insert(next, new_cost)
+				#came_from[next] = current
+				#
+	## Did we ever find it?
+	#if not end_vertex:
+		#return []
+	#
+	## Reconstruct path
+	#var cur_vertex: ModuleGraphVertex = end_vertex
+	#var path: Array[ModuleBase] = []
+	#while cur_vertex != start_vertex:
+		#path.append(cur_vertex.module)
+		#cur_vertex = came_from[cur_vertex]
+	#path.append(start)
+	#path.reverse()
+	#return path
 
 func pathfind_to_func(start: ModuleBase, end_func: Callable) -> Array[ModuleBase]:
 	var start_vertex: ModuleGraphVertex = _vertices.get(start)

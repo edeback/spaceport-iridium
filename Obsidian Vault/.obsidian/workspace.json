@@ -137,12 +137,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/Inspirations.md",
+                "file": "Spaceport Iridium/Game Mechanics/Resources/Resource Gathering.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Inspirations"
+              "title": "Resource Gathering"
             }
           }
         ],
@@ -291,9 +291,9 @@
   },
   "active": "8caa9f37fed1693c",
   "lastOpenFiles": [
-    "Spaceport Iridium/To Do.md",
-    "Spaceport Iridium/Inspirations.md",
     "Spaceport Iridium/Game Mechanics/Modules/Transportation.md",
+    "Spaceport Iridium/Inspirations.md",
+    "Spaceport Iridium/To Do.md",
     "Spaceport Iridium/Game Mechanics/Modules/Science.md",
     "Spaceport Iridium/Game Mechanics/Modules/Overview.md",
     "Spaceport Iridium/Game Mechanics/Modules/Energy.md",

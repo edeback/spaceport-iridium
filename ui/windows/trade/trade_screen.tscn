@@ -1,0 +1,129 @@
+[gd_scene load_steps=5 format=3 uid="uid://mroynql4rcbs"]
+
+[ext_resource type="Texture2D" uid="uid://d0as5orqnhkl4" path="res://assets/external/kenney_ui/Vector/Blue/button_square_flat.svg" id="1_0uyp0"]
+[ext_resource type="Script" uid="uid://bncyn6x12jwv6" path="res://ui/windows/trade/trade_screen.gd" id="1_gjp8f"]
+[ext_resource type="PackedScene" uid="uid://tn1loj0n48w6" path="res://ui/windows/trade/trade_resource_row.tscn" id="2_gjp8f"]
+[ext_resource type="Texture2D" uid="uid://cc0ns2prdb577" path="res://ui/icons/credit_symbol.svg" id="4_y6br3"]
+
+[node name="TradeScreen" type="MarginContainer"]
+custom_minimum_size = Vector2(400, 400)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -8.0
+offset_top = -11.5
+offset_right = 8.0
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_gjp8f")
+trade_resource_row_scene = ExtResource("2_gjp8f")
+
+[node name="NinePatchRect" type="NinePatchRect" parent="."]
+self_modulate = Color(0.768243, 0.52438736, 0.7868966, 1)
+layout_mode = 2
+texture = ExtResource("1_0uyp0")
+patch_margin_left = 8
+patch_margin_top = 8
+patch_margin_right = 8
+patch_margin_bottom = 8
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="MarginContainer2" type="MarginContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 0
+
+[node name="Label" type="Label" parent="VBoxContainer/MarginContainer2"]
+layout_mode = 2
+text = "Trade"
+horizontal_alignment = 1
+
+[node name="ResourceRowsContainer" type="VBoxContainer" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TradeResourceRow" parent="VBoxContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
+layout_mode = 2
+
+[node name="TradeResourceRow2" parent="VBoxContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
+layout_mode = 2
+
+[node name="TradeResourceRow3" parent="VBoxContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
+layout_mode = 2
+
+[node name="TradeResourceRow4" parent="VBoxContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
+layout_mode = 2
+
+[node name="TradeResourceRow5" parent="VBoxContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
+layout_mode = 2
+
+[node name="TradeResourceRow6" parent="VBoxContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
+layout_mode = 2
+
+[node name="TradeResourceRow7" parent="VBoxContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
+layout_mode = 2
+
+[node name="MarginContainer3" type="MarginContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="PanelContainer" type="PanelContainer" parent="VBoxContainer/MarginContainer3"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/MarginContainer3"]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/MarginContainer3/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="TotalLabel" type="Label" parent="VBoxContainer/MarginContainer3/MarginContainer/HBoxContainer"]
+layout_mode = 2
+text = "Total:"
+
+[node name="CreditIcon" type="TextureRect" parent="VBoxContainer/MarginContainer3/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+texture = ExtResource("4_y6br3")
+expand_mode = 3
+
+[node name="TotalCreditsLabel" type="Label" parent="VBoxContainer/MarginContainer3/MarginContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "654891"
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/margin_bottom = 8
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/MarginContainer"]
+layout_mode = 2
+
+[node name="SubmitButton" type="Button" parent="VBoxContainer/MarginContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 6
+text = "Submit"
+
+[node name="CancelButton" type="Button" parent="VBoxContainer/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 6
+text = "Cancel"
+
+[connection signal="pressed" from="VBoxContainer/MarginContainer/HBoxContainer/SubmitButton" to="." method="submit"]
+[connection signal="pressed" from="VBoxContainer/MarginContainer/HBoxContainer/CancelButton" to="." method="cancel"]

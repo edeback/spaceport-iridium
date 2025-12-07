@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://d2yel2dv7mxe6"]
+
+[ext_resource type="Script" uid="uid://qh26gw2d12ri" path="res://modules/components/trade_component.gd" id="1_yjj60"]
+[ext_resource type="PackedScene" uid="uid://c68bepim1i8gr" path="res://ui/windows/component_ui_panels/trade_component_ui.tscn" id="2_7fy2h"]
+
+[node name="TradeComponent" type="Node2D"]
+script = ExtResource("1_yjj60")
+ui_info_panel_element = ExtResource("2_7fy2h")

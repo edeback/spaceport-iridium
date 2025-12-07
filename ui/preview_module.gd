@@ -8,36 +8,35 @@ const SHADER_PARAM_PLACEABLE = "PLACEABLE"
 
 var module_size: Vector2i
 var connection_points: Array[Vector2i]
+var internal_points: Array[Vector2i]
+var must_be_clear_points: Array[Vector2i]
 var module_layer: WorldManager.InteractionLayer
 var last_cell: Vector2i
 var offset: Vector2 = Vector2(0, 0)
-var is_horizontal: bool = true
+var is_horizontal: bool = true:
+	set(new_value):
+		if new_value != is_horizontal:
+			is_horizontal = new_value
+			if module_data != null:
+				update_from_module_data()
 
 var module_data: ModuleData:
 	get:
 		return module_data
 	set(new_value):
-		module_data = new_value
-		if module_data == null:
-			sprite.texture = default_texture
-			sprite.visible = false
-		else:
-			var temp_module: ModuleBase = module_data.scene.instantiate() as ModuleBase
-			module_size = temp_module.size
-			temp_module.is_horizontal = is_horizontal
-			connection_points = temp_module.get_structure_component().connection_points
-			module_layer = module_data.interaction_layer
-			var temp_sprite: Sprite2D = temp_module.get_sprite()
-			sprite.texture = temp_sprite.texture
-			sprite.offset = temp_sprite.offset
-			sprite.region_enabled = temp_sprite.region_enabled
-			sprite.region_rect = temp_sprite.region_rect
-			sprite.transform = temp_sprite.transform
-			sprite.centered = true
-			sprite.visible = true
-			offset = temp_module.offset.position
-			temp_module.queue_free()
-		
+		if module_data != new_value:
+			module_data = new_value
+			if module_data == null:
+				sprite.texture = default_texture
+				sprite.visible = false
+			else:
+				update_from_module_data()
+
+var flipped: bool:
+	set(new_value):
+		if flipped != new_value:
+			flipped = new_value
+			update_from_module_data()
 
 var can_place: bool = true:
 	get:
@@ -46,6 +45,30 @@ var can_place: bool = true:
 		if can_place != new_value:
 			can_place = new_value
 			_update_shader()
+
+func update_from_module_data() -> void:
+	var temp_scene: PackedScene =  module_data.scene
+	if flipped and module_data.flippable:
+		temp_scene = module_data.flipped_scene
+	var temp_module: ModuleBase = temp_scene.instantiate() as ModuleBase
+	module_size = temp_module.size
+	temp_module.is_horizontal = is_horizontal
+	connection_points = temp_module.get_structure_component().connection_points
+	internal_points = temp_module.get_structure_component().internal_points
+	must_be_clear_points = temp_module.get_structure_component().must_be_clear_points
+	module_layer = module_data.interaction_layer
+	var temp_sprite: Sprite2D = temp_module.get_sprite()
+	sprite.texture = temp_sprite.texture
+	sprite.offset = temp_sprite.offset
+	sprite.region_enabled = temp_sprite.region_enabled
+	sprite.region_rect = temp_sprite.region_rect
+	sprite.transform = temp_sprite.transform
+	sprite.centered = true
+	sprite.visible = true
+	sprite.flip_h = temp_sprite.flip_h
+	sprite.flip_v = temp_sprite.flip_v
+	offset = temp_module.offset.position
+	temp_module.queue_free()
 
 func _update_shader() -> void:
 	if (sprite && sprite.material != null):
@@ -61,6 +84,10 @@ func update_placeable(module_cell: Vector2i, ignore_connections: bool = false) -
 	if Global.world_manager.is_blocked(module_layer, module_cell, module_size):
 		can_place = false
 		return
+	for point: Vector2i in must_be_clear_points:
+		if Global.world_manager.has_overlaps(module_layer, module_cell + point):
+			can_place = false
+			return
 	# Must be connected to at least one other module
 	if ignore_connections:
 		can_place = true
@@ -72,8 +99,13 @@ func update_placeable(module_cell: Vector2i, ignore_connections: bool = false) -
 func _has_possible_connections(module_cell: Vector2i) -> bool:
 	# Explicit connection points
 	for point in connection_points:
-		if Global.world_manager.has_overlaps(module_layer, module_cell + point):
-			return true
+		var test_module: ModuleBase = Global.world_manager.get_module_by_cell(module_layer, module_cell + point)
+		if test_module != null:
+			var struct_component: StructureComponent = test_module.get_structure_component()
+			if struct_component != null:
+				for internal_point in internal_points:
+					if struct_component.can_connect_to(module_cell + internal_point):
+						return true
 	
 	# Cross-layer connections (overlaps)
 	return Global.world_manager.has_overlaps(1 - module_layer, module_cell, module_size)

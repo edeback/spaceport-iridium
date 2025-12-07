@@ -1,0 +1,36 @@
+[gd_scene load_steps=7 format=3 uid="uid://c87qnpmys3w6c"]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_lf8xj"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_3m4vr"]
+[ext_resource type="PackedScene" uid="uid://ge73mk14adfq" path="res://modules/components/power_generation_component.tscn" id="3_gkv42"]
+[ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="5_rcgfq"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1bqgj"]
+shader = ExtResource("2_3m4vr")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_15wy0"]
+resource_local_to_scene = true
+size = Vector2(62, 62)
+
+[node name="Module" instance=ExtResource("1_lf8xj")]
+
+[node name="Sprite" parent="Offset" index="0"]
+material = SubResource("ShaderMaterial_1bqgj")
+
+[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
+shape = SubResource("RectangleShape2D_15wy0")
+
+[node name="PathComponent" parent="." index="1"]
+path_points = Array[Vector2i]([])
+door_indices = Array[Vector2i]([])
+door_required = false
+
+[node name="LightingComponent" parent="." index="3" node_paths=PackedStringArray("power_generation_component") instance=ExtResource("5_rcgfq")]
+position = Vector2(32, 32)
+power_generation_component = NodePath("../PowerGenerationComponent")
+
+[node name="PowerGenerationComponent" parent="." index="4" instance=ExtResource("3_gkv42")]
+power_output = 10000000.0

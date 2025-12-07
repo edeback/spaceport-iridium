@@ -4,3 +4,7 @@
 
 [node name="MiningComponent" type="Node2D"]
 script = ExtResource("1_klg84")
+
+[node name="DroneRespawnTimer" type="Timer" parent="."]
+wait_time = 5.0
+one_shot = true

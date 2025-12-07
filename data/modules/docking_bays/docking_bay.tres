@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ModuleData" load_steps=4 format=3 uid="uid://boadffwat0kpp"]
+
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="1_5lqk0"]
+[ext_resource type="PackedScene" uid="uid://cuqyno6nnog1" path="res://modules/docking_bays/docking_bay_right.tscn" id="1_vpvv2"]
+[ext_resource type="PackedScene" uid="uid://bpridbphjctdv" path="res://modules/docking_bays/docking_bay_left_base.tscn" id="2_11ty0"]
+
+[resource]
+script = ExtResource("1_5lqk0")
+name = "Docking Bay"
+scene = ExtResource("2_11ty0")
+tags = Array[String](["Dock"])
+flippable = true
+flipped_scene = ExtResource("1_vpvv2")
+metadata/_custom_type_script = "uid://vwmofdckg7hu"

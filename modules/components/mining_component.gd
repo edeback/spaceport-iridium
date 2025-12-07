@@ -4,15 +4,18 @@ extends ComponentBase
 @export var output_storage: MultiStorageComponent
 @export var time_to_process: float = 1
 @export var power_consumer: PowerConsumptionComponent
-@export var continuous: bool = false
 @export var base_output_resource: ResourceData
 @export var sub_resources: Array[ResourceData]
+var mining_drone_scene: PackedScene = preload("res://pawns/mining_drone_pawn.tscn")
+@export var max_drones: int = 3
+@onready var drone_respawn_timer: Timer = $DroneRespawnTimer
+
+var drones: Array[MiningDronePawn] = []
 
 var output_resource: ResourceData
 
 var processing: bool = false
 var current_process_time: float = 0
-var mining_job: Job_MineAsteroid = null
 
 signal processor_progress_changed(new_progress: float)
 
@@ -23,6 +26,7 @@ func _ready() -> void:
 	assert(power_consumer != null, "Processor must have power_consumer!")
 	assert(time_to_process > 0, "Processor time_to_process must be > 0!")
 	add_to_group("processor")
+	drone_respawn_timer.timeout.connect(build_drone)
 	#output_resource = base_output_resource.duplicate()
 	#output_resource.base_resource = base_output_resource
 	#var mutiple: float = 0.0
@@ -38,24 +42,27 @@ func _process(delta: float) -> void:
 		last_error = "No power!"
 		return
 	last_error = ""
-	if mining_job == null and _can_output(1.0):
-		mining_job = Job_MineAsteroid.new()
-		mining_job.requesting_module = owner_module
-		mining_job.job_end.connect(mining_job_complete)
-		Global.job_manager.add_job(mining_job)
-	#if continuous:
-		#_continuous_processing(delta)
-	#else:
-		#_stepwise_processing(delta)
-	pass
+	if drones.size() < max_drones and drone_respawn_timer.is_stopped():
+		drone_respawn_timer.start()
+	if _can_output(1.0):
+		for drone: MiningDronePawn in drones:
+			if drone.current_job == null:
+				var mining_job: Job_MineAsteroid = Job_MineAsteroid.new()
+				mining_job.requesting_module = owner_module
+				if not drone.give_job(mining_job):
+					mining_job.free()
+		
+func build_drone() -> void:
+	var new_drone: MiningDronePawn = mining_drone_scene.instantiate() as MiningDronePawn
+	Global.world_manager.pawn_layer.add_child(new_drone)
+	new_drone.global_position = global_position
+	new_drone.current_module = owner_module
+	drones.append(new_drone)
 
 func _exit_tree() -> void:
-	if mining_job != null:
-		mining_job.cancel(true)
-		mining_job = null
+	for drone: MiningDronePawn in drones:
+		drone.self_destruct()
 
-func mining_job_complete() -> void:
-	mining_job = null
 
 func _can_output(fraction: float = 1.0) -> bool:
 	return output_storage.space_available() >= fraction
@@ -63,38 +70,38 @@ func _can_output(fraction: float = 1.0) -> bool:
 func _deposit_outputs(fraction: float = 1.0) -> void:
 	var doublecheck: bool = output_storage.deposit(output_resource, fraction)
 	assert(doublecheck, "Somehow couldn't output items when there was room!")
-
-func _continuous_processing(delta: float) -> void:
-	var fraction_of_recipe: float = delta / time_to_process
-	if _can_output(fraction_of_recipe):
-		_deposit_outputs(fraction_of_recipe)
-	return
-
-func _stepwise_processing(delta: float) -> void:
-	if processing:
-		current_process_time += delta
-		processor_progress_changed.emit(current_process_time / time_to_process)
-		if current_process_time >= time_to_process:
-			if _can_output():
-				var doublecheck: bool = output_storage.deposit(output_resource, 1)
-				print("Mining completed")
-				assert(doublecheck, "Somehow couldn't output items when there was room!")
-				processor_progress_changed.emit(0)
-				processing = false
-				current_process_time = 0
-			else:
-				last_error = "No space for output resources!"
-				return
-		last_error = ""
-	else:
-		if _can_output():
-			print("Mining starting")
-			processor_progress_changed.emit(0)
-			processing = true
-			current_process_time = 0
-			last_error = ""
-		else:
-			last_error = "No space for output resources!"
+#
+#func _continuous_processing(delta: float) -> void:
+	#var fraction_of_recipe: float = delta / time_to_process
+	#if _can_output(fraction_of_recipe):
+		#_deposit_outputs(fraction_of_recipe)
+	#return
+#
+#func _stepwise_processing(delta: float) -> void:
+	#if processing:
+		#current_process_time += delta
+		#processor_progress_changed.emit(current_process_time / time_to_process)
+		#if current_process_time >= time_to_process:
+			#if _can_output():
+				#var doublecheck: bool = output_storage.deposit(output_resource, 1)
+				#print("Mining completed")
+				#assert(doublecheck, "Somehow couldn't output items when there was room!")
+				#processor_progress_changed.emit(0)
+				#processing = false
+				#current_process_time = 0
+			#else:
+				#last_error = "No space for output resources!"
+				#return
+		#last_error = ""
+	#else:
+		#if _can_output():
+			#print("Mining starting")
+			#processor_progress_changed.emit(0)
+			#processing = true
+			#current_process_time = 0
+			#last_error = ""
+		#else:
+			#last_error = "No space for output resources!"
 
 func has_ui() -> bool:
 	return false

@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://ce6npnqw8s3mu"]
+[gd_scene load_steps=26 format=3 uid="uid://ce6npnqw8s3mu"]
 
 [ext_resource type="Script" uid="uid://de484prd4xlyv" path="res://ui/ui_main.gd" id="1_2bqpn"]
 [ext_resource type="PackedScene" uid="uid://c7x5q4maw36vx" path="res://ui/buttons/module_button_group.tscn" id="3_ka3re"]
@@ -18,6 +18,7 @@
 [ext_resource type="Script" uid="uid://dreytwxljgmic" path="res://ui/credits_display_ui.gd" id="15_1h8lm"]
 [ext_resource type="Texture2D" uid="uid://cc0ns2prdb577" path="res://ui/icons/credit_symbol.svg" id="15_b5r2u"]
 [ext_resource type="Script" uid="uid://c6excany0u70v" path="res://ui/energy_display_ui.gd" id="15_rtsem"]
+[ext_resource type="PackedScene" uid="uid://mroynql4rcbs" path="res://ui/windows/trade/trade_screen.tscn" id="19_xyc40"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xdhp5"]
 bg_color = Color(0.0782779, 0.271425, 7.21961e-08, 1)
@@ -47,7 +48,7 @@ corner_radius_bottom_left = 16
 shadow_size = 6
 shadow_offset = Vector2(-3, -3)
 
-[sub_resource type="FoldableGroup" id="FoldableGroup_1h8lm"]
+[sub_resource type="FoldableGroup" id="FoldableGroup_xyc40"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1h8lm"]
 content_margin_left = 4.0
@@ -262,7 +263,7 @@ layout_mode = 2
 
 [node name="FoldableContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer" instance=ExtResource("3_ka3re")]
 layout_mode = 2
-foldable_group = SubResource("FoldableGroup_1h8lm")
+foldable_group = SubResource("FoldableGroup_xyc40")
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -279,6 +280,13 @@ size_flags_vertical = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_1h8lm")
 shortcut = SubResource("Shortcut_xyc40")
 text = "Module Info"
+
+[node name="TradeScreen" parent="." instance=ExtResource("19_xyc40")]
+layout_mode = 1
+offset_left = -300.0
+offset_top = -349.5
+offset_right = 300.0
+offset_bottom = 349.5
 
 [connection signal="item_selected" from="VBoxContainer/PanelContainer/MarginContainer/HBoxContainer/InteractionLayerOptions" to="." method="_on_interaction_layer_changed"]
 [connection signal="pressed" from="VBoxContainer/Modules/MarginContainer/VBoxContainer/MarginContainer/ModuleInfoButton" to="." method="_on_info_button_pressed"]

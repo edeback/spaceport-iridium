@@ -7,6 +7,11 @@ extends Resource
 @export var sub_resources: Dictionary[ResourceData, float]
 @export var base_resource: ResourceData
 
+@export var default_cost: int = 10
+@export var default_market_supply: int = 100
+
+
+
 @export var show_test: bool = false:
 	set(value):
 		show_test = value

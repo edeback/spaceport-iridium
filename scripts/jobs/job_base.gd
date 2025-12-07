@@ -4,6 +4,7 @@ extends Resource
 @export var name: String = ""
 @export var description: String = ""
 var priority: int = 0
+var repeat_after_finish: bool = false
 
 signal job_end
 

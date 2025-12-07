@@ -111,7 +111,11 @@ func extract_position(index: int) -> Vector2:
 	
 func reached_next_node() -> void:
 	if path_variant[next_path_index] is ModuleBase:
-		pawn.current_module = path_variant[next_path_index] as ModuleBase
+		var this_module: ModuleBase = path_variant[next_path_index] as ModuleBase
+		var prev_module: ModuleBase = null
+		if next_path_index > 0 and path_variant[next_path_index -1 ] is ModuleBase:
+			prev_module = path_variant[next_path_index -1] as ModuleBase
+		this_module.enter_module_from(pawn, prev_module)
 		modules_to_watch.pop_back()
 	else:
 		pawn.current_module = null

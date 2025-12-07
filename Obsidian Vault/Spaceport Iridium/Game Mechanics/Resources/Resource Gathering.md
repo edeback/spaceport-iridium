@@ -33,6 +33,8 @@ Open Market
 	- Maybe only when a trader comes?
 	- Or maybe always available but only fulfilled when a trader comes by?
 	- Resources should then have market price on them
+- "Contracts" that specify a specific (higher, bonus) value for a certain number of shipped resources by a certain time
+- Events change market supplies, which change prices
 
 Other stations
 - Buy from other stations in the system?

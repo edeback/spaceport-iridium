@@ -8,7 +8,7 @@ var resource_storage_components: Dictionary = {}
 
 var resources_changed: Array[ResourceData] = []
 
-@export_storage var credits: int = 0:
+@export_storage var credits: int = 10000:
 	get():
 		return credits
 	set(new_credits):
@@ -51,3 +51,8 @@ func _recalc_resource(resource: ResourceData) -> void:
 		total += storage_component.total_stored_by_resource(resource)
 	resource_totals.set(resource, total)
 	resource_changed.emit(resource, total)
+
+func get_total_quantity_of_resource(resource: ResourceData) -> float:
+	if resource_totals.has(resource):
+		return resource_totals[resource]
+	return 0

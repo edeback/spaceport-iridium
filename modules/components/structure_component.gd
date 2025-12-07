@@ -12,6 +12,16 @@ extends ComponentBase
 		connection_points = new_points
 		queue_redraw()
 		
+@export var internal_points: Array[Vector2i] = []:
+	set(new_points):
+		internal_points = new_points
+		queue_redraw()
+		
+@export var must_be_clear_points: Array[Vector2i] = []:
+	set(new_points):
+		must_be_clear_points = new_points
+		queue_redraw()
+		
 ## Module // Is Door
 var module_connections: Dictionary[ModuleBase, bool] = {}
 
@@ -22,6 +32,11 @@ signal module_connections_changed(new_connections: Dictionary[ModuleBase, bool])
 func _ready() -> void:
 	super()
 	size = owner_module.size
+	
+	
+func can_connect_to(world_cell: Vector2i) -> bool:
+	var local_cell: Vector2i = world_cell - owner_module.module_cell
+	return connection_points.has(local_cell)
 	
 ## Do we maybe have any connection?
 func _has_possible_connections() -> bool:
@@ -101,4 +116,16 @@ func _draw() -> void:
 			var point: Vector2i = connection_points[index]
 			var center: Vector2 = Vector2(point * Vector2i(64, 64)) +  Vector2(32, 32)
 			draw_circle(center, 12, Color.GREEN)
+			draw_string(ThemeDB.fallback_font, center + Vector2(-4, 5), str(index), HORIZONTAL_ALIGNMENT_CENTER, -1, 12, Color.BLACK)
+		
+		for index in internal_points.size():
+			var point: Vector2i = internal_points[index]
+			var center: Vector2 = Vector2(point * Vector2i(64, 64)) +  Vector2(32, 32)
+			draw_circle(center, 12, Color.LIGHT_SKY_BLUE)
+			draw_string(ThemeDB.fallback_font, center + Vector2(-4, 5), str(index), HORIZONTAL_ALIGNMENT_CENTER, -1, 12, Color.BLACK)
+		
+		for index in must_be_clear_points.size():
+			var point: Vector2i = must_be_clear_points[index]
+			var center: Vector2 = Vector2(point * Vector2i(64, 64)) +  Vector2(32, 32)
+			draw_circle(center, 12, Color.ORANGE_RED)
 			draw_string(ThemeDB.fallback_font, center + Vector2(-4, 5), str(index), HORIZONTAL_ALIGNMENT_CENTER, -1, 12, Color.BLACK)

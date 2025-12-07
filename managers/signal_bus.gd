@@ -15,8 +15,8 @@ signal module_structure_connection_added(from: ModuleBase, to: ModuleBase, dista
 signal module_structure_connection_removed(from: ModuleBase, to: ModuleBase)
 @warning_ignore("unused_signal")
 signal module_selected(selected_module: ModuleBase)
-
-
+@warning_ignore("unused_signal")
+signal set_up_trade(trade_component: TradeComponent)
 
 
 

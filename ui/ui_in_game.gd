@@ -49,13 +49,15 @@ func _unhandled_input(event: InputEvent) -> void:
 					cur_input_mode = InputMode.Multiplace
 					multiplace_start = hovered_cell
 				else:
-					Global.world_manager.add_module(cur_module, preview_module.last_cell)
+					Global.world_manager.add_module(cur_module, preview_module.last_cell, true, preview_module.flipped)
 					update_module_placement(true)
 			else:
 				select_module(hovered_cell)
 		if event.is_action_pressed("remove"):
 			Global.world_manager.remove_module_by_cell_active_layer(hovered_cell)
-	pass
+	if event is InputEventKey:
+		if event.is_action_pressed("flip_module"):
+			preview_module.flipped = not preview_module.flipped
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:

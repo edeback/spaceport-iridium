@@ -12,6 +12,8 @@ class LayerData:
 # Only used for setup. Use layer_data at runtime
 @export var module_layers: Dictionary[InteractionLayer, CanvasLayer]
 
+@export var pawn_layer: CanvasLayer
+
 @export var replacement_module: ModuleData
 
 var layer_data: Dictionary[InteractionLayer, LayerData]
@@ -71,8 +73,11 @@ func get_nearest_module_by_type(position: Vector2, module_data: ModuleData) -> M
 			closest_module = module
 	return closest_module
 
-func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true) -> void:
-	var new_module: ModuleBase = module_data.scene.instantiate()
+func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false) -> void:
+	var module_scene: PackedScene = module_data.scene
+	if flipped and module_data.flippable:
+		module_scene = module_data.flipped_scene
+	var new_module: ModuleBase = module_scene.instantiate()
 	new_module.get_instance_id()
 	if is_blocked(module_data.interaction_layer, cell, new_module.size):
 		print("Warning, attempted to add module where one exists at: " + str(cell))
@@ -108,7 +113,9 @@ func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 		if not Global.structure_manager.can_remove_module(module):
 			return false
 	var replacement_location: Vector2i = module.module_cell
-	var replacement_size: Vector2i = module.size
+	var replacement_points: Array[Vector2i] = []
+	if module.get_structure_component() != null:
+		replacement_points = module.get_structure_component().internal_points
 	module.pre_delete()
 	SignalBus.module_removed.emit(module)
 	module.remove_connections()
@@ -121,9 +128,8 @@ func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 	module_array.erase(module)
 	module.queue_free()
 	if module.module_data != replacement_module and module.module_data.interaction_layer == InteractionLayer.MODULE:
-		for x in replacement_size.x:
-			for y in replacement_size.y:
-				add_module(replacement_module, replacement_location + Vector2i(x,y))
+		for replacement_point in replacement_points:
+			add_module(replacement_module, replacement_location +replacement_point)
 	return true
 
 func remove_module_by_cell_active_layer(cell: Vector2i) -> void:

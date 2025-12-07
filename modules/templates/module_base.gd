@@ -68,7 +68,7 @@ func _ready() -> void:
 	_update_shader()
 	if module_data != null:
 		nameplate.text = module_data.name
-	else:
+	elif nameplate != null:
 		nameplate.text = ""
 	add_to_group("module")
 	if SignalBus.is_node_ready():
@@ -76,11 +76,10 @@ func _ready() -> void:
 	on_place()
 
 func on_place() -> void:
-	if Global.is_node_ready() and module_data.interaction_layer == WorldManager.InteractionLayer.MODULE:
+	if get_structure_component() != null and module_data.interaction_layer == WorldManager.InteractionLayer.MODULE:
 		var cells: Array[Vector2i] = []
-		for x in size.x:
-			for y in size.y:
-				cells.append(module_cell + Vector2i(x, y))
+		for internal_point: Vector2i in get_structure_component().internal_points:
+			cells.append(module_cell + internal_point)
 		Global.tilemap.set_cells_terrain_connect(cells, 0, 0)
 	pass
 	
@@ -133,6 +132,9 @@ func remove_connections() -> void:
 	
 func get_global_center() -> Vector2:
 	return global_position + Vector2(Global.CELL_SIZE * size) / 2
+	
+func enter_module_from(pawn: PawnBase, _prev_module: ModuleBase = null) -> void:
+	pawn.current_module = self
 	
 
 func get_sprite() -> Sprite2D:

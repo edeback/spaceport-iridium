@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3 uid="uid://cuaw8huae5r8l"]
+
+[ext_resource type="Script" uid="uid://ci8vomgjqvena" path="res://modules/special/module_space_connection.gd" id="1_54mio"]
+[ext_resource type="PackedScene" uid="uid://v3qhw5f8nrbf" path="res://modules/components/path_component.tscn" id="4_r75ks"]
+
+[node name="Module" type="Node2D" node_paths=PackedStringArray("sprite", "offset")]
+z_index = 1
+script = ExtResource("1_54mio")
+sprite = NodePath("")
+blocks_building = false
+can_delete = false
+structure_check_before_delete = false
+offset = NodePath("")
+
+[node name="PathComponent" parent="." instance=ExtResource("4_r75ks")]
+connection_points = Array[Vector2i]([])
+path_points = Array[Vector2i]([Vector2i(32, 32)])
+path_edges = Dictionary[Vector2i, String]({})
+door_indices = Array[int]([0])
+door_required = true

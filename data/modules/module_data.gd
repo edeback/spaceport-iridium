@@ -13,3 +13,6 @@ extends Resource
 @export var hidden: bool = false
 
 @export var interaction_layer: WorldManager.InteractionLayer = WorldManager.InteractionLayer.MODULE
+
+@export var flippable: bool = false
+@export var flipped_scene: PackedScene

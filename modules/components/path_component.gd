@@ -121,9 +121,11 @@ func make_connections() -> void:
 			module_connections[module] = connected_modules[module]
 			SignalBus.module_path_connection_added.emit(owner_module, module, owner_module.module_cell.distance_to(module.module_cell))
 	connect_doors()
+		
 	
 func manual_connection(other_module: ModuleBase, connection_index: int) -> void:
 	module_connections[other_module] = connection_index
+	SignalBus.module_path_connection_added.emit(owner_module, other_module, 1)
 			
 func has_door(cell_to_check: Vector2i) -> bool:
 	for index: int in door_indices:
