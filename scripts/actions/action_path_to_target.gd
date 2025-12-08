@@ -175,7 +175,7 @@ func move(delta: float) -> void:
 	if next_path_index >= path_variant.size():
 		# Made it to the last position
 		action_state = PathActionState.Finished
-	pawn.position = next_position
+	pawn.move_to(next_position)
 
 func is_failed() -> bool:
 	return action_state == PathActionState.Failed

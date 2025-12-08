@@ -190,7 +190,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"walk",
-"speed": 12.0
+"speed": 20.0
 }]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_j6cx7"]
@@ -273,7 +273,6 @@ animations = [{
 script = ExtResource("1_4rv7m")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-visible = false
 texture_filter = 1
 scale = Vector2(0.3, 0.3)
 texture = ExtResource("2_tngjo")
@@ -285,9 +284,9 @@ visible = false
 scale = Vector2(0.25, 0.25)
 sprite_frames = SubResource("SpriteFrames_o283h")
 animation = &"idle"
-frame_progress = 0.65374947
 
 [node name="Robot" type="AnimatedSprite2D" parent="."]
+visible = false
 scale = Vector2(0.3, 0.3)
 sprite_frames = SubResource("SpriteFrames_dda5j")
 animation = &"stand"

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bxedo7qsx4i10"]
+
+[ext_resource type="Script" uid="uid://g8stfqwq6yxm" path="res://modules/components/pawn_storage_component.gd" id="1_tne3k"]
+
+[node name="PawnStorageComponent" type="Node2D"]
+script = ExtResource("1_tne3k")

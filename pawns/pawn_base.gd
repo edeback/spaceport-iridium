@@ -8,6 +8,7 @@ extends Node2D
 @export var path: PackedVector2Array
 @export var speed: float = 120.0
 @export var carrying_capacity: int = 10
+@export var animated_sprite: AnimatedSprite2D
 
 var traveling: bool = false
 var next_point: int = 0
@@ -76,6 +77,20 @@ func _on_module_selected(selected_module: ModuleBase):
 	next_point = 0
 	traveling = true
 	pass
+
+func _exit_tree() -> void:
+	if current_job != null:
+		current_job.cancel(true)
+		current_job = null
+
+func move_to(new_pos: Vector2) -> void:
+	if animated_sprite != null:
+		if position == new_pos:
+			animated_sprite.play("idle")
+		else:
+			animated_sprite.play("walk")
+			animated_sprite.flip_h = new_pos.x < position.x
+	position = new_pos
 
 #func _find_next_job() -> void:
 	#if current_job == null:

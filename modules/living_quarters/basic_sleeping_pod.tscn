@@ -1,0 +1,27 @@
+[gd_scene load_steps=7 format=3 uid="uid://cnf1f3ppgbny7"]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_862pb"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_7yck1"]
+[ext_resource type="PackedScene" uid="uid://bxedo7qsx4i10" path="res://modules/components/pawn_storage_component.tscn" id="3_6botg"]
+[ext_resource type="PackedScene" uid="uid://2pp7va28ybgl" path="res://pawns/crew_pawn.tscn" id="4_6botg"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bjfrs"]
+shader = ExtResource("2_7yck1")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bjfrs"]
+resource_local_to_scene = true
+size = Vector2(62, 62)
+
+[node name="Module" instance=ExtResource("1_862pb")]
+
+[node name="Sprite" parent="Offset" index="0"]
+material = SubResource("ShaderMaterial_bjfrs")
+
+[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
+shape = SubResource("RectangleShape2D_bjfrs")
+
+[node name="PawnStorageComponent" parent="." index="3" instance=ExtResource("3_6botg")]
+pawn_scene = ExtResource("4_6botg")

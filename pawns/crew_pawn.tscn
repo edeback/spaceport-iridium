@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3 uid="uid://2pp7va28ybgl"]
+
+[ext_resource type="PackedScene" uid="uid://ddoebv5qw5lfm" path="res://pawns/pawn_base.tscn" id="1_4e1f1"]
+
+[node name="PawnBase" node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_4e1f1")]
+animated_sprite = NodePath("Crew")
+
+[node name="Sprite2D" parent="." index="0"]
+visible = false
+
+[node name="Crew" parent="." index="1"]
+visible = true
+frame_progress = 0.0

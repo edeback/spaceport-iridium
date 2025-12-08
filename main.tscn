@@ -1,4 +1,4 @@
-[gd_scene load_steps=1064 format=3 uid="uid://cgnfy2cj4760l"]
+[gd_scene load_steps=1063 format=3 uid="uid://cgnfy2cj4760l"]
 
 [ext_resource type="Script" uid="uid://nwr8gusqocd6" path="res://managers/main.gd" id="1_lvssd"]
 [ext_resource type="Script" uid="uid://dcanuqi7bdrfp" path="res://managers/camera.gd" id="3_055fr"]
@@ -16,7 +16,6 @@
 [ext_resource type="Script" uid="uid://d1myskwk0m3o0" path="res://managers/resource_manager.gd" id="9_074og"]
 [ext_resource type="PackedScene" uid="uid://dbdc66ow44ldq" path="res://ui/ui_in_game.tscn" id="9_ipixf"]
 [ext_resource type="Script" uid="uid://hfw1t2fwgg17" path="res://managers/asteroid_manager.gd" id="10_cegan"]
-[ext_resource type="PackedScene" uid="uid://ddoebv5qw5lfm" path="res://pawns/pawn_base.tscn" id="10_emvbo"]
 [ext_resource type="Texture2D" uid="uid://c5nxd7xkb86hj" path="res://assets/sprites/space_background_darker.png" id="10_vivmo"]
 [ext_resource type="Texture2D" uid="uid://byf3wu6nq1gun" path="res://assets/sprites/star_spritesheet.png" id="11_2cqfq"]
 [ext_resource type="PackedScene" uid="uid://cvrcrbshj8cre" path="res://objects/asteroid_base.tscn" id="11_82xsv"]
@@ -7710,9 +7709,6 @@ color = Color(0.552941, 0.552941, 0.552941, 1)
 [node name="PawnLayer" type="CanvasLayer" parent="ForegroundLayers"]
 layer = 2
 follow_viewport_enabled = true
-
-[node name="PawnBase" parent="ForegroundLayers/PawnLayer" instance=ExtResource("10_emvbo")]
-position = Vector2(407, 250)
 
 [node name="UiInGameLayer" type="CanvasLayer" parent="ForegroundLayers"]
 layer = 9
