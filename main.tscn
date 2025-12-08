@@ -19,7 +19,6 @@
 [ext_resource type="Texture2D" uid="uid://c5nxd7xkb86hj" path="res://assets/sprites/space_background_darker.png" id="10_vivmo"]
 [ext_resource type="Texture2D" uid="uid://byf3wu6nq1gun" path="res://assets/sprites/star_spritesheet.png" id="11_2cqfq"]
 [ext_resource type="PackedScene" uid="uid://cvrcrbshj8cre" path="res://objects/asteroid_base.tscn" id="11_82xsv"]
-[ext_resource type="Texture2D" uid="uid://356rxxqpfaqo" path="res://assets/sprites/truss_structure.png" id="11_efxa6"]
 [ext_resource type="Script" uid="uid://6xb1ct163od4" path="res://market_manager.gd" id="12_d13ii"]
 [ext_resource type="Texture2D" uid="uid://dmlscjahmhtu8" path="res://assets/sprites/planet_spritesheet.png" id="12_yaehf"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="13_4k2k6"]
@@ -34,6 +33,7 @@
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="22_d2t1y"]
 [ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="23_gngh3"]
 [ext_resource type="AudioStream" uid="uid://6j2kp23eqf8s" path="res://assets/external/sci_fi_music_pack/Sci-Fi 1 Loop.ogg" id="26_0rl1p"]
+[ext_resource type="Texture2D" uid="uid://rts0ktv4mj0v" path="res://assets/sprites/truss_structure_new.png" id="31_4k2k6"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2cqfq"]
 atlas = ExtResource("11_2cqfq")
@@ -7219,8 +7219,8 @@ animations = [{
 "speed": 5.0
 }]
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dg77c"]
-texture = ExtResource("11_efxa6")
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0rl1p"]
+texture = ExtResource("31_4k2k6")
 texture_region_size = Vector2i(64, 64)
 0:0/0 = 0
 0:0/0/terrain_set = 0
@@ -7559,7 +7559,7 @@ tile_size = Vector2i(64, 64)
 terrain_set_0/mode = 0
 terrain_set_0/terrain_0/name = "Terrain 0"
 terrain_set_0/terrain_0/color = Color(0.5, 0.34375, 0.25, 1)
-sources/2 = SubResource("TileSetAtlasSource_dg77c")
+sources/2 = SubResource("TileSetAtlasSource_0rl1p")
 
 [node name="Main" type="Node" node_paths=PackedStringArray("structure_tile_map")]
 script = ExtResource("1_lvssd")

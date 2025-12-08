@@ -123,13 +123,13 @@ func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 	if module.get_structure_component() != null:
 		replacement_points = module.get_structure_component().internal_points
 	module.pre_delete()
-	SignalBus.module_removed.emit(module)
 	module.remove_connections()
 	for x in module.size.x:
 		for y in module.size.y:
 			layer_data[module.module_data.interaction_layer].cell_to_module.erase(module.module_cell + Vector2i(x,y))
 	id_to_module.erase(module.module_id)
 	layer_data[module.module_data.interaction_layer].canvas.remove_child(module)
+	SignalBus.module_removed.emit(module)
 	var module_array: Array = modules_by_type.get_or_add(module.module_data, [])
 	module_array.erase(module)
 	module.queue_free()

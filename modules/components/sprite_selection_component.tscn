@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://cq34q4cbroavg"]
+
+[ext_resource type="Script" uid="uid://dwbj3e2xk8y1g" path="res://modules/components/sprite_selection_component.gd" id="1_6lvcq"]
+
+[node name="SpriteSelectionComponent" type="Node2D" node_paths=PackedStringArray("sprite")]
+script = ExtResource("1_6lvcq")
+sprite = NodePath("")
