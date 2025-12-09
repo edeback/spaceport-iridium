@@ -1,6 +1,8 @@
 class_name ResourceManager
 extends Node
 
+@export var storable_resources: Array[ResourceData] = []
+
 var resource_totals: Dictionary[ResourceData, float] = {}
 
 # Dictionary[ResourceData, Array[MultiStorageComponent]]

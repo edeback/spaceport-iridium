@@ -146,7 +146,7 @@
             }
           }
         ],
-        "currentTab": 9
+        "currentTab": 8
       }
     ],
     "direction": "vertical"
@@ -289,11 +289,16 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "8caa9f37fed1693c",
+  "active": "d0be06ee95876c99",
   "lastOpenFiles": [
+    "Pasted image 20251208125343.png",
+    "Pasted image 20251208125118.png",
+    "Spaceport Iridium/To Do.md",
+    "Pasted image 20251208125343.png.import",
+    "Pasted image 20251208125118.png.import",
+    "Spaceport Iridium/Game Mechanics/Resources/Resource Gathering.md",
     "Spaceport Iridium/Game Mechanics/Modules/Transportation.md",
     "Spaceport Iridium/Inspirations.md",
-    "Spaceport Iridium/To Do.md",
     "Spaceport Iridium/Game Mechanics/Modules/Science.md",
     "Spaceport Iridium/Game Mechanics/Modules/Overview.md",
     "Spaceport Iridium/Game Mechanics/Modules/Energy.md",
@@ -302,7 +307,6 @@
     "Spaceport Iridium/Roadmap.md",
     "Spaceport Iridium/Game Mechanics/Story/Tutorial.md",
     "Spaceport Iridium/Game Mechanics/Resources/Overview.md",
-    "Spaceport Iridium/Game Mechanics/Resources/Resource Gathering.md",
     "Paper Spacestation/Idea.md",
     "Spaceport Iridium/UI.md",
     "Spaceport Iridium/Audio.md",

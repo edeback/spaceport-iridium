@@ -1,4 +1,4 @@
-[gd_scene load_steps=1063 format=3 uid="uid://cgnfy2cj4760l"]
+[gd_scene load_steps=1065 format=3 uid="uid://cgnfy2cj4760l"]
 
 [ext_resource type="Script" uid="uid://nwr8gusqocd6" path="res://managers/main.gd" id="1_lvssd"]
 [ext_resource type="Script" uid="uid://dcanuqi7bdrfp" path="res://managers/camera.gd" id="3_055fr"]
@@ -23,7 +23,9 @@
 [ext_resource type="Texture2D" uid="uid://dmlscjahmhtu8" path="res://assets/sprites/planet_spritesheet.png" id="12_yaehf"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="13_4k2k6"]
 [ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="14_0rl1p"]
+[ext_resource type="Resource" uid="uid://8t3hl170s6gi" path="res://data/resources/biowaste.tres" id="14_ok6jj"]
 [ext_resource type="Resource" uid="uid://1an3ftgpeh6u" path="res://data/resources/hydrogen.tres" id="15_ok6jj"]
+[ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/generic_ore.tres" id="16_b1qrp"]
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="16_facbu"]
 [ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/industrial_metals.tres" id="17_b1qrp"]
 [ext_resource type="Resource" uid="uid://b27jc67v174pi" path="res://data/resources/iridium.tres" id="18_come4"]
@@ -7607,6 +7609,7 @@ script = ExtResource("8_w48qg")
 
 [node name="ResourceManager" type="Node" parent="Managers"]
 script = ExtResource("9_074og")
+storable_resources = Array[ExtResource("13_4k2k6")]([ExtResource("23_gngh3"), ExtResource("14_ok6jj"), ExtResource("14_0rl1p"), ExtResource("16_b1qrp"), ExtResource("15_ok6jj"), ExtResource("16_facbu"), ExtResource("17_b1qrp"), ExtResource("18_come4"), ExtResource("19_h8e4i"), ExtResource("20_4lmeg"), ExtResource("21_0cp0l"), ExtResource("22_d2t1y")])
 
 [node name="MarketManager" type="Node" parent="Managers" node_paths=PackedStringArray("market_update_timer")]
 script = ExtResource("12_d13ii")

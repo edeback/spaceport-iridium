@@ -9,7 +9,12 @@ Money system:
 	- Then when they get picked up, earn cash
 
 Storage modules:
+- Update to use one "storage_data" dictionary instead of multiple (stored_resources, cur_stored, cur_reserved_withdraw etc etc)
+- Refactor everything to use ints instead of floats (ugh)
 - "Vent" items? For when things get clogged up with resources you can't use
+- Be able to select which items can be stored there and which can't
+- ![[Pasted image 20251208125343.png]]
+
 
 Life-related buildings:
 - Dining hall
@@ -23,3 +28,7 @@ Plus life-related jobs:
 
 QoL:
 - Asteroids should have description of resources
+
+Rework:
+- Put everything to ints instead of floats in storage?
+- Then modules would only produce when complete

@@ -1,6 +1,9 @@
 class_name MultiStorageComponent
 extends ComponentBase
 
+
+
+
 @export var priority: int = 1
 @export var stored_resources: Array[ResourceData]
 @export var max_stored: float = 10
@@ -13,12 +16,15 @@ extends ComponentBase
 
 @export var cur_stored: Dictionary[ResourceData, float] = {}
 
+@export var storage_data: Dictionary[ResourceData, StorageData] = {}
+
 @export var cur_reserved_withdraw: Dictionary[ResourceData, float] = {}
 @export var cur_reserved_deposit: Dictionary[ResourceData, float] = {}
 
 @export var default_import_jobs: Dictionary[ResourceData, Job_GetResource] = {}
 
 @export var storage_ui: ProgressBar
+@export var player_configurable: bool = false
 
 #var stock_reserved: Dictionary[ResourceData, float] = {}
 #var space_reserved: Dictionary[ResourceData, float] = {}
@@ -38,6 +44,38 @@ func _ready() -> void:
 		for resource: ResourceData in stored_resources:
 			Global.resource_manager.register_component(resource, self)
 
+func add_stored_resource(resource: ResourceData) -> void:
+	if not stored_resources.has(resource):
+		stored_resources.append(resource)
+		if include_in_stats:
+			Global.resource_manager.register_component(resource, self)
+			
+func remove_stored_resource(resource: ResourceData) -> void:
+	if stored_resources.has(resource):
+		stored_resources.erase(resource)
+		cur_stored.erase(resource)
+		cur_reserved_deposit.erase(resource)
+		cur_reserved_withdraw.erase(resource)
+		if include_in_stats:
+			Global.resource_manager.unregister_component(resource, self)
+		if default_import_jobs.has(resource):
+			default_import_jobs[resource].cancel(true)
+			default_import_jobs.erase(resource)
+		var jobs_to_keep: Array[Job_GetResource] = []
+		for job: Job_GetResource in export_jobs:
+			if job.resource_data == resource:
+				job.cancel(true)
+			else:
+				jobs_to_keep.append(job)
+		export_jobs = jobs_to_keep
+		jobs_to_keep = []
+		for job: Job_GetResource in import_jobs:
+			if job.resource_data == resource:
+				job.cancel(true)
+			else:
+				jobs_to_keep.append(job)
+		import_jobs = jobs_to_keep
+			
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:

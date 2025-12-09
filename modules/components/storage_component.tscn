@@ -29,7 +29,7 @@ border_width_bottom = 1
 border_color = Color(0, 0, 0, 1)
 corner_detail = 6
 
-[node name="StorageComponent" type="Node2D" node_paths=PackedStringArray("storage_ui")]
+[node name="Storage Bay" type="Node2D" node_paths=PackedStringArray("storage_ui")]
 script = ExtResource("1_hrwh1")
 storage_ui = NodePath("ProgressBar")
 ui_info_panel_element = ExtResource("2_5elv5")
