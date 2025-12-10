@@ -52,29 +52,33 @@ layout_mode = 2
 text = "Trade"
 horizontal_alignment = 1
 
-[node name="ResourceRowsContainer" type="VBoxContainer" parent="VBoxContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ResourceRowsContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="TradeResourceRow" parent="VBoxContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
+[node name="TradeResourceRow" parent="VBoxContainer/ScrollContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
 layout_mode = 2
 
-[node name="TradeResourceRow2" parent="VBoxContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
+[node name="TradeResourceRow2" parent="VBoxContainer/ScrollContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
 layout_mode = 2
 
-[node name="TradeResourceRow3" parent="VBoxContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
+[node name="TradeResourceRow3" parent="VBoxContainer/ScrollContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
 layout_mode = 2
 
-[node name="TradeResourceRow4" parent="VBoxContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
+[node name="TradeResourceRow4" parent="VBoxContainer/ScrollContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
 layout_mode = 2
 
-[node name="TradeResourceRow5" parent="VBoxContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
+[node name="TradeResourceRow5" parent="VBoxContainer/ScrollContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
 layout_mode = 2
 
-[node name="TradeResourceRow6" parent="VBoxContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
+[node name="TradeResourceRow6" parent="VBoxContainer/ScrollContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
 layout_mode = 2
 
-[node name="TradeResourceRow7" parent="VBoxContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
+[node name="TradeResourceRow7" parent="VBoxContainer/ScrollContainer/ResourceRowsContainer" instance=ExtResource("2_gjp8f")]
 layout_mode = 2
 
 [node name="MarginContainer3" type="MarginContainer" parent="VBoxContainer"]

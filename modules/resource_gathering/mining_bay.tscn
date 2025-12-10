@@ -1,21 +1,22 @@
-[gd_scene load_steps=17 format=3 uid="uid://bx6qtgyfs24d3"]
+[gd_scene load_steps=24 format=3 uid="uid://bx6qtgyfs24d3"]
 
 [ext_resource type="PackedScene" uid="uid://c4cgh4tautltt" path="res://modules/templates/module_2x2.tscn" id="1_4oagm"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_58pc6"]
 [ext_resource type="PackedScene" uid="uid://udm67iu3w25e" path="res://modules/components/mining_component.tscn" id="3_y7hho"]
-[ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/generic_ore.tres" id="4_paxrx"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="4_w1qq0"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="5_5m057"]
 [ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="5_hpqm1"]
 [ext_resource type="Resource" uid="uid://b27jc67v174pi" path="res://data/resources/iridium.tres" id="6_2l5du"]
-[ext_resource type="Resource" uid="uid://c56jj6kgs36sx" path="res://data/resources/precious_metals.tres" id="7_krpv1"]
+[ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="7_2l5du"]
+[ext_resource type="Resource" uid="uid://c56jj6kgs36sx" path="res://data/resources/gold.tres" id="7_krpv1"]
 [ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="8_0tx88"]
+[ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="9_krpv1"]
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="9_wt5jo"]
-[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/industrial_metals.tres" id="10_cyani"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="10_cyani"]
 [ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicates.tres" id="11_avr65"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="14_5m057"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_5m057"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_w1qq0"]
 shader = ExtResource("2_58pc6")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -25,10 +26,34 @@ shader_parameter/SELECTED = false
 resource_local_to_scene = true
 size = Vector2(126, 126)
 
+[sub_resource type="Resource" id="Resource_0tx88"]
+script = ExtResource("7_2l5du")
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
+[sub_resource type="Resource" id="Resource_wt5jo"]
+script = ExtResource("7_2l5du")
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
+[sub_resource type="Resource" id="Resource_cyani"]
+script = ExtResource("7_2l5du")
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
+[sub_resource type="Resource" id="Resource_avr65"]
+script = ExtResource("7_2l5du")
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
+[sub_resource type="Resource" id="Resource_25qps"]
+script = ExtResource("7_2l5du")
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
+[sub_resource type="Resource" id="Resource_delo2"]
+script = ExtResource("7_2l5du")
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
 [node name="Module" instance=ExtResource("1_4oagm")]
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_5m057")
+material = SubResource("ShaderMaterial_w1qq0")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_y7hho")
@@ -36,17 +61,22 @@ shape = SubResource("RectangleShape2D_y7hho")
 [node name="MiningComponent" parent="." index="2" node_paths=PackedStringArray("output_storage", "power_consumer") instance=ExtResource("3_y7hho")]
 output_storage = NodePath("../StorageComponent")
 power_consumer = NodePath("../PowerConsumptionComponent")
-base_output_resource = ExtResource("4_paxrx")
-sub_resources = Array[ExtResource("5_5m057")]([ExtResource("6_2l5du"), ExtResource("7_krpv1"), ExtResource("8_0tx88"), ExtResource("9_wt5jo"), ExtResource("10_cyani"), ExtResource("11_avr65")])
 
 [node name="PowerConsumptionComponent" parent="." index="3" instance=ExtResource("4_w1qq0")]
 power_consumption = 30.0
 
 [node name="StorageComponent" parent="." index="4" instance=ExtResource("5_hpqm1")]
 priority = -1
-stored_resources = Array[ExtResource("5_5m057")]([ExtResource("4_paxrx")])
 max_stored = 40.0
 accepts_imports = false
+storage_data = Dictionary[ExtResource("5_5m057"), ExtResource("7_2l5du")]({
+ExtResource("6_2l5du"): SubResource("Resource_0tx88"),
+ExtResource("8_0tx88"): SubResource("Resource_wt5jo"),
+ExtResource("9_wt5jo"): SubResource("Resource_cyani"),
+ExtResource("10_cyani"): SubResource("Resource_avr65"),
+ExtResource("7_krpv1"): SubResource("Resource_25qps"),
+ExtResource("11_avr65"): SubResource("Resource_delo2")
+})
 
 [node name="LightingComponent" parent="." index="5" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("14_5m057")]
 position = Vector2(64, 64)

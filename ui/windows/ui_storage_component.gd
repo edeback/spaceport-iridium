@@ -27,13 +27,13 @@ func refresh_display() -> void:
 		resource_container.remove_child(node)
 		node.queue_free()
 	storage_lines.clear()
-	for resource: ResourceData in storage_component.stored_resources:
+	for resource: ResourceData in storage_component.storage_data:
 		var storage_line: StorageResourceLine = resource_line.instantiate() as StorageResourceLine
 		storage_line.stored_resource_name.text = resource.name
 		storage_line.stored_resource_value.text = _format_resouce_value(storage_component.total_stored_by_resource(resource))
 		if storage_component.player_configurable:
 			storage_line.remove_resource_button.pressed.connect(_on_remove_resource_pressed.bind(resource))
-			if storage_component.cur_stored.get_or_add(resource, 0.0) > 0:
+			if storage_component.storage_data[resource].stored > 0:
 				storage_line.remove_resource_button.disabled = true
 			storage_line.desired_resources_spinbox.value_changed.connect(_on_desired_resources_changed.bind(resource))
 		else:
@@ -42,25 +42,21 @@ func refresh_display() -> void:
 			storage_line.desired_resources_spinbox.value = storage_component.max_stored
 		storage_lines[resource] = storage_line
 		resource_container.add_child(storage_line)
-	%FreeSpaceAvailableLabel.text = _format_resouce_value(storage_component.space_available(true))
+	%FreeSpaceAvailableLabel.text = _format_resouce_value(storage_component.space_available())
 	%FreeSpaceMaxLabel.text = _format_resouce_value(storage_component.max_stored)
 	priority_value.value = storage_component.priority
 	refresh_add_resource_menu()
 		
 		
-func _format_resouce_value(value: float) -> String:
-	return "%5.1f" % value
+func _format_resouce_value(value: int) -> String:
+	return "%d" % value
 	
-func _on_storage_changed(resource: ResourceData, new_value: float) -> void:
+func _on_storage_changed(resource: ResourceData, new_value: int) -> void:
 	var storage_line: StorageResourceLine = storage_lines.get(resource)
-	if storage_line == null and resource.base_resource != null:
-		storage_line = storage_lines.get(resource.base_resource)
 	if storage_line != null:
-		if resource.base_resource != null:
-			new_value = storage_component.total_stored_by_resource(resource.base_resource)
 		storage_line.stored_resource_value.text = _format_resouce_value(new_value)
 		storage_line.remove_resource_button.disabled = new_value > 0
-	%FreeSpaceAvailableLabel.text = _format_resouce_value(storage_component.space_available(true))
+	%FreeSpaceAvailableLabel.text = _format_resouce_value(storage_component.space_available())
 
 func _on_priority_value_changed(new_value: float) -> void:
 	storage_component.priority = roundi(new_value)
@@ -71,20 +67,20 @@ func refresh_add_resource_menu() -> void:
 	add_resource_menu.get_popup().clear()
 	for index in range(Global.resource_manager.storable_resources.size()):
 		var resource: ResourceData = Global.resource_manager.storable_resources[index]
-		if storage_component.stored_resources.has(resource):
+		if storage_component.storage_data.has(resource):
 			continue
 		add_resource_menu.get_popup().add_item(resource.name, index)
 
 func _on_id_pressed(id: int) -> void:
 	if storage_component != null:
 		var resource := Global.resource_manager.storable_resources[id]
-		if not storage_component.stored_resources.has(resource):
+		if not storage_component.storage_data.has(resource):
 			storage_component.add_stored_resource(resource)
 			refresh_display()
 
 func _on_remove_resource_pressed(resource: ResourceData) -> void:
 	if storage_component != null:
-		if storage_component.stored_resources.has(resource) and storage_component.cur_stored.get_or_add(resource, 0) == 0:
+		if storage_component.storage_data.has(resource) and storage_component.storage_data[resource].stored == 0:
 			storage_component.remove_stored_resource(resource)
 			refresh_display()
 

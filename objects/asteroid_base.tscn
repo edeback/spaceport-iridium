@@ -1,31 +1,27 @@
-[gd_scene load_steps=12 format=3 uid="uid://cvrcrbshj8cre"]
+[gd_scene load_steps=10 format=3 uid="uid://cvrcrbshj8cre"]
 
 [ext_resource type="Script" uid="uid://cbikuxxna03ab" path="res://objects/asteroid_base.gd" id="1_gwhge"]
 [ext_resource type="Texture2D" uid="uid://cmbwcxe4uwwwt" path="res://assets/sprites/asteroid.png" id="1_yx8kc"]
-[ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="3_4ts3b"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="4_iee0s"]
 [ext_resource type="Resource" uid="uid://b27jc67v174pi" path="res://data/resources/iridium.tres" id="4_j8ppu"]
-[ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/generic_ore.tres" id="5_da4ob"]
-[ext_resource type="Resource" uid="uid://c56jj6kgs36sx" path="res://data/resources/precious_metals.tres" id="5_mx1br"]
+[ext_resource type="Resource" uid="uid://c56jj6kgs36sx" path="res://data/resources/gold.tres" id="5_mx1br"]
 [ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="6_2upad"]
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="7_d4a3e"]
-[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/industrial_metals.tres" id="8_n1bin"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="8_n1bin"]
 [ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicates.tres" id="9_164ux"]
 
-[node name="AsteroidBase" type="Node2D" node_paths=PackedStringArray("sprite", "storage")]
+[node name="AsteroidBase" type="Node2D" node_paths=PackedStringArray("sprite")]
 script = ExtResource("1_gwhge")
 sprite = NodePath("Sprite2D")
-storage = NodePath("StorageComponent")
-base_output_resource = ExtResource("5_da4ob")
-sub_resources = Array[ExtResource("4_iee0s")]([ExtResource("4_j8ppu"), ExtResource("5_mx1br"), ExtResource("6_2upad"), ExtResource("7_d4a3e"), ExtResource("8_n1bin"), ExtResource("9_164ux")])
+resource_weighted_values = Dictionary[ExtResource("4_iee0s"), float]({
+ExtResource("6_2upad"): 2.0,
+ExtResource("7_d4a3e"): 4.0,
+ExtResource("4_j8ppu"): 1.0,
+ExtResource("5_mx1br"): 1.0,
+ExtResource("9_164ux"): 8.0,
+ExtResource("8_n1bin"): 10.0
+})
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 position = Vector2(-7, -8)
 texture = ExtResource("1_yx8kc")
-
-[node name="StorageComponent" parent="." instance=ExtResource("3_4ts3b")]
-position = Vector2(-13, -41)
-stored_resources = Array[ExtResource("4_iee0s")]([ExtResource("5_da4ob")])
-include_in_stats = false
-accepts_imports = false
-accepts_exports = false

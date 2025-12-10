@@ -4,8 +4,9 @@ extends Resource
 
 @export var name: String = ""
 @export var icon: Texture2D
-@export var sub_resources: Dictionary[ResourceData, float]
-@export var base_resource: ResourceData
+
+#@export var sub_resources: Dictionary[ResourceData, float]
+#@export var base_resource: ResourceData
 
 @export var default_cost: int = 10
 @export var default_market_supply: int = 100

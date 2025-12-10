@@ -6,10 +6,11 @@ var pawn: PawnBase
 var requesting_module: ModuleBase
 var state: MineAsteroidState = MineAsteroidState.Starting
 var action: Action_PathToTarget = null
-var resource_mined: ResourceData
-var amount_mined: float = 0
 var efficiency: float = 1.0
-var max_mined: float = 5.0
+var time_mining: float = 0.0
+var default_seconds_to_mine: float = 1.0
+var max_mined: int = 5
+var resources_mined: Array[ResourceData] = []
 
 enum MineAsteroidState { Starting, MovingToAsteroid, MineAsteroid, ReturningToModule, DepositMaterial, Finished, Failed }
 
@@ -107,14 +108,13 @@ func move_to_asteroid(delta: float) -> void:
 		action = null
 		
 func mine_asteroid(delta: float) -> void:
-	if not resource_mined:
-		resource_mined = asteroid.output_resource
 	# Stay glued to asteroid
 	pawn.position = asteroid.position
-	var new_amount_mined: float = asteroid.mine_resource(delta * efficiency)
-	amount_mined += new_amount_mined
-	if amount_mined >= max_mined:
-		amount_mined = max_mined
+	time_mining += delta * efficiency
+	if time_mining >= default_seconds_to_mine:
+		time_mining = 0
+		resources_mined.append(asteroid.mine_resource())
+	if resources_mined.size() >= max_mined:
 		state = MineAsteroidState.ReturningToModule
 	elif asteroid.is_empty():
 		state = MineAsteroidState.Starting
@@ -136,7 +136,8 @@ func move_to_module(delta: float) -> void:
 func deposit_material() -> void:
 	var storage: MultiStorageComponent = requesting_module.get_component_by_type(MultiStorageComponent) as MultiStorageComponent
 	if storage:
-		storage.deposit(resource_mined, amount_mined)
+		for resource: ResourceData in resources_mined:
+			storage.deposit(resource, 1)
 		state = MineAsteroidState.Finished
 	else:
 		state = MineAsteroidState.Failed

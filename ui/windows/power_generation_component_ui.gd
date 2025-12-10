@@ -8,16 +8,16 @@ extends ModuleComponentUI
 var power_generation_component: PowerGenerationComponent
 
 const POWER_PRODUCTION_FORMAT: String = "Produces %d power"
-const INPUT_CONSUMPTION_FORMAT: String = "Consumes %.2f %s per second"
+const INPUT_CONSUMPTION_FORMAT: String = "Consumes 1 %s per %.2f seconds"
 
 func set_power_generation_component(component: PowerGenerationComponent) -> void:
 	power_generation_component = component
 	power_production_label.text = POWER_PRODUCTION_FORMAT % component.get_power_output()
 	force_shutdown_button.set_pressed_no_signal(component.force_off)
-	if component.resource_consumed != null and component.resource_consumption_per_second != 0:
-		input_consumption_label.text = INPUT_CONSUMPTION_FORMAT % [component.resource_consumption_per_second, component.resource_consumed.name]
+	if component.resource_consumed != null and component.seconds_per_resource_consumed != 0:
+		input_consumption_label.text = INPUT_CONSUMPTION_FORMAT % [component.resource_consumed.name, component.seconds_per_resource_consumed]
 	else:
 		input_consumption_label.visible = false
 
 func _on_button_toggled(toggled_on: bool) -> void:
-	power_generation_component.force_off = toggled_on
+	power_generation_component.disable_generation(toggled_on)

@@ -1,23 +1,14 @@
-[gd_scene load_steps=19 format=3 uid="uid://bpridbphjctdv"]
+[gd_scene load_steps=10 format=3 uid="uid://bpridbphjctdv"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_ivh8x"]
 [ext_resource type="Script" uid="uid://ctmoldf856r8s" path="res://modules/docking_bays/docking_bay.gd" id="2_8obs2"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_jskn1"]
+[ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_iqcir"]
 [ext_resource type="PackedScene" uid="uid://d2yel2dv7mxe6" path="res://modules/components/trade_component.tscn" id="4_psdj2"]
 [ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="5_18pmv"]
-[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="6_3m8o6"]
-[ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="7_ec4v0"]
-[ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="8_47xch"]
-[ext_resource type="Resource" uid="uid://1an3ftgpeh6u" path="res://data/resources/hydrogen.tres" id="9_8lo18"]
-[ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="10_t6dea"]
-[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/industrial_metals.tres" id="11_fnw5i"]
-[ext_resource type="Resource" uid="uid://b27jc67v174pi" path="res://data/resources/iridium.tres" id="12_rv71c"]
-[ext_resource type="Resource" uid="uid://tf727fx7vlah" path="res://data/resources/oxygen.tres" id="13_q2jwq"]
-[ext_resource type="Resource" uid="uid://c56jj6kgs36sx" path="res://data/resources/precious_metals.tres" id="14_0ksck"]
-[ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicates.tres" id="15_2k3d8"]
-[ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="16_25txt"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="7_gu0qf"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_3m8o6"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_iqcir"]
 shader = ExtResource("2_jskn1")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -35,12 +26,16 @@ size = Vector2i(4, 2)
 position = Vector2(160, 64)
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_3m8o6")
+material = SubResource("ShaderMaterial_iqcir")
 region_rect = Rect2(64, 128, 192, 128)
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 position = Vector2(0.5, 0.5)
 shape = SubResource("RectangleShape2D_dkgs7")
+
+[node name="LightingComponent" parent="Offset" index="2" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_iqcir")]
+scale = Vector2(3, 2)
+power_consumption_component = NodePath("../../PowerConsumptionComponent")
 
 [node name="PathComponent" parent="." index="1"]
 path_points = Array[Vector2i]([Vector2i(224, 96)])
@@ -53,19 +48,23 @@ must_be_clear_points = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)])
 size = Vector2i(4, 2)
 
 [node name="TradeComponent" parent="." index="3" node_paths=PackedStringArray("export_storage", "import_storage") instance=ExtResource("4_psdj2")]
-export_storage = NodePath("../ExportStorage")
-import_storage = NodePath("../ImportStorage")
+export_storage = NodePath("../Goods To Export")
+import_storage = NodePath("../Imported Goods")
 
-[node name="ImportStorage" parent="." index="4" instance=ExtResource("5_18pmv")]
+[node name="Imported Goods" parent="." index="4" instance=ExtResource("5_18pmv")]
 position = Vector2(32, 0)
 priority = -50
-stored_resources = Array[ExtResource("6_3m8o6")]([ExtResource("7_ec4v0"), ExtResource("8_47xch"), ExtResource("9_8lo18"), ExtResource("10_t6dea"), ExtResource("11_fnw5i"), ExtResource("12_rv71c"), ExtResource("13_q2jwq"), ExtResource("14_0ksck"), ExtResource("15_2k3d8"), ExtResource("16_25txt")])
-max_stored = 10000.0
+max_stored = 40
 accepts_imports = false
+allow_any_resource = true
 
-[node name="ExportStorage" parent="." index="5" instance=ExtResource("5_18pmv")]
+[node name="Goods To Export" parent="." index="5" instance=ExtResource("5_18pmv")]
 position = Vector2(192, 0)
 priority = 0
-stored_resources = Array[ExtResource("6_3m8o6")]([ExtResource("7_ec4v0"), ExtResource("8_47xch"), ExtResource("9_8lo18"), ExtResource("10_t6dea"), ExtResource("11_fnw5i"), ExtResource("12_rv71c"), ExtResource("13_q2jwq"), ExtResource("14_0ksck"), ExtResource("15_2k3d8"), ExtResource("16_25txt")])
-max_stored = 200.0
+max_stored = 40
 accepts_exports = false
+player_configurable = true
+
+[node name="PowerConsumptionComponent" parent="." index="6" instance=ExtResource("7_gu0qf")]
+position = Vector2(128, 0)
+power_consumption = 60.0

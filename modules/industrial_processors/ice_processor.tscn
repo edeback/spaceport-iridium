@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://cmdaw5xwc5juy"]
+[gd_scene load_steps=17 format=3 uid="uid://cmdaw5xwc5juy"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_jqjye"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_k607o"]
@@ -7,11 +7,13 @@
 [ext_resource type="Resource" uid="uid://dgpswv183ebv6" path="res://data/recipes/ice_to_water_recipe.tres" id="6_es0ib"]
 [ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="7_sgees"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="8_jqjye"]
+[ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="8_k607o"]
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="9_mgbfp"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="10_64yxw"]
+[ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="10_esxo4"]
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="10_mgbfp"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_jqjye"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_pxac8"]
 shader = ExtResource("3_k607o")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -21,10 +23,18 @@ shader_parameter/SELECTED = false
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
+[sub_resource type="Resource" id="Resource_es0ib"]
+script = ExtResource("8_k607o")
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
+[sub_resource type="Resource" id="Resource_sgees"]
+script = ExtResource("8_k607o")
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
 [node name="Module" instance=ExtResource("1_jqjye")]
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_jqjye")
+material = SubResource("ShaderMaterial_pxac8")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_my7lf")
@@ -40,14 +50,16 @@ time_to_process = 10.0
 power_consumer = NodePath("../PowerConsumptionComponent")
 
 [node name="InputStorage" parent="." index="2" instance=ExtResource("7_sgees")]
-offset_left = -32.0
-offset_right = -32.0
-stored_resources = Array[ExtResource("8_jqjye")]([ExtResource("9_mgbfp")])
 accepts_exports = false
+storage_data = Dictionary[ExtResource("8_jqjye"), ExtResource("8_k607o")]({
+ExtResource("9_mgbfp"): SubResource("Resource_es0ib")
+})
 
 [node name="OutputStorage" parent="." index="3" instance=ExtResource("7_sgees")]
 priority = -1
-stored_resources = Array[ExtResource("8_jqjye")]([ExtResource("10_mgbfp")])
 accepts_imports = false
+storage_data = Dictionary[ExtResource("8_jqjye"), ExtResource("8_k607o")]({
+ExtResource("10_mgbfp"): SubResource("Resource_sgees")
+})
 
 [node name="PowerConsumptionComponent" parent="." index="4" instance=ExtResource("10_64yxw")]

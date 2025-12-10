@@ -5,6 +5,5 @@
 
 [resource]
 script = ExtResource("2_6cypi")
-name = "Ore"
+name = "Iron Ore"
 icon = ExtResource("1_fn40q")
-sub_resources = null

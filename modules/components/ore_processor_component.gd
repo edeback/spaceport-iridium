@@ -1,3 +1,5 @@
+# Maybe not necessary at all?
+
 class_name OreProcessorComponent
 extends ComponentBase
 
@@ -29,18 +31,19 @@ func _process(delta: float) -> void:
 	pass
 
 func _continuous_processing(delta: float) -> void:
-	var fraction: float = delta / time_to_process
-	var resource_to_process: ResourceData = input_storage.find_first_stored_resource_with_base(base_resource, fraction)
-	if resource_to_process:
-		var do_process: bool = true
-		for sub_resource: ResourceData in resource_to_process.sub_resources:
-			do_process = do_process and output_storage.can_deposit(sub_resource, resource_to_process.sub_resources[sub_resource] * fraction)
-		if do_process:
-			last_error = ""
-			input_storage.withdraw(resource_to_process, fraction)
-			for sub_resource: ResourceData in resource_to_process.sub_resources:
-				output_storage.deposit(sub_resource, resource_to_process.sub_resources[sub_resource] * fraction)
-		else:
-			last_error = "Can't deposit output resources!"
-	else:
-		last_error = "No input resources!"
+	pass
+	#var fraction: float = delta / time_to_process
+	#var resource_to_process: ResourceData = input_storage.find_first_stored_resource_with_base(base_resource, fraction)
+	#if resource_to_process:
+		#var do_process: bool = true
+		#for sub_resource: ResourceData in resource_to_process.sub_resources:
+			#do_process = do_process and output_storage.can_deposit(sub_resource, resource_to_process.sub_resources[sub_resource] * fraction)
+		#if do_process:
+			#last_error = ""
+			#input_storage.withdraw(resource_to_process, fraction)
+			#for sub_resource: ResourceData in resource_to_process.sub_resources:
+				#output_storage.deposit(sub_resource, resource_to_process.sub_resources[sub_resource] * fraction)
+		#else:
+			#last_error = "Can't deposit output resources!"
+	#else:
+		#last_error = "No input resources!"

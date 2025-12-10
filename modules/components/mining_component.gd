@@ -2,10 +2,7 @@ class_name MiningComponent
 extends ComponentBase
 
 @export var output_storage: MultiStorageComponent
-@export var time_to_process: float = 1
 @export var power_consumer: PowerConsumptionComponent
-@export var base_output_resource: ResourceData
-@export var sub_resources: Array[ResourceData]
 var mining_drone_scene: PackedScene = preload("res://pawns/mining_drone_pawn.tscn")
 @export var max_drones: int = 3
 @onready var drone_respawn_timer: Timer = $DroneRespawnTimer
@@ -17,14 +14,12 @@ var output_resource: ResourceData
 var processing: bool = false
 var current_process_time: float = 0
 
-signal processor_progress_changed(new_progress: float)
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	super()
 	assert(output_storage != null, "Processor must have output_storage!")
 	assert(power_consumer != null, "Processor must have power_consumer!")
-	assert(time_to_process > 0, "Processor time_to_process must be > 0!")
 	add_to_group("processor")
 	drone_respawn_timer.timeout.connect(build_drone)
 	#output_resource = base_output_resource.duplicate()
@@ -36,7 +31,7 @@ func _ready() -> void:
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if !power_consumer.powered:
 		# Do nothing if unpowered
 		last_error = "No power!"
@@ -44,7 +39,7 @@ func _process(delta: float) -> void:
 	last_error = ""
 	if drones.size() < max_drones and drone_respawn_timer.is_stopped():
 		drone_respawn_timer.start()
-	if _can_output(1.0):
+	if _can_output(1):
 		for drone: MiningDronePawn in drones:
 			if drone.current_job == null:
 				var mining_job: Job_MineAsteroid = Job_MineAsteroid.new()
@@ -64,12 +59,12 @@ func _exit_tree() -> void:
 		drone.self_destruct()
 
 
-func _can_output(fraction: float = 1.0) -> bool:
-	return output_storage.space_available() >= fraction
+func _can_output(amount: int) -> bool:
+	return output_storage.space_available() >= amount
 	
-func _deposit_outputs(fraction: float = 1.0) -> void:
-	var doublecheck: bool = output_storage.deposit(output_resource, fraction)
-	assert(doublecheck, "Somehow couldn't output items when there was room!")
+#func _deposit_outputs(fraction: float = 1.0) -> void:
+	#var doublecheck: bool = output_storage.deposit(output_resource, fraction)
+	#assert(doublecheck, "Somehow couldn't output items when there was room!")
 #
 #func _continuous_processing(delta: float) -> void:
 	#var fraction_of_recipe: float = delta / time_to_process

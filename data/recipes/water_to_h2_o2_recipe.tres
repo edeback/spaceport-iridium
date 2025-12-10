@@ -9,10 +9,10 @@
 [resource]
 script = ExtResource("3_s37rr")
 name = "Electrolyze Water"
-inputs = Dictionary[ExtResource("1_nkldc"), float]({
-ExtResource("2_0oe1p"): 1.0
+inputs = Dictionary[ExtResource("1_nkldc"), int]({
+ExtResource("2_0oe1p"): 2
 })
-outputs = Dictionary[ExtResource("1_nkldc"), float]({
-ExtResource("3_0oe1p"): 0.5,
-ExtResource("4_s37rr"): 1.0
+outputs = Dictionary[ExtResource("1_nkldc"), int]({
+ExtResource("3_0oe1p"): 1,
+ExtResource("4_s37rr"): 2
 })

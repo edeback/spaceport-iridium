@@ -41,8 +41,6 @@ func unregister_component(resource: ResourceData, component: MultiStorageCompone
 	queue_recalc_resource(resource)
 	
 func queue_recalc_resource(resource: ResourceData) -> void:
-	if resource.base_resource != null:
-		resource = resource.base_resource
 	if not resources_changed.has(resource):
 		resources_changed.append(resource)
 		
