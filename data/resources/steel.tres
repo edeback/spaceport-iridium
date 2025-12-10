@@ -7,3 +7,5 @@
 script = ExtResource("2_vbfod")
 name = "Steel"
 icon = ExtResource("1_yc37q")
+default_cost = 100
+default_market_supply = 50

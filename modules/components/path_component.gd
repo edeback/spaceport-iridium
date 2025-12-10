@@ -34,6 +34,10 @@ class PathTraversalEdgeData:
 
 ## Do we error if no door is connected?
 @export var door_required: bool = false
+
+## Do we prevent movement if not powered?
+@export var power_required: bool = false
+@export var power_consumption_component: PowerConsumptionComponent
 		
 var module_connections: Dictionary[ModuleBase, int] = {}
 
@@ -46,6 +50,14 @@ func _ready() -> void:
 		astar.add_point(index, path_points[index])
 	for edge in path_edges:
 		astar.connect_points(edge.x, edge.y)
+	if power_required and power_consumption_component != null:
+		power_consumption_component.powered_changed.connect(_on_power_changed)
+		
+func _on_power_changed(new_power: bool) -> void:
+	if new_power:
+		Global.path_manager.enable_module(owner_module)
+	else:
+		Global.path_manager.disable_module(owner_module)
 	
 func get_closest_path_point(local_vec: Vector2) -> Vector2i:
 	var index: int = astar.get_closest_point(local_vec)

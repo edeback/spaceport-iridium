@@ -10,4 +10,4 @@ func make_connections() -> void:
 	super.make_connections()
 	for node: ModuleTeleporter in get_tree().get_nodes_in_group("teleporters"):
 		if node != null and node != self:
-			SignalBus.module_connection_added.emit(self, node, 1)
+			SignalBus.module_path_connection_added.emit(self, node, 1)

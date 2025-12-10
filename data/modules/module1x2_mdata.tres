@@ -10,3 +10,4 @@ name = "1x2"
 scene = ExtResource("2_ike76")
 icon = ExtResource("1_n383g")
 tags = Array[String](["Test"])
+hidden = true

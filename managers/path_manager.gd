@@ -68,6 +68,14 @@ func _module_path_to_point_path(path: Array[ModuleBase], use_global_position: bo
 		else:
 			point_path.append(module.module_cell)
 	return point_path
+	
+func disable_module(module: ModuleBase) -> void:
+	graph.block_vertex(module)
+	recheck_pathfinding = true
+	
+func enable_module(module: ModuleBase) -> void:
+	graph.unblock_vertex(module)
+	recheck_pathfinding = true
 
 ## Normally in cells, can convert to global
 func run_pathfinding(start_module: ModuleBase, end_module: ModuleBase, use_global_position: bool = false) -> PackedVector2Array:

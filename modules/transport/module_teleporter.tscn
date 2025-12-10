@@ -1,10 +1,12 @@
-[gd_scene load_steps=6 format=3 uid="uid://vt0da1t6638n"]
+[gd_scene load_steps=8 format=3 uid="uid://vt0da1t6638n"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_ivqvi"]
 [ext_resource type="Script" uid="uid://bo6usxgapn5cl" path="res://modules/transport/module_teleporter.gd" id="2_yuavr"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_lqklp"]
+[ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_lqklp"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="4_yuavr"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_80vqc"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ivqvi"]
 shader = ExtResource("3_lqklp")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -18,7 +20,17 @@ size = Vector2(62, 62)
 script = ExtResource("2_yuavr")
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_80vqc")
+material = SubResource("ShaderMaterial_ivqvi")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
 shape = SubResource("RectangleShape2D_gd6ts")
+
+[node name="LightingComponent" parent="Offset" index="2" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_lqklp")]
+power_consumption_component = NodePath("../../PowerConsumptionComponent")
+
+[node name="PathComponent" parent="." index="1" node_paths=PackedStringArray("power_consumption_component")]
+power_required = true
+power_consumption_component = NodePath("../PowerConsumptionComponent")
+
+[node name="PowerConsumptionComponent" parent="." index="3" instance=ExtResource("4_yuavr")]
+power_consumption = 500.0

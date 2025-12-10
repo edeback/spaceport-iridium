@@ -7,3 +7,5 @@
 script = ExtResource("2_r1bmp")
 name = "Carbon"
 icon = ExtResource("1_ak25u")
+default_cost = 20
+default_market_supply = 80
