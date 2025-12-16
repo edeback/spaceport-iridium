@@ -1,0 +1,131 @@
+[gd_scene load_steps=12 format=3 uid="uid://dtipd1rwqes7u"]
+
+[ext_resource type="Script" uid="uid://b2h2pibcffusw" path="res://ui/pawns/pawn_info_panel.gd" id="1_j2y6g"]
+[ext_resource type="Texture2D" uid="uid://d0as5orqnhkl4" path="res://assets/external/kenney_ui/Vector/Blue/button_square_flat.svg" id="2_4c6nk"]
+[ext_resource type="PackedScene" uid="uid://bp3buujhvc0n6" path="res://ui/pawns/pawn_needs_tab.tscn" id="3_k5q5c"]
+[ext_resource type="Texture2D" uid="uid://dx10vvcmha2ht" path="res://assets/external/craftpix_space_shooter/Buttons/BTNs/Close_BTN.png" id="7_cugvx"]
+[ext_resource type="Texture2D" uid="uid://doewhgldu2cyr" path="res://assets/external/craftpix_space_shooter/Buttons/BTNs_Active/Close_BTN.png" id="8_p6u53"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_n8fgc"]
+texture = ExtResource("7_cugvx")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_l5qy5"]
+texture = ExtResource("8_p6u53")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_lb6l8"]
+texture = ExtResource("7_cugvx")
+modulate_color = Color(0.85933435, 0.91648823, 0.8338145, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ka63m"]
+texture = ExtResource("7_cugvx")
+modulate_color = Color(0.67481464, 0.67481464, 0.6748146, 1)
+
+[sub_resource type="InputEventKey" id="InputEventKey_ti31b"]
+device = -1
+keycode = 4194305
+
+[sub_resource type="Shortcut" id="Shortcut_7g6w7"]
+events = [SubResource("InputEventKey_ti31b")]
+
+[node name="PawnInfoPanel" type="MarginContainer" node_paths=PackedStringArray("data_tabs")]
+script = ExtResource("1_j2y6g")
+data_tabs = NodePath("MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer/DataTabs")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+
+[node name="BaseScreen" type="MarginContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/BaseScreen"]
+self_modulate = Color(0.768243, 0.52438736, 0.7868966, 1)
+layout_mode = 2
+texture = ExtResource("2_4c6nk")
+patch_margin_left = 8
+patch_margin_top = 8
+patch_margin_right = 8
+patch_margin_bottom = 8
+
+[node name="MarginContainer2" type="MarginContainer" parent="MarginContainer/BaseScreen"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/BaseScreen/MarginContainer2"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PawnNameLabel" type="Label" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Pawn Name"
+
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 10
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/HBoxContainer/PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 3
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 3
+
+[node name="AlertLabel" type="Label" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/HBoxContainer/PanelContainer/MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 10
+theme_override_colors/font_color = Color(0.7059392, 3.5376102e-06, 3.85046e-07, 1)
+text = "Alert alert alert! Something is wrong!"
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = -4
+theme_override_constants/margin_right = -4
+theme_override_constants/margin_bottom = -4
+
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer"]
+layout_mode = 2
+texture = ExtResource("2_4c6nk")
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
+
+[node name="DataTabs" type="TabContainer" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+current_tab = 0
+clip_tabs = false
+
+[node name="Needs" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer/DataTabs" instance=ExtResource("3_k5q5c")]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/BaseScreen"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 0
+theme_override_constants/margin_top = -5
+theme_override_constants/margin_right = -5
+
+[node name="Button" type="Button" parent="MarginContainer/BaseScreen/MarginContainer"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_styles/normal = SubResource("StyleBoxTexture_n8fgc")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_l5qy5")
+theme_override_styles/hover = SubResource("StyleBoxTexture_lb6l8")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_ka63m")
+shortcut = SubResource("Shortcut_7g6w7")
+
+[connection signal="pressed" from="MarginContainer/BaseScreen/MarginContainer/Button" to="." method="_on_exit_button_pressed"]

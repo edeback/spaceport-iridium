@@ -1,0 +1,2 @@
+class_name SocialComponent
+extends ComponentBase

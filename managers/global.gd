@@ -12,6 +12,7 @@ var resource_manager: ResourceManager
 var market_manager: MarketManager
 var asteroid_manager: AsteroidManager
 var ui_in_game: UIInGame
+var ui_main: UIMain
 var tilemap: TileMapLayer
 
 # Called when the node enters the scene tree for the first time.

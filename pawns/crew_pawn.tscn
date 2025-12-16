@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://2pp7va28ybgl"]
+[gd_scene load_steps=3 format=3 uid="uid://2pp7va28ybgl"]
 
 [ext_resource type="PackedScene" uid="uid://ddoebv5qw5lfm" path="res://pawns/pawn_base.tscn" id="1_4e1f1"]
+[ext_resource type="PackedScene" uid="uid://b0bybnib3jtmj" path="res://pawns/pawn_needs_component.tscn" id="2_6fnyy"]
 
 [node name="PawnBase" node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_4e1f1")]
 animated_sprite = NodePath("Crew")
@@ -10,4 +11,10 @@ visible = false
 
 [node name="Crew" parent="." index="1"]
 visible = true
-frame_progress = 0.0
+
+[node name="PawnNeedsComponent" parent="." index="3" instance=ExtResource("2_6fnyy")]
+has_health_need = true
+has_sleep_need = true
+has_hunger_need = true
+has_entertainment_need = true
+has_social_need = true

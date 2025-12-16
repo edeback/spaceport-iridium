@@ -1,0 +1,124 @@
+[gd_scene load_steps=3 format=3 uid="uid://bp3buujhvc0n6"]
+
+[ext_resource type="Script" uid="uid://bwtow45nttqxr" path="res://ui/pawns/pawn_needs_tab.gd" id="1_4dah2"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4dah2"]
+content_margin_left = 2.0
+content_margin_top = 2.0
+content_margin_right = 2.0
+content_margin_bottom = 2.0
+bg_color = Color(0.1, 0.1, 0.1, 0.3)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+corner_detail = 6
+
+[node name="PawnNeedsTab" type="PanelContainer" node_paths=PackedStringArray("health_bar", "sleep_bar", "hunger_bar", "entertainment_bar", "social_bar")]
+script = ExtResource("1_4dah2")
+health_bar = NodePath("MarginContainer/VBoxContainer/HealthContainer/HealthBar")
+sleep_bar = NodePath("MarginContainer/VBoxContainer/SleepContainer/SleepBar")
+hunger_bar = NodePath("MarginContainer/VBoxContainer/HungerContainer/HungerBar")
+entertainment_bar = NodePath("MarginContainer/VBoxContainer/EntertainmentContainer/EntertainmentBar")
+social_bar = NodePath("MarginContainer/VBoxContainer/SocialContainer/SocialBar")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="HealthContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HealthContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Health"
+
+[node name="HealthBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/HealthContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/outline_size = 4
+theme_override_styles/background = SubResource("StyleBoxFlat_4dah2")
+value = 34.0
+
+[node name="SleepContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/SleepContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Sleep"
+
+[node name="SleepBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/SleepContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/outline_size = 4
+theme_override_styles/background = SubResource("StyleBoxFlat_4dah2")
+
+[node name="HungerContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HungerContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Hunger"
+
+[node name="HungerBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/HungerContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/outline_size = 4
+theme_override_styles/background = SubResource("StyleBoxFlat_4dah2")
+
+[node name="EntertainmentContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/EntertainmentContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Entertainment"
+
+[node name="EntertainmentBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/EntertainmentContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/outline_size = 4
+theme_override_styles/background = SubResource("StyleBoxFlat_4dah2")
+
+[node name="SocialContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/SocialContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Social"
+
+[node name="SocialBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/SocialContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/outline_size = 4
+theme_override_styles/background = SubResource("StyleBoxFlat_4dah2")

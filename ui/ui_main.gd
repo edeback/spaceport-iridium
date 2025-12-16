@@ -1,3 +1,4 @@
+class_name UIMain
 extends Control
 
 @export var button_group: PackedScene
@@ -6,6 +7,11 @@ extends Control
 @export var resource_display_container: HBoxContainer
 @export var resource_display_ui: PackedScene
 @export var resources_to_display: Array[ResourceData]
+
+@export var pawn_info_screen: PackedScene
+@export var cur_pawn_info: PawnInfoPanel
+
+@export var temp_modules: Array[ModuleData] = []
 
 var module_data_groups: Dictionary = {}
 var preview_model : ModuleBase
@@ -18,6 +24,7 @@ func _ready() -> void:
 	load_moduledatas()
 	create_module_button_groups()
 	create_resource_display()
+	Global.ui_main = self
 	Global.world_manager.show_module_layer(WorldManager.InteractionLayer.MODULE)
 	Global.world_manager.active_layer_changed.connect(_on_active_layer_changed)
 	Global.ui_in_game.input_mode_changed.connect(_on_input_mode_changed)
@@ -42,9 +49,10 @@ func load_moduledatas() -> void:
 		button_container.remove_child(node)
 		node.queue_free()
 	module_data_groups.clear()
-	var file_paths: Array[String] = get_all_file_paths(MODULE_PATH)
-	for file_path: String in file_paths:
-		var module_data: ModuleData = ResourceLoader.load(file_path, "ModuleData")
+	#var file_paths: Array[String] = get_all_file_paths(MODULE_PATH)
+	#for file_path: String in file_paths:
+		#var module_data: ModuleData = ResourceLoader.load(file_path, "ModuleData")
+	for module_data: ModuleData in temp_modules:
 		if module_data.hidden:
 			continue
 		if module_data.tags.size() == 0:
@@ -92,3 +100,14 @@ func _on_active_layer_changed(new_layer: WorldManager.InteractionLayer) -> void:
 func _on_interaction_layer_changed(new_layer: int) -> void:
 	if not skip_emit:
 		Global.world_manager.show_module_layer(new_layer)
+
+func pawn_clicked(pawn: PawnBase) -> void:
+	if cur_pawn_info != null:
+		cur_pawn_info.queue_free()
+		if cur_pawn_info.pawn == pawn:
+			# Just close, nothign else
+			return
+	cur_pawn_info = pawn_info_screen.instantiate()
+	cur_pawn_info.set_pawn(pawn)
+	add_child(cur_pawn_info)
+	

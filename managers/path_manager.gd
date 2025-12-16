@@ -90,7 +90,13 @@ func run_pathfinding_by_module(start_module: ModuleBase, end_module: ModuleBase)
 	
 func run_pathfinding_to_type_by_module(start_module: ModuleBase, end_type: ModuleData) -> Array[ModuleBase]:
 	return graph.pathfind_to_type(start_module, end_type)
+	
+func run_pathfinding_to_component_type(start_module: ModuleBase, end_component_type: ComponentBase) -> Array[ModuleBase]:
+	return graph.pathfind_to_component_type(start_module, end_component_type)
 
+func run_pathfinding_by_func(start_module: ModuleBase, function: Callable) -> Array[ModuleBase]:
+	return graph.pathfind_to_func(start_module, function)
+	
 func get_closest_module_by_cell(start_cell: Vector2i) -> ModuleBase:
 	return graph.get_closest_module_to(start_cell)
 	#return Global.world_manager.get_module_by_id(astar.get_closest_point(start_cell))

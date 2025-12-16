@@ -33,10 +33,14 @@ func _ready() -> void:
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
 	if !power_consumer.powered:
+		for drone: MiningDronePawn in drones:
+			drone.powered = false
 		# Do nothing if unpowered
 		last_error = "No power!"
 		return
 	last_error = ""
+	for drone: MiningDronePawn in drones:
+		drone.powered = true
 	if drones.size() < max_drones and drone_respawn_timer.is_stopped():
 		drone_respawn_timer.start()
 	if _can_output(1):

@@ -35,3 +35,5 @@ Trading
 Overflowing storage:
 - Vent gasses, dump other items into space?
 
+
+Change decor of modules?

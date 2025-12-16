@@ -26,18 +26,25 @@ func initialize_action(_pawn: PawnBase, _target: Node2D) -> void:
 	pawn = _pawn
 	target = _target
 	target_is_module = _target is ModuleBase
+	var target_is_component := _target is ComponentBase
 	#path = []
 	path_variant.clear()
 	modules_to_watch.clear()
 	sub_path.clear()
 	if pawn.current_module != null:
-		if target_is_module:
+		if target_is_module or target_is_component:
 			if pawn.current_module == target:
+				action_state = PathActionState.Finished
+				return
+			if target_is_component and pawn.current_module == target.owner_module:
 				action_state = PathActionState.Finished
 				return
 			# Module -> Module
 			#path = Global.path_manager.run_pathfinding(pawn.current_module, target as ModuleBase, true)
-			modules_to_watch = Global.path_manager.run_pathfinding_by_module(pawn.current_module, target as ModuleBase)
+			if target_is_component:
+				modules_to_watch = Global.path_manager.run_pathfinding_to_component_type(pawn.current_module, target as ComponentBase)
+			else:
+				modules_to_watch = Global.path_manager.run_pathfinding_by_module(pawn.current_module, target as ModuleBase)
 			path_variant.append_array(modules_to_watch)
 		else:
 			# Module -> External
@@ -47,11 +54,14 @@ func initialize_action(_pawn: PawnBase, _target: Node2D) -> void:
 			# airlock -> direct to object
 			path_variant.append(target)
 	else:
-		if target_is_module:
+		if target_is_module or target_is_component:
 			# External -> Module
 			var nearest_airlock: ModuleBase = Global.world_manager.get_nearest_module_by_type(pawn.position, airlock_data)
 			path_variant = [pawn.position]
-			modules_to_watch = Global.path_manager.run_pathfinding_by_module(nearest_airlock, target as ModuleBase)
+			if target_is_component:
+				modules_to_watch = Global.path_manager.run_pathfinding_to_component_type(nearest_airlock, target as ComponentBase)
+			else:
+				modules_to_watch = Global.path_manager.run_pathfinding_by_module(nearest_airlock, target as ModuleBase)
 			path_variant.append_array(modules_to_watch)
 		else:
 			# External -> External

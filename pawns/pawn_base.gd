@@ -9,6 +9,8 @@ extends Node2D
 @export var speed: float = 120.0
 @export var carrying_capacity: int = 10
 @export var animated_sprite: AnimatedSprite2D
+@export var pawn_name: String = ""
+@export var collision: Area2D
 
 var traveling: bool = false
 var next_point: int = 0
@@ -17,10 +19,20 @@ var job_mine_asteroid: Job_MineAsteroid = null
 
 var job_length: float = 0
 
+var components: Array[PawnComponentBase] = []
+
+func get_component_by_type(type: Variant) -> PawnComponentBase:
+	for component: PawnComponentBase in components:
+		if is_instance_of(component, type):
+			return component
+	return null
+
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	SignalBus.module_selected.connect(_on_module_selected)
+	#SignalBus.module_selected.connect(_on_module_selected)
 	pass # Replace with function body.
+	
 
 func start_job() -> void:
 	current_job = Global.job_manager.find_job(self)
@@ -70,13 +82,13 @@ func _process(delta: float) -> void:
 		#
 	pass
 
-func _on_module_selected(selected_module: ModuleBase):
-	destination_module = selected_module
-	current_module = Global.path_manager.get_closest_module_by_position(position)
-	path = Global.path_manager.run_pathfinding(current_module, destination_module)
-	next_point = 0
-	traveling = true
-	pass
+#func _on_module_selected(selected_module: ModuleBase):
+	#destination_module = selected_module
+	#current_module = Global.path_manager.get_closest_module_by_position(position)
+	#path = Global.path_manager.run_pathfinding(current_module, destination_module)
+	#next_point = 0
+	#traveling = true
+	#pass
 
 func _exit_tree() -> void:
 	if current_job != null:
@@ -96,3 +108,9 @@ func move_to(new_pos: Vector2) -> void:
 	#if current_job == null:
 		#current_job = Global.job_manager.find_job()
 	#pass
+
+
+func _on_collision_clicked(viewport: Node, event: InputEvent, shape_idx: int) -> void:
+	if event.is_action_pressed("build"):
+		get_viewport().set_input_as_handled()
+		Global.ui_main.pawn_clicked(self)

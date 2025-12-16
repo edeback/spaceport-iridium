@@ -175,6 +175,15 @@ func pathfind_to_type(start: ModuleBase, end_type: ModuleData) -> Array[ModuleBa
 	var type_callable: Callable = func(test_vertext: ModuleGraphVertex) -> bool: return test_vertext.module.module_data == end_type
 	return pathfind_to_func(start, type_callable)
 	
+func pathfind_to_component_type(start: ModuleBase, end_component_type: ComponentBase) -> Array[ModuleBase]:
+	if end_component_type == null:
+		return []
+	var start_vertex: ModuleGraphVertex = _vertices.get(start)
+	if start_vertex == null:
+		return []
+	var component_type_callable: Callable = func(test_vertex: ModuleGraphVertex) -> bool: return test_vertex.module.get_component_by_type(end_component_type) != null
+	return pathfind_to_func(start, component_type_callable)	
+	
 	#var frontier: ModuleQueue = ModuleQueue.new()
 	#frontier.insert(start_vertex, 0)
 	#var came_from: Dictionary[ModuleGraphVertex, ModuleGraphVertex]
