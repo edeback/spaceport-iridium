@@ -52,7 +52,7 @@ project/assembly_name="Spaceport Iridium"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/module_editor/plugin.cfg", "res://addons/resources_spreadsheet_view/plugin.cfg", "res://addons/script-ide/plugin.cfg")
+enabled=PackedStringArray("res://addons/grid_building/plugin.cfg", "res://addons/module_editor/plugin.cfg", "res://addons/resources_spreadsheet_view/plugin.cfg", "res://addons/script-ide/plugin.cfg")
 
 [gui]
 

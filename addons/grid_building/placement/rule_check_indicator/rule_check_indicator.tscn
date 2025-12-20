@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://bmkyfp6lkhout"]
+
+[ext_resource type="Script" uid="uid://b38wjwn4xpwa3" path="res://addons/grid_building/placement/rule_check_indicator/rule_check_indicator.gd" id="1_j8k7v"]
+[ext_resource type="Shape2D" uid="uid://tw62qymynt5l" path="res://templates/grid_building_templates/indicator/tci_default_rectangle_shape_for_16_by_16.tres" id="2_m8n9p"]
+
+[node name="RuleCheckIndicator" type="ShapeCast2D" node_paths=PackedStringArray("validity_sprite")]
+shape = ExtResource("2_m8n9p")
+target_position = Vector2(0, 0)
+collision_mask = 4294967295
+script = ExtResource("1_j8k7v")
+validity_sprite = NodePath("ValiditySprite")
+
+[node name="ValiditySprite" type="Sprite2D" parent="."]
+visible = false
