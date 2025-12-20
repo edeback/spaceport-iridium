@@ -42,7 +42,7 @@ func initialize_action(_pawn: PawnBase, _target: Node2D) -> void:
 			# Module -> Module
 			#path = Global.path_manager.run_pathfinding(pawn.current_module, target as ModuleBase, true)
 			if target_is_component:
-				modules_to_watch = Global.path_manager.run_pathfinding_to_component_type(pawn.current_module, target as ComponentBase)
+				modules_to_watch = Global.path_manager.run_pathfinding_to_component_type(pawn.current_module, target.get_script())
 			else:
 				modules_to_watch = Global.path_manager.run_pathfinding_by_module(pawn.current_module, target as ModuleBase)
 			path_variant.append_array(modules_to_watch)
@@ -67,7 +67,7 @@ func initialize_action(_pawn: PawnBase, _target: Node2D) -> void:
 			# External -> External
 			# Super easy, just go directly?
 			path_variant = [pawn.position, target]
-	if path_variant.size() < 2:
+	if path_variant.is_empty():
 		action_state = PathActionState.Failed
 	else:
 		# Want next module at end so easy to pop

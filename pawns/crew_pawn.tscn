@@ -6,15 +6,18 @@
 [node name="PawnBase" node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_4e1f1")]
 animated_sprite = NodePath("Crew")
 
-[node name="Sprite2D" parent="." index="0"]
-visible = false
-
 [node name="Crew" parent="." index="1"]
 visible = true
+
+[node name="Robot" parent="." index="2"]
+visible = false
 
 [node name="PawnNeedsComponent" parent="." index="3" instance=ExtResource("2_6fnyy")]
 has_health_need = true
 has_sleep_need = true
 has_hunger_need = true
+hunger_duration_seconds = 30.0
 has_entertainment_need = true
+entertainment_duration_seconds = 30.0
 has_social_need = true
+social_duration_seconds = 30.0

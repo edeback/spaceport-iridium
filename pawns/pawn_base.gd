@@ -34,6 +34,14 @@ func _ready() -> void:
 	pass # Replace with function body.
 	
 
+func try_start_job(new_job: JobBase) -> bool:
+	if current_job == null and new_job.can_do_job(self):
+		current_job = new_job
+		current_job.start_job(self)
+		return true
+	return false
+		
+
 func start_job() -> void:
 	current_job = Global.job_manager.find_job(self)
 	if current_job:

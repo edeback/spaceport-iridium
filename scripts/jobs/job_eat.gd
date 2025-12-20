@@ -3,7 +3,6 @@ extends JobBase
 
 var pawn: PawnBase = null
 var action: Action_PathToTarget = null
-var end_component: SustenanceComponent = null
 
 enum JobState { Start, GoToModule, Eat, Finished, Failed }
 var job_state: JobState = JobState.Start
@@ -62,7 +61,6 @@ func job_start() -> void:
 	if action.is_failed():
 		cancel(true)
 	else:
-		end_component = action.modules_to_watch.back().get_component_by_type(SustenanceComponent)
 		job_state = JobState.GoToModule
 	
 func move_to_module(delta: float) -> void:
@@ -77,5 +75,10 @@ func move_to_module(delta: float) -> void:
 		action = null
 
 func eat() -> void:
-	end_component.consume_sustenance(10)
-	job_state = JobState.Finished
+	var sus_component: SustenanceComponent = pawn.current_module.get_component_by_type(SustenanceComponent) as SustenanceComponent
+	if sus_component != null:
+		if sus_component.consume_sustenance(10):
+			(pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent).hunger_value += 10
+		job_state = JobState.Finished
+	else:
+		cancel(true)

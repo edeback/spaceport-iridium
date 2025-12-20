@@ -5,12 +5,13 @@
 [ext_resource type="Theme" uid="uid://be0o5q2vl2xnx" path="res://ui/themes/spinbox_theme.tres" id="3_jodna"]
 [ext_resource type="Texture2D" uid="uid://dtddmta7qm6au" path="res://assets/external/kenney_ui/PNG/Grey/Default/icon_outline_cross.png" id="3_ovn6y"]
 
-[node name="HBoxContainer" type="HBoxContainer" node_paths=PackedStringArray("stored_resource_name", "stored_resource_value", "remove_resource_button", "desired_resources_spinbox")]
+[node name="HBoxContainer" type="HBoxContainer" node_paths=PackedStringArray("stored_resource_name", "stored_resource_value", "remove_resource_button", "desired_resources_spinbox", "debug_add_button")]
 script = ExtResource("1_b4rr0")
 stored_resource_name = NodePath("NameBox/StoredName")
 stored_resource_value = NodePath("ContentsBox/StoredValue")
 remove_resource_button = NodePath("NameBox/RemoveResourceButton")
 desired_resources_spinbox = NodePath("ContentsBox/DesiredResourcesSpinbox")
+debug_add_button = NodePath("DebugAddButton")
 
 [node name="NameBox" type="HBoxContainer" parent="."]
 layout_mode = 2
@@ -32,6 +33,10 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 16
 text = "Water"
+
+[node name="DebugAddButton" type="Button" parent="."]
+layout_mode = 2
+text = "+"
 
 [node name="ContentsBox" type="HBoxContainer" parent="."]
 layout_mode = 2

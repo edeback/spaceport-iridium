@@ -26,11 +26,11 @@
 [ext_resource type="Resource" uid="uid://0iqtgbc2dqvn" path="res://data/modules/industrial_processors/ice_processor_mdata.tres" id="19_0lj05"]
 [ext_resource type="PackedScene" uid="uid://mroynql4rcbs" path="res://ui/windows/trade/trade_screen.tscn" id="19_xyc40"]
 [ext_resource type="Resource" uid="uid://c7ecu8kiaopc7" path="res://data/modules/industrial_processors/ore_processor_mdata.tres" id="20_qj0xk"]
-[ext_resource type="Resource" uid="uid://crhsnxhuro0k" path="res://data/modules/living_quarters/sleeping_pod_mdata.tres" id="21_qj7ft"]
+[ext_resource type="Resource" uid="uid://crhsnxhuro0k" path="res://data/modules/crew/sleeping_pod_mdata.tres" id="21_qj7ft"]
 [ext_resource type="Resource" uid="uid://753weg0dtsl7" path="res://data/modules/power/battery.tres" id="22_vt8g8"]
 [ext_resource type="Resource" uid="uid://bcv5sug5sammf" path="res://data/modules/power/debug_power.tres" id="23_tmpp0"]
 [ext_resource type="Resource" uid="uid://ddwo8htifu16c" path="res://data/modules/power/fusion_reactor.tres" id="24_wt573"]
-[ext_resource type="Resource" uid="uid://b8vvj4s2ms0s8" path="res://data/modules/power/solar_panel.tres" id="25_u34n7"]
+[ext_resource type="Resource" uid="uid://b8vvj4s2ms0s8" path="res://data/modules/power/solar_panel_mdata.tres" id="25_u34n7"]
 [ext_resource type="Resource" uid="uid://c1126wf8hgb4f" path="res://data/modules/resource_gathering/mining_bay_mdata.tres" id="26_bgs1r"]
 [ext_resource type="Resource" uid="uid://cu4vq33kxfwb8" path="res://data/modules/storage/large_storage.tres" id="27_6porg"]
 [ext_resource type="Resource" uid="uid://c0o6agquw83kw" path="res://data/modules/storage/medium_storage.tres" id="28_s5567"]
@@ -67,7 +67,7 @@ corner_radius_bottom_left = 16
 shadow_size = 6
 shadow_offset = Vector2(-3, -3)
 
-[sub_resource type="FoldableGroup" id="FoldableGroup_xyc40"]
+[sub_resource type="FoldableGroup" id="FoldableGroup_x3wcs"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1h8lm"]
 content_margin_left = 4.0
@@ -261,18 +261,10 @@ theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 4
 
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/PanelContainer/MarginContainer"]
-layout_mode = 2
-
-[node name="InteractionLayerOptions" type="OptionButton" parent="VBoxContainer/PanelContainer/MarginContainer/HBoxContainer"]
+[node name="DisplayCorridorsCheckbox" type="CheckBox" parent="VBoxContainer/PanelContainer/MarginContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-selected = 0
-item_count = 2
-popup/item_0/text = "Modules"
-popup/item_0/id = 0
-popup/item_1/text = "Transportation"
-popup/item_1/id = 1
+text = "Display Corridors"
 
 [node name="Modules" type="PanelContainer" parent="VBoxContainer"]
 layout_mode = 2
@@ -293,7 +285,7 @@ layout_mode = 2
 
 [node name="FoldableContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer" instance=ExtResource("3_ka3re")]
 layout_mode = 2
-foldable_group = SubResource("FoldableGroup_xyc40")
+foldable_group = SubResource("FoldableGroup_x3wcs")
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -320,5 +312,5 @@ offset_right = 300.0
 offset_bottom = 349.5
 
 [connection signal="pressed" from="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer/PanelContainer/CreditsButton" to="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer" method="_on_credits_button_clicked"]
-[connection signal="item_selected" from="VBoxContainer/PanelContainer/MarginContainer/HBoxContainer/InteractionLayerOptions" to="." method="_on_interaction_layer_changed"]
+[connection signal="toggled" from="VBoxContainer/PanelContainer/MarginContainer/DisplayCorridorsCheckbox" to="." method="_on_check_button_toggled"]
 [connection signal="pressed" from="VBoxContainer/Modules/MarginContainer/VBoxContainer/MarginContainer/ModuleInfoButton" to="." method="_on_info_button_pressed"]

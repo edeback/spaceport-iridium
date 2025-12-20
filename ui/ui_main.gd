@@ -49,10 +49,10 @@ func load_moduledatas() -> void:
 		button_container.remove_child(node)
 		node.queue_free()
 	module_data_groups.clear()
-	#var file_paths: Array[String] = get_all_file_paths(MODULE_PATH)
-	#for file_path: String in file_paths:
-		#var module_data: ModuleData = ResourceLoader.load(file_path, "ModuleData")
-	for module_data: ModuleData in temp_modules:
+	var file_paths: Array[String] = get_all_file_paths(MODULE_PATH)
+	for file_path: String in file_paths:
+		var module_data: ModuleData = ResourceLoader.load(file_path, "ModuleData")
+	#for module_data: ModuleData in temp_modules:
 		if module_data.hidden:
 			continue
 		if module_data.tags.size() == 0:
@@ -82,8 +82,8 @@ func _process(delta: float) -> void:
 
 
 func _on_check_button_toggled(toggled_on: bool) -> void:
-	#Global.world_manager.show_module_layer(WorldManager.InteractionLayer.TRANSPORT if toggled_on else WorldManager.InteractionLayer.MODULE)
-	Global.world_manager.set_module_layer_visibility(WorldManager.InteractionLayer.CORRIDOR, toggled_on)
+	Global.world_manager.show_module_layer(WorldManager.InteractionLayer.CORRIDOR if toggled_on else WorldManager.InteractionLayer.MODULE)
+	#Global.world_manager.set_module_layer_visibility(WorldManager.InteractionLayer.CORRIDOR, toggled_on)
 
 func _on_info_button_pressed() -> void:
 	Global.ui_in_game.change_input_mode(UIInGame.InputMode.None)
@@ -94,6 +94,7 @@ func _on_input_mode_changed(new_mode: UIInGame.InputMode) -> void:
 func _on_active_layer_changed(new_layer: WorldManager.InteractionLayer) -> void:
 	skip_emit = true
 	%InteractionLayerOptions.selected = new_layer
+	%DisplayCorridorsCheckbox.set_pressed_no_signal(new_layer == WorldManager.InteractionLayer.CORRIDOR)
 	skip_emit = false
 	
 

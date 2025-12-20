@@ -1,0 +1,25 @@
+[gd_scene load_steps=6 format=3 uid="uid://b8ciktratf6xb"]
+
+[ext_resource type="PackedScene" uid="uid://drvd8opv6enr8" path="res://modules/templates/module_2x1.tscn" id="1_cwauj"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_6dgag"]
+[ext_resource type="PackedScene" uid="uid://b8fbjamaiahs4" path="res://modules/components/sustenance_component.tscn" id="3_6dgag"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_x3cc5"]
+shader = ExtResource("2_6dgag")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_oya45"]
+resource_local_to_scene = true
+size = Vector2(126, 62)
+
+[node name="Module" instance=ExtResource("1_cwauj")]
+
+[node name="Sprite" parent="Offset" index="0"]
+material = SubResource("ShaderMaterial_x3cc5")
+
+[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
+shape = SubResource("RectangleShape2D_oya45")
+
+[node name="SustenanceComponent" parent="." index="3" instance=ExtResource("3_6dgag")]

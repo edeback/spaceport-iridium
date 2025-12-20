@@ -91,7 +91,7 @@ func run_pathfinding_by_module(start_module: ModuleBase, end_module: ModuleBase)
 func run_pathfinding_to_type_by_module(start_module: ModuleBase, end_type: ModuleData) -> Array[ModuleBase]:
 	return graph.pathfind_to_type(start_module, end_type)
 	
-func run_pathfinding_to_component_type(start_module: ModuleBase, end_component_type: ComponentBase) -> Array[ModuleBase]:
+func run_pathfinding_to_component_type(start_module: ModuleBase, end_component_type: Variant) -> Array[ModuleBase]:
 	return graph.pathfind_to_component_type(start_module, end_component_type)
 
 func run_pathfinding_by_func(start_module: ModuleBase, function: Callable) -> Array[ModuleBase]:

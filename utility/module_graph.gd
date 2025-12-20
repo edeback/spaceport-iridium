@@ -175,7 +175,7 @@ func pathfind_to_type(start: ModuleBase, end_type: ModuleData) -> Array[ModuleBa
 	var type_callable: Callable = func(test_vertext: ModuleGraphVertex) -> bool: return test_vertext.module.module_data == end_type
 	return pathfind_to_func(start, type_callable)
 	
-func pathfind_to_component_type(start: ModuleBase, end_component_type: ComponentBase) -> Array[ModuleBase]:
+func pathfind_to_component_type(start: ModuleBase, end_component_type: Variant) -> Array[ModuleBase]:
 	if end_component_type == null:
 		return []
 	var start_vertex: ModuleGraphVertex = _vertices.get(start)

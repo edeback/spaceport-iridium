@@ -8,7 +8,7 @@ func _ready() -> void:
 	add_to_group("sustenance_component")
 
 func consume_sustenance(amount: float) -> bool:
-	if amount > sustenance_available:
+	if amount <= sustenance_available:
 		sustenance_available -= amount
 		return true
 	return false

@@ -31,6 +31,7 @@ func refresh_display() -> void:
 		var storage_line: StorageResourceLine = resource_line.instantiate() as StorageResourceLine
 		storage_line.stored_resource_name.text = resource.name
 		storage_line.stored_resource_value.text = _format_resouce_value(storage_component.total_stored_by_resource(resource))
+		storage_line.debug_add_button.pressed.connect(_on_debug_add_button_pressed.bind(resource))
 		if storage_component.player_configurable:
 			storage_line.remove_resource_button.pressed.connect(_on_remove_resource_pressed.bind(resource))
 			if storage_component.storage_data[resource].stored > 0:
@@ -45,6 +46,7 @@ func refresh_display() -> void:
 	%FreeSpaceAvailableLabel.text = _format_resouce_value(storage_component.space_available())
 	%FreeSpaceMaxLabel.text = _format_resouce_value(storage_component.max_stored)
 	priority_value.value = storage_component.priority
+	%DisplayFillMeterCheckbox.button_pressed = storage_component.display_storage_ui
 	refresh_add_resource_menu()
 		
 		
@@ -86,3 +88,10 @@ func _on_remove_resource_pressed(resource: ResourceData) -> void:
 
 func _on_desired_resources_changed(new_value: float, resource: ResourceData) -> void:
 	pass
+
+func _on_display_fill_meter_changed(new_value: bool) -> void:
+	storage_component.display_storage_ui = new_value
+
+func _on_debug_add_button_pressed(resource: ResourceData) -> void:
+	if storage_component != null:
+		storage_component.deposit(resource, 1)

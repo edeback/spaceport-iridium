@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=6 format=3 uid="uid://dwj1ac2s0sviw"]
+
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_d8711"]
+[ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="2_gogb3"]
+[ext_resource type="Script" uid="uid://by2n6rwcttgyx" path="res://data/recipes/recipe_data.gd" id="2_xk33h"]
+[ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="3_5wh7t"]
+[ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="4_5wh7t"]
+
+[resource]
+script = ExtResource("2_xk33h")
+name = "Farm Algae"
+inputs = Dictionary[ExtResource("1_d8711"), int]({
+ExtResource("2_gogb3"): 1,
+ExtResource("3_5wh7t"): 1
+})
+outputs = Dictionary[ExtResource("1_d8711"), int]({
+ExtResource("4_5wh7t"): 2
+})
+metadata/_custom_type_script = "uid://by2n6rwcttgyx"

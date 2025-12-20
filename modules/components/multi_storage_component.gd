@@ -21,6 +21,11 @@ extends ComponentBase
 #@export var default_import_jobs: Dictionary[ResourceData, Job_GetResource] = {}
 
 @export var storage_ui: ProgressBar
+@export var display_storage_ui: bool = true:
+	set(new_display):
+		if new_display != display_storage_ui:
+			display_storage_ui = new_display
+			storage_ui.visible = display_storage_ui
 @export var player_configurable: bool = false
 
 #var stock_reserved: Dictionary[ResourceData, float] = {}
@@ -31,6 +36,7 @@ var import_jobs: Array[Job_GetResource] = []
 
 const SMALL_FLOAT: float = 0.000001
 
+var storage_value_changed: bool = true
 signal storage_changed(resource: ResourceData, new_value: int)
 
 # Called when the node enters the scene tree for the first time.
@@ -91,7 +97,9 @@ func remove_stored_resource(resource: ResourceData) -> void:
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
 	# Move to only when changed
-	update_storage_ui()
+	if display_storage_ui and storage_value_changed:
+		storage_value_changed = false
+		update_storage_ui()
 	if power_consumption_component and not power_consumption_component.powered:
 		last_error = "No power!"
 		return
@@ -180,6 +188,7 @@ func withdraw(resource: ResourceData, quantity: int, use_reserve: bool = false) 
 	var data: StorageData = storage_data.get(resource)
 	if data:
 		if data.try_withdraw(quantity, use_reserve):
+			storage_value_changed = true
 			storage_changed.emit(resource, data.stored)
 			Global.resource_manager.queue_recalc_resource(resource)
 			return true
@@ -199,6 +208,7 @@ func withdraw_up_to(resource: ResourceData, quantity: int, use_reserve: bool = f
 	if data:
 		var withdrawn := data.withdraw_up_to(quantity, use_reserve)
 		if withdrawn > 0:
+			storage_value_changed = true
 			storage_changed.emit(resource, data.stored)
 			Global.resource_manager.queue_recalc_resource(resource)
 		return withdrawn
@@ -231,7 +241,11 @@ func cancel_withdraw_job(job: Job_GetResource) -> void:
 func complete_withdraw_job(job: Job_GetResource) -> bool:
 	var data: StorageData = storage_data.get(job.resource_data)
 	if data:
-		return data.complete_withdraw_job(job)
+		var did_withdraw: bool = data.complete_withdraw_job(job)
+		if did_withdraw:
+			storage_value_changed = true
+			storage_changed.emit(job.resource_data, data.stored)
+		return did_withdraw
 	return false
 	
 func total_stored_by_resource(resource: ResourceData) -> int:
@@ -263,6 +277,7 @@ func deposit(resource: ResourceData, quantity: int, only_if_room: bool = false, 
 		if only_if_room and free_space < quantity:
 			return false
 		var new_stored := data.deposit(quantity, use_reserve)
+		storage_value_changed = true
 		storage_changed.emit(resource, new_stored)
 		Global.resource_manager.queue_recalc_resource(resource)
 		return true
@@ -283,7 +298,11 @@ func cancel_deposit_job(job: Job_GetResource) -> void:
 func complete_deposit_job(job: Job_GetResource) -> bool:
 	var data: StorageData = storage_data.get(job.resource_data)
 	if data:
-		return data.complete_deposit_job(job)
+		var did_deposit: bool = data.complete_deposit_job(job)
+		if did_deposit:
+			storage_value_changed = true
+			storage_changed.emit(job.resource_data, data.stored)
+		return did_deposit
 	return false
 	#if import_jobs.has(job):
 		#if deposit(job.resource_data, job.amount, false, true):
