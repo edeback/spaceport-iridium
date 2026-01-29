@@ -93,7 +93,6 @@ func _on_input_mode_changed(new_mode: UIInGame.InputMode) -> void:
 
 func _on_active_layer_changed(new_layer: WorldManager.InteractionLayer) -> void:
 	skip_emit = true
-	%InteractionLayerOptions.selected = new_layer
 	%DisplayCorridorsCheckbox.set_pressed_no_signal(new_layer == WorldManager.InteractionLayer.CORRIDOR)
 	skip_emit = false
 	

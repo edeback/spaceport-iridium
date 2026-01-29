@@ -1,4 +1,4 @@
-[gd_scene load_steps=45 format=3 uid="uid://ce6npnqw8s3mu"]
+[gd_scene format=3 uid="uid://ce6npnqw8s3mu"]
 
 [ext_resource type="Script" uid="uid://de484prd4xlyv" path="res://ui/ui_main.gd" id="1_2bqpn"]
 [ext_resource type="PackedScene" uid="uid://c7x5q4maw36vx" path="res://ui/buttons/module_button_group.tscn" id="3_ka3re"]
@@ -93,7 +93,7 @@ keycode = 4194305
 [sub_resource type="Shortcut" id="Shortcut_xyc40"]
 events = [SubResource("InputEventKey_1h8lm")]
 
-[node name="UiMain" type="Control" node_paths=PackedStringArray("button_container", "resource_display_container")]
+[node name="UiMain" type="Control" unique_id=2019768832 node_paths=PackedStringArray("button_container", "resource_display_container")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -110,7 +110,7 @@ resources_to_display = Array[ExtResource("4_pqeum")]([ExtResource("5_rtsem"), Ex
 pawn_info_screen = ExtResource("15_x3wcs")
 temp_modules = Array[ExtResource("15_47oex")]([ExtResource("16_x3wcs"), ExtResource("17_848xd"), ExtResource("18_w7nyr"), ExtResource("19_0lj05"), ExtResource("20_qj0xk"), ExtResource("21_qj7ft"), ExtResource("22_vt8g8"), ExtResource("23_tmpp0"), ExtResource("24_wt573"), ExtResource("25_u34n7"), ExtResource("26_bgs1r"), ExtResource("27_6porg"), ExtResource("28_s5567"), ExtResource("29_qnfs5"), ExtResource("30_4mt1o"), ExtResource("31_wy7eg"), ExtResource("32_k34tn")])
 
-[node name="ResourceDisplayPanel" type="PanelContainer" parent="."]
+[node name="ResourceDisplayPanel" type="PanelContainer" parent="." unique_id=1186352041]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -124,40 +124,40 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_xdhp5")
 
-[node name="MarginContainer" type="MarginContainer" parent="ResourceDisplayPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="ResourceDisplayPanel" unique_id=1153547948]
 layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="HBoxContainer" type="HBoxContainer" parent="ResourceDisplayPanel/MarginContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="ResourceDisplayPanel/MarginContainer" unique_id=133719880]
 layout_mode = 2
 
-[node name="CreditsDisplayContainer" type="PanelContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer" node_paths=PackedStringArray("credits_available_label")]
+[node name="CreditsDisplayContainer" type="PanelContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer" unique_id=1891202266 node_paths=PackedStringArray("credits_available_label")]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 script = ExtResource("15_1h8lm")
 credits_available_label = NodePath("MarginContainer/VBoxContainer/CreditsAvailableLabel")
 
-[node name="MarginContainer" type="MarginContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer" unique_id=957839381]
 layout_mode = 2
 theme_override_constants/margin_left = 4
 theme_override_constants/margin_top = 2
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer" unique_id=1091706229]
 layout_mode = 2
 size_flags_vertical = 4
 
-[node name="PanelContainer" type="PanelContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer" unique_id=977417977]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="CreditsIcon" type="TextureRect" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer/PanelContainer"]
+[node name="CreditsIcon" type="TextureRect" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer/PanelContainer" unique_id=12909827]
 visible = false
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
@@ -166,7 +166,7 @@ size_flags_vertical = 4
 texture = ExtResource("15_b5r2u")
 expand_mode = 1
 
-[node name="CreditsButton" type="Button" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer/PanelContainer"]
+[node name="CreditsButton" type="Button" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer/PanelContainer" unique_id=215183255]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 icon = ExtResource("15_b5r2u")
@@ -174,40 +174,40 @@ flat = true
 icon_alignment = 1
 expand_icon = true
 
-[node name="CreditsNameLabel" type="Label" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer"]
+[node name="CreditsNameLabel" type="Label" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer" unique_id=1945958339]
 layout_mode = 2
 size_flags_horizontal = 4
 text = "Credits"
 
-[node name="CreditsAvailableLabel" type="Label" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer"]
+[node name="CreditsAvailableLabel" type="Label" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer" unique_id=551926144]
 layout_mode = 2
 size_flags_horizontal = 4
 text = "8795423"
 
-[node name="EnergyDisplayContainer" type="PanelContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer" node_paths=PackedStringArray("energy_used_label")]
+[node name="EnergyDisplayContainer" type="PanelContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer" unique_id=2060079048 node_paths=PackedStringArray("energy_used_label")]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 script = ExtResource("15_rtsem")
 energy_used_label = NodePath("MarginContainer/VBoxContainer/EnergyUsedLabel")
 
-[node name="MarginContainer" type="MarginContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer" unique_id=1699026209]
 layout_mode = 2
 theme_override_constants/margin_left = 4
 theme_override_constants/margin_top = 2
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer/MarginContainer" unique_id=1007458240]
 layout_mode = 2
 size_flags_vertical = 4
 
-[node name="PanelContainer" type="PanelContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer/MarginContainer/VBoxContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer/MarginContainer/VBoxContainer" unique_id=1217976286]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="EnergyIcon" type="TextureRect" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer/MarginContainer/VBoxContainer/PanelContainer"]
+[node name="EnergyIcon" type="TextureRect" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer/MarginContainer/VBoxContainer/PanelContainer" unique_id=769114458]
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -215,79 +215,79 @@ size_flags_vertical = 4
 texture = ExtResource("3_wyidc")
 expand_mode = 1
 
-[node name="EnergyLabel" type="Label" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer/MarginContainer/VBoxContainer"]
+[node name="EnergyLabel" type="Label" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer/MarginContainer/VBoxContainer" unique_id=1670626873]
 layout_mode = 2
 size_flags_horizontal = 4
 text = "Energy"
 
-[node name="EnergyUsedLabel" type="Label" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer/MarginContainer/VBoxContainer"]
+[node name="EnergyUsedLabel" type="Label" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer/MarginContainer/VBoxContainer" unique_id=990410902]
 layout_mode = 2
 size_flags_horizontal = 4
 text = "87 / 300"
 
-[node name="ResourceContainer" type="HBoxContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer"]
+[node name="ResourceContainer" type="HBoxContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer" unique_id=1542373739]
 layout_mode = 2
 
-[node name="PanelContainer2" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" instance=ExtResource("4_wyidc")]
+[node name="PanelContainer2" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" unique_id=775071548 instance=ExtResource("4_wyidc")]
 layout_mode = 2
 
-[node name="PanelContainer3" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" instance=ExtResource("4_wyidc")]
+[node name="PanelContainer3" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" unique_id=836193402 instance=ExtResource("4_wyidc")]
 layout_mode = 2
 
-[node name="PanelContainer4" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" instance=ExtResource("4_wyidc")]
+[node name="PanelContainer4" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" unique_id=435608622 instance=ExtResource("4_wyidc")]
 layout_mode = 2
 
-[node name="PanelContainer5" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" instance=ExtResource("4_wyidc")]
+[node name="PanelContainer5" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" unique_id=1044300108 instance=ExtResource("4_wyidc")]
 layout_mode = 2
 
-[node name="PanelContainer6" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" instance=ExtResource("4_wyidc")]
+[node name="PanelContainer6" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" unique_id=983873649 instance=ExtResource("4_wyidc")]
 layout_mode = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1258212530]
 layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
 offset_right = 176.0
 grow_vertical = 2
 
-[node name="PanelContainer" type="PanelContainer" parent="VBoxContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="VBoxContainer" unique_id=828912190]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_u8vfh")
 
-[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/PanelContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/PanelContainer" unique_id=2069499512]
 layout_mode = 2
 theme_override_constants/margin_left = 4
 theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 4
 
-[node name="DisplayCorridorsCheckbox" type="CheckBox" parent="VBoxContainer/PanelContainer/MarginContainer"]
+[node name="DisplayCorridorsCheckbox" type="CheckBox" parent="VBoxContainer/PanelContainer/MarginContainer" unique_id=312351359]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Display Corridors"
 
-[node name="Modules" type="PanelContainer" parent="VBoxContainer"]
+[node name="Modules" type="PanelContainer" parent="VBoxContainer" unique_id=615522520]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_u8vfh")
 
-[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules"]
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules" unique_id=11590616]
 layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/Modules/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/Modules/MarginContainer" unique_id=792435669]
 layout_mode = 2
 
-[node name="ButtonContainer" type="VBoxContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer"]
+[node name="ButtonContainer" type="VBoxContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer" unique_id=2038703158]
 layout_mode = 2
 
-[node name="FoldableContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer" instance=ExtResource("3_ka3re")]
+[node name="FoldableContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer" unique_id=1698963565 instance=ExtResource("3_ka3re")]
 layout_mode = 2
 foldable_group = SubResource("FoldableGroup_x3wcs")
 
-[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer" unique_id=39982694]
 layout_mode = 2
 size_flags_vertical = 10
 theme_override_constants/margin_left = 4
@@ -295,7 +295,7 @@ theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 4
 
-[node name="ModuleInfoButton" type="Button" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer/MarginContainer"]
+[node name="ModuleInfoButton" type="Button" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer/MarginContainer" unique_id=939840124]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 10
@@ -303,7 +303,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_1h8lm")
 shortcut = SubResource("Shortcut_xyc40")
 text = "Module Info"
 
-[node name="TradeScreen" parent="." instance=ExtResource("19_xyc40")]
+[node name="TradeScreen" parent="." unique_id=1329679237 instance=ExtResource("19_xyc40")]
 visible = false
 layout_mode = 1
 offset_left = -300.0
