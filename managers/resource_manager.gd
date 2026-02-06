@@ -3,56 +3,13 @@ extends Node
 
 @export var storable_resources: Array[ResourceData] = []
 
-var resource_totals: Dictionary[ResourceData, float] = {}
-
-# Dictionary[ResourceData, Array[MultiStorageComponent]]
-var resource_storage_components: Dictionary = {}
-
-var resources_changed: Array[ResourceData] = []
-
-@export_storage var credits: int = 10000:
-	get():
-		return credits
-	set(new_credits):
-		credits = new_credits
-		credits_changed.emit(credits)
-
-signal resource_changed(resource: ResourceData, new_value: float)
-signal credits_changed(new_credits: int)
+# Because so many use it directly
+@export var credit_resource: ResourceData
 
 func _ready() -> void:
 	Global.resource_manager = self
 	
 func _process(delta: float) -> void:
-	for resource: ResourceData in resources_changed:
-		_recalc_resource(resource)
-	resources_changed.clear()
+	for resource: ResourceData in storable_resources:
+		resource._recalc_resource()
 	
-	
-func register_component(resource: ResourceData, component: MultiStorageComponent) -> void:
-	var components = resource_storage_components.get_or_add(resource, [])
-	if not components.has(component):
-		components.append(component)
-	queue_recalc_resource(resource)
-
-func unregister_component(resource: ResourceData, component: MultiStorageComponent) -> void:
-	var components = resource_storage_components.get_or_add(resource, [])
-	components.erase(component)
-	queue_recalc_resource(resource)
-	
-func queue_recalc_resource(resource: ResourceData) -> void:
-	if not resources_changed.has(resource):
-		resources_changed.append(resource)
-		
-func _recalc_resource(resource: ResourceData) -> void:
-	var total: float = 0
-	var components_array = resource_storage_components.get_or_add(resource, [])
-	for storage_component: MultiStorageComponent in components_array:
-		total += storage_component.total_stored_by_resource(resource)
-	resource_totals.set(resource, total)
-	resource_changed.emit(resource, total)
-
-func get_total_quantity_of_resource(resource: ResourceData) -> float:
-	if resource_totals.has(resource):
-		return resource_totals[resource]
-	return 0

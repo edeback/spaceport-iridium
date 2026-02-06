@@ -12,7 +12,7 @@ Storage modules:
 - "Vent" items? For when things get clogged up with resources you can't use
 - Be able to select which items can be stored there and which can't
 - ![[Pasted image 20251208125343.png]]
-
+- Also maybe have auto-dump to clear superfluous resources?
 
 Life-related buildings:
 - Dining hall

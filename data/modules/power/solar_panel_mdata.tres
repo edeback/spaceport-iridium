@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://b8vvj4s2ms0s8"]
 
 [ext_resource type="Texture2D" uid="uid://cs0ht0ea12qtx" path="res://assets/sprites/solar_panel_tilemap.png" id="1_gwcax"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_6dlf4"]
 [ext_resource type="PackedScene" uid="uid://dxnloxeyu3aru" path="res://modules/energy/solar_panel.tscn" id="2_7kodw"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_6le0c"]
 

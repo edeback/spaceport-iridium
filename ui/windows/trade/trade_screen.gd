@@ -31,7 +31,7 @@ func refresh_total() -> void:
 	for trade_row: TradeResourceRow in trade_resource_rows:
 		total_change += trade_row.get_total_credits()
 	%TotalCreditsLabel.text = str(total_change)
-	var current_credits: int = Global.resource_manager.credits
+	var current_credits: int = Global.resource_manager.credit_resource.get_total()
 	if current_credits + total_change < 0:
 		%SubmitButton.disabled = true
 		%TotalCreditsLabel.self_modulate = Color.RED

@@ -73,10 +73,10 @@ func get_nearest_module_by_type(position: Vector2, module_data: ModuleData) -> M
 			closest_module = module
 	return closest_module
 	
-func purchase_and_add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false, allow_negative_credits: bool = false) -> void:
-	if not allow_negative_credits and Global.resource_manager.credits < module_data.cost:
+func purchase_and_add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false, allow_cost_overrun: bool = false) -> void:
+	if not allow_cost_overrun and !module_data.can_afford():
 		return
-	Global.resource_manager.credits -= module_data.cost
+	module_data.withdraw_cost()
 	add_module(module_data, cell, is_horizontal, flipped)
 
 func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false) -> void:

@@ -79,7 +79,7 @@ func _update_shader() -> void:
 
 func update_placeable(module_cell: Vector2i, ignore_connections: bool = false) -> void:
 	# Must be able to pay
-	if Global.resource_manager.credits < module_data.cost:
+	if !module_data.can_afford():
 		%ErrorLabel.visible = true
 		%ErrorLabel.text = "Can't afford!"
 		can_place = false

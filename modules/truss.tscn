@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://busc6m38p1r8j"]
+[gd_scene format=3 uid="uid://busc6m38p1r8j"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_uwdk4"]
 [ext_resource type="Script" uid="uid://dt78mjhj8i6cf" path="res://modules/truss.gd" id="2_m657s"]
@@ -11,11 +11,11 @@ shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_2hsxi"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ykycx"]
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
-[node name="Module" instance=ExtResource("1_uwdk4")]
+[node name="Module" unique_id=754556263 instance=ExtResource("1_uwdk4")]
 script = ExtResource("2_m657s")
 blocks_building = false
 structure_check_before_delete = true
@@ -28,7 +28,7 @@ material = SubResource("ShaderMaterial_uwdk4")
 texture = ExtResource("4_uwdk4")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
-shape = SubResource("RectangleShape2D_2hsxi")
+shape = SubResource("RectangleShape2D_ykycx")
 
 [node name="PathComponent" parent="." index="1"]
 path_points = Array[Vector2i]([])

@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://lfuwsqm704un" path="res://ui/icons/energy.svg" id="3_wyidc"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="4_pqeum"]
 [ext_resource type="PackedScene" uid="uid://dbm37hjpuku3k" path="res://ui/resource_display_ui.tscn" id="4_wyidc"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="5_47oex"]
 [ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="5_rtsem"]
 [ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="6_b5r2u"]
 [ext_resource type="Resource" uid="uid://1an3ftgpeh6u" path="res://data/resources/hydrogen.tres" id="7_1h8lm"]
@@ -15,9 +16,7 @@
 [ext_resource type="Resource" uid="uid://c56jj6kgs36sx" path="res://data/resources/gold.tres" id="12_6re3r"]
 [ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicates.tres" id="13_0sakr"]
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="14_p3y7p"]
-[ext_resource type="Script" uid="uid://dreytwxljgmic" path="res://ui/credits_display_ui.gd" id="15_1h8lm"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="15_47oex"]
-[ext_resource type="Texture2D" uid="uid://cc0ns2prdb577" path="res://ui/icons/credit_symbol.svg" id="15_b5r2u"]
 [ext_resource type="Script" uid="uid://c6excany0u70v" path="res://ui/energy_display_ui.gd" id="15_rtsem"]
 [ext_resource type="PackedScene" uid="uid://dtipd1rwqes7u" path="res://ui/pawns/pawn_info_panel.tscn" id="15_x3wcs"]
 [ext_resource type="Resource" uid="uid://boadffwat0kpp" path="res://data/modules/docking_bays/docking_bay.tres" id="16_x3wcs"]
@@ -67,7 +66,7 @@ corner_radius_bottom_left = 16
 shadow_size = 6
 shadow_offset = Vector2(-3, -3)
 
-[sub_resource type="FoldableGroup" id="FoldableGroup_x3wcs"]
+[sub_resource type="FoldableGroup" id="FoldableGroup_8jjvc"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1h8lm"]
 content_margin_left = 4.0
@@ -106,7 +105,7 @@ button_group = ExtResource("3_ka3re")
 button_container = NodePath("VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer")
 resource_display_container = NodePath("ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer")
 resource_display_ui = ExtResource("4_wyidc")
-resources_to_display = Array[ExtResource("4_pqeum")]([ExtResource("5_rtsem"), ExtResource("6_b5r2u"), ExtResource("7_1h8lm"), ExtResource("8_xyc40"), ExtResource("9_pset1"), ExtResource("10_j1br4"), ExtResource("11_lnfpq"), ExtResource("12_6re3r"), ExtResource("13_0sakr"), ExtResource("14_p3y7p")])
+resources_to_display = Array[ExtResource("4_pqeum")]([ExtResource("5_47oex"), ExtResource("5_rtsem"), ExtResource("6_b5r2u"), ExtResource("7_1h8lm"), ExtResource("8_xyc40"), ExtResource("9_pset1"), ExtResource("10_j1br4"), ExtResource("11_lnfpq"), ExtResource("12_6re3r"), ExtResource("13_0sakr"), ExtResource("14_p3y7p")])
 pawn_info_screen = ExtResource("15_x3wcs")
 temp_modules = Array[ExtResource("15_47oex")]([ExtResource("16_x3wcs"), ExtResource("17_848xd"), ExtResource("18_w7nyr"), ExtResource("19_0lj05"), ExtResource("20_qj0xk"), ExtResource("21_qj7ft"), ExtResource("22_vt8g8"), ExtResource("23_tmpp0"), ExtResource("24_wt573"), ExtResource("25_u34n7"), ExtResource("26_bgs1r"), ExtResource("27_6porg"), ExtResource("28_s5567"), ExtResource("29_qnfs5"), ExtResource("30_4mt1o"), ExtResource("31_wy7eg"), ExtResource("32_k34tn")])
 
@@ -133,56 +132,6 @@ theme_override_constants/margin_bottom = 8
 
 [node name="HBoxContainer" type="HBoxContainer" parent="ResourceDisplayPanel/MarginContainer" unique_id=133719880]
 layout_mode = 2
-
-[node name="CreditsDisplayContainer" type="PanelContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer" unique_id=1891202266 node_paths=PackedStringArray("credits_available_label")]
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-script = ExtResource("15_1h8lm")
-credits_available_label = NodePath("MarginContainer/VBoxContainer/CreditsAvailableLabel")
-
-[node name="MarginContainer" type="MarginContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer" unique_id=957839381]
-layout_mode = 2
-theme_override_constants/margin_left = 4
-theme_override_constants/margin_top = 2
-theme_override_constants/margin_right = 4
-theme_override_constants/margin_bottom = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer" unique_id=1091706229]
-layout_mode = 2
-size_flags_vertical = 4
-
-[node name="PanelContainer" type="PanelContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer" unique_id=977417977]
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-
-[node name="CreditsIcon" type="TextureRect" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer/PanelContainer" unique_id=12909827]
-visible = false
-custom_minimum_size = Vector2(30, 30)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-texture = ExtResource("15_b5r2u")
-expand_mode = 1
-
-[node name="CreditsButton" type="Button" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer/PanelContainer" unique_id=215183255]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-icon = ExtResource("15_b5r2u")
-flat = true
-icon_alignment = 1
-expand_icon = true
-
-[node name="CreditsNameLabel" type="Label" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer" unique_id=1945958339]
-layout_mode = 2
-size_flags_horizontal = 4
-text = "Credits"
-
-[node name="CreditsAvailableLabel" type="Label" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer" unique_id=551926144]
-layout_mode = 2
-size_flags_horizontal = 4
-text = "8795423"
 
 [node name="EnergyDisplayContainer" type="PanelContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer" unique_id=2060079048 node_paths=PackedStringArray("energy_used_label")]
 layout_mode = 2
@@ -285,7 +234,7 @@ layout_mode = 2
 
 [node name="FoldableContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer" unique_id=1698963565 instance=ExtResource("3_ka3re")]
 layout_mode = 2
-foldable_group = SubResource("FoldableGroup_x3wcs")
+foldable_group = SubResource("FoldableGroup_8jjvc")
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer" unique_id=39982694]
 layout_mode = 2
@@ -311,6 +260,5 @@ offset_top = -349.5
 offset_right = 300.0
 offset_bottom = 349.5
 
-[connection signal="pressed" from="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer/MarginContainer/VBoxContainer/PanelContainer/CreditsButton" to="ResourceDisplayPanel/MarginContainer/HBoxContainer/CreditsDisplayContainer" method="_on_credits_button_clicked"]
 [connection signal="toggled" from="VBoxContainer/PanelContainer/MarginContainer/DisplayCorridorsCheckbox" to="." method="_on_check_button_toggled"]
 [connection signal="pressed" from="VBoxContainer/Modules/MarginContainer/VBoxContainer/MarginContainer/ModuleInfoButton" to="." method="_on_info_button_pressed"]

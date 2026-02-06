@@ -45,20 +45,14 @@ func _ready() -> void:
 	add_to_group("resource_storage")
 	if include_in_stats:
 		for resource: ResourceData in storage_data:
-			Global.resource_manager.register_component(resource, self)
-		#for resource: ResourceData in stored_resources:
-			#Global.resource_manager.register_component(resource, self)
+			resource.register_component(self)
 
 func add_stored_resource(resource: ResourceData) -> void:
 	if not storage_data.has(resource):
 		var new_data := StorageData.new()
 		storage_data[resource] = new_data
 		if include_in_stats:
-			Global.resource_manager.register_component(resource, self)
-	#if not stored_resources.has(resource):
-		#stored_resources.append(resource)
-		#if include_in_stats:
-			#Global.resource_manager.register_component(resource, self)
+			resource.register_component(self)
 			
 func remove_stored_resource(resource: ResourceData) -> void:
 	var data: StorageData = storage_data.get(resource)
@@ -66,7 +60,7 @@ func remove_stored_resource(resource: ResourceData) -> void:
 		data.end_all_jobs()
 		storage_data.erase(resource)
 		if include_in_stats:
-			Global.resource_manager.unregister_component(resource, self)
+			resource.unregister_component(self)
 		
 	#if stored_resources.has(resource):
 		#stored_resources.erase(resource)
@@ -123,7 +117,7 @@ func update_storage_ui() -> void:
 func _exit_tree() -> void:
 	if include_in_stats:
 		for resource: ResourceData in storage_data:
-			Global.resource_manager.unregister_component(resource, self)
+			resource.unregister_component(self)
 	for data: StorageData in storage_data.values():
 		data.end_all_jobs()
 			
@@ -190,7 +184,7 @@ func withdraw(resource: ResourceData, quantity: int, use_reserve: bool = false) 
 		if data.try_withdraw(quantity, use_reserve):
 			storage_value_changed = true
 			storage_changed.emit(resource, data.stored)
-			Global.resource_manager.queue_recalc_resource(resource)
+			resource.needs_recalc = true
 			return true
 	return false
 		
@@ -210,7 +204,7 @@ func withdraw_up_to(resource: ResourceData, quantity: int, use_reserve: bool = f
 		if withdrawn > 0:
 			storage_value_changed = true
 			storage_changed.emit(resource, data.stored)
-			Global.resource_manager.queue_recalc_resource(resource)
+			resource.needs_recalc = true
 		return withdrawn
 	return 0
 	
@@ -279,7 +273,7 @@ func deposit(resource: ResourceData, quantity: int, only_if_room: bool = false, 
 		var new_stored := data.deposit(quantity, use_reserve)
 		storage_value_changed = true
 		storage_changed.emit(resource, new_stored)
-		Global.resource_manager.queue_recalc_resource(resource)
+		resource.needs_recalc = true
 		return true
 	return false
 	
