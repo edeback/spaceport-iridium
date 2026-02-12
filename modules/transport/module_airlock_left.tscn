@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://cdew55j75frqa"]
+[gd_scene format=3 uid="uid://cdew55j75frqa"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_jfu4r"]
 [ext_resource type="Texture2D" uid="uid://dnbkqmui7m4ae" path="res://assets/external/kenney_ui/PNG/Red/Double/arrow_basic_w.png" id="3_2vd0s"]
@@ -10,11 +10,11 @@ shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_gd6ts"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_h2ut6"]
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
-[node name="Module" instance=ExtResource("1_jfu4r")]
+[node name="Module" unique_id=1683758623 instance=ExtResource("1_jfu4r")]
 size = Vector2i(2, 1)
 
 [node name="Offset" parent="." index="0"]
@@ -25,7 +25,7 @@ material = SubResource("ShaderMaterial_2vd0s")
 texture = ExtResource("3_2vd0s")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
-shape = SubResource("RectangleShape2D_gd6ts")
+shape = SubResource("RectangleShape2D_h2ut6")
 
 [node name="PathComponent" parent="." index="1"]
 path_points = Array[Vector2i]([Vector2i(96, 32), Vector2i(64, 32)])

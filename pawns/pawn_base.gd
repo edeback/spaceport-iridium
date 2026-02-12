@@ -14,12 +14,19 @@ extends Node2D
 
 var traveling: bool = false
 var next_point: int = 0
-var current_job: JobBase = null
+var current_job: JobBase = null:
+	set(new_job):
+		if new_job != current_job:
+			current_job = new_job
+			job_changed.emit()
+			
 var job_mine_asteroid: Job_MineAsteroid = null
 
 var job_length: float = 0
 
 var components: Array[PawnComponentBase] = []
+
+signal job_changed
 
 func get_component_by_type(type: Variant) -> PawnComponentBase:
 	for component: PawnComponentBase in components:

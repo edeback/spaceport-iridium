@@ -4,7 +4,11 @@ extends JobBase
 var asteroid: AsteroidBase
 var pawn: PawnBase
 var requesting_module: ModuleBase
-var state: MineAsteroidState = MineAsteroidState.Starting
+var state: MineAsteroidState = MineAsteroidState.Starting:
+	set(new_state):
+		if new_state != state:
+			state = new_state
+			subtask_changed.emit()
 var action: Action_PathToTarget = null
 var efficiency: float = 1.0
 var time_mining: float = 0.0
@@ -14,6 +18,18 @@ var resources_mined: Array[ResourceData] = []
 
 enum MineAsteroidState { Starting, MovingToAsteroid, MineAsteroid, ReturningToModule, DepositMaterial, Finished, Failed }
 
+func get_job_description() -> String:
+	return "Mine Asteroid"
+
+func get_subtask_description() -> String:
+	match state:
+		MineAsteroidState.MovingToAsteroid:
+			return "Moving to asteroid"
+		MineAsteroidState.MineAsteroid:
+			return "Mining asteroid"
+		MineAsteroidState.ReturningToModule:
+			return "Returning to mining bay"
+	return ""
 
 func setup(_module: ModuleBase) -> void:
 	assert(_module != null)

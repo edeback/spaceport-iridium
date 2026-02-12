@@ -1,8 +1,9 @@
-[gd_scene load_steps=12 format=3 uid="uid://dtipd1rwqes7u"]
+[gd_scene format=3 uid="uid://dtipd1rwqes7u"]
 
 [ext_resource type="Script" uid="uid://b2h2pibcffusw" path="res://ui/pawns/pawn_info_panel.gd" id="1_j2y6g"]
 [ext_resource type="Texture2D" uid="uid://d0as5orqnhkl4" path="res://assets/external/kenney_ui/Vector/Blue/button_square_flat.svg" id="2_4c6nk"]
 [ext_resource type="PackedScene" uid="uid://bp3buujhvc0n6" path="res://ui/pawns/pawn_needs_tab.tscn" id="3_k5q5c"]
+[ext_resource type="PackedScene" uid="uid://dylvcpn3hgjkx" path="res://ui/pawns/pawn_job_tab.tscn" id="4_jaanw"]
 [ext_resource type="Texture2D" uid="uid://dx10vvcmha2ht" path="res://assets/external/craftpix_space_shooter/Buttons/BTNs/Close_BTN.png" id="7_cugvx"]
 [ext_resource type="Texture2D" uid="uid://doewhgldu2cyr" path="res://assets/external/craftpix_space_shooter/Buttons/BTNs_Active/Close_BTN.png" id="8_p6u53"]
 
@@ -27,19 +28,19 @@ keycode = 4194305
 [sub_resource type="Shortcut" id="Shortcut_7g6w7"]
 events = [SubResource("InputEventKey_ti31b")]
 
-[node name="PawnInfoPanel" type="MarginContainer" node_paths=PackedStringArray("data_tabs")]
+[node name="PawnInfoPanel" type="MarginContainer" unique_id=592006808 node_paths=PackedStringArray("data_tabs")]
 script = ExtResource("1_j2y6g")
 data_tabs = NodePath("MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer/DataTabs")
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=910270076]
 layout_mode = 2
 
-[node name="BaseScreen" type="MarginContainer" parent="MarginContainer"]
+[node name="BaseScreen" type="MarginContainer" parent="MarginContainer" unique_id=870657272]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/BaseScreen"]
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/BaseScreen" unique_id=1888946475]
 self_modulate = Color(0.768243, 0.52438736, 0.7868966, 1)
 layout_mode = 2
 texture = ExtResource("2_4c6nk")
@@ -48,51 +49,51 @@ patch_margin_top = 8
 patch_margin_right = 8
 patch_margin_bottom = 8
 
-[node name="MarginContainer2" type="MarginContainer" parent="MarginContainer/BaseScreen"]
+[node name="MarginContainer2" type="MarginContainer" parent="MarginContainer/BaseScreen" unique_id=675383480]
 layout_mode = 2
 theme_override_constants/margin_left = 6
 theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 6
 theme_override_constants/margin_bottom = 6
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/BaseScreen/MarginContainer2"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/BaseScreen/MarginContainer2" unique_id=47006572]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer" unique_id=1717062329]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="PawnNameLabel" type="Label" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/HBoxContainer"]
+[node name="PawnNameLabel" type="Label" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/HBoxContainer" unique_id=1809347675]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Pawn Name"
 
-[node name="PanelContainer" type="PanelContainer" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/HBoxContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/HBoxContainer" unique_id=1599054476]
 layout_mode = 2
 size_flags_horizontal = 10
 
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/HBoxContainer/PanelContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/HBoxContainer/PanelContainer" unique_id=1623484732]
 layout_mode = 2
 theme_override_constants/margin_left = 3
 theme_override_constants/margin_top = 2
 theme_override_constants/margin_right = 3
 
-[node name="AlertLabel" type="Label" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/HBoxContainer/PanelContainer/MarginContainer"]
+[node name="AlertLabel" type="Label" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/HBoxContainer/PanelContainer/MarginContainer" unique_id=574348395]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 10
 theme_override_colors/font_color = Color(0.7059392, 3.5376102e-06, 3.85046e-07, 1)
 text = "Alert alert alert! Something is wrong!"
 
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer" unique_id=423890143]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = -4
 theme_override_constants/margin_right = -4
 theme_override_constants/margin_bottom = -4
 
-[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer"]
+[node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer" unique_id=1935925781]
 layout_mode = 2
 texture = ExtResource("2_4c6nk")
 patch_margin_left = 6
@@ -100,24 +101,29 @@ patch_margin_top = 6
 patch_margin_right = 6
 patch_margin_bottom = 6
 
-[node name="DataTabs" type="TabContainer" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer"]
+[node name="DataTabs" type="TabContainer" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer" unique_id=913279221]
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 current_tab = 0
 clip_tabs = false
 
-[node name="Needs" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer/DataTabs" instance=ExtResource("3_k5q5c")]
+[node name="Needs" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer/DataTabs" unique_id=1147016764 instance=ExtResource("3_k5q5c")]
 layout_mode = 2
 metadata/_tab_index = 0
 
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/BaseScreen"]
+[node name="PawnJobTab" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer/DataTabs" unique_id=1251231180 instance=ExtResource("4_jaanw")]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/BaseScreen" unique_id=1491866804]
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 0
 theme_override_constants/margin_top = -5
 theme_override_constants/margin_right = -5
 
-[node name="Button" type="Button" parent="MarginContainer/BaseScreen/MarginContainer"]
+[node name="Button" type="Button" parent="MarginContainer/BaseScreen/MarginContainer" unique_id=1416673261]
 custom_minimum_size = Vector2(20, 20)
 layout_mode = 2
 size_flags_horizontal = 4

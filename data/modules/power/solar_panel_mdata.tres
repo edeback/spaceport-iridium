@@ -14,5 +14,4 @@ script = ExtResource("3_6le0c")
 name = "Solar Panel"
 scene = ExtResource("2_7kodw")
 icon = SubResource("AtlasTexture_15jww")
-cost = 100
 tags = Array[String](["Power"])

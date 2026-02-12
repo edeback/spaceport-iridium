@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://nwr8gusqocd6" path="res://managers/main.gd" id="1_lvssd"]
 [ext_resource type="Script" uid="uid://dcanuqi7bdrfp" path="res://managers/camera.gd" id="3_055fr"]
-[ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/hallways/hallway.tres" id="3_82xsv"]
+[ext_resource type="Resource" uid="uid://c8o32mbasjok7" path="res://data/modules/special/starting_module_mdata.tres" id="3_facbu"]
 [ext_resource type="Script" uid="uid://d0hud6eqhyh68" path="res://managers/path_manager.gd" id="3_nkgie"]
 [ext_resource type="Script" uid="uid://dvf7wnwvh6siv" path="res://managers/power_manager.gd" id="4_deici"]
 [ext_resource type="Resource" uid="uid://p3ja7r43eh6c" path="res://data/modules/truss.tres" id="4_getpj"]
@@ -7572,7 +7572,7 @@ structure_tile_map = NodePath("ForegroundLayers/ModuleLayer/StructureTileMap")
 
 [node name="WorldManager" type="Node" parent="Managers" unique_id=1880931306 node_paths=PackedStringArray("module_layers", "pawn_layer")]
 script = ExtResource("6_i5kyc")
-start_module = ExtResource("3_82xsv")
+start_module = ExtResource("3_facbu")
 module_layers = {
 0: NodePath("../../ForegroundLayers/ModuleLayer"),
 1: NodePath("../../ForegroundLayers/TransportLayer")

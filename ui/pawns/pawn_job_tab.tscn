@@ -1,0 +1,48 @@
+[gd_scene format=3 uid="uid://dylvcpn3hgjkx"]
+
+[ext_resource type="Script" uid="uid://c26rfwnde1t5h" path="res://ui/pawns/pawn_job_tab.gd" id="1_ymndu"]
+
+[node name="PawnJobTab" type="PanelContainer" unique_id=1251231180]
+script = ExtResource("1_ymndu")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=644253749]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=428424606]
+layout_mode = 2
+
+[node name="TaskContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=423803779]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/TaskContainer" unique_id=1516677778]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+text = "Task:"
+
+[node name="CurrentTask" type="Label" parent="MarginContainer/VBoxContainer/TaskContainer" unique_id=990275660]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 8.0
+text = "Doing stuff! So much stuff."
+
+[node name="SubTaskContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=618114148]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/SubTaskContainer" unique_id=160281816]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+text = "Subtask:"
+
+[node name="CurrentSubTask" type="Label" parent="MarginContainer/VBoxContainer/SubTaskContainer" unique_id=1527618399]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 8.0
+text = "Little things!"

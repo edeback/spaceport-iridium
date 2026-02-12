@@ -14,7 +14,29 @@ var deposit_storage: MultiStorageComponent
 var action: Action_PathToTarget = null
 
 enum JobState { Start, GoToResource, GatherResource, ReturnWithResource, DepositResource, Finished, Failed }
-var job_state: JobState = JobState.Start
+var job_state: JobState = JobState.Start:
+	set(new_state):
+		if job_state != new_state:
+			job_state = new_state
+			subtask_changed.emit()
+
+func get_job_description() -> String:
+	return "Get resource"
+
+func get_subtask_description() -> String:
+	match job_state:
+		JobState.GoToResource:
+			return "Going to resource"
+		JobState.GatherResource:
+			return "Gathering resource"
+		JobState.ReturnWithResource:
+			return "Returning with resource"
+		JobState.DepositResource:
+			return "Depositing resource"
+	return ""
+
+func is_valid() -> bool:
+	return requester != null and resource_data != null and deposit_storage != null
 
 func can_do_job(_pawn: PawnBase) -> bool:
 	var storage_component: MultiStorageComponent = null

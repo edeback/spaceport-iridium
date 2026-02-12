@@ -32,6 +32,10 @@ func remove_job(job_data: JobBase) -> void:
 func find_job(pawn: PawnBase) -> JobBase:
 	for index: int in range(job_board.size() - 1, -1, -1):
 		var job_to_do: JobBase = job_board[index]
+		# Check that the job is still possible
+		if !job_to_do.is_valid():
+			job_board.remove_at(index)
+			continue
 		if job_to_do.can_do_job(pawn):
 			job_board.remove_at(index)
 			return job_to_do

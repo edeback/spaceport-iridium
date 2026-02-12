@@ -1,4 +1,8 @@
 
+Additional links:
+https://relentlessoptimizer.com/gaming/2021/03/13/simtower-reference/
+https://www.reddit.com/r/SimTower/comments/1j8bzsl/indepth_discussion_on_optimal_tower_design_in/
+
 The "frame" is a unit of time within your tower. One game time (from day to day or from weekend to day) consists of 300 frames.
 
 The ''frame" is a generated unit of time that is deter- mined by the Individual computer's dock speed and how fast its on-screen graphics are drawn. This accounts for all the differences in processor types, rather than using a physical second for every machine. One game lime period consists of 3Q0 time or animation frames.

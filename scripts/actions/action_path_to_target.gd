@@ -1,5 +1,5 @@
 class_name Action_PathToTarget
-extends Node
+extends Action_Base
 
 var pawn: PawnBase
 var target: Node2D
@@ -20,6 +20,8 @@ var action_state: PathActionState = PathActionState.Starting
 
 var modules_to_watch: Array[ModuleBase] = []
 
+func get_description() -> String:
+	return "Pathing to target"
 
 func initialize_action(_pawn: PawnBase, _target: Node2D) -> void:
 	SignalBus.module_removed.connect(module_removed)
@@ -108,6 +110,10 @@ func extract_position(index: int) -> Vector2:
 		if index > 0 and path_variant[index - 1] is ModuleBase:
 			var prev_mod: ModuleBase = path_variant[index - 1] as ModuleBase
 			return Vector2(module.get_path_component().get_connection_point_from(prev_mod)) + module.position
+		if pawn.current_module != null and pawn.current_module == module:
+			return pawn.position
+		if module.get_path_component().door_indices.size() > 0:
+			return Vector2(module.get_path_component().get_closest_path_point(pawn.position - module.position)) + module.position
 		return Global.cell_to_world(module.module_cell, true)
 	elif path_variant[index] is Node2D:
 		var node: Node2D = path_variant[index] as Node2D

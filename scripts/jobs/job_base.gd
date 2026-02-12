@@ -6,7 +6,18 @@ extends Resource
 var priority: int = 0
 var repeat_after_finish: bool = false
 
+signal subtask_changed
+
 signal job_end
+
+func get_job_description() -> String:
+	return ""
+
+func get_subtask_description() -> String:
+	return ""
+
+func is_valid() -> bool:
+	return true
 
 func can_do_job(_pawn: PawnBase) -> bool:
 	return true

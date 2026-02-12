@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://c8o32mbasjok7"]
+
+[ext_resource type="Texture2D" uid="uid://doin5ie7nqjy8" path="res://assets/external/kenney_ui/Vector/Red/check_square_grey_cross.svg" id="1_2veoo"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_biing"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_14ht2"]
+[ext_resource type="PackedScene" uid="uid://bp4rvfoirrfhe" path="res://modules/special/starting_module.tscn" id="3_h5dhg"]
+
+[resource]
+script = ExtResource("3_14ht2")
+name = "Command Center"
+scene = ExtResource("3_h5dhg")
+icon = ExtResource("1_2veoo")
+hidden = true
+metadata/_custom_type_script = "uid://vwmofdckg7hu"

@@ -37,3 +37,5 @@ Overflowing storage:
 
 
 Change decor of modules?
+
+Minimap of entire thing to easily move around? (like SimTower)
