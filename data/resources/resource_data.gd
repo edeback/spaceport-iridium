@@ -18,7 +18,7 @@ extends Resource
 @export var cached_total: int = 0
 var needs_recalc: bool = true
 
-var registered_storage: Array[MultiStorageComponent] = []
+var registered_storage: Array[StorageComponent] = []
 
 #@export var show_test: bool = false:
 	#set(value):
@@ -51,12 +51,12 @@ func get_total(force_recalc: bool = false) -> int:
 	_recalc_resource(force_recalc)
 	return cached_total
 
-func register_component(component: MultiStorageComponent) -> void:
+func register_component(component: StorageComponent) -> void:
 	if not registered_storage.has(component):
 		registered_storage.append(component)
 		needs_recalc = true
 
-func unregister_component(component: MultiStorageComponent) -> void:
+func unregister_component(component: StorageComponent) -> void:
 	registered_storage.erase(component)
 	needs_recalc = true
 		
@@ -64,7 +64,7 @@ func _recalc_resource(force_recalc: bool = false) -> void:
 	if needs_recalc or force_recalc:
 		needs_recalc = false
 		var total: int = global_total
-		for storage_component: MultiStorageComponent in registered_storage:
+		for storage_component: StorageComponent in registered_storage:
 			total += storage_component.total_stored_by_resource(self)
 		cached_total = total
 		total_changed.emit(total)

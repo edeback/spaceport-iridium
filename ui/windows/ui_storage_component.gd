@@ -6,13 +6,13 @@ extends ModuleComponentUI
 @export var priority_value: SpinBox
 @export var add_resource_menu: MenuButton
 
-var storage_component: MultiStorageComponent
+var storage_component: StorageComponent
 var storage_lines: Dictionary[ResourceData, StorageResourceLine]
 
 func _ready() -> void:
 	add_resource_menu.get_popup().id_pressed.connect(_on_id_pressed)
 
-func set_storage_component(component: MultiStorageComponent) -> void:
+func set_storage_component(component: StorageComponent) -> void:
 	name = component.name
 	storage_component = component
 	storage_component.storage_changed.connect(_on_storage_changed)

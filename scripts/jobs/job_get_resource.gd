@@ -9,8 +9,8 @@ var destination: ModuleBase
 var requester: Node
 var pawn: PawnBase
 
-var export_storage: MultiStorageComponent
-var deposit_storage: MultiStorageComponent
+var export_storage: StorageComponent
+var deposit_storage: StorageComponent
 var action: Action_PathToTarget = null
 
 enum JobState { Start, GoToResource, GatherResource, ReturnWithResource, DepositResource, Finished, Failed }
@@ -39,10 +39,10 @@ func is_valid() -> bool:
 	return requester != null and resource_data != null and deposit_storage != null
 
 func can_do_job(_pawn: PawnBase) -> bool:
-	var storage_component: MultiStorageComponent = null
+	var storage_component: StorageComponent = null
 	var storage_nodes: Array[Node] = requester.get_tree().get_nodes_in_group("resource_storage")
 	for node in storage_nodes:
-		var storage: MultiStorageComponent = node as MultiStorageComponent
+		var storage: StorageComponent = node as StorageComponent
 		if storage.accepts_exports and storage.priority < deposit_storage.priority and storage.can_withdraw(resource_data, amount):
 			storage_component = storage
 			break
@@ -102,10 +102,10 @@ func cancel(as_failed: bool) -> void:
 			
 func job_start() -> void:
 	var min_distance: int = 0
-	var storage_component: MultiStorageComponent = null
+	var storage_component: StorageComponent = null
 	var storage_nodes: Array[Node] = requester.get_tree().get_nodes_in_group("resource_storage")
 	for node in storage_nodes:
-		var storage: MultiStorageComponent = node as MultiStorageComponent
+		var storage: StorageComponent = node as StorageComponent
 		if storage.accepts_exports and storage.priority < deposit_storage.priority and storage.can_withdraw(resource_data, amount):
 			var new_distance: int = storage.owner_module.module_cell.distance_squared_to(pawn.cell)
 			if storage_component ==  null or new_distance < min_distance:

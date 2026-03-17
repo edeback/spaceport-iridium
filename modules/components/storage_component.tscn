@@ -1,6 +1,6 @@
-[gd_scene load_steps=5 format=3 uid="uid://rxfwstm02i00"]
+[gd_scene format=3 uid="uid://rxfwstm02i00"]
 
-[ext_resource type="Script" uid="uid://f2ihhxyrecvs" path="res://modules/components/multi_storage_component.gd" id="1_hrwh1"]
+[ext_resource type="Script" uid="uid://f2ihhxyrecvs" path="res://modules/components/storage_component.gd" id="1_hrwh1"]
 [ext_resource type="PackedScene" uid="uid://bfsvbpnemihue" path="res://ui/windows/ui_storage_component.tscn" id="2_5elv5"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hrwh1"]

@@ -1,4 +1,4 @@
-class_name MultiStorageComponent
+class_name StorageComponent
 extends ComponentBase
 
 @export var priority: int = 1

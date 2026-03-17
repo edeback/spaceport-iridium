@@ -2,8 +2,8 @@ class_name ProcessorComponent
 extends ComponentBase
 
 @export var recipe: RecipeData
-@export var input_storage: MultiStorageComponent
-@export var output_storage: MultiStorageComponent
+@export var input_storage: StorageComponent
+@export var output_storage: StorageComponent
 @export var time_to_process: float = 1
 @export var power_consumer: PowerConsumptionComponent
 

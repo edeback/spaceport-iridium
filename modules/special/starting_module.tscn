@@ -12,13 +12,14 @@
 [ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="10_4yt2q"]
 [ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="11_d0haa"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ivba1"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_l8ygt"]
 shader = ExtResource("2_gm7c8")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
+shader_parameter/progress = 0.999999977648
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_q257j"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_do1gr"]
 resource_local_to_scene = true
 size = Vector2(192, 128)
 
@@ -30,14 +31,14 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 [node name="Module" unique_id=1483217976 instance=ExtResource("1_gv2ro")]
 
 [node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_ivba1")
+material = SubResource("ShaderMaterial_l8ygt")
 
 [node name="LightingComponent" parent="Offset/Sprite" index="1" unique_id=1837754386 node_paths=PackedStringArray("power_generation_component") instance=ExtResource("3_gm7c8")]
 scale = Vector2(3, 2)
 power_generation_component = NodePath("../../../PowerGenerationComponent")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
-shape = SubResource("RectangleShape2D_q257j")
+shape = SubResource("RectangleShape2D_do1gr")
 
 [node name="PathComponent" parent="." index="1"]
 path_points = Array[Vector2i]([Vector2i(96, 32)])

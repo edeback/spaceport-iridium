@@ -1,7 +1,7 @@
 class_name MiningComponent
 extends ComponentBase
 
-@export var output_storage: MultiStorageComponent
+@export var output_storage: StorageComponent
 @export var power_consumer: PowerConsumptionComponent
 var mining_drone_scene: PackedScene = preload("res://pawns/mining_drone_pawn.tscn")
 @export var max_drones: int = 3

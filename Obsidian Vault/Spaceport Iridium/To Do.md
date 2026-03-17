@@ -44,3 +44,9 @@ Modules:
 
 Pawns:
 - Current Job
+
+Construct module system
+- Start out with blueprint
+- Require resources
+- Then work to build
+

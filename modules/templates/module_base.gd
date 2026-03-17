@@ -74,6 +74,9 @@ func _ready() -> void:
 	if SignalBus.is_node_ready():
 		SignalBus.module_added.emit(self)
 	on_place()
+	
+func on_create() -> void:
+	pass
 
 func on_place() -> void:
 	if get_structure_component() != null and module_data.interaction_layer == WorldManager.InteractionLayer.MODULE:

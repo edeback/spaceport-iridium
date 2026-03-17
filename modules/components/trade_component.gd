@@ -1,8 +1,8 @@
 class_name TradeComponent
 extends ComponentBase
 
-@export var export_storage: MultiStorageComponent
-@export var import_storage: MultiStorageComponent
+@export var export_storage: StorageComponent
+@export var import_storage: StorageComponent
 
 func has_ui() -> bool:
 	return true

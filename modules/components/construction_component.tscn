@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://valcdjjl853u"]
+
+[ext_resource type="Script" uid="uid://ch8uul8ttm0ql" path="res://modules/components/construction_component.gd" id="1_trkly"]
+
+[node name="ConstructionComponent" type="Node2D" unique_id=1206775965]
+script = ExtResource("1_trkly")
+metadata/_custom_type_script = "uid://ch8uul8ttm0ql"

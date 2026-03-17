@@ -39,3 +39,8 @@ Overflowing storage:
 Change decor of modules?
 
 Minimap of entire thing to easily move around? (like SimTower)
+
+Possible modules:
+- Observatory/Astrometrics
+	- Identify danger (pirates/solar storms) early
+	- Produce science/research data

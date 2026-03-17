@@ -150,7 +150,7 @@ func move_to_module(delta: float) -> void:
 		action = null
 		
 func deposit_material() -> void:
-	var storage: MultiStorageComponent = requesting_module.get_component_by_type(MultiStorageComponent) as MultiStorageComponent
+	var storage: StorageComponent = requesting_module.get_component_by_type(StorageComponent) as StorageComponent
 	if storage:
 		for resource: ResourceData in resources_mined:
 			storage.deposit(resource, 1)

@@ -3,7 +3,7 @@ extends ComponentBase
 
 @export var power_output: float = 100.0
 @export var resource_consumed: ResourceData
-@export var input_storage: MultiStorageComponent
+@export var input_storage: StorageComponent
 @export var timer: Timer
 ## 0 for no consumption at all (like a solar panel)
 @export var seconds_per_resource_consumed: float = 0:
