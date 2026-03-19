@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://dxnloxeyu3aru"]
+[gd_scene format=3 uid="uid://dxnloxeyu3aru"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_ldvtf"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_elnck"]
@@ -12,8 +12,9 @@ shader = ExtResource("2_elnck")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_15wy0"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_aqnlt"]
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
@@ -29,29 +30,29 @@ fill = 1
 fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(0.8, 0.8)
 
-[node name="Module" instance=ExtResource("1_ldvtf")]
+[node name="Module" unique_id=355746657 instance=ExtResource("1_ldvtf")]
 
-[node name="SpriteSelectionComponent" parent="Offset" index="0" node_paths=PackedStringArray("sprite") instance=ExtResource("2_p3bqt")]
+[node name="SpriteSelectionComponent" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=2121829806 node_paths=PackedStringArray("sprite") instance=ExtResource("2_p3bqt")]
 sprite = NodePath("../Sprite")
 
-[node name="Sprite" parent="Offset" index="1"]
+[node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="1" unique_id=1530003366]
 material = SubResource("ShaderMaterial_p3bqt")
 texture = ExtResource("4_p3bqt")
 
-[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
-shape = SubResource("RectangleShape2D_15wy0")
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
+shape = SubResource("RectangleShape2D_aqnlt")
 
-[node name="Sprite2D" type="Sprite2D" parent="Offset" index="3"]
+[node name="Sprite2D" type="Sprite2D" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="3" unique_id=304492415]
 material = SubResource("CanvasItemMaterial_aqnlt")
 texture = SubResource("GradientTexture2D_xcypy")
 
-[node name="SolarPowerComponent" parent="." index="1" node_paths=PackedStringArray("structure_component") instance=ExtResource("3_y6uab")]
+[node name="SolarPowerComponent" parent="." index="1" unique_id=991572920 node_paths=PackedStringArray("structure_component") instance=ExtResource("3_y6uab")]
 script = ExtResource("4_gocud")
 scales_by_surroundings = true
 structure_component = NodePath("../StructureComponent")
 power_output = 20.0
 
-[node name="PathComponent" parent="." index="2"]
+[node name="PathComponent" parent="." index="2" unique_id=1088376714]
 path_points = Array[Vector2i]([])
-door_indices = Array[Vector2i]([])
+door_connections = Dictionary[int, int]({})
 door_required = false

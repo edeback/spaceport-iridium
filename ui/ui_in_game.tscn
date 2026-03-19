@@ -1,10 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://dbdc66ow44ldq"]
+[gd_scene format=3 uid="uid://dbdc66ow44ldq"]
 
 [ext_resource type="Script" uid="uid://ctskq23b3fuly" path="res://ui/ui_in_game.gd" id="1_di4q1"]
 [ext_resource type="PackedScene" uid="uid://byip82db78f7" path="res://ui/windows/module_info_ingame_panel.tscn" id="2_4odt1"]
 [ext_resource type="PackedScene" uid="uid://fm1pchsof76e" path="res://ui/preview_module.tscn" id="3_204sb"]
 
-[node name="UiInGame" type="Control"]
+[node name="UiInGame" type="Control" unique_id=1211435719]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -14,6 +14,7 @@ grow_vertical = 2
 script = ExtResource("1_di4q1")
 module_info_panel = ExtResource("2_4odt1")
 
-[node name="Selector" type="Node2D" parent="."]
+[node name="Selector" type="Node2D" parent="." unique_id=669790758]
 
-[node name="PreviewModule" parent="Selector" instance=ExtResource("3_204sb")]
+[node name="PreviewModule" parent="Selector" unique_id=1421317792 instance=ExtResource("3_204sb")]
+visible = false

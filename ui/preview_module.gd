@@ -86,12 +86,6 @@ func update_placeable(module_cell: Vector2i, ignore_connections: bool = false) -
 		%ErrorLabel.text = "Can't afford!"
 		can_place = false
 		return
-	# Must be in right layer
-	if Global.world_manager.active_layer != module_layer:
-		%ErrorLabel.visible = true
-		%ErrorLabel.text = "Wrong layer!"
-		can_place = false
-		return
 	# Footprint must not overlap
 	if Global.world_manager.is_blocked(module_layer, module_cell, module_size):
 		%ErrorLabel.visible = true

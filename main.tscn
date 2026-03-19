@@ -7709,6 +7709,8 @@ follow_viewport_enabled = true
 layer = 3
 follow_viewport_enabled = true
 
+[node name="CanvasModulate" type="CanvasModulate" parent="ForegroundLayers/VerticalTransportLayer" unique_id=1229565819]
+
 [node name="HorizontalTransportLayer" type="CanvasLayer" parent="ForegroundLayers" unique_id=1908179889]
 layer = 2
 follow_viewport_enabled = true

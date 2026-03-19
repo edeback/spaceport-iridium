@@ -213,6 +213,7 @@ theme_override_constants/margin_bottom = 4
 [node name="DisplayCorridorsCheckbox" type="CheckBox" parent="VBoxContainer/PanelContainer/MarginContainer" unique_id=312351359]
 unique_name_in_owner = true
 layout_mode = 2
+button_pressed = true
 text = "Display Corridors"
 
 [node name="Modules" type="PanelContainer" parent="VBoxContainer" unique_id=615522520]

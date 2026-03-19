@@ -37,7 +37,6 @@ func change_input_mode(mode: InputMode, module: ModuleData = null) -> void:
 	input_mode_changed.emit(mode)
 	if module:
 		preview_module.visible = true
-		Global.world_manager.show_module_layer(module.interaction_layer)
 	else:
 		preview_module.visible = false
 	pass

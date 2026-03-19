@@ -22,15 +22,8 @@ var layer_data: Dictionary[StructureLayer, LayerData]
 var last_id : int = 0
 #var cell_to_module: Dictionary[Vector2i, ModuleBase] = {}
 var id_to_module: Dictionary[int, ModuleBase] = {}
-var active_layer: StructureLayer = StructureLayer.MODULE:
-	set(new_layer):
-		if active_layer != new_layer:
-			active_layer = new_layer
-			active_layer_changed.emit(active_layer)
 			
 var modules_by_type: Dictionary = {}
-		
-signal active_layer_changed(new_layer: StructureLayer)
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -54,9 +47,6 @@ func _process(delta: float) -> void:
 func _get_next_id() -> int:
 	last_id = last_id + 1
 	return last_id
-	
-func get_module_by_cell_active_layer(cell: Vector2i) -> ModuleBase:
-	return get_module_by_cell(active_layer, cell)
 
 func get_module_by_cell(layer: StructureLayer, cell: Vector2i) -> ModuleBase:
 	return layer_data[layer].cell_to_module.get(cell)
@@ -138,9 +128,6 @@ func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 		for replacement_point in replacement_points:
 			add_module(replacement_module, replacement_location +replacement_point)
 	return true
-
-func remove_module_by_cell_active_layer(cell: Vector2i) -> void:
-	remove_module_by_cell(active_layer, cell)
 	
 func remove_module_by_cell(layer: StructureLayer, cell: Vector2i) -> void:
 	var module: ModuleBase = layer_data[layer].cell_to_module.get(cell)
@@ -179,17 +166,20 @@ func get_module_by_id(id: int) -> ModuleBase:
 	return id_to_module.get(id)
 	
 func show_module_layer(layer: StructureLayer) -> void:
-	active_layer = layer
 	if layer == StructureLayer.MODULE:
 		var module_mod: CanvasModulate = module_layers[StructureLayer.MODULE].get_node("CanvasModulate") as CanvasModulate
 		module_mod.color.a = 1
 		var corridor_mod: CanvasModulate = module_layers[StructureLayer.CORRIDOR].get_node("CanvasModulate") as CanvasModulate
 		corridor_mod.color.a = 0.3
+		var turbolift_mod: CanvasModulate = module_layers[StructureLayer.TURBOLIFT].get_node("CanvasModulate") as CanvasModulate
+		turbolift_mod.color.a = 0.3
 	elif layer == StructureLayer.CORRIDOR:
 		var module_mod: CanvasModulate = module_layers[StructureLayer.MODULE].get_node("CanvasModulate") as CanvasModulate
-		module_mod.color.a = 0.9
+		module_mod.color.a = 1
 		var corridor_mod: CanvasModulate = module_layers[StructureLayer.CORRIDOR].get_node("CanvasModulate") as CanvasModulate
 		corridor_mod.color.a = 1
+		var turbolift_mod: CanvasModulate = module_layers[StructureLayer.TURBOLIFT].get_node("CanvasModulate") as CanvasModulate
+		turbolift_mod.color.a = 1
 	#for module_layer in module_layers:
 		#if module_layer == layer:
 			#module_layers[module_layer].visible = true
@@ -199,10 +189,3 @@ func show_module_layer(layer: StructureLayer) -> void:
 			#module_layers[module_layer].visible = true
 			#var mod: CanvasModulate = module_layers[module_layer].get_node("CanvasModulate") as CanvasModulate
 			#mod.color.a = 0.3
-
-func set_module_layer_visibility(layer: StructureLayer, visibility: bool) -> void:
-	module_layers[layer].visible = visibility
-	if visibility:
-		active_layer = layer
-	else:
-		active_layer = StructureLayer.MODULE
