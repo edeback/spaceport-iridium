@@ -25,7 +25,7 @@ func _ready() -> void:
 	create_module_button_groups()
 	create_resource_display()
 	Global.ui_main = self
-	Global.world_manager.show_module_layer(WorldManager.InteractionLayer.MODULE)
+	Global.world_manager.show_module_layer(WorldManager.StructureLayer.MODULE)
 	Global.world_manager.active_layer_changed.connect(_on_active_layer_changed)
 	Global.ui_in_game.input_mode_changed.connect(_on_input_mode_changed)
 
@@ -82,8 +82,8 @@ func _process(delta: float) -> void:
 
 
 func _on_check_button_toggled(toggled_on: bool) -> void:
-	Global.world_manager.show_module_layer(WorldManager.InteractionLayer.CORRIDOR if toggled_on else WorldManager.InteractionLayer.MODULE)
-	#Global.world_manager.set_module_layer_visibility(WorldManager.InteractionLayer.CORRIDOR, toggled_on)
+	Global.world_manager.show_module_layer(WorldManager.StructureLayer.CORRIDOR if toggled_on else WorldManager.StructureLayer.MODULE)
+	#Global.world_manager.set_module_layer_visibility(WorldManager.StructureLayer.CORRIDOR, toggled_on)
 
 func _on_info_button_pressed() -> void:
 	Global.ui_in_game.change_input_mode(UIInGame.InputMode.None)
@@ -91,9 +91,9 @@ func _on_info_button_pressed() -> void:
 func _on_input_mode_changed(new_mode: UIInGame.InputMode) -> void:
 	%ModuleInfoButton.disabled = (new_mode != UIInGame.InputMode.Module)
 
-func _on_active_layer_changed(new_layer: WorldManager.InteractionLayer) -> void:
+func _on_active_layer_changed(new_layer: WorldManager.StructureLayer) -> void:
 	skip_emit = true
-	%DisplayCorridorsCheckbox.set_pressed_no_signal(new_layer == WorldManager.InteractionLayer.CORRIDOR)
+	%DisplayCorridorsCheckbox.set_pressed_no_signal(new_layer == WorldManager.StructureLayer.CORRIDOR)
 	skip_emit = false
 	
 

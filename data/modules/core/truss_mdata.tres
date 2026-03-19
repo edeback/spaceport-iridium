@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://p3ja7r43eh6c"]
+
+[ext_resource type="Texture2D" uid="uid://wydp85db7mim" path="res://assets/sprites/icon_truss_structure.png" id="1_jwfst"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_xapty"]
+[ext_resource type="PackedScene" uid="uid://busc6m38p1r8j" path="res://modules/truss.tscn" id="3_h5mru"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="4_8vpgq"]
+
+[resource]
+script = ExtResource("4_8vpgq")
+name = "Truss"
+scene = ExtResource("3_h5mru")
+icon = ExtResource("1_jwfst")
+tags = Array[String](["Core"])
+multiplacement = 3
+ignore_multiplacement_connection_check = true

@@ -1,4 +1,4 @@
-[gd_scene load_steps=53 format=3 uid="uid://ddoebv5qw5lfm"]
+[gd_scene format=3 uid="uid://ddoebv5qw5lfm"]
 
 [ext_resource type="Script" uid="uid://ddgc25wxbd8dx" path="res://pawns/pawn_base.gd" id="1_4rv7m"]
 [ext_resource type="Texture2D" uid="uid://dfjrqt380rc2o" path="res://assets/external/kenney_toon-characters-1/Robot/Tilesheet/character_robot_sheet.png" id="2_tngjo"]
@@ -270,14 +270,14 @@ animations = [{
 }]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_j6cx7"]
-radius = 9.0
-height = 28.0
+radius = 6.0
+height = 22.0
 
-[node name="PawnBase" type="Node2D" node_paths=PackedStringArray("collision")]
+[node name="PawnBase" type="Node2D" unique_id=1154928948 node_paths=PackedStringArray("collision")]
 script = ExtResource("1_4rv7m")
 collision = NodePath("Area2D")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=949508764]
 visible = false
 texture_filter = 1
 scale = Vector2(0.3, 0.3)
@@ -285,24 +285,24 @@ texture = ExtResource("2_tngjo")
 region_enabled = true
 region_rect = Rect2(16, 32, 64, 96)
 
-[node name="Crew" type="AnimatedSprite2D" parent="."]
+[node name="Crew" type="AnimatedSprite2D" parent="." unique_id=552917447]
 visible = false
 scale = Vector2(0.25, 0.25)
 sprite_frames = SubResource("SpriteFrames_o283h")
 animation = &"idle"
 
-[node name="Robot" type="AnimatedSprite2D" parent="."]
+[node name="Robot" type="AnimatedSprite2D" parent="." unique_id=264074984]
 scale = Vector2(0.3, 0.3)
 sprite_frames = SubResource("SpriteFrames_dda5j")
 animation = &"stand"
 offset = Vector2(0, -16)
 
-[node name="Area2D" type="Area2D" parent="."]
+[node name="Area2D" type="Area2D" parent="." unique_id=845226640]
 collision_mask = 0
 monitoring = false
 monitorable = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=600900905]
 light_mask = 0
 shape = SubResource("CapsuleShape2D_j6cx7")
 

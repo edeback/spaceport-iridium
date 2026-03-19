@@ -14,6 +14,7 @@ Storage modules:
 - Desired sets a soft (maybe hard?) max on an item
 - ![[Pasted image 20251208125343.png]]
 - Also maybe have auto-dump to clear superfluous resources?
+- tag reserves by job id so that they always match up
 
 Life-related buildings:
 - Dining hall
@@ -50,3 +51,10 @@ Construct module system
 - Require resources
 - Then work to build
 
+
+Transportation modules:
+- Turbolift connect visually to ones above
+- Implement stairs (in turbolift slot)
+- Make turbolifts actually work
+- Fix how connections work (doors, placement) probably by moving them to structure component
+- Try to get rid of "active layer" concept as we won't be switching manually

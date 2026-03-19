@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://b4l6xf05lgfxj"]
+
+[ext_resource type="Texture2D" uid="uid://cvfqbw8ny4lci" path="res://assets/sprites/stairs.png" id="1_cw7iy"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_8sqwl"]
+[ext_resource type="PackedScene" uid="uid://bin43s2rjphfc" path="res://modules/core/stairs.tscn" id="3_rx11o"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="4_21tvd"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1lxco"]
+atlas = ExtResource("1_cw7iy")
+region = Rect2(192, 0, 64, 64)
+
+[resource]
+script = ExtResource("4_21tvd")
+name = "Stairs"
+scene = ExtResource("3_rx11o")
+icon = SubResource("AtlasTexture_1lxco")
+tags = Array[String](["Core"])
+multiplacement = 2
+interaction_layer = 2
+metadata/_custom_type_script = "uid://vwmofdckg7hu"

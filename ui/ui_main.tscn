@@ -20,7 +20,7 @@
 [ext_resource type="Script" uid="uid://c6excany0u70v" path="res://ui/energy_display_ui.gd" id="15_rtsem"]
 [ext_resource type="PackedScene" uid="uid://dtipd1rwqes7u" path="res://ui/pawns/pawn_info_panel.tscn" id="15_x3wcs"]
 [ext_resource type="Resource" uid="uid://boadffwat0kpp" path="res://data/modules/docking_bays/docking_bay.tres" id="16_x3wcs"]
-[ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/hallways/hallway.tres" id="17_848xd"]
+[ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/core/hallway_mdata.tres" id="17_848xd"]
 [ext_resource type="Resource" uid="uid://b0cfkopyrq5xk" path="res://data/modules/industrial_processors/electrolysis_processor_mdata.tres" id="18_w7nyr"]
 [ext_resource type="Resource" uid="uid://0iqtgbc2dqvn" path="res://data/modules/industrial_processors/ice_processor_mdata.tres" id="19_0lj05"]
 [ext_resource type="PackedScene" uid="uid://mroynql4rcbs" path="res://ui/windows/trade/trade_screen.tscn" id="19_xyc40"]
@@ -35,7 +35,7 @@
 [ext_resource type="Resource" uid="uid://c0o6agquw83kw" path="res://data/modules/storage/medium_storage.tres" id="28_s5567"]
 [ext_resource type="Resource" uid="uid://ibkvk5lxr6ut" path="res://data/modules/storage/small_storage.tres" id="29_qnfs5"]
 [ext_resource type="Resource" uid="uid://detljhx2721g" path="res://data/modules/module_teleporter.tres" id="30_4mt1o"]
-[ext_resource type="Resource" uid="uid://p3ja7r43eh6c" path="res://data/modules/truss.tres" id="31_wy7eg"]
+[ext_resource type="Resource" uid="uid://p3ja7r43eh6c" path="res://data/modules/core/truss_mdata.tres" id="31_wy7eg"]
 [ext_resource type="Resource" uid="uid://ch5rdw0jfhvft" path="res://data/modules/module_airlock.tres" id="32_k34tn"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xdhp5"]
@@ -66,7 +66,7 @@ corner_radius_bottom_left = 16
 shadow_size = 6
 shadow_offset = Vector2(-3, -3)
 
-[sub_resource type="FoldableGroup" id="FoldableGroup_8jjvc"]
+[sub_resource type="FoldableGroup" id="FoldableGroup_47oex"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1h8lm"]
 content_margin_left = 4.0
@@ -234,7 +234,7 @@ layout_mode = 2
 
 [node name="FoldableContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer" unique_id=1698963565 instance=ExtResource("3_ka3re")]
 layout_mode = 2
-foldable_group = SubResource("FoldableGroup_8jjvc")
+foldable_group = SubResource("FoldableGroup_47oex")
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer" unique_id=39982694]
 layout_mode = 2

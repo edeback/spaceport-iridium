@@ -8,6 +8,7 @@ shader = ExtResource("2_nuaun")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_nuaun"]
 resource_local_to_scene = true
@@ -16,17 +17,17 @@ size = Vector2(192, 128)
 [node name="Module" unique_id=236677007 instance=ExtResource("1_57488")]
 size = Vector2i(3, 2)
 
-[node name="Offset" parent="." index="0"]
+[node name="Offset" parent="." index="0" unique_id=498681270]
 position = Vector2(96, 64)
 
-[node name="Sprite" parent="Offset" index="0"]
+[node name="Sprite" parent="Offset" index="0" unique_id=1530003366]
 material = SubResource("ShaderMaterial_57488")
 region_rect = Rect2(64, 128, 192, 128)
 
-[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
 shape = SubResource("RectangleShape2D_nuaun")
 
-[node name="StructureComponent" parent="." index="2"]
+[node name="StructureComponent" parent="." index="2" unique_id=2060859123]
 connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(1, -1), Vector2i(2, -1), Vector2i(-1, 0), Vector2i(3, 0), Vector2i(-1, 1), Vector2i(3, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2)])
 internal_points = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)])
 size = Vector2i(3, 2)

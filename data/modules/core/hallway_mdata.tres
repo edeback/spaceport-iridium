@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://dutod605eq6sx"]
+
+[ext_resource type="Texture2D" uid="uid://byittdi7f4m30" path="res://assets/sprites/hallway.png" id="1_g1nfe"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_ug0gx"]
+[ext_resource type="PackedScene" uid="uid://bh5xdj8qfdiig" path="res://modules/core/hallway.tscn" id="3_fka6u"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="4_l800v"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hpgmt"]
+atlas = ExtResource("1_g1nfe")
+region = Rect2(192, 0, 64, 64)
+
+[resource]
+script = ExtResource("4_l800v")
+name = "Corridor"
+scene = ExtResource("3_fka6u")
+icon = SubResource("AtlasTexture_hpgmt")
+tags = Array[String](["Core"])
+multiplacement = 1
+interaction_layer = 1

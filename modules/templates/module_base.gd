@@ -75,11 +75,20 @@ func _ready() -> void:
 		SignalBus.module_added.emit(self)
 	on_place()
 	
-func on_create() -> void:
-	pass
+func ready_preview() -> void:
+	for component: ComponentBase in components:
+		component.ready_preview()
+
+func ready_blueprint() -> void:
+	for component: ComponentBase in components:
+		component.ready_blueprint()
+	
+func ready_constructed() -> void:
+	for component: ComponentBase in components:
+		component.ready_constructed()
 
 func on_place() -> void:
-	if get_structure_component() != null and module_data.interaction_layer == WorldManager.InteractionLayer.MODULE:
+	if get_structure_component() != null and module_data.interaction_layer == WorldManager.StructureLayer.MODULE:
 		var cells: Array[Vector2i] = []
 		for internal_point: Vector2i in get_structure_component().internal_points:
 			cells.append(module_cell + internal_point)
@@ -154,3 +163,16 @@ func show_label() -> void:
 func hide_label() -> void:
 	if nameplate != null:
 		nameplate.visible = false
+
+
+func _on_footprint_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
+	if event is InputEventMouseButton:
+		#if sprite.is_pixel_opaque(sprite.to_local(get_global_mouse_position())):
+			#print("clicked " + module_data.name)
+			if event.is_action_pressed("build"):
+					get_viewport().set_input_as_handled()
+					Global.ui_in_game.toggle_info_panel(self)
+					#on_select(!selected)
+			if event.is_action_pressed("remove"):
+				get_viewport().set_input_as_handled()
+				Global.world_manager.remove_module(self)

@@ -1,0 +1,55 @@
+[gd_scene format=3 uid="uid://bin43s2rjphfc"]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_0uceu"]
+[ext_resource type="Script" uid="uid://bnsyhorn7syvt" path="res://modules/core/stairs.gd" id="2_nlvn8"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_g8ehl"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="4_abvjf"]
+[ext_resource type="Texture2D" uid="uid://cvfqbw8ny4lci" path="res://assets/sprites/stairs.png" id="5_nlvn8"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_inhrl"]
+shader = ExtResource("3_g8ehl")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 0.999999977648
+shader_parameter/gradient_texture = ExtResource("4_abvjf")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_nlvn8"]
+resource_local_to_scene = true
+size = Vector2(36, 31)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_g8ehl"]
+resource_local_to_scene = true
+size = Vector2(36, 32)
+
+[node name="Module" unique_id=1683111138 node_paths=PackedStringArray("collision_upper") instance=ExtResource("1_0uceu")]
+script = ExtResource("2_nlvn8")
+collision_upper = NodePath("Offset/Footprint/CollisionUpper")
+
+[node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
+material = SubResource("ShaderMaterial_inhrl")
+texture = ExtResource("5_nlvn8")
+
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
+position = Vector2(11, 15.5)
+shape = SubResource("RectangleShape2D_nlvn8")
+
+[node name="CollisionUpper" type="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="1" unique_id=1533562438]
+position = Vector2(11, -16)
+shape = SubResource("RectangleShape2D_g8ehl")
+disabled = true
+
+[node name="PathComponent" parent="." index="1" unique_id=1088376714]
+connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(0, 1)])
+path_points = Array[Vector2i]([Vector2i(44, 0), Vector2i(44, 64), Vector2i(44, 58)])
+path_edges = Dictionary[Vector2i, String]({
+Vector2i(0, 2): "",
+Vector2i(1, 2): ""
+})
+door_connections = Dictionary[int, int]({
+2: 1
+})
+door_required = false
+
+[node name="StructureComponent" parent="." index="2" unique_id=2060859123]
+connection_points = Array[Vector2i]([Vector2i(0, 0)])

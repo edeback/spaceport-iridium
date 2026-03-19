@@ -5,7 +5,7 @@
 [ext_resource type="Resource" uid="uid://c8o32mbasjok7" path="res://data/modules/special/starting_module_mdata.tres" id="3_facbu"]
 [ext_resource type="Script" uid="uid://d0hud6eqhyh68" path="res://managers/path_manager.gd" id="3_nkgie"]
 [ext_resource type="Script" uid="uid://dvf7wnwvh6siv" path="res://managers/power_manager.gd" id="4_deici"]
-[ext_resource type="Resource" uid="uid://p3ja7r43eh6c" path="res://data/modules/truss.tres" id="4_getpj"]
+[ext_resource type="Resource" uid="uid://p3ja7r43eh6c" path="res://data/modules/core/truss_mdata.tres" id="4_getpj"]
 [ext_resource type="PackedScene" uid="uid://umcjs6xyrnek" path="res://ui/ui_debug.tscn" id="4_m3cse"]
 [ext_resource type="PackedScene" uid="uid://ce6npnqw8s3mu" path="res://ui/ui_main.tscn" id="5_uwp6h"]
 [ext_resource type="Script" uid="uid://6mx2qi4ecq8b" path="res://managers/turbolift_manager.gd" id="6_dg77c"]
@@ -7575,7 +7575,8 @@ script = ExtResource("6_i5kyc")
 start_module = ExtResource("3_facbu")
 module_layers = {
 0: NodePath("../../ForegroundLayers/ModuleLayer"),
-1: NodePath("../../ForegroundLayers/TransportLayer")
+1: NodePath("../../ForegroundLayers/HorizontalTransportLayer"),
+2: NodePath("../../ForegroundLayers/VerticalTransportLayer")
 }
 pawn_layer = NodePath("../../ForegroundLayers/PawnLayer")
 replacement_module = ExtResource("4_getpj")
@@ -7589,9 +7590,8 @@ script = ExtResource("6_ryguw")
 [node name="PowerManager" type="Node" parent="Managers" unique_id=1129733551]
 script = ExtResource("4_deici")
 
-[node name="TurboliftManager" type="Node" parent="Managers" unique_id=378982072 node_paths=PackedStringArray("default_shaft")]
+[node name="TurboliftManager" type="Node" parent="Managers" unique_id=378982072]
 script = ExtResource("6_dg77c")
-default_shaft = NodePath("PlacementShaft")
 
 [node name="PlacementShaft" type="Line2D" parent="Managers/TurboliftManager" unique_id=258520237]
 visible = false
@@ -7694,6 +7694,31 @@ position = Vector2(-123, -405)
 
 [node name="ForegroundLayers" type="Node" parent="." unique_id=1239321156]
 
+[node name="UiInGameLayer" type="CanvasLayer" parent="ForegroundLayers" unique_id=157507231]
+layer = 9
+follow_viewport_enabled = true
+
+[node name="UiInGame" parent="ForegroundLayers/UiInGameLayer" unique_id=1422422236 instance=ExtResource("9_ipixf")]
+mouse_filter = 1
+
+[node name="PawnLayer" type="CanvasLayer" parent="ForegroundLayers" unique_id=435393025]
+layer = 4
+follow_viewport_enabled = true
+
+[node name="VerticalTransportLayer" type="CanvasLayer" parent="ForegroundLayers" unique_id=2031937818]
+layer = 3
+follow_viewport_enabled = true
+
+[node name="HorizontalTransportLayer" type="CanvasLayer" parent="ForegroundLayers" unique_id=1908179889]
+layer = 2
+follow_viewport_enabled = true
+
+[node name="CanvasModulate" type="CanvasModulate" parent="ForegroundLayers/HorizontalTransportLayer" unique_id=1426114782]
+color = Color(0.552941, 0.552941, 0.552941, 1)
+
+[node name="PawnLayerLow" type="CanvasLayer" parent="ForegroundLayers" unique_id=1962442915]
+follow_viewport_enabled = true
+
 [node name="ModuleLayer" type="CanvasLayer" parent="ForegroundLayers" unique_id=2010589153]
 layer = 0
 follow_viewport_enabled = true
@@ -7704,23 +7729,6 @@ color = Color(0.552941, 0.552941, 0.552941, 1)
 [node name="StructureTileMap" type="TileMapLayer" parent="ForegroundLayers/ModuleLayer" unique_id=369801454]
 z_index = -1
 tile_set = SubResource("TileSet_4c57u")
-
-[node name="TransportLayer" type="CanvasLayer" parent="ForegroundLayers" unique_id=1908179889]
-follow_viewport_enabled = true
-
-[node name="CanvasModulate" type="CanvasModulate" parent="ForegroundLayers/TransportLayer" unique_id=1426114782]
-color = Color(0.552941, 0.552941, 0.552941, 1)
-
-[node name="PawnLayer" type="CanvasLayer" parent="ForegroundLayers" unique_id=435393025]
-layer = 2
-follow_viewport_enabled = true
-
-[node name="UiInGameLayer" type="CanvasLayer" parent="ForegroundLayers" unique_id=157507231]
-layer = 9
-follow_viewport_enabled = true
-
-[node name="UiInGame" parent="ForegroundLayers/UiInGameLayer" unique_id=1422422236 instance=ExtResource("9_ipixf")]
-mouse_filter = 1
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1482649263]
 layer = 10

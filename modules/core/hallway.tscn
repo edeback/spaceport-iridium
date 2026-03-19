@@ -1,0 +1,85 @@
+[gd_scene format=3 uid="uid://bh5xdj8qfdiig"]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_fsw0g"]
+[ext_resource type="Script" uid="uid://csv0c8amfvt5u" path="res://modules/core/hallway.gd" id="2_eidsi"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_gfe75"]
+[ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_jxdbx"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="5_eidsi"]
+[ext_resource type="Texture2D" uid="uid://byittdi7f4m30" path="res://assets/sprites/hallway.png" id="5_jxdbx"]
+[ext_resource type="Texture2D" uid="uid://bqlboa3th5nax" path="res://assets/sprites/module_door.png" id="7_jxdbx"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_nhdtd"]
+shader = ExtResource("3_gfe75")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_qjnux"]
+resource_local_to_scene = true
+size = Vector2(62, 31)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6yc0r"]
+shader = ExtResource("3_gfe75")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
+
+[node name="Module" unique_id=477524818 node_paths=PackedStringArray("door_sprite") instance=ExtResource("1_fsw0g")]
+script = ExtResource("2_eidsi")
+door_sprite = NodePath("Offset/DoorSprite")
+blocks_building = false
+structure_check_before_delete = true
+
+[node name="Hallway" type="Node2D" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1382909595]
+
+[node name="LightingComponent" parent="Offset/Hallway" index="0" unique_id=494028080 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_jxdbx")]
+z_index = 2
+position = Vector2(0, 16)
+scale = Vector2(1, 0.5)
+power_consumption_component = NodePath("../../../PowerConsumptionComponent")
+
+[node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="1" unique_id=1530003366]
+material = SubResource("ShaderMaterial_nhdtd")
+texture = ExtResource("5_jxdbx")
+
+[node name="Nameplate" parent="Offset/Sprite" index="0" unique_id=1140576615]
+offset_left = 0.0
+offset_top = -0.5
+offset_right = 0.0
+offset_bottom = 22.5
+
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
+position = Vector2(0, 15.5)
+shape = SubResource("RectangleShape2D_qjnux")
+
+[node name="DoorSprite" type="Sprite2D" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="3" unique_id=1612014896]
+z_index = 1
+material = SubResource("ShaderMaterial_6yc0r")
+texture = ExtResource("7_jxdbx")
+region_enabled = true
+region_rect = Rect2(128, 0, 64, 64)
+
+[node name="PowerConsumptionComponent" parent="." index="1" unique_id=1534735045 instance=ExtResource("5_eidsi")]
+power_consumption = 5.0
+
+[node name="PathComponent" parent="." index="2" unique_id=1088376714]
+connection_points = Array[Vector2i]([Vector2i(-1, 0), Vector2i(1, 0)])
+path_points = Array[Vector2i]([Vector2i(0, 60), Vector2i(64, 60), Vector2i(16, 60), Vector2i(16, 58), Vector2i(44, 60), Vector2i(44, 58)])
+path_edges = Dictionary[Vector2i, String]({
+Vector2i(0, 2): "",
+Vector2i(2, 3): "",
+Vector2i(2, 4): "",
+Vector2i(4, 1): "",
+Vector2i(4, 5): ""
+})
+door_connections = Dictionary[int, int]({
+3: 0,
+5: 2
+})
+door_required = false
+
+[node name="StructureComponent" parent="." index="3" unique_id=2060859123]
+visible = false
+connection_points = Array[Vector2i]([Vector2i(0, 0)])

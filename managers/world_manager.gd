@@ -1,7 +1,8 @@
 class_name WorldManager
 extends Node
 
-enum InteractionLayer { MODULE, CORRIDOR }
+enum StructureLayer { MODULE, CORRIDOR, TURBOLIFT }
+enum Multiplacement { NONE, HORIZONTAL, VERTICAL, BOTH }
 
 class LayerData:
 	var canvas: CanvasLayer
@@ -10,18 +11,18 @@ class LayerData:
 
 @export var start_module: ModuleData
 # Only used for setup. Use layer_data at runtime
-@export var module_layers: Dictionary[InteractionLayer, CanvasLayer]
+@export var module_layers: Dictionary[StructureLayer, CanvasLayer]
 
 @export var pawn_layer: CanvasLayer
 
 @export var replacement_module: ModuleData
 
-var layer_data: Dictionary[InteractionLayer, LayerData]
+var layer_data: Dictionary[StructureLayer, LayerData]
 
 var last_id : int = 0
 #var cell_to_module: Dictionary[Vector2i, ModuleBase] = {}
 var id_to_module: Dictionary[int, ModuleBase] = {}
-var active_layer: InteractionLayer = InteractionLayer.MODULE:
+var active_layer: StructureLayer = StructureLayer.MODULE:
 	set(new_layer):
 		if active_layer != new_layer:
 			active_layer = new_layer
@@ -29,7 +30,7 @@ var active_layer: InteractionLayer = InteractionLayer.MODULE:
 			
 var modules_by_type: Dictionary = {}
 		
-signal active_layer_changed(new_layer: InteractionLayer)
+signal active_layer_changed(new_layer: StructureLayer)
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -57,7 +58,7 @@ func _get_next_id() -> int:
 func get_module_by_cell_active_layer(cell: Vector2i) -> ModuleBase:
 	return get_module_by_cell(active_layer, cell)
 
-func get_module_by_cell(layer: InteractionLayer, cell: Vector2i) -> ModuleBase:
+func get_module_by_cell(layer: StructureLayer, cell: Vector2i) -> ModuleBase:
 	return layer_data[layer].cell_to_module.get(cell)
 	
 func get_modules_by_type(module_data: ModuleData) -> Array:
@@ -133,7 +134,7 @@ func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 	var module_array: Array = modules_by_type.get_or_add(module.module_data, [])
 	module_array.erase(module)
 	module.queue_free()
-	if module.module_data != replacement_module and module.module_data.interaction_layer == InteractionLayer.MODULE:
+	if module.module_data != replacement_module and module.module_data.interaction_layer == StructureLayer.MODULE:
 		for replacement_point in replacement_points:
 			add_module(replacement_module, replacement_location +replacement_point)
 	return true
@@ -141,12 +142,12 @@ func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 func remove_module_by_cell_active_layer(cell: Vector2i) -> void:
 	remove_module_by_cell(active_layer, cell)
 	
-func remove_module_by_cell(layer: InteractionLayer, cell: Vector2i) -> void:
+func remove_module_by_cell(layer: StructureLayer, cell: Vector2i) -> void:
 	var module: ModuleBase = layer_data[layer].cell_to_module.get(cell)
 	if module != null:
 		remove_module(module)
 		
-func is_blocked(layer: InteractionLayer, cell: Vector2i, size: Vector2i = Vector2i(1,1)) -> bool:
+func is_blocked(layer: StructureLayer, cell: Vector2i, size: Vector2i = Vector2i(1,1)) -> bool:
 	for x in size.x:
 		for y in size.y:
 			var module: ModuleBase = layer_data[layer].cell_to_module.get(cell + Vector2i(x, y))
@@ -154,14 +155,14 @@ func is_blocked(layer: InteractionLayer, cell: Vector2i, size: Vector2i = Vector
 				return true
 	return false
 
-func has_overlaps(layer: InteractionLayer, cell: Vector2i, size: Vector2i = Vector2i(1,1)) -> bool:
+func has_overlaps(layer: StructureLayer, cell: Vector2i, size: Vector2i = Vector2i(1,1)) -> bool:
 	for x in size.x:
 		for y in size.y:
 			if layer_data[layer].cell_to_module.has(cell + Vector2i(x, y)):
 				return true
 	return false
 
-func get_overlaps(layer: InteractionLayer, cell: Vector2i, size: Vector2i = Vector2i(1,1), max_values: int = 0) -> Array[ModuleBase]:
+func get_overlaps(layer: StructureLayer, cell: Vector2i, size: Vector2i = Vector2i(1,1), max_values: int = 0) -> Array[ModuleBase]:
 	# TODO: Typed dictionaries are in Godot 4.4! Maybe someday we'll get sets too!
 	var overlaps: Array[ModuleBase] = []
 	for x in size.x:
@@ -177,17 +178,17 @@ func get_overlaps(layer: InteractionLayer, cell: Vector2i, size: Vector2i = Vect
 func get_module_by_id(id: int) -> ModuleBase:
 	return id_to_module.get(id)
 	
-func show_module_layer(layer: InteractionLayer) -> void:
+func show_module_layer(layer: StructureLayer) -> void:
 	active_layer = layer
-	if layer == InteractionLayer.MODULE:
-		var module_mod: CanvasModulate = module_layers[InteractionLayer.MODULE].get_node("CanvasModulate") as CanvasModulate
+	if layer == StructureLayer.MODULE:
+		var module_mod: CanvasModulate = module_layers[StructureLayer.MODULE].get_node("CanvasModulate") as CanvasModulate
 		module_mod.color.a = 1
-		var corridor_mod: CanvasModulate = module_layers[InteractionLayer.CORRIDOR].get_node("CanvasModulate") as CanvasModulate
+		var corridor_mod: CanvasModulate = module_layers[StructureLayer.CORRIDOR].get_node("CanvasModulate") as CanvasModulate
 		corridor_mod.color.a = 0.3
-	elif layer == InteractionLayer.CORRIDOR:
-		var module_mod: CanvasModulate = module_layers[InteractionLayer.MODULE].get_node("CanvasModulate") as CanvasModulate
+	elif layer == StructureLayer.CORRIDOR:
+		var module_mod: CanvasModulate = module_layers[StructureLayer.MODULE].get_node("CanvasModulate") as CanvasModulate
 		module_mod.color.a = 0.9
-		var corridor_mod: CanvasModulate = module_layers[InteractionLayer.CORRIDOR].get_node("CanvasModulate") as CanvasModulate
+		var corridor_mod: CanvasModulate = module_layers[StructureLayer.CORRIDOR].get_node("CanvasModulate") as CanvasModulate
 		corridor_mod.color.a = 1
 	#for module_layer in module_layers:
 		#if module_layer == layer:
@@ -199,9 +200,9 @@ func show_module_layer(layer: InteractionLayer) -> void:
 			#var mod: CanvasModulate = module_layers[module_layer].get_node("CanvasModulate") as CanvasModulate
 			#mod.color.a = 0.3
 
-func set_module_layer_visibility(layer: InteractionLayer, visibility: bool) -> void:
+func set_module_layer_visibility(layer: StructureLayer, visibility: bool) -> void:
 	module_layers[layer].visible = visibility
 	if visibility:
 		active_layer = layer
 	else:
-		active_layer = InteractionLayer.MODULE
+		active_layer = StructureLayer.MODULE

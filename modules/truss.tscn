@@ -10,6 +10,7 @@ shader = ExtResource("2_ykycx")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ykycx"]
 resource_local_to_scene = true
@@ -20,17 +21,15 @@ script = ExtResource("2_m657s")
 blocks_building = false
 structure_check_before_delete = true
 
-[node name="Offset" parent="." index="0"]
+[node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
 visible = false
-
-[node name="Sprite" parent="Offset" index="0"]
 material = SubResource("ShaderMaterial_uwdk4")
 texture = ExtResource("4_uwdk4")
 
-[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
 shape = SubResource("RectangleShape2D_ykycx")
 
-[node name="PathComponent" parent="." index="1"]
+[node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([])
-door_indices = Array[Vector2i]([])
+door_connections = Dictionary[int, int]({})
 door_required = false

@@ -18,6 +18,6 @@ void fragment() { // Called for every pixel the material is visible on.
 	}
 	vec2 local_uv = (UV - REGION_RECT.xy) / REGION_RECT.zw;
 	vec4 progress_color = texture(gradient_texture, local_uv);
-	new_color.a = step(1.0 - PROGRESS, progress_color.r);
+	new_color.a = new_color.a * step(1.0 - PROGRESS, progress_color.r);
 	COLOR = new_color;
 }

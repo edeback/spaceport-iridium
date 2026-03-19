@@ -1,29 +1,56 @@
-[gd_scene load_steps=7 format=3 uid="uid://cdg7n780yglrf"]
+[gd_scene format=3 uid="uid://cdg7n780yglrf"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_6ys41"]
 [ext_resource type="Script" uid="uid://cisi2gmfvwhy2" path="res://modules/transport/module_turbolift.gd" id="2_6ys41"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_hevvg"]
-[ext_resource type="Texture2D" uid="uid://bxitki6fh050n" path="res://assets/external/2D Sci-Fi Platform Builder/2-PNG Files/Environment/ElevatorClosed.png" id="4_vm5pc"]
+[ext_resource type="Texture2D" uid="uid://r2nt1fhbsql4" path="res://assets/sprites/turbolift.png" id="4_vm5pc"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_80vqc"]
 shader = ExtResource("3_hevvg")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_gd6ts"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_hevvg"]
+atlas = ExtResource("4_vm5pc")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vm5pc"]
 resource_local_to_scene = true
-size = Vector2(62, 62)
+size = Vector2(33, 29)
 
-[node name="Module" instance=ExtResource("1_6ys41")]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hevvg"]
+resource_local_to_scene = true
+size = Vector2(33, 34)
+
+[node name="Module" unique_id=642610342 node_paths=PackedStringArray("collision_upper") instance=ExtResource("1_6ys41")]
 script = ExtResource("2_6ys41")
-interaction_layer = 1
+collision_upper = NodePath("Offset/Footprint/CollisionUpper")
 
-[node name="Sprite" parent="Offset" index="0"]
+[node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
 material = SubResource("ShaderMaterial_80vqc")
-scale = Vector2(0.125, 0.125)
-texture = ExtResource("4_vm5pc")
-region_enabled = false
+texture = SubResource("AtlasTexture_hevvg")
 
-[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
-shape = SubResource("RectangleShape2D_gd6ts")
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
+position = Vector2(11.5, 16.5)
+shape = SubResource("RectangleShape2D_vm5pc")
+
+[node name="CollisionUpper" type="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="1" unique_id=914468920]
+position = Vector2(11.5, -15)
+shape = SubResource("RectangleShape2D_hevvg")
+disabled = true
+
+[node name="PathComponent" parent="." index="1" unique_id=1088376714]
+connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(0, 1)])
+path_points = Array[Vector2i]([Vector2i(44, 0), Vector2i(44, 64), Vector2i(44, 58)])
+path_edges = Dictionary[Vector2i, String]({
+Vector2i(0, 2): "",
+Vector2i(1, 2): ""
+})
+door_connections = Dictionary[int, int]({
+2: 1
+})
+door_required = false
+
+[node name="StructureComponent" parent="." index="2" unique_id=2060859123]
+connection_points = Array[Vector2i]([Vector2i(0, 0)])

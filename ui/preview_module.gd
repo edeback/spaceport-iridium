@@ -10,7 +10,8 @@ var module_size: Vector2i
 var connection_points: Array[Vector2i]
 var internal_points: Array[Vector2i]
 var must_be_clear_points: Array[Vector2i]
-var module_layer: WorldManager.InteractionLayer
+var module_layer: WorldManager.StructureLayer
+var module_connection_layer: WorldManager.StructureLayer
 var last_cell: Vector2i
 var offset: Vector2 = Vector2(0, 0)
 var is_horizontal: bool = true:
@@ -57,6 +58,7 @@ func update_from_module_data() -> void:
 	internal_points = temp_module.get_structure_component().internal_points
 	must_be_clear_points = temp_module.get_structure_component().must_be_clear_points
 	module_layer = module_data.interaction_layer
+	module_connection_layer = module_data.connection_layer
 	var temp_sprite: Sprite2D = temp_module.get_sprite()
 	sprite.texture = temp_sprite.texture
 	sprite.offset = temp_sprite.offset
@@ -117,16 +119,14 @@ func update_placeable(module_cell: Vector2i, ignore_connections: bool = false) -
 func _has_possible_connections(module_cell: Vector2i) -> bool:
 	# Explicit connection points
 	for point in connection_points:
-		var test_module: ModuleBase = Global.world_manager.get_module_by_cell(module_layer, module_cell + point)
+		var test_module: ModuleBase = Global.world_manager.get_module_by_cell(module_connection_layer, module_cell + point)
 		if test_module != null:
 			var struct_component: StructureComponent = test_module.get_structure_component()
 			if struct_component != null:
 				for internal_point in internal_points:
 					if struct_component.can_connect_to(module_cell + internal_point):
 						return true
-	
-	# Cross-layer connections (overlaps)
-	return Global.world_manager.has_overlaps(1 - module_layer, module_cell, module_size)
+	return false
 
 func _ready() -> void:
 	sprite.texture = default_texture

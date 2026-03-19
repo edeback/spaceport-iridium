@@ -1,7 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://cbryy1xran3ym"]
+[gd_scene format=3 uid="uid://cbryy1xran3ym"]
 
 [ext_resource type="Script" uid="uid://cs1hqmh0o171h" path="res://modules/components/structure_component.gd" id="1_k7ogo"]
 
-[node name="StructureComponent" type="Node2D"]
+[node name="StructureComponent" type="Node2D" unique_id=1430455506]
 script = ExtResource("1_k7ogo")
 show_debug = true

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://bcplqx4pradfr"]
+
+[ext_resource type="Texture2D" uid="uid://r2nt1fhbsql4" path="res://assets/sprites/turbolift.png" id="1_6fuxq"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_waae6"]
+[ext_resource type="PackedScene" uid="uid://cdg7n780yglrf" path="res://modules/transport/module_turbolift.tscn" id="3_4qj6a"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="4_2f7uq"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_waae6"]
+atlas = ExtResource("1_6fuxq")
+region = Rect2(64, 0, 64, 64)
+
+[resource]
+script = ExtResource("4_2f7uq")
+name = "Turbolift"
+scene = ExtResource("3_4qj6a")
+icon = SubResource("AtlasTexture_waae6")
+tags = Array[String](["Core"])
+multiplacement = 2
+interaction_layer = 2

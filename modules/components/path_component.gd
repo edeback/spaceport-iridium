@@ -31,8 +31,8 @@ class PathTraversalEdgeData:
 		path_edges = new_edges
 		queue_redraw()
 
-## Which of the path points (by index) are actually doors?
-@export var door_indices: Array[int] = []
+## Which of the path points (by index) are actually doors, and what layer do they connect to?
+@export var door_connections: Dictionary[int, WorldManager.StructureLayer] = {}
 
 ## Do we error if no door is connected?
 @export var door_required: bool = false
@@ -43,10 +43,10 @@ class PathTraversalEdgeData:
 		
 var module_connections: Dictionary[ModuleBase, int] = {}
 
-var door_sprites: Array[Sprite2D] = []
+var door_sprites: Dictionary[int, Sprite2D] = {}
 
-signal door_connected(cell: Vector2i)
-signal door_disconnected(cell: Vector2i)
+signal door_connected(cell: Vector2i, from_layer: WorldManager.StructureLayer)
+signal door_disconnected(cell: Vector2i, from_layer: WorldManager.StructureLayer)
 
 func _ready() -> void:
 	super()
@@ -56,11 +56,12 @@ func _ready() -> void:
 		astar.connect_points(edge.x, edge.y)
 	if power_required and power_consumption_component != null:
 		power_consumption_component.powered_changed.connect(_on_power_changed)
-	for index in door_indices:
+	for index in door_connections:
 		var new_sprite: Sprite2D = Sprite2D.new()
 		new_sprite.texture = door_not_connected_image
-		new_sprite.position = path_points[index]
-		door_sprites.append(new_sprite)
+		new_sprite.position = Global.cell_to_world(Global.world_to_cell(path_points[index]), true)
+		new_sprite.visible = door_required
+		door_sprites[index] = new_sprite
 		add_child(new_sprite)
 		
 func _on_power_changed(new_power: bool) -> void:
@@ -124,7 +125,7 @@ func _find_connections() -> Dictionary[ModuleBase, int]:
 	var connected_modules: Dictionary[ModuleBase, int] = {}
 	for index: int in connection_points.size():
 		var module: ModuleBase = Global.world_manager.get_module_by_cell(owner_module.module_data.interaction_layer, owner_module.module_cell + connection_points[index])
-		if module != null and module != self:
+		if module != null and module != owner_module:
 			connected_modules[module] = index
 	return connected_modules
 	
@@ -148,65 +149,66 @@ func make_connections() -> void:
 func manual_connection(other_module: ModuleBase, connection_index: int) -> void:
 	module_connections[other_module] = connection_index
 	SignalBus.module_path_connection_added.emit(owner_module, other_module, 1)
-			
-func has_door(cell_to_check: Vector2i) -> bool:
-	for index: int in door_indices:
-		var door_cell: Vector2i = Global.world_to_cell(path_points[index])
-		if door_cell + owner_module.module_cell == cell_to_check:
-			return true
+	
+func has_door_to(cell_to_check: Vector2i, target_layer: WorldManager.StructureLayer) -> bool:
+	for index: int in door_connections:
+		if door_connections[index] == target_layer:
+			var door_cell: Vector2i = Global.world_to_cell(path_points[index])
+			if door_cell + owner_module.module_cell == cell_to_check:
+				return true
 	return false
 	
 func try_connect_door(other_module: ModuleBase, cell_to_check: Vector2i) -> bool:
-	for index: int in door_indices.size():
-		var door_cell: Vector2i = Global.world_to_cell(path_points[door_indices[index]])
-		if door_cell + owner_module.module_cell == cell_to_check:
-			door_sprites[index].visible = false
-			module_connections[other_module] = door_indices[index]
-			door_connected.emit(door_cell)
-			check_doors()
-			return true
+	for index: int in door_connections:
+		if other_module.module_data.interaction_layer == door_connections[index]:
+			var door_cell: Vector2i = Global.world_to_cell(path_points[index])
+			if door_cell + owner_module.module_cell == cell_to_check:
+				door_sprites[index].visible = false
+				module_connections[other_module] = index
+				door_connected.emit(door_cell, other_module.module_data.interaction_layer)
+				check_doors()
+				return true
 	check_doors()
 	return false
 			
 func connect_doors() -> void:
-	var layer_to_check: WorldManager.InteractionLayer = (1 - owner_module.module_data.interaction_layer) as WorldManager.InteractionLayer
-	for index: int in door_indices.size():
-		var door_cell: Vector2i = Global.world_to_cell(path_points[door_indices[index]])
-		for module: ModuleBase in Global.world_manager.get_overlaps(layer_to_check, owner_module.module_cell + door_cell):
-			if module != owner_module and module.get_path_component() and module.get_path_component().try_connect_door(owner_module, owner_module.module_cell + door_cell):
-				door_sprites[index].visible = false
-				module_connections[module] = door_indices[index]
-				door_connected.emit(door_cell)
-				SignalBus.module_path_connection_added.emit(owner_module, module, 1)
+	for index: int in door_connections:
+		var door_cell: Vector2i = Global.world_to_cell(path_points[index])
+		var module: ModuleBase = Global.world_manager.get_module_by_cell(door_connections[index], owner_module.module_cell + door_cell)
+		if module != null and module != owner_module and module.get_path_component() and module.get_path_component().try_connect_door(owner_module, owner_module.module_cell + door_cell):
+			door_sprites[index].visible = false
+			module_connections[module] = index
+			door_connected.emit(door_cell, module.module_data.interaction_layer)
+			SignalBus.module_path_connection_added.emit(owner_module, module, 1)
 	check_doors()
 
 func check_doors() -> void:
 	if door_required:
 		var has_door_connected: bool = false
 		var connected_indices: Array[int] = module_connections.values()
-		for index: int in door_indices:
+		for index: int in door_connections:
 			if connected_indices.has(index):
 				has_door_connected = true
 				break
-		if has_door_connected:
-			last_error = ""
-		else:
+		if !has_door_connected and door_required:
 			last_error = "Door not connected!"
+		else:
+			last_error = ""
 			
 func remove_connections() -> void:
 	for module in module_connections:
 		module.get_path_component().disconnect_from(owner_module)
-		if door_indices.has(module_connections[module]):
-			door_sprites[door_indices.find(module_connections[module])].visible = true
-			door_disconnected.emit(Global.world_to_cell(path_points[module_connections[module]]))
+		if door_connections.has(module_connections[module]):
+			door_sprites[module_connections[module]].visible = door_required
+			door_disconnected.emit(Global.world_to_cell(path_points[module_connections[module]]), module.module_data.interaction_layer)
 		SignalBus.module_path_connection_removed.emit(owner_module.module_id, module.module_id)
 	module_connections.clear()
 	check_doors()
 	
 func disconnect_from(other_module: ModuleBase) -> void:
-	if door_indices.has(module_connections[other_module]):
-		door_sprites[door_indices.find(module_connections[other_module])].visible = true
-		door_disconnected.emit(Global.world_to_cell(path_points[module_connections[other_module]]))
+	if door_connections.has(module_connections[other_module]):
+		door_sprites[module_connections[other_module]].visible = door_required
+		door_disconnected.emit(Global.world_to_cell(path_points[module_connections[other_module]]), other_module.module_data.interaction_layer)
 	module_connections.erase(other_module)
 	check_doors()
 

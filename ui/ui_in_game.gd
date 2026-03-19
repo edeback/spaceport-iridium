@@ -47,17 +47,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		var hovered_cell: Vector2i = Global.world_to_cell(get_global_mouse_position())
 		if event.is_action_pressed("build"):
 			if cur_module != null and preview_module != null and preview_module.can_place:
-				if cur_module.multiplacement:
+				if cur_module.multiplacement != WorldManager.Multiplacement.NONE:
 					preview_module.visible = false
 					cur_input_mode = InputMode.Multiplace
 					multiplace_start = hovered_cell
 				else:
 					Global.world_manager.purchase_and_add_module(cur_module, preview_module.last_cell, true, preview_module.flipped)
 					update_module_placement(true)
-			else:
-				select_module(hovered_cell)
+				get_viewport().set_input_as_handled()
 		if event.is_action_pressed("remove"):
-			Global.world_manager.remove_module_by_cell_active_layer(hovered_cell)
+				if cur_input_mode != InputMode.None:
+					change_input_mode(InputMode.None)
+					get_viewport().set_input_as_handled()
 	if event is InputEventKey:
 		if event.is_action_pressed("flip_module"):
 			preview_module.flipped = not preview_module.flipped
@@ -92,29 +93,31 @@ func update_multiplacement() -> void:
 	var yrange: int = hovered_cell.y - multiplace_start.y
 	var xdirection: int = 1 if xrange > 0 else -1
 	var ydirection: int = 1 if yrange > 0 else -1
-	if abs(yrange) > abs(xrange):
-		xrange = 0
-		yrange = abs(yrange)
-	else:
-		xrange = abs(xrange)
+	xrange = abs(xrange)
+	yrange = abs(yrange)
+	if preview_module.module_data.multiplacement == WorldManager.Multiplacement.HORIZONTAL:
 		yrange = 0
+	elif preview_module.module_data.multiplacement == WorldManager.Multiplacement.VERTICAL:
+		xrange = 0
+	while preview_multimodules.size() < (xrange + 1) * (yrange + 1):
+		preview_multimodules.append(preview_module.duplicate())
+		add_child(preview_multimodules.back())
+	for i: int in range(preview_multimodules.size(), (xrange + 1) * (yrange + 1), -1):
+		var previewmod: PreviewModule = preview_multimodules.pop_back()
+		if previewmod != null:
+			remove_child(previewmod)
+			previewmod.queue_free()
 	for x: int in range(xrange + 1):
 		for y: int in range(yrange + 1):
 			var cell: Vector2i = Vector2i(multiplace_start.x + x * xdirection, multiplace_start.y + y * ydirection)
-			if preview_multimodules.size() < x + y + 1:
-				preview_multimodules.append(preview_module.duplicate())
-				add_child(preview_multimodules.back())
-			var previewmod: PreviewModule = preview_multimodules.get(x + y)
+			var previewmod: PreviewModule = preview_multimodules.get(y * (xrange + 1) + x)
 			previewmod.visible = true
 			previewmod.is_horizontal = yrange == 0
 			var snapped_position: Vector2 = Global.cell_to_world(cell) + preview_module.offset
 			previewmod.position = snapped_position
 			previewmod.module_data = preview_module.module_data
-			previewmod.update_placeable(cell, true)
-	for i: int in range(preview_multimodules.size(), xrange + yrange + 1, -1):
-		var previewmod: PreviewModule = preview_multimodules.pop_back()
-		if previewmod != null:
-			previewmod.queue_free()
+			previewmod.update_placeable(cell, preview_module.module_data.ignore_multiplacement_connection_check)
+
 			
 func finalize_multiplacement() -> void:
 	for mod: PreviewModule in preview_multimodules:
@@ -141,13 +144,6 @@ func update_module_placement(force: bool = false) -> void:
 
 func update_structure_placement() -> void:
 	pass
-
-func select_module(cell: Vector2i) -> void:
-	var selected_module: ModuleBase = Global.world_manager.get_module_by_cell_active_layer(cell)
-	if selected_module != null:
-		# Temp comment out this so we just see info panels
-		selected_module.on_select(!selected_module.selected)
-		toggle_info_panel(selected_module)
 
 		
 func toggle_info_panel(selected_module: ModuleBase) -> void:

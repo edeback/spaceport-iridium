@@ -22,6 +22,15 @@ func _ready() -> void:
 	timer.wait_time = seconds_per_resource_consumed
 	timer.timeout.connect(restart_generation)
 
+func ready_preview() -> void:
+	pass
+	
+func ready_blueprint() -> void:
+	pass
+	
+func ready_constructed() -> void:
+	pass
+
 func get_power_output() -> float:
 	return power_output
 	

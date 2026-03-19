@@ -36,7 +36,7 @@ func _ready() -> void:
 	
 func can_connect_to(world_cell: Vector2i) -> bool:
 	var local_cell: Vector2i = world_cell - owner_module.module_cell
-	return connection_points.has(local_cell)
+	return connection_points.has(local_cell) or internal_points.has(local_cell)
 	
 ## Do we maybe have any connection?
 func _has_possible_connections() -> bool:
@@ -45,33 +45,39 @@ func _has_possible_connections() -> bool:
 		if Global.world_manager.has_overlaps(owner_module.module_data.interaction_layer, owner_module.module_cell + point):
 			return true
 	# Connections cross-level
-	if Global.world_manager.has_overlaps(1 - owner_module.module_data.interaction_layer, owner_module.module_cell, owner_module.size):
+	if Global.world_manager.has_overlaps(owner_module.module_data.connection_layer, owner_module.module_cell, owner_module.size):
 		return true
 	return false
 		
 func _has_direct_connection(module: ModuleBase) -> bool:
 	for index: int in connection_points.size():
-		var test_module: ModuleBase = Global.world_manager.get_module_by_cell(owner_module.module_data.interaction_layer, owner_module.module_cell + connection_points[index])
+		var test_module: ModuleBase = Global.world_manager.get_module_by_cell(owner_module.module_data.connection_layer, owner_module.module_cell + connection_points[index])
 		if test_module == module:
 			return true
 	return false
 
 func _has_cross_connection(module: ModuleBase) -> bool:
-	for test_module: ModuleBase in Global.world_manager.get_overlaps(1 - owner_module.module_data.interaction_layer, owner_module.module_cell, owner_module.size):
-		if test_module == module:
-			return true
+	if module.module_data.interaction_layer != module.module_data.connection_layer:
+		for index: int in internal_points.size():
+			var test_module: ModuleBase = Global.world_manager.get_module_by_cell(module.module_data.interaction_layer, owner_module.module_cell + internal_points[index])
+			if test_module == module:
+				return true
 	return false
 
 ## Modules connected to this on this or other layer
 func _find_connections() -> Dictionary[ModuleBase, bool]:
 	var connected_modules: Dictionary[ModuleBase, bool] = {}
 	for test_point: Vector2i in connection_points:
-		var test_module: ModuleBase = Global.world_manager.get_module_by_cell(owner_module.module_data.interaction_layer, owner_module.module_cell + test_point)
-		if test_module != null and test_module != self:
+		var test_module: ModuleBase = Global.world_manager.get_module_by_cell(owner_module.module_data.connection_layer, owner_module.module_cell + test_point)
+		if test_module != null and test_module != owner_module:
 			connected_modules[test_module] = false
-	# Connections cross-level
-	for test_module: ModuleBase in Global.world_manager.get_overlaps(1 - owner_module.module_data.interaction_layer, owner_module.module_cell, owner_module.size):
-			connected_modules[test_module] = true
+	## Check all other layers for new cross-connections
+	for layer: WorldManager.StructureLayer in WorldManager.StructureLayer.values():
+		if layer != owner_module.module_data.interaction_layer:
+			for test_point: Vector2i in internal_points:
+				var test_module: ModuleBase = Global.world_manager.get_module_by_cell(layer, owner_module.module_cell + test_point)
+				if test_module != null and test_module != owner_module:
+					connected_modules[test_module] = true
 	return connected_modules
 	
 ## Connect to the other module if we can, return if successful
@@ -80,7 +86,7 @@ func try_connect(other_module: ModuleBase) -> bool:
 		module_connections[other_module] = false
 		module_connections_changed.emit(module_connections)
 		return true
-	if _has_cross_connection(other_module):
+	elif _has_cross_connection(other_module):
 		module_connections[other_module] = true
 		module_connections_changed.emit(module_connections)
 		return true
@@ -101,7 +107,7 @@ func manual_connection(other_module: ModuleBase, connection_index: int) -> void:
 func remove_connections() -> void:
 	for module in module_connections:
 		module.get_structure_component().disconnect_from(owner_module)
-		SignalBus.module_structure_connection_removed.emit(owner_module.module_id, module.module_id)
+		SignalBus.module_structure_connection_removed.emit(owner_module, module)
 	module_connections.clear()
 	module_connections_changed.emit(module_connections)
 	

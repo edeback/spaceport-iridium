@@ -1,18 +1,25 @@
-[gd_scene load_steps=3 format=3 uid="uid://2pp7va28ybgl"]
+[gd_scene format=3 uid="uid://2pp7va28ybgl"]
 
 [ext_resource type="PackedScene" uid="uid://ddoebv5qw5lfm" path="res://pawns/pawn_base.tscn" id="1_4e1f1"]
 [ext_resource type="PackedScene" uid="uid://b0bybnib3jtmj" path="res://pawns/pawn_needs_component.tscn" id="2_6fnyy"]
 
-[node name="PawnBase" node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_4e1f1")]
+[node name="PawnBase" unique_id=1067060448 node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_4e1f1")]
 animated_sprite = NodePath("Crew")
+metadata/_edit_vertical_guides_ = [-9.0]
+metadata/_edit_horizontal_guides_ = [-14.0, 10.0, -10.0]
+
+[node name="Sprite2D" parent="." index="0"]
+scale = Vector2(0.22, 0.22)
 
 [node name="Crew" parent="." index="1"]
 visible = true
+scale = Vector2(0.2, 0.2)
 
 [node name="Robot" parent="." index="2"]
 visible = false
+scale = Vector2(0.22, 0.22)
 
-[node name="PawnNeedsComponent" parent="." index="3" instance=ExtResource("2_6fnyy")]
+[node name="PawnNeedsComponent" parent="." index="3" unique_id=1968637232 instance=ExtResource("2_6fnyy")]
 has_health_need = true
 has_sleep_need = true
 has_hunger_need = true

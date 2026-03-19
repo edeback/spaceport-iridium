@@ -20,6 +20,7 @@ extends ComponentBase
 #@export var cur_reserved_deposit: Dictionary[ResourceData, float] = {}
 #@export var default_import_jobs: Dictionary[ResourceData, Job_GetResource] = {}
 
+@export var display_info_panel_ui: bool = true
 @export var storage_ui: ProgressBar
 @export var display_storage_ui: bool = true:
 	set(new_display):
@@ -308,7 +309,7 @@ func complete_deposit_job(job: Job_GetResource) -> bool:
 	#return false
 	
 func has_ui() -> bool:
-	return true
+	return display_info_panel_ui
 	
 func get_ui() -> ModuleComponentUI:
 	var panel_element: UIStorageComponent = ui_info_panel_element.instantiate() as UIStorageComponent

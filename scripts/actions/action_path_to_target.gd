@@ -112,7 +112,7 @@ func extract_position(index: int) -> Vector2:
 			return Vector2(module.get_path_component().get_connection_point_from(prev_mod)) + module.position
 		if pawn.current_module != null and pawn.current_module == module:
 			return pawn.position
-		if module.get_path_component().door_indices.size() > 0:
+		if !module.get_path_component().door_connections.is_empty():
 			return Vector2(module.get_path_component().get_closest_path_point(pawn.position - module.position)) + module.position
 		return Global.cell_to_world(module.module_cell, true)
 	elif path_variant[index] is Node2D:
