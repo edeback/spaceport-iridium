@@ -18,7 +18,6 @@ var force_off: bool = false
 func _ready() -> void:
 	super()
 	assert(seconds_per_resource_consumed == 0.0 or (input_storage != null and resource_consumed != null), "Processor must either not require resource or have resource storage!")
-	add_to_group("power_generator")
 	timer.wait_time = seconds_per_resource_consumed
 	timer.timeout.connect(restart_generation)
 
@@ -29,7 +28,7 @@ func ready_blueprint() -> void:
 	pass
 	
 func ready_constructed() -> void:
-	pass
+	add_to_group("power_generator")
 
 func get_power_output() -> float:
 	return power_output

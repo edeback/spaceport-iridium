@@ -32,6 +32,10 @@ QoL:
 
 Rework:
 - Power system to not need to run every frame?
+- Refactor jobs
+	- More generic jobs/actions
+	- System to set chains of actions/jobs and/or to pre-empt them
+- Start removing process func as much as possible
 
 
 Modules:
@@ -47,14 +51,12 @@ Pawns:
 - Current Job
 
 Construct module system
-- Start out with blueprint
+- Start out with module in "construction" mode
+	- Most things disabled
 - Require resources
 - Then work to build
 
 
 Transportation modules:
-- Turbolift connect visually to ones above
-- Implement stairs (in turbolift slot)
 - Make turbolifts actually work
 - Fix how connections work (doors, placement) probably by moving them to structure component
-- Try to get rid of "active layer" concept as we won't be switching manually

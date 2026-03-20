@@ -4,6 +4,8 @@ extends Node
 var power_generators: Array[PowerGenerationComponent]
 var power_consumers: Array[PowerConsumptionComponent]
 
+var needs_update: bool = true
+
 signal power_updated(desired: float, generated: float)
 
 # Called when the node enters the scene tree for the first time.

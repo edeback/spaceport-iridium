@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://crf7dnbconvo"]
+
+[ext_resource type="Script" uid="uid://dch1oprnscwc2" path="res://modules/components/space_link_component.gd" id="1_71wdt"]
+
+[node name="SpaceLinkComponent" type="Node2D" unique_id=1261878571]
+script = ExtResource("1_71wdt")
+metadata/_custom_type_script = "uid://dch1oprnscwc2"

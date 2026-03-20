@@ -1,7 +1,13 @@
 [gd_scene format=3 uid="uid://valcdjjl853u"]
 
 [ext_resource type="Script" uid="uid://ch8uul8ttm0ql" path="res://modules/components/construction_component.gd" id="1_trkly"]
+[ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="2_t25he"]
 
-[node name="ConstructionComponent" type="Node2D" unique_id=1206775965]
+[node name="ConstructionComponent" type="Node2D" unique_id=1206775965 node_paths=PackedStringArray("material_storage")]
 script = ExtResource("1_trkly")
+material_storage = NodePath("Construction Materials")
 metadata/_custom_type_script = "uid://ch8uul8ttm0ql"
+
+[node name="Construction Materials" parent="." unique_id=1188924340 instance=ExtResource("2_t25he")]
+include_in_stats = false
+construction_storage = true

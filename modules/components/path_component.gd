@@ -64,6 +64,15 @@ func _ready() -> void:
 		door_sprites[index] = new_sprite
 		add_child(new_sprite)
 		
+func ready_preview() -> void:
+	pass
+	
+func ready_blueprint() -> void:
+	pass
+	
+func ready_constructed() -> void:
+	pass
+		
 func _on_power_changed(new_power: bool) -> void:
 	if new_power:
 		Global.path_manager.enable_module(owner_module)

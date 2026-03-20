@@ -20,7 +20,7 @@ func _ready() -> void:
 	super()
 	assert(output_storage != null, "Processor must have output_storage!")
 	assert(power_consumer != null, "Processor must have power_consumer!")
-	add_to_group("processor")
+	
 	drone_respawn_timer.timeout.connect(build_drone)
 	#output_resource = base_output_resource.duplicate()
 	#output_resource.base_resource = base_output_resource
@@ -29,6 +29,15 @@ func _ready() -> void:
 		#mutiple += 0.1
 		#output_resource.sub_resources[resource_data] = mutiple
 
+func ready_preview() -> void:
+	set_process(false)
+	
+func ready_blueprint() -> void:
+	set_process(false)
+	
+func ready_constructed() -> void:
+	set_process(true)
+	add_to_group("processor")
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
@@ -47,7 +56,7 @@ func _process(_delta: float) -> void:
 		for drone: MiningDronePawn in drones:
 			if drone.current_job == null:
 				var mining_job: Job_MineAsteroid = Job_MineAsteroid.new()
-				mining_job.requesting_module = owner_module
+				mining_job.setup(owner_module)
 				if not drone.give_job(mining_job):
 					mining_job.free()
 		

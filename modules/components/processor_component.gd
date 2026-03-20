@@ -19,9 +19,17 @@ func _ready() -> void:
 	assert(output_storage != null, "Processor must have output_storage!")
 	assert(power_consumer != null, "Processor must have power_consumer!")
 	assert(time_to_process > 0, "Processor time_to_process must be > 0!")
-	add_to_group("processor")
 	super()
 
+func ready_preview() -> void:
+	set_process(false)
+	
+func ready_blueprint() -> void:
+	set_process(false)
+	
+func ready_constructed() -> void:
+	add_to_group("processor")
+	set_process(true)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:

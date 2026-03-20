@@ -8,6 +8,16 @@ extends Node2D
 func _ready() -> void:
 	pass # Replace with function body.
 
+func ready_preview() -> void:
+	light.visible = false
+	set_process(false)
+	
+func ready_blueprint() -> void:
+	light.visible = false
+	set_process(false)
+	
+func ready_constructed() -> void:
+	set_process(true)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:

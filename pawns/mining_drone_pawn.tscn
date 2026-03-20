@@ -1,7 +1,10 @@
-[gd_scene load_steps=3 format=3 uid="uid://dnxmwkllbts73"]
+[gd_scene format=3 uid="uid://dnxmwkllbts73"]
 
 [ext_resource type="PackedScene" uid="uid://ddoebv5qw5lfm" path="res://pawns/pawn_base.tscn" id="1_gfyck"]
 [ext_resource type="Script" uid="uid://dstr5gvqm0f3m" path="res://pawns/mining_drone_pawn.gd" id="2_ows4s"]
 
-[node name="PawnBase" instance=ExtResource("1_gfyck")]
+[node name="PawnBase" unique_id=581295898 instance=ExtResource("1_gfyck")]
 script = ExtResource("2_ows4s")
+drone_efficiency = 0.2
+cargo_size = 5.0
+powered = true

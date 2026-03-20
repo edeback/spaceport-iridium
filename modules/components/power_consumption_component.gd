@@ -22,9 +22,16 @@ signal powered_changed(new_power: bool)
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	add_to_group("power_consumer")
 	super()
 
+func ready_preview() -> void:
+	pass
+	
+func ready_blueprint() -> void:
+	pass
+	
+func ready_constructed() -> void:
+	add_to_group("power_consumer")
 	
 func desired_power(delta: float) -> float:
 	if force_off:
@@ -35,7 +42,7 @@ func consume_power(delta: float, input_power: float) -> float:
 	if force_off:
 		powered = false
 		return 0
-	var consumption = power_consumption
+	var consumption := power_consumption
 	if input_power >= consumption:
 		powered = true
 		return consumption

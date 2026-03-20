@@ -28,6 +28,7 @@ extends ComponentBase
 			display_storage_ui = new_display
 			storage_ui.visible = display_storage_ui
 @export var player_configurable: bool = false
+@export var construction_storage: bool = false
 
 #var stock_reserved: Dictionary[ResourceData, float] = {}
 #var space_reserved: Dictionary[ResourceData, float] = {}
@@ -43,10 +44,31 @@ signal storage_changed(resource: ResourceData, new_value: int)
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	super()
-	add_to_group("resource_storage")
-	if include_in_stats:
-		for resource: ResourceData in storage_data:
-			resource.register_component(self)
+
+func ready_preview() -> void:
+	set_process(false)
+	
+func ready_blueprint() -> void:
+	if construction_storage:
+		display_info_panel_ui = true
+		add_to_group("resource_storage")
+		set_process(true)
+	else:
+		display_info_panel_ui = false
+		set_process(false)
+	
+func ready_constructed() -> void:
+	if construction_storage:
+		display_info_panel_ui = false
+		remove_from_group("resource_storage")
+		set_process(false)
+	else:
+		display_info_panel_ui = true
+		add_to_group("resource_storage")
+		set_process(false)
+		if include_in_stats:
+			for resource: ResourceData in storage_data:
+				resource.register_component(self)
 
 func add_stored_resource(resource: ResourceData) -> void:
 	if not storage_data.has(resource):

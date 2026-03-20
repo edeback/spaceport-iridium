@@ -3,6 +3,15 @@ extends Node2D
 
 @export var ui_info_panel_element: PackedScene
 
+var component_enabled: bool = false:
+	set(new_enabled):
+		if component_enabled != new_enabled:
+			component_enabled = new_enabled
+			if component_enabled:
+				_on_enabled()
+			else:
+				_on_disabled()
+				
 var owner_module: ModuleBase
 
 signal new_error(component: ComponentBase, error_message: String)
@@ -15,16 +24,32 @@ var last_error: String = "":
 			last_error = new_value
 			new_error.emit(self, new_value)
 
+func _on_enabled() -> void:
+	pass
+	
+func _on_disabled() -> void:
+	pass
+
+func get_parent_module() -> ModuleBase:
+	if owner is ModuleBase:
+		return owner as ModuleBase
+	elif owner is ComponentBase:
+		return (owner as ComponentBase).get_parent_module()
+	return null
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	if owner is ModuleBase:
-		owner_module = owner as ModuleBase
+	owner_module = get_parent_module()
+	if owner_module != null:
 		owner_module.components.append(self)
 
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
+func ready_preview() -> void:
+	pass
+	
+func ready_blueprint() -> void:
+	pass
+	
+func ready_constructed() -> void:
 	pass
 
 func has_ui() -> bool:

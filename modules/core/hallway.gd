@@ -11,6 +11,8 @@ func _ready() -> void:
 	super()
 	SignalBus.module_added.connect(set_sprite)
 	SignalBus.module_removed.connect(set_sprite)
+	get_path_component().door_connected.connect(door_connected_to)
+	get_path_component().door_disconnected.connect(door_disconnected_to)
 	set_sprite(null)
 	
 func on_place() -> void:
@@ -18,18 +20,6 @@ func on_place() -> void:
 	if Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, module_cell) == null:
 		# add a truss segment below
 		Global.world_manager.add_module(truss, module_cell)
-	
-	
-func make_connections() -> void:
-	get_path_component().door_connected.connect(door_connected_to)
-	get_path_component().door_disconnected.connect(door_disconnected_to)
-	super()
-	
-func remove_connections() -> void:
-	super()
-	get_path_component().door_connected.disconnect(door_connected_to)
-	get_path_component().door_disconnected.disconnect(door_disconnected_to)
-	
 	
 func door_connected_to(_cell: Vector2i, from_layer: WorldManager.StructureLayer) -> void:
 	if from_layer == WorldManager.StructureLayer.MODULE:

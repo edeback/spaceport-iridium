@@ -101,7 +101,12 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 	var module_array: Array = modules_by_type.get_or_add(module_data, [])
 	module_array.append(new_module)
 	module_layers[module_data.interaction_layer].add_child(new_module)
-	new_module.make_connections()
+	# TODO: Hacky, find better way
+	var construction_component: ConstructionComponent = new_module.get_node("ConstructionComponent") as ConstructionComponent
+	if construction_component != null:
+		new_module.call_deferred("ready_blueprint")
+	else:
+		new_module.ready_constructed()
 
 func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 	if module.can_delete == false:

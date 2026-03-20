@@ -35,6 +35,7 @@ var _cached_structure_component: StructureComponent = null
 const SHADER_PARAM_PREVIEW = "PREVIEW"
 const SHADER_PARAM_PLACEABLE = "PLACEABLE"
 const SHADER_PARAM_SELECTED = "SELECTED"
+const SHADER_PARAM_PROGRESS = "PROGRESS"
 
 var previewing: bool = false:
 	get:
@@ -59,6 +60,13 @@ var selected: bool = false:
 			selected = new_value
 			_update_shader()
 			SignalBus.module_selected.emit(self)
+			
+var progress: float = 1.0:
+	set(new_value):
+		new_value = clamp(new_value, 0.0, 1.0)
+		if new_value != progress:
+			progress = new_value
+			_update_shader()
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -86,6 +94,7 @@ func ready_blueprint() -> void:
 func ready_constructed() -> void:
 	for component: ComponentBase in components:
 		component.ready_constructed()
+	make_connections()
 
 func on_place() -> void:
 	if get_structure_component() != null and module_data.interaction_layer == WorldManager.StructureLayer.MODULE:
@@ -117,6 +126,7 @@ func _update_shader() -> void:
 		get_sprite().material.set_shader_parameter(SHADER_PARAM_PREVIEW, previewing)
 		get_sprite().material.set_shader_parameter(SHADER_PARAM_PLACEABLE, can_place)
 		get_sprite().material.set_shader_parameter(SHADER_PARAM_SELECTED, selected)
+		get_sprite().material.set_shader_parameter(SHADER_PARAM_PROGRESS, progress)
 		
 func get_path_component() -> PathComponent:
 	if _cached_path_component:
@@ -148,7 +158,6 @@ func get_global_center() -> Vector2:
 func enter_module_from(pawn: PawnBase, _prev_module: ModuleBase = null) -> void:
 	pawn.current_module = self
 	
-
 func get_sprite() -> Sprite2D:
 	return sprite
 
@@ -164,6 +173,8 @@ func hide_label() -> void:
 	if nameplate != null:
 		nameplate.visible = false
 
+func get_random_position_on_module() -> Vector2:
+	return global_position + get_structure_component().internal_points.pick_random() * Global.CELL_SIZE + randf() * Global.CELL_SIZE
 
 func _on_footprint_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton:
