@@ -11,7 +11,7 @@ var state: ConstructModuleState = ConstructModuleState.Starting:
 			state = new_state
 			subtask_changed.emit()
 var action: Action_PathToTarget = null
-var shift_spot_interval: float = 5.0
+var shift_spot_interval: float = 3.0
 var shift_spot_elapsed: float = 0.0
 
 enum ConstructModuleState { Starting, MovingToModule, ConstructModule, DeconstructModule, Finished, Failed }

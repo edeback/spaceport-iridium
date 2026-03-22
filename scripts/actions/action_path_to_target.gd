@@ -47,10 +47,10 @@ func run_pathfinding() -> void:
 		nodes_to_watch.reverse()
 		action_state = PathActionState.Moving
 		# Debug shove path in UI
-		var packed_path: PackedVector2Array = []
-		for index in path.size():
-			packed_path.append(Global.world_to_cell(extract_position(index)))
-		Global.ui_in_game.debug_path_cell = packed_path
+		#var packed_path: PackedVector2Array = []
+		#for index in path.size():
+			#packed_path.append(Global.world_to_cell(extract_position(index)))
+		#Global.ui_in_game.debug_path_cell = packed_path
 		Global.ui_in_game.debug_path_position = get_debug_path_detailed()
 	
 

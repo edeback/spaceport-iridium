@@ -24,6 +24,8 @@ func ready_blueprint() -> void:
 	set_process(true)
 	setup_storage_for_construction()
 	current_state = ConstructionState.NotStarted
+	owner_module.progress = 0
+	Global.path_manager.graph.change_vertex_group(owner_module, "space")
 	
 func ready_constructed() -> void:
 	set_process(false)
@@ -32,6 +34,7 @@ func ready_constructed() -> void:
 	material_storage.accepts_imports = false
 	material_storage.display_storage_ui = false
 	material_storage.display_info_panel_ui = false
+	Global.path_manager.graph.change_vertex_group(owner_module, "")
 
 func _process(delta: float) -> void:
 	match current_state:
@@ -47,6 +50,7 @@ func _process(delta: float) -> void:
 			if work_seconds_done >= work_seconds_to_complete:
 				current_state = ConstructionState.Built
 				construction_finished.emit()
+				owner_module.ready_constructed()
 		ConstructionState.Built:
 			pass
 		ConstructionState.Deconstructing:

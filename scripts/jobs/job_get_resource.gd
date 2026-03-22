@@ -49,8 +49,10 @@ func can_do_job(_pawn: PawnBase) -> bool:
 	if storage_component != null:
 		var test_action: Action_PathToTarget = Action_PathToTarget.new()
 		test_action.initialize_action(_pawn, storage_component.owner_module)
-		var failed: bool = test_action.is_failed()
-		return not failed
+		if test_action.is_failed():
+			return false
+		test_action.initialize_action(_pawn, deposit_storage.owner_module)
+		return not test_action.is_failed()
 	return false
 
 func start_job(_pawn: PawnBase) -> void:

@@ -156,7 +156,9 @@ func get_global_center() -> Vector2:
 	return global_position + Vector2(Global.CELL_SIZE * size) / 2
 	
 func enter_module_from(pawn: PawnBase, _prev_module: ModuleBase = null) -> void:
-	pawn.current_module = self
+	# TODO Hack for not going "inside" space things but there must be a better way
+	if Global.path_manager.graph._vertices[self].group != "space":
+		pawn.current_module = self
 	
 func get_sprite() -> Sprite2D:
 	return sprite
@@ -174,7 +176,7 @@ func hide_label() -> void:
 		nameplate.visible = false
 
 func get_random_position_on_module() -> Vector2:
-	return global_position + get_structure_component().internal_points.pick_random() * Global.CELL_SIZE + randf() * Global.CELL_SIZE
+	return global_position + Vector2(get_structure_component().internal_points.pick_random() * Global.CELL_SIZE) + Global.CELL_SIZE * 0.15 + Vector2(randf() * Global.CELL_SIZE.x, randf() * Global.CELL_SIZE.y) * 0.7
 
 func _on_footprint_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton:

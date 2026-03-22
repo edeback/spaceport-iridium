@@ -33,6 +33,7 @@ func change_vertex_group(vertex: Node2D, new_group: StringName) -> void:
 		if new_group:
 			_linked_groups.get_or_add(new_group, []).append(graph_vertex)
 		graph_vertex.group = new_group
+		_rebuild_subgraphs()
 	
 func block_vertex(vertex: Node2D) -> void:
 	if _vertices.has(vertex):

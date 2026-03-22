@@ -8,12 +8,22 @@
 [ext_resource type="Texture2D" uid="uid://cs0ht0ea12qtx" path="res://assets/sprites/solar_panel_tilemap.png" id="4_p3bqt"]
 [ext_resource type="PackedScene" uid="uid://valcdjjl853u" path="res://modules/components/construction_component.tscn" id="7_aqnlt"]
 
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_aqnlt"]
+frequency = 0.0668
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_pbf7i"]
+width = 64
+height = 64
+generate_mipmaps = false
+noise = SubResource("FastNoiseLite_aqnlt")
+
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_aqnlt"]
 shader = ExtResource("2_elnck")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
-shader_parameter/PROGRESS = 1.0
+shader_parameter/PROGRESS = 0.0
+shader_parameter/gradient_texture = SubResource("NoiseTexture2D_pbf7i")
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_pbf7i"]
 resource_local_to_scene = true
