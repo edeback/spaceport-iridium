@@ -65,7 +65,7 @@ func ready_constructed() -> void:
 	else:
 		display_info_panel_ui = true
 		add_to_group("resource_storage")
-		set_process(false)
+		set_process(true)
 		if include_in_stats:
 			for resource: ResourceData in storage_data:
 				resource.register_component(self)

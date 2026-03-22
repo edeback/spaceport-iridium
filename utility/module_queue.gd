@@ -31,7 +31,7 @@ func is_empty() -> bool:
 	return self._data.is_empty()
 
 func _get_parent(index: int) -> int:
-	# warning-ignore:integer_division
+	@warning_ignore("integer_division")
 	return (index - 1) / 2
 
 func _left_child(index: int) -> int:
@@ -41,14 +41,14 @@ func _right_child(index: int) -> int:
 	return (2 * index) +  2
 
 func _swap(a_idx: int, b_idx: int) -> void:
-	var a = self._data[a_idx]
-	var b = self._data[b_idx]
+	var a := self._data[a_idx]
+	var b := self._data[b_idx]
 	self._data[a_idx] = b
 	self._data[b_idx] = a
 
 func _up_heap(index: int) -> void:
 	# Compare the added element with its parent; if they are in the correct order, stop.
-	var parent_idx = self._get_parent(index)
+	var parent_idx := self._get_parent(index)
 	if self._data[index].cost >= self._data[parent_idx].cost:
 		return
 	self._swap(index, parent_idx)

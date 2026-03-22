@@ -97,7 +97,7 @@ func make_connections() -> void:
 	for module in connected_modules:
 		if module.get_structure_component().try_connect(owner_module):
 			module_connections[module] = connected_modules[module]
-			SignalBus.module_structure_connection_added.emit(owner_module, module, owner_module.module_cell.distance_to(module.module_cell))
+			SignalBus.module_structure_connection_added.emit(owner_module, module, owner_module.global_position.distance_to(module.global_position))
 	module_connections_changed.emit(module_connections)
 	
 func manual_connection(other_module: ModuleBase, connection_index: int) -> void:

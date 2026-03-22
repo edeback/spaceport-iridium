@@ -3,10 +3,10 @@ extends Action_Base
 
 var pawn: PawnBase
 var target: Node2D
-var target_is_module: bool = true
 #var path: PackedVector2Array
 var next_path_index: int = 0
-var path_variant: Array = []
+var path: Array[Node2D] = []
+var nodes_to_watch: Array[Node2D] = []
 
 var airlock_data: ModuleData = preload("res://data/modules/module_airlock.tres") as ModuleData
 
@@ -18,8 +18,6 @@ enum PathActionState { Starting, Moving, Finished, Failed }
 
 var action_state: PathActionState = PathActionState.Starting
 
-var modules_to_watch: Array[ModuleBase] = []
-
 func get_description() -> String:
 	return "Pathing to target"
 
@@ -27,59 +25,33 @@ func initialize_action(_pawn: PawnBase, _target: Node2D) -> void:
 	SignalBus.module_removed.connect(module_removed)
 	pawn = _pawn
 	target = _target
-	target_is_module = _target is ModuleBase
-	var target_is_component := _target is ComponentBase
-	#path = []
-	path_variant.clear()
-	modules_to_watch.clear()
+	run_pathfinding()
+	
+func run_pathfinding() -> void:
+	path.clear()
 	sub_path.clear()
+	nodes_to_watch.clear()
 	if pawn.current_module != null:
-		if target_is_module or target_is_component:
-			if pawn.current_module == target:
-				action_state = PathActionState.Finished
-				return
-			if target_is_component and pawn.current_module == target.owner_module:
-				action_state = PathActionState.Finished
-				return
-			# Module -> Module
-			#path = Global.path_manager.run_pathfinding(pawn.current_module, target as ModuleBase, true)
-			if target_is_component:
-				modules_to_watch = Global.path_manager.run_pathfinding_to_component_type(pawn.current_module, target.get_script())
-			else:
-				modules_to_watch = Global.path_manager.run_pathfinding_by_module(pawn.current_module, target as ModuleBase)
-			path_variant.append_array(modules_to_watch)
-		else:
-			# Module -> External
-			#path = Global.path_manager.run_pathfinding_to_type(pawn.current_module, airlock_data, true)
-			modules_to_watch = Global.path_manager.run_pathfinding_to_type_by_module(pawn.current_module, airlock_data)
-			path_variant.append_array(modules_to_watch)
-			# airlock -> direct to object
-			path_variant.append(target)
+		if pawn.current_module == target:
+			action_state = PathActionState.Finished
+			return
+		path = Global.path_manager.run_pathfinding_by_node(pawn.current_module, target)
 	else:
-		if target_is_module or target_is_component:
-			# External -> Module
-			var nearest_airlock: ModuleBase = Global.world_manager.get_nearest_module_by_type(pawn.position, airlock_data)
-			path_variant = [pawn.position]
-			if target_is_component:
-				modules_to_watch = Global.path_manager.run_pathfinding_to_component_type(nearest_airlock, target as ComponentBase)
-			else:
-				modules_to_watch = Global.path_manager.run_pathfinding_by_module(nearest_airlock, target as ModuleBase)
-			path_variant.append_array(modules_to_watch)
-		else:
-			# External -> External
-			# Super easy, just go directly?
-			path_variant = [pawn.position, target]
-	if path_variant.is_empty():
+		path = Global.path_manager.run_pathfinding_by_node(pawn, target)
+
+	if path.is_empty():
 		action_state = PathActionState.Failed
 	else:
-		# Want next module at end so easy to pop
-		modules_to_watch.reverse()
+		next_path_index = 0
+		nodes_to_watch.append_array(path)
+		nodes_to_watch.reverse()
 		action_state = PathActionState.Moving
 		# Debug shove path in UI
 		var packed_path: PackedVector2Array = []
-		for index in path_variant.size():
+		for index in path.size():
 			packed_path.append(Global.world_to_cell(extract_position(index)))
-		Global.ui_in_game.debug_path = packed_path
+		Global.ui_in_game.debug_path_cell = packed_path
+		Global.ui_in_game.debug_path_position = get_debug_path_detailed()
 	
 
 func process_action(delta: float) -> void:
@@ -97,69 +69,79 @@ func module_removed(removed_module: ModuleBase) -> void:
 	if removed_module == target:
 		# Target is gone, we can't ever get there
 		action_state = PathActionState.Failed
-	elif modules_to_watch.has(removed_module):
+	elif nodes_to_watch.has(removed_module):
 		# One of the modules on the path is gone, recalc path
-		initialize_action(pawn, target)
+		run_pathfinding()
+		
+func get_debug_path_detailed() -> PackedVector2Array:
+	var packed_path: PackedVector2Array = []
+	for index: int in path.size():
+		var base_pos := path[index].global_position
+		var sub := get_sub_path(index)
+		if sub.size() > 0:
+			packed_path.append(base_pos + sub[0].start_pos)
+			for data: PathComponent.PathTraversalEdgeData in sub:
+				packed_path.append(base_pos + data.end_pos)
+		else:
+			packed_path.append(extract_position(index))
+			#if path[index] is ModuleBase:
+				#var mod := path[index] as ModuleBase
+				#packed_path.append(mod.get_global_center())
+			#else:
+				#packed_path.append(base_pos)
+	return packed_path
+	
 		
 func extract_position(index: int) -> Vector2:
-	if index >= path_variant.size():
+	if index >= path.size() or index < 0:
 		print("trying to get the path position of an element not in the path_variant array!")
 		return Vector2.ZERO
-	if path_variant[index] is ModuleBase:
-		var module: ModuleBase = path_variant[index] as ModuleBase
-		if index > 0 and path_variant[index - 1] is ModuleBase:
-			var prev_mod: ModuleBase = path_variant[index - 1] as ModuleBase
-			return Vector2(module.get_path_component().get_connection_point_from(prev_mod)) + module.position
+	if path[index] is ModuleBase:
+		var module: ModuleBase = path[index] as ModuleBase
+		if index > 0 and path[index - 1] is ModuleBase:
+			var prev_mod: ModuleBase = path[index - 1] as ModuleBase
+			return Vector2(module.get_path_component().get_connection_point_from(prev_mod)) + module.global_position
 		if pawn.current_module != null and pawn.current_module == module:
-			return pawn.position
+			return pawn.global_position
 		if !module.get_path_component().door_connections.is_empty():
-			return Vector2(module.get_path_component().get_closest_path_point(pawn.position - module.position)) + module.position
+			return Vector2(module.get_path_component().get_closest_path_point(pawn.global_position - module.global_position)) + module.global_position
 		return Global.cell_to_world(module.module_cell, true)
-	elif path_variant[index] is Node2D:
-		var node: Node2D = path_variant[index] as Node2D
-		return node.position
-	elif path_variant[index] is Vector2:
-		return path_variant[index] as Vector2
-	else:
-		assert(false, "Unknown type in path array, failing!")
-		action_state = PathActionState.Failed
-	return Vector2.ZERO
+	return path[index].global_position
 	
 func reached_next_node() -> void:
-	if path_variant[next_path_index] is ModuleBase:
-		var this_module: ModuleBase = path_variant[next_path_index] as ModuleBase
+	if path[next_path_index] is ModuleBase:
+		var this_module: ModuleBase = path[next_path_index] as ModuleBase
 		var prev_module: ModuleBase = null
-		if next_path_index > 0 and path_variant[next_path_index -1 ] is ModuleBase:
-			prev_module = path_variant[next_path_index -1] as ModuleBase
+		if next_path_index > 0 and path[next_path_index - 1] is ModuleBase:
+			prev_module = path[next_path_index - 1] as ModuleBase
 		this_module.enter_module_from(pawn, prev_module)
-		modules_to_watch.pop_back()
 	else:
 		pawn.current_module = null
+	nodes_to_watch.pop_back()
 	next_path_index += 1
-	check_enter_sub_path()
+	sub_path = get_sub_path(next_path_index)
+	if sub_path.size() > 0:
+		sub_path_index = 0
+		in_sub_path = true
 	
-func check_enter_sub_path() -> void:
-	if next_path_index > 0 and next_path_index + 1 < path_variant.size():
-		if path_variant[next_path_index - 1] is ModuleBase and path_variant[next_path_index] is ModuleBase and path_variant[next_path_index + 1] is ModuleBase:
-			var last_module: ModuleBase = path_variant[next_path_index - 1] as ModuleBase
-			var current_module: ModuleBase = path_variant[next_path_index] as ModuleBase
-			var next_module: ModuleBase = path_variant[next_path_index + 1] as ModuleBase
+func get_sub_path(index: int) -> Array[PathComponent.PathTraversalEdgeData]:
+	if index > 0 and index + 1 < path.size():
+		if path[index] is ModuleBase:
+			var current_module: ModuleBase = path[index] as ModuleBase
 			if current_module.get_path_component() != null:
-				sub_path = current_module.get_path_component().get_path_through_module(last_module, next_module)
-				if sub_path.size() > 0:
-					sub_path_index = 0
-					in_sub_path = true
+				return current_module.get_path_component().get_path_through_module(path[index - 1], path[index + 1])
+	return []
 	
 func move(delta: float) -> void:
 	var dist_to_travel: float = pawn.speed * delta
-	var next_position: Vector2 = pawn.position
+	var next_position: Vector2 = pawn.global_position
 	while dist_to_travel > 0:
 		if in_sub_path:
 			if sub_path_index >= sub_path.size():
 				in_sub_path = false
 				reached_next_node()
 				continue
-			var next_path_position: Vector2 = path_variant[next_path_index].position + sub_path[sub_path_index].end_pos
+			var next_path_position: Vector2 = path[next_path_index].global_position + sub_path[sub_path_index].end_pos
 			var travel_vector: Vector2 = next_path_position - next_position
 			var dist_to_next_point: float = travel_vector.length()
 			if dist_to_next_point <= dist_to_travel + 0.0001:
@@ -171,7 +153,7 @@ func move(delta: float) -> void:
 				dist_to_travel = 0
 				break
 		else:
-			if next_path_index >= path_variant.size():
+			if next_path_index >= path.size():
 				break
 			var next_path_position: Vector2 = extract_position(next_path_index)
 			var travel_vector: Vector2 = next_path_position - next_position
@@ -184,11 +166,11 @@ func move(delta: float) -> void:
 				next_position = next_position + travel_vector / dist_to_next_point * dist_to_travel
 				dist_to_travel = 0
 				break
-	if next_position == pawn.position:
+	if next_position == pawn.global_position:
 		# We didn't move, we're done here
 		#print ("tried to move but failed? Marking as finished but investigate")
 		action_state = PathActionState.Finished
-	if next_path_index >= path_variant.size():
+	if next_path_index >= path.size():
 		# Made it to the last position
 		action_state = PathActionState.Finished
 	pawn.move_to(next_position)

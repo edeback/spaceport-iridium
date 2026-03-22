@@ -7,9 +7,14 @@ extends Control
 @export var module_info_panel: PackedScene
 var cur_module_info_panel: ModuleInfoIngamePanel
 
-var debug_path: PackedVector2Array:
+var debug_path_cell: PackedVector2Array:
 	set(new_path):
-		debug_path = new_path
+		debug_path_cell = new_path
+		queue_redraw()
+		
+var debug_path_position: PackedVector2Array:
+	set(new_path):
+		debug_path_position = new_path
 		queue_redraw()
 		
 enum InputMode {None, Module, Structure, Turbolift, Multiplace}
@@ -166,9 +171,16 @@ func close_info_panel() -> void:
 
 func _draw() -> void:	 		
 	var last_point: Variant = null
-	for next_point in debug_path:
+	for next_point in debug_path_cell:
 		if last_point == null:
 			last_point = next_point
 			continue
 		draw_line(last_point * Vector2(Global.CELL_SIZE) + Vector2(32, 32), next_point * Vector2(Global.CELL_SIZE)+ Vector2(32, 32), Color.LAWN_GREEN, 2.5, true) 
+		last_point = next_point
+	last_point = null
+	for next_point in debug_path_position:
+		if last_point == null:
+			last_point = next_point
+			continue
+		draw_line(last_point, next_point, Color.AQUA, 1, true) 
 		last_point = next_point

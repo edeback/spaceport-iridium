@@ -22,7 +22,7 @@ func _process(delta: float) -> void:
 			spawn_asteroid()
 	var asteroids_to_remove: Array[AsteroidBase] = []
 	for asteroid: AsteroidBase in asteroids:
-		if asteroid.position.distance_squared_to(end_point.position) < 45000:
+		if asteroid.position.distance_squared_to(start_point.position) > 4000000:
 			asteroids_to_remove.append(asteroid)
 			asteroid.queue_free()
 	for asteroid: AsteroidBase in asteroids_to_remove:

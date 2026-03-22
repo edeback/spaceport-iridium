@@ -18,9 +18,11 @@ func _ready() -> void:
 	cur_resources = max_resources
 	for weight: float in resource_weighted_values.values():
 		resource_total_weights += weight
+	Global.path_manager.add_vertex(self, true, "space")
 	
 func _exit_tree() -> void:
 	despawning.emit()
+	Global.path_manager.remove_vertex(self)
 
 func _process(delta: float) -> void:
 	position += speed_pixels_per_sec * delta * direction

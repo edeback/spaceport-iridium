@@ -34,6 +34,22 @@ func world_to_tilemap_cell(position: Vector2) -> Vector2i:
 		return tilemap.local_to_map(position)
 	return Vector2i()
 
+func node_path_to_point_path(path: Array[Node2D], use_global_position: bool = false) -> PackedVector2Array:
+	var point_path: PackedVector2Array = []
+	for node: Node2D in path:
+		if node is ModuleBase:
+			var module := node as ModuleBase
+			if use_global_position:
+				point_path.append(cell_to_world(module.module_cell))
+			else:
+				point_path.append(module.module_cell)
+		else:
+			if use_global_position:
+				point_path.append(node.global_position)
+			else:
+				point_path.append(world_to_cell(node.global_position))
+	return point_path
+
 # All the below functions don't really work as they don't read values that aren't overridden
 # Need to figure out how to find the base class
 func get_node_index_from_scene(scene: PackedScene, node: String) -> int:

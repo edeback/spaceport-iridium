@@ -7576,7 +7576,8 @@ start_module = ExtResource("3_facbu")
 module_layers = {
 0: NodePath("../../ForegroundLayers/ModuleLayer"),
 1: NodePath("../../ForegroundLayers/HorizontalTransportLayer"),
-2: NodePath("../../ForegroundLayers/VerticalTransportLayer")
+2: NodePath("../../ForegroundLayers/VerticalTransportLayer"),
+3: NodePath("../../BackgroundLayers/AsteroidLayer")
 }
 pawn_layer = NodePath("../../ForegroundLayers/PawnLayer")
 replacement_module = ExtResource("4_getpj")

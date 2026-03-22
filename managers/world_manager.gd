@@ -1,7 +1,7 @@
 class_name WorldManager
 extends Node
 
-enum StructureLayer { MODULE, CORRIDOR, TURBOLIFT }
+enum StructureLayer { MODULE, CORRIDOR, TURBOLIFT, SPACE }
 enum Multiplacement { NONE, HORIZONTAL, VERTICAL, BOTH }
 
 class LayerData:

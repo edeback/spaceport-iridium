@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://cvrcrbshj8cre"]
+[gd_scene format=3 uid="uid://cvrcrbshj8cre"]
 
 [ext_resource type="Script" uid="uid://cbikuxxna03ab" path="res://objects/asteroid_base.gd" id="1_gwhge"]
 [ext_resource type="Texture2D" uid="uid://cmbwcxe4uwwwt" path="res://assets/sprites/asteroid.png" id="1_yx8kc"]
@@ -10,7 +10,7 @@
 [ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="8_wnbub"]
 [ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicates.tres" id="9_164ux"]
 
-[node name="AsteroidBase" type="Node2D" node_paths=PackedStringArray("sprite")]
+[node name="AsteroidBase" type="Node2D" unique_id=1253064257 node_paths=PackedStringArray("sprite")]
 script = ExtResource("1_gwhge")
 sprite = NodePath("Sprite2D")
 resource_weighted_values = Dictionary[ExtResource("4_iee0s"), float]({
@@ -22,6 +22,6 @@ ExtResource("9_164ux"): 8.0,
 ExtResource("8_wnbub"): 10.0
 })
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=986573433]
 position = Vector2(-7, -8)
 texture = ExtResource("1_yx8kc")

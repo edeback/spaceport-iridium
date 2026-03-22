@@ -5,7 +5,7 @@ extends Node
 
 var graph:ModuleGraph = ModuleGraph.new()
 var debug_path: PackedVector2Array
-var selected_modules: Array[ModuleBase] = []
+var selected_modules: Array[Node2D] = []
 
 var recheck_pathfinding: bool = false
 
@@ -39,9 +39,22 @@ func _on_module_connection_added(from: ModuleBase, to: ModuleBase, distance: flo
 	graph.add_edge(from, to, distance)
 	recheck_pathfinding = true
 	
+func add_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "") -> void:
+	graph.add_vertex(vertex, is_endpoint, group)
+	
+func remove_vertex(vertex: Node2D) -> void:
+	graph.remove_vertex(vertex)
+	selected_modules.erase(vertex)
+	recheck_pathfinding = true
+	
+func add_connection(from: Node2D, to: Node2D, distance: float) -> void:
+	graph.add_edge(from, to, distance)
+	recheck_pathfinding = true
+	
 func _on_module_connection_removed(from: ModuleBase, to: ModuleBase) -> void:
 	graph.remove_edge(from, to)
 	recheck_pathfinding = true
+	
 	
 func _on_module_selected(module: ModuleBase) -> void:
 	if module.selected:
@@ -55,18 +68,25 @@ func check_pathfinding() -> void:
 		debug_path = []
 		for index in range(selected_modules.size() - 1):
 			debug_path.append_array(run_pathfinding(selected_modules[index], selected_modules[index + 1]))
-		ui_in_game.debug_path = debug_path
+		ui_in_game.debug_path_cell = debug_path
 	else:
 		debug_path = []
-		ui_in_game.debug_path = debug_path
+		ui_in_game.debug_path_cell = debug_path
 	
-func _module_path_to_point_path(path: Array[ModuleBase], use_global_position: bool = false) -> PackedVector2Array:
+func _module_path_to_point_path(path: Array[Node2D], use_global_position: bool = false) -> PackedVector2Array:
 	var point_path: PackedVector2Array = []
-	for module: ModuleBase in path:
-		if use_global_position:
-			point_path.append(Global.cell_to_world(module.module_cell))
+	for node: Node2D in path:
+		if node is ModuleBase:
+			var module := node as ModuleBase
+			if use_global_position:
+				point_path.append(Global.cell_to_world(module.module_cell))
+			else:
+				point_path.append(module.module_cell)
 		else:
-			point_path.append(module.module_cell)
+			if use_global_position:
+				point_path.append(node.global_position)
+			else:
+				point_path.append(Global.world_to_cell(node.global_position))
 	return point_path
 	
 func disable_module(module: ModuleBase) -> void:
@@ -78,28 +98,26 @@ func enable_module(module: ModuleBase) -> void:
 	recheck_pathfinding = true
 
 ## Normally in cells, can convert to global
-func run_pathfinding(start_module: ModuleBase, end_module: ModuleBase, use_global_position: bool = false) -> PackedVector2Array:
+func run_pathfinding(start_module: Node2D, end_module: Node2D, use_global_position: bool = false) -> PackedVector2Array:
 	return _module_path_to_point_path(graph.pathfind(start_module, end_module), use_global_position)
-	#return astar.get_point_path(start_module.module_id, end_module.module_id)
 	
-func run_pathfinding_to_type(start_module: ModuleBase, end_type: ModuleData, use_global_position: bool = false) -> PackedVector2Array:
+func run_pathfinding_to_type(start_module: Node2D, end_type: ModuleData, use_global_position: bool = false) -> PackedVector2Array:
 	return _module_path_to_point_path(graph.pathfind_to_type(start_module, end_type), use_global_position)
 	
-func run_pathfinding_by_module(start_module: ModuleBase, end_module: ModuleBase) -> Array[ModuleBase]:
+func run_pathfinding_by_node(start_module: Node2D, end_module: Node2D) -> Array[Node2D]:
 	return graph.pathfind(start_module, end_module)
 	
-func run_pathfinding_to_type_by_module(start_module: ModuleBase, end_type: ModuleData) -> Array[ModuleBase]:
+func run_pathfinding_to_type_by_node(start_module: Node2D, end_type: ModuleData) -> Array[Node2D]:
 	return graph.pathfind_to_type(start_module, end_type)
 	
-func run_pathfinding_to_component_type(start_module: ModuleBase, end_component_type: Variant) -> Array[ModuleBase]:
+func run_pathfinding_to_component_type(start_module: Node2D, end_component_type: Variant) -> Array[Node2D]:
 	return graph.pathfind_to_component_type(start_module, end_component_type)
 
-func run_pathfinding_by_func(start_module: ModuleBase, function: Callable) -> Array[ModuleBase]:
+func run_pathfinding_by_func(start_module: Node2D, function: Callable) -> Array[Node2D]:
 	return graph.pathfind_to_func(start_module, function)
 	
 func get_closest_module_by_cell(start_cell: Vector2i) -> ModuleBase:
-	return graph.get_closest_module_to(start_cell)
-	#return Global.world_manager.get_module_by_id(astar.get_closest_point(start_cell))
+	return graph.get_closest_module_to_position(Global.cell_to_world(start_cell))
 	
 func get_closest_module_by_position(start_position: Vector2) -> ModuleBase:
-	return get_closest_module_by_cell(Global.world_to_cell(start_position))
+	return graph.get_closest_module_to_position(start_position)

@@ -2,7 +2,8 @@ class_name PawnBase
 extends Node2D
 
 @export var cell: Vector2i
-@export var current_module: ModuleBase
+@export var current_module: ModuleBase:
+	set = _on_module_changed
 @export var destination_cell: Vector2i
 @export var destination_module: ModuleBase
 @export var path: PackedVector2Array
@@ -37,6 +38,7 @@ func get_component_by_type(type: Variant) -> PawnComponentBase:
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	Global.path_manager.add_vertex(self, true, "" if current_module != null else "space")
 	#SignalBus.module_selected.connect(_on_module_selected)
 	pass # Replace with function body.
 	
@@ -106,6 +108,7 @@ func _process(delta: float) -> void:
 	#pass
 
 func _exit_tree() -> void:
+	Global.path_manager.remove_vertex(self)
 	if current_job != null:
 		current_job.cancel(true)
 		current_job = null
@@ -118,6 +121,13 @@ func move_to(new_pos: Vector2) -> void:
 			animated_sprite.play("walk")
 			animated_sprite.flip_h = new_pos.x < position.x
 	position = new_pos
+
+func _on_module_changed(new_module: ModuleBase) -> void:
+	current_module = new_module
+	if new_module == null:
+		Global.path_manager.graph.change_vertex_group(self, "space")
+	else:
+		Global.path_manager.graph.change_vertex_group(self, "")
 
 #func _find_next_job() -> void:
 	#if current_job == null:
