@@ -271,6 +271,12 @@ func total_stored_by_resource(resource: ResourceData) -> int:
 		return data.stored
 	return 0
 	
+func is_empty() -> bool:
+	for data: StorageData in storage_data.values():
+		if data.stored > 0:
+			return false
+	return true
+	
 func space_available(excluding_reserve: bool = false) -> int:
 	var cur_stored_and_reserved: int = 0
 	for data: StorageData in storage_data.values():

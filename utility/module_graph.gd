@@ -1,6 +1,10 @@
 class_name ModuleGraph
 extends Resource
 
+class FindableObject:
+	var node: Node2D = null
+	var location: Vector2 = Vector2.ZERO
+
 signal graph_changed
 
 ## StringName, Array[ModuleGraphVertex]
@@ -138,16 +142,22 @@ func _rebuild_subgraphs() -> void:
 			_assign_subgraph_from(vertex, cur_subgraph)
 	last_subgraph = cur_subgraph
 	
-func get_closest_module_to_position(vector: Vector2) -> ModuleBase:
+func get_closest_module_to_position(vector: Vector2, vertices: Array[ModuleGraphVertex] = _vertices.values()) -> ModuleBase:
 	var dist: float = -1
 	var module: ModuleBase = null
-	for vertex: ModuleGraphVertex in _vertices.values():
+	for vertex: ModuleGraphVertex in vertices:
 		if vertex.node is ModuleBase:
 			var new_dist: float = vertex.node.global_position.distance_squared_to(vector)
 			if new_dist < dist or dist < 0:
 				dist = new_dist
 				module = vertex.node as ModuleBase
 	return module
+	
+func get_closest_module_by_group(vector: Vector2, group: StringName) -> ModuleBase:
+	var group_vertices: Array[ModuleGraphVertex] = _linked_groups.get(group, [])
+	if group_vertices.is_empty():
+		return null
+	return get_closest_module_to_position(vector, group_vertices)
 
 func pathfind(start: Node2D, end: Node2D) -> Array[Node2D]:
 	var start_vertex: ModuleGraphVertex = _vertices.get(start)
@@ -161,21 +171,21 @@ func pathfind(start: Node2D, end: Node2D) -> Array[Node2D]:
 	var came_from: Dictionary[ModuleGraphVertex, ModuleGraphVertex]
 	var cost_so_far: Dictionary[ModuleGraphVertex, float]
 	cost_so_far[start_vertex] = 0
-	var added_groups: Array[StringName] = []
+	#var added_groups: Array[StringName] = []
 	while not frontier.is_empty():
 		var current: ModuleGraphVertex = frontier.extract()
 		if current == end_vertex:
 			break
 			
-		if current.group and !added_groups.has(current.group):
-			# Group means direct connection, so just go there directly now
-			if end_vertex.group == current.group:
-				came_from[end_vertex] = current
-				break
-			# Add all group members, but only once ever!
-			added_groups.append(current.group)
+		if current.group: #and !added_groups.has(current.group):
+			## Group means direct connection, so just go there directly now
+			#if end_vertex.group == current.group:
+				#came_from[end_vertex] = current
+				#break
+			## Add all group members, but only once ever!
+			#added_groups.append(current.group)
 			for linked: ModuleGraphVertex in _linked_groups[current.group]:
-				if linked != current and not linked.endpoint:
+				if linked == end_vertex or (linked != current and not linked.endpoint):
 					var new_cost: float = cost_so_far[current] + linked.dist_to(current)
 					if not cost_so_far.has(linked) or new_cost < cost_so_far[linked]:
 						cost_so_far[linked] = new_cost
@@ -184,7 +194,7 @@ func pathfind(start: Node2D, end: Node2D) -> Array[Node2D]:
 						came_from[linked] = current
 						
 		for next: ModuleGraphVertex in current.edges.keys():
-			if next.blocked:
+			if next.blocked or (next.endpoint and next != end_vertex):
 				continue
 			var new_cost: float = cost_so_far[current] + current.edges[next].cost
 			if not cost_so_far.has(next) or new_cost < cost_so_far[next]:
@@ -212,6 +222,10 @@ func _heuristic(_start: ModuleGraphVertex, _end: ModuleGraphVertex) -> float:
 	# return start.dist_squared_to(end)
 	return 0 # Otherwise we never check teleporters...
 	#return start.dist_to(end)
+	
+func pathfind_to_space_location(start: Node2D, end_pos: Vector2) -> Array[Node2D]:
+	
+	return []
 	
 func pathfind_to_type(start: Node2D, end_type: ModuleData) -> Array[Node2D]:
 	if end_type == null:

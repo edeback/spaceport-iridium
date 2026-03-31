@@ -6,6 +6,8 @@ extends Resource
 var priority: int = 0
 var repeat_after_finish: bool = false
 
+enum JobState { Starting, Moving, Working, Finished, Failed }
+
 signal subtask_changed
 
 signal job_end

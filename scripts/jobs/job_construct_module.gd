@@ -17,6 +17,8 @@ var shift_spot_elapsed: float = 0.0
 enum ConstructModuleState { Starting, MovingToModule, ConstructModule, DeconstructModule, Finished, Failed }
 
 func get_job_description() -> String:
+	if deconstruct:
+		return "Deconstruct Module"
 	return "Construct Module"
 
 func get_subtask_description() -> String:
@@ -52,7 +54,7 @@ func is_valid() -> bool:
 	return is_instance_valid(module_to_construct) and is_instance_valid(construction_component)
 	
 func can_do_job(_pawn: PawnBase) -> bool:
-	if !construction_component.ready_for_construction():
+	if !deconstruct and !construction_component.ready_for_construction():
 		return false
 	var test_action: Action_PathToTarget = Action_PathToTarget.new()
 	test_action.initialize_action(_pawn, module_to_construct)

@@ -121,3 +121,6 @@ func get_closest_module_by_cell(start_cell: Vector2i) -> ModuleBase:
 	
 func get_closest_module_by_position(start_position: Vector2) -> ModuleBase:
 	return graph.get_closest_module_to_position(start_position)
+
+func get_closest_module_by_group(start_position: Vector2, group: StringName) -> ModuleBase:
+	return graph.get_closest_module_by_group(start_position, group)

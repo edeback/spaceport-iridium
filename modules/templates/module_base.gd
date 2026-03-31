@@ -16,6 +16,7 @@ extends ObjectBase
 @export var blocks_building: bool = true
 @export var can_delete: bool = true
 @export var structure_check_before_delete: bool = true
+@export var add_to_groups: Array[StringName] = []
 
 @export var offset: Node2D
 
@@ -79,6 +80,8 @@ func _ready() -> void:
 	elif nameplate != null:
 		nameplate.text = ""
 	add_to_group("module")
+	for group_name: StringName in add_to_groups:
+		add_to_group(group_name)
 	if SignalBus.is_node_ready():
 		SignalBus.module_added.emit(self)
 	on_place()
@@ -159,6 +162,8 @@ func enter_module_from(pawn: PawnBase, _prev_module: ModuleBase = null) -> void:
 	# TODO Hack for not going "inside" space things but there must be a better way
 	if Global.path_manager.graph._vertices[self].group != "space":
 		pawn.current_module = self
+	else:
+		pawn.current_module = null
 	
 func get_sprite() -> Sprite2D:
 	return sprite

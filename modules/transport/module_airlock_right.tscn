@@ -17,6 +17,7 @@ size = Vector2(62, 62)
 
 [node name="Module" unique_id=1773302990 instance=ExtResource("1_aa1sr")]
 size = Vector2i(2, 1)
+add_to_groups = Array[StringName]([&"airlock"])
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
 material = SubResource("ShaderMaterial_y8cay")
@@ -27,9 +28,10 @@ flip_h = true
 shape = SubResource("RectangleShape2D_qynlb")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
-path_points = Array[Vector2i]([Vector2i(32, 32), Vector2i(64, 32)])
+path_points = Array[Vector2i]([Vector2i(16, 58), Vector2i(64, 32), Vector2i(32, 32)])
 path_edges = Dictionary[Vector2i, String]({
-Vector2i(0, 1): ""
+Vector2i(0, 2): "",
+Vector2i(1, 2): ""
 })
 door_connections = Dictionary[int, int]({
 0: 1,

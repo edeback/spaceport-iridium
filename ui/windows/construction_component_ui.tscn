@@ -1,0 +1,67 @@
+[gd_scene format=3 uid="uid://doqkmy452ang8"]
+
+[ext_resource type="Script" uid="uid://dk8pm05nqtw7" path="res://ui/windows/construction_component_ui.gd" id="1_3ek1m"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3ek1m"]
+draw_center = false
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.7059392, 3.5376102e-06, 3.85046e-07, 1)
+
+[node name="Construct_Destruct" type="PanelContainer" unique_id=858414470 node_paths=PackedStringArray("progress_container", "label", "progress_bar", "button_container", "deconstruct_button", "demolish_button")]
+offset_right = 192.0
+offset_bottom = 66.0
+script = ExtResource("1_3ek1m")
+progress_container = NodePath("MarginContainer/VBoxContainer/ProgressContainer")
+label = NodePath("MarginContainer/VBoxContainer/ProgressContainer/Label")
+progress_bar = NodePath("MarginContainer/VBoxContainer/ProgressContainer/ProgressBar")
+button_container = NodePath("MarginContainer/VBoxContainer/ButtonContainer")
+deconstruct_button = NodePath("MarginContainer/VBoxContainer/ButtonContainer/DeconstructButton")
+demolish_button = NodePath("MarginContainer/VBoxContainer/ButtonContainer/DemolishButton")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=234303292]
+layout_mode = 2
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=2100798372]
+layout_mode = 2
+
+[node name="ProgressContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=375260659]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/ProgressContainer" unique_id=959306051]
+layout_mode = 2
+text = "Constructing:"
+
+[node name="ProgressBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/ProgressContainer" unique_id=1059177155]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 1.0
+value = 0.5
+
+[node name="ButtonContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1713252922]
+layout_mode = 2
+
+[node name="DeconstructButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonContainer" unique_id=18345788]
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Carefully dismantle this module for a full resource refund"
+theme_override_styles/pressed = SubResource("StyleBoxFlat_3ek1m")
+toggle_mode = true
+text = "Deconstruct"
+
+[node name="DemolishButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonContainer" unique_id=1244553203]
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Instantly destroy this module (no resource refund)"
+theme_override_styles/pressed = SubResource("StyleBoxFlat_3ek1m")
+toggle_mode = true
+text = "Demolish"
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonContainer/DeconstructButton" to="." method="_on_deconstruct_button_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonContainer/DemolishButton" to="." method="_on_demolish_button_pressed"]

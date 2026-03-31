@@ -17,6 +17,7 @@ size = Vector2(62, 62)
 
 [node name="Module" unique_id=1683758623 instance=ExtResource("1_jfu4r")]
 size = Vector2i(2, 1)
+add_to_groups = Array[StringName]([&"airlock"])
 
 [node name="Offset" parent="." index="0" unique_id=498681270]
 position = Vector2(96, 32)
@@ -29,9 +30,10 @@ texture = ExtResource("3_2vd0s")
 shape = SubResource("RectangleShape2D_h2ut6")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
-path_points = Array[Vector2i]([Vector2i(96, 32), Vector2i(64, 32)])
+path_points = Array[Vector2i]([Vector2i(80, 58), Vector2i(64, 32), Vector2i(96, 32)])
 path_edges = Dictionary[Vector2i, String]({
-Vector2i(0, 1): ""
+Vector2i(0, 2): "",
+Vector2i(1, 2): ""
 })
 door_connections = Dictionary[int, int]({
 0: 1,

@@ -275,9 +275,11 @@ height = 22.0
 
 [node name="PawnBase" type="Node2D" unique_id=1154928948 node_paths=PackedStringArray("collision")]
 script = ExtResource("1_4rv7m")
-collision = NodePath("Area2D")
+collision = NodePath("Offset/Area2D")
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=949508764]
+[node name="Offset" type="Node2D" parent="." unique_id=1164109464]
+
+[node name="Sprite2D" type="Sprite2D" parent="Offset" unique_id=949508764]
 visible = false
 texture_filter = 1
 scale = Vector2(0.3, 0.3)
@@ -285,25 +287,25 @@ texture = ExtResource("2_tngjo")
 region_enabled = true
 region_rect = Rect2(16, 32, 64, 96)
 
-[node name="Crew" type="AnimatedSprite2D" parent="." unique_id=552917447]
+[node name="Crew" type="AnimatedSprite2D" parent="Offset" unique_id=552917447]
 visible = false
 scale = Vector2(0.25, 0.25)
 sprite_frames = SubResource("SpriteFrames_o283h")
 animation = &"idle"
 
-[node name="Robot" type="AnimatedSprite2D" parent="." unique_id=264074984]
+[node name="Robot" type="AnimatedSprite2D" parent="Offset" unique_id=264074984]
 scale = Vector2(0.3, 0.3)
 sprite_frames = SubResource("SpriteFrames_dda5j")
 animation = &"stand"
 offset = Vector2(0, -16)
 
-[node name="Area2D" type="Area2D" parent="." unique_id=845226640]
+[node name="Area2D" type="Area2D" parent="Offset" unique_id=845226640]
 collision_mask = 0
 monitoring = false
 monitorable = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=600900905]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Offset/Area2D" unique_id=600900905]
 light_mask = 0
 shape = SubResource("CapsuleShape2D_j6cx7")
 
-[connection signal="input_event" from="Area2D" to="." method="_on_collision_clicked"]
+[connection signal="input_event" from="Offset/Area2D" to="." method="_on_collision_clicked"]

@@ -67,7 +67,8 @@ func get_nearest_module_by_type(position: Vector2, module_data: ModuleData) -> M
 func purchase_and_add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false, allow_cost_overrun: bool = false) -> void:
 	if not allow_cost_overrun and !module_data.can_afford():
 		return
-	module_data.withdraw_cost()
+	if module_data.instant_build:
+		module_data.withdraw_cost()
 	add_module(module_data, cell, is_horizontal, flipped)
 
 func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false) -> void:

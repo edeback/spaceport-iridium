@@ -29,6 +29,7 @@ collision_upper = NodePath("Offset/Footprint/CollisionUpper")
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
 material = SubResource("ShaderMaterial_inhrl")
 texture = ExtResource("5_nlvn8")
+region_rect = Rect2(192, 0, 64, 64)
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
 position = Vector2(11, 15.5)
@@ -41,10 +42,14 @@ disabled = true
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(0, 1)])
-path_points = Array[Vector2i]([Vector2i(44, 0), Vector2i(44, 64), Vector2i(44, 58)])
+path_points = Array[Vector2i]([Vector2i(45, 0), Vector2i(45, 64), Vector2i(44, 56), Vector2i(56, 56), Vector2i(30, 40), Vector2i(56, 24), Vector2i(30, 8)])
 path_edges = Dictionary[Vector2i, String]({
-Vector2i(0, 2): "",
-Vector2i(1, 2): ""
+Vector2i(1, 3): "",
+Vector2i(2, 3): "",
+Vector2i(3, 4): "",
+Vector2i(4, 5): "",
+Vector2i(5, 6): "",
+Vector2i(6, 0): ""
 })
 door_connections = Dictionary[int, int]({
 2: 1
@@ -52,4 +57,5 @@ door_connections = Dictionary[int, int]({
 door_required = false
 
 [node name="StructureComponent" parent="." index="2" unique_id=2060859123]
+visible = false
 connection_points = Array[Vector2i]([Vector2i(0, 0)])

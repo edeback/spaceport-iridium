@@ -39,9 +39,14 @@ func get_component_by_type(type: Variant) -> PawnComponentBase:
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	Global.path_manager.add_vertex(self, true, "" if current_module != null else "space")
+	SignalBus.module_removed.connect(_on_module_removed)
 	#SignalBus.module_selected.connect(_on_module_selected)
 	pass # Replace with function body.
 	
+
+func _on_module_removed(module: ModuleBase) -> void:
+	if current_module == module:
+		current_module = null
 
 func try_start_job(new_job: JobBase) -> bool:
 	if current_job == null and new_job.can_do_job(self):
@@ -55,6 +60,17 @@ func start_job() -> void:
 	current_job = Global.job_manager.find_job(self)
 	if current_job:
 		current_job.start_job(self)
+	else:
+		# Wander!
+		var idle_job: Job_IdleWander = Job_IdleWander.new()
+		if idle_job.can_do_job(self):
+			current_job = idle_job
+			current_job.start_job(self)
+		else:
+			# Can't even move anywhere, idle pose
+			if animated_sprite != null:
+				animated_sprite.play("idle")
+		
 	#var processors: Array[Node] = get_tree().get_nodes_in_group("processor")
 	#if processors.size() > 0:
 		#job_mine_asteroid = Job_MineAsteroid.new()

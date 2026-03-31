@@ -13,8 +13,8 @@ var export_storage: StorageComponent
 var deposit_storage: StorageComponent
 var action: Action_PathToTarget = null
 
-enum JobState { Start, GoToResource, GatherResource, ReturnWithResource, DepositResource, Finished, Failed }
-var job_state: JobState = JobState.Start:
+enum ResourceJobState { Start, GoToResource, GatherResource, ReturnWithResource, DepositResource, Finished, Failed }
+var job_state: ResourceJobState = ResourceJobState.Start:
 	set(new_state):
 		if job_state != new_state:
 			job_state = new_state
@@ -25,13 +25,13 @@ func get_job_description() -> String:
 
 func get_subtask_description() -> String:
 	match job_state:
-		JobState.GoToResource:
+		ResourceJobState.GoToResource:
 			return "Going to resource"
-		JobState.GatherResource:
+		ResourceJobState.GatherResource:
 			return "Gathering resource"
-		JobState.ReturnWithResource:
+		ResourceJobState.ReturnWithResource:
 			return "Returning with resource"
-		JobState.DepositResource:
+		ResourceJobState.DepositResource:
 			return "Depositing resource"
 	return ""
 
@@ -57,42 +57,42 @@ func can_do_job(_pawn: PawnBase) -> bool:
 
 func start_job(_pawn: PawnBase) -> void:
 	pawn = _pawn
-	if job_state != JobState.Failed:
-		job_state = JobState.Start
+	if job_state != ResourceJobState.Failed:
+		job_state = ResourceJobState.Start
 
 func process_job(delta: float) -> void:
 	match job_state:
-		JobState.Start:
+		ResourceJobState.Start:
 			job_start()
 			pass
-		JobState.GoToResource:
+		ResourceJobState.GoToResource:
 			move_to_export_storage(delta)
 			pass
-		JobState.GatherResource:
+		ResourceJobState.GatherResource:
 			gather_resource()
 			pass
-		JobState.ReturnWithResource:
+		ResourceJobState.ReturnWithResource:
 			move_to_import_storage(delta)
 			pass
-		JobState.DepositResource:
+		ResourceJobState.DepositResource:
 			deposit_resource()
 			pass
-		JobState.Finished:
+		ResourceJobState.Finished:
 			pass
-		JobState.Failed:
+		ResourceJobState.Failed:
 			pass
 			
 func is_finished() -> bool:
-	return job_state == JobState.Finished
+	return job_state == ResourceJobState.Finished
 	
 func is_failed() -> bool:
-	return job_state == JobState.Failed
+	return job_state == ResourceJobState.Failed
 	
 func cancel(as_failed: bool) -> void:
 	if as_failed:
-		job_state = JobState.Failed
+		job_state = ResourceJobState.Failed
 	else:
-		job_state = JobState.Finished
+		job_state = ResourceJobState.Finished
 	if action != null:
 		action.free()
 		action = null
@@ -118,7 +118,7 @@ func job_start() -> void:
 		export_storage = storage_component
 		export_storage.add_withdraw_job(self)
 		deposit_storage.add_deposit_job(self)
-		job_state = JobState.GoToResource
+		job_state = ResourceJobState.GoToResource
 	else:
 		cancel(true)
 	
@@ -130,13 +130,13 @@ func move_to_export_storage(delta: float) -> void:
 	if action.is_failed():
 		cancel(true)
 	elif action.is_finished():
-		job_state = JobState.GatherResource
+		job_state = ResourceJobState.GatherResource
 		action.free()
 		action = null
 		
 func gather_resource() -> void:
 	if export_storage.complete_withdraw_job(self):
-		job_state = JobState.ReturnWithResource
+		job_state = ResourceJobState.ReturnWithResource
 	else:
 		cancel(true)
 		
@@ -148,13 +148,13 @@ func move_to_import_storage(delta: float) -> void:
 	if action.is_failed():
 		cancel(true)
 	elif action.is_finished():
-		job_state = JobState.DepositResource
+		job_state = ResourceJobState.DepositResource
 		action.free()
 		action = null
 		
 func deposit_resource() -> void:
 	if deposit_storage.complete_deposit_job(self):
-		job_state = JobState.Finished
+		job_state = ResourceJobState.Finished
 	else:
 		cancel(true)
 #

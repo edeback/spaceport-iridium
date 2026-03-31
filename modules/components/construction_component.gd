@@ -1,18 +1,24 @@
 class_name ConstructionComponent
 extends ComponentBase
 
-@export var instant_build : bool = false
 @export var material_storage: StorageComponent
 @export var work_seconds_to_complete: float = 10
+@export var deconstruction_time_multiplier: float = 0.25
 var work_seconds_done: float = 0:
 	set = _set_work_seconds
 
 enum ConstructionState { Paused, NotStarted, Constructing, Built, Deconstructing, Deconstructed }
-var current_state : ConstructionState = ConstructionState.NotStarted
+var current_state : ConstructionState = ConstructionState.NotStarted:
+	set(new_state):
+		if new_state != current_state:
+			current_state = new_state
+			state_changed.emit(new_state)
 var construction_job: Job_ConstructModule = null
 
 signal construction_finished
 signal deconstruction_finished
+signal state_changed(new_state: ConstructionState)
+signal progress_changed(new_progress: float)
 
 func _ready() -> void:
 	super()
@@ -36,6 +42,15 @@ func ready_constructed() -> void:
 	material_storage.display_info_panel_ui = false
 	Global.path_manager.graph.change_vertex_group(owner_module, "")
 
+func start_deconstruction() -> void:
+	set_process(true)
+	work_seconds_done = work_seconds_to_complete * deconstruction_time_multiplier
+	construction_job = Job_ConstructModule.new()
+	construction_job.setup(owner_module)
+	construction_job.deconstruct = true
+	Global.job_manager.add_job(construction_job)
+	current_state = ConstructionState.Deconstructing
+
 func _process(delta: float) -> void:
 	match current_state:
 		ConstructionState.Paused:
@@ -46,6 +61,7 @@ func _process(delta: float) -> void:
 				construction_job.setup(owner_module)
 				Global.job_manager.add_job(construction_job)
 				current_state = ConstructionState.Constructing
+				work_seconds_done = 0
 		ConstructionState.Constructing:
 			if work_seconds_done >= work_seconds_to_complete:
 				current_state = ConstructionState.Built
@@ -54,13 +70,27 @@ func _process(delta: float) -> void:
 		ConstructionState.Built:
 			pass
 		ConstructionState.Deconstructing:
-			pass
+			if work_seconds_done <= 0:
+				current_state = ConstructionState.Deconstructed
+				deconstruction_finished.emit()
+				setup_storage_post_deconstruction()
+				work_seconds_done = 0
+				current_state = ConstructionState.Deconstructed
 		ConstructionState.Deconstructed:
-			deconstruction_finished.emit()
+			if material_storage.is_empty():
+				Global.world_manager.remove_module(owner_module, false)
 
 func _set_work_seconds(new_work_seconds: float) -> void:
 	work_seconds_done = new_work_seconds
-	owner_module.progress = work_seconds_done / work_seconds_to_complete
+	var progress: float = get_progress()
+	owner_module.progress = progress
+	progress_changed.emit(progress)
+
+func get_progress() -> float:
+	var progress: float = work_seconds_done / work_seconds_to_complete
+	if current_state == ConstructionState.Deconstructing:
+		progress /= deconstruction_time_multiplier
+	return progress
 
 func ready_for_construction() -> bool:
 	if owner_module.module_data.resource_costs.is_empty():
@@ -106,3 +136,11 @@ func setup_storage_post_deconstruction() -> void:
 			new_data.desired = owner_module.module_data.resource_costs[resource]
 			new_data.stored = new_data.desired
 			material_storage.storage_data[resource] = new_data
+
+func has_ui() -> bool:
+	return true
+	
+func get_ui() -> ModuleComponentUI:
+	var ui: ConstructionComponentUI = ui_info_panel_element.instantiate() as ConstructionComponentUI
+	ui.set_construction_component(self)
+	return ui

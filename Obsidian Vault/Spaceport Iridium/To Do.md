@@ -64,8 +64,4 @@ Transportation modules:
 
 current work:
 - allow pathfind to specific location in module_graph? (like a position instead of a node2d)
-- Give pawns the tag of being in space or not (maybe?)
 - rework action_pathtotarget to be more general
-- tag teleporters in a special group, "space" side of airlocks in a special group
-- link airlock outsides to insides
-	- Maybe put door logic into path_component? Door to "space" layer?

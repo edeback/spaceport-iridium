@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://c87qnpmys3w6c"]
+[gd_scene format=3 uid="uid://c87qnpmys3w6c"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_lf8xj"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_3m4vr"]
@@ -10,27 +10,28 @@ shader = ExtResource("2_3m4vr")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_15wy0"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lf8xj"]
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
-[node name="Module" instance=ExtResource("1_lf8xj")]
+[node name="Module" unique_id=269448849 instance=ExtResource("1_lf8xj")]
 
-[node name="Sprite" parent="Offset" index="0"]
+[node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
 material = SubResource("ShaderMaterial_1bqgj")
 
-[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
-shape = SubResource("RectangleShape2D_15wy0")
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
+shape = SubResource("RectangleShape2D_lf8xj")
 
-[node name="PathComponent" parent="." index="1"]
+[node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([])
-door_indices = Array[Vector2i]([])
+door_connections = Dictionary[int, int]({})
 door_required = false
 
-[node name="LightingComponent" parent="." index="3" node_paths=PackedStringArray("power_generation_component") instance=ExtResource("5_rcgfq")]
+[node name="LightingComponent" parent="." index="3" unique_id=749465845 node_paths=PackedStringArray("power_generation_component") instance=ExtResource("5_rcgfq")]
 position = Vector2(32, 32)
 power_generation_component = NodePath("../PowerGenerationComponent")
 
-[node name="PowerGenerationComponent" parent="." index="4" instance=ExtResource("3_gkv42")]
+[node name="PowerGenerationComponent" parent="." index="4" unique_id=562228203 instance=ExtResource("3_gkv42")]
 power_output = 10000000.0

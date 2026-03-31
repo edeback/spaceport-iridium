@@ -3,9 +3,7 @@ extends JobBase
 
 var pawn: PawnBase = null
 var action: Action_PathToTarget = null
-
-enum JobState { Start, GoToModule, Eat, Finished, Failed }
-var job_state: JobState = JobState.Start
+var job_state: JobBase.JobState = JobBase.JobState.Starting
 
 func can_do_job(_pawn: PawnBase) -> bool:
 	var sus_components := _pawn.get_tree().get_nodes_in_group("sustenance_component")
@@ -20,35 +18,35 @@ func can_do_job(_pawn: PawnBase) -> bool:
 func start_job(_pawn: PawnBase) -> void:
 	pawn = _pawn
 	if job_state != JobState.Failed:
-		job_state = JobState.Start
+		job_state = JobState.Starting
 
 func process_job(delta: float) -> void:
 	match job_state:
-		JobState.Start:
+		JobBase.JobState.Starting:
 			job_start()
 			pass
-		JobState.GoToModule:
+		JobBase.JobState.Moving:
 			move_to_module(delta)
 			pass
-		JobState.Eat:
+		JobBase.JobState.Working:
 			eat()
 			pass
-		JobState.Finished:
+		JobBase.JobState.Finished:
 			pass
-		JobState.Failed:
+		JobBase.JobState.Failed:
 			pass
 			
 func is_finished() -> bool:
-	return job_state == JobState.Finished
+	return job_state == JobBase.JobState.Finished
 	
 func is_failed() -> bool:
-	return job_state == JobState.Failed
+	return job_state == JobBase.JobState.Failed
 	
 func cancel(as_failed: bool) -> void:
 	if as_failed:
-		job_state = JobState.Failed
+		job_state = JobBase.JobState.Failed
 	else:
-		job_state = JobState.Finished
+		job_state = JobBase.JobState.Finished
 	if action != null:
 		action.free()
 		action = null
@@ -61,7 +59,7 @@ func job_start() -> void:
 	if action.is_failed():
 		cancel(true)
 	else:
-		job_state = JobState.GoToModule
+		job_state = JobBase.JobState.Moving
 	
 func move_to_module(delta: float) -> void:
 	if action == null:
@@ -70,7 +68,7 @@ func move_to_module(delta: float) -> void:
 	if action.is_failed():
 		cancel(true)
 	elif action.is_finished():
-		job_state = JobState.Eat
+		job_state = JobBase.JobState.Working
 		action.free()
 		action = null
 
@@ -79,6 +77,6 @@ func eat() -> void:
 	if sus_component != null:
 		if sus_component.consume_sustenance(10):
 			(pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent).hunger_value += 10
-		job_state = JobState.Finished
+		job_state = JobBase.JobState.Finished
 	else:
 		cancel(true)

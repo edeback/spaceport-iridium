@@ -1,5 +1,5 @@
 class_name ModuleComponentUI
-extends Control
+extends PanelContainer
 
 var associated_module: ModuleBase
 

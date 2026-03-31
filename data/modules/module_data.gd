@@ -5,6 +5,7 @@ extends Resource
 @export var description: String = ""
 @export var scene: PackedScene
 @export var icon: Texture2D
+@export var instant_build: bool = true
 @export var resource_costs: Dictionary[ResourceData, int]
 @export var tags: Array[String]
 ## Can you click-drag to place multiples?

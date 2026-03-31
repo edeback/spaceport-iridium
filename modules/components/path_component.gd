@@ -95,14 +95,19 @@ func get_connection_point_from(prev_module: Node2D) -> Vector2i:
 	return Vector2i.ZERO
 	
 func get_path_through_module(start_module: Node2D, end_module: Node2D) -> Array[PathTraversalEdgeData]:
+	var start_index: int = module_connections.get(start_module, -1)
+	var end_index: int = module_connections.get(end_module, -1)
+	return _get_path_within_module(start_index, end_index)
+	
+func get_path_exiting_module(start_global_position: Vector2, end_module: Node2D) -> Array[PathTraversalEdgeData]:
+	var local_vec = start_global_position - owner_module.global_position
+	var start_index: int = astar.get_closest_point(local_vec)
+	var end_index: int = module_connections.get(end_module, -1)
+	return _get_path_within_module(start_index, end_index)
+
+func _get_path_within_module(start_index: int, end_index: int) -> Array[PathTraversalEdgeData]:
 	var path: Array[PathTraversalEdgeData] = []
-	var start_index: int = -1
-	if module_connections.has(start_module):
-		start_index = module_connections[start_module]
-	var end_index: int = -1
-	if module_connections.has(end_module):
-		end_index = module_connections[end_module]
-	if start_index != -1 and end_index != -1 and start_index != end_index:
+	if start_index > -1 and end_index > -1 and start_index != end_index:
 		var id_path: PackedInt64Array = astar.get_id_path(start_index, end_index)
 		for index in range(id_path.size() - 1):
 			var edge_data: PathTraversalEdgeData = PathTraversalEdgeData.new()

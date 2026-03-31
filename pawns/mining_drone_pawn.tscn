@@ -3,8 +3,16 @@
 [ext_resource type="PackedScene" uid="uid://ddoebv5qw5lfm" path="res://pawns/pawn_base.tscn" id="1_gfyck"]
 [ext_resource type="Script" uid="uid://dstr5gvqm0f3m" path="res://pawns/mining_drone_pawn.gd" id="2_ows4s"]
 
-[node name="PawnBase" unique_id=581295898 instance=ExtResource("1_gfyck")]
+[node name="PawnBase" unique_id=581295898 node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_gfyck")]
 script = ExtResource("2_ows4s")
 drone_efficiency = 0.2
 cargo_size = 5.0
 powered = true
+animated_sprite = NodePath("Offset/Robot")
+
+[node name="Robot" parent="Offset" parent_id_path=PackedInt32Array(1164109464) index="2" unique_id=264074984]
+position = Vector2(0, -7)
+scale = Vector2(0.2, 0.2)
+
+[node name="CollisionShape2D" parent="Offset/Area2D" parent_id_path=PackedInt32Array(845226640) index="0" unique_id=600900905]
+position = Vector2(0, -7)

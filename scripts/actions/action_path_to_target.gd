@@ -3,6 +3,7 @@ extends Action_Base
 
 var pawn: PawnBase
 var target: Node2D
+var speed: float = 1.0
 #var path: PackedVector2Array
 var next_path_index: int = 0
 var path: Array[Node2D] = []
@@ -21,10 +22,11 @@ var action_state: PathActionState = PathActionState.Starting
 func get_description() -> String:
 	return "Pathing to target"
 
-func initialize_action(_pawn: PawnBase, _target: Node2D) -> void:
+func initialize_action(_pawn: PawnBase, _target: Node2D, _speed: float = 1.0) -> void:
 	SignalBus.module_removed.connect(module_removed)
 	pawn = _pawn
 	target = _target
+	speed = _speed
 	run_pathfinding()
 	
 func run_pathfinding() -> void:
@@ -36,6 +38,10 @@ func run_pathfinding() -> void:
 			action_state = PathActionState.Finished
 			return
 		path = Global.path_manager.run_pathfinding_by_node(pawn.current_module, target)
+		sub_path = get_partial_sub_path(0)
+		if sub_path.size() > 0:
+			sub_path_index = 0
+			in_sub_path = true
 	else:
 		path = Global.path_manager.run_pathfinding_by_node(pawn, target)
 
@@ -132,8 +138,16 @@ func get_sub_path(index: int) -> Array[PathComponent.PathTraversalEdgeData]:
 				return current_module.get_path_component().get_path_through_module(path[index - 1], path[index + 1])
 	return []
 	
+func get_partial_sub_path(index: int) -> Array[PathComponent.PathTraversalEdgeData]:
+	if index >= 0 and index + 1 < path.size():
+		if path[index] is ModuleBase:
+			var current_module: ModuleBase = path[index] as ModuleBase
+			if current_module.get_path_component() != null:
+				return current_module.get_path_component().get_path_exiting_module(pawn.global_position, path[index + 1])
+	return []
+	
 func move(delta: float) -> void:
-	var dist_to_travel: float = pawn.speed * delta
+	var dist_to_travel: float = pawn.speed * delta * speed
 	var next_position: Vector2 = pawn.global_position
 	while dist_to_travel > 0:
 		if in_sub_path:

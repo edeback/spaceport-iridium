@@ -15,6 +15,7 @@ script = ExtResource("3_6le0c")
 name = "Solar Panel"
 scene = ExtResource("2_7kodw")
 icon = SubResource("AtlasTexture_15jww")
+instant_build = false
 resource_costs = Dictionary[ExtResource("2_6dlf4"), int]({
 ExtResource("3_gc65i"): 1
 })
