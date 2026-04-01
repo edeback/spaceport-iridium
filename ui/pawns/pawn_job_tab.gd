@@ -20,4 +20,4 @@ func subtask_changed() -> void:
 		%CurrentSubTask.text = pawn.current_job.get_subtask_description()
 	else:
 		%CurrentSubTask.text = ""
-	%CurrentSubTask.visible = not %CurrentSubTask.text.is_empty()
+	%SubTaskContainer.visible = not %CurrentSubTask.text.is_empty()

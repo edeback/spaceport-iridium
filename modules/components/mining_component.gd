@@ -63,7 +63,7 @@ func _process(_delta: float) -> void:
 func build_drone() -> void:
 	var new_drone: MiningDronePawn = mining_drone_scene.instantiate() as MiningDronePawn
 	Global.world_manager.pawn_layer.add_child(new_drone)
-	new_drone.global_position = global_position
+	new_drone.global_position = Global.cell_to_world(owner_module.module_cell, true)
 	new_drone.current_module = owner_module
 	drones.append(new_drone)
 

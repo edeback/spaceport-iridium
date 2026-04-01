@@ -7,6 +7,8 @@ var astar: AStar2D = AStar2D.new()
 class PathTraversalEdgeData:
 	var start_pos: Vector2
 	var end_pos: Vector2
+	var start_index: int
+	var end_index: int
 	var edge_meta: String
 	
 @export var door_not_connected_image: Texture2D
@@ -100,7 +102,7 @@ func get_path_through_module(start_module: Node2D, end_module: Node2D) -> Array[
 	return _get_path_within_module(start_index, end_index)
 	
 func get_path_exiting_module(start_global_position: Vector2, end_module: Node2D) -> Array[PathTraversalEdgeData]:
-	var local_vec = start_global_position - owner_module.global_position
+	var local_vec := start_global_position - owner_module.global_position
 	var start_index: int = astar.get_closest_point(local_vec)
 	var end_index: int = module_connections.get(end_module, -1)
 	return _get_path_within_module(start_index, end_index)
@@ -111,6 +113,8 @@ func _get_path_within_module(start_index: int, end_index: int) -> Array[PathTrav
 		var id_path: PackedInt64Array = astar.get_id_path(start_index, end_index)
 		for index in range(id_path.size() - 1):
 			var edge_data: PathTraversalEdgeData = PathTraversalEdgeData.new()
+			edge_data.start_index = id_path[index]
+			edge_data.end_index = id_path[index + 1]
 			edge_data.start_pos = path_points[id_path[index]]
 			edge_data.end_pos = path_points[id_path[index + 1]]
 			# Gotta check which way we put it in the path_edges dict

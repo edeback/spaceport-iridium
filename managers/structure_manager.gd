@@ -26,24 +26,24 @@ func _on_module_connection_removed(from: ModuleBase, to: ModuleBase) -> void:
 	graph.remove_edge(from, to)
 	
 ## Normally in cells, can convert to global
-func run_pathfinding(start_module: Node2D, end_module: Node2D, use_global_position: bool = false) -> PackedVector2Array:
-	return Global.node_path_to_point_path(graph.pathfind(start_module, end_module), use_global_position)
-	#return astar.get_point_path(start_module.module_id, end_module.module_id)
-	
-func run_pathfinding_to_type(start_module: Node2D, end_type: ModuleData, use_global_position: bool = false) -> PackedVector2Array:
-	return Global.node_path_to_point_path(graph.pathfind_to_type(start_module, end_type), use_global_position)
-	
-func run_pathfinding_by_module(start_module: Node2D, end_module: Node2D) -> Array[Node2D]:
-	return graph.pathfind(start_module, end_module)
-	
-func run_pathfinding_to_type_by_module(start_module: Node2D, end_type: ModuleData) -> Array[Node2D]:
-	return graph.pathfind_to_type(start_module, end_type)
-
-func get_closest_module_by_cell(start_cell: Vector2i) -> ModuleBase:
-	return graph.get_closest_module_to_position(Global.cell_to_world(start_cell))
-	
-func get_closest_module_by_position(start_position: Vector2) -> ModuleBase:
-	return graph.get_closest_module_to_position(start_position)
+#func run_pathfinding(start_module: Node2D, end_module: Node2D, use_global_position: bool = false) -> PackedVector2Array:
+	#return Global.node_path_to_point_path(graph.pathfind(start_module, end_module), use_global_position)
+	##return astar.get_point_path(start_module.module_id, end_module.module_id)
+	#
+#func run_pathfinding_to_type(start_module: Node2D, end_type: ModuleData, use_global_position: bool = false) -> PackedVector2Array:
+	#return Global.node_path_to_point_path(graph.pathfind_to_type(start_module, end_type), use_global_position)
+	#
+#func run_pathfinding_by_module(start_module: Node2D, end_module: Node2D) -> Array[Node2D]:
+	#return graph.pathfind(start_module, end_module)
+	#
+#func run_pathfinding_to_type_by_module(start_module: Node2D, end_type: ModuleData) -> Array[Node2D]:
+	#return graph.pathfind_to_type(start_module, end_type)
+#
+#func get_closest_module_by_cell(start_cell: Vector2i) -> ModuleBase:
+	#return graph.get_closest_module_to_position(Global.cell_to_world(start_cell))
+	#
+#func get_closest_module_by_position(start_position: Vector2) -> ModuleBase:
+	#return graph.get_closest_module_to_position(start_position)
 
 ## Can we remove this module without "breaking" the structure?
 func can_remove_module(module: ModuleBase) -> bool:

@@ -171,7 +171,13 @@ func get_sprite() -> Sprite2D:
 ## True if this overlap requires us to cancel a build
 func overlap_module(_new_module: ModuleData, _is_horizontal: bool) -> bool:
 	return true
-
+	
+func has_custom_pathing() -> bool:
+	return false
+	
+func traverse(path_edge: PathComponent.PathTraversalEdgeData) -> void:
+	pass
+	
 func show_label() -> void:
 	if nameplate != null:
 		nameplate.visible = true

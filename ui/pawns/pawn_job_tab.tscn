@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c26rfwnde1t5h" path="res://ui/pawns/pawn_job_tab.gd" id="1_ymndu"]
 
-[node name="PawnJobTab" type="PanelContainer" unique_id=1251231180]
+[node name="Job Info" type="PanelContainer" unique_id=1251231180]
 script = ExtResource("1_ymndu")
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=644253749]
@@ -32,6 +32,7 @@ size_flags_stretch_ratio = 8.0
 text = "Doing stuff! So much stuff."
 
 [node name="SubTaskContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=618114148]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 20
 

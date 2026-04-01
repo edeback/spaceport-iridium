@@ -73,9 +73,10 @@ func check_pathfinding() -> void:
 		debug_path = []
 		ui_in_game.debug_path_cell = debug_path
 	
-func _module_path_to_point_path(path: Array[Node2D], use_global_position: bool = false) -> PackedVector2Array:
+func _module_path_to_point_path(path: Array[ModuleGraph.PathPoint], use_global_position: bool = false) -> PackedVector2Array:
 	var point_path: PackedVector2Array = []
-	for node: Node2D in path:
+	for point: ModuleGraph.PathPoint in path:
+		var node: Node2D = point.node
 		if node is ModuleBase:
 			var module := node as ModuleBase
 			if use_global_position:
@@ -104,16 +105,18 @@ func run_pathfinding(start_module: Node2D, end_module: Node2D, use_global_positi
 func run_pathfinding_to_type(start_module: Node2D, end_type: ModuleData, use_global_position: bool = false) -> PackedVector2Array:
 	return _module_path_to_point_path(graph.pathfind_to_type(start_module, end_type), use_global_position)
 	
-func run_pathfinding_by_node(start_module: Node2D, end_module: Node2D) -> Array[Node2D]:
+func run_pathfinding_by_node(start_module: Node2D, end_module: Node2D, end_in_space: bool = false) -> Array[ModuleGraph.PathPoint]:
+	if end_in_space:
+		return graph.pathfind_to_node_in_space(start_module, end_module)
 	return graph.pathfind(start_module, end_module)
 	
-func run_pathfinding_to_type_by_node(start_module: Node2D, end_type: ModuleData) -> Array[Node2D]:
+func run_pathfinding_to_type_by_node(start_module: Node2D, end_type: ModuleData) -> Array[ModuleGraph.PathPoint]:
 	return graph.pathfind_to_type(start_module, end_type)
 	
-func run_pathfinding_to_component_type(start_module: Node2D, end_component_type: Variant) -> Array[Node2D]:
+func run_pathfinding_to_component_type(start_module: Node2D, end_component_type: Variant) -> Array[ModuleGraph.PathPoint]:
 	return graph.pathfind_to_component_type(start_module, end_component_type)
 
-func run_pathfinding_by_func(start_module: Node2D, function: Callable) -> Array[Node2D]:
+func run_pathfinding_by_func(start_module: Node2D, function: Callable) -> Array[ModuleGraph.PathPoint]:
 	return graph.pathfind_to_func(start_module, function)
 	
 func get_closest_module_by_cell(start_cell: Vector2i) -> ModuleBase:

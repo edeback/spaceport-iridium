@@ -57,7 +57,7 @@ func can_do_job(_pawn: PawnBase) -> bool:
 	if !deconstruct and !construction_component.ready_for_construction():
 		return false
 	var test_action: Action_PathToTarget = Action_PathToTarget.new()
-	test_action.initialize_action(_pawn, module_to_construct)
+	test_action.initialize_action(_pawn, module_to_construct, 1, true)
 	var failed: bool = test_action.is_failed()
 	test_action.free()
 	return not failed
@@ -100,7 +100,7 @@ func _module_removed(module: ModuleBase) -> void:
 func move_to_module(delta: float) -> void:
 	if action == null:
 		action = Action_PathToTarget.new()
-		action.initialize_action(pawn, module_to_construct)
+		action.initialize_action(pawn, module_to_construct, 1, true)
 	action.process_action(delta)
 	if action.is_failed():
 		state = ConstructModuleState.Failed
