@@ -1,36 +1,106 @@
-[gd_scene load_steps=8 format=3 uid="uid://vt0da1t6638n"]
+[gd_scene format=3 uid="uid://vt0da1t6638n"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_ivqvi"]
 [ext_resource type="Script" uid="uid://bo6usxgapn5cl" path="res://modules/transport/module_teleporter.gd" id="2_yuavr"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_lqklp"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_lqklp"]
+[ext_resource type="Texture2D" uid="uid://lebwd4trp72s" path="res://assets/sprites/teleporter.png" id="4_tttov"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="4_yuavr"]
+[ext_resource type="Texture2D" uid="uid://edcxrir0kiea" path="res://assets/external/craftpix_explosion_sprites/Explosion_7/1/Explosion_1.png" id="5_jjc4t"]
+[ext_resource type="Texture2D" uid="uid://c2kcdabkom0wr" path="res://assets/external/craftpix_explosion_sprites/Explosion_7/1/Explosion_2.png" id="6_tttov"]
+[ext_resource type="Texture2D" uid="uid://5uwhqgu7s4wx" path="res://assets/external/craftpix_explosion_sprites/Explosion_7/1/Explosion_3.png" id="7_gkv8y"]
+[ext_resource type="Texture2D" uid="uid://dfiu5p6mtvpq7" path="res://assets/external/craftpix_explosion_sprites/Explosion_7/1/Explosion_4.png" id="8_ev4tx"]
+[ext_resource type="Texture2D" uid="uid://c5gw6g6pw08mx" path="res://assets/external/craftpix_explosion_sprites/Explosion_7/1/Explosion_5.png" id="9_tqln7"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ivqvi"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tttov"]
 shader = ExtResource("3_lqklp")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_gd6ts"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gkv8y"]
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
-[node name="Module" instance=ExtResource("1_ivqvi")]
+[sub_resource type="SpriteFrames" id="SpriteFrames_2n4se"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_jjc4t")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_tttov")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_gkv8y")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_ev4tx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_tqln7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_gkv8y")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_ev4tx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_tqln7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_gkv8y")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_ev4tx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_tqln7")
+}],
+"loop": false,
+"name": &"teleport",
+"speed": 10.0
+}]
+
+[node name="Module" unique_id=312783944 node_paths=PackedStringArray("lightning_sprite") instance=ExtResource("1_ivqvi")]
 script = ExtResource("2_yuavr")
+teleporter_path_index = 2
+lightning_sprite = NodePath("Offset/LightningSprite")
 
-[node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_ivqvi")
+[node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
+material = SubResource("ShaderMaterial_tttov")
+texture = ExtResource("4_tttov")
 
-[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
-shape = SubResource("RectangleShape2D_gd6ts")
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
+shape = SubResource("RectangleShape2D_gkv8y")
 
-[node name="LightingComponent" parent="Offset" index="2" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_lqklp")]
+[node name="LightingComponent" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="2" unique_id=1866726232 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_lqklp")]
+z_index = 10
 power_consumption_component = NodePath("../../PowerConsumptionComponent")
 
-[node name="PathComponent" parent="." index="1" node_paths=PackedStringArray("power_consumption_component")]
+[node name="LightningSprite" type="AnimatedSprite2D" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="3" unique_id=568227592]
+visible = false
+z_index = 9
+position = Vector2(0.5, -2)
+scale = Vector2(0.08, 0.05)
+sprite_frames = SubResource("SpriteFrames_2n4se")
+animation = &"teleport"
+frame = 10
+frame_progress = 1.0
+
+[node name="PathComponent" parent="." index="1" unique_id=1088376714 node_paths=PackedStringArray("power_consumption_component")]
+path_points = Array[Vector2i]([Vector2i(50, 58), Vector2i(32, 44), Vector2i(32, 44)])
+path_edges = Dictionary[Vector2i, StringName]({
+Vector2i(0, 1): &"wait_for_teleport",
+Vector2i(1, 2): &"run_teleporter"
+})
 power_required = true
 power_consumption_component = NodePath("../PowerConsumptionComponent")
 
-[node name="PowerConsumptionComponent" parent="." index="3" instance=ExtResource("4_yuavr")]
+[node name="StructureComponent" parent="." index="2" unique_id=2060859123]
+visible = false
+
+[node name="PowerConsumptionComponent" parent="." index="3" unique_id=2137305331 instance=ExtResource("4_yuavr")]
 power_consumption = 500.0

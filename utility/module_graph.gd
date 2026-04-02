@@ -22,11 +22,12 @@ func add_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "
 	_vertices[vertex] = make_vertex(vertex, is_endpoint, group)
 	_emit_graph_changed()
 	
-func make_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "") -> ModuleGraphVertex:
+func make_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "", group_door: int = 0) -> ModuleGraphVertex:
 	var new_vertex: ModuleGraphVertex = ModuleGraphVertex.new()
 	new_vertex.node = vertex
 	new_vertex.endpoint = is_endpoint
 	new_vertex.group = group
+	new_vertex.group_door = group_door
 	last_subgraph += 1
 	new_vertex.subgraph = last_subgraph
 	if group:
@@ -37,7 +38,7 @@ func make_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = 
 		group_array.append(new_vertex)
 	return new_vertex
 	
-func change_vertex_group(vertex: Node2D, new_group: StringName) -> void:
+func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: int = -1) -> void:
 	var graph_vertex: ModuleGraphVertex = _vertices.get(vertex)
 	if graph_vertex != null and graph_vertex.group != new_group:
 		if graph_vertex.group:
@@ -45,6 +46,8 @@ func change_vertex_group(vertex: Node2D, new_group: StringName) -> void:
 		if new_group:
 			_linked_groups.get_or_add(new_group, []).append(graph_vertex)
 		graph_vertex.group = new_group
+		if new_group_door >= 0:
+			graph_vertex.group_door = new_group_door
 		_rebuild_subgraphs()
 	
 func block_vertex(vertex: Node2D) -> void:

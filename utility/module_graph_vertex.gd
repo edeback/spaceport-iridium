@@ -10,6 +10,8 @@ var edges: Dictionary[ModuleGraphVertex, EdgeData]
 var subgraph: int
 var blocked: bool = false
 var group: StringName = ""
+# When going to this group, what index in the path component counts as the "door"?
+var group_door: int = 0
 ## If endpoint, never try to path through this. Generally only valid for non-module entities
 var endpoint: bool = false
 

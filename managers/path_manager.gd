@@ -41,6 +41,9 @@ func _on_module_connection_added(from: ModuleBase, to: ModuleBase, distance: flo
 func add_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "") -> void:
 	graph.add_vertex(vertex, is_endpoint, group)
 	
+func get_vertex(vertex: Node2D) -> ModuleGraphVertex:
+	return graph._vertices.get(vertex)
+	
 func remove_vertex(vertex: Node2D) -> void:
 	graph.remove_vertex(vertex)
 	selected_modules.erase(vertex)

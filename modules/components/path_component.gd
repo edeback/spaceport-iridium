@@ -91,22 +91,32 @@ func get_closest_path_point(local_vec: Vector2) -> Vector2i:
 		return path_points[index]
 	return Vector2i.ZERO
 	
+func get_connection_index_from(other_module: Node2D) -> int:
+	# First check direct connection
+	var index: int = module_connections.get(other_module, -1)
+	if index < 0:
+		# Check group connections
+		var owner_vertex: ModuleGraphVertex = Global.path_manager.get_vertex(owner_module)
+		var other_vertex: ModuleGraphVertex = Global.path_manager.get_vertex(other_module)
+		if owner_vertex and other_vertex and owner_vertex.group and owner_vertex.group == other_vertex.group:
+			index = owner_vertex.group_door
+	return index
+	
 func get_connection_point_from(prev_module: Node2D) -> Vector2i:
-	if module_connections.has(prev_module):
-		var connection_index: int = module_connections[prev_module]
-		if connection_index < path_points.size():
-			return path_points[connection_index]
+	var connection_index: int = get_connection_index_from(prev_module)
+	if connection_index >= 0 and connection_index < path_points.size():
+		return path_points[connection_index]
 	return Vector2i.ZERO
 	
 func get_path_through_module(start_module: Node2D, end_module: Node2D) -> Array[PathTraversalEdgeData]:
-	var start_index: int = module_connections.get(start_module, -1)
-	var end_index: int = module_connections.get(end_module, -1)
+	var start_index: int = get_connection_index_from(start_module)
+	var end_index: int = get_connection_index_from(end_module)
 	return _get_path_within_module(start_index, end_index)
 	
 func get_path_exiting_module(start_global_position: Vector2, end_module: Node2D) -> Array[PathTraversalEdgeData]:
 	var local_vec := start_global_position - owner_module.global_position
 	var start_index: int = astar.get_closest_point(local_vec)
-	var end_index: int = module_connections.get(end_module, -1)
+	var end_index: int = get_connection_index_from(end_module)
 	return _get_path_within_module(start_index, end_index)
 
 func _get_path_within_module(start_index: int, end_index: int) -> Array[PathTraversalEdgeData]:
@@ -181,7 +191,7 @@ func manual_connection(other_module: Node2D, connection_index: int) -> void:
 	Global.path_manager.add_connection(owner_module, other_module, 1)
 	
 func get_door_data_to(other_module: ModuleBase) -> StringName:
-	var index: int = module_connections.get(other_module, -1)
+	var index: int = get_connection_index_from(other_module)
 	if index >= 0:
 		return door_data.get(index, "")
 	return ""

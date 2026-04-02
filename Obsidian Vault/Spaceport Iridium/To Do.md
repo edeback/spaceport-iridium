@@ -29,6 +29,9 @@ Plus life-related jobs:
 QoL:
 - Asteroids should have description of resources
 - Mass sell for docking bay
+- When flipping modules, double check validity
+- Hallways should do actual connection check to determine sprite as opposed to existence (can "connect" to airlocks going opposite direction even though not really connected)
+- Click on a cell multiple times to get nodes behind the top one (important for corridors + stairs/turbolift + module/truss behind)
 
 Rework:
 - Power system to not need to run every frame?
@@ -64,4 +67,10 @@ Transportation modules:
 
 current work:
 - allow pathfind to specific location in module_graph? (like a position instead of a node2d)
+	- pathfind to specific path index inside a module, too
 - rework action_pathtotarget to be more general
+	- have some sort of edgedata for general things? teleporters
+	- also move to character component instead of "action"
+- fix module blocking, and have some way of showing it visually
+- floating objects in space (with inventory) - recover scrap/deconstruction materials
+

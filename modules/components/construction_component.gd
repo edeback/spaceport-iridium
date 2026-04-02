@@ -44,12 +44,12 @@ func ready_constructed() -> void:
 
 func start_deconstruction() -> void:
 	set_process(true)
-	work_seconds_done = work_seconds_to_complete * deconstruction_time_multiplier
 	construction_job = Job_ConstructModule.new()
 	construction_job.setup(owner_module)
 	construction_job.deconstruct = true
 	Global.job_manager.add_job(construction_job)
 	current_state = ConstructionState.Deconstructing
+	work_seconds_done = work_seconds_to_complete * deconstruction_time_multiplier
 
 func _process(delta: float) -> void:
 	match current_state:
@@ -57,6 +57,10 @@ func _process(delta: float) -> void:
 			pass
 		ConstructionState.NotStarted:
 			if ready_for_construction():
+				material_storage.accepts_exports = false
+				material_storage.accepts_imports = false
+				material_storage.display_storage_ui = false
+				material_storage.display_info_panel_ui = false
 				construction_job = Job_ConstructModule.new()
 				construction_job.setup(owner_module)
 				Global.job_manager.add_job(construction_job)

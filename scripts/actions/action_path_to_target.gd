@@ -185,6 +185,7 @@ func get_partial_sub_path(index: int) -> Array[PathComponent.PathTraversalEdgeDa
 	return []
 	
 func reached_next_subpath() -> void:
+	sub_path_index += 1
 	if sub_path_index == 0:
 		if next_path_index > -1 and next_path_index < path.size():
 			if path[next_path_index].node is ModuleBase and not path[next_path_index].in_space:
@@ -197,7 +198,6 @@ func reached_next_subpath() -> void:
 				pawn.current_module = null
 			if next_path_index > 1:
 				nodes_to_watch.pop_back()
-	sub_path_index += 1
 	if sub_path_index >= sub_path.size():
 		in_sub_path = false
 		await reached_next_node()
@@ -220,6 +220,7 @@ func move(delta: float) -> void:
 				next_position = next_path_position
 				dist_to_travel -= dist_to_next_point
 				await reached_next_subpath()
+				next_position = pawn.global_position
 			else:
 				next_position = next_position + travel_vector / dist_to_next_point * dist_to_travel
 				dist_to_travel = 0
@@ -234,14 +235,15 @@ func move(delta: float) -> void:
 				next_position = next_path_position
 				dist_to_travel -= dist_to_next_point
 				await reached_next_node()
+				next_position = pawn.global_position
 			else:
 				next_position = next_position + travel_vector / dist_to_next_point * dist_to_travel
 				dist_to_travel = 0
 				break
-	if next_position == pawn.global_position:
+	#if next_position == pawn.global_position:
 		# We didn't move, we're done here
 		#print ("tried to move but failed? Marking as finished but investigate")
-		action_state = PathActionState.Finished
+		#action_state = PathActionState.Finished
 	if next_path_index >= path.size():
 		# Made it to the last position
 		action_state = PathActionState.Finished
