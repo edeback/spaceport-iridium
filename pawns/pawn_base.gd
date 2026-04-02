@@ -7,12 +7,13 @@ extends Node2D
 @export var destination_cell: Vector2i
 @export var destination_module: ModuleBase
 @export var path: PackedVector2Array
-@export var speed: float = 120.0
+@export var speed: float = 80.0
 @export var carrying_capacity: int = 10
 @export var animated_sprite: AnimatedSprite2D
 @export var pawn_name: String = ""
 @export var collision: Area2D
 
+var current_layer: WorldManager.StructureLayer = WorldManager.StructureLayer.SPACE
 var traveling: bool = false
 var next_point: int = 0
 var current_job: JobBase = null:
@@ -123,11 +124,18 @@ func _process(delta: float) -> void:
 	#traveling = true
 	#pass
 
-func _exit_tree() -> void:
-	Global.path_manager.remove_vertex(self)
-	if current_job != null:
-		current_job.cancel(true)
-		current_job = null
+#func _exit_tree() -> void:
+	#Global.path_manager.remove_vertex(self)
+	#if current_job != null:
+		#current_job.cancel(true)
+		#current_job = null
+		
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		Global.path_manager.remove_vertex(self)
+		if current_job != null:
+			current_job.cancel(true)
+			current_job = null
 
 func move_to(new_pos: Vector2) -> void:
 	if animated_sprite != null:
@@ -141,9 +149,15 @@ func move_to(new_pos: Vector2) -> void:
 func _on_module_changed(new_module: ModuleBase) -> void:
 	current_module = new_module
 	if new_module == null:
+		if current_layer != WorldManager.StructureLayer.SPACE:
+			current_layer = WorldManager.StructureLayer.SPACE
+			reparent(Global.world_manager.get_canvas_for_layer(current_layer))
 		Global.path_manager.graph.change_vertex_group(self, "space")
 	else:
 		Global.path_manager.graph.change_vertex_group(self, "")
+		if current_layer != new_module.module_data.interaction_layer:
+			current_layer = new_module.module_data.interaction_layer
+			reparent(Global.world_manager.get_canvas_for_layer(current_layer))
 
 #func _find_next_job() -> void:
 	#if current_job == null:

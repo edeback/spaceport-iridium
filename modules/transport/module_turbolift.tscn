@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://cisi2gmfvwhy2" path="res://modules/transport/module_turbolift.gd" id="2_6ys41"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_hevvg"]
 [ext_resource type="Texture2D" uid="uid://r2nt1fhbsql4" path="res://assets/sprites/turbolift.png" id="4_vm5pc"]
+[ext_resource type="Texture2D" uid="uid://crwswrrwpu3gu" path="res://assets/sprites/turboliftdoor.png" id="5_hevvg"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_80vqc"]
 shader = ExtResource("3_hevvg")
@@ -12,37 +13,149 @@ shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_hevvg"]
-atlas = ExtResource("4_vm5pc")
+[sub_resource type="AtlasTexture" id="AtlasTexture_rb34t"]
+atlas = ExtResource("5_hevvg")
+region = Rect2(0, 0, 64, 64)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_vm5pc"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_mmo4w"]
+atlas = ExtResource("5_hevvg")
+region = Rect2(64, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1c20m"]
+atlas = ExtResource("5_hevvg")
+region = Rect2(128, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s6vvg"]
+atlas = ExtResource("5_hevvg")
+region = Rect2(192, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a35m7"]
+atlas = ExtResource("5_hevvg")
+region = Rect2(256, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gr7td"]
+atlas = ExtResource("5_hevvg")
+region = Rect2(320, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kws5b"]
+atlas = ExtResource("5_hevvg")
+region = Rect2(384, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xnv46"]
+atlas = ExtResource("5_hevvg")
+region = Rect2(448, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ag5oy"]
+atlas = ExtResource("5_hevvg")
+region = Rect2(512, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vy6xe"]
+atlas = ExtResource("5_hevvg")
+region = Rect2(576, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_l4xqh"]
+atlas = ExtResource("5_hevvg")
+region = Rect2(640, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bqvwx"]
+atlas = ExtResource("5_hevvg")
+region = Rect2(704, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s5coj"]
+atlas = ExtResource("5_hevvg")
+region = Rect2(768, 0, 64, 64)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_62saw"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rb34t")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mmo4w")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1c20m")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s6vvg")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a35m7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gr7td")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kws5b")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xnv46")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ag5oy")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vy6xe")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_l4xqh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bqvwx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s5coj")
+}],
+"loop": false,
+"name": &"open",
+"speed": 30.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mmo4w"]
 resource_local_to_scene = true
-size = Vector2(33, 29)
+size = Vector2(33, 25)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hevvg"]
 resource_local_to_scene = true
 size = Vector2(33, 34)
 
-[node name="Module" unique_id=642610342 node_paths=PackedStringArray("collision_upper") instance=ExtResource("1_6ys41")]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rb34t"]
+size = Vector2(33, 5)
+
+[node name="Module" unique_id=642610342 node_paths=PackedStringArray("collision_upper", "collision_lower", "door_sprite") instance=ExtResource("1_6ys41")]
 script = ExtResource("2_6ys41")
 collision_upper = NodePath("Offset/Footprint/CollisionUpper")
+collision_lower = NodePath("Offset/Footprint/CollisionLower")
+door_sprite = NodePath("Offset/Sprite/DoorSprite")
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
 material = SubResource("ShaderMaterial_80vqc")
-texture = SubResource("AtlasTexture_hevvg")
+texture = ExtResource("4_vm5pc")
+
+[node name="DoorSprite" type="AnimatedSprite2D" parent="Offset/Sprite" index="1" unique_id=1955404107]
+visible = false
+z_index = 10
+sprite_frames = SubResource("SpriteFrames_62saw")
+animation = &"open"
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-position = Vector2(11.5, 16.5)
-shape = SubResource("RectangleShape2D_vm5pc")
+position = Vector2(-9.5, 14.5)
+shape = SubResource("RectangleShape2D_mmo4w")
 
 [node name="CollisionUpper" type="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="1" unique_id=914468920]
-position = Vector2(11.5, -15)
+position = Vector2(-9.5, -15)
 shape = SubResource("RectangleShape2D_hevvg")
+disabled = true
+
+[node name="CollisionLower" type="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="2" unique_id=1376086934]
+position = Vector2(-9.5, 29.5)
+shape = SubResource("RectangleShape2D_rb34t")
 disabled = true
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(0, 1)])
-path_points = Array[Vector2i]([Vector2i(44, 0), Vector2i(44, 64), Vector2i(44, 58)])
+path_points = Array[Vector2i]([Vector2i(22, 0), Vector2i(22, 64), Vector2i(22, 58)])
 path_edges = Dictionary[Vector2i, String]({
 Vector2i(0, 2): "",
 Vector2i(1, 2): ""
@@ -50,7 +163,11 @@ Vector2i(1, 2): ""
 door_connections = Dictionary[int, int]({
 2: 1
 })
+door_data = Dictionary[int, String]({
+2: "turbolift_door"
+})
 door_required = false
 
 [node name="StructureComponent" parent="." index="2" unique_id=2060859123]
+visible = false
 connection_points = Array[Vector2i]([Vector2i(0, 0)])

@@ -20,5 +20,5 @@ func connections_changed(new_connections: Dictionary[ModuleBase, bool]) -> void:
 			current_connections += 1
 	power_scaling = (possible_connections - current_connections) / possible_connections
 		
-func get_power_output() -> float:
+func get_power_output()  -> float:
 	return power_output * power_scaling

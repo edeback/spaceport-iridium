@@ -7,6 +7,16 @@ extends ModuleBase
 var airlock_resetting: bool = false
 signal airlock_reset
 
+func _ready() -> void:
+	super()
+	for airlock_name: StringName in airlock:
+		var door_sprite: AnimatedSprite2D = airlock[airlock_name]
+		door_sprite.animation_finished.connect(func() -> void:
+			if door_sprite.frame != 0:
+				await get_tree().create_timer(2).timeout
+				set_airlock(airlock_name, true)
+		)
+
 func has_custom_pathing() -> bool:
 	return true
 	
@@ -15,13 +25,18 @@ func set_airlock(airlock_name: StringName, is_close: bool) -> void:
 	if anim_sprite.is_playing():
 		if anim_sprite.get_playing_speed() > 0 and not is_close or anim_sprite.get_playing_speed() < 0 and is_close:
 			# In progress
+			print(("Closing " if is_close else "Opening ") + airlock_name + " but it's already being opened")
+			await anim_sprite.animation_finished
 			return
 	if anim_sprite.frame == 0 and is_close:
 		# Already closed
+		print("Closing " + airlock_name + " but it's already closed")
 		return
 	elif not is_close and (anim_sprite.frame == anim_sprite.sprite_frames.get_frame_count(&"open") - 1):
 		# Already open
+		print("Opening " + airlock_name + " but it's already open")
 		return
+	print("Starting animation to " + ("close " if is_close else "open ") + airlock_name)
 	anim_sprite.play(&"open", -1 if is_close else 1, is_close)
 	await anim_sprite.animation_finished
 	

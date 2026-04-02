@@ -5,7 +5,7 @@ extends ModuleBase
 var truss: ModuleData = preload("res://data/modules/core/truss_mdata.tres")
 		
 @export var door_sprite: Sprite2D
-
+@export var window_sprite: Sprite2D
 
 func _ready() -> void:
 	super()
@@ -24,19 +24,23 @@ func on_place() -> void:
 func door_connected_to(_cell: Vector2i, from_layer: WorldManager.StructureLayer) -> void:
 	if from_layer == WorldManager.StructureLayer.MODULE:
 		door_sprite.region_rect.position.x = 0
+	elif from_layer == WorldManager.StructureLayer.TURBOLIFT:
+		window_sprite.visible = false
 	
 func door_disconnected_to(_cell: Vector2i, from_layer: WorldManager.StructureLayer) -> void:
 	if from_layer == WorldManager.StructureLayer.MODULE:
 		door_sprite.region_rect.position.x = 128
-
+	elif from_layer == WorldManager.StructureLayer.TURBOLIFT:
+		window_sprite.visible = true
+		
 func set_sprite(_module: ModuleBase) -> void:
-	if _module == null or _module is CorridorModule:
+	if _module == null or _module.module_data.interaction_layer == module_data.interaction_layer:
 		var blocked_value: int = 0
 		var left_cell: Vector2i = module_cell - Vector2i(1, 0)
-		if Global.world_manager.get_module_by_cell(module_data.interaction_layer, left_cell) is CorridorModule:
+		if Global.world_manager.get_module_by_cell(module_data.interaction_layer, left_cell) != null:
 			blocked_value += 1
 		var right_cell: Vector2i = module_cell + Vector2i(size.x, 0)
-		if Global.world_manager.get_module_by_cell(module_data.interaction_layer, right_cell) is CorridorModule:
+		if Global.world_manager.get_module_by_cell(module_data.interaction_layer, right_cell) != null:
 			blocked_value += 2
 		sprite.region_rect.position.x = Global.CELL_SIZE.x * blocked_value
 		queue_redraw()

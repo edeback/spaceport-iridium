@@ -48,6 +48,9 @@ func _get_next_id() -> int:
 	last_id = last_id + 1
 	return last_id
 
+func get_canvas_for_layer(layer: StructureLayer) -> CanvasLayer:
+	return layer_data[layer].canvas
+
 func get_module_by_cell(layer: StructureLayer, cell: Vector2i) -> ModuleBase:
 	return layer_data[layer].cell_to_module.get(cell)
 	

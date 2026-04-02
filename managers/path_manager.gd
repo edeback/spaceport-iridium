@@ -14,7 +14,6 @@ func _ready() -> void:
 	Global.path_manager = self
 	SignalBus.module_added.connect(_on_module_added)
 	SignalBus.module_removed.connect(_on_module_removed)
-	SignalBus.module_path_connection_added.connect(_on_module_connection_added)
 	SignalBus.module_path_connection_removed.connect(_on_module_connection_removed)
 	SignalBus.module_selected.connect(_on_module_selected)
 	pass # Replace with function body.
@@ -47,8 +46,8 @@ func remove_vertex(vertex: Node2D) -> void:
 	selected_modules.erase(vertex)
 	recheck_pathfinding = true
 	
-func add_connection(from: Node2D, to: Node2D, distance: float) -> void:
-	graph.add_edge(from, to, distance)
+func add_connection(from: Node2D, to: Node2D, distance: float, data: StringName = "") -> void:
+	graph.add_edge(from, to, distance, data)
 	recheck_pathfinding = true
 	
 func _on_module_connection_removed(from: ModuleBase, to: ModuleBase) -> void:

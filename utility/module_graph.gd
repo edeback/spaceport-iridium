@@ -4,6 +4,7 @@ extends Resource
 class PathPoint:
 	var node: Node2D = null
 	var in_space: bool = false
+	var edge_meta: String = ""
 
 signal graph_changed
 
@@ -74,7 +75,7 @@ func remove_vertex(vertex: Node2D) -> void:
 	_rebuild_subgraphs() # This may have split our graph
 	_emit_graph_changed()
 	
-func add_edge(start: Node2D, end: Node2D, cost: float, data: Variant = null) -> bool:
+func add_edge(start: Node2D, end: Node2D, cost: float, data: StringName = "") -> bool:
 	var start_vertex: ModuleGraphVertex = _vertices.get(start)
 	var end_vertex: ModuleGraphVertex = _vertices.get(end)
 	if (start_vertex == null or end_vertex == null):
@@ -214,11 +215,19 @@ func pathfind_by_vertex(start_vertex: ModuleGraphVertex, end_vertex: ModuleGraph
 	# Reconstruct path
 	var cur_vertex: ModuleGraphVertex = end_vertex
 	var path: Array[PathPoint] = []
+	var prev_vertex: ModuleGraphVertex = null
 	while cur_vertex != start_vertex:
 		var next_point := PathPoint.new()
 		next_point.node = cur_vertex.node
 		next_point.in_space = (cur_vertex.group == &"space")
+		if prev_vertex != null:
+			var edge_data: ModuleGraphVertex.EdgeData = prev_vertex.edges.get(cur_vertex)
+			if edge_data != null:
+				next_point.edge_meta = edge_data.data
+			else:
+				next_point.edge_meta = cur_vertex.group
 		path.append(next_point)
+		prev_vertex = cur_vertex
 		cur_vertex = came_from[cur_vertex]
 	var start_point := PathPoint.new()
 	start_point.node = start_vertex.node

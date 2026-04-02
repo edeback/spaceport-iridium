@@ -16,11 +16,11 @@ shader_parameter/gradient_texture = ExtResource("4_abvjf")
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_nlvn8"]
 resource_local_to_scene = true
-size = Vector2(36, 31)
+size = Vector2(35, 31)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_g8ehl"]
 resource_local_to_scene = true
-size = Vector2(36, 32)
+size = Vector2(35, 32)
 
 [node name="Module" unique_id=1683111138 node_paths=PackedStringArray("collision_upper") instance=ExtResource("1_0uceu")]
 script = ExtResource("2_nlvn8")
@@ -32,17 +32,17 @@ texture = ExtResource("5_nlvn8")
 region_rect = Rect2(192, 0, 64, 64)
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-position = Vector2(11, 15.5)
+position = Vector2(-9.5, 16)
 shape = SubResource("RectangleShape2D_nlvn8")
 
 [node name="CollisionUpper" type="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="1" unique_id=1533562438]
-position = Vector2(11, -16)
+position = Vector2(-9.5, -16)
 shape = SubResource("RectangleShape2D_g8ehl")
 disabled = true
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(0, 1)])
-path_points = Array[Vector2i]([Vector2i(45, 0), Vector2i(45, 64), Vector2i(44, 56), Vector2i(56, 56), Vector2i(30, 40), Vector2i(56, 24), Vector2i(30, 8)])
+path_points = Array[Vector2i]([Vector2i(21, 0), Vector2i(21, 64), Vector2i(22, 58), Vector2i(10, 55), Vector2i(34, 39), Vector2i(10, 23), Vector2i(34, 7)])
 path_edges = Dictionary[Vector2i, String]({
 Vector2i(1, 3): "",
 Vector2i(2, 3): "",
@@ -54,6 +54,7 @@ Vector2i(6, 0): ""
 door_connections = Dictionary[int, int]({
 2: 1
 })
+door_data = null
 door_required = false
 
 [node name="StructureComponent" parent="." index="2" unique_id=2060859123]

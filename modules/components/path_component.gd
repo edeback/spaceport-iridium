@@ -9,7 +9,7 @@ class PathTraversalEdgeData:
 	var end_pos: Vector2
 	var start_index: int
 	var end_index: int
-	var edge_meta: String
+	var edge_meta: StringName = ""
 	
 @export var door_not_connected_image: Texture2D
 
@@ -28,13 +28,15 @@ class PathTraversalEdgeData:
 		path_points = new_points
 		queue_redraw()
 ## Where X and Y are the indexes of the points in path_points and the string is metadata
-@export var path_edges: Dictionary[Vector2i, String] = {}:
+@export var path_edges: Dictionary[Vector2i, StringName] = {}:
 	set(new_edges):
 		path_edges = new_edges
 		queue_redraw()
 
 ## Which of the path points (by index) are actually doors, and what layer do they connect to?
 @export var door_connections: Dictionary[int, WorldManager.StructureLayer] = {}
+
+@export var door_data: Dictionary[int, StringName] = {}
 
 ## Do we error if no door is connected?
 @export var door_required: bool = false
@@ -111,6 +113,14 @@ func _get_path_within_module(start_index: int, end_index: int) -> Array[PathTrav
 	var path: Array[PathTraversalEdgeData] = []
 	if start_index > -1 and end_index > -1 and start_index != end_index:
 		var id_path: PackedInt64Array = astar.get_id_path(start_index, end_index)
+		if id_path.size() > 0:
+			# Add a starter point so we get here before we move through the module
+			var edge_data: PathTraversalEdgeData = PathTraversalEdgeData.new()
+			edge_data.start_index = -1
+			edge_data.start_pos = Vector2.ZERO
+			edge_data.end_index = start_index
+			edge_data.end_pos = path_points[start_index]
+			path.append(edge_data)
 		for index in range(id_path.size() - 1):
 			var edge_data: PathTraversalEdgeData = PathTraversalEdgeData.new()
 			edge_data.start_index = id_path[index]
@@ -162,13 +172,19 @@ func make_connections() -> void:
 	for module in connected_modules:
 		if module.get_path_component().try_connect(owner_module):
 			module_connections[module] = connected_modules[module]
-			SignalBus.module_path_connection_added.emit(owner_module, module, owner_module.global_position.distance_to(module.global_position))
+			Global.path_manager.add_connection(owner_module, module, owner_module.global_position.distance_to(module.global_position))
 	connect_doors()
 		
 	
 func manual_connection(other_module: Node2D, connection_index: int) -> void:
 	module_connections[other_module] = connection_index
 	Global.path_manager.add_connection(owner_module, other_module, 1)
+	
+func get_door_data_to(other_module: ModuleBase) -> StringName:
+	var index: int = module_connections.get(other_module, -1)
+	if index >= 0:
+		return door_data.get(index, "")
+	return ""
 	
 func has_door_to(cell_to_check: Vector2i, target_layer: WorldManager.StructureLayer) -> bool:
 	for index: int in door_connections:
@@ -211,7 +227,10 @@ func connect_doors() -> void:
 				door_sprites[index].visible = false
 			module_connections[module] = index
 			door_connected.emit(door_cell, module.module_data.interaction_layer)
-			SignalBus.module_path_connection_added.emit(owner_module, module, 1)
+			var data: StringName = door_data.get(index, "")
+			if data.is_empty():
+				data = module.get_path_component().get_door_data_to(owner_module)
+			Global.path_manager.add_connection(owner_module, module, 1, data)
 	check_doors()
 
 func check_doors() -> void:
@@ -260,7 +279,7 @@ func _draw() -> void:
 			draw_string(ThemeDB.fallback_font, center + Vector2(-4, 5), str(index), HORIZONTAL_ALIGNMENT_CENTER, -1, 12, Color.BLACK)
 		for index in path_points.size():
 			var point: Vector2i = path_points[index]
-			draw_circle(point, 4, Color.GREEN)
-			draw_string(ThemeDB.fallback_font, point + Vector2i(-2, 3), str(index), HORIZONTAL_ALIGNMENT_CENTER, -1, 8, Color.BLACK)
+			draw_circle(point, 2, Color.GREEN)
+			draw_string(ThemeDB.fallback_font, point + Vector2i(-1, 2), str(index), HORIZONTAL_ALIGNMENT_CENTER, -1, 4, Color.BLACK)
 		for edge: Vector2i in path_edges:
-			draw_line(path_points[edge.x], path_points[edge.y], Color.RED, 2)
+			draw_line(path_points[edge.x], path_points[edge.y], Color.RED, 1)

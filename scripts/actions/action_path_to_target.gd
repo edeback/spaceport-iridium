@@ -16,7 +16,7 @@ var in_sub_path: bool = false
 var sub_path: Array[PathComponent.PathTraversalEdgeData] 
 var sub_path_index: int = 0
 
-enum PathActionState { Starting, Moving, Finished, Failed }
+enum PathActionState { Starting, Moving, Finished, Failed, Paused }
 
 var action_state: PathActionState = PathActionState.Starting
 
@@ -40,18 +40,19 @@ func run_pathfinding() -> void:
 			action_state = PathActionState.Finished
 			return
 		path = Global.path_manager.run_pathfinding_by_node(pawn.current_module, target, end_in_space)
-		sub_path = get_partial_sub_path(0)
-		if sub_path.size() > 0:
-			sub_path_index = 0
-			in_sub_path = true
+		#sub_path = get_partial_sub_path(0)
+		#if sub_path.size() > 0:
+			#sub_path_index = 0
+			#in_sub_path = true
 	else:
 		path = Global.path_manager.run_pathfinding_by_node(pawn, target, end_in_space)
 
 	if path.is_empty():
 		action_state = PathActionState.Failed
 	else:
-		next_path_index = 0
-		nodes_to_watch.append_array(path)
+		next_path_index = -1
+		for point in path:
+			nodes_to_watch.append(point.node)
 		nodes_to_watch.reverse()
 		action_state = PathActionState.Moving
 		# Debug shove path in UI
@@ -67,10 +68,15 @@ func process_action(delta: float) -> void:
 		PathActionState.Starting:
 			pass
 		PathActionState.Moving:
-			move(delta)
+			action_state = PathActionState.Paused
+			await move(delta)
+			if action_state == PathActionState.Paused:
+				action_state = PathActionState.Moving
 		PathActionState.Finished:
+			SignalBus.module_removed.disconnect(module_removed)
 			pass
 		PathActionState.Failed:
+			SignalBus.module_removed.disconnect(module_removed)
 			pass
 		
 func module_removed(removed_module: ModuleBase) -> void:
@@ -87,7 +93,7 @@ func get_debug_path_detailed() -> PackedVector2Array:
 		var base_pos := path[index].node.global_position
 		var sub := get_sub_path(index)
 		if sub.size() > 0:
-			packed_path.append(base_pos + sub[0].start_pos)
+			#packed_path.append(base_pos + sub[0].start_pos)
 			for data: PathComponent.PathTraversalEdgeData in sub:
 				packed_path.append(base_pos + data.end_pos)
 		else:
@@ -119,22 +125,47 @@ func extract_position(index: int) -> Vector2:
 	return path[index].node.global_position
 	
 func reached_next_node() -> void:
-	if path[next_path_index].node is ModuleBase and not path[next_path_index].in_space:
-		var this_module: ModuleBase = path[next_path_index].node as ModuleBase
-		var prev_module: ModuleBase = null
-		if next_path_index > 0 and path[next_path_index - 1].node is ModuleBase:
-			prev_module = path[next_path_index - 1].node as ModuleBase
-		this_module.enter_module_from(pawn, prev_module)
-	else:
-		pawn.current_module = null
-	nodes_to_watch.pop_back()
+	if next_path_index >= 0 and path[next_path_index].node is ModuleBase and path[next_path_index].node.has_custom_pathing():
+		var door: int = 0
+		if sub_path.size() > 0:
+			door = sub_path[sub_path.size() - 1].end_index
+		var leaving_module: ModuleBase = path[next_path_index].node as ModuleBase
+		await leaving_module.path_exit(door, path[next_path_index].edge_meta)
+		
 	next_path_index += 1
-	sub_path = get_sub_path(next_path_index)
+
+	if next_path_index == 0:
+		sub_path = get_partial_sub_path(next_path_index)
+	else:
+		sub_path = get_sub_path(next_path_index)
+		
+	if next_path_index > 0 and next_path_index < path.size() and path[next_path_index].node is ModuleBase and path[next_path_index].node.has_custom_pathing():
+		var door: int = 0
+		if sub_path.size() > 0:
+			door = sub_path[0].end_index
+		var entering_module: ModuleBase = path[next_path_index].node as ModuleBase
+		await entering_module.path_enter(door, path[next_path_index - 1].edge_meta)
+		
 	if sub_path.size() > 0:
 		sub_path_index = -1
 		await reached_next_subpath()
 		in_sub_path = true
-	
+	else:
+		# If we don't have a subpath, "enter" this node now
+		if next_path_index > -1 and next_path_index < path.size():
+			if path[next_path_index].node is ModuleBase and not path[next_path_index].in_space:
+				var this_module: ModuleBase = path[next_path_index].node as ModuleBase
+				var prev_module: ModuleBase = null
+				if next_path_index > 0 and path[next_path_index - 1].node is ModuleBase:
+					prev_module = path[next_path_index - 1].node as ModuleBase
+				this_module.enter_module_from(pawn, prev_module)
+			else:
+				pawn.current_module = null
+			if next_path_index > 0:
+				nodes_to_watch.pop_back()
+
+
+
 func get_sub_path(index: int) -> Array[PathComponent.PathTraversalEdgeData]:
 	if index > 0 and index + 1 < path.size():
 		if !path[index].in_space and path[index].node is ModuleBase:
@@ -152,6 +183,18 @@ func get_partial_sub_path(index: int) -> Array[PathComponent.PathTraversalEdgeDa
 	return []
 	
 func reached_next_subpath() -> void:
+	if sub_path_index == 0:
+		if next_path_index > -1 and next_path_index < path.size():
+			if path[next_path_index].node is ModuleBase and not path[next_path_index].in_space:
+				var this_module: ModuleBase = path[next_path_index].node as ModuleBase
+				var prev_module: ModuleBase = null
+				if next_path_index > 0 and path[next_path_index - 1].node is ModuleBase:
+					prev_module = path[next_path_index - 1].node as ModuleBase
+				this_module.enter_module_from(pawn, prev_module)
+			else:
+				pawn.current_module = null
+			if next_path_index > 0:
+				nodes_to_watch.pop_back()
 	sub_path_index += 1
 	if sub_path_index >= sub_path.size():
 		in_sub_path = false
@@ -162,6 +205,8 @@ func reached_next_subpath() -> void:
 		await module.traverse(sub_path[sub_path_index])
 	
 func move(delta: float) -> void:
+	if next_path_index < 0:
+		await reached_next_node()
 	var dist_to_travel: float = pawn.speed * delta * speed
 	var next_position: Vector2 = pawn.global_position
 	while dist_to_travel > 0:

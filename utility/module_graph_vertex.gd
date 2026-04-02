@@ -3,7 +3,7 @@ extends Object
 
 class EdgeData:
 	var cost: float = 0
-	var data: Variant
+	var data: StringName = ""
 
 var node: Node2D = null
 var edges: Dictionary[ModuleGraphVertex, EdgeData]
@@ -13,7 +13,7 @@ var group: StringName = ""
 ## If endpoint, never try to path through this. Generally only valid for non-module entities
 var endpoint: bool = false
 
-func add_edge(destination: ModuleGraphVertex, cost: float, data: Variant = null) -> void:
+func add_edge(destination: ModuleGraphVertex, cost: float, data: StringName = "") -> void:
 	var new_edge:EdgeData = EdgeData.new()
 	new_edge.cost = cost
 	new_edge.data = data

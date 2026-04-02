@@ -274,6 +274,8 @@ radius = 6.0
 height = 22.0
 
 [node name="PawnBase" type="Node2D" unique_id=1154928948 node_paths=PackedStringArray("collision")]
+z_index = 5
+y_sort_enabled = true
 script = ExtResource("1_4rv7m")
 collision = NodePath("Offset/Area2D")
 

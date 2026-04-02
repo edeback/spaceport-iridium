@@ -7577,9 +7577,9 @@ module_layers = {
 0: NodePath("../../ForegroundLayers/ModuleLayer"),
 1: NodePath("../../ForegroundLayers/HorizontalTransportLayer"),
 2: NodePath("../../ForegroundLayers/VerticalTransportLayer"),
-3: NodePath("../../BackgroundLayers/AsteroidLayer")
+3: NodePath("../../ForegroundLayers/ForegroundSpace")
 }
-pawn_layer = NodePath("../../ForegroundLayers/PawnLayer")
+pawn_layer = NodePath("../../ForegroundLayers/ForegroundSpace")
 replacement_module = ExtResource("4_getpj")
 
 [node name="PathManager" type="Node" parent="Managers" unique_id=280019714]
@@ -7702,22 +7702,22 @@ follow_viewport_enabled = true
 [node name="UiInGame" parent="ForegroundLayers/UiInGameLayer" unique_id=1422422236 instance=ExtResource("9_ipixf")]
 mouse_filter = 1
 
-[node name="PawnLayer" type="CanvasLayer" parent="ForegroundLayers" unique_id=435393025]
+[node name="ForegroundSpace" type="CanvasLayer" parent="ForegroundLayers" unique_id=435393025]
 layer = 4
 follow_viewport_enabled = true
 
-[node name="VerticalTransportLayer" type="CanvasLayer" parent="ForegroundLayers" unique_id=2031937818]
-layer = 3
-follow_viewport_enabled = true
-
-[node name="CanvasModulate" type="CanvasModulate" parent="ForegroundLayers/VerticalTransportLayer" unique_id=1229565819]
-
 [node name="HorizontalTransportLayer" type="CanvasLayer" parent="ForegroundLayers" unique_id=1908179889]
-layer = 2
+layer = 3
 follow_viewport_enabled = true
 
 [node name="CanvasModulate" type="CanvasModulate" parent="ForegroundLayers/HorizontalTransportLayer" unique_id=1426114782]
 color = Color(0.552941, 0.552941, 0.552941, 1)
+
+[node name="VerticalTransportLayer" type="CanvasLayer" parent="ForegroundLayers" unique_id=2031937818]
+layer = 2
+follow_viewport_enabled = true
+
+[node name="CanvasModulate" type="CanvasModulate" parent="ForegroundLayers/VerticalTransportLayer" unique_id=1229565819]
 
 [node name="PawnLayerLow" type="CanvasLayer" parent="ForegroundLayers" unique_id=1962442915]
 follow_viewport_enabled = true
