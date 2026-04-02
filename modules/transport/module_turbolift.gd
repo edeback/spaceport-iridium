@@ -81,13 +81,19 @@ func set_door(is_close: bool) -> void:
 func has_custom_pathing() -> bool:
 	return true
 
-func traverse(_path_edge: PathComponent.PathTraversalEdgeData) -> void:
-	pass
+func traverse(_pawn: PawnBase, _path_edge: PathComponent.PathTraversalEdgeData) -> void:
+	if _path_edge.edge_meta == &"board_turbolift":
+		if _path_edge.start_index == 3:
+			# 3 -> 2 enters lift
+			_pawn.traverse_turbolift(true)
+		else:
+			# must be exiting lift
+			_pawn.traverse_turbolift(false)
 
-func path_enter(_door: int, _meta: StringName) -> void:
+func path_enter(_pawn: PawnBase, _door: int, _meta: StringName) -> void:
 	if _meta == &"turbolift_door":
 		await set_door(false)
 	
-func path_exit(_door: int, _meta: StringName) -> void:
+func path_exit(_pawn: PawnBase, _door: int, _meta: StringName) -> void:
 	if _meta == &"turbolift_door":
 		await set_door(false)

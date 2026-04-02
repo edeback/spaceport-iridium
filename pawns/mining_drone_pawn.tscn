@@ -10,7 +10,14 @@ cargo_size = 5.0
 powered = true
 animated_sprite = NodePath("Offset/Robot")
 
-[node name="Robot" parent="Offset" parent_id_path=PackedInt32Array(1164109464) index="2" unique_id=264074984]
+[node name="TurboliftBase" parent="Offset" parent_id_path=PackedInt32Array(1164109464) index="0" unique_id=1258126832]
+position = Vector2(0, -10)
+
+[node name="Crew" parent="Offset" parent_id_path=PackedInt32Array(1164109464) index="2" unique_id=552917447]
+visible = false
+
+[node name="Robot" parent="Offset" parent_id_path=PackedInt32Array(1164109464) index="3" unique_id=264074984]
+visible = true
 position = Vector2(0, -7)
 scale = Vector2(0.2, 0.2)
 

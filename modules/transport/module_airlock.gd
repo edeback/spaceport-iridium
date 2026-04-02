@@ -50,7 +50,7 @@ func wait_for_airlocks(outer_closed: bool, inner_closed: bool) -> void:
 	if outer_sprite.is_playing():
 		await outer_sprite.animation_finished
 
-func traverse(path_edge: PathComponent.PathTraversalEdgeData) -> void:
+func traverse(_pawn: PawnBase, path_edge: PathComponent.PathTraversalEdgeData) -> void:
 	if path_edge.edge_meta == "inner_airlock":
 		await set_airlock(&"outer_airlock", true)
 		await set_airlock(&"inner_airlock", false)

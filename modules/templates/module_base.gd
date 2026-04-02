@@ -175,13 +175,13 @@ func overlap_module(_new_module: ModuleData, _is_horizontal: bool) -> bool:
 func has_custom_pathing() -> bool:
 	return false
 	
-func traverse(_path_edge: PathComponent.PathTraversalEdgeData) -> void:
+func traverse(_pawn: PawnBase, _path_edge: PathComponent.PathTraversalEdgeData) -> void:
 	pass
 	
-func path_enter(_door: int, _meta: StringName) -> void:
+func path_enter(_pawn: PawnBase, _door: int, _meta: StringName) -> void:
 	pass
 	
-func path_exit(_door: int, _meta: StringName) -> void:
+func path_exit(_pawn: PawnBase, _door: int, _meta: StringName) -> void:
 	pass
 	
 func show_label() -> void:

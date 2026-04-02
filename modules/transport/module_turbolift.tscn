@@ -6,7 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://r2nt1fhbsql4" path="res://assets/sprites/turbolift.png" id="4_vm5pc"]
 [ext_resource type="Texture2D" uid="uid://crwswrrwpu3gu" path="res://assets/sprites/turboliftdoor.png" id="5_hevvg"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_80vqc"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hevvg"]
 shader = ExtResource("3_hevvg")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -130,7 +130,7 @@ collision_lower = NodePath("Offset/Footprint/CollisionLower")
 door_sprite = NodePath("Offset/Sprite/DoorSprite")
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_80vqc")
+material = SubResource("ShaderMaterial_hevvg")
 texture = ExtResource("4_vm5pc")
 
 [node name="DoorSprite" type="AnimatedSprite2D" parent="Offset/Sprite" index="1" unique_id=1955404107]
@@ -155,16 +155,17 @@ disabled = true
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(0, 1)])
-path_points = Array[Vector2i]([Vector2i(22, 0), Vector2i(22, 64), Vector2i(22, 58)])
-path_edges = Dictionary[Vector2i, String]({
-Vector2i(0, 2): "",
-Vector2i(1, 2): ""
+path_points = Array[Vector2i]([Vector2i(22, 0), Vector2i(22, 64), Vector2i(22, 58), Vector2i(22, 58)])
+path_edges = Dictionary[Vector2i, StringName]({
+Vector2i(0, 2): &"",
+Vector2i(1, 2): &"",
+Vector2i(2, 3): &"board_turbolift"
 })
 door_connections = Dictionary[int, int]({
-2: 1
+3: 1
 })
-door_data = Dictionary[int, String]({
-2: "turbolift_door"
+door_data = Dictionary[int, StringName]({
+3: &"turbolift_door"
 })
 door_required = false
 

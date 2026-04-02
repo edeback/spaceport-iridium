@@ -37,7 +37,7 @@ structure_check_before_delete = true
 [node name="Hallway" type="Node2D" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1382909595]
 
 [node name="LightingComponent" parent="Offset/Hallway" index="0" unique_id=494028080 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_jxdbx")]
-z_index = 2
+z_index = 10
 position = Vector2(0, 16)
 scale = Vector2(1, 0.5)
 power_consumption_component = NodePath("../../../PowerConsumptionComponent")
@@ -86,6 +86,7 @@ door_connections = Dictionary[int, int]({
 3: 2,
 5: 0
 })
+door_data = null
 door_required = false
 
 [node name="StructureComponent" parent="." index="3" unique_id=2060859123]

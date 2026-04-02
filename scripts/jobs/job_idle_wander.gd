@@ -29,7 +29,7 @@ func start_job(_pawn: PawnBase) -> void:
 		var connections: Array[Node2D] = _pawn.current_module.get_path_component().module_connections.keys()
 		connections.shuffle()
 		for node in connections:
-			if node is ModuleBase:
+			if node is ModuleBase and node is not ModuleTurbolift:
 				destination = node as ModuleBase
 				break
 	else:

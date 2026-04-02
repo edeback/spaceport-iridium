@@ -51,6 +51,8 @@ func run_pathfinding() -> void:
 		action_state = PathActionState.Failed
 	else:
 		next_path_index = -1
+		sub_path_index = -1
+		in_sub_path = false
 		for point in path:
 			nodes_to_watch.append(point.node)
 		nodes_to_watch.reverse()
@@ -130,7 +132,7 @@ func reached_next_node() -> void:
 		if sub_path.size() > 0:
 			door = sub_path[sub_path.size() - 1].end_index
 		var leaving_module: ModuleBase = path[next_path_index].node as ModuleBase
-		await leaving_module.path_exit(door, path[next_path_index].edge_meta)
+		await leaving_module.path_exit(pawn, door, path[next_path_index].edge_meta)
 		
 	next_path_index += 1
 
@@ -144,7 +146,7 @@ func reached_next_node() -> void:
 		if sub_path.size() > 0:
 			door = sub_path[0].end_index
 		var entering_module: ModuleBase = path[next_path_index].node as ModuleBase
-		await entering_module.path_enter(door, path[next_path_index - 1].edge_meta)
+		await entering_module.path_enter(pawn, door, path[next_path_index - 1].edge_meta)
 		
 	if sub_path.size() > 0:
 		sub_path_index = -1
@@ -161,7 +163,7 @@ func reached_next_node() -> void:
 				this_module.enter_module_from(pawn, prev_module)
 			else:
 				pawn.current_module = null
-			if next_path_index > 0:
+			if next_path_index > 1:
 				nodes_to_watch.pop_back()
 
 
@@ -193,7 +195,7 @@ func reached_next_subpath() -> void:
 				this_module.enter_module_from(pawn, prev_module)
 			else:
 				pawn.current_module = null
-			if next_path_index > 0:
+			if next_path_index > 1:
 				nodes_to_watch.pop_back()
 	sub_path_index += 1
 	if sub_path_index >= sub_path.size():
@@ -202,7 +204,7 @@ func reached_next_subpath() -> void:
 		return
 	var module: ModuleBase = path[next_path_index].node as ModuleBase
 	if module != null and module.has_custom_pathing():
-		await module.traverse(sub_path[sub_path_index])
+		await module.traverse(pawn, sub_path[sub_path_index])
 	
 func move(delta: float) -> void:
 	if next_path_index < 0:

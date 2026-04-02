@@ -232,6 +232,12 @@ func pathfind_by_vertex(start_vertex: ModuleGraphVertex, end_vertex: ModuleGraph
 	var start_point := PathPoint.new()
 	start_point.node = start_vertex.node
 	start_point.in_space = (start_vertex.group == &"space")
+	if prev_vertex != null:
+		var edge_data: ModuleGraphVertex.EdgeData = prev_vertex.edges.get(cur_vertex)
+		if edge_data != null:
+			start_point.edge_meta = edge_data.data
+		else:
+			start_point.edge_meta = start_vertex.group
 	path.append(start_point)
 	path.reverse()
 	return path

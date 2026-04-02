@@ -12,6 +12,7 @@ extends Node2D
 @export var animated_sprite: AnimatedSprite2D
 @export var pawn_name: String = ""
 @export var collision: Area2D
+@export var turbolift_base: Sprite2D
 
 var current_layer: WorldManager.StructureLayer = WorldManager.StructureLayer.SPACE
 var traveling: bool = false
@@ -139,7 +140,7 @@ func _notification(what: int) -> void:
 
 func move_to(new_pos: Vector2) -> void:
 	if animated_sprite != null:
-		if position == new_pos:
+		if position.x == new_pos.x:
 			animated_sprite.play("idle")
 		else:
 			animated_sprite.play("walk")
@@ -147,23 +148,28 @@ func move_to(new_pos: Vector2) -> void:
 	position = new_pos
 
 func _on_module_changed(new_module: ModuleBase) -> void:
-	current_module = new_module
-	if new_module == null:
-		if current_layer != WorldManager.StructureLayer.SPACE:
-			current_layer = WorldManager.StructureLayer.SPACE
-			reparent(Global.world_manager.get_canvas_for_layer(current_layer))
-		Global.path_manager.graph.change_vertex_group(self, "space")
-	else:
-		Global.path_manager.graph.change_vertex_group(self, "")
-		if current_layer != new_module.module_data.interaction_layer:
-			current_layer = new_module.module_data.interaction_layer
-			reparent(Global.world_manager.get_canvas_for_layer(current_layer))
+	if current_module != new_module:
+		current_module = new_module
+		if new_module == null:
+			# Force "exit" turbolift if we got ejected
+			turbolift_base.visible = false
+			if current_layer != WorldManager.StructureLayer.SPACE:
+				current_layer = WorldManager.StructureLayer.SPACE
+				reparent(Global.world_manager.get_canvas_for_layer(current_layer))
+			Global.path_manager.graph.change_vertex_group(self, "space")
+		else:
+			Global.path_manager.graph.change_vertex_group(self, "")
+			if current_layer != new_module.module_data.interaction_layer:
+				current_layer = new_module.module_data.interaction_layer
+				reparent(Global.world_manager.get_canvas_for_layer(current_layer))
 
 #func _find_next_job() -> void:
 	#if current_job == null:
 		#current_job = Global.job_manager.find_job()
 	#pass
 
+func traverse_turbolift(is_entering: bool) -> void:
+	turbolift_base.visible = is_entering
 
 func _on_collision_clicked(viewport: Node, event: InputEvent, shape_idx: int) -> void:
 	if event.is_action_pressed("build"):

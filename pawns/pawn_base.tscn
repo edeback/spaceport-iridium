@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ddgc25wxbd8dx" path="res://pawns/pawn_base.gd" id="1_4rv7m"]
 [ext_resource type="Texture2D" uid="uid://dfjrqt380rc2o" path="res://assets/external/kenney_toon-characters-1/Robot/Tilesheet/character_robot_sheet.png" id="2_tngjo"]
+[ext_resource type="Texture2D" uid="uid://bwmsscm32juws" path="res://assets/sprites/turbolift_base.png" id="2_wyski"]
 [ext_resource type="Texture2D" uid="uid://d23p0x1oq1caw" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idle_1.png" id="3_j6cx7"]
 [ext_resource type="Texture2D" uid="uid://buujr2ip8qex5" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idle_2.png" id="4_wyski"]
 [ext_resource type="Texture2D" uid="uid://bw36upvesmlrl" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idle_3.png" id="5_cl5b7"]
@@ -273,13 +274,19 @@ animations = [{
 radius = 6.0
 height = 22.0
 
-[node name="PawnBase" type="Node2D" unique_id=1154928948 node_paths=PackedStringArray("collision")]
+[node name="PawnBase" type="Node2D" unique_id=1154928948 node_paths=PackedStringArray("collision", "turbolift_base")]
 z_index = 5
 y_sort_enabled = true
 script = ExtResource("1_4rv7m")
 collision = NodePath("Offset/Area2D")
+turbolift_base = NodePath("Offset/TurboliftBase")
 
 [node name="Offset" type="Node2D" parent="." unique_id=1164109464]
+
+[node name="TurboliftBase" type="Sprite2D" parent="Offset" unique_id=1258126832]
+visible = false
+position = Vector2(0, -1)
+texture = ExtResource("2_wyski")
 
 [node name="Sprite2D" type="Sprite2D" parent="Offset" unique_id=949508764]
 visible = false
@@ -290,12 +297,12 @@ region_enabled = true
 region_rect = Rect2(16, 32, 64, 96)
 
 [node name="Crew" type="AnimatedSprite2D" parent="Offset" unique_id=552917447]
-visible = false
 scale = Vector2(0.25, 0.25)
 sprite_frames = SubResource("SpriteFrames_o283h")
 animation = &"idle"
 
 [node name="Robot" type="AnimatedSprite2D" parent="Offset" unique_id=264074984]
+visible = false
 scale = Vector2(0.3, 0.3)
 sprite_frames = SubResource("SpriteFrames_dda5j")
 animation = &"stand"

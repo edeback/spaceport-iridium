@@ -161,7 +161,7 @@ func reached_next_subpath() -> void:
 		return
 	var module: ModuleBase = path[next_path_index].node as ModuleBase
 	if module != null and module.has_custom_pathing():
-		await module.traverse(sub_path[sub_path_index])
+		await module.traverse(pawn, sub_path[sub_path_index])
 	
 func move(delta: float) -> void:
 	var dist_to_travel: float = pawn.speed * delta * speed
