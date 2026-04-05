@@ -56,11 +56,7 @@ func is_valid() -> bool:
 func can_do_job(_pawn: PawnBase) -> bool:
 	if !deconstruct and !construction_component.ready_for_construction():
 		return false
-	var test_action: Action_PathToTarget = Action_PathToTarget.new()
-	test_action.initialize_action(_pawn, module_to_construct, 1, true)
-	var failed: bool = test_action.is_failed()
-	test_action.free()
-	return not failed
+	return Global.path_manager.is_space_reachable(_pawn)
 	
 func start_job(_pawn: PawnBase) -> void:
 	pawn = _pawn

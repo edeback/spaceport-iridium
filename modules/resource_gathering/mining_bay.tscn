@@ -28,26 +28,32 @@ resource_local_to_scene = true
 size = Vector2(126, 126)
 
 [sub_resource type="Resource" id="Resource_0tx88"]
+resource_local_to_scene = true
 script = ExtResource("7_2l5du")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [sub_resource type="Resource" id="Resource_wt5jo"]
+resource_local_to_scene = true
 script = ExtResource("7_2l5du")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [sub_resource type="Resource" id="Resource_cyani"]
+resource_local_to_scene = true
 script = ExtResource("7_2l5du")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [sub_resource type="Resource" id="Resource_25qps"]
+resource_local_to_scene = true
 script = ExtResource("7_2l5du")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [sub_resource type="Resource" id="Resource_delo2"]
+resource_local_to_scene = true
 script = ExtResource("7_2l5du")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [sub_resource type="Resource" id="Resource_avr65"]
+resource_local_to_scene = true
 script = ExtResource("7_2l5du")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 

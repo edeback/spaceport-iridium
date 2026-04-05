@@ -39,12 +39,12 @@ func setup(_module: ModuleBase) -> void:
 	
 func can_do_job(_pawn: PawnBase) -> bool:
 	var asteroids: Array[Node] = _pawn.get_tree().get_nodes_in_group("asteroid")
-	var test_asteroid: AsteroidBase = asteroids.pick_random() as AsteroidBase
-	var test_action: Action_PathToTarget = Action_PathToTarget.new()
-	test_action.initialize_action(_pawn, test_asteroid, 1, true)
-	var failed: bool = test_action.is_failed()
-	test_action.free()
-	return not failed
+	var has_resources: bool = false
+	for node in asteroids:
+		if (node as AsteroidBase).cur_resources > 0:
+			has_resources = true
+			break
+	return has_resources and Global.path_manager.is_space_reachable(_pawn)
 	
 func start_job(_pawn: PawnBase) -> void:
 	pawn = _pawn

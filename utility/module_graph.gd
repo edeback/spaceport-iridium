@@ -38,7 +38,7 @@ func make_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = 
 		group_array.append(new_vertex)
 	return new_vertex
 	
-func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: int = -1) -> void:
+func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: int = -1, rebuild: bool = true) -> void:
 	var graph_vertex: ModuleGraphVertex = _vertices.get(vertex)
 	if graph_vertex != null and graph_vertex.group != new_group:
 		if graph_vertex.group:
@@ -48,7 +48,22 @@ func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: 
 		graph_vertex.group = new_group
 		if new_group_door >= 0:
 			graph_vertex.group_door = new_group_door
-		_rebuild_subgraphs()
+		if rebuild:
+			_rebuild_subgraphs()
+	
+func get_group_subgraph(group: StringName) -> int:
+	if group:
+		var group_array : Array = _linked_groups.get_or_add(group, [])
+		if not group_array.is_empty():
+			# Default dump this in the same subgraph as they're all connected
+			return group_array[0].subgraph
+	return -1
+	
+## Not for use with adding/removing nodes, this redirects pawn to pawn.current_module if they're in a module
+func get_vertex_for_path(node: Node2D) -> ModuleGraphVertex:
+	if node and node is PawnBase and (node as PawnBase).current_module != null:
+		return _vertices.get((node as PawnBase).current_module)
+	return _vertices.get(node)
 	
 func block_vertex(vertex: Node2D) -> void:
 	if _vertices.has(vertex):
@@ -152,7 +167,15 @@ func _rebuild_subgraphs() -> void:
 			cur_subgraph += 1
 			_assign_subgraph_from(vertex, cur_subgraph)
 	last_subgraph = cur_subgraph
-	
+
+func _rebuild_partial_subgraphs(changed_nodes: Array[ModuleGraphVertex]) -> void:
+	for node: ModuleGraphVertex in changed_nodes:
+		node.subgraph = -1
+	for node: ModuleGraphVertex in changed_nodes:
+		if node.subgraph == -1:
+			last_subgraph += 1
+			_assign_subgraph_from(node, last_subgraph)
+
 func get_closest_module_to_position(vector: Vector2, vertices: Array[ModuleGraphVertex] = _vertices.values()) -> ModuleBase:
 	var dist: float = -1
 	var module: ModuleBase = null
@@ -170,9 +193,18 @@ func get_closest_module_by_group(vector: Vector2, group: StringName) -> ModuleBa
 		return null
 	return get_closest_module_to_position(vector, group_vertices)
 
+func is_reachable(start: Node2D, end: Node2D) -> bool:
+	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
+	var end_vertex: ModuleGraphVertex = get_vertex_for_path(end)
+	return start_vertex and end_vertex and start_vertex.subgraph == end_vertex.subgraph
+	
+func is_space_reachable(start: Node2D) -> bool:
+	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
+	return start_vertex and start_vertex.subgraph == get_group_subgraph(&"space")
+
 func pathfind(start: Node2D, end: Node2D) -> Array[PathPoint]:
-	var start_vertex: ModuleGraphVertex = _vertices.get(start)
-	var end_vertex: ModuleGraphVertex = _vertices.get(end)
+	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
+	var end_vertex: ModuleGraphVertex = get_vertex_for_path(end)
 	return pathfind_by_vertex(start_vertex, end_vertex)
 
 func pathfind_by_vertex(start_vertex: ModuleGraphVertex, end_vertex: ModuleGraphVertex) -> Array[PathPoint]:
@@ -253,14 +285,14 @@ func _heuristic(_start: ModuleGraphVertex, _end: ModuleGraphVertex) -> float:
 func pathfind_to_node_in_space(start: Node2D, end: Node2D) -> Array[PathPoint]:
 	var temp_vertex: ModuleGraphVertex = make_vertex(end, true, "space")
 	_linked_groups.get_or_add("space", []).append(temp_vertex)
-	var path := pathfind_by_vertex(_vertices.get(start), temp_vertex)
+	var path := pathfind_by_vertex(get_vertex_for_path(start), temp_vertex)
 	_linked_groups["space"].erase(temp_vertex)
 	return path
 	
 func pathfind_to_type(start: Node2D, end_type: ModuleData) -> Array[PathPoint]:
 	if end_type == null:
 		return []
-	var start_vertex: ModuleGraphVertex = _vertices.get(start)
+	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
 	if start_vertex == null:
 		return []
 	var type_callable: Callable = func(test_vertex: ModuleGraphVertex) -> bool: return test_vertex.node is ModuleBase and test_vertex.node.module_data == end_type
@@ -269,14 +301,14 @@ func pathfind_to_type(start: Node2D, end_type: ModuleData) -> Array[PathPoint]:
 func pathfind_to_component_type(start: Node2D, end_component_type: Variant) -> Array[PathPoint]:
 	if end_component_type == null:
 		return []
-	var start_vertex: ModuleGraphVertex = _vertices.get(start)
+	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
 	if start_vertex == null:
 		return []
 	var component_type_callable: Callable = func(test_vertex: ModuleGraphVertex) -> bool: return test_vertex.node is ModuleBase and test_vertex.node.get_component_by_type(end_component_type) != null
 	return pathfind_to_func(start, component_type_callable)	
 
 func pathfind_to_func(start: Node2D, end_func: Callable) -> Array[PathPoint]:
-	var start_vertex: ModuleGraphVertex = _vertices.get(start)
+	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
 	if start_vertex == null or !end_func.is_valid():
 		return []
 	var frontier: ModuleQueue = ModuleQueue.new()

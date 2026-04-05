@@ -237,7 +237,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_j6cx7")
 }],
 "loop": true,
-"name": &"stand",
+"name": &"idle",
 "speed": 5.0
 }, {
 "frames": [{
@@ -305,7 +305,7 @@ animation = &"idle"
 visible = false
 scale = Vector2(0.3, 0.3)
 sprite_frames = SubResource("SpriteFrames_dda5j")
-animation = &"stand"
+animation = &"idle"
 offset = Vector2(0, -16)
 
 [node name="Area2D" type="Area2D" parent="Offset" unique_id=845226640]

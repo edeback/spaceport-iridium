@@ -100,6 +100,12 @@ func enable_module(module: ModuleBase) -> void:
 	graph.unblock_vertex(module)
 	recheck_pathfinding = true
 
+func is_reachable(start: Node2D, end: Node2D) -> bool:
+	return graph.is_reachable(start, end)
+	
+func is_space_reachable(start: Node2D) -> bool:
+	return graph.is_space_reachable(start)
+
 ## Normally in cells, can convert to global
 func run_pathfinding(start_module: Node2D, end_module: Node2D, use_global_position: bool = false) -> PackedVector2Array:
 	return _module_path_to_point_path(graph.pathfind(start_module, end_module), use_global_position)

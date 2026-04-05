@@ -8,11 +8,7 @@ var job_state: JobBase.JobState = JobBase.JobState.Starting
 func can_do_job(_pawn: PawnBase) -> bool:
 	var sus_components := _pawn.get_tree().get_nodes_in_group("sustenance_component")
 	if sus_components.size() > 0:
-		var test_action: Action_PathToTarget = Action_PathToTarget.new()
-		test_action.initialize_action(_pawn, sus_components[0])
-		var failed: bool = test_action.is_failed()
-		test_action.free()
-		return not failed
+		return Global.path_manager.is_reachable(_pawn, sus_components[0])
 	return false
 
 func start_job(_pawn: PawnBase) -> void:

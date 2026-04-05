@@ -74,6 +74,8 @@ func process_action(delta: float) -> void:
 			await move(delta)
 			if action_state == PathActionState.Paused:
 				action_state = PathActionState.Moving
+		PathActionState.Paused:
+			pawn.set_idle()
 		PathActionState.Finished:
 			SignalBus.module_removed.disconnect(module_removed)
 			pass

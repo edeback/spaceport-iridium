@@ -147,6 +147,9 @@ func move_to(new_pos: Vector2) -> void:
 			animated_sprite.flip_h = new_pos.x < position.x
 	position = new_pos
 
+func set_idle() -> void:
+	animated_sprite.play("idle")
+
 func _on_module_changed(new_module: ModuleBase) -> void:
 	if current_module != new_module:
 		current_module = new_module
@@ -156,9 +159,9 @@ func _on_module_changed(new_module: ModuleBase) -> void:
 			if current_layer != WorldManager.StructureLayer.SPACE:
 				current_layer = WorldManager.StructureLayer.SPACE
 				reparent(Global.world_manager.get_canvas_for_layer(current_layer))
-			Global.path_manager.graph.change_vertex_group(self, "space")
+			Global.path_manager.graph.change_vertex_group(self, "space", -1, false)
 		else:
-			Global.path_manager.graph.change_vertex_group(self, "")
+			Global.path_manager.graph.change_vertex_group(self, "", -1, false)
 			if current_layer != new_module.module_data.interaction_layer:
 				current_layer = new_module.module_data.interaction_layer
 				reparent(Global.world_manager.get_canvas_for_layer(current_layer))

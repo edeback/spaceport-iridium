@@ -47,12 +47,7 @@ func can_do_job(_pawn: PawnBase) -> bool:
 			storage_component = storage
 			break
 	if storage_component != null:
-		var test_action: Action_PathToTarget = Action_PathToTarget.new()
-		test_action.initialize_action(_pawn, storage_component.owner_module)
-		if test_action.is_failed():
-			return false
-		test_action.initialize_action(_pawn, deposit_storage.owner_module)
-		return not test_action.is_failed()
+		return Global.path_manager.is_reachable(_pawn, storage_component.owner_module) and Global.path_manager.is_reachable(_pawn, deposit_storage.owner_module)
 	return false
 
 func start_job(_pawn: PawnBase) -> void:
