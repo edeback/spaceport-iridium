@@ -22,6 +22,8 @@ class PathTraversalEdgeData:
 	set(new_points):
 		connection_points = new_points
 		queue_redraw()
+		
+@export var self_connection_only: bool = false
 
 @export var path_points: Array[Vector2i] = []:
 	set(new_points):
@@ -152,11 +154,14 @@ func _has_possible_connections() -> bool:
 			return true
 	return false
 		
+func _can_connect(other_module: ModuleBase) -> bool:
+	return other_module != null and other_module != owner_module and (not self_connection_only or other_module.module_data == owner_module.module_data)
+		
 ## Find the index of a connection between this and another module. -1 if not found
 func _find_connection(other_module: ModuleBase) -> int:
 	for index: int in connection_points.size():
 		var module: ModuleBase = Global.world_manager.get_module_by_cell(owner_module.module_data.interaction_layer, owner_module.module_cell + connection_points[index])
-		if module != null and module == other_module:
+		if _can_connect(module):
 			return index
 	return -1
 
@@ -165,7 +170,7 @@ func _find_connections() -> Dictionary[ModuleBase, int]:
 	var connected_modules: Dictionary[ModuleBase, int] = {}
 	for index: int in connection_points.size():
 		var module: ModuleBase = Global.world_manager.get_module_by_cell(owner_module.module_data.interaction_layer, owner_module.module_cell + connection_points[index])
-		if module != null and module != owner_module:
+		if _can_connect(module):
 			connected_modules[module] = index
 	return connected_modules
 	
