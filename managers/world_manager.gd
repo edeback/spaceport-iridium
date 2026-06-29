@@ -17,6 +17,8 @@ class LayerData:
 
 @export var replacement_module: ModuleData
 
+@export var hallway_module: ModuleData
+
 var layer_data: Dictionary[StructureLayer, LayerData]
 
 var last_id : int = 0
@@ -74,7 +76,7 @@ func purchase_and_add_module(module_data: ModuleData, cell: Vector2i, is_horizon
 		module_data.withdraw_cost()
 	add_module(module_data, cell, is_horizontal, flipped)
 
-func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false) -> void:
+func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false) -> ModuleBase:
 	var module_scene: PackedScene = module_data.scene
 	if flipped and module_data.flippable:
 		module_scene = module_data.flipped_scene
@@ -111,6 +113,7 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 		new_module.call_deferred("ready_blueprint")
 	else:
 		new_module.ready_constructed()
+	return new_module
 
 func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 	if module.can_delete == false:

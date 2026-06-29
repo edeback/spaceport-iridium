@@ -45,6 +45,10 @@ func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: 
 			_linked_groups[graph_vertex.group].erase(graph_vertex)
 		if new_group:
 			_linked_groups.get_or_add(new_group, []).append(graph_vertex)
+			graph_vertex.subgraph = get_group_subgraph(new_group)
+		else:
+			last_subgraph += 1
+			graph_vertex.subgraph = last_subgraph
 		graph_vertex.group = new_group
 		if new_group_door >= 0:
 			graph_vertex.group_door = new_group_door

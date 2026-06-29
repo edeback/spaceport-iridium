@@ -1,7 +1,7 @@
 @tool
 class_name CorridorModule
 extends ModuleBase
-
+		
 var truss: ModuleData = preload("res://data/modules/core/truss_mdata.tres")
 		
 @export var door_sprite: Sprite2D

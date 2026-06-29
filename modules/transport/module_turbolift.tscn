@@ -132,6 +132,7 @@ door_sprite = NodePath("Offset/Sprite/DoorSprite")
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
 material = SubResource("ShaderMaterial_hevvg")
 texture = ExtResource("4_vm5pc")
+region_rect = Rect2(192, 0, 64, 64)
 
 [node name="DoorSprite" type="AnimatedSprite2D" parent="Offset/Sprite" index="1" unique_id=1955404107]
 visible = false

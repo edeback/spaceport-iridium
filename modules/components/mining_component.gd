@@ -58,7 +58,7 @@ func _process(_delta: float) -> void:
 				var mining_job: Job_MineAsteroid = Job_MineAsteroid.new()
 				mining_job.setup(owner_module)
 				if not mining_job.can_do_job(drone) or not drone.give_job(mining_job):
-					mining_job.free()
+					mining_job.cancel(true)
 		
 func build_drone() -> void:
 	var new_drone: MiningDronePawn = mining_drone_scene.instantiate() as MiningDronePawn

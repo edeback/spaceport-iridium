@@ -2,6 +2,8 @@
 class_name ModuleTurbolift
 extends ModuleBase
 
+var truss: ModuleData = preload("res://data/modules/core/truss_mdata.tres")
+
 @export var collision_upper: CollisionShape2D
 @export var collision_lower: CollisionShape2D
 @export var door_sprite: AnimatedSprite2D
@@ -19,6 +21,12 @@ func _ready() -> void:
 			await get_tree().create_timer(2).timeout
 			set_door(true)
 	)
+
+func on_place() -> void:
+	super()
+	if Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, module_cell) == null:
+		# add a truss segment below
+		Global.world_manager.add_module(truss, module_cell)
 
 func on_select(new_selected: bool) -> void:
 	super(new_selected)
@@ -46,7 +54,7 @@ func set_sprite(_module: ModuleBase) -> void:
 			collision_upper.disabled = false
 			image_select += 1
 		else:
-			collision_upper.disabled = true
+			collision_upper.disabled = false
 		if Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.TURBOLIFT, module_cell + Vector2i(0, 1)) is ModuleTurbolift:
 			# There is a turbolift below
 			sprite.region_rect.position.x = 0

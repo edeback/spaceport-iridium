@@ -16,4 +16,5 @@ scene = ExtResource("3_fka6u")
 icon = SubResource("AtlasTexture_hpgmt")
 tags = Array[String](["Core"])
 multiplacement = 1
+ignore_multiplacement_connection_check = true
 interaction_layer = 1

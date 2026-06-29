@@ -161,7 +161,7 @@ func _can_connect(other_module: ModuleBase) -> bool:
 func _find_connection(other_module: ModuleBase) -> int:
 	for index: int in connection_points.size():
 		var module: ModuleBase = Global.world_manager.get_module_by_cell(owner_module.module_data.interaction_layer, owner_module.module_cell + connection_points[index])
-		if _can_connect(module):
+		if module != null and module == other_module:
 			return index
 	return -1
 
@@ -237,7 +237,10 @@ func connect_doors() -> void:
 			continue
 		var door_cell: Vector2i = Global.world_to_cell(path_points[index])
 		var module: ModuleBase = Global.world_manager.get_module_by_cell(door_connections[index], owner_module.module_cell + door_cell)
-		if module != null and module != owner_module and module.get_path_component() and module.get_path_component().try_connect_door(owner_module, owner_module.module_cell + door_cell):
+		if module == null:
+			if door_required:
+				module = Global.world_manager.add_module(Global.world_manager.hallway_module, owner_module.module_cell + door_cell)
+		if module!= null and module != owner_module and module.get_path_component() and module.get_path_component().try_connect_door(owner_module, owner_module.module_cell + door_cell):
 			if door_required:
 				door_sprites[index].visible = false
 			module_connections[module] = index

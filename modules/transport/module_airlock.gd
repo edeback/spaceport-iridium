@@ -2,6 +2,8 @@
 class_name AirlockModule
 extends ModuleBase
 
+var truss: ModuleData = preload("res://data/modules/core/truss_mdata.tres")
+
 @export var airlock: Dictionary[StringName, AnimatedSprite2D]
 
 var airlock_resetting: bool = false
@@ -16,6 +18,14 @@ func _ready() -> void:
 				await get_tree().create_timer(2).timeout
 				set_airlock(airlock_name, true)
 		)
+		
+
+func on_place() -> void:
+	super()
+	for point in get_structure_component().internal_points:
+		if Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, module_cell + point) == null:
+			# add a truss segment below
+			Global.world_manager.add_module(truss, module_cell + point)
 
 func has_custom_pathing() -> bool:
 	return true

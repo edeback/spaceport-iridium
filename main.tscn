@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://dvf7wnwvh6siv" path="res://managers/power_manager.gd" id="4_deici"]
 [ext_resource type="Resource" uid="uid://p3ja7r43eh6c" path="res://data/modules/core/truss_mdata.tres" id="4_getpj"]
 [ext_resource type="PackedScene" uid="uid://umcjs6xyrnek" path="res://ui/ui_debug.tscn" id="4_m3cse"]
+[ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/core/hallway_mdata.tres" id="5_b1qrp"]
 [ext_resource type="PackedScene" uid="uid://ce6npnqw8s3mu" path="res://ui/ui_main.tscn" id="5_uwp6h"]
 [ext_resource type="Script" uid="uid://6mx2qi4ecq8b" path="res://managers/turbolift_manager.gd" id="6_dg77c"]
 [ext_resource type="Script" uid="uid://bsy2db6ssn3vt" path="res://managers/world_manager.gd" id="6_i5kyc"]
@@ -7581,6 +7582,7 @@ module_layers = {
 }
 pawn_layer = NodePath("../../ForegroundLayers/ForegroundSpace")
 replacement_module = ExtResource("4_getpj")
+hallway_module = ExtResource("5_b1qrp")
 
 [node name="PathManager" type="Node" parent="Managers" unique_id=280019714]
 script = ExtResource("3_nkgie")

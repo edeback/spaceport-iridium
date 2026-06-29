@@ -9,7 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://bqlboa3th5nax" path="res://assets/sprites/module_door.png" id="7_jxdbx"]
 [ext_resource type="Texture2D" uid="uid://dgby5x0bddok7" path="res://assets/sprites/module_windows.png" id="7_qjnux"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_nhdtd"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_qjnux"]
 shader = ExtResource("3_gfe75")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -23,7 +23,7 @@ shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_qjnux"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gwbnh"]
 resource_local_to_scene = true
 size = Vector2(62, 31)
 
@@ -43,7 +43,7 @@ scale = Vector2(1, 0.5)
 power_consumption_component = NodePath("../../../PowerConsumptionComponent")
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="1" unique_id=1530003366]
-material = SubResource("ShaderMaterial_nhdtd")
+material = SubResource("ShaderMaterial_qjnux")
 texture = ExtResource("5_jxdbx")
 
 [node name="Nameplate" parent="Offset/Sprite" index="0" unique_id=1140576615]
@@ -67,28 +67,28 @@ region_rect = Rect2(128, 0, 64, 64)
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
 position = Vector2(0, 15.5)
-shape = SubResource("RectangleShape2D_qjnux")
+shape = SubResource("RectangleShape2D_gwbnh")
 
 [node name="PowerConsumptionComponent" parent="." index="1" unique_id=1534735045 instance=ExtResource("5_eidsi")]
 power_consumption = 5.0
 
 [node name="PathComponent" parent="." index="2" unique_id=1088376714]
 connection_points = Array[Vector2i]([Vector2i(-1, 0), Vector2i(1, 0)])
+self_connection_only = null
 path_points = Array[Vector2i]([Vector2i(0, 60), Vector2i(64, 60), Vector2i(22, 60), Vector2i(22, 58), Vector2i(50, 60), Vector2i(50, 58)])
-path_edges = Dictionary[Vector2i, String]({
-Vector2i(0, 2): "",
-Vector2i(2, 3): "",
-Vector2i(2, 4): "",
-Vector2i(4, 1): "",
-Vector2i(4, 5): ""
+path_edges = Dictionary[Vector2i, StringName]({
+Vector2i(0, 2): &"",
+Vector2i(2, 3): &"",
+Vector2i(2, 4): &"",
+Vector2i(4, 1): &"",
+Vector2i(4, 5): &""
 })
 door_connections = Dictionary[int, int]({
 3: 2,
 5: 0
 })
-door_data = null
 door_required = false
 
 [node name="StructureComponent" parent="." index="3" unique_id=2060859123]
 visible = false
-connection_points = Array[Vector2i]([Vector2i(0, 0)])
+connection_points = Array[Vector2i]([Vector2i(-1, 0), Vector2i(0, 0), Vector2i(1, 0)])
