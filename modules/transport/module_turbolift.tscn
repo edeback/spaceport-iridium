@@ -173,4 +173,4 @@ door_required = false
 
 [node name="StructureComponent" parent="." index="2" unique_id=2060859123]
 visible = false
-connection_points = Array[Vector2i]([Vector2i(0, 0)])
+connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(0, 0), Vector2i(0, 1)])
