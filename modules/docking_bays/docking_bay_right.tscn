@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://cuqyno6nnog1"]
+[gd_scene format=3 uid="uid://cuqyno6nnog1"]
 
 [ext_resource type="PackedScene" uid="uid://bpridbphjctdv" path="res://modules/docking_bays/docking_bay_left_base.tscn" id="1_5d0j8"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_d1nkh"]
@@ -8,36 +8,37 @@ shader = ExtResource("2_d1nkh")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_2tr7e"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_d1nkh"]
 resource_local_to_scene = true
 size = Vector2(191, 127)
 
-[node name="Module" instance=ExtResource("1_5d0j8")]
+[node name="Module" unique_id=865745155 instance=ExtResource("1_5d0j8")]
 
-[node name="Offset" parent="." index="0"]
+[node name="Offset" parent="." index="0" unique_id=498681270]
 position = Vector2(96, 64)
 
-[node name="Sprite" parent="Offset" index="0"]
+[node name="Sprite" parent="Offset" index="0" unique_id=1530003366]
 material = SubResource("ShaderMaterial_5d0j8")
-flip_h = true
+region_rect = Rect2(192, 0, 192, 128)
 
-[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
-shape = SubResource("RectangleShape2D_2tr7e")
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
+shape = SubResource("RectangleShape2D_d1nkh")
 
-[node name="PathComponent" parent="." index="1"]
-path_points = Array[Vector2i]([Vector2i(32, 96)])
+[node name="PathComponent" parent="." index="1" unique_id=1088376714]
+path_points = Array[Vector2i]([Vector2i(50, 122), Vector2i(30, 105)])
 
-[node name="StructureComponent" parent="." index="2"]
+[node name="StructureComponent" parent="." index="2" unique_id=2060859123]
 connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(1, -1), Vector2i(2, -1), Vector2i(-1, 0), Vector2i(-1, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2)])
 internal_points = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)])
 must_be_clear_points = Array[Vector2i]([Vector2i(3, 0), Vector2i(3, 1)])
 
-[node name="ImportedGoods" parent="." index="4"]
-position = Vector2(128, 0)
-
-[node name="GoodsToExport" parent="." index="5"]
+[node name="Imported Goods" parent="." index="4" unique_id=1475305824]
 position = Vector2(-32, 0)
 
-[node name="PowerConsumptionComponent" parent="." index="6"]
+[node name="Goods To Export" parent="." index="5" unique_id=1010662297]
+position = Vector2(128, 0)
+
+[node name="PowerConsumptionComponent" parent="." index="6" unique_id=1657948966]
 position = Vector2(64, 0)

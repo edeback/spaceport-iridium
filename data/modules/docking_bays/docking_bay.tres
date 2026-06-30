@@ -1,14 +1,20 @@
-[gd_resource type="Resource" script_class="ModuleData" load_steps=4 format=3 uid="uid://boadffwat0kpp"]
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://boadffwat0kpp"]
 
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="1_5lqk0"]
 [ext_resource type="PackedScene" uid="uid://cuqyno6nnog1" path="res://modules/docking_bays/docking_bay_right.tscn" id="1_vpvv2"]
 [ext_resource type="PackedScene" uid="uid://bpridbphjctdv" path="res://modules/docking_bays/docking_bay_left_base.tscn" id="2_11ty0"]
+[ext_resource type="Texture2D" uid="uid://bd4p021jd1cq8" path="res://assets/sprites/trading_dock.png" id="2_u32ef"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="3_2k04c"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nlvn8"]
+atlas = ExtResource("2_u32ef")
+region = Rect2(0, 0, 192, 128)
 
 [resource]
 script = ExtResource("1_5lqk0")
 name = "Docking Bay"
 scene = ExtResource("2_11ty0")
-cost = 300
+icon = SubResource("AtlasTexture_nlvn8")
 tags = Array[String](["Dock"])
 flippable = true
 flipped_scene = ExtResource("1_vpvv2")

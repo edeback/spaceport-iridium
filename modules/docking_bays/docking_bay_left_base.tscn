@@ -1,70 +1,76 @@
-[gd_scene load_steps=10 format=3 uid="uid://bpridbphjctdv"]
+[gd_scene format=3 uid="uid://bpridbphjctdv"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_ivh8x"]
 [ext_resource type="Script" uid="uid://ctmoldf856r8s" path="res://modules/docking_bays/docking_bay.gd" id="2_8obs2"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_jskn1"]
+[ext_resource type="Texture2D" uid="uid://bd4p021jd1cq8" path="res://assets/sprites/trading_dock.png" id="4_gu0qf"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_iqcir"]
 [ext_resource type="PackedScene" uid="uid://d2yel2dv7mxe6" path="res://modules/components/trade_component.tscn" id="4_psdj2"]
 [ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="5_18pmv"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="7_gu0qf"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_iqcir"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yrg00"]
 shader = ExtResource("2_jskn1")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_dkgs7"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_e63vr"]
 resource_local_to_scene = true
 size = Vector2(191, 127)
 
-[node name="Module" instance=ExtResource("1_ivh8x")]
+[node name="Module" unique_id=1572878563 instance=ExtResource("1_ivh8x")]
 script = ExtResource("2_8obs2")
 size = Vector2i(4, 2)
 
-[node name="Offset" parent="." index="0"]
+[node name="Offset" parent="." index="0" unique_id=498681270]
 position = Vector2(160, 64)
 
-[node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_iqcir")
-region_rect = Rect2(64, 128, 192, 128)
+[node name="Sprite" parent="Offset" index="0" unique_id=1530003366]
+material = SubResource("ShaderMaterial_yrg00")
+texture = ExtResource("4_gu0qf")
+region_rect = Rect2(0, 0, 192, 128)
 
-[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
 position = Vector2(0.5, 0.5)
-shape = SubResource("RectangleShape2D_dkgs7")
+shape = SubResource("RectangleShape2D_e63vr")
 
-[node name="LightingComponent" parent="Offset" index="2" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_iqcir")]
+[node name="LightingComponent" parent="Offset" index="2" unique_id=1459118124 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_iqcir")]
 scale = Vector2(3, 2)
 power_consumption_component = NodePath("../../PowerConsumptionComponent")
 
-[node name="PathComponent" parent="." index="1"]
-path_points = Array[Vector2i]([Vector2i(224, 96)])
+[node name="PathComponent" parent="." index="1" unique_id=1088376714]
+path_points = Array[Vector2i]([Vector2i(242, 122), Vector2i(210, 105)])
+path_edges = Dictionary[Vector2i, StringName]({
+Vector2i(0, 1): &""
+})
 
-[node name="StructureComponent" parent="." index="2"]
+[node name="StructureComponent" parent="." index="2" unique_id=2060859123]
 visible = false
 connection_points = Array[Vector2i]([Vector2i(1, -1), Vector2i(2, -1), Vector2i(3, -1), Vector2i(4, 0), Vector2i(4, 1), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2)])
 internal_points = Array[Vector2i]([Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1)])
 must_be_clear_points = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)])
 size = Vector2i(4, 2)
 
-[node name="TradeComponent" parent="." index="3" node_paths=PackedStringArray("export_storage", "import_storage") instance=ExtResource("4_psdj2")]
+[node name="TradeComponent" parent="." index="3" unique_id=1540868727 node_paths=PackedStringArray("export_storage", "import_storage") instance=ExtResource("4_psdj2")]
 export_storage = NodePath("../Goods To Export")
 import_storage = NodePath("../Imported Goods")
 
-[node name="Imported Goods" parent="." index="4" instance=ExtResource("5_18pmv")]
+[node name="Imported Goods" parent="." index="4" unique_id=1475305824 instance=ExtResource("5_18pmv")]
 position = Vector2(32, 0)
 priority = -50
 max_stored = 40
 accepts_imports = false
 allow_any_resource = true
 
-[node name="Goods To Export" parent="." index="5" instance=ExtResource("5_18pmv")]
+[node name="Goods To Export" parent="." index="5" unique_id=1010662297 instance=ExtResource("5_18pmv")]
 position = Vector2(192, 0)
 priority = 0
 max_stored = 40
 accepts_exports = false
 player_configurable = true
 
-[node name="PowerConsumptionComponent" parent="." index="6" instance=ExtResource("7_gu0qf")]
+[node name="PowerConsumptionComponent" parent="." index="6" unique_id=1657948966 instance=ExtResource("7_gu0qf")]
 position = Vector2(128, 0)
 power_consumption = 60.0

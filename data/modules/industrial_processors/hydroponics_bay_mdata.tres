@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://cu6f4qegt1ykk"]
+
+[ext_resource type="Texture2D" uid="uid://bun3faac31aog" path="res://assets/sprites/hydroponics_bay.png" id="1_0roq3"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_x74ts"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="3_2a5uh"]
+[ext_resource type="PackedScene" uid="uid://dw21dxp6l44u2" path="res://modules/industrial_processors/hydroponics_bay.tscn" id="4_x74ts"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="5_lqt3h"]
+
+[resource]
+script = ExtResource("5_lqt3h")
+name = "Hydroponics Bay"
+scene = ExtResource("4_x74ts")
+icon = ExtResource("1_0roq3")
+resource_costs = Dictionary[ExtResource("2_x74ts"), int]({
+ExtResource("3_2a5uh"): 200
+})
+tags = Array[String](["Processor"])
+metadata/_custom_type_script = "uid://vwmofdckg7hu"

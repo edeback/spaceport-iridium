@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://d2vqdhq8oy3lp"]
 
+[ext_resource type="Texture2D" uid="uid://bfx85rb5crklr" path="res://assets/sprites/algae_tanks.png" id="1_fx34i"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="1_ju4bj"]
-[ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="1_omcbj"]
 [ext_resource type="PackedScene" uid="uid://bd8aerqsa13jh" path="res://modules/industrial_processors/algae_vats.tscn" id="2_308pd"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_fx34i"]
 [ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="3_wby53"]
@@ -10,7 +10,7 @@
 script = ExtResource("1_ju4bj")
 name = "Algae Vats"
 scene = ExtResource("2_308pd")
-icon = ExtResource("1_omcbj")
+icon = ExtResource("1_fx34i")
 resource_costs = Dictionary[ExtResource("2_fx34i"), int]({
 ExtResource("3_wby53"): 200
 })

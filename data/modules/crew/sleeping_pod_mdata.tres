@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="ModuleData" load_steps=4 format=3 uid="uid://crhsnxhuro0k"]
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://crhsnxhuro0k"]
 
-[ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="1_pj301"]
+[ext_resource type="Texture2D" uid="uid://kk5flkkimb6u" path="res://assets/sprites/sleeping_pod.png" id="1_u3hca"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_fsmkb"]
 [ext_resource type="PackedScene" uid="uid://cnf1f3ppgbny7" path="res://modules/crew/basic_sleeping_pod.tscn" id="2_u3hca"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_fsmkb"]
 
@@ -8,7 +9,6 @@
 script = ExtResource("3_fsmkb")
 name = "Sleeping Pod"
 scene = ExtResource("2_u3hca")
-icon = ExtResource("1_pj301")
-cost = 300
+icon = ExtResource("1_u3hca")
 tags = Array[String](["Crew"])
 metadata/_custom_type_script = "uid://vwmofdckg7hu"

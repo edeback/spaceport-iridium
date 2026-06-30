@@ -1,7 +1,8 @@
-[gd_scene load_steps=19 format=3 uid="uid://bd8aerqsa13jh"]
+[gd_scene format=3 uid="uid://bd8aerqsa13jh"]
 
 [ext_resource type="PackedScene" uid="uid://c4cgh4tautltt" path="res://modules/templates/module_2x2.tscn" id="1_v54ii"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_bkuoe"]
+[ext_resource type="Texture2D" uid="uid://bfx85rb5crklr" path="res://assets/sprites/algae_tanks.png" id="3_0rxrq"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="3_6f4mx"]
 [ext_resource type="PackedScene" uid="uid://c63swhm7yiir" path="res://modules/components/processor_component.tscn" id="4_s5d0r"]
 [ext_resource type="Resource" uid="uid://dwj1ac2s0sviw" path="res://data/recipes/algae_vats_recipe.tres" id="5_txiy8"]
@@ -14,13 +15,14 @@
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="11_7gh7k"]
 [ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="12_s1114"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_jhsug"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7gh7k"]
 shader = ExtResource("2_bkuoe")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_imick"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_jhsug"]
 resource_local_to_scene = true
 size = Vector2(126, 126)
 
@@ -36,31 +38,33 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 script = ExtResource("8_s1114")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
-[node name="Module" instance=ExtResource("1_v54ii")]
+[node name="Module" unique_id=1164815278 instance=ExtResource("1_v54ii")]
 
-[node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_jhsug")
+[node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
+material = SubResource("ShaderMaterial_7gh7k")
+texture = ExtResource("3_0rxrq")
+region_rect = Rect2(0, 0, 128, 128)
 
-[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
-shape = SubResource("RectangleShape2D_imick")
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
+shape = SubResource("RectangleShape2D_jhsug")
 
-[node name="LightingComponent" parent="Offset" index="2" instance=ExtResource("3_6f4mx")]
+[node name="LightingComponent" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="2" unique_id=1074918199 instance=ExtResource("3_6f4mx")]
 scale = Vector2(2, 2)
 
-[node name="PathComponent" parent="." index="1"]
+[node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([Vector2i(32, 96)])
 
-[node name="ProcessorComponent" parent="." index="3" node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("4_s5d0r")]
+[node name="ProcessorComponent" parent="." index="3" unique_id=837779850 node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("4_s5d0r")]
 recipe = ExtResource("5_txiy8")
 input_storage = NodePath("../Input")
 output_storage = NodePath("../Output")
 time_to_process = 30.0
 power_consumer = NodePath("../PowerConsumptionComponent")
 
-[node name="PowerConsumptionComponent" parent="." index="4" instance=ExtResource("5_wub03")]
+[node name="PowerConsumptionComponent" parent="." index="4" unique_id=593982705 instance=ExtResource("5_wub03")]
 power_consumption = 150.0
 
-[node name="Input" parent="." index="5" instance=ExtResource("6_68l7p")]
+[node name="Input" parent="." index="5" unique_id=1294834415 instance=ExtResource("6_68l7p")]
 position = Vector2(-16, 0)
 max_stored = 15
 accepts_exports = false
@@ -69,7 +73,7 @@ ExtResource("9_txiy8"): SubResource("Resource_twimy"),
 ExtResource("11_7gh7k"): SubResource("Resource_p460y")
 })
 
-[node name="Output" parent="." index="6" instance=ExtResource("6_68l7p")]
+[node name="Output" parent="." index="6" unique_id=849654614 instance=ExtResource("6_68l7p")]
 position = Vector2(48, 0)
 storage_data = Dictionary[ExtResource("7_wtvxi"), ExtResource("8_s1114")]({
 ExtResource("12_s1114"): SubResource("Resource_txiy8")
