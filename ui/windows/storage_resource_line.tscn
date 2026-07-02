@@ -1,23 +1,26 @@
-[gd_scene load_steps=5 format=3 uid="uid://dprv5w0bvxvvb"]
+[gd_scene format=3 uid="uid://dprv5w0bvxvvb"]
 
 [ext_resource type="Script" uid="uid://8o5roogmn3fd" path="res://ui/windows/storage_resource_line.gd" id="1_b4rr0"]
 [ext_resource type="Texture2D" uid="uid://ct3m5xg41ptib" path="res://assets/external/kenney_ui/PNG/Grey/Default/icon_cross.png" id="2_nlufw"]
 [ext_resource type="Theme" uid="uid://be0o5q2vl2xnx" path="res://ui/themes/spinbox_theme.tres" id="3_jodna"]
 [ext_resource type="Texture2D" uid="uid://dtddmta7qm6au" path="res://assets/external/kenney_ui/PNG/Grey/Default/icon_outline_cross.png" id="3_ovn6y"]
+[ext_resource type="Texture2D" uid="uid://cbjmsmhra0t83" path="res://assets/sprites/trash-can.png" id="5_nlufw"]
+[ext_resource type="Texture2D" uid="uid://baq1qvi3o8jpm" path="res://assets/external/kenney_ui/Vector/Red/button_square_flat.svg" id="5_ovn6y"]
 
-[node name="HBoxContainer" type="HBoxContainer" node_paths=PackedStringArray("stored_resource_name", "stored_resource_value", "remove_resource_button", "desired_resources_spinbox", "debug_add_button")]
+[node name="HBoxContainer" type="HBoxContainer" unique_id=229822206 node_paths=PackedStringArray("stored_resource_name", "stored_resource_value", "remove_resource_button", "desired_resources_spinbox", "debug_add_button", "dump_button")]
 script = ExtResource("1_b4rr0")
 stored_resource_name = NodePath("NameBox/StoredName")
 stored_resource_value = NodePath("ContentsBox/StoredValue")
 remove_resource_button = NodePath("NameBox/RemoveResourceButton")
 desired_resources_spinbox = NodePath("ContentsBox/DesiredResourcesSpinbox")
 debug_add_button = NodePath("DebugAddButton")
+dump_button = NodePath("ContentsBox/CenterContainer/DumpButton")
 
-[node name="NameBox" type="HBoxContainer" parent="."]
+[node name="NameBox" type="HBoxContainer" parent="." unique_id=1590424296]
 layout_mode = 2
 size_flags_horizontal = 2
 
-[node name="RemoveResourceButton" type="TextureButton" parent="NameBox"]
+[node name="RemoveResourceButton" type="TextureButton" parent="NameBox" unique_id=810353350]
 custom_minimum_size = Vector2(12, 12)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -28,33 +31,49 @@ texture_hover = ExtResource("3_ovn6y")
 ignore_texture_size = true
 stretch_mode = 0
 
-[node name="StoredName" type="Label" parent="NameBox"]
+[node name="StoredName" type="Label" parent="NameBox" unique_id=927352583]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 16
 text = "Water"
 
-[node name="DebugAddButton" type="Button" parent="."]
+[node name="DebugAddButton" type="Button" parent="." unique_id=1244710171]
 layout_mode = 2
 text = "+"
 
-[node name="ContentsBox" type="HBoxContainer" parent="."]
+[node name="ContentsBox" type="HBoxContainer" parent="." unique_id=1076321897]
 layout_mode = 2
 size_flags_horizontal = 10
 
-[node name="StoredValue" type="Label" parent="ContentsBox"]
+[node name="StoredValue" type="Label" parent="ContentsBox" unique_id=637850201]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "4"
 
-[node name="SlashLabel" type="Label" parent="ContentsBox"]
+[node name="SlashLabel" type="Label" parent="ContentsBox" unique_id=684790310]
 layout_mode = 2
 text = "/"
 
-[node name="DesiredResourcesSpinbox" type="SpinBox" parent="ContentsBox"]
+[node name="DesiredResourcesSpinbox" type="SpinBox" parent="ContentsBox" unique_id=251591680]
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 4
 theme = ExtResource("3_jodna")
 rounded = true
 alignment = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="ContentsBox" unique_id=323939780]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="ContentsBox/CenterContainer" unique_id=385402199]
+custom_minimum_size = Vector2(20, 25)
+layout_mode = 2
+texture = ExtResource("5_ovn6y")
+expand_mode = 4
+
+[node name="DumpButton" type="TextureButton" parent="ContentsBox/CenterContainer" unique_id=1076756348]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+texture_normal = ExtResource("5_nlufw")
+ignore_texture_size = true
+stretch_mode = 5

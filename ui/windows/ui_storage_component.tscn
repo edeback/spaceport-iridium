@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://bfsvbpnemihue"]
+[gd_scene format=3 uid="uid://bfsvbpnemihue"]
 
 [ext_resource type="Script" uid="uid://bqpuv7wysl1nf" path="res://ui/windows/ui_storage_component.gd" id="1_6j2gs"]
 [ext_resource type="PackedScene" uid="uid://dprv5w0bvxvvb" path="res://ui/windows/storage_resource_line.tscn" id="2_4o4nm"]
@@ -20,7 +20,23 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 corner_detail = 5
 
-[node name="Storage" type="PanelContainer" node_paths=PackedStringArray("resource_container", "priority_value", "add_resource_menu")]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oliwk"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.40659866, 0.558377, 0.86383194, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[node name="Storage" type="PanelContainer" unique_id=1597534492 node_paths=PackedStringArray("resource_container", "priority_value", "add_resource_menu")]
 custom_minimum_size = Vector2(400, 0)
 anchors_preset = 15
 anchor_right = 1.0
@@ -35,17 +51,17 @@ resource_line = ExtResource("2_4o4nm")
 priority_value = NodePath("MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer/HBoxContainer/PriorityValue")
 add_resource_menu = NodePath("MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer/PanelContainer/AddStoredResourceMenuButton")
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=99127212]
 layout_mode = 2
 theme_override_constants/margin_left = 2
 theme_override_constants/margin_top = 2
 theme_override_constants/margin_right = 2
 theme_override_constants/margin_bottom = 2
 
-[node name="VSplitContainer" type="VBoxContainer" parent="MarginContainer"]
+[node name="VSplitContainer" type="VBoxContainer" parent="MarginContainer" unique_id=763593596]
 layout_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VSplitContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VSplitContainer" unique_id=871007350]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 2
@@ -53,94 +69,147 @@ theme_override_constants/margin_top = 2
 theme_override_constants/margin_right = 2
 theme_override_constants/margin_bottom = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer" unique_id=1782993780]
 layout_mode = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer" unique_id=1007175849]
 layout_mode = 2
 
-[node name="PanelContainer" type="PanelContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=583741807]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_4o4nm")
 
-[node name="AddStoredResourceMenuButton" type="MenuButton" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer/PanelContainer"]
+[node name="AddStoredResourceMenuButton" type="MenuButton" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer/PanelContainer" unique_id=1785318346]
 layout_mode = 2
 text = "Add new stored resource"
 flat = false
 
-[node name="AvailableAndDesiredLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="AvailableAndDesiredLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1120317562]
 layout_mode = 2
 size_flags_horizontal = 10
 text = "Available / Desired"
 
-[node name="ResourceContainer" type="VBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer"]
+[node name="ResourceContainer" type="VBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer" unique_id=1778224836]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/ResourceContainer" instance=ExtResource("2_4o4nm")]
+[node name="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/ResourceContainer" unique_id=2104872855 instance=ExtResource("2_4o4nm")]
 layout_mode = 2
 
-[node name="HBoxContainer2" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/ResourceContainer" instance=ExtResource("2_4o4nm")]
+[node name="HBoxContainer2" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/ResourceContainer" unique_id=2045258698 instance=ExtResource("2_4o4nm")]
 layout_mode = 2
 
-[node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer"]
+[node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer" unique_id=858988727]
 layout_mode = 2
 
-[node name="NameBox" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3"]
+[node name="NameBox" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3" unique_id=1212081692]
 layout_mode = 2
 size_flags_horizontal = 2
 
-[node name="FreeSpaceName" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/NameBox"]
+[node name="FreeSpaceName" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/NameBox" unique_id=1014648599]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 16
 text = "Free Space"
 
-[node name="ContentsBox" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3"]
+[node name="ContentsBox" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3" unique_id=1339721231]
 layout_mode = 2
 size_flags_horizontal = 10
 
-[node name="FreeSpaceAvailableLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/ContentsBox"]
+[node name="FreeSpaceAvailableLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/ContentsBox" unique_id=198627751]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "4"
 
-[node name="SlashLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/ContentsBox"]
+[node name="SlashLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/ContentsBox" unique_id=1833426597]
 layout_mode = 2
 text = "/"
 
-[node name="FreeSpaceMaxLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/ContentsBox"]
+[node name="FreeSpaceMaxLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/ContentsBox" unique_id=1319466790]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "4"
 
-[node name="MarginContainer2" type="MarginContainer" parent="MarginContainer/VSplitContainer"]
+[node name="MarginContainer2" type="MarginContainer" parent="MarginContainer/VSplitContainer" unique_id=967253758]
 layout_mode = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer2"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer2" unique_id=1203632883]
 layout_mode = 2
 
-[node name="DisplayFillMeterCheckbox" type="CheckBox" parent="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer"]
+[node name="DisplayFillMeterCheckbox" type="CheckBox" parent="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer" unique_id=300810451]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Display Fill Meter"
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer" unique_id=1950057496]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer/HBoxContainer"]
+[node name="Label" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer/HBoxContainer" unique_id=213800905]
 layout_mode = 2
 text = "Priority: "
 
-[node name="PriorityValue" type="SpinBox" parent="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer/HBoxContainer"]
+[node name="PriorityValue" type="SpinBox" parent="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer/HBoxContainer" unique_id=1305261179]
 layout_mode = 2
 theme = ExtResource("3_oliwk")
 min_value = -100.0
 value = 1.0
 rounded = true
 alignment = 2
+
+[node name="DumpResourcePanel" type="PanelContainer" parent="." unique_id=1396915978]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_oliwk")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DumpResourcePanel" unique_id=181595976]
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="Label" type="Label" parent="DumpResourcePanel/VBoxContainer" unique_id=828649545]
+layout_mode = 2
+text = "Dump Resource"
+horizontal_alignment = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="DumpResourcePanel/VBoxContainer" unique_id=778677883]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 5
+
+[node name="HBoxContainer" type="HBoxContainer" parent="DumpResourcePanel/VBoxContainer/MarginContainer" unique_id=2055561865]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="ResourceToDumpLabel" type="Label" parent="DumpResourcePanel/VBoxContainer/MarginContainer/HBoxContainer" unique_id=246436608]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Water"
+
+[node name="Control" type="Control" parent="DumpResourcePanel/VBoxContainer/MarginContainer/HBoxContainer" unique_id=1747765167]
+custom_minimum_size = Vector2(10, 0)
+layout_mode = 2
+
+[node name="ResourceToDumpAmount" type="SpinBox" parent="DumpResourcePanel/VBoxContainer/MarginContainer/HBoxContainer" unique_id=1157880498]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="DumpResourcePanel/VBoxContainer" unique_id=1641127031]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="ConfirmDumpButton" type="Button" parent="DumpResourcePanel/VBoxContainer/HBoxContainer" unique_id=196652912]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Confirm"
+
+[node name="CancelDumpButton" type="Button" parent="DumpResourcePanel/VBoxContainer/HBoxContainer" unique_id=1994364669]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Cancel"
 
 [connection signal="toggled" from="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer/DisplayFillMeterCheckbox" to="." method="_on_display_fill_meter_changed"]

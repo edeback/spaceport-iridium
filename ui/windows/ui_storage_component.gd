@@ -8,9 +8,12 @@ extends ModuleComponentUI
 
 var storage_component: StorageComponent
 var storage_lines: Dictionary[ResourceData, StorageResourceLine]
+var current_dumped_resource: ResourceData = null
 
 func _ready() -> void:
 	add_resource_menu.get_popup().id_pressed.connect(_on_id_pressed)
+	%ConfirmDumpButton.pressed.connect(_on_confirm_dump_button_pressed)
+	%CancelDumpButton.pressed.connect(_on_cancel_dump_button_pressed)
 
 func set_storage_component(component: StorageComponent) -> void:
 	name = component.name
@@ -32,6 +35,7 @@ func refresh_display() -> void:
 		storage_line.stored_resource_name.text = resource.name
 		storage_line.stored_resource_value.text = _format_resouce_value(storage_component.total_stored_by_resource(resource))
 		storage_line.debug_add_button.pressed.connect(_on_debug_add_button_pressed.bind(resource))
+		storage_line.dump_button.pressed.connect(_on_dump_button_pressed.bind(resource))
 		if storage_component.player_configurable:
 			storage_line.remove_resource_button.pressed.connect(_on_remove_resource_pressed.bind(resource))
 			if storage_component.storage_data[resource].stored > 0:
@@ -95,3 +99,22 @@ func _on_display_fill_meter_changed(new_value: bool) -> void:
 func _on_debug_add_button_pressed(resource: ResourceData) -> void:
 	if storage_component != null:
 		storage_component.deposit(resource, 1)
+
+func _on_dump_button_pressed(resource: ResourceData) -> void:
+	current_dumped_resource = resource
+	%ResourceToDumpLabel.text = resource.name
+	var storage_data: StorageData = storage_component.storage_data[resource]
+	%ResourceToDumpAmount.max_value = storage_data.stored
+	%ResourceToDumpAmount.value = storage_data.stored
+	%DumpResourcePanel.visible = true
+	
+func _on_confirm_dump_button_pressed() -> void:
+	storage_component.withdraw(current_dumped_resource, %ResourceToDumpAmount.value, true)
+	current_dumped_resource = null
+	%DumpResourcePanel.visible = false
+	
+func _on_cancel_dump_button_pressed() -> void:
+	current_dumped_resource = null
+	%DumpResourcePanel.visible = false
+	
+	
