@@ -73,6 +73,7 @@ func ready_constructed() -> void:
 func add_stored_resource(resource: ResourceData) -> void:
 	if not storage_data.has(resource):
 		var new_data := StorageData.new()
+		new_data.desired = max_stored
 		storage_data[resource] = new_data
 		if include_in_stats:
 			resource.register_component(self)
@@ -124,7 +125,7 @@ func _process(_delta: float) -> void:
 	if accepts_imports and space_available(true) > 0:
 		for resource: ResourceData in storage_data:
 			var data := storage_data[resource]
-			if data.import_job == null:
+			if data.import_job == null and data.stored + data.reserved_deposit - data.reserved_withdraw < data.desired:
 				var new_job: Job_GetResource = Job_GetResource.new()
 				new_job.requester = self
 				new_job.resource_data = resource

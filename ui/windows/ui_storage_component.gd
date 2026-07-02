@@ -40,6 +40,7 @@ func refresh_display() -> void:
 			storage_line.remove_resource_button.pressed.connect(_on_remove_resource_pressed.bind(resource))
 			if storage_component.storage_data[resource].stored > 0:
 				storage_line.remove_resource_button.disabled = true
+			storage_line.desired_resources_spinbox.value = storage_component.storage_data[resource].desired
 			storage_line.desired_resources_spinbox.value_changed.connect(_on_desired_resources_changed.bind(resource))
 		else:
 			storage_line.remove_resource_button.visible = false
@@ -91,7 +92,8 @@ func _on_remove_resource_pressed(resource: ResourceData) -> void:
 			refresh_display()
 
 func _on_desired_resources_changed(new_value: float, resource: ResourceData) -> void:
-	pass
+	var storage_data: StorageData = storage_component.storage_data[resource]
+	storage_data.desired = new_value
 
 func _on_display_fill_meter_changed(new_value: bool) -> void:
 	storage_component.display_storage_ui = new_value
