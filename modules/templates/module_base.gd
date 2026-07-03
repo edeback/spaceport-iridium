@@ -201,7 +201,7 @@ func _on_footprint_input_event(_viewport: Node, event: InputEvent, _shape_idx: i
 			#print("clicked " + module_data.name)
 			if event.is_action_pressed("build"):
 					get_viewport().set_input_as_handled()
-					Global.ui_in_game.toggle_info_panel(self)
+					Global.ui_main.toggle_info_panel(self)
 					#on_select(!selected)
 			if event.is_action_pressed("remove"):
 				get_viewport().set_input_as_handled()

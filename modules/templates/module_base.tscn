@@ -8,12 +8,12 @@
 [ext_resource type="PackedScene" uid="uid://cbryy1xran3ym" path="res://modules/components/structure_component.tscn" id="5_ln6ba"]
 [ext_resource type="Texture2D" uid="uid://bqlboa3th5nax" path="res://assets/sprites/module_door.png" id="6_ni2ss"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ni2ss"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_avk05"]
 shader = ExtResource("2_5bxic")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
-shader_parameter/PROGRESS = 0.999999977648
+shader_parameter/PROGRESS = 1.0
 shader_parameter/gradient_texture = ExtResource("3_vdk3v")
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_aotpw"]
@@ -36,7 +36,7 @@ z_index = -1
 position = Vector2(32, 32)
 
 [node name="Sprite" type="Sprite2D" parent="Offset" unique_id=1530003366]
-material = SubResource("ShaderMaterial_ni2ss")
+material = SubResource("ShaderMaterial_avk05")
 texture = ExtResource("3_fvu82")
 region_enabled = true
 region_rect = Rect2(0, 0, 64, 64)
@@ -67,7 +67,7 @@ shape = SubResource("RectangleShape2D_aotpw")
 door_not_connected_image = SubResource("AtlasTexture_jxdbx")
 connection_points = Array[Vector2i]([])
 path_points = Array[Vector2i]([Vector2i(32, 32)])
-path_edges = Dictionary[Vector2i, String]({})
+path_edges = Dictionary[Vector2i, StringName]({})
 door_connections = Dictionary[int, int]({
 0: 1
 })

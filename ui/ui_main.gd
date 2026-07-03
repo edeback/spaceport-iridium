@@ -110,3 +110,14 @@ func pawn_clicked(pawn: PawnBase) -> void:
 	cur_pawn_info.set_pawn(pawn)
 	add_child(cur_pawn_info)
 	
+func toggle_info_panel(selected_module: ModuleBase) -> void:
+	if %ModuleInfoPanel.visible == true and %ModuleInfoPanel.module_viewed == selected_module:
+		close_info_panel()
+	else:
+		%ModuleInfoPanel.set_module(selected_module)
+		%ModuleInfoPanel.visible = true	
+
+func close_info_panel() -> void:
+	%ModuleInfoPanel.set_module(null)
+	%ModuleInfoPanel.visible = false
+	

@@ -52,4 +52,6 @@ func set_sprite(_module: ModuleBase) -> void:
 	if Global.world_manager.get_module_by_cell(owner_module.module_data.interaction_layer, right_cell) != null:
 		blocked_value += RIGHT_BLOCKED
 	sprite.region_rect.position = OFFSET_DICT[blocked_value]
+	sprite.region_rect.position.x *= owner_module.size.x
+	sprite.region_rect.position.y *= owner_module.size.y
 	sprite.region_rect.size = Vector2(owner_module.size * Global.CELL_SIZE)

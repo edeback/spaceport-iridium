@@ -37,6 +37,7 @@
 [ext_resource type="Resource" uid="uid://detljhx2721g" path="res://data/modules/module_teleporter.tres" id="30_4mt1o"]
 [ext_resource type="Resource" uid="uid://p3ja7r43eh6c" path="res://data/modules/core/truss_mdata.tres" id="31_wy7eg"]
 [ext_resource type="Resource" uid="uid://ch5rdw0jfhvft" path="res://data/modules/module_airlock.tres" id="32_k34tn"]
+[ext_resource type="PackedScene" uid="uid://byip82db78f7" path="res://ui/windows/module_info_ingame_panel.tscn" id="38_x3wcs"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xdhp5"]
 bg_color = Color(0.0782779, 0.271425, 7.21961e-08, 1)
@@ -66,7 +67,7 @@ corner_radius_bottom_left = 16
 shadow_size = 6
 shadow_offset = Vector2(-3, -3)
 
-[sub_resource type="FoldableGroup" id="FoldableGroup_47oex"]
+[sub_resource type="FoldableGroup" id="FoldableGroup_x3wcs"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1h8lm"]
 content_margin_left = 4.0
@@ -235,7 +236,7 @@ layout_mode = 2
 
 [node name="FoldableContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer" unique_id=1698963565 instance=ExtResource("3_ka3re")]
 layout_mode = 2
-foldable_group = SubResource("FoldableGroup_47oex")
+foldable_group = SubResource("FoldableGroup_x3wcs")
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer" unique_id=39982694]
 layout_mode = 2
@@ -260,6 +261,17 @@ offset_left = -300.0
 offset_top = -349.5
 offset_right = 300.0
 offset_bottom = 349.5
+
+[node name="ModuleInfoPanel" parent="." unique_id=1500315581 instance=ExtResource("38_x3wcs")]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 0
+grow_vertical = 0
 
 [connection signal="toggled" from="VBoxContainer/PanelContainer/MarginContainer/DisplayCorridorsCheckbox" to="." method="_on_check_button_toggled"]
 [connection signal="pressed" from="VBoxContainer/Modules/MarginContainer/VBoxContainer/MarginContainer/ModuleInfoButton" to="." method="_on_info_button_pressed"]

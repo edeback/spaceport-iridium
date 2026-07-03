@@ -13,19 +13,23 @@ func _ready() -> void:
 	pass
 	
 func set_module(module: ModuleBase) -> void:
+	if module_viewed != null:
+		module_viewed.selected = false
 	module_viewed = module
 	for child_node: Node in data_tabs.get_children():
 		data_tabs.remove_child(child_node)
 		child_node.queue_free()
-	module_name_label.text = module.module_data.name
 	component_alerts.clear()
-	for component: ComponentBase in module.components:
-		component_alerts.set(component, component.last_error)
-		component.new_error.connect(_on_component_error)
-		if component.has_ui():
-			data_tabs.add_child(component.get_ui())
+	if module_viewed != null:
+		module_viewed.selected = true
+		module_name_label.text = module.module_data.name
+		for component: ComponentBase in module.components:
+			component_alerts.set(component, component.last_error)
+			component.new_error.connect(_on_component_error)
+			if component.has_ui():
+				data_tabs.add_child(component.get_ui())
+		module_viewed.tree_exiting.connect(_on_exit_button_pressed)
 	_refresh_alerts()
-	module_viewed.tree_exiting.connect(_on_exit_button_pressed)
 
 func _on_component_error(component: ComponentBase, error: String) -> void:
 	component_alerts.set(component, error)
@@ -48,4 +52,5 @@ func _refresh_alerts() -> void:
 
 
 func _on_exit_button_pressed() -> void:
-	queue_free()
+	set_module(null)
+	visible = false

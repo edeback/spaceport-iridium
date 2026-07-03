@@ -4,9 +4,6 @@ extends Control
 @onready var selector: Node2D = $Selector
 @onready var preview_module: PreviewModule = $Selector/PreviewModule
 
-@export var module_info_panel: PackedScene
-var cur_module_info_panel: ModuleInfoIngamePanel
-
 var debug_path_cell: PackedVector2Array:
 	set(new_path):
 		debug_path_cell = new_path
@@ -148,26 +145,6 @@ func update_module_placement(force: bool = false) -> void:
 
 func update_structure_placement() -> void:
 	pass
-
-		
-func toggle_info_panel(selected_module: ModuleBase) -> void:
-	if cur_module_info_panel != null:
-		var last_module: ModuleBase = cur_module_info_panel.module_viewed
-		cur_module_info_panel.queue_free()
-		cur_module_info_panel = null
-		if last_module == selected_module:
-			# Just toggle off the panel if we're clicking the same module
-			return
-	var new_info_panel: ModuleInfoIngamePanel = module_info_panel.instantiate() as ModuleInfoIngamePanel
-	new_info_panel.set_module(selected_module)
-	add_child(new_info_panel)
-	new_info_panel.set_position(Global.cell_to_world(selected_module.module_cell))
-	cur_module_info_panel = new_info_panel
-
-func close_info_panel() -> void:
-	if cur_module_info_panel != null:
-		cur_module_info_panel.queue_free()
-		cur_module_info_panel = null
 
 func _draw() -> void:	 		
 	var last_point: Variant = null
