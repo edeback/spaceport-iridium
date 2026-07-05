@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://cbryy1xran3ym" path="res://modules/components/structure_component.tscn" id="5_ln6ba"]
 [ext_resource type="Texture2D" uid="uid://bqlboa3th5nax" path="res://assets/sprites/module_door.png" id="6_ni2ss"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_avk05"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ni2ss"]
 shader = ExtResource("2_5bxic")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -36,7 +36,7 @@ z_index = -1
 position = Vector2(32, 32)
 
 [node name="Sprite" type="Sprite2D" parent="Offset" unique_id=1530003366]
-material = SubResource("ShaderMaterial_avk05")
+material = SubResource("ShaderMaterial_ni2ss")
 texture = ExtResource("3_fvu82")
 region_enabled = true
 region_rect = Rect2(0, 0, 64, 64)

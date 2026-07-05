@@ -180,7 +180,7 @@ func _rebuild_partial_subgraphs(changed_nodes: Array[ModuleGraphVertex]) -> void
 			last_subgraph += 1
 			_assign_subgraph_from(node, last_subgraph)
 
-func get_closest_module_to_position(vector: Vector2, vertices: Array[ModuleGraphVertex] = _vertices.values()) -> ModuleBase:
+func get_closest_module_to_position(vector: Vector2, vertices: Array[ModuleGraphVertex]) -> ModuleBase:
 	var dist: float = -1
 	var module: ModuleBase = null
 	for vertex: ModuleGraphVertex in vertices:

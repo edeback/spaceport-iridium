@@ -35,10 +35,17 @@ class PathTraversalEdgeData:
 		path_edges = new_edges
 		queue_redraw()
 
+## Custom behaviors for when pawns start pathing along a specific edge
+@export var edge_behaviors: Dictionary[Vector2i, PathBehavior] = {}
+
 ## Which of the path points (by index) are actually doors, and what layer do they connect to?
 @export var door_connections: Dictionary[int, WorldManager.StructureLayer] = {}
-
+## Door metadata
 @export var door_data: Dictionary[int, StringName] = {}
+## Custom behaviors for when pawns path through doors
+@export var door_behaviors: Dictionary[int, PathBehavior] = {}
+
+var _behavior_states: Dictionary[PathBehavior, RefCounted] = {}
 
 ## Do we error if no door is connected?
 @export var door_required: bool = false
@@ -54,6 +61,9 @@ var door_sprites: Dictionary[int, Sprite2D] = {}
 
 signal door_connected(cell: Vector2i, from_layer: WorldManager.StructureLayer)
 signal door_disconnected(cell: Vector2i, from_layer: WorldManager.StructureLayer)
+
+## Is this part of a turbolift shaft, and if so, which?
+#var current_shaft: ElevatorShaft = null
 
 func _ready() -> void:
 	super()
@@ -71,6 +81,17 @@ func _ready() -> void:
 			new_sprite.visible = true
 			door_sprites[index] = new_sprite
 			add_child(new_sprite)
+	for behavior: PathBehavior in door_behaviors.values():
+		_ensure_behavior_state(behavior)
+	for behavior: PathBehavior in edge_behaviors.values():
+		_ensure_behavior_state(behavior)
+
+func _ensure_behavior_state(behavior: PathBehavior) -> void:
+	if behavior and not _behavior_states.has(behavior):
+		_behavior_states[behavior] = behavior.create_state(self)
+
+func get_behavior_state(behavior: PathBehavior) -> RefCounted:
+	return _behavior_states.get(behavior)
 		
 func ready_preview() -> void:
 	pass
@@ -86,6 +107,13 @@ func _on_power_changed(new_power: bool) -> void:
 		Global.path_manager.enable_module(owner_module)
 	else:
 		Global.path_manager.disable_module(owner_module)
+	
+func get_edge_behavior(edge: PathTraversalEdgeData) -> PathBehavior:
+	# Have to check both a->b and b->a as this is (currently) symmetric (though could be directional later?)
+	var key := Vector2i(edge.start_index, edge.end_index)
+	if edge_behaviors.has(key):
+		return edge_behaviors[key]
+	return edge_behaviors.get(Vector2i(edge.end_index, edge.start_index))
 	
 func get_closest_path_point(local_vec: Vector2) -> Vector2i:
 	var index: int = astar.get_closest_point(local_vec)

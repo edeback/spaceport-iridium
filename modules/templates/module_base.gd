@@ -25,8 +25,6 @@ var module_cell: Vector2i
 var module_data: ModuleData
 var is_horizontal: bool = true
 
-var module_connections: Dictionary[ModuleBase, bool] = {}
-
 var jobs = {}
 
 var _cached_path_component: PathComponent = null
@@ -173,16 +171,26 @@ func overlap_module(_new_module: ModuleData, _is_horizontal: bool) -> bool:
 	return true
 	
 func has_custom_pathing() -> bool:
-	return false
+	var pc := get_path_component()
+	return pc != null and (not pc.door_behaviors.is_empty() or not pc.edge_behaviors.is_empty())
 	
-func traverse(_pawn: PawnBase, _path_edge: PathComponent.PathTraversalEdgeData) -> void:
-	pass
-	
-func path_enter(_pawn: PawnBase, _door: int, _meta: StringName) -> void:
-	pass
-	
-func path_exit(_pawn: PawnBase, _door: int, _meta: StringName) -> void:
-	pass
+func traverse(pawn: PawnBase, edge: PathComponent.PathTraversalEdgeData) -> void:
+	var pc := get_path_component()
+	var behavior := pc.get_edge_behavior(edge)
+	if behavior:
+		await behavior.on_traverse(pawn, edge, self, pc.get_behavior_state(behavior))
+
+func path_enter(pawn: PawnBase, door: int, meta: StringName) -> void:
+	var pc := get_path_component()
+	var behavior: PathBehavior = pc.door_behaviors.get(door)
+	if behavior:
+		await behavior.on_enter(pawn, door, meta, self, pc.get_behavior_state(behavior))
+
+func path_exit(pawn: PawnBase, door: int, meta: StringName, next_node: Node2D = null) -> void:
+	var pc := get_path_component()
+	var behavior: PathBehavior = pc.door_behaviors.get(door)
+	if behavior:
+		await behavior.on_exit(pawn, door, meta, self, next_node, pc.get_behavior_state(behavior))
 	
 func show_label() -> void:
 	if nameplate != null:

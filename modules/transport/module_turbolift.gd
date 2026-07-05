@@ -102,6 +102,6 @@ func path_enter(_pawn: PawnBase, _door: int, _meta: StringName) -> void:
 	if _meta == &"turbolift_door":
 		await set_door(false)
 	
-func path_exit(_pawn: PawnBase, _door: int, _meta: StringName) -> void:
+func path_exit(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D = null) -> void:
 	if _meta == &"turbolift_door":
 		await set_door(false)

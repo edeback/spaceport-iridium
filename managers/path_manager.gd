@@ -126,12 +126,6 @@ func run_pathfinding_to_component_type(start_module: Node2D, end_component_type:
 
 func run_pathfinding_by_func(start_module: Node2D, function: Callable) -> Array[ModuleGraph.PathPoint]:
 	return graph.pathfind_to_func(start_module, function)
-	
-func get_closest_module_by_cell(start_cell: Vector2i) -> ModuleBase:
-	return graph.get_closest_module_to_position(Global.cell_to_world(start_cell))
-	
-func get_closest_module_by_position(start_position: Vector2) -> ModuleBase:
-	return graph.get_closest_module_to_position(start_position)
 
 func get_closest_module_by_group(start_position: Vector2, group: StringName) -> ModuleBase:
 	return graph.get_closest_module_by_group(start_position, group)

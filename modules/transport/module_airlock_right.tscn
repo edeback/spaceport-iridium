@@ -6,9 +6,11 @@
 [ext_resource type="Texture2D" uid="uid://itmi8316fmw8" path="res://assets/sprites/airlock_base.png" id="4_wnc2v"]
 [ext_resource type="Texture2D" uid="uid://beskjsh5od4yd" path="res://assets/sprites/airlock_door.png" id="5_rix3q"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="6_wnc2v"]
+[ext_resource type="Script" uid="uid://bgw2w7swbwrnr" path="res://scripts/pathing/path_behavior.gd" id="7_6tlpr"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="7_rix3q"]
+[ext_resource type="Script" uid="uid://dvg25rkuceauk" path="res://scripts/pathing/behavior_linked_doors.gd" id="8_63r85"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_rix3q"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_68dey"]
 shader = ExtResource("2_y8cay")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -82,16 +84,20 @@ animations = [{
 "speed": 5.0
 }]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_t1sub"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6xqs8"]
 resource_local_to_scene = true
 size = Vector2(77.5, 31)
 
-[node name="Module" unique_id=1683758623 node_paths=PackedStringArray("airlock") instance=ExtResource("1_aa1sr")]
+[sub_resource type="Resource" id="Resource_gndd8"]
+script = ExtResource("8_63r85")
+doors = Dictionary[StringName, NodePath]({
+&"inner_airlock": NodePath("../Offset/Sprite/InnerDoor"),
+&"outer_airlock": NodePath("../Offset/Sprite/OuterDoor")
+})
+metadata/_custom_type_script = "uid://dvg25rkuceauk"
+
+[node name="Module" unique_id=1683758623 instance=ExtResource("1_aa1sr")]
 script = ExtResource("2_ia2hq")
-airlock = {
-&"inner_airlock": NodePath("Offset/Sprite/InnerDoor"),
-&"outer_airlock": NodePath("Offset/Sprite/OuterDoor")
-}
 size = Vector2i(2, 1)
 add_to_groups = Array[StringName]([&"airlock"])
 
@@ -99,7 +105,7 @@ add_to_groups = Array[StringName]([&"airlock"])
 position = Vector2(64, 32)
 
 [node name="Sprite" parent="Offset" index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_rix3q")
+material = SubResource("ShaderMaterial_68dey")
 texture = SubResource("AtlasTexture_uj6c3")
 region_enabled = false
 
@@ -120,16 +126,19 @@ animation = &"open"
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
 position = Vector2(-24.75, 16)
-shape = SubResource("RectangleShape2D_t1sub")
+shape = SubResource("RectangleShape2D_6xqs8")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 connection_points = Array[Vector2i]([Vector2i(-1, 0)])
-self_connection_only = null
 path_points = Array[Vector2i]([Vector2i(0, 60), Vector2i(20, 60), Vector2i(50, 60), Vector2i(75, 60)])
 path_edges = Dictionary[Vector2i, StringName]({
 Vector2i(0, 1): &"",
 Vector2i(1, 2): &"inner_airlock",
 Vector2i(2, 3): &"outer_airlock"
+})
+edge_behaviors = Dictionary[Vector2i, ExtResource("7_6tlpr")]({
+Vector2i(1, 2): SubResource("Resource_gndd8"),
+Vector2i(2, 3): SubResource("Resource_gndd8")
 })
 door_connections = Dictionary[int, int]({
 3: 3
