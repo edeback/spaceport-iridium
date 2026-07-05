@@ -87,6 +87,9 @@ func _ready() -> void:
 		_ensure_behavior_state(behavior)
 
 func _ensure_behavior_state(behavior: PathBehavior) -> void:
+	if Engine.is_editor_hint():
+		# Can't operate on these in editor mode
+		return
 	if behavior and not _behavior_states.has(behavior):
 		_behavior_states[behavior] = behavior.create_state(self)
 

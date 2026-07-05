@@ -21,6 +21,7 @@ func _ready() -> void:
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:
+	graph._flush_subgraphs()
 	if recheck_pathfinding:
 		recheck_pathfinding = false
 		check_pathfinding()

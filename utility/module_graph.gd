@@ -15,6 +15,16 @@ var _vertices: Dictionary[Node2D, ModuleGraphVertex]
 
 var last_subgraph: int = 0
 
+var _subgraph_dirty: bool = false
+
+func _mark_dirty() -> void:
+	_subgraph_dirty = true
+	
+func _flush_subgraphs() -> void:
+	if _subgraph_dirty:
+		_rebuild_subgraphs()
+		_subgraph_dirty = false
+
 func add_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "") -> void:
 	if _vertices.has(vertex):
 		print("trying to add existing vertex! skipping. Module: " + vertex.name)
@@ -53,7 +63,7 @@ func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: 
 		if new_group_door >= 0:
 			graph_vertex.group_door = new_group_door
 		if rebuild:
-			_rebuild_subgraphs()
+			_mark_dirty()
 	
 func get_group_subgraph(group: StringName) -> int:
 	if group:
@@ -72,12 +82,12 @@ func get_vertex_for_path(node: Node2D) -> ModuleGraphVertex:
 func block_vertex(vertex: Node2D) -> void:
 	if _vertices.has(vertex):
 		_vertices[vertex].blocked = true
-		_rebuild_subgraphs()
+		_mark_dirty()
 		
 func unblock_vertex(vertex: Node2D) -> void:
 	if _vertices.has(vertex):
 		_vertices[vertex].blocked = false
-		_rebuild_subgraphs()
+		_mark_dirty()
 		
 func is_blocked(vertex: Node2D) -> bool:
 	if _vertices.has(vertex):
@@ -94,7 +104,7 @@ func remove_vertex(vertex: Node2D) -> void:
 		_linked_groups[old_vertex.group].erase(old_vertex)
 	_vertices.erase(vertex)
 	old_vertex.free()
-	_rebuild_subgraphs() # This may have split our graph
+	_mark_dirty() # This may have split our graph
 	_emit_graph_changed()
 	
 func add_edge(start: Node2D, end: Node2D, cost: float, data: StringName = "") -> bool:
@@ -121,7 +131,7 @@ func remove_edge(start: Node2D, end: Node2D) -> bool:
 		return false
 	start_vertex.edges.erase(end_vertex)
 	end_vertex.edges.erase(start_vertex)
-	_rebuild_subgraphs() # This may have split our graph
+	_mark_dirty()# This may have split our graph
 	_emit_graph_changed()
 	return true
 
@@ -198,11 +208,13 @@ func get_closest_module_by_group(vector: Vector2, group: StringName) -> ModuleBa
 	return get_closest_module_to_position(vector, group_vertices)
 
 func is_reachable(start: Node2D, end: Node2D) -> bool:
+	_flush_subgraphs()
 	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
 	var end_vertex: ModuleGraphVertex = get_vertex_for_path(end)
 	return start_vertex and end_vertex and start_vertex.subgraph == end_vertex.subgraph
 	
 func is_space_reachable(start: Node2D) -> bool:
+	_flush_subgraphs()
 	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
 	return start_vertex and start_vertex.subgraph == get_group_subgraph(&"space")
 
@@ -212,6 +224,7 @@ func pathfind(start: Node2D, end: Node2D) -> Array[PathPoint]:
 	return pathfind_by_vertex(start_vertex, end_vertex)
 
 func pathfind_by_vertex(start_vertex: ModuleGraphVertex, end_vertex: ModuleGraphVertex) -> Array[PathPoint]:
+	_flush_subgraphs()
 	if start_vertex == null or end_vertex == null or start_vertex.blocked or end_vertex.blocked:
 		return []
 	if start_vertex.subgraph != end_vertex.subgraph:
@@ -312,6 +325,7 @@ func pathfind_to_component_type(start: Node2D, end_component_type: Variant) -> A
 	return pathfind_to_func(start, component_type_callable)	
 
 func pathfind_to_func(start: Node2D, end_func: Callable) -> Array[PathPoint]:
+	_flush_subgraphs()
 	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
 	if start_vertex == null or !end_func.is_valid():
 		return []

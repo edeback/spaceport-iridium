@@ -51,7 +51,9 @@ func can_remove_module(module: ModuleBase) -> bool:
 		return true
 	var can_remove: bool = false
 	graph.block_vertex(module)
+	graph._flush_subgraphs()
 	if graph.last_subgraph == 1:
 		can_remove = true
 	graph.unblock_vertex(module)
+	graph._flush_subgraphs()
 	return can_remove
