@@ -57,7 +57,7 @@ func cancel(_as_failed: bool) -> void:
 	else:
 		state = MineAsteroidState.Finished
 	if action:
-		action.free()
+		action.cancel()
 		action = null
 	
 func process_job(delta: float) -> void:

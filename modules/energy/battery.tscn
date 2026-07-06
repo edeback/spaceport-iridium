@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://biddskpbtcra5"]
+[gd_scene format=3 uid="uid://biddskpbtcra5"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_uy0ph"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_48ebp"]
@@ -9,22 +9,23 @@ shader = ExtResource("3_48ebp")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_15wy0"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_uy0ph"]
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
-[node name="Module" instance=ExtResource("1_uy0ph")]
+[node name="Module" unique_id=311893815 instance=ExtResource("1_uy0ph")]
 
-[node name="Sprite" parent="Offset" index="0"]
+[node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
 material = SubResource("ShaderMaterial_gfbpm")
 
-[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
-shape = SubResource("RectangleShape2D_15wy0")
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
+shape = SubResource("RectangleShape2D_uy0ph")
 
-[node name="PathComponent" parent="." index="1"]
+[node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([])
-door_indices = Array[Vector2i]([])
+door_connections = Dictionary[int, int]({})
 door_required = false
 
-[node name="BatteryComponent" parent="." index="3" instance=ExtResource("4_n0fs3")]
+[node name="BatteryComponent" parent="." index="3" unique_id=5189711 instance=ExtResource("4_n0fs3")]

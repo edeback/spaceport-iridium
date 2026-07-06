@@ -73,10 +73,14 @@ func get_group_subgraph(group: StringName) -> int:
 			return group_array[0].subgraph
 	return -1
 	
-## Not for use with adding/removing nodes, this redirects pawn to pawn.current_module if they're in a module
+## Not for use with adding/removing nodes, this redirects pawn to current_module or path_position_override
 func get_vertex_for_path(node: Node2D) -> ModuleGraphVertex:
-	if node and node is PawnBase and (node as PawnBase).current_module != null:
-		return _vertices.get((node as PawnBase).current_module)
+	if node and node is PawnBase:
+		var pawn := node as PawnBase
+		if pawn.path_position_override != null:
+			return _vertices.get(pawn.path_position_override)
+		if pawn.current_module != null:
+			return _vertices.get(pawn.current_module)
 	return _vertices.get(node)
 	
 func block_vertex(vertex: Node2D) -> void:

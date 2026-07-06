@@ -67,7 +67,7 @@ func cancel(_as_failed: bool) -> void:
 	else:
 		state = ConstructModuleState.Finished
 	if action:
-		action.free()
+		action.cancel()
 		action = null
 	
 func process_job(delta: float) -> void:

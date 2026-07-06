@@ -8,6 +8,9 @@ var truss: ModuleData = preload("res://data/modules/core/truss_mdata.tres")
 @export var collision_lower: CollisionShape2D
 @export var door_sprite: AnimatedSprite2D
 
+var shaft: TurboliftShaft
+var open_requests: Array[RideRequest] = []
+
 func _ready() -> void:
 	add_to_group("turbolifts")
 	super()
@@ -21,6 +24,7 @@ func _ready() -> void:
 			await get_tree().create_timer(2).timeout
 			set_door(true)
 	)
+	Global.turbolift_manager.add_turbolift_module(self)
 
 func on_place() -> void:
 	super()
@@ -86,22 +90,29 @@ func set_door(is_close: bool) -> void:
 	anim_sprite.play(&"open", -1 if is_close else 1, is_close)
 	await anim_sprite.animation_finished
 
+func get_waiting_slot() -> Vector2:
+	return Vector2(randi_range(-10, 10), randi_range(0, 5))
+	
+func assign_waiting_slot(pawn: PawnBase) -> void:
+	pawn.global_position += get_waiting_slot()
+	pawn.reparent(Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.CORRIDOR, module_cell))
+	pass
+
 func has_custom_pathing() -> bool:
 	return true
 
 func traverse(_pawn: PawnBase, _path_edge: PathComponent.PathTraversalEdgeData) -> void:
-	if _path_edge.edge_meta == &"board_turbolift":
-		if _path_edge.start_index == 3:
-			# 3 -> 2 enters lift
-			_pawn.traverse_turbolift(true)
-		else:
-			# must be exiting lift
-			_pawn.traverse_turbolift(false)
+	pass
 
-func path_enter(_pawn: PawnBase, _door: int, _meta: StringName) -> void:
-	if _meta == &"turbolift_door":
-		await set_door(false)
+func path_enter(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D = null) -> void:
+	if next_node is ModuleTurbolift:
+		pass
+	pass
+	#if _meta == &"turbolift_door":
+		#await set_door(false)
 	
-func path_exit(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D = null) -> void:
-	if _meta == &"turbolift_door":
-		await set_door(false)
+func path_exit(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D, cancel_signal: Signal) -> void:
+	if next_node is ModuleTurbolift:
+		await shaft.request_ride(_pawn, self, next_node, cancel_signal)
+	#if _meta == &"turbolift_door":
+		#await set_door(false)

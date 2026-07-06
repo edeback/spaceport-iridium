@@ -180,17 +180,21 @@ func traverse(pawn: PawnBase, edge: PathComponent.PathTraversalEdgeData) -> void
 	if behavior:
 		await behavior.on_traverse(pawn, edge, self, pc.get_behavior_state(behavior))
 
-func path_enter(pawn: PawnBase, door: int, meta: StringName) -> void:
+func path_enter(pawn: PawnBase, door: int, meta: StringName, next_node: Node2D = null) -> void:
 	var pc := get_path_component()
 	var behavior: PathBehavior = pc.door_behaviors.get(door)
 	if behavior:
-		await behavior.on_enter(pawn, door, meta, self, pc.get_behavior_state(behavior))
+		await behavior.on_enter(pawn, door, meta, self, next_node, pc.get_behavior_state(behavior))
 
-func path_exit(pawn: PawnBase, door: int, meta: StringName, next_node: Node2D = null) -> void:
+func path_exit(pawn: PawnBase, door: int, meta: StringName, next_node: Node2D, cancel_signal: Signal) -> void:
 	var pc := get_path_component()
 	var behavior: PathBehavior = pc.door_behaviors.get(door)
 	if behavior:
-		await behavior.on_exit(pawn, door, meta, self, next_node, pc.get_behavior_state(behavior))
+		var ctx := PathBehaviorContext.new()
+		ctx.next_node = next_node
+		ctx.state = pc.get_behavior_state(behavior)
+		ctx.cancelled = cancel_signal
+		await behavior.on_exit(pawn, door, meta, self, ctx)
 	
 func show_label() -> void:
 	if nameplate != null:

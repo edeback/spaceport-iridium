@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://ddgc25wxbd8dx" path="res://pawns/pawn_base.gd" id="1_4rv7m"]
 [ext_resource type="Texture2D" uid="uid://dfjrqt380rc2o" path="res://assets/external/kenney_toon-characters-1/Robot/Tilesheet/character_robot_sheet.png" id="2_tngjo"]
-[ext_resource type="Texture2D" uid="uid://bwmsscm32juws" path="res://assets/sprites/turbolift_base.png" id="2_wyski"]
 [ext_resource type="Texture2D" uid="uid://d23p0x1oq1caw" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idle_1.png" id="3_j6cx7"]
 [ext_resource type="Texture2D" uid="uid://buujr2ip8qex5" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idle_2.png" id="4_wyski"]
 [ext_resource type="Texture2D" uid="uid://bw36upvesmlrl" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_idle_3.png" id="5_cl5b7"]
@@ -63,7 +62,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("8_nnfmx")
 }],
-"loop": true,
+"loop": 1,
 "name": &"idle",
 "speed": 3.0
 }, {
@@ -86,7 +85,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("14_5vcdf")
 }],
-"loop": true,
+"loop": 1,
 "name": &"idle_sit",
 "speed": 3.0
 }, {
@@ -103,7 +102,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("18_rmb6i")
 }],
-"loop": true,
+"loop": 1,
 "name": &"interact",
 "speed": 5.0
 }, {
@@ -120,7 +119,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("22_3h33a")
 }],
-"loop": true,
+"loop": 1,
 "name": &"interact_back",
 "speed": 5.0
 }, {
@@ -137,7 +136,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("26_v3kjo")
 }],
-"loop": true,
+"loop": 1,
 "name": &"interact_sit",
 "speed": 5.0
 }, {
@@ -160,7 +159,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("32_350cc")
 }],
-"loop": true,
+"loop": 1,
 "name": &"lay_down",
 "speed": 3.0
 }, {
@@ -189,7 +188,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("40_clhk7")
 }],
-"loop": true,
+"loop": 1,
 "name": &"walk",
 "speed": 20.0
 }]
@@ -236,7 +235,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_j6cx7")
 }],
-"loop": true,
+"loop": 1,
 "name": &"idle",
 "speed": 5.0
 }, {
@@ -265,7 +264,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_oxfsj")
 }],
-"loop": true,
+"loop": 1,
 "name": &"walk",
 "speed": 12.0
 }]
@@ -274,19 +273,13 @@ animations = [{
 radius = 6.0
 height = 22.0
 
-[node name="PawnBase" type="Node2D" unique_id=1154928948 node_paths=PackedStringArray("collision", "turbolift_base")]
+[node name="PawnBase" type="Node2D" unique_id=1154928948 node_paths=PackedStringArray("collision")]
 z_index = 5
 y_sort_enabled = true
 script = ExtResource("1_4rv7m")
 collision = NodePath("Offset/Area2D")
-turbolift_base = NodePath("Offset/TurboliftBase")
 
 [node name="Offset" type="Node2D" parent="." unique_id=1164109464]
-
-[node name="TurboliftBase" type="Sprite2D" parent="Offset" unique_id=1258126832]
-visible = false
-position = Vector2(0, -1)
-texture = ExtResource("2_wyski")
 
 [node name="Sprite2D" type="Sprite2D" parent="Offset" unique_id=949508764]
 visible = false

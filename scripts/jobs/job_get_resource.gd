@@ -89,7 +89,7 @@ func cancel(as_failed: bool) -> void:
 	else:
 		job_state = ResourceJobState.Finished
 	if action != null:
-		action.free()
+		action.cancel()
 		action = null
 	if export_storage:
 		export_storage.cancel_withdraw_job(self)

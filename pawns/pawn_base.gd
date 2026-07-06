@@ -12,9 +12,9 @@ extends Node2D
 @export var animated_sprite: AnimatedSprite2D
 @export var pawn_name: String = ""
 @export var collision: Area2D
-@export var turbolift_base: Sprite2D
 
 var current_layer: WorldManager.StructureLayer = WorldManager.StructureLayer.SPACE
+var path_position_override: Node2D = null
 var traveling: bool = false
 var next_point: int = 0
 var current_job: JobBase = null:
@@ -145,7 +145,9 @@ func move_to(new_pos: Vector2) -> void:
 		else:
 			animated_sprite.play("walk")
 			animated_sprite.flip_h = new_pos.x < position.x
-	position = new_pos
+	if global_position.distance_to(new_pos) > 100.0:
+		pass
+	global_position = new_pos
 
 func set_idle() -> void:
 	animated_sprite.play("idle")
@@ -154,8 +156,6 @@ func _on_module_changed(new_module: ModuleBase) -> void:
 	if current_module != new_module:
 		current_module = new_module
 		if new_module == null:
-			# Force "exit" turbolift if we got ejected
-			turbolift_base.visible = false
 			if current_layer != WorldManager.StructureLayer.SPACE:
 				current_layer = WorldManager.StructureLayer.SPACE
 				reparent(Global.world_manager.get_canvas_for_layer(current_layer))
@@ -170,9 +170,6 @@ func _on_module_changed(new_module: ModuleBase) -> void:
 	#if current_job == null:
 		#current_job = Global.job_manager.find_job()
 	#pass
-
-func traverse_turbolift(is_entering: bool) -> void:
-	turbolift_base.visible = is_entering
 
 func _on_collision_clicked(viewport: Node, event: InputEvent, shape_idx: int) -> void:
 	if event.is_action_pressed("build"):

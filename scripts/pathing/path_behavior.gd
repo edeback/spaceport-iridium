@@ -7,11 +7,11 @@ extends Resource
 func create_state(_pc: PathComponent) -> RefCounted:
 	return null
 
-func on_enter(pawn: PawnBase, door_index: int, meta: StringName, module: ModuleBase, state: RefCounted) -> void:
+func on_enter(pawn: PawnBase, door_index: int, meta: StringName, module: ModuleBase, next_node: Node2D, state: RefCounted) -> void:
 	pass
 
 func on_traverse(pawn: PawnBase, edge: PathComponent.PathTraversalEdgeData, module: ModuleBase, state: RefCounted) -> void:
 	pass
 
-func on_exit(pawn: PawnBase, door_index: int, meta: StringName, module: ModuleBase, next_node: Node2D, state: RefCounted) -> void:
+func on_exit(pawn: PawnBase, door_index: int, meta: StringName, module: ModuleBase, ctx: PathBehaviorContext) -> void:
 	pass

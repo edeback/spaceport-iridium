@@ -38,7 +38,7 @@ func traverse(_pawn: PawnBase, _path_edge: PathComponent.PathTraversalEdgeData) 
 			await lightning_sprite.animation_finished
 			lightning_sprite.visible = false
 
-func path_enter(_pawn: PawnBase, _door: int, _meta: StringName) -> void:
+func path_enter(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D = null) -> void:
 	if _meta == &"teleporters" and _door >= 0:
 		var new_position: Vector2 = global_position + Vector2(get_path_component().path_points[_door])
 		_pawn.global_position = new_position

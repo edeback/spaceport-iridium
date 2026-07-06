@@ -20,6 +20,8 @@ enum PathActionState { Starting, Moving, Finished, Failed, Paused }
 
 var action_state: PathActionState = PathActionState.Starting
 
+signal path_invalidated
+
 func get_description() -> String:
 	return "Pathing to target"
 
@@ -35,21 +37,25 @@ func run_pathfinding() -> void:
 	path.clear()
 	sub_path.clear()
 	nodes_to_watch.clear()
-	if pawn.current_module != null:
-		if pawn.current_module == target:
+	
+	var start_node: Node2D = pawn.path_position_override
+	if start_node == null:
+		start_node = pawn.current_module
+	if start_node != null:
+		if start_node == target:
 			action_state = PathActionState.Finished
 			return
-		path = Global.path_manager.run_pathfinding_by_node(pawn.current_module, target, end_in_space)
-		#sub_path = get_partial_sub_path(0)
-		#if sub_path.size() > 0:
-			#sub_path_index = 0
-			#in_sub_path = true
+		path = Global.path_manager.run_pathfinding_by_node(start_node, target, end_in_space)
 	else:
 		path = Global.path_manager.run_pathfinding_by_node(pawn, target, end_in_space)
 
 	if path.is_empty():
 		action_state = PathActionState.Failed
 	else:
+		if path.size() > 1 and path[0].node is TurboliftCab and path[1].node is ModuleTurbolift:
+			var request: RideRequest = path[0].node.get_onboard_request_for(pawn)
+			if request:
+				request.to_floor = path[1].node
 		next_path_index = -1
 		sub_path_index = -1
 		in_sub_path = false
@@ -86,10 +92,17 @@ func process_action(delta: float) -> void:
 func module_removed(removed_module: ModuleBase) -> void:
 	if removed_module == target:
 		# Target is gone, we can't ever get there
+		path_invalidated.emit()
 		action_state = PathActionState.Failed
 	elif nodes_to_watch.has(removed_module):
 		# One of the modules on the path is gone, recalc path
+		path_invalidated.emit()
 		run_pathfinding()
+		
+func cancel() -> void:
+	action_state = PathActionState.Failed
+	path_invalidated.emit()
+	queue_free()
 		
 func get_debug_path_detailed() -> PackedVector2Array:
 	var packed_path: PackedVector2Array = []
@@ -134,7 +147,10 @@ func reached_next_node() -> void:
 		if sub_path.size() > 0:
 			door = sub_path[sub_path.size() - 1].end_index
 		var leaving_module: ModuleBase = path[next_path_index].node as ModuleBase
-		await leaving_module.path_exit(pawn, door, path[next_path_index].edge_meta)
+		var next_module: Node2D = path[next_path_index + 1].node if path.size() > (next_path_index + 1) else null
+		await leaving_module.path_exit(pawn, door, path[next_path_index].edge_meta, next_module, path_invalidated)
+		if action_state == PathActionState.Failed:
+			return
 		
 	next_path_index += 1
 
@@ -148,7 +164,8 @@ func reached_next_node() -> void:
 		if sub_path.size() > 0:
 			door = sub_path[0].end_index
 		var entering_module: ModuleBase = path[next_path_index].node as ModuleBase
-		await entering_module.path_enter(pawn, door, path[next_path_index - 1].edge_meta)
+		var next_module: Node2D = path[next_path_index + 1].node if path.size() > (next_path_index + 1) else null
+		await entering_module.path_enter(pawn, door, path[next_path_index - 1].edge_meta, next_module)
 		
 	if sub_path.size() > 0:
 		sub_path_index = -1

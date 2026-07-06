@@ -12,11 +12,11 @@
 [ext_resource type="Script" uid="uid://6mx2qi4ecq8b" path="res://managers/turbolift_manager.gd" id="6_dg77c"]
 [ext_resource type="Script" uid="uid://bsy2db6ssn3vt" path="res://managers/world_manager.gd" id="6_i5kyc"]
 [ext_resource type="Script" uid="uid://cyou4qqxr66bq" path="res://managers/structure_manager.gd" id="6_ryguw"]
-[ext_resource type="Texture2D" uid="uid://cd1lyx4unl47d" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Parts/spaceParts_089.png" id="7_ycdy4"]
 [ext_resource type="Script" uid="uid://cx2dttwf32bok" path="res://managers/job_manager.gd" id="8_w48qg"]
 [ext_resource type="Script" uid="uid://d1myskwk0m3o0" path="res://managers/resource_manager.gd" id="9_074og"]
 [ext_resource type="PackedScene" uid="uid://dbdc66ow44ldq" path="res://ui/ui_in_game.tscn" id="9_ipixf"]
 [ext_resource type="Script" uid="uid://hfw1t2fwgg17" path="res://managers/asteroid_manager.gd" id="10_cegan"]
+[ext_resource type="PackedScene" uid="uid://cl6ymrfojjut" path="res://modules/transport/turbolift_cab.tscn" id="10_come4"]
 [ext_resource type="Texture2D" uid="uid://c5nxd7xkb86hj" path="res://assets/sprites/space_background_darker.png" id="10_vivmo"]
 [ext_resource type="Texture2D" uid="uid://byf3wu6nq1gun" path="res://assets/sprites/star_spritesheet.png" id="11_2cqfq"]
 [ext_resource type="PackedScene" uid="uid://cvrcrbshj8cre" path="res://objects/asteroid_base.tscn" id="11_82xsv"]
@@ -7595,18 +7595,7 @@ script = ExtResource("4_deici")
 
 [node name="TurboliftManager" type="Node" parent="Managers" unique_id=378982072]
 script = ExtResource("6_dg77c")
-
-[node name="PlacementShaft" type="Line2D" parent="Managers/TurboliftManager" unique_id=258520237]
-visible = false
-z_index = -1
-points = PackedVector2Array(0, -156, 0, 0)
-width = 60.0
-default_color = Color(0.351563, 0.351563, 0.351563, 1)
-texture = ExtResource("7_ycdy4")
-texture_mode = 2
-joint_mode = 1
-begin_cap_mode = 2
-end_cap_mode = 2
+default_cab = ExtResource("10_come4")
 
 [node name="JobManager" type="Node" parent="Managers" unique_id=1756864677]
 script = ExtResource("8_w48qg")
