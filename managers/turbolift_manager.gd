@@ -37,13 +37,8 @@ func create_new_shaft() -> TurboliftShaft:
 	new_shaft.group_id = "turboshaft_" + str(last_turboshaft)
 	last_turboshaft += 1
 	_turbolift_shafts.append(new_shaft)
-	create_new_cab(new_shaft)
 	return new_shaft
 	
-func create_new_cab(shaft: TurboliftShaft) -> void:
-	var new_cab: TurboliftCab = default_cab.instantiate() as TurboliftCab
-	shaft.add_cab(new_cab)
-	pass
 
 func remove_turbolift_module(module: ModuleTurbolift) -> bool:
 	var shaft: TurboliftShaft = module.shaft
@@ -51,9 +46,11 @@ func remove_turbolift_module(module: ModuleTurbolift) -> bool:
 
 	if shaft.floors.is_empty():
 		# Shaft is empty, remove it
+		shaft.clear()
 		_turbolift_shafts.erase(shaft)
 
 	return true
+	
 	
 	
 

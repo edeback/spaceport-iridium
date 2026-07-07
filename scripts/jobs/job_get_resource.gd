@@ -11,7 +11,6 @@ var pawn: PawnBase
 
 var export_storage: StorageComponent
 var deposit_storage: StorageComponent
-var action: Action_PathToTarget = null
 
 enum ResourceJobState { Start, GoToResource, GatherResource, ReturnWithResource, DepositResource, Finished, Failed }
 var job_state: ResourceJobState = ResourceJobState.Start:
@@ -52,45 +51,21 @@ func can_do_job(_pawn: PawnBase) -> bool:
 
 func start_job(_pawn: PawnBase) -> void:
 	pawn = _pawn
-	if job_state != ResourceJobState.Failed:
-		job_state = ResourceJobState.Start
-
-func process_job(delta: float) -> void:
-	match job_state:
-		ResourceJobState.Start:
-			job_start()
-			pass
-		ResourceJobState.GoToResource:
-			move_to_export_storage(delta)
-			pass
-		ResourceJobState.GatherResource:
-			gather_resource()
-			pass
-		ResourceJobState.ReturnWithResource:
-			move_to_import_storage(delta)
-			pass
-		ResourceJobState.DepositResource:
-			deposit_resource()
-			pass
-		ResourceJobState.Finished:
-			pass
-		ResourceJobState.Failed:
-			pass
+	job_start()
 			
 func is_finished() -> bool:
 	return job_state == ResourceJobState.Finished
 	
 func is_failed() -> bool:
 	return job_state == ResourceJobState.Failed
-	
+		
 func cancel(as_failed: bool) -> void:
 	if as_failed:
 		job_state = ResourceJobState.Failed
 	else:
 		job_state = ResourceJobState.Finished
-	if action != null:
-		action.cancel()
-		action = null
+	# Deliberately don't touch pawn.movement here. If it's mid-ride, let it
+	# finish on its own terms — the next job will retarget once it's free.
 	if export_storage:
 		export_storage.cancel_withdraw_job(self)
 	if deposit_storage:
@@ -113,41 +88,36 @@ func job_start() -> void:
 		export_storage = storage_component
 		export_storage.add_withdraw_job(self)
 		deposit_storage.add_deposit_job(self)
-		job_state = ResourceJobState.GoToResource
+		move_to_export_storage()
 	else:
 		cancel(true)
 	
-func move_to_export_storage(delta: float) -> void:
-	if action == null:
-		action = Action_PathToTarget.new()
-		action.initialize_action(pawn, export_storage.owner_module)
-	action.process_action(delta)
-	if action.is_failed():
-		cancel(true)
-	elif action.is_finished():
-		job_state = ResourceJobState.GatherResource
-		action.free()
-		action = null
 		
-func gather_resource() -> void:
+func move_to_export_storage() -> void:
+	job_state = ResourceJobState.GoToResource
+	pawn.movement_component.movement_ended.connect(gather_resource, CONNECT_ONE_SHOT)
+	pawn.movement_component.move_to(export_storage.owner_module)
+		
+func gather_resource(prev_success: bool) -> void:
+	if not prev_success:
+		cancel(true)
+		return
+	job_state = ResourceJobState.GatherResource
 	if export_storage.complete_withdraw_job(self):
-		job_state = ResourceJobState.ReturnWithResource
+		move_to_import_storage()
 	else:
 		cancel(true)
 		
-func move_to_import_storage(delta: float) -> void:
-	if action == null:
-		action = Action_PathToTarget.new()
-		action.initialize_action(pawn, deposit_storage.owner_module)
-	action.process_action(delta)
-	if action.is_failed():
-		cancel(true)
-	elif action.is_finished():
-		job_state = ResourceJobState.DepositResource
-		action.free()
-		action = null
+func move_to_import_storage() -> void:
+	job_state = ResourceJobState.ReturnWithResource
+	pawn.movement_component.movement_ended.connect(deposit_resource, CONNECT_ONE_SHOT)
+	pawn.movement_component.move_to(deposit_storage.owner_module)
 		
-func deposit_resource() -> void:
+func deposit_resource(prev_success: bool) -> void:
+	job_state = ResourceJobState.DepositResource
+	if not prev_success:
+		cancel(true)
+		return
 	if deposit_storage.complete_deposit_job(self):
 		job_state = ResourceJobState.Finished
 	else:

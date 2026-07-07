@@ -31,7 +31,7 @@ func ready_blueprint() -> void:
 	setup_storage_for_construction()
 	current_state = ConstructionState.NotStarted
 	owner_module.progress = 0
-	Global.path_manager.graph.change_vertex_group(owner_module, "space")
+	Global.path_manager.change_vertex_group(owner_module, "space")
 	
 func ready_constructed() -> void:
 	set_process(false)
@@ -40,7 +40,7 @@ func ready_constructed() -> void:
 	material_storage.accepts_imports = false
 	material_storage.display_storage_ui = false
 	material_storage.display_info_panel_ui = false
-	Global.path_manager.graph.change_vertex_group(owner_module, "")
+	Global.path_manager.change_vertex_group(owner_module, "")
 
 func start_deconstruction() -> void:
 	set_process(true)

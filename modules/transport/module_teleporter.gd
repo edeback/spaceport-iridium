@@ -11,7 +11,7 @@ func _ready() -> void:
 
 func make_connections() -> void:
 	super()
-	Global.path_manager.graph.change_vertex_group(self, "teleporters", teleporter_path_index)
+	Global.path_manager.change_vertex_group(self, "teleporters", teleporter_path_index)
 	#var teleporter_node := Node2D.new()
 	#add_child(teleporter_node)
 	#get_path_component().path_points.get(teleporter_path_index)
@@ -38,7 +38,7 @@ func traverse(_pawn: PawnBase, _path_edge: PathComponent.PathTraversalEdgeData) 
 			await lightning_sprite.animation_finished
 			lightning_sprite.visible = false
 
-func path_enter(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D = null) -> void:
+func path_enter(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D, cancel_signal: Signal) -> void:
 	if _meta == &"teleporters" and _door >= 0:
 		var new_position: Vector2 = global_position + Vector2(get_path_component().path_points[_door])
 		_pawn.global_position = new_position

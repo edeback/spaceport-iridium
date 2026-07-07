@@ -45,6 +45,11 @@ func add_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "
 func get_vertex(vertex: Node2D) -> ModuleGraphVertex:
 	return graph._vertices.get(vertex)
 	
+func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: int = -1) -> void:
+	graph.change_vertex_group(vertex, new_group, new_group_door)
+	if vertex is ModuleBase:
+		SignalBus.module_group_changed.emit(vertex as ModuleBase)
+	
 func remove_vertex(vertex: Node2D) -> void:
 	graph.remove_vertex(vertex)
 	selected_modules.erase(vertex)

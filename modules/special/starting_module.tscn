@@ -56,6 +56,7 @@ capacity = 2
 
 [node name="Storage Bay" parent="." index="5" unique_id=3501451 instance=ExtResource("7_l8ygt")]
 position = Vector2(128, 0)
+priority = -100
 max_stored = 40
 allow_any_resource = true
 storage_data = Dictionary[ExtResource("8_do1gr"), ExtResource("9_btupe")]({

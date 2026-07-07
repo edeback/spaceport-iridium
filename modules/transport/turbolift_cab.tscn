@@ -5,38 +5,34 @@
 
 [node name="TurboliftCab" type="Node2D" unique_id=2075444536 node_paths=PackedStringArray("standing_locations")]
 script = ExtResource("1_vvn38")
-standing_locations = [NodePath("Offset/Marker2D"), NodePath("Offset/Marker2D2"), NodePath("Offset/Marker2D3"), NodePath("Offset/Marker2D4"), NodePath("Offset/Marker2D5"), NodePath("Offset/Marker2D6")]
+standing_locations = [NodePath("Marker2D"), NodePath("Marker2D2"), NodePath("Marker2D3"), NodePath("Marker2D4"), NodePath("Marker2D5"), NodePath("Marker2D6")]
+offset = Vector2(21, 45)
 metadata/_custom_type_script = "uid://ckwyt6pspxsx2"
 
-[node name="Offset" type="Node2D" parent="." unique_id=4653821]
-z_index = -1
-position = Vector2(32, 32)
-
-[node name="Sprite2D" type="Sprite2D" parent="Offset" unique_id=1350205037]
-position = Vector2(-9.437496, 14)
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1350205037]
 scale = Vector2(1.1523438, 1)
 texture = ExtResource("2_dokrb")
 
-[node name="Marker2D" type="Marker2D" parent="Offset" unique_id=167625538]
-position = Vector2(-20, 26)
+[node name="Marker2D" type="Marker2D" parent="." unique_id=167625538]
+position = Vector2(-3, 12)
 gizmo_extents = 2.0
 
-[node name="Marker2D2" type="Marker2D" parent="Offset" unique_id=1233052563]
-position = Vector2(-17, 25)
+[node name="Marker2D2" type="Marker2D" parent="." unique_id=1233052563]
+position = Vector2(3, 12)
 gizmo_extents = 2.0
 
-[node name="Marker2D3" type="Marker2D" parent="Offset" unique_id=170737507]
-position = Vector2(-13, 26)
+[node name="Marker2D3" type="Marker2D" parent="." unique_id=170737507]
+position = Vector2(-9, 11)
 gizmo_extents = 2.0
 
-[node name="Marker2D4" type="Marker2D" parent="Offset" unique_id=737768329]
-position = Vector2(-9, 25)
+[node name="Marker2D4" type="Marker2D" parent="." unique_id=737768329]
+position = Vector2(10, 11)
 gizmo_extents = 2.0
 
-[node name="Marker2D5" type="Marker2D" parent="Offset" unique_id=701431064]
-position = Vector2(-5, 26)
+[node name="Marker2D5" type="Marker2D" parent="." unique_id=701431064]
+position = Vector2(-6, 10)
 gizmo_extents = 2.0
 
-[node name="Marker2D6" type="Marker2D" parent="Offset" unique_id=1443401558]
-position = Vector2(-1, 25)
+[node name="Marker2D6" type="Marker2D" parent="." unique_id=1443401558]
+position = Vector2(6, 10)
 gizmo_extents = 2.0

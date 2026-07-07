@@ -180,7 +180,7 @@ func traverse(pawn: PawnBase, edge: PathComponent.PathTraversalEdgeData) -> void
 	if behavior:
 		await behavior.on_traverse(pawn, edge, self, pc.get_behavior_state(behavior))
 
-func path_enter(pawn: PawnBase, door: int, meta: StringName, next_node: Node2D = null) -> void:
+func path_enter(pawn: PawnBase, door: int, meta: StringName, next_node: Node2D, cancel_signal: Signal) -> void:
 	var pc := get_path_component()
 	var behavior: PathBehavior = pc.door_behaviors.get(door)
 	if behavior:

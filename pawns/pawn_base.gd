@@ -13,6 +13,8 @@ extends Node2D
 @export var pawn_name: String = ""
 @export var collision: Area2D
 
+var movement_component: PawnMovementComponent
+
 var current_layer: WorldManager.StructureLayer = WorldManager.StructureLayer.SPACE
 var path_position_override: Node2D = null
 var traveling: bool = false
@@ -40,6 +42,9 @@ func get_component_by_type(type: Variant) -> PawnComponentBase:
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	movement_component = PawnMovementComponent.new()
+	movement_component.owner_pawn = self
+	add_child(movement_component)
 	Global.path_manager.add_vertex(self, true, "" if current_module != null else "space")
 	SignalBus.module_removed.connect(_on_module_removed)
 	#SignalBus.module_selected.connect(_on_module_selected)
@@ -159,9 +164,9 @@ func _on_module_changed(new_module: ModuleBase) -> void:
 			if current_layer != WorldManager.StructureLayer.SPACE:
 				current_layer = WorldManager.StructureLayer.SPACE
 				reparent(Global.world_manager.get_canvas_for_layer(current_layer))
-			Global.path_manager.graph.change_vertex_group(self, "space", -1, false)
+			Global.path_manager.change_vertex_group(self, "space", -1)
 		else:
-			Global.path_manager.graph.change_vertex_group(self, "", -1, false)
+			Global.path_manager.change_vertex_group(self, "", -1)
 			if current_layer != new_module.module_data.interaction_layer:
 				current_layer = new_module.module_data.interaction_layer
 				reparent(Global.world_manager.get_canvas_for_layer(current_layer))

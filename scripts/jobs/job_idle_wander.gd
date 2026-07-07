@@ -3,8 +3,7 @@ extends JobBase
 
 var pawn: PawnBase
 var destination_module: ModuleBase
-var action: Action_PathToTarget = null
-var state: JobBase.JobState = JobBase.JobState.Starting
+var state: JobState = JobState.Starting
 
 func get_job_description() -> String:
 	return "Wandering idly"
@@ -43,57 +42,28 @@ func start_job(_pawn: PawnBase) -> void:
 					destination = node as ModuleBase
 	if destination != null:
 		destination_module = destination
-		SignalBus.module_removed.connect(_module_removed)
+		move_to_module()
+	else:
+		complete(false)
 		
 func end_job() -> void:
 	super()
-	SignalBus.module_removed.disconnect(_module_removed)
 		
-func cancel(_as_failed: bool) -> void:
-	if _as_failed:
-		state = JobBase.JobState.Failed
+func complete(as_success: bool) -> void:
+	if as_success:
+		state = JobState.Finished
 	else:
-		state = JobBase.JobState.Finished
-	if action:
-		action.cancel()
-		action = null
+		state = JobState.Failed
 	
-func process_job(delta: float) -> void:
-	match state:
-		JobBase.JobState.Starting:
-			state = JobBase.JobState.Working
-		JobBase.JobState.Working:
-			move_to_module(delta)
-		JobBase.JobState.Finished:
-			pass
-		JobBase.JobState.Failed:
-			pass
-			
-func _module_removed(module: ModuleBase) -> void:
-	if module == destination_module:
-		destination_module = null
-		state = JobBase.JobState.Failed
-		if action != null:
-			action.free()
-			action = null
 
-func move_to_module(delta: float) -> void:
-	if action == null:
-		action = Action_PathToTarget.new()
-		action.initialize_action(pawn, destination_module, 0.4)
-	action.process_action(delta)
-	if action.is_failed():
-		state = JobBase.JobState.Failed
-		action.free()
-		action = null
-	elif action.is_finished():
-		state = JobBase.JobState.Finished
-		action.free()
-		action = null
+func move_to_module() -> void:
+	state = JobState.Moving
+	pawn.movement_component.movement_ended.connect(complete, CONNECT_ONE_SHOT)
+	pawn.movement_component.move_to(destination_module, 0.4)
 	
 	
 func is_failed() -> bool:
-	return state == JobBase.JobState.Failed
+	return state == JobState.Failed
 	
 func is_finished() -> bool:
-	return state == JobBase.JobState.Finished
+	return state == JobState.Finished

@@ -2,7 +2,6 @@ class_name Job_Eat
 extends JobBase
 
 var pawn: PawnBase = null
-var action: Action_PathToTarget = null
 var job_state: JobBase.JobState = JobBase.JobState.Starting
 
 func can_do_job(_pawn: PawnBase) -> bool:
@@ -13,24 +12,8 @@ func can_do_job(_pawn: PawnBase) -> bool:
 
 func start_job(_pawn: PawnBase) -> void:
 	pawn = _pawn
-	if job_state != JobState.Failed:
-		job_state = JobState.Starting
+	job_start()
 
-func process_job(delta: float) -> void:
-	match job_state:
-		JobBase.JobState.Starting:
-			job_start()
-			pass
-		JobBase.JobState.Moving:
-			move_to_module(delta)
-			pass
-		JobBase.JobState.Working:
-			eat()
-			pass
-		JobBase.JobState.Finished:
-			pass
-		JobBase.JobState.Failed:
-			pass
 			
 func is_finished() -> bool:
 	return job_state == JobBase.JobState.Finished
@@ -43,32 +26,21 @@ func cancel(as_failed: bool) -> void:
 		job_state = JobBase.JobState.Failed
 	else:
 		job_state = JobBase.JobState.Finished
-	if action != null:
-		action.free()
-		action = null
 		
 func job_start() -> void:
 	var sus_components := pawn.get_tree().get_nodes_in_group("sustenance_component")
 	if sus_components.size() > 0:
-		action = Action_PathToTarget.new()
-		action.initialize_action(pawn, sus_components[0])
-	if action.is_failed():
-		cancel(true)
-	else:
-		job_state = JobBase.JobState.Moving
+		move_to_module(sus_components[0])
 	
-func move_to_module(delta: float) -> void:
-	if action == null:
-		cancel(true)
-	action.process_action(delta)
-	if action.is_failed():
-		cancel(true)
-	elif action.is_finished():
-		job_state = JobBase.JobState.Working
-		action.free()
-		action = null
+func move_to_module(module: ModuleBase) -> void:
+	job_state = JobBase.JobState.Moving
+	pawn.movement_component.movement_ended.connect(eat, CONNECT_ONE_SHOT)
+	pawn.movement_component.move_to(module)
 
-func eat() -> void:
+func eat(prev_success: bool) -> void:
+	if not prev_success:
+		cancel(true)
+		return
 	var sus_component: SustenanceComponent = pawn.current_module.get_component_by_type(SustenanceComponent) as SustenanceComponent
 	if sus_component != null:
 		if sus_component.consume_sustenance(10):

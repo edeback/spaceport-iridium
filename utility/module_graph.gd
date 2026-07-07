@@ -48,7 +48,7 @@ func make_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = 
 		group_array.append(new_vertex)
 	return new_vertex
 	
-func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: int = -1, rebuild: bool = true) -> void:
+func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: int = -1) -> void:
 	var graph_vertex: ModuleGraphVertex = _vertices.get(vertex)
 	if graph_vertex != null and graph_vertex.group != new_group:
 		if graph_vertex.group:
@@ -62,7 +62,7 @@ func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: 
 		graph_vertex.group = new_group
 		if new_group_door >= 0:
 			graph_vertex.group_door = new_group_door
-		if rebuild:
+		if not graph_vertex.endpoint:
 			_mark_dirty()
 	
 func get_group_subgraph(group: StringName) -> int:
@@ -185,6 +185,7 @@ func _rebuild_subgraphs() -> void:
 			cur_subgraph += 1
 			_assign_subgraph_from(vertex, cur_subgraph)
 	last_subgraph = cur_subgraph
+	_emit_graph_changed()
 
 func _rebuild_partial_subgraphs(changed_nodes: Array[ModuleGraphVertex]) -> void:
 	for node: ModuleGraphVertex in changed_nodes:

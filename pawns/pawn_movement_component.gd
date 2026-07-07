@@ -1,59 +1,99 @@
-class_name Action_PathToTarget
-extends Action_Base
+class_name PawnMovementComponent
+extends PawnComponentBase
 
-var pawn: PawnBase
 var target: Node2D
 var speed: float = 1.0
 var end_in_space: bool = false
-#var path: PackedVector2Array
+
 var next_path_index: int = 0
 var path: Array[ModuleGraph.PathPoint] = []
 var nodes_to_watch: Array[Node2D] = []
-
-var airlock_data: ModuleData = preload("res://data/modules/module_airlock.tres") as ModuleData
 
 var in_sub_path: bool = false
 var sub_path: Array[PathComponent.PathTraversalEdgeData] 
 var sub_path_index: int = 0
 
-enum PathActionState { Starting, Moving, Finished, Failed, Paused }
+enum State { Idle, Moving, Paused }
+var state: State = State.Idle
 
-var action_state: PathActionState = PathActionState.Starting
+var _pending_target: Node2D = null
+var _pending_speed: float = 1.0
+var _pending_end_in_space: bool = false
+var _busy_in_hook: bool = false   ## suspended inside path_exit/path_enter/traverse right now
 
-signal path_invalidated
+signal path_invalidated # Re-running pathfinding but not canceled yet
+signal movement_ended(as_success: bool)
 
-func get_description() -> String:
-	return "Pathing to target"
-
-func initialize_action(_pawn: PawnBase, _target: Node2D, _speed: float = 1.0, _end_in_space: bool = false) -> void:
+func _ready() -> void:
+	super()
 	SignalBus.module_removed.connect(module_removed)
-	pawn = _pawn
-	target = _target
-	speed = _speed
-	end_in_space = _end_in_space
+	SignalBus.module_group_changed.connect(module_group_changed)
+
+func _process(delta: float) -> void:
+	if owner_pawn.path_position_override != null:
+		return  # a cab (or similar) owns our position right now — just wait
+	match state:
+		State.Moving:
+			state = State.Paused
+			await move(delta)
+			if target == null or _pending_target != null:
+				state = State.Idle
+			elif state == State.Paused:
+				state = State.Moving
+		State.Paused:
+			owner_pawn.set_idle()
+		State.Idle:
+			if _pending_target != null:
+				_start_pending()
+				
+func move_to(new_target: Node2D, new_speed: float = 1.0, in_space: bool = false) -> void:
+	_pending_target = new_target
+	_pending_speed = new_speed
+	_pending_end_in_space = in_space
+
+func _start_pending() -> void:
+	if target != null:
+		path_invalidated.emit()
+	target = _pending_target
+	speed = _pending_speed
+	end_in_space = _pending_end_in_space
+	_pending_target = null
 	run_pathfinding()
+
+func is_traveling() -> bool:
+	return state == State.Moving or state == State.Paused or _busy_in_hook
+
+func movement_complete() -> void:
+	target = null
+	state = State.Idle
+	movement_ended.emit(true)
+	
+func movement_fail() -> void:
+	target = null
+	movement_ended.emit(false)
+
 	
 func run_pathfinding() -> void:
 	path.clear()
 	sub_path.clear()
 	nodes_to_watch.clear()
 	
-	var start_node: Node2D = pawn.path_position_override
+	var start_node: Node2D = owner_pawn.path_position_override
 	if start_node == null:
-		start_node = pawn.current_module
+		start_node = owner_pawn.current_module
 	if start_node != null:
 		if start_node == target:
-			action_state = PathActionState.Finished
+			movement_complete()
 			return
 		path = Global.path_manager.run_pathfinding_by_node(start_node, target, end_in_space)
 	else:
-		path = Global.path_manager.run_pathfinding_by_node(pawn, target, end_in_space)
+		path = Global.path_manager.run_pathfinding_by_node(owner_pawn, target, end_in_space)
 
 	if path.is_empty():
-		action_state = PathActionState.Failed
+		movement_fail()
 	else:
 		if path.size() > 1 and path[0].node is TurboliftCab and path[1].node is ModuleTurbolift:
-			var request: RideRequest = path[0].node.get_onboard_request_for(pawn)
+			var request: RideRequest = path[0].node.get_onboard_request_for(owner_pawn)
 			if request:
 				request.to_floor = path[1].node
 		next_path_index = -1
@@ -62,7 +102,7 @@ func run_pathfinding() -> void:
 		for point in path:
 			nodes_to_watch.append(point.node)
 		nodes_to_watch.reverse()
-		action_state = PathActionState.Moving
+		state = State.Moving
 		# Debug shove path in UI
 		#var packed_path: PackedVector2Array = []
 		#for index in path.size():
@@ -70,39 +110,26 @@ func run_pathfinding() -> void:
 		#Global.ui_in_game.debug_path_cell = packed_path
 		Global.ui_in_game.debug_path_position = get_debug_path_detailed()
 	
-
-func process_action(delta: float) -> void:
-	match action_state:
-		PathActionState.Starting:
-			pass
-		PathActionState.Moving:
-			action_state = PathActionState.Paused
-			await move(delta)
-			if action_state == PathActionState.Paused:
-				action_state = PathActionState.Moving
-		PathActionState.Paused:
-			pawn.set_idle()
-		PathActionState.Finished:
-			SignalBus.module_removed.disconnect(module_removed)
-			pass
-		PathActionState.Failed:
-			SignalBus.module_removed.disconnect(module_removed)
-			pass
 		
 func module_removed(removed_module: ModuleBase) -> void:
 	if removed_module == target:
 		# Target is gone, we can't ever get there
+		movement_fail()
 		path_invalidated.emit()
-		action_state = PathActionState.Failed
 	elif nodes_to_watch.has(removed_module):
 		# One of the modules on the path is gone, recalc path
 		path_invalidated.emit()
-		run_pathfinding()
+		call_deferred("run_pathfinding")
+		
+func module_group_changed(module: ModuleBase) -> void:
+	if nodes_to_watch.has(module):
+		# One of the modules on the path changed groups, recalc path
+		path_invalidated.emit()
+		call_deferred("run_pathfinding")
 		
 func cancel() -> void:
-	action_state = PathActionState.Failed
 	path_invalidated.emit()
-	queue_free()
+	movement_fail()
 		
 func get_debug_path_detailed() -> PackedVector2Array:
 	var packed_path: PackedVector2Array = []
@@ -134,10 +161,10 @@ func extract_position(index: int) -> Vector2:
 		if index > 0 and path[index - 1].node is ModuleBase:
 			var prev_mod: ModuleBase = path[index - 1].node as ModuleBase
 			return Vector2(module.get_path_component().get_connection_point_from(prev_mod)) + module.global_position
-		if pawn.current_module != null and pawn.current_module == module:
-			return pawn.global_position
+		if owner_pawn.current_module != null and owner_pawn.current_module == module:
+			return owner_pawn.global_position
 		if !module.get_path_component().door_connections.is_empty():
-			return Vector2(module.get_path_component().get_closest_path_point(pawn.global_position - module.global_position)) + module.global_position
+			return Vector2(module.get_path_component().get_closest_path_point(owner_pawn.global_position - module.global_position)) + module.global_position
 		return Global.cell_to_world(module.module_cell, true)
 	return path[index].node.global_position
 	
@@ -148,8 +175,10 @@ func reached_next_node() -> void:
 			door = sub_path[sub_path.size() - 1].end_index
 		var leaving_module: ModuleBase = path[next_path_index].node as ModuleBase
 		var next_module: Node2D = path[next_path_index + 1].node if path.size() > (next_path_index + 1) else null
-		await leaving_module.path_exit(pawn, door, path[next_path_index].edge_meta, next_module, path_invalidated)
-		if action_state == PathActionState.Failed:
+		_busy_in_hook = true
+		await leaving_module.path_exit(owner_pawn, door, path[next_path_index].edge_meta, next_module, path_invalidated)
+		_busy_in_hook = false
+		if target == null:
 			return
 		
 	next_path_index += 1
@@ -165,7 +194,11 @@ func reached_next_node() -> void:
 			door = sub_path[0].end_index
 		var entering_module: ModuleBase = path[next_path_index].node as ModuleBase
 		var next_module: Node2D = path[next_path_index + 1].node if path.size() > (next_path_index + 1) else null
-		await entering_module.path_enter(pawn, door, path[next_path_index - 1].edge_meta, next_module)
+		_busy_in_hook = true
+		await entering_module.path_enter(owner_pawn, door, path[next_path_index - 1].edge_meta, next_module, path_invalidated)
+		_busy_in_hook = false
+		if target == null:
+			return
 		
 	if sub_path.size() > 0:
 		sub_path_index = -1
@@ -179,9 +212,12 @@ func reached_next_node() -> void:
 				var prev_module: ModuleBase = null
 				if next_path_index > 0 and path[next_path_index - 1].node is ModuleBase:
 					prev_module = path[next_path_index - 1].node as ModuleBase
-				this_module.enter_module_from(pawn, prev_module)
+				this_module.enter_module_from(owner_pawn, prev_module)
+			elif path[next_path_index].node is TurboliftCab:
+				# Don't dump people into space when they're riding the turbolift
+				pass
 			else:
-				pawn.current_module = null
+				owner_pawn.current_module = null
 			if next_path_index > 1:
 				nodes_to_watch.pop_back()
 
@@ -200,7 +236,7 @@ func get_partial_sub_path(index: int) -> Array[PathComponent.PathTraversalEdgeDa
 		if !path[index].in_space and path[index].node is ModuleBase:
 			var current_module: ModuleBase = path[index].node as ModuleBase
 			if current_module.get_path_component() != null:
-				return current_module.get_path_component().get_path_exiting_module(pawn.global_position, path[index + 1].node)
+				return current_module.get_path_component().get_path_exiting_module(owner_pawn.global_position, path[index + 1].node)
 	return []
 	
 func reached_next_subpath() -> void:
@@ -212,9 +248,9 @@ func reached_next_subpath() -> void:
 				var prev_module: ModuleBase = null
 				if next_path_index > 0 and path[next_path_index - 1].node is ModuleBase:
 					prev_module = path[next_path_index - 1].node as ModuleBase
-				this_module.enter_module_from(pawn, prev_module)
+				this_module.enter_module_from(owner_pawn, prev_module)
 			else:
-				pawn.current_module = null
+				owner_pawn.current_module = null
 			if next_path_index > 1:
 				nodes_to_watch.pop_back()
 	if sub_path_index >= sub_path.size():
@@ -223,13 +259,15 @@ func reached_next_subpath() -> void:
 		return
 	var module: ModuleBase = path[next_path_index].node as ModuleBase
 	if module != null and module.has_custom_pathing():
-		await module.traverse(pawn, sub_path[sub_path_index])
+		await module.traverse(owner_pawn, sub_path[sub_path_index])
 	
 func move(delta: float) -> void:
 	if next_path_index < 0:
 		await reached_next_node()
-	var dist_to_travel: float = pawn.speed * delta * speed
-	var next_position: Vector2 = pawn.global_position
+		if target == null:
+			return
+	var dist_to_travel: float = owner_pawn.speed * delta * speed
+	var next_position: Vector2 = owner_pawn.global_position
 	while dist_to_travel > 0:
 		if in_sub_path:
 			var next_path_position: Vector2 = path[next_path_index].node.global_position + sub_path[sub_path_index].end_pos
@@ -239,7 +277,9 @@ func move(delta: float) -> void:
 				next_position = next_path_position
 				dist_to_travel -= dist_to_next_point
 				await reached_next_subpath()
-				next_position = pawn.global_position
+				if target == null:
+					return
+				next_position = owner_pawn.global_position
 			else:
 				next_position = next_position + travel_vector / dist_to_next_point * dist_to_travel
 				dist_to_travel = 0
@@ -254,7 +294,9 @@ func move(delta: float) -> void:
 				next_position = next_path_position
 				dist_to_travel -= dist_to_next_point
 				await reached_next_node()
-				next_position = pawn.global_position
+				if target == null:
+					return
+				next_position = owner_pawn.global_position
 			else:
 				next_position = next_position + travel_vector / dist_to_next_point * dist_to_travel
 				dist_to_travel = 0
@@ -263,13 +305,7 @@ func move(delta: float) -> void:
 		# We didn't move, we're done here
 		#print ("tried to move but failed? Marking as finished but investigate")
 		#action_state = PathActionState.Finished
+	owner_pawn.move_to(next_position)
 	if next_path_index >= path.size():
 		# Made it to the last position
-		action_state = PathActionState.Finished
-	pawn.move_to(next_position)
-
-func is_failed() -> bool:
-	return action_state == PathActionState.Failed
-	
-func is_finished() -> bool:
-	return action_state == PathActionState.Finished
+		movement_complete()

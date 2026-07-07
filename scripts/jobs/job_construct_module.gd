@@ -10,7 +10,6 @@ var state: ConstructModuleState = ConstructModuleState.Starting:
 		if new_state != state:
 			state = new_state
 			subtask_changed.emit()
-var action: Action_PathToTarget = null
 var shift_spot_interval: float = 3.0
 var shift_spot_elapsed: float = 0.0
 
@@ -60,22 +59,20 @@ func can_do_job(_pawn: PawnBase) -> bool:
 	
 func start_job(_pawn: PawnBase) -> void:
 	pawn = _pawn
+	move_to_module()
 		
 func cancel(_as_failed: bool) -> void:
 	if _as_failed:
 		state = ConstructModuleState.Failed
 	else:
 		state = ConstructModuleState.Finished
-	if action:
-		action.cancel()
-		action = null
 	
 func process_job(delta: float) -> void:
 	match state:
 		ConstructModuleState.Starting:
-			state = ConstructModuleState.MovingToModule
+			pass
 		ConstructModuleState.MovingToModule:
-			move_to_module(delta)
+			pass
 		ConstructModuleState.ConstructModule:
 			construct_module(delta)
 		ConstructModuleState.DeconstructModule:
@@ -89,26 +86,20 @@ func _module_removed(module: ModuleBase) -> void:
 	if module == module_to_construct:
 		module_to_construct = null
 		state = ConstructModuleState.Failed
-		if action != null:
-			action.free()
-			action = null
 
-func move_to_module(delta: float) -> void:
-	if action == null:
-		action = Action_PathToTarget.new()
-		action.initialize_action(pawn, module_to_construct, 1, true)
-	action.process_action(delta)
-	if action.is_failed():
-		state = ConstructModuleState.Failed
-		action.free()
-		action = null
-	elif action.is_finished():
-		if deconstruct:
-			state = ConstructModuleState.DeconstructModule
-		else:
-			state = ConstructModuleState.ConstructModule
-		action.free()
-		action = null
+func move_to_module() -> void:
+	state = ConstructModuleState.MovingToModule
+	pawn.movement_component.movement_ended.connect(move_complete, CONNECT_ONE_SHOT)
+	pawn.movement_component.move_to(module_to_construct, 1, true)
+		
+func move_complete(as_success: bool) -> void:
+	if not as_success:
+		cancel(true)
+		return
+	if deconstruct:
+		state = ConstructModuleState.DeconstructModule
+	else:
+		state = ConstructModuleState.ConstructModule
 		
 func construct_module(delta: float) -> void:
 	shift_spot_elapsed += delta

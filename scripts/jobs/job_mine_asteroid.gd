@@ -9,7 +9,6 @@ var state: MineAsteroidState = MineAsteroidState.Starting:
 		if new_state != state:
 			state = new_state
 			subtask_changed.emit()
-var action: Action_PathToTarget = null
 var efficiency: float = 1.0
 var time_mining: float = 0.0
 var default_seconds_to_mine: float = 1.0
@@ -56,22 +55,19 @@ func cancel(_as_failed: bool) -> void:
 		state = MineAsteroidState.Failed
 	else:
 		state = MineAsteroidState.Finished
-	if action:
-		action.cancel()
-		action = null
 	
 func process_job(delta: float) -> void:
 	match state:
 		MineAsteroidState.Starting:
 			get_asteroid()
 		MineAsteroidState.MovingToAsteroid:
-			move_to_asteroid(delta)
+			pass
 		MineAsteroidState.MineAsteroid:
 			mine_asteroid(delta)
 		MineAsteroidState.ReturningToModule:
-			move_to_module(delta)
+			pass
 		MineAsteroidState.DepositMaterial:
-			deposit_material()
+			pass
 		MineAsteroidState.Finished:
 			pass
 		MineAsteroidState.Failed:
@@ -89,39 +85,35 @@ func get_asteroid() -> void:
 		state = MineAsteroidState.Failed
 		return
 	asteroid.despawning.connect(_asteroid_despawned)
-	state = MineAsteroidState.MovingToAsteroid
+	move_to_asteroid()
 	
 func _asteroid_despawned() -> void:
 	asteroid = null
 	# Find a different one!
 	if state < MineAsteroidState.ReturningToModule:
 		state = MineAsteroidState.Starting
-		if action != null:
-			action.free()
-			action = null
 	# otherwise we don't care, we already came and left already
 
 func _module_removed(module: ModuleBase) -> void:
 	if module == requesting_module:
 		requesting_module = null
 		state = MineAsteroidState.Failed
-		if action != null:
-			action.free()
-			action = null
+		if pawn.movement_component.movement_ended.is_connected(mine_asteroid):
+			pawn.movement_component.movement_ended.disconnect(mine_asteroid)
 
-func move_to_asteroid(delta: float) -> void:
-	if action == null:
-		action = Action_PathToTarget.new()
-		action.initialize_action(pawn, asteroid, 1, true)
-	action.process_action(delta)
-	if action.is_failed():
-		state = MineAsteroidState.Failed
-		action.free()
-		action = null
-	elif action.is_finished():
+func move_to_asteroid() -> void:
+	state = MineAsteroidState.MovingToAsteroid
+	pawn.movement_component.movement_ended.connect(mine_asteroid, CONNECT_ONE_SHOT)
+	pawn.movement_component.move_to(asteroid, 1, true)
+		
+func start_mining(prev_success: bool) -> void:
+	if not prev_success:
+		if state < MineAsteroidState.ReturningToModule:
+			state = MineAsteroidState.Starting
+		else:
+			cancel(true)
+	else:
 		state = MineAsteroidState.MineAsteroid
-		action.free()
-		action = null
 		
 func mine_asteroid(delta: float) -> void:
 	# Stay glued to asteroid
@@ -131,25 +123,19 @@ func mine_asteroid(delta: float) -> void:
 		time_mining = 0
 		resources_mined.append(asteroid.mine_resource())
 	if resources_mined.size() >= max_mined:
-		state = MineAsteroidState.ReturningToModule
+		move_to_module()
 	elif asteroid.is_empty():
 		state = MineAsteroidState.Starting
 		
-func move_to_module(delta: float) -> void:
-	if action == null:
-		action = Action_PathToTarget.new()
-		action.initialize_action(pawn, requesting_module)
-	action.process_action(delta)
-	if action.is_failed():
-		state = MineAsteroidState.Failed
-		action.free()
-		action = null
-	elif action.is_finished():
-		state = MineAsteroidState.DepositMaterial
-		action.free()
-		action = null
+func move_to_module() -> void:
+	state = MineAsteroidState.ReturningToModule
+	pawn.movement_component.movement_ended.connect(deposit_material, CONNECT_ONE_SHOT)
+	pawn.movement_component.move_to(requesting_module)
 		
-func deposit_material() -> void:
+func deposit_material(prev_success: bool) -> void:
+	if not prev_success:
+		cancel(true)
+		return
 	var storage: StorageComponent = requesting_module.get_component_by_type(StorageComponent) as StorageComponent
 	if storage:
 		for resource: ResourceData in resources_mined:

@@ -161,7 +161,7 @@ path_edges = Dictionary[Vector2i, StringName]({
 Vector2i(0, 1): &"board_turbolift"
 })
 door_data = Dictionary[int, StringName]({
-1: &"turbolift_door"
+0: &"turbolift_door"
 })
 door_required = false
 

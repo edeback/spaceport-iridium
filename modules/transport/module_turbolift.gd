@@ -32,6 +32,9 @@ func on_place() -> void:
 		# add a truss segment below
 		Global.world_manager.add_module(truss, module_cell)
 
+func pre_delete() -> void:
+	Global.turbolift_manager.remove_turbolift_module(self)
+
 func on_select(new_selected: bool) -> void:
 	super(new_selected)
 	#if new_selected:
@@ -104,15 +107,15 @@ func has_custom_pathing() -> bool:
 func traverse(_pawn: PawnBase, _path_edge: PathComponent.PathTraversalEdgeData) -> void:
 	pass
 
-func path_enter(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D = null) -> void:
+func path_enter(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D, cancel_signal: Signal) -> void:
 	if next_node is ModuleTurbolift:
 		pass
 	pass
-	#if _meta == &"turbolift_door":
-		#await set_door(false)
 	
 func path_exit(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D, cancel_signal: Signal) -> void:
 	if next_node is ModuleTurbolift:
-		await shaft.request_ride(_pawn, self, next_node, cancel_signal)
+		var ride_request: RideRequest = await shaft.request_ride(_pawn, self, next_node, cancel_signal)
+		if ride_request.cancelled:
+			_pawn.movement_component.cancel()
 	#if _meta == &"turbolift_door":
 		#await set_door(false)

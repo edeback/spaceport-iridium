@@ -282,18 +282,18 @@ func connect_doors() -> void:
 			Global.path_manager.add_connection(owner_module, module, 1, data)
 	check_doors()
 
+func has_door_connected() -> bool:
+	var connected_indices: Array[int] = module_connections.values()
+	for index: int in door_connections:
+		if connected_indices.has(index):
+			return true
+	return false
+
 func check_doors() -> void:
-	if door_required:
-		var has_door_connected: bool = false
-		var connected_indices: Array[int] = module_connections.values()
-		for index: int in door_connections:
-			if connected_indices.has(index):
-				has_door_connected = true
-				break
-		if !has_door_connected and door_required:
-			last_error = "Door not connected!"
-		else:
-			last_error = ""
+	if door_required and not has_door_connected():
+		last_error = "Door not connected!"
+	else:
+		last_error = ""
 			
 func remove_connections() -> void:
 	for node in module_connections:

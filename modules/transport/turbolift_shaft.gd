@@ -14,34 +14,33 @@ func clear() -> void:
 	for cab in cabs:
 		cab.destroy()
 	
+	
+func create_new_cab() -> void:
+	var new_cab: TurboliftCab = Global.turbolift_manager.default_cab.instantiate() as TurboliftCab
+	Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.TURBOLIFT).add_child(new_cab)
+	add_cab(new_cab)
+	
 func add_cab(cab: TurboliftCab) -> void:
 	cab.shaft = self
-	Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.TURBOLIFT).add_child(cab)
-	Global.path_manager.add_vertex(cab, true, group_id) 
+	Global.path_manager.change_vertex_group(cab, group_id) 
 	cabs.append(cab)
 	if cab.current_turbolift == null and floors.size() > 0:
-		cab.global_position = floors[0].global_position
+		cab.set_apparent_position(floors[0].global_position)
 		cab.current_turbolift = floors[0]
 
 # Register a turbolift module as part of this shaft
 func register_floor(module: ModuleTurbolift) -> void:
-	Global.path_manager.graph.change_vertex_group(module, group_id, 1, false)
 	floors.append(module)
 	module.shaft = self
+	Global.path_manager.change_vertex_group(module, group_id, 1)
 	# Keep floors sorted
 	floors.sort_custom(func(a: ModuleTurbolift, b: ModuleTurbolift) -> bool: return a.module_cell.y < b.module_cell.y)
-	if floors.size() == 1:
-		# move cabs here
-		for cab in cabs:
-			cab.global_position = module.global_position
 
-# Unregister a floor (when module is removed)
-func unregister_floor(module: ModuleTurbolift) -> void:
-	floors.erase(module.module_cell)
-	# Was sorted, should continue to be sorted
 	
 
 func request_ride(pawn: PawnBase, from_floor: ModuleBase, to_floor: ModuleBase, cancel_signal: Signal) -> RideRequest:
+	if cabs.is_empty():
+		create_new_cab()
 	var request := RideRequest.new()
 	request.pawn = pawn
 	request.from_floor = from_floor
@@ -50,18 +49,17 @@ func request_ride(pawn: PawnBase, from_floor: ModuleBase, to_floor: ModuleBase, 
 	var best_cab: TurboliftCab = _best_cab_for(request)
 	if best_cab:
 		best_cab.add_pickup_request(request)
-	var on_cancel := func(): _cancel(request)
-	cancel_signal.connect(on_cancel, CONNECT_ONE_SHOT)
+	#var on_cancel := func(): _cancel(request)
+	#cancel_signal.connect(on_cancel, CONNECT_ONE_SHOT)
 	await request.finished
-	if cancel_signal.is_connected(on_cancel):
-		cancel_signal.disconnect(on_cancel)
+	#if cancel_signal.is_connected(on_cancel):
+		#cancel_signal.disconnect(on_cancel)
 	#_release_waiting_slot(from_floor, pawn)
 	return request
 
 func _cancel(request: RideRequest) -> void:
 	if request.cancelled:
 		return
-	request.cancelled = true
 	for cab in cabs:
 		if cab.cancel_request(request):
 			return
@@ -73,12 +71,12 @@ func _best_cab_for(request: RideRequest) -> TurboliftCab:
 	# Doesn't need to be optimal — O(cabs) per request, and a shaft has a handful at most.
 	var best_cab: TurboliftCab = null
 	for cab: TurboliftCab in cabs:
-		if cab.is_idle() and cab.is_available() and (best_cab == null or request.from_floor.global_position.distance_squared_to(cab.global_position) < request.from_floor.global_position.distance_squared_to(best_cab.global_position)):
+		if cab.is_idle() and cab.is_available() and (best_cab == null or request.from_floor.global_position.distance_squared_to(cab.get_apparent_position()) < request.from_floor.global_position.distance_squared_to(best_cab.get_apparent_position())):
 			best_cab = cab
 	if best_cab:
 		return best_cab
 	for cab: TurboliftCab in cabs:
-		if cab.is_available() and (cab.moving_up() == (cab.global_position.y > request.from_floor.global_position.y)) and (best_cab == null or request.from_floor.global_position.distance_squared_to(cab.global_position) < request.from_floor.global_position.distance_squared_to(best_cab.global_position)):
+		if cab.is_available() and (cab.moving_up() == (cab.get_apparent_position().y > request.from_floor.global_position.y)) and (best_cab == null or request.from_floor.global_position.distance_squared_to(cab.get_apparent_position()) < request.from_floor.global_position.distance_squared_to(best_cab.global_position)):
 			best_cab = cab
 	if best_cab:
 		return best_cab
@@ -91,7 +89,7 @@ func merge(other: TurboliftShaft) -> void:
 	if self == other:
 		return
 	for turbolift: ModuleTurbolift in other.floors:
-		Global.path_manager.graph.change_vertex_group(turbolift, group_id, 1, false)
+		Global.path_manager.change_vertex_group(turbolift, group_id, 1)
 		turbolift.shaft = self
 	floors.append_array(other.floors)
 	floors.sort_custom(func(a: ModuleTurbolift, b: ModuleTurbolift) -> bool: return a.module_cell.y < b.module_cell.y)
@@ -104,8 +102,9 @@ func split_at(module: ModuleTurbolift) -> void:
 	var floor_index: int = floors.find(module)
 	if floor_index == -1:
 		return
-	for cab in cabs:
+	for cab in cabs.duplicate():
 		if cab.current_turbolift == module:
+			cabs.erase(cab)
 			cab.destroy()
 	if floor_index != -1 and floor_index == 0 or floor_index == floors.size() - 1:
 		# Top or bottom, not splitting
@@ -120,6 +119,8 @@ func split_at(module: ModuleTurbolift) -> void:
 		# Bottom half moved to new shaft
 		_transfer_floors(floor_index + 1, floors.size())
 		floors = floors.slice(0, floor_index)
+	for cab in cabs:
+		cab.recheck_requests()
 		
 func _transfer_floors(start: int, end: int) -> void:
 	var new_shaft: TurboliftShaft = Global.turbolift_manager.create_new_shaft()
@@ -130,6 +131,7 @@ func _transfer_floors(start: int, end: int) -> void:
 			if cab.current_turbolift == floors[i]:
 				new_shaft.add_cab(cab)
 				cabs.erase(cab)
+				cab.recheck_requests()
 
 ## Get all cabs that are currently at a specific floor
 #func get_cabs_at_floor(floor_cell: Vector2i) -> Array[TurboliftCab]:
