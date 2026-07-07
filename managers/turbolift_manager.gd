@@ -35,6 +35,7 @@ func add_turbolift_module(module: ModuleTurbolift) -> void:
 func create_new_shaft() -> TurboliftShaft:
 	var new_shaft := TurboliftShaft.new()
 	new_shaft.group_id = "turboshaft_" + str(last_turboshaft)
+	Global.path_manager.graph.set_group_multiple(new_shaft.group_id, 0.5)
 	last_turboshaft += 1
 	_turbolift_shafts.append(new_shaft)
 	return new_shaft

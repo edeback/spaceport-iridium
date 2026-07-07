@@ -7,6 +7,7 @@ extends ModuleBase
 
 func _ready() -> void:
 	add_to_group("teleporters")
+	Global.path_manager.graph.set_group_multiple("teleporters", 0.1)
 	super()
 
 func make_connections() -> void:

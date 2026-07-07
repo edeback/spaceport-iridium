@@ -9,7 +9,9 @@ class PathPoint:
 signal graph_changed
 
 ## StringName, Array[ModuleGraphVertex]
-var _linked_groups: Dictionary[StringName, Array]
+var _linked_groups: Dictionary[StringName, Array] = {}
+# When pathing through a group, what do we multiply the distance heuristic by?
+var _group_multiple: Dictionary[StringName, float] = {}
 
 var _vertices: Dictionary[Node2D, ModuleGraphVertex]
 
@@ -25,14 +27,14 @@ func _flush_subgraphs() -> void:
 		_rebuild_subgraphs()
 		_subgraph_dirty = false
 
-func add_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "") -> void:
+func add_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "", group_door: int = 0) -> void:
 	if _vertices.has(vertex):
 		print("trying to add existing vertex! skipping. Module: " + vertex.name)
 		return
-	_vertices[vertex] = make_vertex(vertex, is_endpoint, group)
+	_vertices[vertex] = _make_vertex(vertex, is_endpoint, group, group_door)
 	_emit_graph_changed()
 	
-func make_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "", group_door: int = 0) -> ModuleGraphVertex:
+func _make_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "", group_door: int = 0) -> ModuleGraphVertex:
 	var new_vertex: ModuleGraphVertex = ModuleGraphVertex.new()
 	new_vertex.node = vertex
 	new_vertex.endpoint = is_endpoint
@@ -64,6 +66,13 @@ func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: 
 			graph_vertex.group_door = new_group_door
 		if not graph_vertex.endpoint:
 			_mark_dirty()
+	
+func set_group_multiple(group: StringName, multiple: float) -> void:
+	if group:
+		_group_multiple.get_or_add(group, multiple)
+		
+func get_group_multiple(group: StringName) -> float:
+	return _group_multiple.get_or_add(group, 1)
 	
 func get_group_subgraph(group: StringName) -> int:
 	if group:
@@ -247,7 +256,7 @@ func pathfind_by_vertex(start_vertex: ModuleGraphVertex, end_vertex: ModuleGraph
 		if current.group:
 			for linked: ModuleGraphVertex in _linked_groups[current.group]:
 				if linked == end_vertex or (linked != current and not linked.endpoint):
-					var new_cost: float = cost_so_far[current] + linked.dist_to(current)
+					var new_cost: float = cost_so_far[current] + linked.dist_to(current) * get_group_multiple(current.group)
 					if not cost_so_far.has(linked) or new_cost < cost_so_far[linked]:
 						cost_so_far[linked] = new_cost
 						var prio: float = new_cost + _heuristic(linked, end_vertex)
@@ -305,7 +314,7 @@ func _heuristic(_start: ModuleGraphVertex, _end: ModuleGraphVertex) -> float:
 	#return start.dist_to(end)
 	
 func pathfind_to_node_in_space(start: Node2D, end: Node2D) -> Array[PathPoint]:
-	var temp_vertex: ModuleGraphVertex = make_vertex(end, true, "space")
+	var temp_vertex: ModuleGraphVertex = _make_vertex(end, true, "space")
 	_linked_groups.get_or_add("space", []).append(temp_vertex)
 	var path := pathfind_by_vertex(get_vertex_for_path(start), temp_vertex)
 	_linked_groups["space"].erase(temp_vertex)
@@ -350,7 +359,7 @@ func pathfind_to_func(start: Node2D, end_func: Callable) -> Array[PathPoint]:
 		if current.group:
 			for linked: ModuleGraphVertex in _linked_groups[current.group]:
 				if linked == end_vertex or (linked != current and not linked.endpoint):
-					var new_cost: float = cost_so_far[current] + linked.dist_to(current)
+					var new_cost: float = cost_so_far[current] + linked.dist_to(current) * get_group_multiple(current.group)
 					if not cost_so_far.has(linked) or new_cost < cost_so_far[linked]:
 						cost_so_far[linked] = new_cost
 						var prio: float = new_cost + _heuristic(linked, end_vertex)
