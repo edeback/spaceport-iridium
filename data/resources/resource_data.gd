@@ -18,6 +18,19 @@ extends Resource
 @export var cached_total: int = 0
 var needs_recalc: bool = true
 
+## Does this resource carry per-stack variance (ore richness, food quality,
+## etc)? When false (the default, and correct for most resources), every
+## stack of this resource has instance_data == null and storage behaves
+## exactly like a single int count - no behavior change from before this
+## system existed.
+@export var has_variance: bool = false
+
+## How close two variant stacks' ItemInstanceData.get_primary_value() need to
+## be to merge into one stack, once has_variance is true. Higher = coarser
+## buckets (fewer stacks, less precision retained); 0 = only exact matches
+## merge. Ignored when has_variance is false.
+@export_range(0.0, 1.0, 0.01) var merge_tolerance: float = 0.05
+
 var registered_storage: Array[StorageComponent] = []
 
 #@export var show_test: bool = false:

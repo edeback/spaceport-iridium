@@ -15,6 +15,12 @@ var default_seconds_to_mine: float = 1.0
 var max_mined: int = 5
 var resources_mined_count: int = 0
 
+## Placeholder sampling range until AsteroidBase exposes real per-chunk
+## richness data - this is here so mined ore actually carries continuous
+## variance end-to-end. Swap for something asteroid-driven whenever that
+## data exists (e.g. richer asteroids biasing toward the high end).
+const ORE_RICHNESS_RANGE := Vector2(0.3, 1.0)
+
 enum MineAsteroidState { Starting, MovingToAsteroid, MineAsteroid, ReturningToModule, DepositMaterial, Finished, Failed }
 
 func get_job_description() -> String:
@@ -127,7 +133,14 @@ func mine_asteroid(delta: float) -> void:
 	if time_mining >= default_seconds_to_mine:
 		time_mining = 0
 		var mined_resource: ResourceData = asteroid.mine_resource()
-		pawn.inventory_component.add(mined_resource, 1)
+		var stack := ResourceStack.new()
+		stack.resource_data = mined_resource
+		stack.amount = 1
+		if mined_resource != null and mined_resource.has_variance:
+			var instance := OreInstanceData.new()
+			instance.richness = randf_range(ORE_RICHNESS_RANGE.x, ORE_RICHNESS_RANGE.y)
+			stack.instance_data = instance
+		pawn.inventory_component.add_stacks(mined_resource, [stack])
 		resources_mined_count += 1
 	if resources_mined_count >= max_mined:
 		move_to_module()
@@ -157,9 +170,9 @@ func deposit_material(prev_success: bool) -> void:
 		var deposit_amount: int = mini(carried, storage.space_available())
 		if deposit_amount <= 0:
 			continue
-		var withdrawn: int = pawn.inventory_component.withdraw(resource, deposit_amount)
-		if withdrawn > 0 and not storage.deposit(resource, withdrawn, true):
-			pawn.inventory_component.add(resource, withdrawn)
+		var withdrawn: Array[ResourceStack] = pawn.inventory_component.withdraw_stacks(resource, deposit_amount)
+		if not withdrawn.is_empty() and not storage.deposit_stacks(resource, withdrawn):
+			pawn.inventory_component.add_stacks(resource, withdrawn)
 	state = MineAsteroidState.Finished
 	
 func is_failed() -> bool:

@@ -12,7 +12,7 @@ func set_pawn(_pawn: PawnBase) -> void:
 	pawn_inventory.inventory_changed.connect(_inventory_changed)
 	%FreeSpaceMaxLabel.text = str(_pawn.carrying_capacity)
 	for resource in pawn_inventory.carried:
-		_inventory_changed(resource, pawn_inventory.carried[resource])
+		_inventory_changed(resource, pawn_inventory.get_carried_amount(resource))
 	_refresh_total()
 	
 func _inventory_changed(resource: ResourceData, new_value: int) -> void:

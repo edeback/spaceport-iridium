@@ -44,6 +44,13 @@ signal storage_changed(resource: ResourceData, new_value: int)
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	super()
+	# Set up storage data that was set in the editor
+	for storage: StorageData in storage_data.values():
+		var num_to_create: int = storage.stored 
+		if num_to_create > 0:
+			storage.stored = 0
+			storage.deposit(num_to_create, false)
+		
 
 func ready_preview() -> void:
 	set_process(false)
@@ -73,6 +80,7 @@ func ready_constructed() -> void:
 func add_stored_resource(resource: ResourceData) -> void:
 	if not storage_data.has(resource):
 		var new_data := StorageData.new()
+		new_data.resource_data = resource
 		new_data.desired = max_stored
 		storage_data[resource] = new_data
 		if include_in_stats:
@@ -256,15 +264,15 @@ func cancel_withdraw_job(job: Job_GetResource) -> void:
 	if data:
 		data.cancel_withdraw_job(job)
 	
-func complete_withdraw_job(job: Job_GetResource) -> bool:
+func complete_withdraw_job(job: Job_GetResource) -> Array[ResourceStack]:
 	var data: StorageData = storage_data.get(job.resource_data)
 	if data:
-		var did_withdraw: bool = data.complete_withdraw_job(job)
-		if did_withdraw:
+		var withdrawn: Array[ResourceStack] = data.complete_withdraw_job(job)
+		if not withdrawn.is_empty():
 			storage_value_changed = true
 			storage_changed.emit(job.resource_data, data.stored)
-		return did_withdraw
-	return false
+		return withdrawn
+	return []
 	
 func total_stored_by_resource(resource: ResourceData) -> int:
 	var data: StorageData = storage_data.get(resource)
@@ -306,6 +314,47 @@ func deposit(resource: ResourceData, quantity: int, only_if_room: bool = false, 
 		resource.needs_recalc = true
 		return true
 	return false
+
+## Stack-aware deposit that preserves instance_data (richness/quality/etc),
+## for callers that are handing over real ResourceStacks rather than a plain
+## count - e.g. Job_StoreInventory returning carried resources to storage.
+## Same only_if_room semantics as deposit(). All-or-nothing: on failure,
+## nothing in `stacks` is touched, so the caller still owns it.
+func deposit_stacks(resource: ResourceData, stacks: Array[ResourceStack], only_if_room: bool = true) -> bool:
+	if stacks.is_empty():
+		return true
+	var data: StorageData = storage_data.get(resource)
+	if not data and allow_any_resource:
+		add_stored_resource(resource)
+		data = storage_data.get(resource)
+	if data == null:
+		return false
+	var total: int = 0
+	for stack: ResourceStack in stacks:
+		total += stack.amount
+	if only_if_room and space_available() < total:
+		return false
+	for stack: ResourceStack in stacks:
+		data.add_stack(stack)
+	storage_value_changed = true
+	storage_changed.emit(resource, data.stored)
+	resource.needs_recalc = true
+	return true
+
+## Stack-aware withdraw that preserves instance_data. use_reserve mirrors
+## withdraw()/withdraw_up_to(). Returns [] if there isn't enough available.
+func withdraw_stacks(resource: ResourceData, quantity: int, use_reserve: bool = false) -> Array[ResourceStack]:
+	var data: StorageData = storage_data.get(resource)
+	if data == null or not data.can_withdraw(quantity, use_reserve):
+		return []
+	var withdrawn: Array[ResourceStack] = data.withdraw_stacks(quantity)
+	if use_reserve:
+		data.reserved_withdraw = maxi(data.reserved_withdraw - quantity, 0)
+	if not withdrawn.is_empty():
+		storage_value_changed = true
+		storage_changed.emit(resource, data.stored)
+		resource.needs_recalc = true
+	return withdrawn
 	
 func add_deposit_job(job: Job_GetResource) -> bool:
 	var data: StorageData = storage_data.get(job.resource_data)
@@ -319,10 +368,10 @@ func cancel_deposit_job(job: Job_GetResource) -> void:
 	if data:
 		data.cancel_deposit_job(job)
 	
-func complete_deposit_job(job: Job_GetResource) -> bool:
+func complete_deposit_job(job: Job_GetResource, incoming_stacks: Array[ResourceStack] = []) -> bool:
 	var data: StorageData = storage_data.get(job.resource_data)
 	if data:
-		var did_deposit: bool = data.complete_deposit_job(job)
+		var did_deposit: bool = data.complete_deposit_job(job, incoming_stacks)
 		if did_deposit:
 			storage_value_changed = true
 			storage_changed.emit(job.resource_data, data.stored)

@@ -76,14 +76,14 @@ func deposit_resource(prev_success: bool) -> void:
 		# Storage filled up while we were walking over — try again next tick.
 		cancel(true)
 		return
-	var withdrawn: int = pawn.inventory_component.withdraw(resource_data, deposit_amount)
-	if withdrawn > 0 and deposit_storage.deposit(resource_data, withdrawn, true):
+	var withdrawn: Array[ResourceStack] = pawn.inventory_component.withdraw_stacks(resource_data, deposit_amount)
+	if not withdrawn.is_empty() and deposit_storage.deposit_stacks(resource_data, withdrawn):
 		job_state = StoreInventoryState.Finished
 	else:
 		# Something went wrong after we already took it off the pawn — give it back
 		# rather than losing it.
-		if withdrawn > 0:
-			pawn.inventory_component.add(resource_data, withdrawn)
+		if not withdrawn.is_empty():
+			pawn.inventory_component.add_stacks(resource_data, withdrawn)
 		cancel(true)
 
 ## Finds one carried resource type and the closest reachable storage that will

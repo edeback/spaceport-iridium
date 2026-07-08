@@ -12,20 +12,22 @@
 [ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="9_btupe"]
 [ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="10_4yt2q"]
 [ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="11_d0haa"]
+[ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="13_btupe"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_btupe"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4yt2q"]
 shader = ExtResource("2_gm7c8")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_4yt2q"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_d0haa"]
 resource_local_to_scene = true
 size = Vector2(192, 128)
 
 [sub_resource type="Resource" id="Resource_m0sbv"]
 script = ExtResource("9_btupe")
+resource_data = ExtResource("10_4yt2q")
 stored = 20
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
@@ -34,7 +36,7 @@ can_delete = false
 structure_check_before_delete = true
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_btupe")
+material = SubResource("ShaderMaterial_4yt2q")
 texture = ExtResource("3_do1gr")
 region_enabled = false
 
@@ -43,7 +45,7 @@ scale = Vector2(3, 2)
 power_generation_component = NodePath("../../../PowerGenerationComponent")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_4yt2q")
+shape = SubResource("RectangleShape2D_d0haa")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([Vector2i(96, 96)])

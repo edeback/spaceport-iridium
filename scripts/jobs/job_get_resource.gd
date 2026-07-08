@@ -105,10 +105,17 @@ func gather_resource(prev_success: bool) -> void:
 		cancel(true)
 		return
 	job_state = ResourceJobState.GatherResource
-	if export_storage.complete_withdraw_job(self):
-		# Resource now physically lives on the pawn. If the job is canceled
-		# anywhere from here on, it stays with them instead of disappearing.
-		pawn.inventory_component.add(resource_data, amount)
+	var withdrawn: Array[ResourceStack] = export_storage.complete_withdraw_job(self)
+	if not withdrawn.is_empty():
+		# Resource now physically lives on the pawn, stack data and all. If the
+		# job is canceled anywhere from here on, it stays with them instead of
+		# disappearing.
+		var leftover: Array[ResourceStack] = pawn.inventory_component.add_stacks(resource_data, withdrawn)
+		if not leftover.is_empty():
+			# Shouldn't normally happen - can_do_job() already checked the pawn
+			# had room - but if it does, hand it straight back rather than
+			# losing it.
+			export_storage.deposit_stacks(resource_data, leftover, false)
 		move_to_import_storage()
 	else:
 		cancel(true)
@@ -119,22 +126,22 @@ func move_to_import_storage() -> void:
 	pawn.movement_component.move_to(deposit_storage.owner_module)
 		
 func deposit_resource(prev_success: bool) -> void:
+	job_state = ResourceJobState.DepositResource
 	if not prev_success:
 		cancel(true)
 		return
-	job_state = ResourceJobState.DepositResource
-	var carried: int = pawn.inventory_component.withdraw(resource_data, amount)
-	if carried <= 0:
+	var carried_stacks: Array[ResourceStack] = pawn.inventory_component.withdraw_stacks(resource_data, amount)
+	if carried_stacks.is_empty():
 		# We aren't actually holding what we expected to deposit. Shouldn't
 		# normally happen since only this job touches the pawn's inventory
 		# while it's running, but bail out safely if it does.
 		cancel(true)
 		return
-	if deposit_storage.complete_deposit_job(self):
+	if deposit_storage.complete_deposit_job(self, carried_stacks):
 		job_state = ResourceJobState.Finished
 	else:
 		# Couldn't deposit — give it back so it isn't lost.
-		pawn.inventory_component.add(resource_data, carried)
+		pawn.inventory_component.add_stacks(resource_data, carried_stacks)
 		cancel(true)
 #
 #func _job_gather() -> void:

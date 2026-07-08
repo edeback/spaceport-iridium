@@ -1,8 +1,6 @@
 class_name StorageData
-extends Resource
+extends ResourceStackContainer
 
-
-@export var stored: int = 0
 @export var desired: int = 0
 @export var reserved_withdraw: int = 0
 @export var reserved_deposit: int = 0
@@ -28,35 +26,40 @@ func set_job_priority(new_priority: int) -> void:
 		import_job.priority = new_priority
 
 func can_withdraw(quantity: int, use_reserve: bool) -> bool:
-	var available := stored
+	var available: int = stored
 	if not use_reserve:
 		available -= reserved_withdraw
 	return available >= quantity
 
+## Core withdraw shared by the generic (bool) and stack-aware APIs below.
+func _do_withdraw(quantity: int, use_reserve: bool) -> Array[ResourceStack]:
+	if not can_withdraw(quantity, use_reserve):
+		return []
+	var withdrawn: Array[ResourceStack] = withdraw_stacks(quantity)
+	if use_reserve:
+		reserved_withdraw = maxi(reserved_withdraw - quantity, 0)
+	return withdrawn
+
+## Generic (no-variant) withdraw, kept for existing call sites that only deal
+## in plain counts (debug buttons, ResourceData.force_withdraw, etc).
+## Internally this still withdraws real stacks, it just discards whichever
+## instance_data came off them.
 func try_withdraw(quantity: int, use_reserve: bool) -> bool:
-	var available := stored
-	if not use_reserve:
-		available -= reserved_withdraw
-	if quantity <= available:
-		stored -= quantity
-		if use_reserve:
-			reserved_withdraw = maxi(reserved_withdraw - quantity, 0)
-		return true
-	return false
+	return not _do_withdraw(quantity, use_reserve).is_empty()
 
 func withdraw_up_to(quantity: int, use_reserve: bool) -> int:
-	var available := stored
+	var available: int = stored
 	if not use_reserve:
 		available -= reserved_withdraw
-	var withdrawable := mini(quantity, available)
-	if withdrawable > 0:
-		stored -= withdrawable
-		if use_reserve:
-			reserved_withdraw = maxi(reserved_withdraw - withdrawable, 0)
+	var withdrawable: int = mini(quantity, available)
+	if withdrawable <= 0:
+		return 0
+	_do_withdraw(withdrawable, use_reserve)
 	return withdrawable
-	
+
+## Generic (no-variant) deposit, kept for existing call sites.
 func deposit(quantity: int, use_reserve: bool) -> int:
-	stored += quantity
+	add_amount(quantity)
 	if use_reserve:
 		reserved_deposit -= quantity
 		assert(reserved_deposit >= 0)
@@ -65,19 +68,23 @@ func deposit(quantity: int, use_reserve: bool) -> int:
 func add_withdraw_job(job: Job_GetResource) -> void:
 	withdraw_jobs.append(job)
 	reserved_withdraw += job.amount
-	
+
 func cancel_withdraw_job(job: Job_GetResource) -> void:
 	if withdraw_jobs.has(job):
 		withdraw_jobs.erase(job)
 		reserved_withdraw -= job.amount
 		assert(reserved_withdraw >= 0)
-		
-func complete_withdraw_job(job: Job_GetResource) -> bool:
-	if withdraw_jobs.has(job):
-		try_withdraw(job.amount, true)
+
+## Withdraws the amount reserved for `job` as real stacks (preserving any
+## instance_data) instead of just flipping a bool. Returns [] on failure -
+## same "nothing happened" meaning the old bool-false used to carry.
+func complete_withdraw_job(job: Job_GetResource) -> Array[ResourceStack]:
+	if not withdraw_jobs.has(job):
+		return []
+	var withdrawn: Array[ResourceStack] = _do_withdraw(job.amount, true)
+	if not withdrawn.is_empty():
 		withdraw_jobs.erase(job)
-		return true
-	return false
+	return withdrawn
 
 func add_deposit_job(job: Job_GetResource) -> void:
 	deposit_jobs.append(job)
@@ -90,12 +97,22 @@ func cancel_deposit_job(job: Job_GetResource) -> void:
 		deposit_jobs.erase(job)
 		reserved_deposit -= job.amount
 		assert(reserved_deposit >= 0)
-		
-func complete_deposit_job(job: Job_GetResource) -> bool:
-	if deposit_jobs.has(job):
-		if job == import_job:
-			import_job = null
+
+## Deposits the actual stacks a job is carrying (preserving instance_data)
+## instead of just job.amount worth of generic units. incoming_stacks empty
+## falls back to a plain generic deposit, for callers that never touched a
+## pawn's inventory (shouldn't normally happen via Job_GetResource anymore,
+## but keeps this safe to call the old way too).
+func complete_deposit_job(job: Job_GetResource, incoming_stacks: Array[ResourceStack] = []) -> bool:
+	if not deposit_jobs.has(job):
+		return false
+	if job == import_job:
+		import_job = null
+	if incoming_stacks.is_empty():
 		deposit(job.amount, true)
-		deposit_jobs.erase(job)
-		return true
-	return false
+	else:
+		for stack: ResourceStack in incoming_stacks:
+			add_stack(stack)
+		reserved_deposit = maxi(reserved_deposit - job.amount, 0)
+	deposit_jobs.erase(job)
+	return true
