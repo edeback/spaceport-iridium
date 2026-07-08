@@ -12,7 +12,7 @@ func _ready() -> void:
 	structure_component.module_connections_changed.connect(connections_changed)
 	
 func connections_changed(new_connections: Dictionary[ModuleBase, bool]) -> void:
-	var possible_connections: int = structure_component.connection_points.size()
+	var possible_connections: int = structure_component.connection_points.size() + 1
 	var current_connections: float = 0
 	for connection_type: bool in new_connections.values():
 		# Basically if it's not a cross-layer connection

@@ -13,7 +13,7 @@ func create_state(pc: PathComponent) -> RefCounted:
 	)
 	return null
 	
-func on_enter(pawn: PawnBase, door_index: int, meta: StringName, module: ModuleBase, state: RefCounted) -> void:
+func on_enter(pawn: PawnBase, door_index: int, meta: StringName, module: ModuleBase, next_node: Node2D, state: RefCounted) -> void:
 	var door: AnimatedSprite2D = module.get_node(door_node_path)
 	door.play("open")
 	await module.get_tree().create_timer(open_seconds).timeout

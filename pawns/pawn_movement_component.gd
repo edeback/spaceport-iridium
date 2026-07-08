@@ -78,6 +78,10 @@ func run_pathfinding() -> void:
 	sub_path.clear()
 	nodes_to_watch.clear()
 	
+	if target == null:
+		movement_fail()
+		return
+	
 	var start_node: Node2D = owner_pawn.path_position_override
 	if start_node == null:
 		start_node = owner_pawn.current_module

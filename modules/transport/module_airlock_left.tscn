@@ -10,7 +10,7 @@
 [ext_resource type="Script" uid="uid://bgw2w7swbwrnr" path="res://scripts/pathing/path_behavior.gd" id="7_kudrn"]
 [ext_resource type="Script" uid="uid://dvg25rkuceauk" path="res://scripts/pathing/behavior_linked_doors.gd" id="8_kudrn"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_8upxd"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_kudrn"]
 shader = ExtResource("3_vir1b")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -84,7 +84,7 @@ animations = [{
 "speed": 5.0
 }]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_6vpd6"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gndd8"]
 resource_local_to_scene = true
 size = Vector2(85, 31)
 
@@ -106,7 +106,7 @@ metadata/_edit_vertical_guides_ = [128.0]
 position = Vector2(64, 32)
 
 [node name="Sprite" parent="Offset" index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_8upxd")
+material = SubResource("ShaderMaterial_kudrn")
 texture = SubResource("AtlasTexture_uj6c3")
 region_enabled = false
 
@@ -127,7 +127,7 @@ power_consumption_component = NodePath("../../../PowerConsumptionComponent")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
 position = Vector2(21.5, 15.5)
-shape = SubResource("RectangleShape2D_6vpd6")
+shape = SubResource("RectangleShape2D_gndd8")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 connection_points = Array[Vector2i]([Vector2i(2, 0)])
@@ -155,4 +155,3 @@ size = Vector2i(2, 1)
 
 [node name="PowerConsumptionComponent" parent="." index="3" unique_id=1006788337 instance=ExtResource("7_b4qdx")]
 visible = false
-power_consumption = 1.0

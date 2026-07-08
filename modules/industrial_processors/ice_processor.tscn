@@ -1,6 +1,7 @@
-[gd_scene load_steps=17 format=3 uid="uid://cmdaw5xwc5juy"]
+[gd_scene format=3 uid="uid://cmdaw5xwc5juy"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_jqjye"]
+[ext_resource type="Texture2D" uid="uid://4qk3d4i76k5x" path="res://assets/sprites/ice_processor.png" id="3_esxo4"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_k607o"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_esxo4"]
 [ext_resource type="PackedScene" uid="uid://c63swhm7yiir" path="res://modules/components/processor_component.tscn" id="5_pxac8"]
@@ -18,8 +19,9 @@ shader = ExtResource("3_k607o")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_my7lf"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_es0ib"]
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
@@ -31,35 +33,37 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 script = ExtResource("8_k607o")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
-[node name="Module" instance=ExtResource("1_jqjye")]
+[node name="Module" unique_id=1537735289 instance=ExtResource("1_jqjye")]
 
-[node name="Sprite" parent="Offset" index="0"]
+[node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
 material = SubResource("ShaderMaterial_pxac8")
+texture = ExtResource("3_esxo4")
+region_enabled = false
 
-[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
-shape = SubResource("RectangleShape2D_my7lf")
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
+shape = SubResource("RectangleShape2D_es0ib")
 
-[node name="LightingComponent" parent="Offset" index="2" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_esxo4")]
+[node name="LightingComponent" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="2" unique_id=985824206 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_esxo4")]
 power_consumption_component = NodePath("../../PowerConsumptionComponent")
 
-[node name="ProcessorComponent" parent="." index="1" node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("5_pxac8")]
+[node name="ProcessorComponent" parent="." index="1" unique_id=699601355 node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("5_pxac8")]
 recipe = ExtResource("6_es0ib")
 input_storage = NodePath("../InputStorage")
 output_storage = NodePath("../OutputStorage")
 time_to_process = 10.0
 power_consumer = NodePath("../PowerConsumptionComponent")
 
-[node name="InputStorage" parent="." index="2" instance=ExtResource("7_sgees")]
+[node name="InputStorage" parent="." index="2" unique_id=149720025 instance=ExtResource("7_sgees")]
 accepts_exports = false
 storage_data = Dictionary[ExtResource("8_jqjye"), ExtResource("8_k607o")]({
 ExtResource("9_mgbfp"): SubResource("Resource_es0ib")
 })
 
-[node name="OutputStorage" parent="." index="3" instance=ExtResource("7_sgees")]
+[node name="OutputStorage" parent="." index="3" unique_id=456958090 instance=ExtResource("7_sgees")]
 priority = -1
 accepts_imports = false
 storage_data = Dictionary[ExtResource("8_jqjye"), ExtResource("8_k607o")]({
 ExtResource("10_mgbfp"): SubResource("Resource_sgees")
 })
 
-[node name="PowerConsumptionComponent" parent="." index="4" instance=ExtResource("10_64yxw")]
+[node name="PowerConsumptionComponent" parent="." index="4" unique_id=1126697891 instance=ExtResource("10_64yxw")]

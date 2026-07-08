@@ -1,9 +1,10 @@
-[gd_scene load_steps=19 format=3 uid="uid://dvbr2ns4pveve"]
+[gd_scene format=3 uid="uid://dvbr2ns4pveve"]
 
 [ext_resource type="PackedScene" uid="uid://drvd8opv6enr8" path="res://modules/templates/module_2x1.tscn" id="1_06jma"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_gtfxg"]
 [ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="3_560w6"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="3_gtfxg"]
+[ext_resource type="Texture2D" uid="uid://bdedgjs4aas86" path="res://assets/sprites/ore_processor.png" id="3_pj0q4"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_ohxey"]
 [ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="5_83mgx"]
 [ext_resource type="PackedScene" uid="uid://c63swhm7yiir" path="res://modules/components/processor_component.tscn" id="6_av0o4"]
@@ -14,13 +15,14 @@
 [ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="11_ymsq2"]
 [ext_resource type="Resource" uid="uid://bvhvi4mdylcq" path="res://data/recipes/steel_recipe.tres" id="12_arklq"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_83mgx"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_560w6"]
 shader = ExtResource("2_gtfxg")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_83mgx"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_arklq"]
 resource_local_to_scene = true
 size = Vector2(126, 62)
 
@@ -36,23 +38,25 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 script = ExtResource("7_ymsq2")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
-[node name="OreProcessor" instance=ExtResource("1_06jma")]
+[node name="OreProcessor" unique_id=749258774 instance=ExtResource("1_06jma")]
 
-[node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_83mgx")
+[node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
+material = SubResource("ShaderMaterial_560w6")
+texture = ExtResource("3_pj0q4")
+region_enabled = false
 
-[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
-shape = SubResource("RectangleShape2D_83mgx")
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
+shape = SubResource("RectangleShape2D_arklq")
 
-[node name="PowerConsumptionComponent" parent="." index="2" instance=ExtResource("3_gtfxg")]
+[node name="PowerConsumptionComponent" parent="." index="2" unique_id=2041634469 instance=ExtResource("3_gtfxg")]
 power_consumption = 50.0
 
-[node name="LightingComponent" parent="." index="3" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_ohxey")]
+[node name="LightingComponent" parent="." index="3" unique_id=1313670277 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_ohxey")]
 position = Vector2(64, 32)
 scale = Vector2(2, 1)
 power_consumption_component = NodePath("../PowerConsumptionComponent")
 
-[node name="Input Storage" parent="." index="4" instance=ExtResource("5_83mgx")]
+[node name="Input Storage" parent="." index="4" unique_id=443566926 instance=ExtResource("5_83mgx")]
 position = Vector2(-32, 0)
 max_stored = 20
 accepts_exports = false
@@ -61,7 +65,7 @@ ExtResource("3_560w6"): SubResource("Resource_8w55x"),
 ExtResource("10_560w6"): SubResource("Resource_vgcqb")
 })
 
-[node name="Output Storage" parent="." index="5" instance=ExtResource("5_83mgx")]
+[node name="Output Storage" parent="." index="5" unique_id=818868622 instance=ExtResource("5_83mgx")]
 position = Vector2(64, 0)
 priority = -1
 accepts_imports = false
@@ -69,7 +73,7 @@ storage_data = Dictionary[ExtResource("6_ucso1"), ExtResource("7_ymsq2")]({
 ExtResource("11_ymsq2"): SubResource("Resource_pj0q4")
 })
 
-[node name="ProcessorComponent" parent="." index="7" node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("6_av0o4")]
+[node name="ProcessorComponent" parent="." index="7" unique_id=1865115011 node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("6_av0o4")]
 recipe = ExtResource("12_arklq")
 input_storage = NodePath("../Input Storage")
 output_storage = NodePath("../Output Storage")

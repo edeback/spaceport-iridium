@@ -103,7 +103,7 @@ func _module_removed(module: ModuleBase) -> void:
 
 func move_to_asteroid() -> void:
 	state = MineAsteroidState.MovingToAsteroid
-	pawn.movement_component.movement_ended.connect(mine_asteroid, CONNECT_ONE_SHOT)
+	pawn.movement_component.movement_ended.connect(start_mining, CONNECT_ONE_SHOT)
 	pawn.movement_component.move_to(asteroid, 1, true)
 		
 func start_mining(prev_success: bool) -> void:

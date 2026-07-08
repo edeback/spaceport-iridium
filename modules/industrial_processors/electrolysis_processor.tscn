@@ -1,7 +1,8 @@
-[gd_scene load_steps=19 format=3 uid="uid://ppwwsqiw58st"]
+[gd_scene format=3 uid="uid://ppwwsqiw58st"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_ktyew"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_p0wkb"]
+[ext_resource type="Texture2D" uid="uid://cehyi04xka2bp" path="res://assets/sprites/electrolyzer.png" id="3_utp5g"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_yk73m"]
 [ext_resource type="PackedScene" uid="uid://c63swhm7yiir" path="res://modules/components/processor_component.tscn" id="5_utp5g"]
 [ext_resource type="Resource" uid="uid://brc6i1biu0lme" path="res://data/recipes/water_to_h2_o2_recipe.tres" id="6_p0wkb"]
@@ -14,13 +15,14 @@
 [ext_resource type="Resource" uid="uid://tf727fx7vlah" path="res://data/resources/oxygen.tres" id="10_utp5g"]
 [ext_resource type="Resource" uid="uid://1an3ftgpeh6u" path="res://data/resources/hydrogen.tres" id="11_4tsoe"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_53sak"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4tsoe"]
 shader = ExtResource("3_p0wkb")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_my7lf"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_53sak"]
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
@@ -36,31 +38,33 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 script = ExtResource("8_utp5g")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
-[node name="Module" instance=ExtResource("1_ktyew")]
+[node name="Module" unique_id=196635080 instance=ExtResource("1_ktyew")]
 
-[node name="Sprite" parent="Offset" index="0"]
-material = SubResource("ShaderMaterial_53sak")
+[node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
+material = SubResource("ShaderMaterial_4tsoe")
+texture = ExtResource("3_utp5g")
+region_enabled = false
 
-[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
-shape = SubResource("RectangleShape2D_my7lf")
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
+shape = SubResource("RectangleShape2D_53sak")
 
-[node name="LightingComponent" parent="Offset" index="2" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_yk73m")]
+[node name="LightingComponent" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="2" unique_id=1122474165 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_yk73m")]
 power_consumption_component = NodePath("../../PowerConsumptionComponent")
 
-[node name="ProcessorComponent" parent="." index="1" node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("5_utp5g")]
+[node name="ProcessorComponent" parent="." index="1" unique_id=811147633 node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("5_utp5g")]
 recipe = ExtResource("6_p0wkb")
 input_storage = NodePath("../InputStorage")
 output_storage = NodePath("../OutputStorage")
 time_to_process = 10.0
 power_consumer = NodePath("../PowerConsumptionComponent")
 
-[node name="InputStorage" parent="." index="2" instance=ExtResource("7_53sak")]
+[node name="InputStorage" parent="." index="2" unique_id=913787304 instance=ExtResource("7_53sak")]
 accepts_exports = false
 storage_data = Dictionary[ExtResource("8_yk73m"), ExtResource("8_utp5g")]({
 ExtResource("9_b3bym"): SubResource("Resource_nxcsj")
 })
 
-[node name="OutputStorage" parent="." index="3" instance=ExtResource("7_53sak")]
+[node name="OutputStorage" parent="." index="3" unique_id=1293669849 instance=ExtResource("7_53sak")]
 priority = -1
 max_stored = 15.0
 accepts_imports = false
@@ -69,5 +73,5 @@ ExtResource("11_4tsoe"): SubResource("Resource_b3bym"),
 ExtResource("10_utp5g"): SubResource("Resource_0wkqy")
 })
 
-[node name="PowerConsumptionComponent" parent="." index="4" instance=ExtResource("10_0wkqy")]
+[node name="PowerConsumptionComponent" parent="." index="4" unique_id=944602628 instance=ExtResource("10_0wkqy")]
 power_consumption = 50.0

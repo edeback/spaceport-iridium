@@ -22,7 +22,7 @@ shader = ExtResource("2_elnck")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
-shader_parameter/PROGRESS = 0.0
+shader_parameter/PROGRESS = 1.0
 shader_parameter/gradient_texture = SubResource("NoiseTexture2D_pbf7i")
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_pbf7i"]
@@ -61,7 +61,7 @@ texture = SubResource("GradientTexture2D_xcypy")
 script = ExtResource("4_gocud")
 scales_by_surroundings = true
 structure_component = NodePath("../StructureComponent")
-power_output = 20.0
+power_output = 50.0
 
 [node name="PathComponent" parent="." index="2" unique_id=1088376714]
 path_points = Array[Vector2i]([])

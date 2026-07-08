@@ -150,6 +150,7 @@ func move_to(new_pos: Vector2) -> void:
 		else:
 			animated_sprite.play("walk")
 			animated_sprite.flip_h = new_pos.x < position.x
+			animated_sprite.rotation_degrees = abs(animated_sprite.rotation_degrees) * (-1 if animated_sprite.flip_h else 1)
 	if global_position.distance_to(new_pos) > 100.0:
 		pass
 	global_position = new_pos
@@ -165,8 +166,10 @@ func _on_module_changed(new_module: ModuleBase) -> void:
 				current_layer = WorldManager.StructureLayer.SPACE
 				reparent(Global.world_manager.get_canvas_for_layer(current_layer))
 			Global.path_manager.change_vertex_group(self, "space", -1)
+			animated_sprite.rotation_degrees = 90
 		else:
 			Global.path_manager.change_vertex_group(self, "", -1)
+			animated_sprite.rotation_degrees = 0
 			if current_layer != new_module.module_data.interaction_layer:
 				current_layer = new_module.module_data.interaction_layer
 				reparent(Global.world_manager.get_canvas_for_layer(current_layer))

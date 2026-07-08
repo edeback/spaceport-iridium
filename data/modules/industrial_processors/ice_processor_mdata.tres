@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="ModuleData" load_steps=4 format=3 uid="uid://0iqtgbc2dqvn"]
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://0iqtgbc2dqvn"]
 
-[ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="1_v6ei8"]
+[ext_resource type="Texture2D" uid="uid://4qk3d4i76k5x" path="res://assets/sprites/ice_processor.png" id="1_bhv6k"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_lbwgg"]
 [ext_resource type="PackedScene" uid="uid://cmdaw5xwc5juy" path="res://modules/industrial_processors/ice_processor.tscn" id="2_skbq3"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_3caao"]
 
@@ -8,6 +9,5 @@
 script = ExtResource("3_3caao")
 name = "Ice Processor"
 scene = ExtResource("2_skbq3")
-icon = ExtResource("1_v6ei8")
-cost = 200
+icon = ExtResource("1_bhv6k")
 tags = Array[String](["Processor"])
