@@ -15,14 +15,14 @@
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="11_7gh7k"]
 [ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="12_s1114"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_7gh7k"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0rxrq"]
 shader = ExtResource("2_bkuoe")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_jhsug"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7gh7k"]
 resource_local_to_scene = true
 size = Vector2(126, 126)
 
@@ -41,12 +41,12 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 [node name="Module" unique_id=1164815278 instance=ExtResource("1_v54ii")]
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_7gh7k")
+material = SubResource("ShaderMaterial_0rxrq")
 texture = ExtResource("3_0rxrq")
 region_rect = Rect2(0, 0, 128, 128)
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_jhsug")
+shape = SubResource("RectangleShape2D_7gh7k")
 
 [node name="LightingComponent" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="2" unique_id=1074918199 instance=ExtResource("3_6f4mx")]
 scale = Vector2(2, 2)

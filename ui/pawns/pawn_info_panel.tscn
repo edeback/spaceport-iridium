@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://d0as5orqnhkl4" path="res://assets/external/kenney_ui/Vector/Blue/button_square_flat.svg" id="2_4c6nk"]
 [ext_resource type="PackedScene" uid="uid://bp3buujhvc0n6" path="res://ui/pawns/pawn_needs_tab.tscn" id="3_k5q5c"]
 [ext_resource type="PackedScene" uid="uid://dylvcpn3hgjkx" path="res://ui/pawns/pawn_job_tab.tscn" id="4_jaanw"]
+[ext_resource type="PackedScene" uid="uid://3ut5swia4ahi" path="res://ui/pawns/pawn_inventory_tab.tscn" id="5_1dtbj"]
 [ext_resource type="Texture2D" uid="uid://dx10vvcmha2ht" path="res://assets/external/craftpix_space_shooter/Buttons/BTNs/Close_BTN.png" id="7_cugvx"]
 [ext_resource type="Texture2D" uid="uid://doewhgldu2cyr" path="res://assets/external/craftpix_space_shooter/Buttons/BTNs_Active/Close_BTN.png" id="8_p6u53"]
 
@@ -111,10 +112,15 @@ clip_tabs = false
 layout_mode = 2
 metadata/_tab_index = 0
 
-[node name="PawnJobTab" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer/DataTabs" unique_id=1251231180 instance=ExtResource("4_jaanw")]
+[node name="Job" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer/DataTabs" unique_id=1251231180 instance=ExtResource("4_jaanw")]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 1
+
+[node name="Inventory" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer/DataTabs" unique_id=1641694809 instance=ExtResource("5_1dtbj")]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/BaseScreen" unique_id=1491866804]
 layout_mode = 2

@@ -38,6 +38,8 @@ func is_valid() -> bool:
 	return requester != null and resource_data != null and deposit_storage != null
 
 func can_do_job(_pawn: PawnBase) -> bool:
+	if _pawn.inventory_component != null and amount > _pawn.inventory_component.space_available():
+		return false
 	var storage_component: StorageComponent = null
 	var storage_nodes: Array[Node] = requester.get_tree().get_nodes_in_group("resource_storage")
 	for node in storage_nodes:
@@ -104,6 +106,9 @@ func gather_resource(prev_success: bool) -> void:
 		return
 	job_state = ResourceJobState.GatherResource
 	if export_storage.complete_withdraw_job(self):
+		# Resource now physically lives on the pawn. If the job is canceled
+		# anywhere from here on, it stays with them instead of disappearing.
+		pawn.inventory_component.add(resource_data, amount)
 		move_to_import_storage()
 	else:
 		cancel(true)
@@ -114,13 +119,22 @@ func move_to_import_storage() -> void:
 	pawn.movement_component.move_to(deposit_storage.owner_module)
 		
 func deposit_resource(prev_success: bool) -> void:
-	job_state = ResourceJobState.DepositResource
 	if not prev_success:
+		cancel(true)
+		return
+	job_state = ResourceJobState.DepositResource
+	var carried: int = pawn.inventory_component.withdraw(resource_data, amount)
+	if carried <= 0:
+		# We aren't actually holding what we expected to deposit. Shouldn't
+		# normally happen since only this job touches the pawn's inventory
+		# while it's running, but bail out safely if it does.
 		cancel(true)
 		return
 	if deposit_storage.complete_deposit_job(self):
 		job_state = ResourceJobState.Finished
 	else:
+		# Couldn't deposit — give it back so it isn't lost.
+		pawn.inventory_component.add(resource_data, carried)
 		cancel(true)
 #
 #func _job_gather() -> void:
@@ -128,4 +142,3 @@ func deposit_resource(prev_success: bool) -> void:
 	#if withdraw_storage.withdraw_job(self):
 		#deposit_storage.deposit_job(self)
 		#job_state = JobState.Return
-	

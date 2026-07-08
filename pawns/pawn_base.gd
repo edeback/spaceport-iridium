@@ -14,6 +14,7 @@ extends Node2D
 @export var collision: Area2D
 
 var movement_component: PawnMovementComponent
+var inventory_component: PawnInventoryComponent
 
 var current_layer: WorldManager.StructureLayer = WorldManager.StructureLayer.SPACE
 var path_position_override: Node2D = null
@@ -45,6 +46,9 @@ func _ready() -> void:
 	movement_component = PawnMovementComponent.new()
 	movement_component.owner_pawn = self
 	add_child(movement_component)
+	inventory_component = PawnInventoryComponent.new()
+	inventory_component.owner_pawn = self
+	add_child(inventory_component)
 	Global.path_manager.add_vertex(self, true, "" if current_module != null else "space")
 	SignalBus.module_removed.connect(_on_module_removed)
 	#SignalBus.module_selected.connect(_on_module_selected)
@@ -64,6 +68,15 @@ func try_start_job(new_job: JobBase) -> bool:
 		
 
 func start_job() -> void:
+	# If we have an inventory, try to store it ASAP
+	if inventory_component != null and not inventory_component.is_empty():
+		var return_job: Job_StoreInventory = Job_StoreInventory.new()
+		if return_job.can_do_job(self):
+			current_job = return_job
+			current_job.start_job(self)
+			return
+		# No storage will take what we're carrying right now — fall through and
+		# look for a normal job anyway rather than stalling the pawn entirely.
 	current_job = Global.job_manager.find_job(self)
 	if current_job:
 		current_job.start_job(self)

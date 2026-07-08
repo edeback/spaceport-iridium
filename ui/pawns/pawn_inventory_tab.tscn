@@ -1,0 +1,64 @@
+[gd_scene format=3 uid="uid://3ut5swia4ahi"]
+
+[ext_resource type="Script" uid="uid://bviq4c7kmmavv" path="res://ui/pawns/pawn_inventory_tab.gd" id="1_kt4if"]
+[ext_resource type="PackedScene" uid="uid://dpl5j5nblsyrt" path="res://ui/pawns/simple_inventory_row.tscn" id="2_ntgsg"]
+
+[node name="PawnInventoryTab" type="PanelContainer" unique_id=1641694809 node_paths=PackedStringArray("resource_container")]
+script = ExtResource("1_kt4if")
+simple_inventory_row = ExtResource("2_ntgsg")
+resource_container = NodePath("MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/ResourceContainer")
+metadata/_custom_type_script = "uid://bviq4c7kmmavv"
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1924709857]
+layout_mode = 2
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
+
+[node name="VSplitContainer" type="VBoxContainer" parent="MarginContainer" unique_id=2068151613]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VSplitContainer" unique_id=115038011]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer" unique_id=1100333400]
+layout_mode = 2
+
+[node name="ResourceContainer" type="VBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer" unique_id=171723073]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer" unique_id=74925163]
+layout_mode = 2
+
+[node name="FreeSpaceName" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3" unique_id=1574959070]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "Free Space"
+
+[node name="ContentsBox" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3" unique_id=450870235]
+layout_mode = 2
+size_flags_horizontal = 10
+
+[node name="FreeSpaceAvailableLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/ContentsBox" unique_id=952666546]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "4"
+
+[node name="SlashLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/ContentsBox" unique_id=1243478731]
+layout_mode = 2
+text = "/"
+
+[node name="FreeSpaceMaxLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/ContentsBox" unique_id=15816693]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "4"

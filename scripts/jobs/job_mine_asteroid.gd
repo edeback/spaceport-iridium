@@ -13,7 +13,7 @@ var efficiency: float = 1.0
 var time_mining: float = 0.0
 var default_seconds_to_mine: float = 1.0
 var max_mined: int = 5
-var resources_mined: Array[ResourceData] = []
+var resources_mined_count: int = 0
 
 enum MineAsteroidState { Starting, MovingToAsteroid, MineAsteroid, ReturningToModule, DepositMaterial, Finished, Failed }
 
@@ -37,6 +37,8 @@ func setup(_module: ModuleBase) -> void:
 	SignalBus.module_removed.connect(_module_removed)
 	
 func can_do_job(_pawn: PawnBase) -> bool:
+	if _pawn.inventory_component != null and _pawn.inventory_component.space_available() <= 0:
+		return false
 	var asteroids: Array[Node] = _pawn.get_tree().get_nodes_in_group("asteroid")
 	var has_resources: bool = false
 	for node in asteroids:
@@ -118,11 +120,16 @@ func start_mining(prev_success: bool) -> void:
 func mine_asteroid(delta: float) -> void:
 	# Stay glued to asteroid
 	pawn.position = asteroid.position
+	if pawn.inventory_component != null and pawn.inventory_component.space_available() <= 0:
+		move_to_module()
+		return
 	time_mining += delta * efficiency
 	if time_mining >= default_seconds_to_mine:
 		time_mining = 0
-		resources_mined.append(asteroid.mine_resource())
-	if resources_mined.size() >= max_mined:
+		var mined_resource: ResourceData = asteroid.mine_resource()
+		pawn.inventory_component.add(mined_resource, 1)
+		resources_mined_count += 1
+	if resources_mined_count >= max_mined:
 		move_to_module()
 	elif asteroid.is_empty():
 		state = MineAsteroidState.Starting
@@ -137,12 +144,23 @@ func deposit_material(prev_success: bool) -> void:
 		cancel(true)
 		return
 	var storage: StorageComponent = requesting_module.get_component_by_type(StorageComponent) as StorageComponent
-	if storage:
-		for resource: ResourceData in resources_mined:
-			storage.deposit(resource, 1)
-		state = MineAsteroidState.Finished
-	else:
+	if storage == null:
 		state = MineAsteroidState.Failed
+		return
+	# Drain whatever the pawn is carrying (normally just what this trip mined,
+	# but if they picked up leftovers from an earlier canceled job, this sweeps
+	# those out too as a side benefit). Anything the storage won't take -
+	# wrong resource type, or it fills up mid-deposit - simply stays on the
+	# pawn and gets retried by Job_StoreInventory on the next idle tick.
+	for resource: ResourceData in pawn.inventory_component.get_carried_resources():
+		var carried: int = pawn.inventory_component.get_carried_amount(resource)
+		var deposit_amount: int = mini(carried, storage.space_available())
+		if deposit_amount <= 0:
+			continue
+		var withdrawn: int = pawn.inventory_component.withdraw(resource, deposit_amount)
+		if withdrawn > 0 and not storage.deposit(resource, withdrawn, true):
+			pawn.inventory_component.add(resource, withdrawn)
+	state = MineAsteroidState.Finished
 	
 func is_failed() -> bool:
 	return state == MineAsteroidState.Failed
