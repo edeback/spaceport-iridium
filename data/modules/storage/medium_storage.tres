@@ -1,13 +1,13 @@
-[gd_resource type="Resource" script_class="ModuleData" load_steps=4 format=3 uid="uid://c0o6agquw83kw"]
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://c0o6agquw83kw"]
 
-[ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="1_f8b1t"]
+[ext_resource type="Texture2D" uid="uid://dwhjco6536al4" path="res://assets/sprites/medium_storage.png" id="1_dtut3"]
 [ext_resource type="PackedScene" uid="uid://bjvch6dy8oqdf" path="res://modules/storage/medium_storage.tscn" id="2_f8b1t"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_unrx2"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_unrx2"]
 
 [resource]
 script = ExtResource("3_unrx2")
 name = "Medium Storage"
 scene = ExtResource("2_f8b1t")
-icon = ExtResource("1_f8b1t")
-cost = 200
+icon = ExtResource("1_dtut3")
 tags = Array[String](["Storage"])

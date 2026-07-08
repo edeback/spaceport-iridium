@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="ModuleData" load_steps=4 format=3 uid="uid://ibkvk5lxr6ut"]
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://ibkvk5lxr6ut"]
 
-[ext_resource type="Texture2D" uid="uid://r7ig4myc8kkm" path="res://assets/external/kenney_space-shooter-extension/PNG/Sprites/Building/spaceBuilding_001.png" id="1_rwlpt"]
+[ext_resource type="Texture2D" uid="uid://d2c777465bqbh" path="res://assets/sprites/small_storage.png" id="1_2mdjr"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_lqadu"]
 [ext_resource type="PackedScene" uid="uid://c23tc0cwsa53e" path="res://modules/storage/small_storage.tscn" id="2_rwlpt"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_hmp15"]
 
@@ -8,6 +9,5 @@
 script = ExtResource("3_hmp15")
 name = "Small Storage"
 scene = ExtResource("2_rwlpt")
-icon = ExtResource("1_rwlpt")
-cost = 100
+icon = ExtResource("1_2mdjr")
 tags = Array[String](["Storage"])
