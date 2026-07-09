@@ -5,8 +5,14 @@
 [ext_resource type="PackedScene" uid="uid://b8fbjamaiahs4" path="res://modules/components/sustenance_component.tscn" id="3_6dgag"]
 [ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_oya45"]
 [ext_resource type="Texture2D" uid="uid://do6g7shcnagpi" path="res://assets/sprites/mess_hall.png" id="3_x3cc5"]
+[ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="6_4dwlo"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="7_pclkq"]
+[ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="8_08lj0"]
+[ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="9_ilumi"]
+[ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="10_2dwtc"]
+[ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="11_a4u0u"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_5de2l"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4dwlo"]
 shader = ExtResource("2_6dgag")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -14,18 +20,38 @@ shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 shader_parameter/gradient_texture = ExtResource("3_oya45")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_rifdy"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pclkq"]
 resource_local_to_scene = true
 size = Vector2(126, 62)
+
+[sub_resource type="Resource" id="Resource_byurn"]
+script = ExtResource("8_08lj0")
+desired = 10
+resource_data = ExtResource("9_ilumi")
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [node name="Module" unique_id=1807841400 instance=ExtResource("1_cwauj")]
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_5de2l")
+material = SubResource("ShaderMaterial_4dwlo")
 texture = ExtResource("3_x3cc5")
 region_rect = Rect2(0, 0, 128, 64)
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_rifdy")
+shape = SubResource("RectangleShape2D_pclkq")
 
-[node name="SustenanceComponent" parent="." index="3" unique_id=36152855 instance=ExtResource("3_6dgag")]
+[node name="Kitchen" parent="." index="3" unique_id=36152855 node_paths=PackedStringArray("storage_bay") instance=ExtResource("3_6dgag")]
+storage_bay = NodePath("../Kitchen Supplies")
+sustenance_resource = ExtResource("9_ilumi")
+
+[node name="ConstructionComponent" parent="." index="4" unique_id=1206775965]
+position = Vector2(-32, 0)
+
+[node name="Kitchen Supplies" parent="." index="5" unique_id=1059390969 instance=ExtResource("6_4dwlo")]
+position = Vector2(-32, 0)
+priority = 20
+accepts_exports = false
+storage_data = Dictionary[ExtResource("7_pclkq"), ExtResource("8_08lj0")]({
+ExtResource("9_ilumi"): SubResource("Resource_byurn")
+})
+display_storage_ui = false

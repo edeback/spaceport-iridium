@@ -126,7 +126,7 @@ func _find_export_storage(_pawn: PawnBase) -> StorageComponent:
 		var available: int = storage.total_stored_by_resource(resource_data)
 		if available <= 0 or not Global.path_manager.is_reachable(_pawn, storage.owner_module):
 			continue
-		var dist: int = storage.owner_module.module_cell.distance_squared_to(_pawn.cell)
+		var dist: int = storage.owner_module.module_cell.distance_squared_to(Global.world_to_cell(_pawn.global_position))
 		if available >= trip_cap:
 			if best_full == null or dist < best_full_dist:
 				best_full = storage
@@ -151,7 +151,7 @@ func _find_deposit_storage(_pawn: PawnBase) -> StorageComponent:
 			continue
 		if not storage.can_deposit(resource_data, 1) or not Global.path_manager.is_reachable(_pawn, storage.owner_module):
 			continue
-		var dist: int = storage.owner_module.module_cell.distance_squared_to(_pawn.cell)
+		var dist: int = storage.owner_module.module_cell.distance_squared_to(Global.world_to_cell(_pawn.global_position))
 		if best == null or storage.priority > best_priority or (storage.priority == best_priority and dist < best_dist):
 			best = storage
 			best_priority = storage.priority

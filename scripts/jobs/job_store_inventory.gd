@@ -107,7 +107,7 @@ func _find_closest_import_storage(_pawn: PawnBase, resource: ResourceData) -> St
 	for node in storage_nodes:
 		var storage: StorageComponent = node as StorageComponent
 		if storage.accepts_imports and storage.can_deposit(resource, 1) and Global.path_manager.is_reachable(_pawn, storage.owner_module):
-			var new_distance: int = storage.owner_module.module_cell.distance_squared_to(_pawn.cell)
+			var new_distance: int = storage.owner_module.module_cell.distance_squared_to(Global.world_to_cell(_pawn.global_position))
 			if best_storage == null or new_distance < min_distance:
 				best_storage = storage
 				min_distance = new_distance

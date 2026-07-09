@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://b8fbjamaiahs4"]
+[gd_scene format=3 uid="uid://b8fbjamaiahs4"]
 
 [ext_resource type="Script" uid="uid://bewfevlqleu2s" path="res://modules/components/sustenance_component.gd" id="1_8w6h1"]
+[ext_resource type="PackedScene" uid="uid://bka0idqivtqxc" path="res://ui/windows/ui_sustenance_component.tscn" id="2_bltjl"]
 
-[node name="SustenanceComponent" type="Node2D"]
+[node name="SustenanceComponent" type="Node2D" unique_id=2031559302]
 script = ExtResource("1_8w6h1")
+ui_info_panel_element = ExtResource("2_bltjl")
