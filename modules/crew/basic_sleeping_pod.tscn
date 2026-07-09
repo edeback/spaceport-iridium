@@ -7,7 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://kk5flkkimb6u" path="res://assets/sprites/sleeping_pod.png" id="3_xw5s6"]
 [ext_resource type="PackedScene" uid="uid://2pp7va28ybgl" path="res://pawns/crew_pawn.tscn" id="4_6botg"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_jyy4u"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gvv4y"]
 shader = ExtResource("2_7yck1")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -15,18 +15,18 @@ shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 shader_parameter/gradient_texture = ExtResource("3_gvv4y")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_uwv3i"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_jyy4u"]
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
 [node name="Module" unique_id=1872422855 instance=ExtResource("1_862pb")]
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_jyy4u")
+material = SubResource("ShaderMaterial_gvv4y")
 texture = ExtResource("3_xw5s6")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_uwv3i")
+shape = SubResource("RectangleShape2D_jyy4u")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([Vector2i(50, 58)])

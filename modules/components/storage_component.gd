@@ -137,19 +137,49 @@ func _process(_delta: float) -> void:
 		last_error = "No power!"
 		return
 	last_error = ""
-	if accepts_imports and space_available(true) > 0:
+	if accepts_imports:
+		# Shared budget across resources so several under-desired resources in
+		# the same bin don't each request up to the bin's full free space and
+		# jointly overcommit it before any pawn has actually moved anything.
+		var import_budget: int = space_available(true)
+		for resource: ResourceData in storage_data:
+			if import_budget <= 0:
+				break
+			var data := storage_data[resource]
+			if data.import_job != null:
+				continue
+			# Positive when we're short of desired once already-incoming
+			# deposits count as "here" and already-reserved withdrawals count
+			# as "gone" - same accounting the trigger below used to use.
+			var deficit: int = data.desired - data.stored - data.reserved_deposit + data.reserved_withdraw
+			if deficit <= 0:
+				continue
+			var request_amount: int = mini(deficit, import_budget)
+			var new_job: Job_GetResource = Job_GetResource.new()
+			new_job.requester = self
+			new_job.resource_data = resource
+			new_job.deposit_storage = self
+			new_job.priority = priority
+			new_job.amount = request_amount
+			data.import_job = new_job
+			Global.job_manager.add_job(new_job)
+			import_budget -= request_amount
+	if accepts_exports:
 		for resource: ResourceData in storage_data:
 			var data := storage_data[resource]
-			if data.import_job == null and data.stored + data.reserved_deposit - data.reserved_withdraw < data.desired:
-				var new_job: Job_GetResource = Job_GetResource.new()
-				new_job.requester = self
-				new_job.resource_data = resource
-				new_job.deposit_storage = self
-				new_job.priority = priority
-				#new_job.amount = 1
-				new_job.amount = maxi(mini(10, data.desired - data.reserved_deposit - data.stored), 1)
-				data.import_job = new_job
-				Global.job_manager.add_job(new_job)
+			if data.export_job != null:
+				continue
+			var surplus: int = data.stored - data.reserved_withdraw - data.desired
+			if surplus <= 0:
+				continue
+			var new_job: Job_GetResource = Job_GetResource.new()
+			new_job.requester = self
+			new_job.resource_data = resource
+			new_job.export_storage = self
+			new_job.priority = priority
+			new_job.amount = surplus
+			data.export_job = new_job
+			Global.job_manager.add_job(new_job)
 
 func update_storage_ui() -> void:
 	var filled_space := max_stored - space_available()

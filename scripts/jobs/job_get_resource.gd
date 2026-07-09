@@ -34,21 +34,27 @@ func get_subtask_description() -> String:
 			return "Depositing resource"
 	return ""
 
+## A job sits on the board either "pull" (deposit_storage known, still
+## hunting for a source) or "push" (export_storage known, still hunting for a
+## destination). Either origin is enough to keep it alive while unclaimed.
 func is_valid() -> bool:
-	return requester != null and resource_data != null and deposit_storage != null
+	return requester != null and resource_data != null and (export_storage != null or deposit_storage != null)
 
 func can_do_job(_pawn: PawnBase) -> bool:
-	if _pawn.inventory_component != null and amount > _pawn.inventory_component.space_available():
+	if _pawn.inventory_component != null and _pawn.inventory_component.space_available() <= 0:
 		return false
-	var storage_component: StorageComponent = null
-	var storage_nodes: Array[Node] = requester.get_tree().get_nodes_in_group("resource_storage")
-	for node in storage_nodes:
-		var storage: StorageComponent = node as StorageComponent
-		if storage.accepts_exports and storage.priority < deposit_storage.priority and storage.can_withdraw(resource_data, amount):
-			storage_component = storage
-			break
-	if storage_component != null:
-		return Global.path_manager.is_reachable(_pawn, storage_component.owner_module) and Global.path_manager.is_reachable(_pawn, deposit_storage.owner_module)
+	if deposit_storage != null and export_storage == null:
+		# Pull: deposit side is fixed, need a reachable source with any stock.
+		return Global.path_manager.is_reachable(_pawn, deposit_storage.owner_module) \
+			and _find_export_storage(_pawn) != null
+	if export_storage != null and deposit_storage == null:
+		# Push: source side is fixed, need a reachable destination with room.
+		return Global.path_manager.is_reachable(_pawn, export_storage.owner_module) \
+			and _find_deposit_storage(_pawn) != null
+	if export_storage != null and deposit_storage != null:
+		# Fully specified (e.g. hand-authored) - just confirm both are reachable.
+		return Global.path_manager.is_reachable(_pawn, export_storage.owner_module) \
+			and Global.path_manager.is_reachable(_pawn, deposit_storage.owner_module)
 	return false
 
 func start_job(_pawn: PawnBase) -> void:
@@ -75,24 +81,82 @@ func cancel(as_failed: bool) -> void:
 		
 			
 func job_start() -> void:
-	var min_distance: int = 0
-	var storage_component: StorageComponent = null
-	var storage_nodes: Array[Node] = requester.get_tree().get_nodes_in_group("resource_storage")
-	for node in storage_nodes:
-		var storage: StorageComponent = node as StorageComponent
-		if storage.accepts_exports and storage.priority < deposit_storage.priority and storage.can_withdraw(resource_data, amount):
-			var new_distance: int = storage.owner_module.module_cell.distance_squared_to(pawn.cell)
-			if storage_component ==  null or new_distance < min_distance:
-					storage_component = storage
-					min_distance = new_distance
-	if storage_component != null:
-		destination = storage_component.owner_module
-		export_storage = storage_component
-		export_storage.add_withdraw_job(self)
-		deposit_storage.add_deposit_job(self)
-		move_to_export_storage()
-	else:
+	if deposit_storage != null and export_storage == null:
+		export_storage = _find_export_storage(pawn)
+	elif export_storage != null and deposit_storage == null:
+		deposit_storage = _find_deposit_storage(pawn)
+	if export_storage == null or deposit_storage == null:
 		cancel(true)
+		return
+	# Narrow amount down to what this specific trip can actually move: capped
+	# by what the pawn can carry and by what the source actually has right
+	# now. Later trips (a fresh job next _process() tick) pick up any
+	# remainder - this just makes sure we don't fail a job outright because
+	# nowhere reachable happens to have the *entire* original request.
+	var trip_cap: int = amount
+	if pawn.inventory_component != null:
+		trip_cap = mini(trip_cap, pawn.inventory_component.space_available())
+	amount = mini(trip_cap, export_storage.total_stored_by_resource(resource_data))
+	if amount <= 0:
+		cancel(true)
+		return
+	destination = export_storage.owner_module
+	export_storage.add_withdraw_job(self)
+	deposit_storage.add_deposit_job(self)
+	move_to_export_storage()
+
+## Picks a reachable source of resource_data for a *pull* job (deposit_storage
+## already fixed). Prefers a single reachable source that can fill the whole
+## trip; if none exists, falls back to whichever reachable source has the
+## most stock, so each trip empties as much as possible rather than the
+## least. Pure query - safe to call from can_do_job() without side effects.
+func _find_export_storage(_pawn: PawnBase) -> StorageComponent:
+	var trip_cap: int = amount
+	if _pawn.inventory_component != null:
+		trip_cap = mini(trip_cap, _pawn.inventory_component.space_available())
+	var best_full: StorageComponent = null
+	var best_full_dist: int = 0
+	var best_partial: StorageComponent = null
+	var best_partial_amount: int = 0
+	var best_partial_dist: int = 0
+	for node in requester.get_tree().get_nodes_in_group("resource_storage"):
+		var storage: StorageComponent = node as StorageComponent
+		if storage == null or not storage.accepts_exports or storage.priority >= deposit_storage.priority:
+			continue
+		var available: int = storage.total_stored_by_resource(resource_data)
+		if available <= 0 or not Global.path_manager.is_reachable(_pawn, storage.owner_module):
+			continue
+		var dist: int = storage.owner_module.module_cell.distance_squared_to(_pawn.cell)
+		if available >= trip_cap:
+			if best_full == null or dist < best_full_dist:
+				best_full = storage
+				best_full_dist = dist
+		elif available > best_partial_amount or (available == best_partial_amount and (best_partial == null or dist < best_partial_dist)):
+			best_partial = storage
+			best_partial_amount = available
+			best_partial_dist = dist
+	return best_full if best_full != null else best_partial
+
+## Picks a reachable destination for a *push* job (export_storage already
+## fixed). Prefers the highest-priority reachable sink with room, so pushed
+## resources move as directly "uphill" toward their eventual home as
+## possible, then nearest among equal priority. Pure query, same as above.
+func _find_deposit_storage(_pawn: PawnBase) -> StorageComponent:
+	var best: StorageComponent = null
+	var best_priority: int = 0
+	var best_dist: int = 0
+	for node in requester.get_tree().get_nodes_in_group("resource_storage"):
+		var storage: StorageComponent = node as StorageComponent
+		if storage == null or not storage.accepts_imports or storage.priority <= export_storage.priority:
+			continue
+		if not storage.can_deposit(resource_data, 1) or not Global.path_manager.is_reachable(_pawn, storage.owner_module):
+			continue
+		var dist: int = storage.owner_module.module_cell.distance_squared_to(_pawn.cell)
+		if best == null or storage.priority > best_priority or (storage.priority == best_priority and dist < best_dist):
+			best = storage
+			best_priority = storage.priority
+			best_dist = dist
+	return best
 	
 		
 func move_to_export_storage() -> void:

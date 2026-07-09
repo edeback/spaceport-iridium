@@ -24,7 +24,7 @@ shader = ExtResource("2_58pc6")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
-shader_parameter/PROGRESS = 0.999999977648
+shader_parameter/PROGRESS = 1.0
 shader_parameter/gradient_texture = ExtResource("3_wt5jo")
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_cyani"]
@@ -83,6 +83,7 @@ power_consumption = 30.0
 
 [node name="StorageComponent" parent="." index="4" unique_id=1572091566 instance=ExtResource("5_hpqm1")]
 priority = -1
+max_stored = 40
 accepts_imports = false
 storage_data = Dictionary[ExtResource("5_5m057"), ExtResource("7_2l5du")]({
 ExtResource("6_2l5du"): SubResource("Resource_avr65"),
