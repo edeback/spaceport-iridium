@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="4_47vfk"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="5_mosq2"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_38nig"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mosq2"]
 shader = ExtResource("2_idugg")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -16,19 +16,19 @@ shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 shader_parameter/gradient_texture = ExtResource("3_mosq2")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_qt1fp"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_38nig"]
 resource_local_to_scene = true
 size = Vector2(192, 128)
 
 [node name="Module" unique_id=52973747 instance=ExtResource("1_7khhd")]
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_38nig")
+material = SubResource("ShaderMaterial_mosq2")
 texture = ExtResource("3_47vfk")
 region_enabled = false
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_qt1fp")
+shape = SubResource("RectangleShape2D_38nig")
 
 [node name="LightingComponent" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="2" unique_id=407950967 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("3_vjd6y")]
 scale = Vector2(3, 2)
@@ -42,6 +42,7 @@ visible = false
 
 [node name="Storage Bay" parent="." index="3" unique_id=1955642490 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_47vfk")]
 priority = 0
+max_stored = 80
 power_consumption_component = NodePath("../PowerConsumptionComponent")
 player_configurable = true
 

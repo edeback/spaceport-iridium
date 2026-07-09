@@ -13,4 +13,5 @@ metadata/_custom_type_script = "uid://ch8uul8ttm0ql"
 [node name="Construction Materials" parent="." unique_id=1188924340 instance=ExtResource("2_t25he")]
 priority = 100
 include_in_stats = false
+display_storage_ui = false
 construction_storage = true

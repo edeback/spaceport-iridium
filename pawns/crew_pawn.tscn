@@ -11,24 +11,19 @@ metadata/_edit_horizontal_guides_ = [-14.0, 10.0, -10.0]
 [node name="Offset" parent="." index="0" unique_id=1164109464]
 position = Vector2(0, -9)
 
-[node name="TurboliftBase" parent="Offset" index="0" unique_id=1258126832]
-position = Vector2(0, -3)
-
-[node name="Sprite2D" parent="Offset" index="1" unique_id=949508764]
+[node name="Sprite2D" parent="Offset" index="0" unique_id=949508764]
 scale = Vector2(0.22, 0.22)
 
-[node name="Crew" parent="Offset" index="2" unique_id=552917447]
+[node name="Crew" parent="Offset" index="1" unique_id=552917447]
 scale = Vector2(0.2, 0.2)
 
-[node name="Robot" parent="Offset" index="3" unique_id=264074984]
+[node name="Robot" parent="Offset" index="2" unique_id=264074984]
 scale = Vector2(0.22, 0.22)
 
 [node name="PawnNeedsComponent" parent="." index="1" unique_id=1968637232 instance=ExtResource("2_6fnyy")]
 has_health_need = true
 has_sleep_need = true
 has_hunger_need = true
-hunger_duration_seconds = 30.0
-has_entertainment_need = true
+hunger_duration_seconds = 300.0
 entertainment_duration_seconds = 30.0
-has_social_need = true
 social_duration_seconds = 30.0

@@ -5,15 +5,22 @@ extends ResourceStackContainer
 @export var reserved_withdraw: int = 0
 @export var reserved_deposit: int = 0
 @export var import_job: Job_GetResource
+@export var export_job: Job_GetResource
 @export var withdraw_jobs: Array[Job_GetResource] = []
 @export var deposit_jobs: Array[Job_GetResource] = []
 
 
 func end_all_jobs() -> void:
 	if import_job != null:
-		import_job.cancel(true)
+		var job: Job_GetResource = import_job
 		import_job = null
-		Global.job_manager.remove_job(import_job)
+		job.cancel(true)
+		Global.job_manager.remove_job(job)
+	if export_job != null:
+		var job: Job_GetResource = export_job
+		export_job = null
+		job.cancel(true)
+		Global.job_manager.remove_job(job)
 	for job in withdraw_jobs:
 		job.cancel(true)
 	withdraw_jobs.clear()
@@ -24,6 +31,8 @@ func end_all_jobs() -> void:
 func set_job_priority(new_priority: int) -> void:
 	if import_job != null:
 		import_job.priority = new_priority
+	if export_job != null:
+		export_job.priority = new_priority
 
 func can_withdraw(quantity: int, use_reserve: bool) -> bool:
 	var available: int = stored
@@ -70,6 +79,8 @@ func add_withdraw_job(job: Job_GetResource) -> void:
 	reserved_withdraw += job.amount
 
 func cancel_withdraw_job(job: Job_GetResource) -> void:
+	if job == export_job:
+		export_job = null
 	if withdraw_jobs.has(job):
 		withdraw_jobs.erase(job)
 		reserved_withdraw -= job.amount
@@ -83,6 +94,8 @@ func complete_withdraw_job(job: Job_GetResource) -> Array[ResourceStack]:
 		return []
 	var withdrawn: Array[ResourceStack] = _do_withdraw(job.amount, true)
 	if not withdrawn.is_empty():
+		if job == export_job:
+			export_job = null
 		withdraw_jobs.erase(job)
 	return withdrawn
 
@@ -91,9 +104,9 @@ func add_deposit_job(job: Job_GetResource) -> void:
 	reserved_deposit += job.amount
 
 func cancel_deposit_job(job: Job_GetResource) -> void:
+	if job == import_job:
+		import_job = null
 	if deposit_jobs.has(job):
-		if job == import_job:
-			import_job = null
 		deposit_jobs.erase(job)
 		reserved_deposit -= job.amount
 		assert(reserved_deposit >= 0)

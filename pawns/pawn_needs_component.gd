@@ -1,7 +1,7 @@
 class_name PawnNeedsComponent
 extends PawnComponentBase
 
-@export var percent_to_look_for_needs: float = 20
+@export var percent_to_look_for_needs: float = 30
 
 @export var has_health_need: bool = false
 @export var health_max: float = 100

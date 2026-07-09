@@ -23,6 +23,7 @@ var _busy_in_hook: bool = false   ## suspended inside path_exit/path_enter/trave
 
 signal path_invalidated # Re-running pathfinding but not canceled yet
 signal movement_ended(as_success: bool)
+signal movement_started
 
 func _ready() -> void:
 	super()
@@ -108,12 +109,13 @@ func run_pathfinding() -> void:
 			nodes_to_watch.append(point.node)
 		nodes_to_watch.reverse()
 		state = State.Moving
+		movement_started.emit()
 		# Debug shove path in UI
 		#var packed_path: PackedVector2Array = []
 		#for index in path.size():
 			#packed_path.append(Global.world_to_cell(extract_position(index)))
 		#Global.ui_in_game.debug_path_cell = packed_path
-		Global.ui_in_game.debug_path_position = get_debug_path_detailed()
+		#Global.ui_in_game.debug_path_position = get_debug_path_detailed()
 	
 		
 func module_removed(removed_module: ModuleBase) -> void:

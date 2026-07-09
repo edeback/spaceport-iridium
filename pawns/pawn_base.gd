@@ -1,7 +1,6 @@
 class_name PawnBase
 extends Node2D
 
-@export var cell: Vector2i
 @export var current_module: ModuleBase:
 	set = _on_module_changed
 @export var destination_cell: Vector2i
