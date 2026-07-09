@@ -15,5 +15,5 @@ instant_build = false
 resource_costs = Dictionary[ExtResource("2_x74ts"), int]({
 ExtResource("3_0roq3"): 6
 })
-tags = Array[String](["Processor"])
+tags = Array[String](["Industrial"])
 metadata/_custom_type_script = "uid://vwmofdckg7hu"

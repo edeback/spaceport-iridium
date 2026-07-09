@@ -15,4 +15,4 @@ instant_build = false
 resource_costs = Dictionary[ExtResource("2_fabqw"), int]({
 ExtResource("3_fwlkr"): 6
 })
-tags = Array[String](["Processor"])
+tags = Array[String](["Industrial"])
