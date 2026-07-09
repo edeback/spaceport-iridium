@@ -50,7 +50,14 @@ func _ready() -> void:
 		if num_to_create > 0:
 			storage.stored = 0
 			storage.deposit(num_to_create, false)
+		if accepts_imports:
+			storage.desired = max_stored
 		
+func empty_all() -> void:
+	for resource: ResourceData in storage_data:
+		resource.needs_recalc = true
+	storage_data.clear()
+	storage_changed.emit()
 
 func ready_preview() -> void:
 	set_process(false)
@@ -139,6 +146,8 @@ func _process(_delta: float) -> void:
 				new_job.resource_data = resource
 				new_job.deposit_storage = self
 				new_job.priority = priority
+				#new_job.amount = 1
+				new_job.amount = maxi(mini(10, data.desired - data.reserved_deposit - data.stored), 1)
 				data.import_job = new_job
 				Global.job_manager.add_job(new_job)
 

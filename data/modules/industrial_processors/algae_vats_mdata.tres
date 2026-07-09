@@ -4,15 +4,16 @@
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="1_ju4bj"]
 [ext_resource type="PackedScene" uid="uid://bd8aerqsa13jh" path="res://modules/industrial_processors/algae_vats.tscn" id="2_308pd"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_fx34i"]
-[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="3_wby53"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="3_fx34i"]
 
 [resource]
 script = ExtResource("1_ju4bj")
 name = "Algae Vats"
 scene = ExtResource("2_308pd")
 icon = ExtResource("1_fx34i")
+instant_build = false
 resource_costs = Dictionary[ExtResource("2_fx34i"), int]({
-ExtResource("3_wby53"): 200
+ExtResource("3_fx34i"): 10
 })
 tags = Array[String](["Processor"])
 metadata/_custom_type_script = "uid://vwmofdckg7hu"

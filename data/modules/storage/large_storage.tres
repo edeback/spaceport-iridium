@@ -3,6 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://c0q86uodr5ok5" path="res://assets/sprites/large_storage.png" id="1_mx08c"]
 [ext_resource type="PackedScene" uid="uid://ue0poacqnba" path="res://modules/storage/large_storage.tscn" id="2_iiu8r"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_jk2tm"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="3_7jpe4"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_jk2tm"]
 
 [resource]
@@ -10,4 +11,8 @@ script = ExtResource("3_jk2tm")
 name = "Large Storage"
 scene = ExtResource("2_iiu8r")
 icon = ExtResource("1_mx08c")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_jk2tm"), int]({
+ExtResource("3_7jpe4"): 6
+})
 tags = Array[String](["Storage"])

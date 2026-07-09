@@ -3,30 +3,32 @@
 [ext_resource type="PackedScene" uid="uid://bas8aepborlv5" path="res://modules/templates/module_3x2.tscn" id="1_7khhd"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_idugg"]
 [ext_resource type="Texture2D" uid="uid://c0q86uodr5ok5" path="res://assets/sprites/large_storage.png" id="3_47vfk"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_mosq2"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="3_vjd6y"]
 [ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="4_47vfk"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="5_mosq2"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_mosq2"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_38nig"]
 shader = ExtResource("2_idugg")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/gradient_texture = ExtResource("3_mosq2")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_38nig"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_qt1fp"]
 resource_local_to_scene = true
 size = Vector2(192, 128)
 
 [node name="Module" unique_id=52973747 instance=ExtResource("1_7khhd")]
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_mosq2")
+material = SubResource("ShaderMaterial_38nig")
 texture = ExtResource("3_47vfk")
 region_enabled = false
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_38nig")
+shape = SubResource("RectangleShape2D_qt1fp")
 
 [node name="LightingComponent" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="2" unique_id=407950967 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("3_vjd6y")]
 scale = Vector2(3, 2)
@@ -40,7 +42,6 @@ visible = false
 
 [node name="Storage Bay" parent="." index="3" unique_id=1955642490 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_47vfk")]
 priority = 0
-max_stored = 80.0
 power_consumption_component = NodePath("../PowerConsumptionComponent")
 player_configurable = true
 

@@ -57,6 +57,7 @@ func _process(_delta: float) -> void:
 			if drone.current_job == null:
 				var mining_job: Job_MineAsteroid = Job_MineAsteroid.new()
 				mining_job.setup(owner_module)
+				mining_job.output_storage = output_storage
 				if not mining_job.can_do_job(drone) or not drone.give_job(mining_job):
 					mining_job.cancel(true)
 		

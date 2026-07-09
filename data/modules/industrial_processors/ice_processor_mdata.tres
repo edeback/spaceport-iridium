@@ -4,10 +4,15 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_lbwgg"]
 [ext_resource type="PackedScene" uid="uid://cmdaw5xwc5juy" path="res://modules/industrial_processors/ice_processor.tscn" id="2_skbq3"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_3caao"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="3_lbwgg"]
 
 [resource]
 script = ExtResource("3_3caao")
 name = "Ice Processor"
 scene = ExtResource("2_skbq3")
 icon = ExtResource("1_bhv6k")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_lbwgg"), int]({
+ExtResource("3_lbwgg"): 4
+})
 tags = Array[String](["Processor"])

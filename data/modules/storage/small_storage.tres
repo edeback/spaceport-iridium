@@ -4,10 +4,15 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_lqadu"]
 [ext_resource type="PackedScene" uid="uid://c23tc0cwsa53e" path="res://modules/storage/small_storage.tscn" id="2_rwlpt"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_hmp15"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="3_lqadu"]
 
 [resource]
 script = ExtResource("3_hmp15")
 name = "Small Storage"
 scene = ExtResource("2_rwlpt")
 icon = ExtResource("1_2mdjr")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_lqadu"), int]({
+ExtResource("3_lqadu"): 1
+})
 tags = Array[String](["Storage"])

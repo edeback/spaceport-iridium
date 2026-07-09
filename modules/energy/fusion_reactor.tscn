@@ -3,6 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://curt1htey1bfn" path="res://modules/templates/module_2x3.tscn" id="1_j1fwt"]
 [ext_resource type="Texture2D" uid="uid://dfede6crsr025" path="res://assets/sprites/fusion_reactor.png" id="3_3i5gt"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_f8t3n"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_fwmx2"]
 [ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="4_5nv3c"]
 [ext_resource type="PackedScene" uid="uid://ge73mk14adfq" path="res://modules/components/power_generation_component.tscn" id="4_yku0m"]
 [ext_resource type="Resource" uid="uid://1an3ftgpeh6u" path="res://data/resources/hydrogen.tres" id="5_mg4bu"]
@@ -10,15 +11,17 @@
 [ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="7_ghcwy"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="7_yku0m"]
 [ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="8_3i5gt"]
+[ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="11_wjy4w"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_6mgch"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_oklni"]
 shader = ExtResource("3_f8t3n")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/gradient_texture = ExtResource("3_fwmx2")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_fwmx2"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4co3t"]
 resource_local_to_scene = true
 size = Vector2(126, 190)
 
@@ -29,12 +32,12 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 [node name="Module" unique_id=1971618792 instance=ExtResource("1_j1fwt")]
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_6mgch")
+material = SubResource("ShaderMaterial_oklni")
 texture = ExtResource("3_3i5gt")
 region_enabled = false
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_fwmx2")
+shape = SubResource("RectangleShape2D_4co3t")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([Vector2i(32, 160)])

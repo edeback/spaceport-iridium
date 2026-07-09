@@ -3,6 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://drvd8opv6enr8" path="res://modules/templates/module_2x1.tscn" id="1_06jma"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_gtfxg"]
 [ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="3_560w6"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_arklq"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="3_gtfxg"]
 [ext_resource type="Texture2D" uid="uid://bdedgjs4aas86" path="res://assets/sprites/ore_processor.png" id="3_pj0q4"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_ohxey"]
@@ -13,16 +14,18 @@
 [ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="9_pj0q4"]
 [ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="10_560w6"]
 [ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="11_ymsq2"]
+[ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="12_8w55x"]
 [ext_resource type="Resource" uid="uid://bvhvi4mdylcq" path="res://data/recipes/steel_recipe.tres" id="12_arklq"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_560w6"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vgcqb"]
 shader = ExtResource("2_gtfxg")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/gradient_texture = ExtResource("3_arklq")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_arklq"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_85tfa"]
 resource_local_to_scene = true
 size = Vector2(126, 62)
 
@@ -41,12 +44,12 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 [node name="OreProcessor" unique_id=749258774 instance=ExtResource("1_06jma")]
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_560w6")
+material = SubResource("ShaderMaterial_vgcqb")
 texture = ExtResource("3_pj0q4")
 region_enabled = false
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_arklq")
+shape = SubResource("RectangleShape2D_85tfa")
 
 [node name="PowerConsumptionComponent" parent="." index="2" unique_id=2041634469 instance=ExtResource("3_gtfxg")]
 power_consumption = 50.0

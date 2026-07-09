@@ -3,6 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://c4cgh4tautltt" path="res://modules/templates/module_2x2.tscn" id="1_vpngb"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_tsctt"]
 [ext_resource type="Texture2D" uid="uid://bun3faac31aog" path="res://assets/sprites/hydroponics_bay.png" id="3_vpngb"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_vtbmp"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_oqo1h"]
 [ext_resource type="PackedScene" uid="uid://c63swhm7yiir" path="res://modules/components/processor_component.tscn" id="5_pljme"]
 [ext_resource type="Resource" uid="uid://dlah8oikivbi4" path="res://data/recipes/hydroponics_bay_recipe.tres" id="6_vpngb"]
@@ -14,15 +15,17 @@
 [ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="12_t5iom"]
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="13_u5ltp"]
 [ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="14_8n0tu"]
+[ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="14_oqo1h"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_tsctt"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_pljme"]
 shader = ExtResource("2_tsctt")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/gradient_texture = ExtResource("3_vtbmp")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_vtbmp"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6fdvw"]
 resource_local_to_scene = true
 size = Vector2(190, 62)
 
@@ -45,13 +48,13 @@ size = Vector2i(3, 1)
 position = Vector2(96, 32)
 
 [node name="Sprite" parent="Offset" index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_tsctt")
+material = SubResource("ShaderMaterial_pljme")
 texture = ExtResource("3_vpngb")
 region_enabled = false
 region_rect = Rect2(0, 0, 128, 128)
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_vtbmp")
+shape = SubResource("RectangleShape2D_6fdvw")
 
 [node name="LightingComponent" parent="Offset" index="2" unique_id=1074918199 instance=ExtResource("4_oqo1h")]
 scale = Vector2(3, 1)

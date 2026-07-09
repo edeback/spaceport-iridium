@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://ppwwsqiw58st"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_ktyew"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_53sak"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_p0wkb"]
 [ext_resource type="Texture2D" uid="uid://cehyi04xka2bp" path="res://assets/sprites/electrolyzer.png" id="3_utp5g"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_yk73m"]
@@ -14,15 +15,17 @@
 [ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="10_4tsoe"]
 [ext_resource type="Resource" uid="uid://tf727fx7vlah" path="res://data/resources/oxygen.tres" id="10_utp5g"]
 [ext_resource type="Resource" uid="uid://1an3ftgpeh6u" path="res://data/resources/hydrogen.tres" id="11_4tsoe"]
+[ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="13_nxcsj"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_4tsoe"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_b3bym"]
 shader = ExtResource("3_p0wkb")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/gradient_texture = ExtResource("3_53sak")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_53sak"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_0wkqy"]
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
@@ -41,12 +44,12 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 [node name="Module" unique_id=196635080 instance=ExtResource("1_ktyew")]
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_4tsoe")
+material = SubResource("ShaderMaterial_b3bym")
 texture = ExtResource("3_utp5g")
 region_enabled = false
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_53sak")
+shape = SubResource("RectangleShape2D_0wkqy")
 
 [node name="LightingComponent" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="2" unique_id=1122474165 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_yk73m")]
 power_consumption_component = NodePath("../../PowerConsumptionComponent")

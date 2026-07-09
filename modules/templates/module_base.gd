@@ -89,6 +89,10 @@ func ready_preview() -> void:
 		component.ready_preview()
 
 func ready_blueprint() -> void:
+	if module_data.instant_build:
+		# Don't bother with blueprint if we're instant
+		ready_constructed()
+		return
 	for component: ComponentBase in components:
 		component.ready_blueprint()
 	

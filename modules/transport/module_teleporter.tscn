@@ -3,6 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_ivqvi"]
 [ext_resource type="Script" uid="uid://bo6usxgapn5cl" path="res://modules/transport/module_teleporter.gd" id="2_yuavr"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_lqklp"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="4_gkv8y"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_lqklp"]
 [ext_resource type="Texture2D" uid="uid://lebwd4trp72s" path="res://assets/sprites/teleporter.png" id="4_tttov"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="4_yuavr"]
@@ -18,8 +19,9 @@ shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/gradient_texture = ExtResource("4_gkv8y")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_gkv8y"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ev4tx"]
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
@@ -59,7 +61,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("9_tqln7")
 }],
-"loop": false,
+"loop": 0,
 "name": &"teleport",
 "speed": 10.0
 }]
@@ -74,7 +76,7 @@ material = SubResource("ShaderMaterial_tttov")
 texture = ExtResource("4_tttov")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_gkv8y")
+shape = SubResource("RectangleShape2D_ev4tx")
 
 [node name="LightingComponent" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="2" unique_id=1866726232 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_lqklp")]
 z_index = 10

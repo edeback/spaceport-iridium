@@ -31,16 +31,17 @@ func ready_blueprint() -> void:
 	setup_storage_for_construction()
 	current_state = ConstructionState.NotStarted
 	owner_module.progress = 0
-	Global.path_manager.change_vertex_group(owner_module, "space")
+	Global.path_manager.change_vertex_group(owner_module, &"space")
 	
 func ready_constructed() -> void:
 	set_process(false)
-	material_storage.storage_data.clear()
+	material_storage.empty_all()
 	material_storage.accepts_exports = false
 	material_storage.accepts_imports = false
 	material_storage.display_storage_ui = false
 	material_storage.display_info_panel_ui = false
-	Global.path_manager.change_vertex_group(owner_module, "")
+	if Global.path_manager.get_vertex(owner_module).group == &"space":
+		Global.path_manager.change_vertex_group(owner_module, "")
 
 func start_deconstruction() -> void:
 	set_process(true)
@@ -100,6 +101,8 @@ func ready_for_construction() -> bool:
 	if owner_module.module_data.resource_costs.is_empty():
 		return true
 	for resource : ResourceData in owner_module.module_data.resource_costs:
+		if resource == Global.resource_manager.credit_resource:
+			continue
 		if material_storage.storage_data.has(resource):
 			if material_storage.storage_data[resource].stored < owner_module.module_data.resource_costs[resource]:
 				return false
@@ -119,14 +122,16 @@ func setup_storage_for_construction() -> void:
 		material_storage.display_storage_ui = true
 		material_storage.display_info_panel_ui = true
 		material_storage.max_stored = 0
+		material_storage.priority = 99
 		for resource : ResourceData in owner_module.module_data.resource_costs:
-			var new_data := StorageData.new()
-			new_data.desired = owner_module.module_data.resource_costs[resource]
-			material_storage.storage_data[resource] = new_data
-			material_storage.max_stored += new_data.desired
+			if resource != Global.resource_manager.credit_resource:
+				var new_data := StorageData.new()
+				new_data.desired = owner_module.module_data.resource_costs[resource]
+				material_storage.storage_data[resource] = new_data
+				material_storage.max_stored += new_data.desired
 
 func setup_storage_post_deconstruction() -> void:
-	material_storage.storage_data.clear()
+	material_storage.empty_all()
 	material_storage.accepts_imports = false
 	if owner_module.module_data.resource_costs.is_empty():
 		material_storage.display_storage_ui = false
@@ -135,14 +140,16 @@ func setup_storage_post_deconstruction() -> void:
 		material_storage.accepts_exports = true
 		material_storage.display_storage_ui = true
 		material_storage.display_info_panel_ui = true
+		material_storage.priority = -99
 		for resource : ResourceData in owner_module.module_data.resource_costs:
-			var new_data := StorageData.new()
-			new_data.desired = owner_module.module_data.resource_costs[resource]
-			new_data.stored = new_data.desired
-			material_storage.storage_data[resource] = new_data
+			if resource != Global.resource_manager.credit_resource:
+				var new_data := StorageData.new()
+				new_data.deposit(owner_module.module_data.resource_costs[resource], false)
+				new_data.desired = 0
+				material_storage.storage_data[resource] = new_data
 
 func has_ui() -> bool:
-	return true
+	return (not owner_module.module_data.instant_build) if owner_module and owner_module.module_data else false
 	
 func get_ui() -> ModuleComponentUI:
 	var ui: ConstructionComponentUI = ui_info_panel_element.instantiate() as ConstructionComponentUI

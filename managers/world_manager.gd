@@ -74,6 +74,8 @@ func purchase_and_add_module(module_data: ModuleData, cell: Vector2i, is_horizon
 		return
 	if module_data.instant_build:
 		module_data.withdraw_cost()
+	else:
+		module_data.withdraw_credit_cost()
 	add_module(module_data, cell, is_horizontal, flipped)
 
 func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false) -> ModuleBase:
@@ -118,9 +120,10 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 	if module.can_delete == false:
 		return false
-	if structure_check and module.structure_check_before_delete:
-		if not Global.structure_manager.can_remove_module(module):
-			return false
+	# TODO Re-enable this sometime. Right now construction means modules are not counted as connected so this fails often
+	#if structure_check and module.structure_check_before_delete:
+		#if not Global.structure_manager.can_remove_module(module):
+			#return false
 	var replacement_location: Vector2i = module.module_cell
 	var replacement_points: Array[Vector2i] = []
 	if module.get_structure_component() != null:

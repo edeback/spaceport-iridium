@@ -4,11 +4,16 @@
 [ext_resource type="PackedScene" uid="uid://b8ciktratf6xb" path="res://modules/crew/mess_hall.tscn" id="2_iuoys"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_kc8va"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_kc8va"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="3_whr4g"]
 
 [resource]
 script = ExtResource("3_kc8va")
 name = "Mess Hall"
 scene = ExtResource("2_iuoys")
 icon = ExtResource("1_gennt")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_kc8va"), int]({
+ExtResource("3_whr4g"): 6
+})
 tags = Array[String](["Crew"])
 metadata/_custom_type_script = "uid://vwmofdckg7hu"

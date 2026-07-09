@@ -3,6 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://c4cgh4tautltt" path="res://modules/templates/module_2x2.tscn" id="1_4oagm"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_58pc6"]
 [ext_resource type="Texture2D" uid="uid://dvu6d8qnqnkib" path="res://assets/sprites/mining_bay.png" id="3_krpv1"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_wt5jo"]
 [ext_resource type="PackedScene" uid="uid://udm67iu3w25e" path="res://modules/components/mining_component.tscn" id="3_y7hho"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="4_w1qq0"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="5_5m057"]
@@ -13,25 +14,22 @@
 [ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="8_0tx88"]
 [ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="9_krpv1"]
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="9_wt5jo"]
+[ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="11_0tx88"]
 [ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicates.tres" id="11_avr65"]
 [ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="14_2l5du"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="14_5m057"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_0tx88"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_wt5jo"]
 shader = ExtResource("2_58pc6")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
-shader_parameter/PROGRESS = 1.0
+shader_parameter/PROGRESS = 0.999999977648
+shader_parameter/gradient_texture = ExtResource("3_wt5jo")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_wt5jo"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cyani"]
 resource_local_to_scene = true
 size = Vector2(126, 126)
-
-[sub_resource type="Resource" id="Resource_cyani"]
-resource_local_to_scene = true
-script = ExtResource("7_2l5du")
-metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [sub_resource type="Resource" id="Resource_avr65"]
 resource_local_to_scene = true
@@ -58,15 +56,20 @@ resource_local_to_scene = true
 script = ExtResource("7_2l5du")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
+[sub_resource type="Resource" id="Resource_d3svm"]
+resource_local_to_scene = true
+script = ExtResource("7_2l5du")
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
 [node name="Module" unique_id=1936147960 instance=ExtResource("1_4oagm")]
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_0tx88")
+material = SubResource("ShaderMaterial_wt5jo")
 texture = ExtResource("3_krpv1")
 region_enabled = false
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_wt5jo")
+shape = SubResource("RectangleShape2D_cyani")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([Vector2i(96, 96)])
@@ -80,15 +83,14 @@ power_consumption = 30.0
 
 [node name="StorageComponent" parent="." index="4" unique_id=1572091566 instance=ExtResource("5_hpqm1")]
 priority = -1
-max_stored = 40.0
 accepts_imports = false
 storage_data = Dictionary[ExtResource("5_5m057"), ExtResource("7_2l5du")]({
-ExtResource("6_2l5du"): SubResource("Resource_cyani"),
-ExtResource("8_0tx88"): SubResource("Resource_avr65"),
-ExtResource("9_wt5jo"): SubResource("Resource_25qps"),
-ExtResource("7_krpv1"): SubResource("Resource_delo2"),
-ExtResource("11_avr65"): SubResource("Resource_l11el"),
-ExtResource("14_2l5du"): SubResource("Resource_jb6fk")
+ExtResource("6_2l5du"): SubResource("Resource_avr65"),
+ExtResource("8_0tx88"): SubResource("Resource_25qps"),
+ExtResource("9_wt5jo"): SubResource("Resource_delo2"),
+ExtResource("7_krpv1"): SubResource("Resource_l11el"),
+ExtResource("11_avr65"): SubResource("Resource_jb6fk"),
+ExtResource("14_2l5du"): SubResource("Resource_d3svm")
 })
 
 [node name="LightingComponent" parent="." index="5" unique_id=1895651030 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("14_5m057")]

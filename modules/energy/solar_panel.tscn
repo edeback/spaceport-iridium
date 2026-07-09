@@ -6,7 +6,6 @@
 [ext_resource type="PackedScene" uid="uid://ge73mk14adfq" path="res://modules/components/power_generation_component.tscn" id="3_y6uab"]
 [ext_resource type="Script" uid="uid://bprak4d0a5203" path="res://modules/components/solar_power_component.gd" id="4_gocud"]
 [ext_resource type="Texture2D" uid="uid://cs0ht0ea12qtx" path="res://assets/sprites/solar_panel_tilemap.png" id="4_p3bqt"]
-[ext_resource type="PackedScene" uid="uid://valcdjjl853u" path="res://modules/components/construction_component.tscn" id="7_aqnlt"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_aqnlt"]
 frequency = 0.0668
@@ -67,5 +66,3 @@ power_output = 50.0
 path_points = Array[Vector2i]([])
 door_connections = Dictionary[int, int]({})
 door_required = false
-
-[node name="ConstructionComponent" parent="." index="4" unique_id=1206775965 instance=ExtResource("7_aqnlt")]

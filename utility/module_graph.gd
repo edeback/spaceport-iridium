@@ -5,6 +5,7 @@ class PathPoint:
 	var node: Node2D = null
 	var in_space: bool = false
 	var edge_meta: String = ""
+	var debug: String = ""
 
 signal graph_changed
 
@@ -286,6 +287,7 @@ func pathfind_by_vertex(start_vertex: ModuleGraphVertex, end_vertex: ModuleGraph
 		var next_point := PathPoint.new()
 		next_point.node = cur_vertex.node
 		next_point.in_space = (cur_vertex.group == &"space")
+		next_point.debug = cur_vertex.node.name
 		if prev_vertex != null:
 			var edge_data: ModuleGraphVertex.EdgeData = prev_vertex.edges.get(cur_vertex)
 			if edge_data != null:
@@ -298,6 +300,7 @@ func pathfind_by_vertex(start_vertex: ModuleGraphVertex, end_vertex: ModuleGraph
 	var start_point := PathPoint.new()
 	start_point.node = start_vertex.node
 	start_point.in_space = (start_vertex.group == &"space")
+	start_point.debug = start_vertex.node.name
 	if prev_vertex != null:
 		var edge_data: ModuleGraphVertex.EdgeData = prev_vertex.edges.get(cur_vertex)
 		if edge_data != null:

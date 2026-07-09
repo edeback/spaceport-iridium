@@ -45,7 +45,7 @@ func refresh_display() -> void:
 		else:
 			storage_line.remove_resource_button.visible = false
 			storage_line.desired_resources_spinbox.editable = false
-			storage_line.desired_resources_spinbox.value = storage_component.max_stored
+			storage_line.desired_resources_spinbox.value = storage_component.storage_data[resource].desired
 		storage_lines[resource] = storage_line
 		resource_container.add_child(storage_line)
 	%FreeSpaceAvailableLabel.text = _format_resouce_value(storage_component.space_available())

@@ -2,15 +2,17 @@
 
 [ext_resource type="PackedScene" uid="uid://bpridbphjctdv" path="res://modules/docking_bays/docking_bay_left_base.tscn" id="1_5d0j8"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_d1nkh"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_d1nkh"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_5d0j8"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0lfdn"]
 shader = ExtResource("2_d1nkh")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/gradient_texture = ExtResource("3_d1nkh")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_d1nkh"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_2tr7e"]
 resource_local_to_scene = true
 size = Vector2(191, 127)
 
@@ -20,11 +22,11 @@ size = Vector2(191, 127)
 position = Vector2(96, 64)
 
 [node name="Sprite" parent="Offset" index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_5d0j8")
+material = SubResource("ShaderMaterial_0lfdn")
 region_rect = Rect2(192, 0, 192, 128)
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_d1nkh")
+shape = SubResource("RectangleShape2D_2tr7e")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([Vector2i(50, 122), Vector2i(30, 105)])

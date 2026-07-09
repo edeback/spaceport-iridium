@@ -4,10 +4,17 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_ab3ve"]
 [ext_resource type="PackedScene" uid="uid://d1nivugd4xybw" path="res://modules/energy/fusion_reactor.tscn" id="2_remso"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_qnek6"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="3_uny6y"]
+[ext_resource type="Resource" uid="uid://b27jc67v174pi" path="res://data/resources/iridium.tres" id="4_tvdsv"]
 
 [resource]
 script = ExtResource("3_qnek6")
 name = "Fusion Reactor"
 scene = ExtResource("2_remso")
 icon = ExtResource("1_41ymn")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_ab3ve"), int]({
+ExtResource("3_uny6y"): 10,
+ExtResource("4_tvdsv"): 4
+})
 tags = Array[String](["Power"])

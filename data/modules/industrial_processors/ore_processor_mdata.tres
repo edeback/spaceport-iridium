@@ -4,14 +4,15 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_fabqw"]
 [ext_resource type="PackedScene" uid="uid://dvbr2ns4pveve" path="res://modules/industrial_processors/ore_processor.tscn" id="2_wvxdi"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_fabqw"]
-[ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="3_fwlkr"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="3_fwlkr"]
 
 [resource]
 script = ExtResource("3_fabqw")
 name = "Ore Processor"
 scene = ExtResource("2_wvxdi")
 icon = ExtResource("1_fabqw")
+instant_build = false
 resource_costs = Dictionary[ExtResource("2_fabqw"), int]({
-ExtResource("3_fwlkr"): 10
+ExtResource("3_fwlkr"): 6
 })
 tags = Array[String](["Processor"])

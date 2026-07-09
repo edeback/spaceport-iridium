@@ -34,11 +34,12 @@ func _process(delta: float) -> void:
 		return  # a cab (or similar) owns our position right now — just wait
 	match state:
 		State.Moving:
-			state = State.Paused
-			await move(delta)
 			if target == null or _pending_target != null:
 				state = State.Idle
-			elif state == State.Paused:
+				return
+			state = State.Paused
+			await move(delta)
+			if state == State.Paused:
 				state = State.Moving
 		State.Paused:
 			owner_pawn.set_idle()
@@ -157,6 +158,9 @@ func get_debug_path_detailed() -> PackedVector2Array:
 func extract_position(index: int) -> Vector2:
 	if index >= path.size() or index < 0:
 		print("trying to get the path position of an element not in the path_variant array!")
+		return Vector2.ZERO
+	if not is_instance_valid(path[index].node):
+		print("trying to get the path position of a freed node!")
 		return Vector2.ZERO
 	if path[index].node is ModuleBase:
 		var module: ModuleBase = path[index].node as ModuleBase

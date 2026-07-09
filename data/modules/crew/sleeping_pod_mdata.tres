@@ -4,11 +4,18 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_fsmkb"]
 [ext_resource type="PackedScene" uid="uid://cnf1f3ppgbny7" path="res://modules/crew/basic_sleeping_pod.tscn" id="2_u3hca"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_fsmkb"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="3_glhb6"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="4_4chp3"]
 
 [resource]
 script = ExtResource("3_fsmkb")
 name = "Sleeping Pod"
 scene = ExtResource("2_u3hca")
 icon = ExtResource("1_u3hca")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_fsmkb"), int]({
+ExtResource("3_glhb6"): 2,
+ExtResource("4_4chp3"): 300
+})
 tags = Array[String](["Crew"])
 metadata/_custom_type_script = "uid://vwmofdckg7hu"

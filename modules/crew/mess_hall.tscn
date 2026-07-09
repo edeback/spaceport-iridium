@@ -3,27 +3,29 @@
 [ext_resource type="PackedScene" uid="uid://drvd8opv6enr8" path="res://modules/templates/module_2x1.tscn" id="1_cwauj"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_6dgag"]
 [ext_resource type="PackedScene" uid="uid://b8fbjamaiahs4" path="res://modules/components/sustenance_component.tscn" id="3_6dgag"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_oya45"]
 [ext_resource type="Texture2D" uid="uid://do6g7shcnagpi" path="res://assets/sprites/mess_hall.png" id="3_x3cc5"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_oya45"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5de2l"]
 shader = ExtResource("2_6dgag")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/gradient_texture = ExtResource("3_oya45")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_5de2l"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rifdy"]
 resource_local_to_scene = true
 size = Vector2(126, 62)
 
 [node name="Module" unique_id=1807841400 instance=ExtResource("1_cwauj")]
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_oya45")
+material = SubResource("ShaderMaterial_5de2l")
 texture = ExtResource("3_x3cc5")
 region_rect = Rect2(0, 0, 128, 64)
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_5de2l")
+shape = SubResource("RectangleShape2D_rifdy")
 
 [node name="SustenanceComponent" parent="." index="3" unique_id=36152855 instance=ExtResource("3_6dgag")]

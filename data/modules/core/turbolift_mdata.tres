@@ -3,6 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://r2nt1fhbsql4" path="res://assets/sprites/turbolift.png" id="1_6fuxq"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_waae6"]
 [ext_resource type="PackedScene" uid="uid://cdg7n780yglrf" path="res://modules/transport/module_turbolift.tscn" id="3_4qj6a"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="3_rns6g"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="4_2f7uq"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_waae6"]
@@ -14,6 +15,9 @@ script = ExtResource("4_2f7uq")
 name = "Turbolift"
 scene = ExtResource("3_4qj6a")
 icon = SubResource("AtlasTexture_waae6")
+resource_costs = Dictionary[ExtResource("2_waae6"), int]({
+ExtResource("3_rns6g"): 50
+})
 tags = Array[String](["Core"])
 multiplacement = 2
 ignore_multiplacement_connection_check = true

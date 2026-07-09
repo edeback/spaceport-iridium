@@ -6,17 +6,19 @@
 [ext_resource type="Texture2D" uid="uid://bd4p021jd1cq8" path="res://assets/sprites/trading_dock.png" id="4_gu0qf"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_iqcir"]
 [ext_resource type="PackedScene" uid="uid://d2yel2dv7mxe6" path="res://modules/components/trade_component.tscn" id="4_psdj2"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="4_yrg00"]
 [ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="5_18pmv"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="7_gu0qf"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_yrg00"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_e63vr"]
 shader = ExtResource("2_jskn1")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/gradient_texture = ExtResource("4_yrg00")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_e63vr"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_0xp1w"]
 resource_local_to_scene = true
 size = Vector2(191, 127)
 
@@ -28,13 +30,13 @@ size = Vector2i(4, 2)
 position = Vector2(160, 64)
 
 [node name="Sprite" parent="Offset" index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_yrg00")
+material = SubResource("ShaderMaterial_e63vr")
 texture = ExtResource("4_gu0qf")
 region_rect = Rect2(0, 0, 192, 128)
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
 position = Vector2(0.5, 0.5)
-shape = SubResource("RectangleShape2D_e63vr")
+shape = SubResource("RectangleShape2D_0xp1w")
 
 [node name="LightingComponent" parent="Offset" index="2" unique_id=1459118124 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_iqcir")]
 scale = Vector2(3, 2)

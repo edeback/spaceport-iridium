@@ -3,6 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://cehyi04xka2bp" path="res://assets/sprites/electrolyzer.png" id="1_b70be"]
 [ext_resource type="PackedScene" uid="uid://ppwwsqiw58st" path="res://modules/industrial_processors/electrolysis_processor.tscn" id="2_b70be"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_gy8o1"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="3_5y2kn"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_gy8o1"]
 
 [resource]
@@ -10,4 +11,8 @@ script = ExtResource("3_gy8o1")
 name = "Electrolyzer"
 scene = ExtResource("2_b70be")
 icon = ExtResource("1_b70be")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_gy8o1"), int]({
+ExtResource("3_5y2kn"): 4
+})
 tags = Array[String](["Processor"])

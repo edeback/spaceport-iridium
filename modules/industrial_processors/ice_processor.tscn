@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://cmdaw5xwc5juy"]
 
 [ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_jqjye"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_es0ib"]
 [ext_resource type="Texture2D" uid="uid://4qk3d4i76k5x" path="res://assets/sprites/ice_processor.png" id="3_esxo4"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_k607o"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_esxo4"]
@@ -13,15 +14,17 @@
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="10_64yxw"]
 [ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="10_esxo4"]
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="10_mgbfp"]
+[ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="13_sgees"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_pxac8"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xywsu"]
 shader = ExtResource("3_k607o")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/gradient_texture = ExtResource("3_es0ib")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_es0ib"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_yh7xf"]
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
@@ -36,12 +39,12 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 [node name="Module" unique_id=1537735289 instance=ExtResource("1_jqjye")]
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_pxac8")
+material = SubResource("ShaderMaterial_xywsu")
 texture = ExtResource("3_esxo4")
 region_enabled = false
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_es0ib")
+shape = SubResource("RectangleShape2D_yh7xf")
 
 [node name="LightingComponent" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="2" unique_id=985824206 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_esxo4")]
 power_consumption_component = NodePath("../../PowerConsumptionComponent")

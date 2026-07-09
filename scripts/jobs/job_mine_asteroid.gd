@@ -4,6 +4,7 @@ extends JobBase
 var asteroid: AsteroidBase
 var pawn: PawnBase
 var requesting_module: ModuleBase
+var output_storage: StorageComponent
 var state: MineAsteroidState = MineAsteroidState.Starting:
 	set(new_state):
 		if new_state != state:
@@ -97,6 +98,7 @@ func get_asteroid() -> void:
 	
 func _asteroid_despawned() -> void:
 	asteroid = null
+	pawn.movement_component.cancel()
 	# Find a different one!
 	if state < MineAsteroidState.ReturningToModule:
 		state = MineAsteroidState.Starting
@@ -156,8 +158,7 @@ func deposit_material(prev_success: bool) -> void:
 	if not prev_success:
 		cancel(true)
 		return
-	var storage: StorageComponent = requesting_module.get_component_by_type(StorageComponent) as StorageComponent
-	if storage == null:
+	if output_storage == null:
 		state = MineAsteroidState.Failed
 		return
 	# Drain whatever the pawn is carrying (normally just what this trip mined,
@@ -167,11 +168,11 @@ func deposit_material(prev_success: bool) -> void:
 	# pawn and gets retried by Job_StoreInventory on the next idle tick.
 	for resource: ResourceData in pawn.inventory_component.get_carried_resources():
 		var carried: int = pawn.inventory_component.get_carried_amount(resource)
-		var deposit_amount: int = mini(carried, storage.space_available())
+		var deposit_amount: int = mini(carried, output_storage.space_available())
 		if deposit_amount <= 0:
 			continue
 		var withdrawn: Array[ResourceStack] = pawn.inventory_component.withdraw_stacks(resource, deposit_amount)
-		if not withdrawn.is_empty() and not storage.deposit_stacks(resource, withdrawn):
+		if not withdrawn.is_empty() and not output_storage.deposit_stacks(resource, withdrawn):
 			pawn.inventory_component.add_stacks(resource, withdrawn)
 	state = MineAsteroidState.Finished
 	

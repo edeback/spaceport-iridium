@@ -84,6 +84,7 @@ current work:
 		- 
 - fix module blocking building of other modules, and have some way of showing it visually
 - floating objects in space (with inventory) - recover scrap/deconstruction materials
+- job_get_resource (and similar) should be able to have a high max and the pawn can do it a piece at a time, not failing if it can't do it all at once
 
 
 Truss

@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://bpridbphjctdv" path="res://modules/docking_bays/docking_bay_left_base.tscn" id="2_11ty0"]
 [ext_resource type="Texture2D" uid="uid://bd4p021jd1cq8" path="res://assets/sprites/trading_dock.png" id="2_u32ef"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="3_2k04c"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="4_2k04c"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_nlvn8"]
 atlas = ExtResource("2_u32ef")
@@ -15,6 +16,10 @@ script = ExtResource("1_5lqk0")
 name = "Docking Bay"
 scene = ExtResource("2_11ty0")
 icon = SubResource("AtlasTexture_nlvn8")
+instant_build = false
+resource_costs = Dictionary[ExtResource("3_2k04c"), int]({
+ExtResource("4_2k04c"): 8
+})
 tags = Array[String](["Dock"])
 flippable = true
 flipped_scene = ExtResource("1_vpvv2")

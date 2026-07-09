@@ -3,6 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://dvu6d8qnqnkib" path="res://assets/sprites/mining_bay.png" id="1_cxmgm"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_2vdph"]
 [ext_resource type="PackedScene" uid="uid://bx6qtgyfs24d3" path="res://modules/resource_gathering/mining_bay.tscn" id="2_qbuko"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="3_2vdph"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_nni1g"]
 
 [resource]
@@ -10,4 +11,8 @@ script = ExtResource("3_nni1g")
 name = "Mining Bay"
 scene = ExtResource("2_qbuko")
 icon = ExtResource("1_cxmgm")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_2vdph"), int]({
+ExtResource("3_2vdph"): 8
+})
 tags = Array[String](["Producer"])
