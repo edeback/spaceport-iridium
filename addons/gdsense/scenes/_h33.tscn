@@ -1,0 +1,753 @@
+[gd_scene load_steps=6 format=3 uid="uid://2scxh7oqlnxr"]
+
+[ext_resource type="Script" path="res://addons/gdsense/scripts/_h33.gd" id="1_v4m0x"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6qaia"]
+bg_color = Color(0.147, 0.168, 0.203, 1)
+border_width_bottom = 4
+border_color = Color(0.1155, 0.132, 0.1595, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kxnvs"]
+bg_color = Color(0.1, 0.1, 0.1, 0.5)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uapyg"]
+bg_color = Color(0, 1, 0, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_resize_handle"]
+bg_color = Color(0.25, 0.25, 0.25, 1)
+border_width_top = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.45, 0.45, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[node name="GDSense" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_v4m0x")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="TabContainer" type="TabContainer" parent="MarginContainer"]
+layout_mode = 2
+current_tab = 0
+
+[node name="Chat" type="Control" parent="MarginContainer/TabContainer"]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/TabContainer/Chat"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_j2" type="HBoxContainer" parent="MarginContainer/TabContainer/Chat/VBoxContainer"]
+layout_mode = 2
+alignment = 2
+
+[node name="_h28" type="Button" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_j2"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "+ New Chat"
+
+[node name="_q42" type="Label" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_j2"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Session Total: 0"
+horizontal_alignment = 2
+
+[node name="_y21" type="PanelContainer" parent="MarginContainer/TabContainer/Chat/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_6qaia")
+
+[node name="_f28" type="ScrollContainer" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_y21"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="_y55" type="VBoxContainer" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_y21/_f28"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="_e3" type="VBoxContainer" parent="MarginContainer/TabContainer/Chat/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="_z63" type="ProgressBar" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_e3"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_kxnvs")
+theme_override_styles/fill = SubResource("StyleBoxFlat_uapyg")
+step = 0.1
+show_percentage = false
+
+[node name="_c19" type="Label" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_e3"]
+unique_name_in_owner = true
+modulate = Color(0.8, 0.8, 0.8, 1)
+layout_mode = 2
+text = "Context: 0%"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="_q1" type="Label" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_e3"]
+unique_name_in_owner = true
+visible = false
+modulate = Color(1, 0.8, 0, 1)
+layout_mode = 2
+text = "⚠ Context capacity at 85% - consider reducing @ commands"
+horizontal_alignment = 1
+
+[node name="_c75" type="Label" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_e3"]
+unique_name_in_owner = true
+visible = false
+modulate = Color(0.7, 0.9, 1, 1)
+layout_mode = 2
+text = "ℹ Context was automatically trimmed to fit within limits"
+horizontal_alignment = 1
+
+[node name="_s22" type="HBoxContainer" parent="MarginContainer/TabContainer/Chat/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="_v16" type="OptionButton" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_s22"]
+unique_name_in_owner = true
+layout_mode = 2
+selected = 0
+item_count = 1
+popup/item_0/text = "Chat"
+popup/item_0/id = 0
+
+[node name="_f42" type="OptionButton" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_s22"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+clip_text = true
+selected = 0
+item_count = 7
+popup/item_0/text = "Llama 3.1 8B Instant (High Volume)"
+popup/item_0/id = 0
+popup/item_1/text = "GPT OSS 20B (High Volume)"
+popup/item_1/id = 1
+popup/item_2/text = "Gemini Flash Lite (Fast)"
+popup/item_2/id = 2
+popup/item_3/text = "GPT-5 Nano (Fast)"
+popup/item_3/id = 3
+popup/item_4/text = "Gemini Flash (Reasoning)"
+popup/item_4/id = 4
+popup/item_5/text = "GPT-5 Mini (Balanced)"
+popup/item_5/id = 5
+popup/item_6/text = "GPT-5 (Most Capable)"
+popup/item_6/id = 6
+
+[node name="_c89" type="HBoxContainer" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_s22"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="_r44" type="Label" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_s22/_c89"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "P: 0"
+
+[node name="_z10" type="Label" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_s22/_c89"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "C: 0"
+
+[node name="_r24" type="Label" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_s22/_c89"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "T: 0"
+
+[node name="_n44" type="Label" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_s22"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "Request time: 0.0s"
+horizontal_alignment = 1
+
+[node name="_q82" type="OptionButton" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_s22"]
+unique_name_in_owner = true
+layout_mode = 2
+selected = 0
+item_count = 7
+popup/item_0/text = "Commands"
+popup/item_0/id = 0
+popup/item_1/id = -1
+popup/item_1/separator = true
+popup/item_2/text = "@file"
+popup/item_2/id = 2
+popup/item_3/text = "@selection"
+popup/item_3/id = 3
+popup/item_4/text = "@openscript"
+popup/item_4/id = 4
+popup/item_5/text = "@scene"
+popup/item_5/id = 5
+popup/item_6/text = "@node"
+popup/item_6/id = 6
+
+[node name="_t14" type="Button" parent="MarginContainer/TabContainer/Chat/VBoxContainer/_s22"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Send Request"
+
+[node name="_g71" type="Panel" parent="MarginContainer/TabContainer/Chat/VBoxContainer"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_resize_handle")
+
+[node name="_e36" type="TextEdit" parent="MarginContainer/TabContainer/Chat/VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Enter your prompt here... (Use Commands dropdown to insert @ commands)"
+wrap_mode = 1
+
+[node name="History" type="Control" parent="MarginContainer/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="_s52" type="VBoxContainer" parent="MarginContainer/TabContainer/History"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_k20" type="VBoxContainer" parent="MarginContainer/TabContainer/History/_s52"]
+layout_mode = 2
+
+[node name="_x43" type="Label" parent="MarginContainer/TabContainer/History/_s52/_k20"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Chat History"
+horizontal_alignment = 1
+
+[node name="_k74" type="Label" parent="MarginContainer/TabContainer/History/_s52/_k20"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Recent: 15 | Favorites: 0"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/TabContainer/History/_s52/_k20"]
+layout_mode = 2
+
+[node name="_f18" type="TabContainer" parent="MarginContainer/TabContainer/History/_s52"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="Recent Chats" type="Control" parent="MarginContainer/TabContainer/History/_s52/_f18"]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="_v8" type="VBoxContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_p49" type="Label" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "15 most recent chats (excluding favorites)"
+autowrap_mode = 3
+
+[node name="_c76" type="HSplitContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_e93" type="VBoxContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.35
+
+[node name="_u4" type="Label" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_e93"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Chat List:"
+autowrap_mode = 3
+clip_text = true
+
+[node name="_c99" type="ItemList" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_e93"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+item_count = 15
+item_0/text = "how do i make my player move in 2d - 2025-11-21 00:29:12"
+item_1/text = "move my 2d player - 2025-11-21 00:26:13"
+item_2/text = "move my 2d player - 2025-11-21 00:20:43"
+item_3/text = "move my 2d player - 2025-11-21 00:20:04"
+item_4/text = "move my 2d player and jump with space ba... - 2025-11-21 00:18:58"
+item_5/text = "move my player in 2d - 2025-11-21 00:16:47"
+item_6/text = "move my character in 2d - 2025-11-21 00:15:43"
+item_7/text = "move my 2d character - 2025-11-20 23:17:56"
+item_8/text = "move my character in 2d - 2025-11-20 23:11:16"
+item_9/text = "move a 2d character - 2025-11-20 23:09:56"
+item_10/text = "move a character - 2025-11-20 22:46:30"
+item_11/text = "move a 2d character - 2025-11-20 22:45:12"
+item_12/text = "move a 2d character - 2025-11-20 22:29:22"
+item_13/text = "move a character - 2025-11-20 22:28:28"
+item_14/text = "move a 2d character - 2025-11-20 22:27:19"
+
+[node name="_r11" type="VBoxContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.65
+
+[node name="_z81" type="HBoxContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11"]
+layout_mode = 2
+
+[node name="_i15" type="Label" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11/_z81"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "Select a chat to preview"
+autowrap_mode = 3
+clip_text = true
+
+[node name="_k60" type="HBoxContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11/_z81"]
+layout_mode = 2
+
+[node name="_y27" type="Button" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11/_z81/_k60"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Load Chat"
+
+[node name="_z37" type="Button" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11/_z81/_k60"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "★ Favorite"
+
+[node name="_z11" type="Button" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11/_z81/_k60"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Rename"
+
+[node name="_d28" type="Button" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11/_z81/_k60"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Delete"
+
+[node name="_z97" type="ScrollContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_l99" type="VBoxContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11/_z97"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="_j73" type="Label" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11/_z97/_l99"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Full Conversation:"
+
+[node name="_p2" type="PanelContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11/_z97/_l99"]
+layout_mode = 2
+
+[node name="_p97" type="RichTextLabel" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11/_z97/_l99/_p2"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+focus_mode = 2
+theme_override_font_sizes/normal_font_size = 16
+bbcode_enabled = true
+text = "Select a chat to view"
+fit_content = true
+scroll_active = false
+selection_enabled = true
+
+[node name="_g57" type="Control" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11/_z97/_l99"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="_k18" type="Label" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11/_z97/_l99"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Session Info:"
+
+[node name="_y42" type="PanelContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11/_z97/_l99"]
+layout_mode = 2
+
+[node name="_e70" type="RichTextLabel" parent="MarginContainer/TabContainer/History/_s52/_f18/Recent Chats/_v8/_c76/_r11/_z97/_l99/_y42"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+focus_mode = 2
+theme_override_font_sizes/normal_font_size = 16
+bbcode_enabled = true
+text = "Select a chat to view"
+fit_content = true
+scroll_active = false
+selection_enabled = true
+
+[node name="Favorites" type="Control" parent="MarginContainer/TabContainer/History/_s52/_f18"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="_h59" type="VBoxContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_t16" type="Label" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Favorited chats (not subject to 15 limit)"
+autowrap_mode = 3
+
+[node name="_h19" type="HSplitContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_j54" type="VBoxContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.35
+
+[node name="_u4" type="Label" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_j54"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Favorite Chats:"
+autowrap_mode = 3
+clip_text = true
+
+[node name="_w76" type="ItemList" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_j54"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_n63" type="VBoxContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.65
+
+[node name="_z81" type="HBoxContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63"]
+layout_mode = 2
+
+[node name="_t86" type="Label" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63/_z81"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "Select a favorite to preview"
+autowrap_mode = 3
+clip_text = true
+
+[node name="_l6" type="HBoxContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63/_z81"]
+layout_mode = 2
+
+[node name="_a3" type="Button" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63/_z81/_l6"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Load Chat"
+
+[node name="_q4" type="Button" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63/_z81/_l6"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "☆ Unfavorite"
+
+[node name="_y70" type="Button" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63/_z81/_l6"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Rename"
+
+[node name="_x59" type="Button" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63/_z81/_l6"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Delete"
+
+[node name="_z97" type="ScrollContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_x58" type="VBoxContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63/_z97"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="_j73" type="Label" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63/_z97/_x58"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Full Conversation:"
+
+[node name="_p2" type="PanelContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63/_z97/_x58"]
+layout_mode = 2
+
+[node name="_h1" type="RichTextLabel" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63/_z97/_x58/_p2"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+focus_mode = 2
+theme_override_font_sizes/normal_font_size = 16
+bbcode_enabled = true
+text = "Select a favorite chat to view"
+fit_content = true
+scroll_active = false
+selection_enabled = true
+
+[node name="_b22" type="Control" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63/_z97/_x58"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="_k18" type="Label" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63/_z97/_x58"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Session Info:"
+
+[node name="_y42" type="PanelContainer" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63/_z97/_x58"]
+layout_mode = 2
+
+[node name="_q61" type="RichTextLabel" parent="MarginContainer/TabContainer/History/_s52/_f18/Favorites/_h59/_h19/_n63/_z97/_x58/_y42"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+focus_mode = 2
+theme_override_font_sizes/normal_font_size = 16
+bbcode_enabled = true
+text = "Select a favorite chat to view"
+fit_content = true
+scroll_active = false
+selection_enabled = true
+
+[node name="_c31" type="HBoxContainer" parent="MarginContainer/TabContainer/History/_s52"]
+layout_mode = 2
+alignment = 2
+
+[node name="_d85" type="Button" parent="MarginContainer/TabContainer/History/_s52/_c31"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Import Session"
+
+[node name="_b45" type="Button" parent="MarginContainer/TabContainer/History/_s52/_c31"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Export Session"
+
+[node name="_b44" type="Button" parent="MarginContainer/TabContainer/History/_s52/_c31"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Clear Recent Chats"
+
+[node name="_q63" type="Button" parent="MarginContainer/TabContainer/History/_s52/_c31"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Clear Favorites"
+
+[node name="_a89" type="AcceptDialog" parent="MarginContainer/TabContainer/History"]
+unique_name_in_owner = true
+title = "Rename Chat"
+initial_position = 1
+size = Vector2i(400, 120)
+
+[node name="_y89" type="VBoxContainer" parent="MarginContainer/TabContainer/History/_a89"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_s20" type="Label" parent="MarginContainer/TabContainer/History/_a89/_y89"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Enter a custom name for this chat:"
+
+[node name="_c88" type="LineEdit" parent="MarginContainer/TabContainer/History/_a89/_y89"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "e.g., 'Node refactoring discussion'"
+max_length = 100
+
+[node name="_r34" type="FileDialog" parent="MarginContainer/TabContainer/History"]
+unique_name_in_owner = true
+title = "Export Chat Session"
+initial_position = 1
+size = Vector2i(600, 400)
+access = 2
+filters = PackedStringArray("*.json ; GDSense Session Files")
+use_native_dialog = true
+
+[node name="_y37" type="FileDialog" parent="MarginContainer/TabContainer/History"]
+unique_name_in_owner = true
+title = "Open a File"
+initial_position = 1
+size = Vector2i(600, 400)
+ok_button_text = "Open"
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.json ; GDSense Session Files")
+use_native_dialog = true
+
+[node name="Settings" type="Control" parent="MarginContainer/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+
+[node name="_q8" type="ScrollContainer" parent="MarginContainer/TabContainer/Settings"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/TabContainer/Settings/_q8"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="_z9" type="HBoxContainer" parent="MarginContainer/TabContainer/Settings/_q8/VBoxContainer"]
+layout_mode = 2
+
+[node name="_z67" type="Label" parent="MarginContainer/TabContainer/Settings/_q8/VBoxContainer/_z9"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "API Key:"
+
+[node name="_d16" type="LineEdit" parent="MarginContainer/TabContainer/Settings/_q8/VBoxContainer/_z9"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+secret = true
+
+[node name="_e38" type="CheckButton" parent="MarginContainer/TabContainer/Settings/_q8/VBoxContainer/_z9"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Show"
+
+[node name="_e40" type="Button" parent="MarginContainer/TabContainer/Settings/_q8/VBoxContainer/_z9"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Save"
+
+[node name="_w7" type="Label" parent="MarginContainer/TabContainer/Settings/_q8/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "API Key Not Set"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="_a91" type="VBoxContainer" parent="MarginContainer/TabContainer/Settings/_q8/VBoxContainer"]
+layout_mode = 2
+
+[node name="_a94" type="Label" parent="MarginContainer/TabContainer/Settings/_q8/VBoxContainer/_a91"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "AI Model:"
+
+[node name="_a22" type="OptionButton" parent="MarginContainer/TabContainer/Settings/_q8/VBoxContainer/_a91"]
+unique_name_in_owner = true
+layout_mode = 2
+selected = 0
+item_count = 7
+popup/item_0/text = "Llama 3.1 8B Instant (High Volume)"
+popup/item_0/id = 0
+popup/item_1/text = "GPT OSS 20B (High Volume)"
+popup/item_1/id = 1
+popup/item_2/text = "Gemini Flash Lite (Fast)"
+popup/item_2/id = 2
+popup/item_3/text = "GPT-5 Nano (Fast)"
+popup/item_3/id = 3
+popup/item_4/text = "Gemini Flash (Reasoning)"
+popup/item_4/id = 4
+popup/item_5/text = "GPT-5 Mini (Balanced)"
+popup/item_5/id = 5
+popup/item_6/text = "GPT-5 (Most Capable)"
+popup/item_6/id = 6
+
+[node name="_z6" type="VBoxContainer" parent="MarginContainer/TabContainer/Settings/_q8/VBoxContainer"]
+layout_mode = 2
+
+[node name="_v32" type="Label" parent="MarginContainer/TabContainer/Settings/_q8/VBoxContainer/_z6"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Font Scale:"
+
+[node name="_q25" type="OptionButton" parent="MarginContainer/TabContainer/Settings/_q8/VBoxContainer/_z6"]
+unique_name_in_owner = true
+layout_mode = 2
+selected = 0
+item_count = 5
+popup/item_0/text = "Auto (Recommended)"
+popup/item_0/id = 0
+popup/item_1/text = "Small (80%)"
+popup/item_1/id = 1
+popup/item_2/text = "Normal (100%)"
+popup/item_2/id = 2
+popup/item_3/text = "Large (125%)"
+popup/item_3/id = 3
+popup/item_4/text = "Extra Large (150%)"
+popup/item_4/id = 4
+
+[node name="_c54" type="Label" parent="MarginContainer/TabContainer/Settings/_q8/VBoxContainer/_z6"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Auto: 100% (1080p detected). Your resolution: 2x2"

@@ -1,0 +1,62 @@
+[gd_scene load_steps=2 format=3 uid="uid://b8k2h5f3g1m4n"]
+
+[ext_resource type="Script" path="res://addons/gdsense/scripts/_u1.gd" id="1_undo_confirmation"]
+
+[node name="_l45" type="ConfirmationDialog"]
+title = "Undo Refactor"
+initial_position = 2
+size = Vector2i(400, 180)
+script = ExtResource("1_undo_confirmation")
+
+[node name="_s36" type="VBoxContainer" parent="."]
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 392.0
+offset_bottom = 140.0
+
+[node name="_m30" type="Label" parent="_s36"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Undo refactor for function: function_name()"
+
+[node name="_a25" type="Label" parent="_s36"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Refactored at: 12:34:56"
+theme_override_font_sizes/font_size = 12
+
+[node name="_a19" type="Label" parent="_s36"]
+layout_mode = 2
+text = "Original code (will be restored):"
+theme_override_font_sizes/font_size = 12
+
+[node name="_n41" type="PanelContainer" parent="_s36"]
+layout_mode = 2
+
+[node name="_i80" type="RichTextLabel" parent="_s36/_n41"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 60)
+bbcode_enabled = true
+scroll_active = true
+text = "func example():"
+theme_override_font_sizes/normal_font_size = 11
+
+[node name="_b5" type="Label" parent="_s36"]
+layout_mode = 2
+text = "Warning: This will replace the current function."
+theme_override_font_sizes/font_size = 11
+
+[node name="_p9" type="HBoxContainer" parent="_s36"]
+layout_mode = 2
+alignment = 2
+
+[node name="_m44" type="Button" parent="_s36/_p9"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Cancel"
+
+[node name="_f35" type="Button" parent="_s36/_p9"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Undo Refactor"

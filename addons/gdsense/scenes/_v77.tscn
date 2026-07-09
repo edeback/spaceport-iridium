@@ -1,0 +1,274 @@
+[gd_scene load_steps=2 format=3 uid="uid://daj7k4m2p8q5r"]
+
+[ext_resource type="Script" path="res://addons/gdsense/scripts/_v77.gd" id="1_history_panel"]
+
+[node name="_n55" type="AcceptDialog"]
+title = "Refactor History Browser"
+initial_position = 1
+size = Vector2i(800, 600)
+script = ExtResource("1_history_panel")
+
+[node name="_p53" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_y16" type="VBoxContainer" parent="_p53"]
+layout_mode = 2
+
+[node name="_y53" type="Label" parent="_p53/_y16"]
+layout_mode = 2
+text = "Refactor History Browser"
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="_p53/_y16"]
+layout_mode = 2
+
+[node name="TabContainer" type="TabContainer" parent="_p53"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_x3" type="Control" parent="_p53/TabContainer"]
+layout_mode = 2
+
+[node name="_i19" type="VBoxContainer" parent="_p53/TabContainer/_x3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_u77" type="Label" parent="_p53/TabContainer/_x3/_i19"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "File: example.gd"
+theme_override_font_sizes/font_size = 14
+
+[node name="_h29" type="HSplitContainer" parent="_p53/TabContainer/_x3/_i19"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_l26" type="ItemList" parent="_p53/TabContainer/_x3/_i19/_h29"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.4
+
+[node name="_y91" type="VBoxContainer" parent="_p53/TabContainer/_x3/_i19/_h29"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.6
+
+[node name="_g62" type="Label" parent="_p53/TabContainer/_x3/_i19/_h29/_y91"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Select an entry to preview"
+theme_override_font_sizes/font_size = 14
+
+[node name="_g3" type="VSplitContainer" parent="_p53/TabContainer/_x3/_i19/_h29/_y91"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_j3" type="VBoxContainer" parent="_p53/TabContainer/_x3/_i19/_h29/_y91/_g3"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_l40" type="Label" parent="_p53/TabContainer/_x3/_i19/_h29/_y91/_g3/_j3"]
+layout_mode = 2
+text = "Original Code:"
+theme_override_font_sizes/font_size = 12
+
+[node name="_g52" type="PanelContainer" parent="_p53/TabContainer/_x3/_i19/_h29/_y91/_g3/_j3"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_h38" type="ScrollContainer" parent="_p53/TabContainer/_x3/_i19/_h29/_y91/_g3/_j3/_g52"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_w82" type="RichTextLabel" parent="_p53/TabContainer/_x3/_i19/_h29/_y91/_g3/_j3/_g52/_h38"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "# Select an entry to view original code"
+fit_content = true
+scroll_active = false
+theme_override_font_sizes/normal_font_size = 11
+
+[node name="_x63" type="VBoxContainer" parent="_p53/TabContainer/_x3/_i19/_h29/_y91/_g3"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_g13" type="Label" parent="_p53/TabContainer/_x3/_i19/_h29/_y91/_g3/_x63"]
+layout_mode = 2
+text = "Refactored Code:"
+theme_override_font_sizes/font_size = 12
+
+[node name="_c89" type="PanelContainer" parent="_p53/TabContainer/_x3/_i19/_h29/_y91/_g3/_x63"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_s98" type="ScrollContainer" parent="_p53/TabContainer/_x3/_i19/_h29/_y91/_g3/_x63/_c89"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_g32" type="RichTextLabel" parent="_p53/TabContainer/_x3/_i19/_h29/_y91/_g3/_x63/_c89/_s98"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "# Select an entry to view refactored code"
+fit_content = true
+scroll_active = false
+theme_override_font_sizes/normal_font_size = 11
+
+[node name="_l64" type="Control" parent="_p53/TabContainer"]
+layout_mode = 2
+
+[node name="_b76" type="VBoxContainer" parent="_p53/TabContainer/_l64"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_n64" type="Label" parent="_p53/TabContainer/_l64/_b76"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Total entries: 0 across 0 files"
+theme_override_font_sizes/font_size = 14
+
+[node name="_j34" type="HSplitContainer" parent="_p53/TabContainer/_l64/_b76"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_c70" type="VBoxContainer" parent="_p53/TabContainer/_l64/_b76/_j34"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.5
+
+[node name="_c47" type="Label" parent="_p53/TabContainer/_l64/_b76/_j34/_c70"]
+layout_mode = 2
+text = "Files and Functions:"
+theme_override_font_sizes/font_size = 12
+
+[node name="_t40" type="Tree" parent="_p53/TabContainer/_l64/_b76/_j34/_c70"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_l76" type="VBoxContainer" parent="_p53/TabContainer/_l64/_b76/_j34"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.5
+
+[node name="_l77" type="Label" parent="_p53/TabContainer/_l64/_b76/_j34/_l76"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Select an entry to preview"
+theme_override_font_sizes/font_size = 14
+
+[node name="_z90" type="VSplitContainer" parent="_p53/TabContainer/_l64/_b76/_j34/_l76"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_m57" type="VBoxContainer" parent="_p53/TabContainer/_l64/_b76/_j34/_l76/_z90"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_k21" type="Label" parent="_p53/TabContainer/_l64/_b76/_j34/_l76/_z90/_m57"]
+layout_mode = 2
+text = "Original Code:"
+theme_override_font_sizes/font_size = 12
+
+[node name="_h89" type="PanelContainer" parent="_p53/TabContainer/_l64/_b76/_j34/_l76/_z90/_m57"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_j13" type="ScrollContainer" parent="_p53/TabContainer/_l64/_b76/_j34/_l76/_z90/_m57/_h89"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_s62" type="RichTextLabel" parent="_p53/TabContainer/_l64/_b76/_j34/_l76/_z90/_m57/_h89/_j13"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "# Select an entry to view original code"
+fit_content = true
+scroll_active = false
+theme_override_font_sizes/normal_font_size = 11
+
+[node name="_o11" type="VBoxContainer" parent="_p53/TabContainer/_l64/_b76/_j34/_l76/_z90"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_b98" type="Label" parent="_p53/TabContainer/_l64/_b76/_j34/_l76/_z90/_o11"]
+layout_mode = 2
+text = "Refactored Code:"
+theme_override_font_sizes/font_size = 12
+
+[node name="_v86" type="PanelContainer" parent="_p53/TabContainer/_l64/_b76/_j34/_l76/_z90/_o11"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="_i55" type="ScrollContainer" parent="_p53/TabContainer/_l64/_b76/_j34/_l76/_z90/_o11/_v86"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_n57" type="RichTextLabel" parent="_p53/TabContainer/_l64/_b76/_j34/_l76/_z90/_o11/_v86/_i55"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "# Select an entry to view refactored code"
+fit_content = true
+scroll_active = false
+theme_override_font_sizes/normal_font_size = 11
+
+[node name="_n21" type="HBoxContainer" parent="_p53"]
+layout_mode = 2
+alignment = 2
+
+[node name="_w61" type="Button" parent="_p53/_n21"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Clear Current File"
+
+[node name="_y76" type="Button" parent="_p53/_n21"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Clear All History"
+
+[node name="_m37" type="Button" parent="_p53/_n21"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Close"

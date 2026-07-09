@@ -1,0 +1,168 @@
+[gd_scene load_steps=2 format=3 uid="uid://c7vgb8k5f2h4x"]
+
+[ext_resource type="Script" path="res://addons/gdsense/scripts/_k14.gd" id="1_refactor_modal"]
+
+[node name="_m59" type="AcceptDialog"]
+title = "Refactor Function"
+initial_position = 1
+size = Vector2i(600, 400)
+script = ExtResource("1_refactor_modal")
+
+[node name="_v61" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_k74" type="Label" parent="_v61"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Refactor function with AI assistance"
+
+[node name="_g97" type="VBoxContainer" parent="_v61"]
+layout_mode = 2
+
+[node name="_h94" type="Label" parent="_v61/_g97"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Quick Presets:"
+
+[node name="_d78" type="GridContainer" parent="_v61/_g97"]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 2
+
+[node name="_d11" type="Button" parent="_v61/_g97/_d78"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "• Improve readability"
+alignment = 0
+flat = true
+
+[node name="_k43" type="Button" parent="_v61/_g97/_d78"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "• Optimize performance"
+alignment = 0
+flat = true
+
+[node name="_j53" type="Button" parent="_v61/_g97/_d78"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "• Convert to Godot 4"
+alignment = 0
+flat = true
+
+[node name="_t2" type="Button" parent="_v61/_g97/_d78"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "• Extract helper method"
+alignment = 0
+flat = true
+
+[node name="_s26" type="Button" parent="_v61/_g97/_d78"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "• Replace if/else with match"
+alignment = 0
+flat = true
+
+[node name="_w1" type="Button" parent="_v61/_g97/_d78"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "• Add comments"
+alignment = 0
+flat = true
+
+[node name="HSeparator" type="HSeparator" parent="_v61"]
+layout_mode = 2
+
+[node name="_a91" type="HBoxContainer" parent="_v61"]
+layout_mode = 2
+
+[node name="_a94" type="Label" parent="_v61/_a91"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Model:"
+
+[node name="_a22" type="OptionButton" parent="_v61/_a91"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="_t67" type="HSeparator" parent="_v61"]
+layout_mode = 2
+
+[node name="_j80" type="VBoxContainer" parent="_v61"]
+layout_mode = 2
+
+[node name="_i92" type="Label" parent="_v61/_j80"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Custom Instructions:"
+
+[node name="_e36" type="TextEdit" parent="_v61/_j80"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+placeholder_text = "Describe how you want the function to be refactored..."
+wrap_mode = 1
+
+[node name="_c55" type="Label" parent="_v61"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0/1000"
+horizontal_alignment = 2
+
+[node name="_h53" type="PanelContainer" parent="_v61"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="_n81" type="VBoxContainer" parent="_v61/_h53"]
+layout_mode = 2
+
+[node name="_w93" type="Label" parent="_v61/_h53/_n81"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Processing refactor request..."
+horizontal_alignment = 1
+
+[node name="_n44" type="Label" parent="_v61/_h53/_n81"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Elapsed: 0.0s"
+horizontal_alignment = 1
+
+[node name="_c31" type="HBoxContainer" parent="_v61"]
+layout_mode = 2
+alignment = 2
+
+[node name="_f33" type="Button" parent="_v61/_c31"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Cancel"
+
+[node name="_f26" type="Button" parent="_v61/_c31"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Refactor"
+
+[node name="_u85" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 60.0
+one_shot = true
+
+[node name="_g77" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 0.1

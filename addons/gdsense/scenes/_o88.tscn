@@ -1,0 +1,168 @@
+[gd_scene load_steps=2 format=3 uid="uid://c7vgb8k5f2h4x"]
+
+[ext_resource type="Script" path="res://addons/gdsense/scripts/_o88.gd" id="1_refactor_modal"]
+
+[node name="_s4" type="AcceptDialog"]
+title = "Refactor Function"
+initial_position = 1
+size = Vector2i(600, 400)
+script = ExtResource("1_refactor_modal")
+
+[node name="_n68" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_o26" type="Label" parent="_n68"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Refactor function with AI assistance"
+
+[node name="_c22" type="VBoxContainer" parent="_n68"]
+layout_mode = 2
+
+[node name="_u97" type="Label" parent="_n68/_c22"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Quick Presets:"
+
+[node name="_d90" type="GridContainer" parent="_n68/_c22"]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 2
+
+[node name="_v39" type="Button" parent="_n68/_c22/_d90"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "• Improve readability"
+alignment = 0
+flat = true
+
+[node name="_j62" type="Button" parent="_n68/_c22/_d90"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "• Optimize performance"
+alignment = 0
+flat = true
+
+[node name="_q35" type="Button" parent="_n68/_c22/_d90"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "• Convert to Godot 4"
+alignment = 0
+flat = true
+
+[node name="_e7" type="Button" parent="_n68/_c22/_d90"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "• Extract helper method"
+alignment = 0
+flat = true
+
+[node name="_p96" type="Button" parent="_n68/_c22/_d90"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "• Replace if/else with match"
+alignment = 0
+flat = true
+
+[node name="_r24" type="Button" parent="_n68/_c22/_d90"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "• Add comments"
+alignment = 0
+flat = true
+
+[node name="HSeparator" type="HSeparator" parent="_n68"]
+layout_mode = 2
+
+[node name="_r28" type="HBoxContainer" parent="_n68"]
+layout_mode = 2
+
+[node name="_h69" type="Label" parent="_n68/_r28"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Model:"
+
+[node name="_p76" type="OptionButton" parent="_n68/_r28"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="_t67" type="HSeparator" parent="_n68"]
+layout_mode = 2
+
+[node name="_f7" type="VBoxContainer" parent="_n68"]
+layout_mode = 2
+
+[node name="_q29" type="Label" parent="_n68/_f7"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Custom Instructions:"
+
+[node name="_w39" type="TextEdit" parent="_n68/_f7"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+placeholder_text = "Describe how you want the function to be refactored..."
+wrap_mode = 1
+
+[node name="_l82" type="Label" parent="_n68"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0/1000"
+horizontal_alignment = 2
+
+[node name="_l79" type="PanelContainer" parent="_n68"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="_w44" type="VBoxContainer" parent="_n68/_l79"]
+layout_mode = 2
+
+[node name="_z30" type="Label" parent="_n68/_l79/_w44"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Processing refactor request..."
+horizontal_alignment = 1
+
+[node name="_o12" type="Label" parent="_n68/_l79/_w44"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Elapsed: 0.0s"
+horizontal_alignment = 1
+
+[node name="_v6" type="HBoxContainer" parent="_n68"]
+layout_mode = 2
+alignment = 2
+
+[node name="_t20" type="Button" parent="_n68/_v6"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Cancel"
+
+[node name="_m47" type="Button" parent="_n68/_v6"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Refactor"
+
+[node name="_q6" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 60.0
+one_shot = true
+
+[node name="_z16" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 0.1

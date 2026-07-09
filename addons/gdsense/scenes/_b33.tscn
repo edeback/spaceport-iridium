@@ -1,0 +1,153 @@
+[gd_scene load_steps=2 format=3 uid="uid://b8yl5g8j6xr1s"]
+
+[ext_resource type="Script" path="res://addons/gdsense/scripts/_b33.gd" id="1_diff_renderer"]
+
+[node name="_x5" type="AcceptDialog"]
+title = "Review Refactored Code"
+initial_position = 1
+size = Vector2i(1400, 900)
+min_size = Vector2i(1200, 700)
+resizable = true
+script = ExtResource("1_diff_renderer")
+
+[node name="_m63" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_l94" type="HBoxContainer" parent="_m63"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="_c81" type="Label" parent="_m63/_l94"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Review the refactored code changes"
+theme_override_font_sizes/font_size = 16
+
+[node name="_y70" type="Button" parent="_m63/_l94"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Switch to Unified"
+
+[node name="_n60" type="Label" parent="_m63"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Function: "
+theme_override_font_sizes/font_size = 14
+
+[node name="_o83" type="Control" parent="_m63"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+clip_contents = true
+
+[node name="_t18" type="HBoxContainer" parent="_m63/_o83"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="_t95" type="VBoxContainer" parent="_m63/_o83/_t18"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="_s54" type="Label" parent="_m63/_o83/_t18/_t95"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Original Code"
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+
+[node name="_h3" type="ScrollContainer" parent="_m63/_o83/_t18/_t95"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2i(500, 400)
+horizontal_scroll_mode = 2
+vertical_scroll_mode = 2
+clip_contents = true
+follow_focus = true
+
+[node name="_n66" type="VBoxContainer" parent="_m63/_o83/_t18/_t95/_h3"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="VSeparator" type="VSeparator" parent="_m63/_o83/_t18"]
+layout_mode = 2
+
+[node name="_r82" type="VBoxContainer" parent="_m63/_o83/_t18"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="_b99" type="Label" parent="_m63/_o83/_t18/_r82"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Refactored Code"
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+
+[node name="_z89" type="ScrollContainer" parent="_m63/_o83/_t18/_r82"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_minimum_size = Vector2i(500, 400)
+horizontal_scroll_mode = 2
+vertical_scroll_mode = 2
+clip_contents = true
+follow_focus = true
+
+[node name="_s25" type="VBoxContainer" parent="_m63/_o83/_t18/_r82/_z89"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="_p1" type="ScrollContainer" parent="_m63/_o83"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+custom_minimum_size = Vector2i(1000, 400)
+horizontal_scroll_mode = 2
+vertical_scroll_mode = 2
+clip_contents = true
+follow_focus = true
+
+[node name="_y86" type="VBoxContainer" parent="_m63/_o83/_p1"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="_s23" type="HBoxContainer" parent="_m63"]
+layout_mode = 2
+alignment = 2
+
+[node name="_p28" type="Button" parent="_m63/_s23"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Reject Changes"
+
+[node name="_s37" type="Button" parent="_m63/_s23"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Accept Changes"
