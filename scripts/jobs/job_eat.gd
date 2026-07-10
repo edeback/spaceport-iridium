@@ -20,7 +20,7 @@ func get_subtask_description() -> String:
 func can_do_job(_pawn: PawnBase) -> bool:
 	var sus_components := _pawn.get_tree().get_nodes_in_group("sustenance_component")
 	for component in sus_components:
-		if Global.path_manager.is_reachable(_pawn, (component as SustenanceComponent).owner_module):
+		if Global.path_manager.is_reachable(_pawn, (component as SustenanceComponent).owner_module) and (component as SustenanceComponent).sustenance_available > 0:
 			return true
 	return false
 
