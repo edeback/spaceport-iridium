@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://cmkeqkbs2pdr1"]
+
+[ext_resource type="Script" uid="uid://dcabhn83evaab" path="res://ui/ui_time_scale_select.gd" id="1_lvnw1"]
+
+[node name="UiTimeScaleSelect" type="MarginContainer" unique_id=1319912742]
+script = ExtResource("1_lvnw1")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=284841598]
+layout_mode = 2
+
+[node name="PauseButton" type="CheckButton" parent="HBoxContainer" unique_id=1478349839]
+process_mode = 3
+layout_mode = 2
+text = "Pause"
+
+[node name="Label" type="Label" parent="HBoxContainer" unique_id=830854461]
+layout_mode = 2
+text = "Timescale: "
+
+[node name="TimescaleSpinBox" type="SpinBox" parent="HBoxContainer" unique_id=1139737828]
+process_mode = 3
+layout_mode = 2
+size_flags_horizontal = 8
+min_value = 0.25
+max_value = 5.0
+step = 0.05
+value = 1.0
+alignment = 1
+
+[connection signal="toggled" from="HBoxContainer/PauseButton" to="." method="_on_pause_button_toggled"]
+[connection signal="value_changed" from="HBoxContainer/TimescaleSpinBox" to="." method="_on_timescale_spin_box_value_changed"]
