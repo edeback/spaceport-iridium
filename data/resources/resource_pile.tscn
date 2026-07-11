@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://vw2q5so630yo"]
+
+[ext_resource type="Script" uid="uid://bqbsdcud51dh1" path="res://data/resources/resource_pile.gd" id="1_omphe"]
+[ext_resource type="Texture2D" uid="uid://bsjqs513e7r80" path="res://assets/external/Spaceship Creation Kit/Assets/Props/propCrate01.png" id="2_aty3v"]
+
+[node name="ResourcePile" type="Node2D" unique_id=301733463]
+script = ExtResource("1_omphe")
+metadata/_custom_type_script = "uid://bqbsdcud51dh1"
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=2142793]
+scale = Vector2(0.3, 0.3)
+texture = ExtResource("2_aty3v")

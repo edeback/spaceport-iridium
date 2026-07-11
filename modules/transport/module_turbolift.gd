@@ -33,6 +33,7 @@ func on_place() -> void:
 		Global.world_manager.add_module(truss, module_cell)
 
 func pre_delete() -> void:
+	super()
 	Global.turbolift_manager.remove_turbolift_module(self)
 
 func on_select(new_selected: bool) -> void:

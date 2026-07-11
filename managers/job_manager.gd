@@ -34,6 +34,7 @@ func find_job(pawn: PawnBase) -> JobBase:
 		var job_to_do: JobBase = job_board[index]
 		# Check that the job is still possible
 		if !job_to_do.is_valid():
+			job_to_do.end_job()
 			job_board.remove_at(index)
 			continue
 		if job_to_do.can_do_job(pawn):

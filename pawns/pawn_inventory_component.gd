@@ -109,3 +109,14 @@ func withdraw_stacks(resource: ResourceData, amount: int) -> Array[ResourceStack
 	if container.is_empty():
 		carried.erase(resource)
 	return withdrawn
+
+## Drains everything the pawn is carrying into `pile` (preserving
+## instance_data) - e.g. on death, so carried cargo becomes collectible
+## debris instead of disappearing.
+func dump_all_to_pile(pile: ResourcePile) -> void:
+	for resource: ResourceData in get_carried_resources():
+		var amount: int = get_carried_amount(resource)
+		if amount <= 0:
+			continue
+		var stacks: Array[ResourceStack] = withdraw_stacks(resource, amount)
+		pile.add_stacks(resource, stacks)

@@ -111,7 +111,9 @@ func _on_dump_button_pressed(resource: ResourceData) -> void:
 	%DumpResourcePanel.visible = true
 	
 func _on_confirm_dump_button_pressed() -> void:
-	storage_component.withdraw(current_dumped_resource, %ResourceToDumpAmount.value, true)
+	var withdrawn: Array[ResourceStack] = storage_component.withdraw_stacks(current_dumped_resource, %ResourceToDumpAmount.value, true)
+	if not withdrawn.is_empty() and storage_component.owner_module != null:
+		storage_component.owner_module.get_or_create_overflow_pile().add_stacks(current_dumped_resource, withdrawn)
 	current_dumped_resource = null
 	%DumpResourcePanel.visible = false
 	

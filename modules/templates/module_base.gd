@@ -25,6 +25,10 @@ var module_cell: Vector2i
 var module_data: ModuleData
 var is_horizontal: bool = true
 
+## Lazily created - null whenever there's no overflow/dumped material
+## sitting in this module. See get_or_create_overflow_pile().
+var overflow_pile: ResourcePile = null
+
 var jobs = {}
 
 var _cached_path_component: PathComponent = null
@@ -110,7 +114,18 @@ func on_place() -> void:
 	pass
 	
 func pre_delete() -> void:
-	pass
+	_eject_stored_resources_as_debris()
+
+func _eject_stored_resources_as_debris() -> void:
+	for component: ComponentBase in components:
+		if component is StorageComponent:
+			var storage := component as StorageComponent
+			if not storage.is_empty():
+				storage.dump_all_to_pile(get_or_create_overflow_pile())
+	if is_instance_valid(overflow_pile):
+		# The module's gone - whatever's left is just floating where the
+		# module used to be, not "in" anything anymore.
+		overflow_pile.parent_module = null
 
 func on_select(new_selected: bool) -> void:
 	self.selected = new_selected
@@ -199,6 +214,13 @@ func path_exit(pawn: PawnBase, door: int, meta: StringName, next_node: Node2D, c
 		ctx.state = pc.get_behavior_state(behavior)
 		ctx.cancelled = cancel_signal
 		await behavior.on_exit(pawn, door, meta, self, ctx)
+	
+func get_or_create_overflow_pile() -> ResourcePile:
+	if not is_instance_valid(overflow_pile):
+		var spawn_pos: Vector2 = get_random_position_on_module() if get_structure_component() != null else global_position
+		overflow_pile = ResourcePile.spawn(get_parent(), spawn_pos, self)
+		overflow_pile.despawning.connect(func() -> void: overflow_pile = null)
+	return overflow_pile
 	
 func show_label() -> void:
 	if nameplate != null:

@@ -192,25 +192,20 @@ func _exit_tree() -> void:
 	for data: StorageData in storage_data.values():
 		data.end_all_jobs()
 			
-		#for resource: ResourceData in stored_resources:
-			#Global.resource_manager.unregister_component(resource, self)
-	#for job: Job_GetResource in export_jobs:
-		#job.cancel(true)
-	#export_jobs.clear()
-	#for job: Job_GetResource in import_jobs:
-		#job.cancel(true)
-	#import_jobs.clear()
-	#for job: Job_GetResource in default_import_jobs.values():
-		#job.cancel(true)
-		#Global.job_manager.remove_job(job)
-	#default_import_jobs.clear()
-	
-#func _calc_reserved_from_jobs(resource: ResourceData, jobs: Array[JobData]) -> float:
-	#var reserved: float = 0
-	#for job: JobData in jobs:
-		#if job.resource_data == resource:
-			#reserved += job.amount
-	#return reserved
+## Drains every resource this component holds into `pile` (preserving
+## instance_data), for module destruction/ejection. Bypasses the normal
+## deposit_jobs/reserved bookkeeping entirely - this is an immediate,
+## unconditional dump, not a job-mediated transfer.
+func dump_all_to_pile(pile: ResourcePile) -> void:
+	for resource: ResourceData in storage_data.keys():
+		var data: StorageData = storage_data[resource]
+		if data.stored <= 0:
+			continue
+		var stacks: Array[ResourceStack] = data.withdraw_stacks(data.stored)
+		pile.add_stacks(resource, stacks)
+		storage_value_changed = true
+		storage_changed.emit(resource, data.stored)
+		resource.needs_recalc = true
 	
 func update_priority(new_priority: int) -> void:
 	if priority != new_priority:

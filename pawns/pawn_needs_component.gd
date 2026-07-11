@@ -62,10 +62,12 @@ signal social_changed(new_social: float)
 func _process(delta: float) -> void:
 	if has_hunger_need and hunger_duration_seconds > 0:
 		hunger_value -= delta / hunger_duration_seconds * hunger_max
-		if hunger_value < percent_critical and _needs_new_eat_job():
-			_pending_eat_job = Job_Eat.new()
-			_pending_eat_job.job_end.connect(finished_eating)
-			owner_pawn.interrupt_with_job(_pending_eat_job)   # can't wait
+		# Interrupting causes issues since this happens every frame, as if there is no food,
+		# the pawn gets locked into trying to eat and can never do things like make more food
+		#if hunger_value < percent_critical and _needs_new_eat_job():
+			#_pending_eat_job = Job_Eat.new()
+			#_pending_eat_job.job_end.connect(finished_eating)
+			#owner_pawn.interrupt_with_job(_pending_eat_job)
 		if hunger_value < percent_to_look_for_needs and _needs_new_eat_job():
 			_pending_eat_job = Job_Eat.new()
 			_pending_eat_job.job_end.connect(finished_eating)
@@ -80,7 +82,7 @@ func _process(delta: float) -> void:
 			pass
 			
 func _needs_new_eat_job() -> bool:
-	return _pending_eat_job == null or _pending_eat_job.is_finished() or _pending_eat_job.is_failed()
+	return _pending_eat_job == null #or _pending_eat_job.is_finished() or _pending_eat_job.is_failed()
 			
 func finished_eating() -> void:
 	_pending_eat_job = null
