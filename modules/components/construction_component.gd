@@ -44,13 +44,15 @@ func ready_constructed() -> void:
 		Global.path_manager.change_vertex_group(owner_module, "")
 
 func start_deconstruction() -> void:
-	set_process(true)
-	construction_job = Job_ConstructModule.new()
-	construction_job.setup(owner_module)
-	construction_job.deconstruct = true
-	Global.job_manager.add_job(construction_job)
-	current_state = ConstructionState.Deconstructing
-	work_seconds_done = work_seconds_to_complete * deconstruction_time_multiplier
+	if current_state == ConstructionState.Built:
+		set_process(true)
+		construction_job = Job_ConstructModule.new()
+		construction_job.setup(owner_module)
+		construction_job.deconstruct = true
+		construction_job.job_end.connect(_on_deconstruction_job_end.bind(construction_job), CONNECT_ONE_SHOT)
+		Global.job_manager.add_job(construction_job)
+		current_state = ConstructionState.Deconstructing
+		work_seconds_done = work_seconds_to_complete * deconstruction_time_multiplier
 
 func _process(delta: float) -> void:
 	match current_state:
@@ -58,15 +60,7 @@ func _process(delta: float) -> void:
 			pass
 		ConstructionState.NotStarted:
 			if ready_for_construction():
-				material_storage.accepts_exports = false
-				material_storage.accepts_imports = false
-				material_storage.display_storage_ui = false
-				material_storage.display_info_panel_ui = false
-				construction_job = Job_ConstructModule.new()
-				construction_job.setup(owner_module)
-				Global.job_manager.add_job(construction_job)
-				current_state = ConstructionState.Constructing
-				work_seconds_done = 0
+				_start_construction_job(true)
 		ConstructionState.Constructing:
 			if work_seconds_done >= work_seconds_to_complete:
 				current_state = ConstructionState.Built
@@ -85,18 +79,6 @@ func _process(delta: float) -> void:
 			if material_storage.is_empty():
 				Global.world_manager.remove_module(owner_module, false)
 
-func _set_work_seconds(new_work_seconds: float) -> void:
-	work_seconds_done = new_work_seconds
-	var progress: float = get_progress()
-	owner_module.progress = progress
-	progress_changed.emit(progress)
-
-func get_progress() -> float:
-	var progress: float = work_seconds_done / work_seconds_to_complete
-	if current_state == ConstructionState.Deconstructing:
-		progress /= deconstruction_time_multiplier
-	return progress
-
 func ready_for_construction() -> bool:
 	if owner_module.module_data.resource_costs.is_empty():
 		return true
@@ -110,6 +92,53 @@ func ready_for_construction() -> bool:
 			print("Failed to setup storage as it cannot contain required materials!")
 			return false
 	return true
+
+## Creates and arms a construction job, wiring up the failure listener so
+## the component can't get permanently stuck if the job never actually gets
+## done - whether that's because a direct handoff got declined (can_do_job()
+## failed at the last second) or a board-claimed job failed some other way
+## after being picked up (unreachable, module removed mid-route, etc).
+func _start_construction_job(add_to_board: bool) -> Job_ConstructModule:
+	material_storage.accepts_exports = false
+	material_storage.accepts_imports = false
+	material_storage.display_storage_ui = false
+	material_storage.display_info_panel_ui = false
+	construction_job = Job_ConstructModule.new()
+	construction_job.setup(owner_module)
+	construction_job.job_end.connect(_on_construction_job_end.bind(construction_job), CONNECT_ONE_SHOT)
+	current_state = ConstructionState.Constructing
+	work_seconds_done = 0
+	if add_to_board:
+		Global.job_manager.add_job(construction_job)
+	return construction_job
+
+## Claims the pawn that just delivered the last resource this site needed,
+## handing them straight into the construction job instead of waiting for
+## _process() to notice next frame and post it on the shared board for
+## whoever happens to be free.
+func offer_followup_job(_pawn: PawnBase) -> JobBase:
+	if current_state != ConstructionState.NotStarted or construction_job != null:
+		return null
+	if not ready_for_construction():
+		return null
+	return _start_construction_job(false)
+
+func _on_construction_job_end(finished_job: Job_ConstructModule) -> void:
+	if finished_job.is_failed() and construction_job == finished_job:
+		construction_job = null
+		current_state = ConstructionState.NotStarted
+
+func _set_work_seconds(new_work_seconds: float) -> void:
+	work_seconds_done = new_work_seconds
+	var progress: float = get_progress()
+	owner_module.progress = progress
+	progress_changed.emit(progress)
+
+func get_progress() -> float:
+	var progress: float = work_seconds_done / work_seconds_to_complete
+	if current_state == ConstructionState.Deconstructing:
+		progress /= deconstruction_time_multiplier
+	return progress
 	
 
 func setup_storage_for_construction() -> void:
@@ -129,6 +158,14 @@ func setup_storage_for_construction() -> void:
 				new_data.desired = owner_module.module_data.resource_costs[resource]
 				material_storage.storage_data[resource] = new_data
 				material_storage.max_stored += new_data.desired
+
+func _on_deconstruction_job_end(finished_job: Job_ConstructModule) -> void:
+	if finished_job.is_failed() and construction_job == finished_job:
+		construction_job = Job_ConstructModule.new()
+		construction_job.setup(owner_module)
+		construction_job.deconstruct = true
+		construction_job.job_end.connect(_on_deconstruction_job_end.bind(construction_job), CONNECT_ONE_SHOT)
+		Global.job_manager.add_job(construction_job)
 
 func setup_storage_post_deconstruction() -> void:
 	material_storage.empty_all()

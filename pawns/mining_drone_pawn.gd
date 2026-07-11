@@ -9,9 +9,8 @@ extends PawnBase
 		if powered != new_powered:
 			powered = new_powered
 			powered_changed(new_powered)
-			
 
-
+var parent_mining_component: MiningComponent = null
 
 func powered_changed(new_powered: bool) -> void:
 	pass
@@ -19,22 +18,36 @@ func powered_changed(new_powered: bool) -> void:
 
 func _process(delta: float) -> void:
 	if powered:
-		super._process(delta)
-	# Else do nothing I guess?
-
-func give_job(new_job: JobBase) -> bool:
-	if current_job == null:
-		current_job = new_job
+		super(delta)
+	
+## Overrides start_job as we only want to get mining jobs, and only from our parent mining component
+## Storing inventory and forced jobs are fine though, just not from the job board
+func start_job() -> void:
+	# If we have an inventory, try to store it ASAP
+	if inventory_component != null and not inventory_component.is_empty():
+		var return_job: Job_StoreInventory = Job_StoreInventory.new()
+		if return_job.can_do_job(self):
+			_begin_job(return_job)
+			return
+		# No storage will take what we're carrying right now — fall through and
+		# look for a normal job anyway rather than stalling the pawn entirely.
+	# Personal queue next - chained followups and queued needs. Checked once
+	# here rather than polled every frame by whatever queued them.
+	while not job_queue.is_empty():
+		var queued_job: JobBase = job_queue.pop_front()
+		if queued_job.is_valid() and queued_job.can_do_job(self):
+			_begin_job(queued_job)
+			return
+		queued_job.cancel(true)
+	if parent_mining_component:
+		current_job = parent_mining_component.get_next_job(self)
+	if current_job:
 		current_job.start_job(self)
-		current_job.job_end.connect(job_complete)
-		if current_job is Job_MineAsteroid:
-			current_job.efficiency = drone_efficiency
-			current_job.max_mined = cargo_size
-		return true
-	return false
+	else:
+		# No job, idle pose
+		if animated_sprite != null:
+			animated_sprite.play("idle")
 
-func job_complete() -> void:
-	pass
 
 func self_destruct() -> void:
 	if current_job != null:

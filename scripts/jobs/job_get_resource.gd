@@ -196,20 +196,27 @@ func deposit_resource(prev_success: bool) -> void:
 		return
 	var carried_stacks: Array[ResourceStack] = pawn.inventory_component.withdraw_stacks(resource_data, amount)
 	if carried_stacks.is_empty():
-		# We aren't actually holding what we expected to deposit. Shouldn't
-		# normally happen since only this job touches the pawn's inventory
-		# while it's running, but bail out safely if it does.
 		cancel(true)
 		return
 	if deposit_storage.complete_deposit_job(self, carried_stacks):
 		job_state = ResourceJobState.Finished
+		# Resolve any followup right here, synchronously - a component's own
+		# _process() (e.g. ConstructionComponent's) could run before or after
+		# the pawn's on any given frame, so we can't wait for the pawn to ask
+		# later and expect to win that race. This does.
+		var followup: JobBase = get_followup_job(pawn)
+		if followup != null:
+			pawn.queue_job(followup, true)
 	else:
 		# Couldn't deposit — give it back so it isn't lost.
 		pawn.inventory_component.add_stacks(resource_data, carried_stacks)
 		cancel(true)
-#
-#func _job_gather() -> void:
-	## temp temp temp
-	#if withdraw_storage.withdraw_job(self):
-		#deposit_storage.deposit_job(self)
-		#job_state = JobState.Return
+
+func get_followup_job(pawn: PawnBase) -> JobBase:
+	if deposit_storage == null or not is_instance_valid(deposit_storage.owner_module):
+		return null
+	for component: ComponentBase in deposit_storage.owner_module.components:
+		var offered: JobBase = component.offer_followup_job(pawn)
+		if offered != null:
+			return offered
+	return null

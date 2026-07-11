@@ -3,7 +3,7 @@ extends JobBase
 
 var asteroid: AsteroidBase
 var pawn: PawnBase
-var requesting_module: ModuleBase
+var requesting_component: MiningComponent
 var output_storage: StorageComponent
 var state: MineAsteroidState = MineAsteroidState.Starting:
 	set(new_state):
@@ -37,9 +37,9 @@ func get_subtask_description() -> String:
 			return "Returning to mining bay"
 	return ""
 
-func setup(_module: ModuleBase) -> void:
-	assert(_module != null)
-	requesting_module = _module
+func setup(component: MiningComponent) -> void:
+	assert(component != null and component.owner_module != null)
+	requesting_component = component
 	state = MineAsteroidState.Starting
 	SignalBus.module_removed.connect(_module_removed)
 	
@@ -56,6 +56,9 @@ func can_do_job(_pawn: PawnBase) -> bool:
 	
 func start_job(_pawn: PawnBase) -> void:
 	pawn = _pawn
+	max_mined = pawn.carrying_capacity
+	if pawn is MiningDronePawn:
+		efficiency = (pawn as MiningDronePawn).drone_efficiency
 	if state != MineAsteroidState.Failed:
 		state = MineAsteroidState.Starting
 		
@@ -105,25 +108,29 @@ func _asteroid_despawned() -> void:
 	# otherwise we don't care, we already came and left already
 
 func _module_removed(module: ModuleBase) -> void:
-	if module == requesting_module:
-		requesting_module = null
+	if module == requesting_component.owner_module:
+		requesting_component = null
 		state = MineAsteroidState.Failed
-		if pawn.movement_component.movement_ended.is_connected(mine_asteroid):
-			pawn.movement_component.movement_ended.disconnect(mine_asteroid)
+		if pawn.movement_component.movement_ended.is_connected(next_state):
+			pawn.movement_component.movement_ended.disconnect(next_state)
 
 func move_to_asteroid() -> void:
 	state = MineAsteroidState.MovingToAsteroid
-	pawn.movement_component.movement_ended.connect(start_mining, CONNECT_ONE_SHOT)
+	pawn.movement_component.movement_ended.connect(next_state, CONNECT_ONE_SHOT)
 	pawn.movement_component.move_to(asteroid, 1, true)
 		
-func start_mining(prev_success: bool) -> void:
+		
+func next_state(prev_success: bool) -> void:
 	if not prev_success:
 		if state < MineAsteroidState.ReturningToModule:
 			state = MineAsteroidState.Starting
 		else:
 			cancel(true)
-	else:
+	elif state == MineAsteroidState.MovingToAsteroid:
 		state = MineAsteroidState.MineAsteroid
+	elif state == MineAsteroidState.ReturningToModule:
+		deposit_material()
+		
 		
 func mine_asteroid(delta: float) -> void:
 	# Stay glued to asteroid
@@ -144,20 +151,17 @@ func mine_asteroid(delta: float) -> void:
 			stack.instance_data = instance
 		pawn.inventory_component.add_stacks(mined_resource, [stack])
 		resources_mined_count += 1
-	if resources_mined_count >= max_mined:
+	if resources_mined_count >= max_mined or pawn.inventory_component.space_available() <= 0:
 		move_to_module()
 	elif asteroid.is_empty():
 		state = MineAsteroidState.Starting
 		
 func move_to_module() -> void:
 	state = MineAsteroidState.ReturningToModule
-	pawn.movement_component.movement_ended.connect(deposit_material, CONNECT_ONE_SHOT)
-	pawn.movement_component.move_to(requesting_module)
+	pawn.movement_component.movement_ended.connect(next_state, CONNECT_ONE_SHOT)
+	pawn.movement_component.move_to(requesting_component.owner_module)
 		
-func deposit_material(prev_success: bool) -> void:
-	if not prev_success:
-		cancel(true)
-		return
+func deposit_material() -> void:
 	if output_storage == null:
 		state = MineAsteroidState.Failed
 		return
@@ -181,3 +185,13 @@ func is_failed() -> bool:
 	
 func is_finished() -> bool:
 	return state == MineAsteroidState.Finished
+
+# Probably don't need this - MiningDronePawns have their own way of getting new jobs
+#func get_followup_job(_pawn: PawnBase) -> JobBase:
+	#if not is_instance_valid(requesting_component):
+		#return null
+	#
+	#var offered: JobBase = requesting_component.offer_followup_job(pawn)
+	#if offered != null:
+		#return offered
+	#return null

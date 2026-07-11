@@ -16,13 +16,18 @@ func set_pawn(_pawn: PawnBase) -> void:
 		Global.ui_in_game.debug_path_position = pawn.movement_component.get_debug_path_detailed()
 		pawn.movement_component.movement_started.connect(_movement_started)
 	
-func _process(delta: float) -> void:
-	set_position(pawn.get_global_transform_with_canvas().get_origin())
+func _process(_delta: float) -> void:
+	if is_instance_valid(pawn):
+		set_position(pawn.get_global_transform_with_canvas().get_origin())
+	else:
+		pawn = null
+		_on_exit_button_pressed()
 
 func _movement_started() -> void:
 	Global.ui_in_game.debug_path_position = pawn.movement_component.get_debug_path_detailed()
 
 func _on_exit_button_pressed() -> void:
-	pawn.movement_component.movement_started.disconnect(_movement_started)
+	if is_instance_valid(pawn):
+		pawn.movement_component.movement_started.disconnect(_movement_started)
 	Global.ui_in_game.debug_path_position = []
 	queue_free()

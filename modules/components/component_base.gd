@@ -57,3 +57,9 @@ func has_ui() -> bool:
 
 func get_ui() -> ModuleComponentUI:
 	return null
+
+## Override to hand a pawn that just delivered resources to (or otherwise
+## interacted with) this component straight into followup work - see
+## JobBase.get_followup_job(). Return null if there's nothing to offer.
+func offer_followup_job(_pawn: PawnBase) -> JobBase:
+	return null

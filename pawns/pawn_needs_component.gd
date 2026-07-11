@@ -1,6 +1,7 @@
 class_name PawnNeedsComponent
 extends PawnComponentBase
 
+@export var percent_critical: float = 5
 @export var percent_to_look_for_needs: float = 30
 
 @export var has_health_need: bool = false
@@ -34,6 +35,8 @@ signal sleep_changed(new_sleep: float)
 signal hunger_changed(new_hunger: float)
 @export var hunger_duration_seconds: float = 600
 
+var _pending_eat_job: Job_Eat = null
+
 @export var has_entertainment_need: bool = false
 @export var entertainment_max: float = 100
 @export var entertainment_value: float = 100:
@@ -59,9 +62,14 @@ signal social_changed(new_social: float)
 func _process(delta: float) -> void:
 	if has_hunger_need and hunger_duration_seconds > 0:
 		hunger_value -= delta / hunger_duration_seconds * hunger_max
-		if hunger_value < percent_to_look_for_needs:
-			if owner_pawn.current_job == null:
-				owner_pawn.try_start_job(Job_Eat.new())
+		if hunger_value < percent_critical and _needs_new_eat_job():
+			_pending_eat_job = Job_Eat.new()
+			_pending_eat_job.job_end.connect(finished_eating)
+			owner_pawn.interrupt_with_job(_pending_eat_job)   # can't wait
+		if hunger_value < percent_to_look_for_needs and _needs_new_eat_job():
+			_pending_eat_job = Job_Eat.new()
+			_pending_eat_job.job_end.connect(finished_eating)
+			owner_pawn.queue_job(_pending_eat_job) # start when free
 	if has_social_need and social_duration_seconds > 0:
 		social_value -= delta / social_duration_seconds * social_max
 		if social_value < percent_to_look_for_needs:
@@ -70,3 +78,9 @@ func _process(delta: float) -> void:
 		entertainment_value -= delta / entertainment_duration_seconds * entertainment_max
 		if entertainment_value < percent_to_look_for_needs:
 			pass
+			
+func _needs_new_eat_job() -> bool:
+	return _pending_eat_job == null or _pending_eat_job.is_finished() or _pending_eat_job.is_failed()
+			
+func finished_eating() -> void:
+	_pending_eat_job = null

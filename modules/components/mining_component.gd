@@ -52,65 +52,36 @@ func _process(_delta: float) -> void:
 		drone.powered = true
 	if drones.size() < max_drones and drone_respawn_timer.is_stopped():
 		drone_respawn_timer.start()
-	if _can_output(1):
-		for drone: MiningDronePawn in drones:
-			if drone.current_job == null:
-				var mining_job: Job_MineAsteroid = Job_MineAsteroid.new()
-				mining_job.setup(owner_module)
-				mining_job.output_storage = output_storage
-				if not mining_job.can_do_job(drone) or not drone.give_job(mining_job):
-					mining_job.cancel(true)
 		
 func build_drone() -> void:
 	var new_drone: MiningDronePawn = mining_drone_scene.instantiate() as MiningDronePawn
-	Global.world_manager.pawn_layer.add_child(new_drone)
 	new_drone.global_position = Global.cell_to_world(owner_module.module_cell, true)
 	new_drone.current_module = owner_module
+	new_drone.parent_mining_component = self
+	Global.world_manager.pawn_layer.add_child(new_drone)
 	drones.append(new_drone)
 
 func _exit_tree() -> void:
 	for drone: MiningDronePawn in drones:
 		drone.self_destruct()
 
-
 func _can_output(amount: int) -> bool:
-	return output_storage.space_available() >= amount
+	return output_storage.space_available(true) >= amount
 	
-#func _deposit_outputs(fraction: float = 1.0) -> void:
-	#var doublecheck: bool = output_storage.deposit(output_resource, fraction)
-	#assert(doublecheck, "Somehow couldn't output items when there was room!")
-#
-#func _continuous_processing(delta: float) -> void:
-	#var fraction_of_recipe: float = delta / time_to_process
-	#if _can_output(fraction_of_recipe):
-		#_deposit_outputs(fraction_of_recipe)
-	#return
-#
-#func _stepwise_processing(delta: float) -> void:
-	#if processing:
-		#current_process_time += delta
-		#processor_progress_changed.emit(current_process_time / time_to_process)
-		#if current_process_time >= time_to_process:
-			#if _can_output():
-				#var doublecheck: bool = output_storage.deposit(output_resource, 1)
-				#print("Mining completed")
-				#assert(doublecheck, "Somehow couldn't output items when there was room!")
-				#processor_progress_changed.emit(0)
-				#processing = false
-				#current_process_time = 0
-			#else:
-				#last_error = "No space for output resources!"
-				#return
-		#last_error = ""
-	#else:
-		#if _can_output():
-			#print("Mining starting")
-			#processor_progress_changed.emit(0)
-			#processing = true
-			#current_process_time = 0
-			#last_error = ""
-		#else:
-			#last_error = "No space for output resources!"
+## Intentionally not offer_followup_job or else construction workers end up picking this up
+func get_next_job(_pawn: PawnBase) -> JobBase:
+	if power_consumer.powered:
+		if _can_output(1):
+			var mining_job: Job_MineAsteroid = Job_MineAsteroid.new()
+			mining_job.setup(self)
+			mining_job.output_storage = output_storage
+			return mining_job
+		elif _pawn.current_module != owner_module:
+			var move_job: Job_MoveToLocation = Job_MoveToLocation.new()
+			move_job.destination_module = owner_module
+			return move_job
+	# Unpowered or unneeded, just idle for a bit
+	return Job_Idle.new()
 
 func has_ui() -> bool:
 	return false

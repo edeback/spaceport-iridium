@@ -4,7 +4,6 @@ extends Resource
 @export var name: String = ""
 @export var description: String = ""
 var priority: int = 0
-var repeat_after_finish: bool = false
 
 enum JobState { Starting, Moving, Working, Finished, Failed }
 
@@ -45,3 +44,14 @@ func cancel(_as_failed: bool) -> void:
 	
 func end_job() -> void:
 	job_end.emit()
+
+## Override to compute a followup job for pawn. Call this yourself (see
+## Job_GetResource.deposit_resource()) at the exact moment you know you've
+## succeeded, and push the result onto the pawn's queue immediately - don't
+## wait for end_job()/is_finished() to be noticed on a later _process()
+## tick. Node processing order between you and whatever you're offering a
+## followup on behalf of isn't guaranteed, so resolving eagerly and
+## synchronously inside your own success path is what keeps the handoff
+## race-free. Return null (the default) if there's nothing to chain into.
+func get_followup_job(_pawn: PawnBase) -> JobBase:
+	return null

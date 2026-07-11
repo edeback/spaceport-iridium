@@ -25,7 +25,12 @@ var current_job: JobBase = null:
 			current_job = new_job
 			job_changed.emit()
 			
-var job_mine_asteroid: Job_MineAsteroid = null
+
+## Jobs waiting for this specific pawn - chained followups (see
+## JobBase.get_followup_job) and queued needs (see queue_job()) alike.
+## Always checked before the shared board in start_job(), and never touched
+## by other pawns or JobManager.
+var job_queue: Array[JobBase] = []
 
 var job_length: float = 0
 
@@ -66,16 +71,45 @@ func try_start_job(new_job: JobBase) -> bool:
 	return false
 		
 
+func _process(delta: float) -> void:
+	job_length += delta
+	if current_job != null:
+		if current_job.is_failed() or current_job.is_finished():
+			_end_current_job()
+		else:
+			current_job.process_job(delta)
+	elif job_length > 1.0:
+		# We don't want to try to start new jobs more than once a second, such as
+		# if a job fails but then is posted and picked up again in rapid succession.
+		# This keeps us from doing things like running pathfinding every frame.
+		job_length = 0
+		start_job()
+
+func _end_current_job() -> void:
+	var finished_job: JobBase = current_job
+	current_job = null
+	finished_job.end_job()
+	# Intentionally don't start the next job immediately
+		
+
 func start_job() -> void:
 	# If we have an inventory, try to store it ASAP
 	if inventory_component != null and not inventory_component.is_empty():
 		var return_job: Job_StoreInventory = Job_StoreInventory.new()
 		if return_job.can_do_job(self):
-			current_job = return_job
-			current_job.start_job(self)
+			_begin_job(return_job)
 			return
 		# No storage will take what we're carrying right now — fall through and
 		# look for a normal job anyway rather than stalling the pawn entirely.
+	# Personal queue next - chained followups and queued needs. Checked once
+	# here rather than polled every frame by whatever queued them.
+	while not job_queue.is_empty():
+		var queued_job: JobBase = job_queue.pop_front()
+		if queued_job.is_valid() and queued_job.can_do_job(self):
+			_begin_job(queued_job)
+			return
+		queued_job.cancel(true)
+		queued_job.end_job()
 	current_job = Global.job_manager.find_job(self)
 	if current_job:
 		current_job.start_job(self)
@@ -83,64 +117,41 @@ func start_job() -> void:
 		# Wander!
 		var idle_job: Job_IdleWander = Job_IdleWander.new()
 		if idle_job.can_do_job(self):
-			current_job = idle_job
-			current_job.start_job(self)
+			_begin_job(idle_job)
 		else:
 			# Can't even move anywhere, idle pose
 			if animated_sprite != null:
 				animated_sprite.play("idle")
-		
-	#var processors: Array[Node] = get_tree().get_nodes_in_group("processor")
-	#if processors.size() > 0:
-		#job_mine_asteroid = Job_MineAsteroid.new()
-		#var processor_component: ComponentBase = processors.pick_random() as ComponentBase
-		#job_mine_asteroid.setup(processor_component.owner_module, self)
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	job_length += delta
+func _begin_job(job: JobBase) -> void:
+	current_job = job
+	current_job.start_job(self)
+
+## Adds a job to this pawn's personal queue, checked in start_job() ahead of
+## the shared board. Use this for queued needs - queue once when the need
+## arises instead of polling can_do_job() every frame. to_front = true jumps
+## ahead of anything already queued (what chained followup jobs use) but
+## still waits for the current job to finish - see interrupt_with_job() to
+## preempt immediately instead.
+func queue_job(job: JobBase, to_front: bool = false) -> void:
+	if to_front:
+		job_queue.push_front(job)
+	else:
+		job_queue.push_back(job)
+
+## Ends the current job right now - gracefully, not as a failure, so
+## anything the pawn is carrying is left for Job_StoreInventory to sweep up
+## afterward instead of lost - and starts new_job immediately. For needs
+## that can't wait, e.g. a pawn about to collapse from hunger.
+func interrupt_with_job(new_job: JobBase) -> void:
 	if current_job != null:
-		if current_job.is_failed() or current_job.is_finished():
-			current_job.end_job()
-			current_job = null
-		else:
-			current_job.process_job(delta)
-	elif job_length > 1.0:
-		job_length = 0
-		start_job()
-	#if traveling:
-		#var dist_to_travel: float = speed * delta
-		#var next_position: Vector2 = position
-		#while dist_to_travel > 0:
-			#if next_point >= path.size():
-				#break
-			#var next_point_position = path[next_point] * Vector2(Global.CELL_SIZE) + Vector2(32, 32)
-			#var travel_vector: Vector2 = next_point_position - next_position
-			#var dist_to_next_point = travel_vector.length()
-			#if dist_to_next_point <= dist_to_travel:
-				#next_position = next_point_position
-				#dist_to_travel -= dist_to_next_point
-				#next_point += 1
-			#else:
-				#next_position = position + travel_vector.normalized() * dist_to_travel
-				#dist_to_travel = 0
-				#break
-		#if next_position == position:
-			## We didn't move, we're done here
-			#traveling = false
-		#else:
-			#position = next_position
-				#
-		#
-	pass
+		var interrupted: JobBase = current_job
+		current_job = null
+		interrupted.cancel(false)
+		interrupted.end_job()
+	job_length = 0
+	_begin_job(new_job)
 
-#func _on_module_selected(selected_module: ModuleBase):
-	#destination_module = selected_module
-	#current_module = Global.path_manager.get_closest_module_by_position(position)
-	#path = Global.path_manager.run_pathfinding(current_module, destination_module)
-	#next_point = 0
-	#traveling = true
-	#pass
 
 #func _exit_tree() -> void:
 	#Global.path_manager.remove_vertex(self)
