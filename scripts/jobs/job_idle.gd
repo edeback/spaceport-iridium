@@ -22,13 +22,13 @@ func start_job(_pawn: PawnBase) -> void:
 	if pawn.animated_sprite != null:
 		pawn.animated_sprite.play("idle")
 	await pawn.get_tree().create_timer(duration, false).timeout
-	complete(true)
+	cancel(false)
 		
-func complete(as_success: bool) -> void:
-	if as_success:
-		state = JobState.Finished
-	else:
+func cancel(_as_failed: bool) -> void:
+	if _as_failed:
 		state = JobState.Failed
+	else:
+		state = JobState.Finished
 	
 	
 func is_failed() -> bool:

@@ -31,6 +31,7 @@ func ready_blueprint() -> void:
 	setup_storage_for_construction()
 	current_state = ConstructionState.NotStarted
 	owner_module.progress = 0
+	work_seconds_done = 0
 	Global.path_manager.change_vertex_group(owner_module, &"space")
 	
 func ready_constructed() -> void:
@@ -107,7 +108,6 @@ func _start_construction_job(add_to_board: bool) -> Job_ConstructModule:
 	construction_job.setup(owner_module)
 	construction_job.job_end.connect(_on_construction_job_end.bind(construction_job), CONNECT_ONE_SHOT)
 	current_state = ConstructionState.Constructing
-	work_seconds_done = 0
 	if add_to_board:
 		Global.job_manager.add_job(construction_job)
 	return construction_job
@@ -168,7 +168,9 @@ func _on_deconstruction_job_end(finished_job: Job_ConstructModule) -> void:
 		Global.job_manager.add_job(construction_job)
 
 func setup_storage_post_deconstruction() -> void:
+	Global.path_manager.change_vertex_group(owner_module, &"space")
 	material_storage.empty_all()
+	material_storage.add_to_group("resource_storage")
 	material_storage.accepts_imports = false
 	if owner_module.module_data.resource_costs.is_empty():
 		material_storage.display_storage_ui = false

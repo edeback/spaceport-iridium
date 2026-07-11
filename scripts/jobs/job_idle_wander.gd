@@ -44,17 +44,19 @@ func start_job(_pawn: PawnBase) -> void:
 		destination_module = destination
 		move_to_module()
 	else:
-		complete(false)
+		cancel(true)
 		
 func end_job() -> void:
 	super()
 		
 func complete(as_success: bool) -> void:
-	if as_success:
-		state = JobState.Finished
-	else:
+	cancel(!as_success)
+		
+func cancel(_as_failed: bool) -> void:
+	if _as_failed:
 		state = JobState.Failed
-	
+	else:
+		state = JobState.Finished
 
 func move_to_module() -> void:
 	state = JobState.Moving

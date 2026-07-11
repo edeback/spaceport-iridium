@@ -21,3 +21,8 @@ func subtask_changed() -> void:
 	else:
 		%CurrentSubTask.text = ""
 	%SubTaskContainer.visible = not %CurrentSubTask.text.is_empty()
+
+
+func _on_cancel_button_pressed() -> void:
+	if is_instance_valid(pawn) and pawn.current_job:
+		pawn.current_job.cancel(true)
