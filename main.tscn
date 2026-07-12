@@ -38,6 +38,7 @@
 [ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="23_gngh3"]
 [ext_resource type="AudioStream" uid="uid://6j2kp23eqf8s" path="res://assets/external/sci_fi_music_pack/Sci-Fi 1 Loop.ogg" id="26_0rl1p"]
 [ext_resource type="Texture2D" uid="uid://rts0ktv4mj0v" path="res://assets/sprites/truss_structure_new.png" id="31_4k2k6"]
+[ext_resource type="Script" uid="uid://bhfs7qjh80a6p" path="res://scripts/managers/unlock_manager.gd" id="31_come4"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2cqfq"]
 atlas = ExtResource("11_2cqfq")
@@ -7627,6 +7628,10 @@ stream = ExtResource("26_0rl1p")
 volume_db = -10.0
 autoplay = true
 parameters/looping = true
+
+[node name="UnlockManager" type="Node" parent="Managers" unique_id=1442880961]
+script = ExtResource("31_come4")
+metadata/_custom_type_script = "uid://bhfs7qjh80a6p"
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=595998923]
 position = Vector2(961, 542)

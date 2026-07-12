@@ -22,6 +22,8 @@ extends Resource
 @export var flippable: bool = false
 @export var flipped_scene: PackedScene
 
+signal module_lock_changed(locked: bool)
+
 func can_afford() -> bool:
 	for resource in resource_costs:
 		if resource.get_total() < resource_costs[resource]:
@@ -37,3 +39,6 @@ func withdraw_credit_cost() -> void:
 	var cost = resource_costs.get(Global.resource_manager.credit_resource, 0)
 	if cost > 0:
 		Global.resource_manager.credit_resource.force_withdraw(cost)
+
+func is_unlocked() -> bool:
+	return true

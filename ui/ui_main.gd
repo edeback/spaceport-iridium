@@ -16,6 +16,7 @@ var cur_resource_pile_screen: ResourcePileInventoryTab
 
 @export var temp_modules: Array[ModuleData] = []
 
+# Dictionary[String, Array[ModuleData]]
 var module_data_groups: Dictionary = {}
 var preview_model : ModuleBase
 var skip_emit: bool = false
@@ -69,9 +70,9 @@ func load_moduledatas() -> void:
 		if module_data.hidden:
 			continue
 		if module_data.tags.size() == 0:
-			module_data_groups.get_or_add("", []).append(module_data)
+			module_data_groups.get_or_add("", [] as Array[ModuleData]).append(module_data)
 		for tag: String in module_data.tags:
-			module_data_groups.get_or_add(tag, []).append(module_data)
+			module_data_groups.get_or_add(tag, [] as Array[ModuleData]).append(module_data)
 			
 			
 

@@ -165,7 +165,7 @@ func _notification(what: int) -> void:
 		if current_job != null:
 			current_job.cancel(true)
 			current_job = null
-			# TODO: We don't have pawn death in any meaningful way yet, so just conclude
+		# TODO: We don't have pawn death in any meaningful way yet, so just conclude
 		# if we're being destroyed, dump our inventory
 		var pile := ResourcePile.spawn(Global.world_manager.pawn_layer, global_position, current_module)
 		inventory_component.dump_all_to_pile(pile)

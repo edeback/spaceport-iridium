@@ -11,6 +11,7 @@ var turbolift_manager: TurboliftManager
 var resource_manager: ResourceManager
 var market_manager: MarketManager
 var asteroid_manager: AsteroidManager
+var unlock_manager: UnlockManager
 var ui_in_game: UIInGame
 var ui_main: UIMain
 var tilemap: TileMapLayer
