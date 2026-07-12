@@ -33,8 +33,8 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-Global="*res://managers/global.gd"
-SignalBus="*res://managers/signal_bus.gd"
+Global="*res://scripts/managers/global.gd"
+SignalBus="*res://scripts/managers/signal_bus.gd"
 
 [debug]
 
