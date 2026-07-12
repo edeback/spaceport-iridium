@@ -1,0 +1,76 @@
+[gd_scene format=3 uid="uid://1cce1a2cba56"]
+
+[ext_resource type="Script" uid="uid://cat860464mrfk" path="res://ui/windows/component_ui_panels/resource_pile_inventory_tab.gd" id="1_32527"]
+[ext_resource type="PackedScene" uid="uid://dpl5j5nblsyrt" path="res://ui/pawns/simple_inventory_row.tscn" id="2_ntgsg"]
+[ext_resource type="Texture2D" uid="uid://dx10vvcmha2ht" path="res://assets/external/craftpix_space_shooter/Buttons/BTNs/Close_BTN.png" id="3_ugveq"]
+[ext_resource type="Texture2D" uid="uid://doewhgldu2cyr" path="res://assets/external/craftpix_space_shooter/Buttons/BTNs_Active/Close_BTN.png" id="4_x3uet"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_0b5xn"]
+texture = ExtResource("3_ugveq")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_b0mwu"]
+texture = ExtResource("4_x3uet")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_di8rn"]
+texture = ExtResource("3_ugveq")
+modulate_color = Color(0.85933435, 0.91648823, 0.8338145, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_lk6r8"]
+texture = ExtResource("3_ugveq")
+modulate_color = Color(0.67481464, 0.67481464, 0.6748146, 1)
+
+[sub_resource type="InputEventKey" id="InputEventKey_ti31b"]
+device = -1
+keycode = 4194305
+
+[sub_resource type="Shortcut" id="Shortcut_5r7do"]
+events = [SubResource("InputEventKey_ti31b")]
+
+[node name="ResourcePileInventoryTab" type="PanelContainer" unique_id=542095038 node_paths=PackedStringArray("resource_container")]
+script = ExtResource("1_32527")
+simple_inventory_row = ExtResource("2_ntgsg")
+resource_container = NodePath("MarginContainer/VBoxContainer/ResourceContainer")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=2096749921]
+layout_mode = 2
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=743183908]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1249039200]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1428788160]
+layout_mode = 2
+text = "Resource Pile"
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1495259039]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 0
+theme_override_constants/margin_top = -5
+theme_override_constants/margin_right = -5
+
+[node name="Button" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer/MarginContainer" unique_id=114094646]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_styles/normal = SubResource("StyleBoxTexture_0b5xn")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_b0mwu")
+theme_override_styles/hover = SubResource("StyleBoxTexture_di8rn")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_lk6r8")
+shortcut = SubResource("Shortcut_5r7do")
+
+[node name="ResourceContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1835618931]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="HBoxContainer3" parent="MarginContainer/VBoxContainer/ResourceContainer" unique_id=590775976 instance=ExtResource("2_ntgsg")]
+layout_mode = 2
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/MarginContainer/Button" to="." method="_on_exit_button_pressed"]

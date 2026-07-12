@@ -3,6 +3,9 @@
 [ext_resource type="Script" uid="uid://bqbsdcud51dh1" path="res://data/resources/resource_pile.gd" id="1_omphe"]
 [ext_resource type="Texture2D" uid="uid://bsjqs513e7r80" path="res://assets/external/Spaceship Creation Kit/Assets/Props/propCrate01.png" id="2_aty3v"]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xyz"]
+size = Vector2(16, 18)
+
 [node name="ResourcePile" type="Node2D" unique_id=301733463]
 script = ExtResource("1_omphe")
 metadata/_custom_type_script = "uid://bqbsdcud51dh1"
@@ -10,3 +13,8 @@ metadata/_custom_type_script = "uid://bqbsdcud51dh1"
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=2142793]
 scale = Vector2(0.3, 0.3)
 texture = ExtResource("2_aty3v")
+
+[node name="ClickArea" type="Area2D" parent="." unique_id=253115428]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ClickArea" unique_id=582262323]
+shape = SubResource("RectangleShape2D_xyz")

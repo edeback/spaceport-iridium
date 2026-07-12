@@ -46,9 +46,17 @@ var parent_module: ModuleBase = null
 
 signal despawning
 signal pile_changed(resource: ResourceData, new_amount: int)
+signal resource_pile_clicked(resource_pile: ResourcePile)
 
 func _ready() -> void:
 	add_to_group("resource_debris")
+	$ClickArea.input_event.connect(_on_click_area_input_event)
+
+func _on_click_area_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
+	if event.is_action_pressed("build"):
+		get_viewport().set_input_as_handled()
+		resource_pile_clicked.emit(self)
+		Global.ui_main.resource_pile_clicked(self)
 
 func get_total(resource: ResourceData) -> int:
 	var container: ResourceStackContainer = contents.get(resource)

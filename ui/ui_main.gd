@@ -9,7 +9,10 @@ extends Control
 @export var resources_to_display: Array[ResourceData]
 
 @export var pawn_info_screen: PackedScene
-@export var cur_pawn_info: PawnInfoPanel
+var cur_pawn_info: PawnInfoPanel
+
+@export var resource_pile_screen: PackedScene
+var cur_resource_pile_screen: ResourcePileInventoryTab
 
 @export var temp_modules: Array[ModuleData] = []
 
@@ -104,11 +107,20 @@ func pawn_clicked(pawn: PawnBase) -> void:
 	if cur_pawn_info != null:
 		cur_pawn_info.queue_free()
 		if cur_pawn_info.pawn == pawn:
-			# Just close, nothign else
+			# Just close, nothing else
 			return
 	cur_pawn_info = pawn_info_screen.instantiate()
 	cur_pawn_info.set_pawn(pawn)
 	add_child(cur_pawn_info)
+	
+func resource_pile_clicked(pile: ResourcePile) -> void:
+	if cur_resource_pile_screen != null:
+		cur_resource_pile_screen.queue_free()
+		if cur_resource_pile_screen.resource_pile == pile:
+			return
+	cur_resource_pile_screen = resource_pile_screen.instantiate()
+	cur_resource_pile_screen.set_resource_pile(pile)
+	add_child(cur_resource_pile_screen)
 	
 func toggle_info_panel(selected_module: ModuleBase) -> void:
 	if %ModuleInfoPanel.visible == true and %ModuleInfoPanel.module_viewed == selected_module:
