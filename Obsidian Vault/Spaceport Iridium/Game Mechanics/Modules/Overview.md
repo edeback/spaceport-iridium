@@ -22,8 +22,7 @@ Promenade
 - Double-level hallway, effectively
 - Can get people between floors without tubes/lifts
 
-Service Tube
-- Basically a ladder between floors
+Stairs
 - High movement penalty
 - Low cost
 

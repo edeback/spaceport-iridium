@@ -8,8 +8,8 @@ Maybe two views?
 - Transportation
 	- Hallways, stairs (service tubes?), turbolift, teleporter (it's own module, not transport layer)
 - Can switch between views
-	- Transportation cutaway (see hallways, turbolift doors)
-	- Transportation detail (click on turbolift to see tubes, click on teleporter to see connections)
+	- Transportation cutaway (see hallways, turbolifts)
+	- Transportation detail (click on turbolift to see cabs available etc, click on teleporter to see connections)
 	- Module detail (show inside of modules, pawns can still be seen walking by but can't see hallways etc)
 - So therefore there are two "layers"
 	- Module layer
@@ -23,19 +23,8 @@ Maybe two views?
 		- Must be placed on a module
 		- When a module is removed, the transport stays
 		- Transport can be removed separately of a module
-			- Removing non-hallways leaves a hallway, can remove hallways to leave nothing
 	- Will need separate pathfinding for power/pawn movement maybe?
 		- Or maybe power is just universal? can't have separately powered sections?
-Or maybe turbolifts connected by "turboshafts"
-- Turbolifts take up normal module space
-- Turboshafts are placed in a new layer interface
-	- can be used for other pipes and such?
-- Can then go in any direction, horizontal, diagonal, etc
-	- Makes pathfinding more complicated probably
-Stairs could be from specific multi-level modules
-- Plazas or other recreational buildings
-- Command center
-- Power plants?
 
 Create JobBoard
 - Modules that need something will put a notice on the job board with a priority
@@ -76,13 +65,3 @@ Sickness and health
 	- DiseaseData
 - Treated by medical bay
 - Noise/vibration? from processing units
-
-
-May need to use 2d array instead of dictionary
-grid=Array()
-grid.resize(height);
-for i in range(height):
-   grid[i]=Array()
-   grid[i].resize(width)
-   for j in range(width):
-      grid\[i\]\[j\]=0

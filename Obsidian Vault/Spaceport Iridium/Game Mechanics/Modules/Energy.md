@@ -7,7 +7,9 @@ Solar panel
 Fusion reactor
 - Requires hydrogen fuel
 
-Hydrogen power cells
+Hydrogen fuel cells
+- Hydrogen + oxygen = energy + water
+- very inefficient compared to fusion
 
 Fission?
 - Would require uranium/plutonium to be a resource...

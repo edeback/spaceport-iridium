@@ -1,6 +1,5 @@
 
 
-Current goal:
 
 Money system:
 - Modules cost money
@@ -32,7 +31,7 @@ QoL:
 - Asteroids should have description of resources
 - Mass sell for docking bay
 - When flipping modules, double check validity
-- Hallways should do actual connection check to determine sprite as opposed to existence (can "connect" to airlocks going opposite direction even though not really connected)
+- Hallways should do actual connection check to determine sprite as opposed to existence
 - Click on a cell multiple times to get nodes behind the top one (important for corridors + stairs/turbolift + module/truss behind)
 - Ability to remove stored item _options_ from Docking bay but let them get removed instead of just destroying any in storage at the moment
 
@@ -86,14 +85,12 @@ current work:
 	- pathfind to specific path index inside a module, too
 - rework action_pathtotarget to be more general
 	- have some sort of edgedata for general things? teleporters
-	- ~~also move to character component instead of "action"~~
 	- Separate out path movement so that movement can be done by some external force (like turbolifts)
 		- Perhaps even make unit a child of the turbolift cab, then cab can move however it wants
 			- cab has set of destinations, informs each pawn when it reaches a floor
 		- 
 - fix module blocking building of other modules, and have some way of showing it visually
 - floating objects in space (with inventory) - recover scrap/deconstruction materials
-- ~~job_get_resource (and similar) should be able to have a high max and the pawn can do it a piece at a time, not failing if it can't do it all at once~~
 
 
 Truss

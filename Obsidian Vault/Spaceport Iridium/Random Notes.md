@@ -27,6 +27,7 @@ Travel?
 "Science tree"?
 - Instead of science, most new options will be purchasable (licensing rights)
 	- NeoNeutrino Labs, etc
+	- Unlocks new modules as well as upgrading existing modules
 - But maybe science lab for other unique options?
 
 Trading
