@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ResourceData" load_steps=3 format=3 uid="uid://c56jj6kgs36sx"]
+[gd_resource type="Resource" script_class="ResourceData" format=3 uid="uid://c56jj6kgs36sx"]
 
 [ext_resource type="Texture2D" uid="uid://268gxvltt1nr" path="res://ui/icons/precious_metals.svg" id="1_biixu"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_27x56"]
@@ -7,3 +7,4 @@
 script = ExtResource("2_27x56")
 name = "Gold"
 icon = ExtResource("1_biixu")
+default_cost = 50

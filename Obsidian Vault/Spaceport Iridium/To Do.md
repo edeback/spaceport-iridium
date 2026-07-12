@@ -34,12 +34,19 @@ QoL:
 - When flipping modules, double check validity
 - Hallways should do actual connection check to determine sprite as opposed to existence (can "connect" to airlocks going opposite direction even though not really connected)
 - Click on a cell multiple times to get nodes behind the top one (important for corridors + stairs/turbolift + module/truss behind)
+- Ability to remove stored item _options_ from Docking bay but let them get removed instead of just destroying any in storage at the moment
 
 Rework:
 - Power system to not need to run every frame?
 - Refactor jobs
 	- More generic jobs/actions
 	- System to set chains of actions/jobs and/or to pre-empt them
+	- Categories of jobs should have higher priority, like finishing completing a building
+	- Perhaps replace job priority with some sort of utility function
+		- Utility would be combo of distance, wants/needs(?), time since job dispatched, etc
+		- Then pick highest utility
+		- Might be super high resource cost to evaluate every frame
+	- Or instead of a single job queue, separate out per type so that it would be easy to pick up specific types of jobs?
 - Start removing process func as much as possible
 
 
@@ -70,6 +77,8 @@ Transportation modules:
 - Ability to turn off the door for turbolifts (stairs?) so they can skip floors
 	- Probably have some main "turbolift system" panel to handle all at once instead of going module by module
 - Better way of force-rechecking pathfinding when modules change vertex groups, not just when added/removed
+- Turbolift needs its own UI where all the modules are selected
+	- Can then set floors on/off, number of turbolifts, turbolift strategy?
 
 
 current work:
@@ -84,7 +93,7 @@ current work:
 		- 
 - fix module blocking building of other modules, and have some way of showing it visually
 - floating objects in space (with inventory) - recover scrap/deconstruction materials
-- job_get_resource (and similar) should be able to have a high max and the pawn can do it a piece at a time, not failing if it can't do it all at once
+- ~~job_get_resource (and similar) should be able to have a high max and the pawn can do it a piece at a time, not failing if it can't do it all at once~~
 
 
 Truss
@@ -94,11 +103,31 @@ Other ways of moving goods around:
 - Logistics Bay with roomba-like robots that can only do hauling tasks
 - Conveyor Belt module that connects two (or more?) buildings by sitting in-between them
 	- Automatically pushes goods from one module to another without needing manual labor
+	- Automated or explicit transfer? UI should at least show what is being transferred
+		- Maybe automatic - will auto-setup based on what modules are next to it
+			- Per-resource, checks storage outputs
+			- Those resources then don't get jobs created for them? or maybe just suspended while the belt is running and re-enabled if the output storage is full?
+		- Can then suspend any transfers that you don't want happening
 - Alternatively/additionally pipes or other tubes to connect different modules
 	- Would need a different layer(?)
 	- Liquids certainly, would other goods even make sense?
+- Have export storage permanently have large/infinite negative priority
+- Similarly, import storage permanently have large positive priority? This maybe needs more fine-tuning though, so you can, say, prioritize getting hydrogen to your reactor
 
 
 Time
 - Visible clock showing day ("cycle"?) and hour
 - Ability to pause, fast forward, slow down
+
+
+PawnInventory
+- Needs to register storage with the resource for tracking purposes
+- And then unregister when destroyed
+- Somehow combine/overlap with storage_component? Or just two lists in Resource is probably fine
+
+Jobs
+- Always call end_job when calling cancel?
+- Job_manager call cancel before removing instead of end_job directly?
+
+Pawnlayer:
+- Is this needed?? Pawns get reparented all the time

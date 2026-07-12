@@ -73,3 +73,20 @@ Resource item data
 Construction
 - Should show blocked areas when in "placing" mode?
 	- Have placing mode for each layer
+
+Roguelite aspects
+- Random events
+	- Event cards to pick from solution options
+- Crises
+	- Major "endgame"-style issues? Think Starsector crises scale
+	- Maybe build up over time and you know they are coming
+
+
+Some way to get out of a "death loop" especially early
+- Can easily use up all steel without having manufacturing set up or docking bay to buy/sell
+- DF has caravan once a year, perhaps trader available who will buy/sell without docking bay?
+- RimWorld also has very hard difficulty curve, but many things can be made of wood directly which is renewable
+- Excursions/expeditions could be used, but probably have a module requirement anyway so later game
+- Also teleporter to move resources directly, though again late-game
+	- Does teleporter need storage? or teleport directly to other storage?
+
