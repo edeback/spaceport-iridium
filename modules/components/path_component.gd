@@ -186,7 +186,7 @@ func _has_possible_connections() -> bool:
 	return false
 		
 func _can_connect(other_module: ModuleBase) -> bool:
-	return other_module != null and other_module != owner_module and (not self_connection_only or other_module.module_data == owner_module.module_data)
+	return other_module != null and other_module != owner_module and other_module.is_complete() and (not self_connection_only or other_module.module_data == owner_module.module_data)
 		
 ## Find the index of a connection between this and another module. -1 if not found
 func _find_connection(other_module: ModuleBase) -> int:
@@ -241,6 +241,8 @@ func has_door_to(cell_to_check: Vector2i, target_layer: WorldManager.StructureLa
 	return false
 	
 func try_connect_door(other_module: ModuleBase, cell_to_check: Vector2i) -> bool:
+	if not owner_module.is_complete():
+		return false
 	for index: int in door_connections:
 		if other_module.module_data.interaction_layer == door_connections[index]:
 			var door_cell: Vector2i = Global.world_to_cell(path_points[index])
@@ -268,9 +270,8 @@ func connect_doors() -> void:
 			continue
 		var door_cell: Vector2i = Global.world_to_cell(path_points[index])
 		var module: ModuleBase = Global.world_manager.get_module_by_cell(door_connections[index], owner_module.module_cell + door_cell)
-		if module == null:
-			if door_required:
-				module = Global.world_manager.add_module(Global.world_manager.hallway_module, owner_module.module_cell + door_cell)
+		if module == null and door_required and door_connections[index] == WorldManager.StructureLayer.CORRIDOR:
+			module = Global.world_manager.add_module(Global.world_manager.hallway_module, owner_module.module_cell + door_cell)
 		if module!= null and module != owner_module and module.get_path_component() and module.get_path_component().try_connect_door(owner_module, owner_module.module_cell + door_cell):
 			if door_required:
 				door_sprites[index].visible = false

@@ -24,12 +24,13 @@ var module_id: int = -1
 var module_cell: Vector2i
 var module_data: ModuleData
 var is_horizontal: bool = true
+enum BuildState { Preview, Blueprint, Built }
+var build_state: BuildState = BuildState.Preview
 
 ## Lazily created - null whenever there's no overflow/dumped material
 ## sitting in this module. See get_or_create_overflow_pile().
 var overflow_pile: ResourcePile = null
 
-var jobs = {}
 
 var _cached_path_component: PathComponent = null
 var _cached_structure_component: StructureComponent = null
@@ -89,10 +90,12 @@ func _ready() -> void:
 	on_place()
 	
 func ready_preview() -> void:
+	build_state = BuildState.Preview
 	for component: ComponentBase in components:
 		component.ready_preview()
 
 func ready_blueprint() -> void:
+	build_state = BuildState.Blueprint
 	if module_data.instant_build:
 		# Don't bother with blueprint if we're instant
 		ready_constructed()
@@ -101,9 +104,13 @@ func ready_blueprint() -> void:
 		component.ready_blueprint()
 	
 func ready_constructed() -> void:
+	build_state = BuildState.Built
 	for component: ComponentBase in components:
 		component.ready_constructed()
 	make_connections()
+
+func is_complete() -> bool:
+	return build_state == BuildState.Built
 
 func on_place() -> void:
 	if get_structure_component() != null and module_data.interaction_layer == WorldManager.StructureLayer.MODULE:
