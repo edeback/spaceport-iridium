@@ -33,3 +33,121 @@ Ixion
 		- Semi-automated, can assign specific resources
 	- Cargo ships
 		- Similar, can assign different resources to carry
+
+Startopia
+- notes from https://web.archive.org/web/20080811020803/http://www.rakrent.com/rtsc/rtsc_startopia.htm
+- One resource: Energy
+	- Used to buy buildings, pay units, and power buildings
+	- Sometimes you can only acquire a thing via a cargo crate (but you still buy it with energy)
+	- Recycling building: converts 1/4 cost of something back into energy
+- 9 alien races
+	- Salt Hogs: working class, work in recyclers/factories, cheap, require minimal facilities and dislike fancy ones
+	- Targ: Communicators, intelligence gathering. Average every way
+	- Greys: Medical, work in sick bays, enjoy basically everything
+	- Sirens: Hedonistic, run love nests.
+	- Kasvagorians: Tough, run security center, violent, don't like luxury
+	- Karmaramans: Farmers, peace-loving, like fancy things
+	- Turrakken: scientists, run laboratories, emotional, bore easily
+	- Zeden: Spiritual, run temples, upper-crust
+	- Gem Slugs: Unable to work, hard to please, poop resources though
+- 4 buildable droids
+	- Scuzzer droids: buy or build them if you have factories, do building/cleaning/repairing/hauling, only require energy.
+		- 3 classes, each one faster and more expensive to buy/maintain as the previous
+	- Security scuzzers: buy or build, attack threats
+- All aliens start as visitors but can be hired to become residents
+- 3 attributes:
+	- Skill: How well they work at their job
+	- Dedication: How long they stay at their post instead of wandering off
+	- Loyalty: How likely they'll help in a firefight
+- 9 stats:
+	- Body: health points, if low they are "ill" and will go to a sick bay
+	- Nourishment: Hunger
+	- Toilet: Personal hygiene, can get worse by eating or other activities, resolved by Lavatron or showers
+	- Love: Loneliness, resolved by Love Next
+	- Fun: boredom meter, awarded many ways but peeps bore easily, at zero they get depressed
+	- Sleep: tiredness, will rest in accommodation based on social status
+	- Soul: spirituality, at lower levels turn criminal and even murderers
+	- Mind: total mental state
+	- Drunk: 
+- Trade
+	- Without a dock, can only trade with one specific trader
+	- Star Dock allows passing ships to dock
+		- Each racial type buys/sells specific things
+	- Require Comsensor to communicate with traders and tourists/pilgrims and other quest-type events (medical emergencies)
+- Manufacturing
+	- Factories can build anything (cheaper than trading) but require knowing the tech
+	- Require buying extremely expensive tech crates or reverse engineering in the Laboratory
+- Research
+	- Laboratories are used to research by analyzing a crate item
+	- Tech tree of unlocks
+	- Can also improve existing techs, though that only makes them cheaper and faster to manufacture
+- Medicine
+	- All done via Sick Bay, though each sick bay can have different equipment of different quality
+	- Illness, many affect different races differently
+		- Radiation Sickness, not contagious
+		- Common cold, affects health only
+		- Solar Fever, affects health and mind, from solar flare
+		- Nymphitus, affects health/mind/love
+		- Lunar Pyschosis, health/mind/soul
+		- Hyperactivitus, health/mind/fun
+		- Gut Worm, health/mind/food
+		- Droop Eye, health/mind/sleep
+		- Volatile: severe health drop
+		- Blotchy Green, health/mind/soul
+		- Space Plague: just health, but very contagious
+		- Alien spawn: severe health, body explodes and spawns a huge Skrasher
+- Food
+	- Only Dine-O-Mat automated food vending machine
+		- Replicates food via energy, or uses food or mineral ores
+		- Different aliens like different types
+- Drink
+	- Gives fun but minus everything else
+	- Rough Bar - dive bar, cheap, violent
+	- Recreational Bar - generic
+	- Cocktail Bar - fancy
+	- Slug Apartments - Gem Slug only
+- Cleanliness
+	- Lavatrons: toilet/shower/change room
+	- Litter Bins: places for litter to go
+		- Lots of litter is bad for mental health and attract vermin, which cause disease
+- Love
+	- Love Nests and Oroflexes (weird alien rollercoaster)
+- Soul
+	- Only at temple on Bio-Deck, free but not removable
+- Sleep
+	- Sleep Berths - cramped and uncomfortable
+	- Star Motel - Better than sleep berths, house many folks
+	- Space Inn - all purpose middle-class, more expensive
+	- Palace Galactica - luxury accommodation, huge, expensive
+- Fun
+	- Retail Stores
+		- Sell goods to peeps while giving mind and fun
+		- Require supplies or else they will use energy
+		- Different ones are best for different aliens
+		- General Store, Computer Store, Combat Store, Music Shop, Leisure Store, Curiosity Shop
+	- Entertainment
+		- Disco (dance floor)
+		- Holodrome (IMAX theater)
+		- Roulesse Wheel (space casino) - losers lose fun while winners gain it
+		- Plaza Fountain - public park
+		- Viewing Gallery - portal to space
+		- Oroflex - rollercoaster?
+- Mind
+	- Conversations improve mind (or minus if they hate the other)
+	- Statues
+- Biodeck
+	- Giant greenhouse, can alter terrain
+	- Different terrain types can grow different plants
+	- Different plants can provide different supply crates
+- Security
+	- Security Center - enhances combat ability, sensor coverage, firing range of security turrets
+	- Security Turret - auto-turret
+	- Comsensor coverage also useful to detect bombs/criminals
+	- Security Scuzzers - droid police, auto-arrest criminals, require Rechargers
+- Criminals
+	- Peeps that are corrupt (low soul)
+	- Steal money, rarely murder
+	- Lockdown Brig to rehabilitate
+	- 
+Tech tree:
+![[Pasted image 20260712204434.png]]
