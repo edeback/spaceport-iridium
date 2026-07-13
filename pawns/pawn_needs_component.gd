@@ -33,7 +33,8 @@ signal sleep_changed(new_sleep: float)
 			hunger_value = new_hunger
 			hunger_changed.emit(hunger_value)
 signal hunger_changed(new_hunger: float)
-@export var hunger_duration_seconds: float = 600
+## Game-hours from full to empty. ~10h means a pawn eats roughly twice per cycle.
+@export var hunger_duration_hours: float = 10.0
 
 var _pending_eat_job: Job_Eat = null
 
@@ -46,7 +47,8 @@ var _pending_eat_job: Job_Eat = null
 			entertainment_value = new_entertainment
 			entertainment_changed.emit(entertainment_value)
 signal entertainment_changed(new_entertainment: float)
-@export var entertainment_duration_seconds: float = 900
+## Game-hours from full to empty.
+@export var entertainment_duration_hours: float = 15.0
 
 @export var has_social_need: bool = false
 @export var social_max: float = 100
@@ -57,11 +59,15 @@ signal entertainment_changed(new_entertainment: float)
 			social_value = new_social
 			social_changed.emit(social_value)
 signal social_changed(new_social: float)
-@export var social_duration_seconds: float = 1200
+## Game-hours from full to empty.
+@export var social_duration_hours: float = 20.0
 
 func _process(delta: float) -> void:
-	if has_hunger_need and hunger_duration_seconds > 0:
-		hunger_value -= delta / hunger_duration_seconds * hunger_max
+	var sim_hours: float = Global.time_manager.scale(delta) / TimeManager.SECONDS_PER_HOUR
+	if sim_hours <= 0.0:
+		return
+	if has_hunger_need and hunger_duration_hours > 0:
+		hunger_value -= sim_hours / hunger_duration_hours * hunger_max
 		# Interrupting causes issues since this happens every frame, as if there is no food,
 		# the pawn gets locked into trying to eat and can never do things like make more food
 		#if hunger_value < percent_critical and _needs_new_eat_job():
@@ -72,12 +78,12 @@ func _process(delta: float) -> void:
 			_pending_eat_job = Job_Eat.new()
 			_pending_eat_job.job_end.connect(finished_eating)
 			owner_pawn.queue_job(_pending_eat_job) # start when free
-	if has_social_need and social_duration_seconds > 0:
-		social_value -= delta / social_duration_seconds * social_max
+	if has_social_need and social_duration_hours > 0:
+		social_value -= sim_hours / social_duration_hours * social_max
 		if social_value < percent_to_look_for_needs:
 			pass
-	if has_entertainment_need and entertainment_duration_seconds > 0:
-		entertainment_value -= delta / entertainment_duration_seconds * entertainment_max
+	if has_entertainment_need and entertainment_duration_hours > 0:
+		entertainment_value -= sim_hours / entertainment_duration_hours * entertainment_max
 		if entertainment_value < percent_to_look_for_needs:
 			pass
 			

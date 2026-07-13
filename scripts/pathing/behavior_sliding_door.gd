@@ -8,15 +8,15 @@ func create_state(pc: PathComponent) -> RefCounted:
 	var door: AnimatedSprite2D = pc.get_node(door_node_path)
 	door.animation_finished.connect(func() -> void:
 		if door.frame != 0:
-			await pc.get_tree().create_timer(open_seconds).timeout
+			await Global.time_manager.sim_seconds(open_seconds)
 			set_door(door, false)
 	)
 	return null
-	
+
 func on_enter(pawn: PawnBase, door_index: int, meta: StringName, module: ModuleBase, next_node: Node2D, state: RefCounted) -> void:
 	var door: AnimatedSprite2D = module.get_node(door_node_path)
 	door.play("open")
-	await module.get_tree().create_timer(open_seconds).timeout
+	await Global.time_manager.sim_seconds(open_seconds)
 
 func set_door(door: AnimatedSprite2D, open: bool) -> void:
 	if door.is_playing():

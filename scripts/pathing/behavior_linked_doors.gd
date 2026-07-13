@@ -15,7 +15,7 @@ func create_state(pc: PathComponent) -> RefCounted:
 		# Automatically close the door after the timeout
 		door_sprite.animation_finished.connect(func() -> void:
 			if door_sprite.frame != 0:
-				await pc.get_tree().create_timer(open_seconds).timeout
+				await Global.time_manager.sim_seconds(open_seconds)
 				_set_door(state, door_name, false)
 		)
 	return state

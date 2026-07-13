@@ -21,7 +21,7 @@ func start_job(_pawn: PawnBase) -> void:
 	pawn = _pawn
 	if pawn.animated_sprite != null:
 		pawn.animated_sprite.play("idle")
-	await pawn.get_tree().create_timer(duration, false).timeout
+	await Global.time_manager.sim_seconds(duration)
 	cancel(false)
 		
 func cancel(_as_failed: bool) -> void:

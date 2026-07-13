@@ -4,22 +4,20 @@ extends ComponentBase
 @export var power_output: float = 100.0
 @export var resource_consumed: ResourceData
 @export var input_storage: StorageComponent
-@export var timer: Timer
-## 0 for no consumption at all (like a solar panel)
-@export var seconds_per_resource_consumed: float = 0:
-	set(new):
-		seconds_per_resource_consumed = new
-		timer.wait_time = seconds_per_resource_consumed
+## 0 for no consumption at all (like a solar panel). Fuel burn is tracked in
+## sim-seconds (the delta generate_power receives comes from the sim slow
+## tick), so it pauses and fast-forwards with the game.
+@export var seconds_per_resource_consumed: float = 0
 
 var powered: bool = false
 var force_off: bool = false
+## Sim-seconds of burn left on the currently loaded fuel unit.
+var _fuel_seconds_left: float = 0.0
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	super()
 	assert(seconds_per_resource_consumed == 0.0 or (input_storage != null and resource_consumed != null), "Processor must either not require resource or have resource storage!")
-	timer.wait_time = seconds_per_resource_consumed
-	timer.timeout.connect(restart_generation)
 
 func ready_preview() -> void:
 	pass
@@ -38,26 +36,28 @@ func disable_generation(disable: bool) -> void:
 		force_off = disable
 		if force_off:
 			powered = false
-			timer.paused = true
 		else:
-			powered = timer.time_left > 0
-			timer.paused = false
-		
+			# Already-loaded fuel resumes burning; fuel-free generators
+			# re-power on the next generate_power call.
+			powered = _fuel_seconds_left > 0.0 or seconds_per_resource_consumed == 0.0
+
 func restart_generation() -> void:
 	if force_off:
 		powered = false
 		return
 	if seconds_per_resource_consumed > 0:
-		if timer.is_stopped():
+		if _fuel_seconds_left <= 0.0:
 			if input_storage.withdraw(resource_consumed, 1):
 				powered = true
-				timer.start()
+				_fuel_seconds_left = seconds_per_resource_consumed
 			else:
 				powered = false
 	else:
 		powered = true
 
-func generate_power(_delta: float) -> float:
+func generate_power(delta: float) -> float:
+	if seconds_per_resource_consumed > 0 and powered and not force_off:
+		_fuel_seconds_left = maxf(_fuel_seconds_left - delta, 0.0)
 	restart_generation()
 	if powered:
 		return get_power_output()

@@ -11,9 +11,12 @@ signal power_updated(desired: float, generated: float)
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	Global.power_manager = self
+	# Power balance runs on the sim slow tick (4 Hz sim-time) instead of every
+	# frame; the interval passed is elapsed sim-seconds, so batteries and fuel
+	# integrate correctly across pause/fast-forward.
+	Global.time_manager.slow_tick.connect(power_modules)
 	#SignalBus.node_grouped.connect(node_added_to_group)
 	#SignalBus.node_ungrouped.connect(node_removed_from_group)
-	pass # Replace with function body.
 
 
 #func node_added_to_group(node: Node, group: String) -> void:
@@ -73,8 +76,3 @@ func power_modules(delta: float) -> void:
 				power_generated -= battery.store_power(delta, power_generated)
 				if power_generated < 0.000001:
 					break
-				
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass

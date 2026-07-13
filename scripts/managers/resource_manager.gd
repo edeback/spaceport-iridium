@@ -8,8 +8,9 @@ extends Node
 
 func _ready() -> void:
 	Global.resource_manager = self
-	
-func _process(delta: float) -> void:
+	Global.time_manager.slow_tick.connect(_on_slow_tick)
+
+func _on_slow_tick(_interval: float) -> void:
 	for resource: ResourceData in storable_resources:
 		resource._recalc_resource()
 	

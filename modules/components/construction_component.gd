@@ -36,6 +36,8 @@ func ready_blueprint() -> void:
 	
 func ready_constructed() -> void:
 	set_process(false)
+	# Ensure state is set if this was spawned already built
+	current_state = ConstructionState.Built
 	material_storage.empty_all()
 	material_storage.accepts_exports = false
 	material_storage.accepts_imports = false
@@ -56,6 +58,11 @@ func start_deconstruction() -> void:
 		work_seconds_done = work_seconds_to_complete * deconstruction_time_multiplier
 
 func _process(delta: float) -> void:
+	# State polling only (work progress arrives via the construction job, which
+	# is already sim-scaled through its pawn) - but don't advance states while
+	# the sim is paused.
+	if Global.time_manager.scale(delta) <= 0.0:
+		return
 	match current_state:
 		ConstructionState.Paused:
 			pass

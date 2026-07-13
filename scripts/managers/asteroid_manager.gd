@@ -15,8 +15,11 @@ func _ready() -> void:
 	
 	
 func _process(delta: float) -> void:
+	var sim_delta: float = Global.time_manager.scale(delta)
+	if sim_delta <= 0.0:
+		return
 	if asteroids.size() < 15:
-		last_spawn += delta
+		last_spawn += sim_delta
 		if last_spawn > 5:
 			last_spawn = 0
 			spawn_asteroid()

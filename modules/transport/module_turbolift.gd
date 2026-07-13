@@ -21,7 +21,7 @@ func _ready() -> void:
 	set_sprite(null)
 	door_sprite.animation_finished.connect(func() -> void:
 		if door_sprite.frame != 0:
-			await get_tree().create_timer(2).timeout
+			await Global.time_manager.sim_seconds(2.0)
 			set_door(true)
 	)
 	Global.turbolift_manager.add_turbolift_module(self)

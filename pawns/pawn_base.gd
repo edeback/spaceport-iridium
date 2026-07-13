@@ -72,12 +72,15 @@ func try_start_job(new_job: JobBase) -> bool:
 		
 
 func _process(delta: float) -> void:
-	job_length += delta
+	var sim_delta: float = Global.time_manager.scale(delta)
+	if sim_delta <= 0.0:
+		return
+	job_length += sim_delta
 	if current_job != null:
 		if current_job.is_failed() or current_job.is_finished():
 			_end_current_job()
 		else:
-			current_job.process_job(delta)
+			current_job.process_job(sim_delta)
 	elif job_length > 1.0:
 		# We don't want to try to start new jobs more than once a second, such as
 		# if a job fails but then is posted and picked up again in rapid succession.

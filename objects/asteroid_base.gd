@@ -25,8 +25,11 @@ func _exit_tree() -> void:
 	Global.path_manager.remove_vertex(self)
 
 func _process(delta: float) -> void:
-	position += speed_pixels_per_sec * delta * direction
-	sprite.rotation_degrees += delta * rotation_speed_deg_per_sec
+	var sim_delta: float = Global.time_manager.scale(delta)
+	if sim_delta <= 0.0:
+		return
+	position += speed_pixels_per_sec * sim_delta * direction
+	sprite.rotation_degrees += sim_delta * rotation_speed_deg_per_sec
 
 func mine_resource() -> ResourceData:
 	if resource_total_weights == 0 or cur_resources <= 0:

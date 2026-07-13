@@ -33,13 +33,16 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if owner_pawn.path_position_override != null:
 		return  # a cab (or similar) owns our position right now — just wait
+	var sim_delta: float = Global.time_manager.scale(delta)
+	if sim_delta <= 0.0:
+		return  # sim paused — hold position, resume exactly where we were
 	match state:
 		State.Moving:
 			if target == null or _pending_target != null:
 				state = State.Idle
 				return
 			state = State.Paused
-			await move(delta)
+			await move(sim_delta)
 			if state == State.Paused:
 				state = State.Moving
 		State.Paused:

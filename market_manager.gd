@@ -8,16 +8,17 @@ extends Node
 ## Resource -> Current stock
 var market_data: Dictionary[ResourceData, int] = {}
 
-@export var market_update_timer: Timer
-
 signal market_updated
 
 func _ready() -> void:
 	Global.market_manager = self
 	for resource: ResourceData in market_resources:
 		market_data[resource] = resource.default_market_supply
-	market_update_timer.timeout.connect(update_market)
-	market_update_timer.start()
+	# Market supply drifts back toward default once per game-hour.
+	Global.time_manager.hour_changed.connect(_on_hour_changed)
+
+func _on_hour_changed(_hour: int) -> void:
+	update_market()
 
 func update_market() -> void:
 	for resource: ResourceData in market_data:

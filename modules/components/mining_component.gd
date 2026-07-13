@@ -5,9 +5,13 @@ extends ComponentBase
 @export var power_consumer: PowerConsumptionComponent
 var mining_drone_scene: PackedScene = preload("res://pawns/mining_drone_pawn.tscn")
 @export var max_drones: int = 3
-@onready var drone_respawn_timer: Timer = $DroneRespawnTimer
+@export var drone_respawn_seconds: float = 5.0
 
 var drones: Array[MiningDronePawn] = []
+
+## Sim-seconds until the next drone builds; < 0 = not currently counting.
+## Only ticks while powered, so it pauses and fast-forwards with the game.
+var _respawn_time_left: float = -1.0
 
 var output_resource: ResourceData
 
@@ -20,8 +24,6 @@ func _ready() -> void:
 	super()
 	assert(output_storage != null, "Processor must have output_storage!")
 	assert(power_consumer != null, "Processor must have power_consumer!")
-	
-	drone_respawn_timer.timeout.connect(build_drone)
 	#output_resource = base_output_resource.duplicate()
 	#output_resource.base_resource = base_output_resource
 	#var mutiple: float = 0.0
@@ -40,7 +42,10 @@ func ready_constructed() -> void:
 	add_to_group("processor")
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	var sim_delta: float = Global.time_manager.scale(delta)
+	if sim_delta <= 0.0:
+		return
 	if !power_consumer.powered:
 		for drone: MiningDronePawn in drones:
 			drone.powered = false
@@ -50,8 +55,15 @@ func _process(_delta: float) -> void:
 	last_error = ""
 	for drone: MiningDronePawn in drones:
 		drone.powered = true
-	if drones.size() < max_drones and drone_respawn_timer.is_stopped():
-		drone_respawn_timer.start()
+	if drones.size() < max_drones:
+		if _respawn_time_left < 0.0:
+			_respawn_time_left = drone_respawn_seconds
+		_respawn_time_left -= sim_delta
+		if _respawn_time_left <= 0.0:
+			_respawn_time_left = -1.0
+			build_drone()
+	else:
+		_respawn_time_left = -1.0
 		
 func build_drone() -> void:
 	var new_drone: MiningDronePawn = mining_drone_scene.instantiate() as MiningDronePawn

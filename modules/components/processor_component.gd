@@ -44,11 +44,14 @@ func ready_constructed() -> void:
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
+	var sim_delta: float = Global.time_manager.scale(delta)
+	if sim_delta <= 0.0:
+		return
 	if !power_consumer.powered:
 		# Do nothing if unpowered
 		last_error = "No power!"
 		return
-	_stepwise_processing(delta)
+	_stepwise_processing(sim_delta)
 
 func _satisfies_recipe() -> bool:
 	for ingredient in recipe.inputs:

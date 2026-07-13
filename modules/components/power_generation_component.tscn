@@ -3,10 +3,6 @@
 [ext_resource type="Script" uid="uid://c21hu1pihnukm" path="res://modules/components/power_generation_component.gd" id="1_vi0vb"]
 [ext_resource type="PackedScene" uid="uid://dntuwww8jkpjt" path="res://ui/windows/power_generation_component_ui.tscn" id="2_6c6tn"]
 
-[node name="PowerGenerationComponent" type="Node2D" node_paths=PackedStringArray("timer")]
+[node name="PowerGenerationComponent" type="Node2D"]
 script = ExtResource("1_vi0vb")
-timer = NodePath("Timer")
 ui_info_panel_element = ExtResource("2_6c6tn")
-
-[node name="Timer" type="Timer" parent="."]
-one_shot = true

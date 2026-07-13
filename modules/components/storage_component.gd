@@ -39,14 +39,21 @@ var import_jobs: Array[Job_GetResource] = []
 const SMALL_FLOAT: float = 0.000001
 
 var storage_value_changed: bool = true
+## Whether the import/export job-posting scan runs; tracks the same lifecycle
+## states set_process used to gate (blueprint construction storage, or
+## constructed regular storage).
+var _posting_active: bool = false
 signal storage_changed(resource: ResourceData, new_value: int)
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	super()
+	# Posting scans run on the sim slow tick, not per frame, so they pause and
+	# fast-forward with the game. (Connections auto-clean when this is freed.)
+	Global.time_manager.slow_tick.connect(_on_slow_tick)
 	# Set up storage data that was set in the editor
 	for storage: StorageData in storage_data.values():
-		var num_to_create: int = storage.stored 
+		var num_to_create: int = storage.stored
 		if num_to_create > 0:
 			storage.stored = 0
 			storage.deposit(num_to_create, false)
@@ -61,25 +68,30 @@ func empty_all() -> void:
 
 func ready_preview() -> void:
 	set_process(false)
-	
+	_posting_active = false
+
 func ready_blueprint() -> void:
 	if construction_storage:
 		display_info_panel_ui = true
 		add_to_group("resource_storage")
 		set_process(true)
+		_posting_active = true
 	else:
 		display_info_panel_ui = false
 		set_process(false)
-	
+		_posting_active = false
+
 func ready_constructed() -> void:
 	if construction_storage:
 		display_info_panel_ui = false
 		remove_from_group("resource_storage")
 		set_process(false)
+		_posting_active = false
 	else:
 		display_info_panel_ui = true
 		add_to_group("resource_storage")
 		set_process(true)
+		_posting_active = true
 		if include_in_stats:
 			for resource: ResourceData in storage_data:
 				resource.register_component(self)
@@ -127,12 +139,16 @@ func remove_stored_resource(resource: ResourceData) -> void:
 		#import_jobs = jobs_to_keep
 			
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
+# UI-only per-frame work; the posting scan lives in _on_slow_tick.
 func _process(_delta: float) -> void:
 	# Move to only when changed
 	if display_storage_ui and storage_value_changed:
 		storage_value_changed = false
 		update_storage_ui()
+
+func _on_slow_tick(_interval: float) -> void:
+	if not _posting_active:
+		return
 	if power_consumption_component and not power_consumption_component.powered:
 		last_error = "No power!"
 		return

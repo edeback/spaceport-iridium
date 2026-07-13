@@ -27,7 +27,9 @@ func ready_constructed() -> void:
 	add_to_group("sustenance_component")
 	set_process(true)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if Global.time_manager.scale(delta) <= 0.0:
+		return
 	if sustenance_available <= sustenance_max - sustenance_per_food:
 		if storage_bay.withdraw(sustenance_resource, 1):
 			sustenance_available += sustenance_per_food

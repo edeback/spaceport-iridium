@@ -34,6 +34,9 @@ func set_apparent_position_y(new_y: float) -> void:
 	global_position.y = new_y + offset.y
 
 func _process(delta: float) -> void:
+	var sim_delta: float = Global.time_manager.scale(delta)
+	if sim_delta <= 0.0:
+		return
 	match state:
 		CabState.WAITING:
 			pass
@@ -58,7 +61,7 @@ func _process(delta: float) -> void:
 			# lerp global_position.y toward the next target floor's y at cab speed;
 			# also update global_position for every request in `onboard` to follow the cab.
 			# On arrival at a floor that's in `stops`: state = State.DOORS_OPEN.
-			var dist_to_move: float = speed * Global.CELL_SIZE.y * delta
+			var dist_to_move: float = speed * Global.CELL_SIZE.y * sim_delta
 			var dist_left: float = destination_module.global_position.y - get_apparent_position().y
 			# Probably want to recheck where we're going and stopping to pick up people on the way?
 			#var next_floor: ModuleTurbolift = shaft.get_floor_module(Global.world_to_cell(global_position).y + signf(dist_left))
