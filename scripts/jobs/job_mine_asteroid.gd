@@ -141,16 +141,19 @@ func mine_asteroid(delta: float) -> void:
 	time_mining += delta * efficiency
 	if time_mining >= default_seconds_to_mine:
 		time_mining = 0
+		# Can be null if another drone emptied the asteroid this frame - the
+		# is_empty() check below sends us hunting for a new one.
 		var mined_resource: ResourceData = asteroid.mine_resource()
-		var stack := ResourceStack.new()
-		stack.resource_data = mined_resource
-		stack.amount = 1
-		if mined_resource != null and mined_resource.has_variance:
-			var instance := OreInstanceData.new()
-			instance.richness = randf_range(ORE_RICHNESS_RANGE.x, ORE_RICHNESS_RANGE.y)
-			stack.instance_data = instance
-		pawn.inventory_component.add_stacks(mined_resource, [stack])
-		resources_mined_count += 1
+		if mined_resource != null:
+			var stack := ResourceStack.new()
+			stack.resource_data = mined_resource
+			stack.amount = 1
+			if mined_resource.has_variance:
+				var instance := OreInstanceData.new()
+				instance.richness = randf_range(ORE_RICHNESS_RANGE.x, ORE_RICHNESS_RANGE.y)
+				stack.instance_data = instance
+			pawn.inventory_component.add_stacks(mined_resource, [stack])
+			resources_mined_count += 1
 	if resources_mined_count >= max_mined or pawn.inventory_component.space_available() <= 0:
 		move_to_module()
 	elif asteroid.is_empty():

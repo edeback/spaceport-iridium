@@ -78,9 +78,10 @@ func eat(prev_success: bool) -> void:
 	if not prev_success:
 		cancel(true)
 		return
-	var sus_component: SustenanceComponent = pawn.current_module.get_component_by_type(SustenanceComponent) as SustenanceComponent
-	if sus_component != null:
-		var amount_consumed: int = sus_component.consume_sustenance(desired_sustenance)
+	# Eat from the component we chose and walked to, not whatever module we
+	# happen to be standing in - re-validated since the walk took time.
+	if is_instance_valid(target_component) and target_component.sustenance_available > 0:
+		var amount_consumed: int = target_component.consume_sustenance(desired_sustenance)
 		(pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent).hunger_value += amount_consumed
 		job_state = JobBase.JobState.Finished
 	else:

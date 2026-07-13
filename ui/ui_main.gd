@@ -58,39 +58,13 @@ func toggle_unlock_panel() -> void:
 	if unlock_panel.visible:
 		unlock_panel.refresh()
 
-func get_all_file_paths(path: String) -> Array[String]:
-	var file_paths: Array[String] = []
-	var dir: DirAccess = DirAccess.open(path)
-	dir.list_dir_begin()
-	var file_name: String = dir.get_next()
-	while file_name != "":
-		var file_path: String = path + "/" + file_name
-		if dir.current_is_dir():
-			file_paths += get_all_file_paths(file_path)
-		elif file_name.get_extension() == "tres":
-			file_paths.append(file_path)
-		file_name = dir.get_next()
-	return file_paths
-	
-func get_all_file_paths_resourceloader(path: String) -> Array[String]:
-	var file_paths: Array[String] = []
-	var directory_list := ResourceLoader.list_directory(path)
-	for file_name: String in directory_list:
-		file_name.replace(".import", "")
-		var file_path: String = path + "/" + file_name
-		if file_path.ends_with("/"):
-			file_paths += get_all_file_paths_resourceloader(file_path)
-		elif file_name.ends_with("tres"):
-			file_paths.append(file_path)
-	return file_paths
-
 func load_moduledatas() -> void:
 	var current_buttons = button_container.get_children()
 	for node in current_buttons:
 		button_container.remove_child(node)
 		node.queue_free()
 	module_data_groups.clear()
-	var file_paths: Array[String] = get_all_file_paths_resourceloader(MODULE_PATH)
+	var file_paths: Array[String] = ResourceScanner.scan_paths(MODULE_PATH)
 	for file_path: String in file_paths:
 		var module_data: ModuleData = ResourceLoader.load(file_path, "ModuleData")
 	#for module_data: ModuleData in temp_modules:

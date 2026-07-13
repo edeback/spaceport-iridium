@@ -72,11 +72,16 @@ func get_nearest_module_by_type(position: Vector2, module_data: ModuleData) -> M
 func purchase_and_add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false, allow_cost_overrun: bool = false) -> void:
 	if not allow_cost_overrun and !module_data.can_afford():
 		return
+	# Place first, pay after: add_module can refuse (blocked cell, overlap
+	# veto), and a failed placement must not cost anything. Can't pre-validate
+	# instead - overlap_module() has side effects (truss removes itself).
+	var new_module: ModuleBase = add_module(module_data, cell, is_horizontal, flipped)
+	if new_module == null:
+		return
 	if module_data.instant_build:
 		module_data.withdraw_cost()
 	else:
 		module_data.withdraw_credit_cost()
-	add_module(module_data, cell, is_horizontal, flipped)
 
 func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false) -> ModuleBase:
 	var module_scene: PackedScene = module_data.scene
@@ -87,7 +92,7 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 	if is_blocked(module_data.interaction_layer, cell, new_module.size):
 		print("Warning, attempted to add module where one exists at: " + str(cell))
 		new_module.free()
-		return
+		return null
 	# Note this only works for one-cell modules but right now only matters for those
 	var cancel_add: bool = false
 	for existing_module: ModuleBase in get_overlaps(module_data.interaction_layer, cell, new_module.size):
@@ -95,7 +100,7 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 			cancel_add = cancel_add or existing_module.overlap_module(module_data, is_horizontal)
 	if cancel_add:
 		new_module.free()
-		return
+		return null
 	new_module.position = Vector2(cell * Global.CELL_SIZE)
 	var module_id: int = _get_next_id()
 	new_module.module_id = module_id

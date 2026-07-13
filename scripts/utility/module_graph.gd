@@ -117,7 +117,9 @@ func remove_vertex(vertex: Node2D) -> void:
 	if old_vertex.group:
 		_linked_groups[old_vertex.group].erase(old_vertex)
 	_vertices.erase(vertex)
-	old_vertex.free()
+	# Vertices are RefCounted: dropping the dict/group references above is the
+	# cleanup. Erasing its edges from both sides (done above) also breaks the
+	# mutual-reference cycles so it can actually be collected.
 	_mark_dirty() # This may have split our graph
 	_emit_graph_changed()
 	

@@ -63,7 +63,7 @@ func _ready() -> void:
 # --- loading --------------------------------------------------------------
 
 func _load_unlocks() -> void:
-	for file_path: String in _tres_paths(UNLOCK_PATH):
+	for file_path: String in ResourceScanner.scan_paths(UNLOCK_PATH):
 		var res: Resource = ResourceLoader.load(file_path)
 		if res is UnlockData:
 			var unlock := res as UnlockData
@@ -75,7 +75,7 @@ func _load_unlocks() -> void:
 				force_unlock(unlock)
 
 func _load_local_upgrades() -> void:
-	for file_path: String in _tres_paths(LOCAL_UPGRADE_PATH):
+	for file_path: String in ResourceScanner.scan_paths(LOCAL_UPGRADE_PATH):
 		var res: Resource = ResourceLoader.load(file_path)
 		if res is LocalUpgradeData:
 			var upgrade := res as LocalUpgradeData
@@ -83,23 +83,6 @@ func _load_local_upgrades() -> void:
 				push_warning("LocalUpgradeData with empty id, skipping: " + file_path)
 				continue
 			_local_upgrades[upgrade.id] = upgrade
-
-func _tres_paths(path: String) -> Array[String]:
-	var out: Array[String] = []
-	var dir := DirAccess.open(path)
-	if dir == null:
-		return out
-	dir.list_dir_begin()
-	var file_name := dir.get_next()
-	while file_name != "":
-		var full := path.path_join(file_name)
-		if dir.current_is_dir():
-			out += _tres_paths(full)
-		elif file_name.get_extension() == "tres":
-			out.append(full)
-		file_name = dir.get_next()
-	dir.list_dir_end()
-	return out
 
 # --- queries --------------------------------------------------------------
 

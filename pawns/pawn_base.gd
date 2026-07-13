@@ -161,12 +161,18 @@ func interrupt_with_job(new_job: JobBase) -> void:
 		
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
-		Global.path_manager.remove_vertex(self)
+		if is_instance_valid(Global.path_manager):
+			Global.path_manager.remove_vertex(self)
 		if current_job != null:
 			current_job.cancel(true)
 			current_job = null
 		# TODO: We don't have pawn death in any meaningful way yet, so just conclude
-		# if we're being destroyed, dump our inventory
+		# if we're being destroyed, dump our inventory. Skipped during game
+		# teardown (managers already gone) and when there's nothing to dump.
+		if not is_instance_valid(inventory_component) or inventory_component.is_empty():
+			return
+		if not is_instance_valid(Global.world_manager) or not is_instance_valid(Global.world_manager.pawn_layer):
+			return
 		var pile := ResourcePile.spawn(Global.world_manager.pawn_layer, global_position, current_module)
 		inventory_component.dump_all_to_pile(pile)
 

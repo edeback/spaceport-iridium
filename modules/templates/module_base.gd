@@ -230,13 +230,13 @@ func _update_shader() -> void:
 func get_path_component() -> PathComponent:
 	if _cached_path_component:
 		return _cached_path_component
-	_cached_path_component = get_node("PathComponent")
+	_cached_path_component = get_node_or_null("PathComponent")
 	return _cached_path_component
-	
+
 func get_structure_component() -> StructureComponent:
 	if _cached_structure_component:
 		return _cached_structure_component
-	_cached_structure_component = get_node("StructureComponent")
+	_cached_structure_component = get_node_or_null("StructureComponent")
 	return _cached_structure_component
 	
 func make_connections() -> void:

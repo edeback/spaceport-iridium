@@ -1,5 +1,5 @@
 class_name ModuleGraphVertex
-extends Object
+extends RefCounted
 
 class EdgeData:
 	var cost: float = 0

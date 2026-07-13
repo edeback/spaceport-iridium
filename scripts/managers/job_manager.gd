@@ -32,8 +32,10 @@ func remove_job(job_data: JobBase) -> void:
 func find_job(pawn: PawnBase) -> JobBase:
 	for index: int in range(job_board.size() - 1, -1, -1):
 		var job_to_do: JobBase = job_board[index]
-		# Check that the job is still possible
+		# Check that the job is still possible. Cancel (not just end) so the
+		# requester releases its reservations / import-export slots.
 		if !job_to_do.is_valid():
+			job_to_do.cancel(true)
 			job_to_do.end_job()
 			job_board.remove_at(index)
 			continue

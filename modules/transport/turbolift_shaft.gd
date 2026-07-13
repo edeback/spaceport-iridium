@@ -76,12 +76,13 @@ func _best_cab_for(request: RideRequest) -> TurboliftCab:
 	if best_cab:
 		return best_cab
 	for cab: TurboliftCab in cabs:
-		if cab.is_available() and (cab.moving_up() == (cab.get_apparent_position().y > request.from_floor.global_position.y)) and (best_cab == null or request.from_floor.global_position.distance_squared_to(cab.get_apparent_position()) < request.from_floor.global_position.distance_squared_to(best_cab.global_position)):
+		if cab.is_available() and (cab.moving_up() == (cab.get_apparent_position().y > request.from_floor.global_position.y)) and (best_cab == null or request.from_floor.global_position.distance_squared_to(cab.get_apparent_position()) < request.from_floor.global_position.distance_squared_to(best_cab.get_apparent_position())):
 			best_cab = cab
 	if best_cab:
 		return best_cab
+	# Most free capacity as a proxy for the shortest current stop queue.
 	for cab: TurboliftCab in cabs:
-		if cab.is_available() and best_cab == null or cab.get_available_capacity() < best_cab.get_available_capacity():
+		if cab.is_available() and (best_cab == null or cab.get_available_capacity() > best_cab.get_available_capacity()):
 			best_cab = cab
 	return best_cab
 
@@ -106,7 +107,7 @@ func split_at(module: ModuleTurbolift) -> void:
 		if cab.current_turbolift == module:
 			cabs.erase(cab)
 			cab.destroy()
-	if floor_index != -1 and floor_index == 0 or floor_index == floors.size() - 1:
+	if floor_index == 0 or floor_index == floors.size() - 1:
 		# Top or bottom, not splitting
 		floors.erase(module)
 		return

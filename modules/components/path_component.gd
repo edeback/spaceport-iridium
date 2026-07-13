@@ -305,7 +305,9 @@ func remove_connections() -> void:
 				if door_required:
 					door_sprites[module_connections[module]].visible = true
 				door_disconnected.emit(Global.world_to_cell(path_points[module_connections[module]]), module.module_data.interaction_layer)
-		SignalBus.module_path_connection_removed.emit(owner_module, node)
+			# Signal is typed (ModuleBase, ModuleBase); plain Node2D space nodes
+			# get their edges removed via remove_vertex in the loop below instead.
+			SignalBus.module_path_connection_removed.emit(owner_module, module)
 	module_connections.clear()
 	for node in space_connections:
 		Global.path_manager.remove_vertex(node)

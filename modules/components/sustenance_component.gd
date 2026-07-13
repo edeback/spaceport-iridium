@@ -16,13 +16,16 @@ func _ready() -> void:
 
 func ready_preview() -> void:
 	override_ui = false
-	
+	set_process(false)
+
 func ready_blueprint() -> void:
 	override_ui = false
-	
+	set_process(false)
+
 func ready_constructed() -> void:
 	override_ui = true
 	add_to_group("sustenance_component")
+	set_process(true)
 
 func _process(_delta: float) -> void:
 	if sustenance_available <= sustenance_max - sustenance_per_food:

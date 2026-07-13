@@ -62,7 +62,7 @@ func set_sprite(_module: ModuleBase) -> void:
 			collision_upper.disabled = false
 			image_select += 1
 		else:
-			collision_upper.disabled = false
+			collision_upper.disabled = true
 		if Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.TURBOLIFT, module_cell + Vector2i(0, 1)) is ModuleTurbolift:
 			# There is a turbolift below
 			sprite.region_rect.position.x = 0

@@ -20,6 +20,10 @@ var current_turbolift: ModuleTurbolift = null
 # Destination floor when moving
 var destination_module: ModuleTurbolift
 
+# This is the grid-aligned position for use in cell calculation
+# as opposed to the visual position (which is centered at global_position)
+# When the cab is "in position" at a turbolift, this ends up pointing to the
+# top-left corner of that cell.
 func get_apparent_position() -> Vector2:
 	return	global_position - offset
 
@@ -219,7 +223,7 @@ func is_available() -> bool:
 
 # Get the number of available spots
 func get_available_capacity() -> int:
-	return capacity - onboard.size() + pickup_requests.size()
+	return capacity - (onboard.size() + pickup_requests.size())
 
 func destroy() -> void:
 	assigned_locations.clear()
