@@ -48,7 +48,7 @@ Ability to warp the entire station to a new system.
 There are global and local unlocks.
 Global unlocks are multiple different tech trees that are accessed from the main UI. Each unlock requires a certain number of credits as well as the previous techs to be unlocked. Each tree has a specific theme.
 
-Global unlocks include:
+Global unlocks could include:
 - A new module type
 - Increased efficiency of certain modules
 - New local upgrades available for certain modules
