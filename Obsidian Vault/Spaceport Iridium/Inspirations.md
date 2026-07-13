@@ -4,6 +4,12 @@ Dwarf Fortress
 Rimworld
 Startopia
 
+Dwarf Fortress/Rimworld
+- Materials matter for objects
+	- Gold is more beautiful but less durable, rock more durable than stone
+	- Clunky when having to choose up-front (additional step before module placement)
+		- But could instead have module upgrades (and sidegrades?) using alternate metals
+
 Ixion
 - Resources:
 	- Basic -> Advanced

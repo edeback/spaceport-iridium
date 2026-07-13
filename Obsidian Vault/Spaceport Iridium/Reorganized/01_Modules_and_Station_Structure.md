@@ -74,8 +74,8 @@ Life-support / crew-quality-of-life modules:
 - Greenhouses / Hydroponics Bay / Algae Vats
 - Sleeping Quarters — residences are meant to be self-contained, i.e. include their own shower and toilet.
 - Recreation Modules
-- Promenade — doubles as the station's main social hub.
-- Holodeck
+	- Promenade — doubles as the station's main social hub.
+	- Holodeck
 
 These pair with the life-related jobs pawns need to perform: sleeping, eating/drinking, socializing (see **03 – Pawns, Jobs & Life** for the job-system side of this).
 
@@ -85,6 +85,10 @@ These pair with the life-related jobs pawns need to perform: sleeping, eating/dr
 - Observatory / Astrometrics — spots incoming danger (pirates, solar storms) early, and produces science/research data. See **04 – World, Meta & Progression** for how research output gets used.
 - Ablative Armor
 - Shields
+- Electronic Warfare modules (offensive/defensive)
+	- Stuff like armor can't be turned off but perhaps other systems could be hacked
+- Weapons
+	- Lasers, railguns, etc
 
 ## Visual & Polish Ideas
 
@@ -95,6 +99,3 @@ These pair with the life-related jobs pawns need to perform: sleeping, eating/dr
 - Tiles should distinguish "solid" vs. "sparse" rendering — sparse when 2+ sides are open (showing substructure or exterior detail underneath), solid otherwise. Might actually need to be tracked per-side rather than as a single solid/sparse flag for the whole tile.
 - Truss should render invisible when it's sitting behind another module.
 
-## Open Roadmap Note
-
-An early roadmap entry mentions "place support structures" as a first step — this is presumably superseded by the truss system described above, but is noted here in case any of the original intent didn't carry over.

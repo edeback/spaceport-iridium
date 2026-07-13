@@ -1,1 +1,21 @@
 
+Start game
+- Build modules
+- Harvest resources
+- Earn money
+	- Selling to trade ships
+	- Trade contracts
+		- X resources by Y date
+		- Penalty if not completed, or not completed in full
+- Send some profit to ParentCorp?
+- Buy upgrades to station
+	- Licensing rights or whatever
+		- ParentCorp wasn't going to pay for them
+	- New options for earning money
+		- Visitors / Tourists
+- Buy upgrades to station
+	- Even more options for earning money
+		- Expeditions
+- Buy upgrades to station
+	- Can move station to new locations
+	- New "quests"/expeditions

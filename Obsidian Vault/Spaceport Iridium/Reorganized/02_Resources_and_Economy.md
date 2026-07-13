@@ -3,10 +3,14 @@
 ## Core Resources
 
 - **Energy** — used by most modules to operate.
+	- **Source**: Power generation modules
+		- Can be passive (solar panel) or active (fusion reactor)
 - **Water** — used by some modules (mess hall, farms).
 - **Credits** — used to buy resources, unlock module blueprints, and build modules.
 - **Oxygen** — used by environmental modules.
 - **Biomass** — used by food modules; produced as an output by residences and some food modules.
+
+
 
 ## Processible / Raw Resources
 
@@ -53,6 +57,7 @@ Speculative / later-game ideas:
 - Neutrinos
 - Antimatter
 - Dark matter
+- Quark matter
 
 ## Resource Gathering
 
@@ -82,3 +87,4 @@ Concern: it's easy to burn through all available steel (or similar) with no refi
 - RimWorld has a steep difficulty curve too, but a lot of early recipes can be made from wood, which is renewable — is there an equivalent renewable fallback here?
 - Excursions/expeditions could work as a bailout, but likely require a module to unlock, making them more of a mid-game safety net than an early one.
 - A teleporter could allow direct resource transfers — open question of whether it needs its own storage buffer or can teleport straight into another module's storage.
+- You are a part of a parent company, you could call them up and plead for resources (to be repaid at a later time). If you don't repay later they will be angry! (or default take your funds)
