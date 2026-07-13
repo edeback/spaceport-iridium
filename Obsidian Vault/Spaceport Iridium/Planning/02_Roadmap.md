@@ -1,0 +1,64 @@
+# Spaceport Iridium — Work Plan / Roadmap
+
+*Ordered plan of work. Each WI links to a full implementation doc in `Planning/Work Items/` (goal, files, steps, edge cases, verification) written to be handed to an implementing model one at a time. Later-phase items are outlined here only — write their docs when they get close, the ground under them will have shifted.*
+
+**Ordering logic:** stabilize what exists → put in the two foundations everything else needs (time, saves) → close the survival/economy loop so the game is *playable* end-to-end → then deepen. Each phase ends in a build you can actually play-test.
+
+---
+
+## Phase 0 — Stabilize & Foundations
+
+*Goal: current features stop lying to you; the two load-bearing systems every later feature depends on exist.*
+
+| # | Work item | Why now |
+|---|---|---|
+| WI-01 | [[Work Items/WI-01_Bug_Fix_Pass\|Bug-fix pass]] | Confirmed bugs (charge-without-build, turbolift crash, export-build data scan, signal type error) get more expensive to find later, and several corrupt play-tests |
+| WI-02 | [[Work Items/WI-02_Time_Manager\|Game clock & simulation tick]] | Needs, shifts, traders, market drift, solar cycles, events — all are expressed in game-time. Also retires the per-frame power/storage/needs polling in one stroke |
+| WI-03 | [[Work Items/WI-03_Save_Load\|Save/load system]] | Longest-lever foundation; every system added after this must ship its own save section, which is only cheap if the framework exists first. Unblocks long play-tests |
+
+## Phase 1 — Close the Core Loop
+
+*Goal: mine → refine → sell → unlock → expand, with a crew that lives on a schedule and can be gained or lost. The game becomes a game.*
+
+| # | Work item | Why this order |
+|---|---|---|
+| WI-04 | [[Work Items/WI-04_Job_System_Refactor\|Job system cleanup & categories]] | Do before adding more job types (sleep, hauling variants, repair); resolves the cancel/end lifecycle questions and adds per-category queues + finish-first boost |
+| WI-05 | [[Work Items/WI-05_Needs_Completion\|Needs: sleep, recreation, social, happiness]] | Turns pawns from robots into crew; consumes WI-02 game-hours; sleeping pods/social/entertainment components already exist as stubs |
+| WI-06 | [[Work Items/WI-06_Shifts_and_Schedules\|Shifts & schedules]] | Thin layer on WI-02 + WI-05: work/rest cycles, per-pawn schedule, off-shift pawns satisfy needs |
+| WI-07 | [[Work Items/WI-07_Crew_Lifecycle\|Crew arrival & departure]] | Population as a resource: crew arrives by shuttle, leaves/dies from neglect → the happiness system gets teeth and the abandonment lose-condition exists |
+| WI-08 | [[Work Items/WI-08_Traders_and_Docking\|Traders, docking flow & the caravan safety valve]] | Moves trade from instant-menu to ship-present fulfillment; periodic guaranteed trader kills the early-game death loop; export bin becomes real |
+
+## Phase 2 — Depth & Texture
+
+*Goal: the loop grows decisions. Mostly parallel-friendly; suggested order below.*
+
+| # | Work item | Notes |
+|---|---|---|
+| WI-09 | [[Work Items/WI-09_Ore_Variance_Refining\|Ore richness through refining]] | Small, high flavor-per-effort; variance data already flows end-to-end |
+| WI-10 | [[Work Items/WI-10_Placement_UX\|Placement & selection UX]] | Blocked-cell display, flip re-validation, stacked-cell click cycling, no-path indicator |
+| WI-11 | [[Work Items/WI-11_Turbolift_Management\|Turbolift system panel & floor control]] | Shaft-wide UI, floor skip, cab count, terrain speed multipliers |
+| WI-12 | [[Work Items/WI-12_Storage_QoL\|Storage QoL: venting, config, mass-sell]] | Vent/dump, remove-option-without-destroying, priority visibility |
+| WI-13 | [[Work Items/WI-13_Events_v1\|Random events v1]] | Event-card framework + market shock & ARC levy events; foundation for pirates/crises |
+| WI-14 | [[Work Items/WI-14_Contracts\|Trade contracts]] | Deliver X by cycle Y; uses WI-02 deadlines + WI-08 traders |
+
+## Phase 3 — Threat & Expansion (outline only; docs to be written when Phase 2 nears completion)
+
+- **Combat v1** — module structural HP, damaged-truss degradation, repair jobs, one pirate raid event with pay-off option. (Depends: WI-13 events, WI-04 job categories.)
+- **New modules pack** — Magscoop, Hydrogen Fuel Cells, Smelter/Polymer/Electronics factories as buildables (ProcessorComponent + recipes — mostly data work), Promenade, Holodeck.
+- **Logistics automation** — Logistics Bay (hauler robots reusing MiningDrone pattern), conveyor module. (Depends: WI-04.)
+- **Observatory & science trickle** — second research currency feeding unlock trees; early-warning hook for combat events.
+- **Health & disease** — DiseaseData, infection spread, Medical Bay. (Depends: WI-07 visitors.)
+- **Minimap & alerts feed** — becomes necessary as stations grow past a few screens.
+
+## Phase 4 — Horizon (design only, no commitments)
+
+ARC relationship arc & independence; expeditions; foreign relations/other stations; crises framework; station warp travel; New Game+ corporations; exotic elements; tutorial (SAI); audio pass.
+
+---
+
+### Standing rules for every work item
+
+1. Every new system ships with its `SaveManager` section (after WI-03) and its debug-console hooks (after WI-02's console, if included there).
+2. New periodic behavior subscribes to TimeManager ticks, never `_process` polling (after WI-02).
+3. New job types declare a category (after WI-04).
+4. Balance numbers live in `.tres` data, not code constants.
