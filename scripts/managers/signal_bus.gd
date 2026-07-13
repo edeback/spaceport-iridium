@@ -19,6 +19,10 @@ signal module_structure_connection_removed(from: ModuleBase, to: ModuleBase)
 signal module_selected(selected_module: ModuleBase)
 @warning_ignore("unused_signal")
 signal set_up_trade(trade_component: TradeComponent)
+@warning_ignore("unused_signal")
+signal global_unlock_changed(unlock: UnlockData)
+@warning_ignore("unused_signal")
+signal module_upgraded(module: ModuleBase)
 
 
 

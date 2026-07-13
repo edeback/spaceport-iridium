@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="UnlockData" format=3 uid="uid://csqavr4brugvy"]
+
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_icd25"]
+[ext_resource type="Script" uid="uid://c6vwp01mtmoyt" path="res://data/unlocks/effects/unlock_effect.gd" id="2_aatfa"]
+[ext_resource type="Texture2D" uid="uid://cs0ht0ea12qtx" path="res://assets/sprites/solar_panel_tilemap.png" id="3_aatfa"]
+[ext_resource type="Script" uid="uid://co6152j7b38nw" path="res://data/unlocks/unlock_data.gd" id="3_r0ok2"]
+[ext_resource type="Resource" uid="uid://b8vvj4s2ms0s8" path="res://data/modules/power/solar_panel_mdata.tres" id="3_seur2"]
+[ext_resource type="Script" uid="uid://byjsbe8qb3i7t" path="res://data/unlocks/effects/grant_module_effect.gd" id="4_4rg3e"]
+
+[sub_resource type="Resource" id="Resource_r0ok2"]
+script = ExtResource("4_4rg3e")
+module = ExtResource("3_seur2")
+metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_icd25"]
+atlas = ExtResource("3_aatfa")
+region = Rect2(0, 0, 64, 64)
+
+[resource]
+script = ExtResource("3_r0ok2")
+id = &"solar_panel_unlock"
+name = "Solar Panels"
+icon = SubResource("AtlasTexture_icd25")
+tree_id = &"power"
+effects = Array[ExtResource("2_aatfa")]([SubResource("Resource_r0ok2")])
+unlocked_by_default = true
+metadata/_custom_type_script = "uid://co6152j7b38nw"

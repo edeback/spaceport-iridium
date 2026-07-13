@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="UnlockData" format=3 uid="uid://dxgsgdvl3m8pv"]
+
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_f3bxf"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="2_p4jbh"]
+[ext_resource type="Script" uid="uid://c6vwp01mtmoyt" path="res://data/unlocks/effects/unlock_effect.gd" id="3_q5df2"]
+[ext_resource type="Resource" uid="uid://cu6f4qegt1ykk" path="res://data/modules/industrial_processors/hydroponics_bay_mdata.tres" id="4_q5df2"]
+[ext_resource type="Script" uid="uid://co6152j7b38nw" path="res://data/unlocks/unlock_data.gd" id="4_s6u3x"]
+[ext_resource type="Script" uid="uid://byjsbe8qb3i7t" path="res://data/unlocks/effects/grant_module_effect.gd" id="5_s6u3x"]
+[ext_resource type="Resource" uid="uid://cen0n7a2j58sn" path="res://data/unlocks/food_tree/algae_tank_unlock.tres" id="5_ubbv6"]
+[ext_resource type="Texture2D" uid="uid://bun3faac31aog" path="res://assets/sprites/hydroponics_bay.png" id="6_s6u3x"]
+
+[sub_resource type="Resource" id="Resource_f3bxf"]
+script = ExtResource("5_s6u3x")
+module = ExtResource("4_q5df2")
+metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
+
+[resource]
+script = ExtResource("4_s6u3x")
+id = &"hydroponics_unlock"
+name = "Hydroponics Bay"
+icon = ExtResource("6_s6u3x")
+tree_id = &"food"
+cost = Dictionary[ExtResource("1_f3bxf"), int]({
+ExtResource("2_p4jbh"): 1000
+})
+prerequisites = Array[ExtResource("4_s6u3x")]([ExtResource("5_ubbv6")])
+effects = Array[ExtResource("3_q5df2")]([SubResource("Resource_f3bxf")])
+metadata/_custom_type_script = "uid://co6152j7b38nw"

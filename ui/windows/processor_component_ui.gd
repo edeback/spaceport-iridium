@@ -18,11 +18,11 @@ func _get_resources_string(resources_used: Dictionary[ResourceData, int]) -> Str
 func set_processor_component(component: ProcessorComponent) -> void:
 	var input_string: String = _get_resources_string(component.recipe.inputs)
 	var output_string: String = _get_resources_string(component.recipe.outputs)
-	var recipe_string: String = PROCESSOR_RECIPE_FORMAT % [component.recipe.name, input_string, output_string, component.time_to_process]
+	var recipe_string: String = PROCESSOR_RECIPE_FORMAT % [component.recipe.name, input_string, output_string, component.get_process_time()]
 	processor_recipe_label.text = recipe_string
 	continuous_label.visible = false
 	processor_progress_bar.indeterminate = false
-	processor_progress_bar.value = component.current_process_time / component.time_to_process
+	processor_progress_bar.value = component.current_process_time / component.get_process_time()
 	component.processor_progress_changed.connect(on_process_progress_changed)
 
 func on_process_progress_changed(new_progress: float) -> void:

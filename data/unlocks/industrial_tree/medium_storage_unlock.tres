@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="UnlockData" format=3 uid="uid://6hmmxukbvr8u"]
+
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_gf1hl"]
+[ext_resource type="Script" uid="uid://c6vwp01mtmoyt" path="res://data/unlocks/effects/unlock_effect.gd" id="2_7nfd1"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="2_jv0n7"]
+[ext_resource type="Resource" uid="uid://c0o6agquw83kw" path="res://data/modules/storage/medium_storage.tres" id="4_8go20"]
+[ext_resource type="Script" uid="uid://byjsbe8qb3i7t" path="res://data/unlocks/effects/grant_module_effect.gd" id="4_mypb7"]
+[ext_resource type="Script" uid="uid://co6152j7b38nw" path="res://data/unlocks/unlock_data.gd" id="6_8d740"]
+[ext_resource type="Texture2D" uid="uid://dwhjco6536al4" path="res://assets/sprites/medium_storage.png" id="6_mj8g3"]
+
+[sub_resource type="Resource" id="Resource_ggx5n"]
+script = ExtResource("4_mypb7")
+module = ExtResource("4_8go20")
+metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
+
+[resource]
+script = ExtResource("6_8d740")
+id = &"medium_storage_unlock"
+name = "Medium Storage"
+icon = ExtResource("6_mj8g3")
+tree_id = &"industrial"
+cost = Dictionary[ExtResource("1_gf1hl"), int]({
+ExtResource("2_jv0n7"): 500
+})
+prerequisites = Array[ExtResource("6_8d740")]([null])
+effects = Array[ExtResource("2_7nfd1")]([SubResource("Resource_ggx5n")])
+metadata/_custom_type_script = "uid://co6152j7b38nw"

@@ -16,3 +16,4 @@ resource_costs = Dictionary[ExtResource("2_unrx2"), int]({
 ExtResource("3_pyd4u"): 4
 })
 tags = Array[String](["Storage"])
+unlocked_by_default = false

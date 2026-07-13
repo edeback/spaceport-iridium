@@ -7,10 +7,21 @@ extends ComponentBase
 @export var time_to_process: float = 1
 @export var power_consumer: PowerConsumptionComponent
 
+## Stat key routed through the owner module's stat-modifier layer. A MULT < 1
+## from a "faster processing" upgrade shortens the effective processing time.
+const STAT_PROCESS_TIME := &"process_time"
+
 var processing: bool = false
 var current_process_time: float = 0
 
 signal processor_progress_changed(new_progress: float)
+
+## Effective time to complete one recipe, after upgrades. Falls back to the raw
+## base value if this component isn't attached to a module yet.
+func get_process_time() -> float:
+	if owner_module != null:
+		return owner_module.get_effective_stat(STAT_PROCESS_TIME, time_to_process)
+	return time_to_process
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -76,9 +87,10 @@ func _deposit_outputs() -> void:
 
 func _stepwise_processing(delta: float) -> void:
 	if processing:
+		var effective_time: float = get_process_time()
 		current_process_time += delta
-		processor_progress_changed.emit(current_process_time / time_to_process)
-		if current_process_time >= time_to_process:
+		processor_progress_changed.emit(current_process_time / effective_time)
+		if current_process_time >= effective_time:
 			var can_output: bool = true
 			for ingredient in recipe.outputs:
 				var amount := recipe.outputs[ingredient]

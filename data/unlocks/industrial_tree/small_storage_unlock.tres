@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnlockData" format=3 uid="uid://bqo84f0t0gbm2"]
+
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_y3pbm"]
+[ext_resource type="Script" uid="uid://c6vwp01mtmoyt" path="res://data/unlocks/effects/unlock_effect.gd" id="2_d1hmf"]
+[ext_resource type="Resource" uid="uid://ibkvk5lxr6ut" path="res://data/modules/storage/small_storage.tres" id="3_aiwkt"]
+[ext_resource type="Texture2D" uid="uid://d2c777465bqbh" path="res://assets/sprites/small_storage.png" id="3_d1hmf"]
+[ext_resource type="Script" uid="uid://co6152j7b38nw" path="res://data/unlocks/unlock_data.gd" id="3_ggx5n"]
+[ext_resource type="Script" uid="uid://byjsbe8qb3i7t" path="res://data/unlocks/effects/grant_module_effect.gd" id="4_lub01"]
+
+[sub_resource type="Resource" id="Resource_ggx5n"]
+script = ExtResource("4_lub01")
+module = ExtResource("3_aiwkt")
+metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
+
+[resource]
+script = ExtResource("3_ggx5n")
+id = &"small_storage_unlock"
+name = "Small Storage"
+icon = ExtResource("3_d1hmf")
+tree_id = &"industrial"
+effects = Array[ExtResource("2_d1hmf")]([SubResource("Resource_ggx5n")])
+unlocked_by_default = true
+metadata/_custom_type_script = "uid://co6152j7b38nw"

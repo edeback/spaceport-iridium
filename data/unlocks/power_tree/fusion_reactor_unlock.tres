@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="UnlockData" format=3 uid="uid://dpo43pgrpraj4"]
+
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_ul13v"]
+[ext_resource type="Script" uid="uid://c6vwp01mtmoyt" path="res://data/unlocks/effects/unlock_effect.gd" id="2_vg7nl"]
+[ext_resource type="Resource" uid="uid://ddwo8htifu16c" path="res://data/modules/power/fusion_reactor.tres" id="3_ga0ui"]
+[ext_resource type="Script" uid="uid://co6152j7b38nw" path="res://data/unlocks/unlock_data.gd" id="3_hg6n5"]
+[ext_resource type="Texture2D" uid="uid://dfede6crsr025" path="res://assets/sprites/fusion_reactor.png" id="3_vg7nl"]
+[ext_resource type="Script" uid="uid://byjsbe8qb3i7t" path="res://data/unlocks/effects/grant_module_effect.gd" id="4_iys1x"]
+[ext_resource type="Resource" uid="uid://csqavr4brugvy" path="res://data/unlocks/power_tree/solar_panel_unlock.tres" id="7_t5plh"]
+
+[sub_resource type="Resource" id="Resource_hg6n5"]
+script = ExtResource("4_iys1x")
+module = ExtResource("3_ga0ui")
+metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
+
+[resource]
+script = ExtResource("3_hg6n5")
+id = &"fusion_reactor_unlock"
+name = "Fusion Reactor"
+icon = ExtResource("3_vg7nl")
+tree_id = &"power"
+prerequisites = Array[ExtResource("3_hg6n5")]([ExtResource("7_t5plh")])
+effects = Array[ExtResource("2_vg7nl")]([SubResource("Resource_hg6n5")])
+metadata/_custom_type_script = "uid://co6152j7b38nw"

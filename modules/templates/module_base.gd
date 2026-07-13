@@ -35,6 +35,14 @@ var overflow_pile: ResourcePile = null
 var _cached_path_component: PathComponent = null
 var _cached_structure_component: StructureComponent = null
 
+## Runtime stat-modifier layer. Components read effective stats through
+## get_effective_stat() so local/global upgrades apply non-destructively.
+var stat_modifiers: StatModifiers = StatModifiers.new()
+
+## Per-instance local upgrade tiers (upgrade -> times purchased). This is the
+## state that makes two modules of the same type differ.
+var local_upgrade_tiers: Dictionary[LocalUpgradeData, int] = {}
+
 
 const SHADER_PARAM_PREVIEW = "PREVIEW"
 const SHADER_PARAM_PLACEABLE = "PLACEABLE"
@@ -105,12 +113,54 @@ func ready_blueprint() -> void:
 	
 func ready_constructed() -> void:
 	build_state = BuildState.Built
+	# Pull in any global (module-type-wide) stat modifiers unlocked so far.
+	if Global.unlock_manager != null:
+		Global.unlock_manager.apply_global_modifiers(self)
 	for component: ComponentBase in components:
 		component.ready_constructed()
 	make_connections()
 
 func is_complete() -> bool:
 	return build_state == BuildState.Built
+
+## Apply this module's active stat modifiers (from local/global upgrades) to a
+## component's base value. Components should route their tunable @export stats
+## through here rather than reading the raw value directly.
+func get_effective_stat(stat: StringName, base: float) -> float:
+	return stat_modifiers.get_effective(stat, base)
+
+# --- local (per-instance) upgrades ---------------------------------------
+
+func get_local_upgrade_tier(upgrade: LocalUpgradeData) -> int:
+	return local_upgrade_tiers.get(upgrade, 0)
+
+## True if the next tier of this upgrade can be purchased on this module right
+## now (type matches, globally unlocked, tier remaining, prereqs met, affordable).
+func can_apply_local_upgrade(upgrade: LocalUpgradeData) -> bool:
+	if upgrade == null:
+		return false
+	if not upgrade.matches_module(module_data):
+		return false
+	if not upgrade.is_globally_unlocked():
+		return false
+	if get_local_upgrade_tier(upgrade) >= upgrade.max_tiers:
+		return false
+	for prereq: LocalUpgradeData in upgrade.prerequisites:
+		if get_local_upgrade_tier(prereq) < 1:
+			return false
+	return upgrade.can_afford(get_local_upgrade_tier(upgrade))
+
+## Purchase the next tier: spend its (tier-scaled) cost and stack its modifiers.
+func try_apply_local_upgrade(upgrade: LocalUpgradeData) -> bool:
+	if not can_apply_local_upgrade(upgrade):
+		return false
+	var tier: int = get_local_upgrade_tier(upgrade)
+	upgrade.withdraw_cost(tier)
+	local_upgrade_tiers[upgrade] = tier + 1
+	for spec: StatModifierSpec in upgrade.modifiers:
+		stat_modifiers.add_modifier(spec.stat, spec.op, spec.value, upgrade.id)
+	SignalBus.module_upgraded.emit(self)
+	return true
 
 func on_place() -> void:
 	if get_structure_component() != null and module_data.interaction_layer == WorldManager.StructureLayer.MODULE:

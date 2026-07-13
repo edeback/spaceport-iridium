@@ -14,6 +14,10 @@ extends Resource
 ## If hidden, does not show in UI
 @export var hidden: bool = false
 
+## If true, this module is buildable from the start. Set false for modules gated
+## behind a global unlock - a GrantModuleEffect flips it on at runtime.
+@export var unlocked_by_default: bool = true
+
 ## Where the structure is placed
 @export var interaction_layer: WorldManager.StructureLayer = WorldManager.StructureLayer.MODULE
 ## Where the structure connects to, could be cross-layer
@@ -41,4 +45,8 @@ func withdraw_credit_cost() -> void:
 		Global.resource_manager.credit_resource.force_withdraw(cost)
 
 func is_unlocked() -> bool:
-	return true
+	if unlocked_by_default:
+		return true
+	if Global.unlock_manager != null:
+		return Global.unlock_manager.is_module_granted(self)
+	return false
