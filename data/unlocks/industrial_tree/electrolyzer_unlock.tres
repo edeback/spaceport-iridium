@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="UnlockData" format=3 uid="uid://byjlxgedr7ghp"]
+
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_vybbn"]
+[ext_resource type="Script" uid="uid://c6vwp01mtmoyt" path="res://data/unlocks/effects/unlock_effect.gd" id="2_2y8eu"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="2_rjf5y"]
+[ext_resource type="Script" uid="uid://co6152j7b38nw" path="res://data/unlocks/unlock_data.gd" id="3_4fych"]
+[ext_resource type="Resource" uid="uid://b0cfkopyrq5xk" path="res://data/modules/industrial_processors/electrolysis_processor_mdata.tres" id="4_367yf"]
+[ext_resource type="Script" uid="uid://byjsbe8qb3i7t" path="res://data/unlocks/effects/grant_module_effect.gd" id="5_h8kg0"]
+[ext_resource type="Texture2D" uid="uid://cehyi04xka2bp" path="res://assets/sprites/electrolyzer.png" id="6_5o4pb"]
+[ext_resource type="Resource" uid="uid://bqo84f0t0gbm2" path="res://data/unlocks/industrial_tree/small_storage_unlock.tres" id="8_xcui0"]
+
+[sub_resource type="Resource" id="Resource_rjf5y"]
+script = ExtResource("5_h8kg0")
+module = ExtResource("4_367yf")
+metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
+
+[resource]
+script = ExtResource("3_4fych")
+id = &"electrolyzer_unlock"
+name = "Electrolyzer"
+description = "Breaks apart water into hydrogen and oxygen."
+icon = ExtResource("6_5o4pb")
+tree_id = &"industrial"
+cost = Dictionary[ExtResource("1_vybbn"), int]({
+ExtResource("2_rjf5y"): 400
+})
+prerequisites = Array[ExtResource("3_4fych")]([ExtResource("8_xcui0")])
+effects = Array[ExtResource("2_2y8eu")]([SubResource("Resource_rjf5y")])
+metadata/_custom_type_script = "uid://co6152j7b38nw"

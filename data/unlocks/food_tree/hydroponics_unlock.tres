@@ -18,6 +18,7 @@ metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
 script = ExtResource("4_s6u3x")
 id = &"hydroponics_unlock"
 name = "Hydroponics Bay"
+description = "Flowers and vegetables!"
 icon = ExtResource("6_s6u3x")
 tree_id = &"food"
 cost = Dictionary[ExtResource("1_f3bxf"), int]({

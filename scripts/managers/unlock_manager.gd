@@ -14,6 +14,16 @@ extends Node
 const UNLOCK_PATH: String = "res://data/unlocks/"
 const LOCAL_UPGRADE_PATH: String = "res://data/local_upgrades/"
 
+## Bump when the save format changes incompatibly.
+const SAVE_VERSION: int = 1
+const SAVE_PATH: String = "user://unlocks.save"
+
+## When true, global unlocks auto-load from SAVE_PATH at startup and auto-save
+## on every purchase. Off by default so unlocks don't silently persist before a
+## central save system exists / you opt in. The Dictionary API and disk helpers
+## work regardless of this flag.
+@export var auto_persist: bool = false
+
 ## Runtime record of one active global, type-wide stat modifier.
 class GlobalStatMod extends RefCounted:
 	var tags: Array[String]
@@ -47,6 +57,8 @@ func _ready() -> void:
 	Global.unlock_manager = self
 	_load_unlocks()
 	_load_local_upgrades()
+	if auto_persist:
+		load_from_file()
 
 # --- loading --------------------------------------------------------------
 
@@ -114,14 +126,27 @@ func is_unlocked(unlock: UnlockData) -> bool:
 func is_module_granted(module: ModuleData) -> bool:
 	return _granted_modules.has(module)
 
+func get_unlock_by_id(id: StringName) -> UnlockData:
+	return _unlocks.get(id)
+
+func get_local_upgrade_by_id(id: StringName) -> LocalUpgradeData:
+	return _local_upgrades.get(id)
+
+## True if every (non-null) prerequisite of this unlock is already owned.
+func prerequisites_met(unlock: UnlockData) -> bool:
+	if unlock == null:
+		return false
+	for prereq: UnlockData in unlock.prerequisites:
+		# Null entries are placeholders in authored data - ignore them.
+		if prereq != null and not is_unlocked(prereq):
+			return false
+	return true
+
 ## Purchasable = not already owned, all prerequisites owned, and affordable.
 func can_unlock(unlock: UnlockData) -> bool:
 	if unlock == null or is_unlocked(unlock):
 		return false
-	for prereq: UnlockData in unlock.prerequisites:
-		if not is_unlocked(prereq):
-			return false
-	return unlock.can_afford()
+	return prerequisites_met(unlock) and unlock.can_afford()
 
 # --- mutation -------------------------------------------------------------
 
@@ -134,12 +159,16 @@ func try_unlock(unlock: UnlockData) -> bool:
 		if effect != null:
 			effect.apply(self, unlock)
 	SignalBus.global_unlock_changed.emit(unlock)
+	if auto_persist:
+		save_to_file()
 	return true
 	
-## Set unlocked without going through cost or prereq checks
+## Set unlocked without going through cost or prereq checks (starting nodes, or
+## a future load-from-save path).
 func force_unlock(unlock: UnlockData) -> void:
 	if unlock == null or is_unlocked(unlock):
 		return
+	_unlocked_ids[unlock.id] = true
 	for effect: UnlockEffect in unlock.effects:
 		if effect != null:
 			effect.apply(self, unlock)
@@ -190,3 +219,65 @@ func _constructed_modules() -> Array[ModuleBase]:
 		if node is ModuleBase and (node as ModuleBase).is_complete():
 			out.append(node)
 	return out
+
+# --- persistence ----------------------------------------------------------
+# Only the set of unlocked ids is stored; granted modules and global stat
+# modifiers are derived by re-running each unlock's effects on load. A central
+# save system can call get_save_data()/load_save_data() and fold the result into
+# its own file; the *_file helpers are a self-contained convenience.
+
+func get_save_data() -> Dictionary:
+	var ids: Array[String] = []
+	for id: StringName in _unlocked_ids:
+		ids.append(String(id))
+	return {"version": SAVE_VERSION, "unlocked": ids}
+
+func load_save_data(data: Dictionary) -> void:
+	_clear_unlock_state()
+	for id_str: String in data.get("unlocked", []):
+		var unlock := get_unlock_by_id(StringName(id_str))
+		if unlock != null:
+			# force_unlock re-marks it owned and re-runs effects, regenerating
+			# granted modules and global modifiers.
+			force_unlock(unlock)
+		else:
+			push_warning("Unknown unlock id in save, skipping: " + id_str)
+
+## Reset all owned/derived global-unlock state. Intended for a fresh load; if
+## called mid-game it also strips applied global modifiers from live modules and
+## re-hides granted module buttons.
+func _clear_unlock_state() -> void:
+	for source: StringName in _global_modifiers.keys():
+		for module: ModuleBase in _constructed_modules():
+			module.stat_modifiers.remove_source(source)
+	_global_modifiers.clear()
+	for module_data: ModuleData in _granted_modules.keys():
+		module_data.module_lock_changed.emit(false)
+	_granted_modules.clear()
+	_unlocked_ids.clear()
+
+func save_to_file(path: String = SAVE_PATH) -> Error:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		push_warning("Could not open unlock save for writing: " + path)
+		return FileAccess.get_open_error()
+	file.store_string(JSON.stringify(get_save_data()))
+	file.close()
+	return OK
+
+## Returns true if a save was found and applied.
+func load_from_file(path: String = SAVE_PATH) -> bool:
+	if not FileAccess.file_exists(path):
+		return false
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		push_warning("Could not open unlock save for reading: " + path)
+		return false
+	var text := file.get_as_text()
+	file.close()
+	var parsed: Variant = JSON.parse_string(text)
+	if not parsed is Dictionary:
+		push_warning("Unlock save file is malformed: " + path)
+		return false
+	load_save_data(parsed)
+	return true

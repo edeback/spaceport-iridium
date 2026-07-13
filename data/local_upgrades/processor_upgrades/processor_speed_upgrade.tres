@@ -3,15 +3,20 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_de2le"]
 [ext_resource type="Script" uid="uid://icaptocm87ny" path="res://modules/templates/stat_modifier_spec.gd" id="2_0eb1d"]
 [ext_resource type="Texture2D" uid="uid://cqxip4x3ocaca" path="res://assets/external/craftpix_space_shooter/Buttons/BTNs_Active/Forward_BTN.png" id="2_4s0ow"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="2_lod1o"]
 [ext_resource type="Script" uid="uid://esnvspsqth7k" path="res://data/local_upgrades/local_upgrade_data.gd" id="3_4s0ow"]
 [ext_resource type="Resource" uid="uid://dwd7w8s5tylyw" path="res://data/local_upgrades/processor_upgrades/processor_speed_spec.tres" id="4_4s0ow"]
 
 [resource]
 script = ExtResource("3_4s0ow")
 id = &"processor_speed_upgrade"
-name = "Speed Enchancement"
+name = "Speed Enhancement"
+description = "Hyperoptimize processing"
 icon = ExtResource("2_4s0ow")
 applies_to = Array[String](["Industrial"])
 max_tiers = 3
+cost = Dictionary[ExtResource("1_de2le"), int]({
+ExtResource("2_lod1o"): 500
+})
 modifiers = Array[ExtResource("2_0eb1d")]([ExtResource("4_4s0ow")])
 metadata/_custom_type_script = "uid://esnvspsqth7k"

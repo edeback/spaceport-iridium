@@ -162,6 +162,28 @@ func try_apply_local_upgrade(upgrade: LocalUpgradeData) -> bool:
 	SignalBus.module_upgraded.emit(self)
 	return true
 
+## Serialize this module's local upgrade tiers (upgrade id -> tier count) for a
+## save file. Fold this into whatever per-module save data the game persists.
+func get_upgrade_save_data() -> Dictionary:
+	var data: Dictionary = {}
+	for upgrade: LocalUpgradeData in local_upgrade_tiers:
+		data[String(upgrade.id)] = local_upgrade_tiers[upgrade]
+	return data
+
+## Restore tiers saved by get_upgrade_save_data() and re-apply their modifiers,
+## exactly as if each tier had been purchased. Call after module_data is set.
+func load_upgrade_save_data(data: Dictionary) -> void:
+	for id_str: String in data:
+		var upgrade := Global.unlock_manager.get_local_upgrade_by_id(StringName(id_str))
+		if upgrade == null:
+			push_warning("Unknown local upgrade id in save, skipping: " + id_str)
+			continue
+		var tier: int = int(data[id_str])
+		local_upgrade_tiers[upgrade] = tier
+		for i in tier:
+			for spec: StatModifierSpec in upgrade.modifiers:
+				stat_modifiers.add_modifier(spec.stat, spec.op, spec.value, upgrade.id)
+
 func on_place() -> void:
 	if get_structure_component() != null and module_data.interaction_layer == WorldManager.StructureLayer.MODULE:
 		var cells: Array[Vector2i] = []

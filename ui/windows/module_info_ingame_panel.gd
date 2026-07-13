@@ -28,6 +28,11 @@ func set_module(module: ModuleBase) -> void:
 			component.new_error.connect(_on_component_error)
 			if component.has_ui():
 				data_tabs.add_child(component.get_ui())
+		# Add a local-upgrades tab when this module has any upgrades available.
+		if not Global.unlock_manager.get_local_upgrade_catalog(module).is_empty():
+			var upgrades_tab := LocalUpgradesTab.new()
+			data_tabs.add_child(upgrades_tab)
+			upgrades_tab.setup(module)
 		module_viewed.tree_exiting.connect(_on_exit_button_pressed)
 	_refresh_alerts()
 

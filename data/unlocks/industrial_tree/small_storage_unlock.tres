@@ -16,6 +16,7 @@ metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
 script = ExtResource("3_ggx5n")
 id = &"small_storage_unlock"
 name = "Small Storage"
+description = "A basic box to hold things."
 icon = ExtResource("3_d1hmf")
 tree_id = &"industrial"
 effects = Array[ExtResource("2_d1hmf")]([SubResource("Resource_ggx5n")])

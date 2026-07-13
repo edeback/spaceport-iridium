@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://byjsbe8qb3i7t" path="res://data/unlocks/effects/grant_module_effect.gd" id="4_mypb7"]
 [ext_resource type="Script" uid="uid://co6152j7b38nw" path="res://data/unlocks/unlock_data.gd" id="6_8d740"]
 [ext_resource type="Texture2D" uid="uid://dwhjco6536al4" path="res://assets/sprites/medium_storage.png" id="6_mj8g3"]
+[ext_resource type="Resource" uid="uid://bqo84f0t0gbm2" path="res://data/unlocks/industrial_tree/small_storage_unlock.tres" id="8_jv0n7"]
 
 [sub_resource type="Resource" id="Resource_ggx5n"]
 script = ExtResource("4_mypb7")
@@ -17,11 +18,12 @@ metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
 script = ExtResource("6_8d740")
 id = &"medium_storage_unlock"
 name = "Medium Storage"
+description = "More efficient per-area than small."
 icon = ExtResource("6_mj8g3")
 tree_id = &"industrial"
 cost = Dictionary[ExtResource("1_gf1hl"), int]({
 ExtResource("2_jv0n7"): 500
 })
-prerequisites = Array[ExtResource("6_8d740")]([null])
+prerequisites = Array[ExtResource("6_8d740")]([ExtResource("8_jv0n7")])
 effects = Array[ExtResource("2_7nfd1")]([SubResource("Resource_ggx5n")])
 metadata/_custom_type_script = "uid://co6152j7b38nw"

@@ -24,12 +24,39 @@ var skip_emit: bool = false
 const MODULE_PATH: String = "res://data/modules/"
 
 # Called when the node enters the scene tree for the first time.
+var unlock_panel: UnlockPanel
+
 func _ready() -> void:
 	load_moduledatas()
 	create_module_button_groups()
 	create_resource_display()
 	Global.ui_main = self
 	Global.ui_in_game.input_mode_changed.connect(_on_input_mode_changed)
+	_setup_unlock_ui()
+
+func _setup_unlock_ui() -> void:
+	unlock_panel = UnlockPanel.new()
+	unlock_panel.visible = false
+	add_child(unlock_panel)
+
+	# Add a "Research" button just above the existing "Module Info" button,
+	# reusing its style so it fits in.
+	var info_btn: Button = %ModuleInfoButton
+	var info_margin: Node = info_btn.get_parent()
+	var side_vbox: Node = info_margin.get_parent()
+	var research_btn := Button.new()
+	research_btn.text = "Research"
+	var style: StyleBox = info_btn.get_theme_stylebox("normal")
+	if style != null:
+		research_btn.add_theme_stylebox_override("normal", style)
+	research_btn.pressed.connect(toggle_unlock_panel)
+	side_vbox.add_child(research_btn)
+	side_vbox.move_child(research_btn, info_margin.get_index())
+
+func toggle_unlock_panel() -> void:
+	unlock_panel.visible = not unlock_panel.visible
+	if unlock_panel.visible:
+		unlock_panel.refresh()
 
 func get_all_file_paths(path: String) -> Array[String]:
 	var file_paths: Array[String] = []

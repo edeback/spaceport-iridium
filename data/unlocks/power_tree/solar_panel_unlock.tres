@@ -20,6 +20,7 @@ region = Rect2(0, 0, 64, 64)
 script = ExtResource("3_r0ok2")
 id = &"solar_panel_unlock"
 name = "Solar Panels"
+description = "Depends on light."
 icon = SubResource("AtlasTexture_icd25")
 tree_id = &"power"
 effects = Array[ExtResource("2_aatfa")]([SubResource("Resource_r0ok2")])
