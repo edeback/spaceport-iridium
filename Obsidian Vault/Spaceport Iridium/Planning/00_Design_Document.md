@@ -116,12 +116,14 @@ Known risk: spend all steel before refining/trade exists → unrecoverable. Miti
 Organic crew (needs, happiness, shifts) and robotic pawns (mining drones exist; logistics robots later). Both use the same pawn/job framework; robots simply have no needs and are bound to a parent module.
 
 ### 6.2 Needs
-- **Hunger** (implemented: decays, pawn queues an Eat job below 30%, eats at a Sustenance module).
-- **Sleep** — sleeping pods/quarters; hotel rooms and spas later.
-- **Recreation** — holodeck, shops, bars.
-- **Social** — promenade, mess hall proximity.
-- **Health** — sickness (DiseaseData, infection spread from visitors), treated in a Medical Bay. Late phase.
-- **Happiness** — derived from the others plus situational modifiers (menial-work penalty, food-quality boost, ambient noise/vibration penalties). Consequences: productivity, and ultimately crew departure (a lose-condition input).
+- **Organic** pawns (most/all crew and visitors, for now):
+	- **Hunger** (implemented: decays, pawn queues an Eat job below 30%, eats at a Sustenance module).
+	- **Sleep** — How much rest a pawn has gotten. Improved by sleeping pods/quarters; hotel rooms and spas later.
+	- **Recreation** — How much enjoyment a pawn has had. Improved by holodeck, shops, bars, general socializing
+	- **Health** — Current state of the body. Reduced by injury, sickness (DiseaseData, infection spread from visitors), treated in a Medical Bay. Late phase.
+	- **Happiness** — derived from the others plus situational modifiers (menial-work penalty, food-quality boost, ambient noise/vibration penalties). Consequences: productivity, and ultimately crew departure (a lose-condition input).
+- **Robotic** pawns (drones)
+	- **Energy** - Slowly drains, recharged at their home module or recharger modules. Low energy causes slow movement/work, zero energy only allows it to move (slowly) back to the recharger (on "backup power")
 
 ### 6.3 Jobs
 - Shared job board; modules post notices with priority (storage posts hauling requests scaled to deficit; construction sites post build jobs).

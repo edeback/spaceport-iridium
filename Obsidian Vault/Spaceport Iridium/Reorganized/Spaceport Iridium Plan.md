@@ -173,6 +173,7 @@ Other ways of getting resources: buying and selling them from others:
 			- Luxury Spas (which also provide Recreation)
 	- Recreation
 		- How much fun a pawn has had
+			- Can be increased by socializing as well
 		- Served by modules such as
 			- Holodeck
 			- Shops

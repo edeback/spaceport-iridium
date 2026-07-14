@@ -28,7 +28,7 @@
 
 ## Needs & Life Buildings
 
-Life-related jobs pawns need to perform: sleeping, eating/drinking, socializing.
+Life-related jobs pawns need to perform: sleeping, eating/drinking, having fun.
 
 These are served by dedicated modules: Dining Hall, Greenhouses/Hydroponics Bay/Algae Vats, Sleeping Quarters, Recreation Modules, and the Promenade as a general social hub.
 
