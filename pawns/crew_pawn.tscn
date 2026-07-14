@@ -2,6 +2,8 @@
 
 [ext_resource type="PackedScene" uid="uid://ddoebv5qw5lfm" path="res://pawns/pawn_base.tscn" id="1_4e1f1"]
 [ext_resource type="PackedScene" uid="uid://b0bybnib3jtmj" path="res://pawns/pawn_needs_component.tscn" id="2_6fnyy"]
+[ext_resource type="PackedScene" path="res://pawns/pawn_health_component.tscn" id="3_health"]
+[ext_resource type="PackedScene" path="res://pawns/socialize_component.tscn" id="4_social"]
 
 [node name="PawnBase" unique_id=1067060448 node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_4e1f1")]
 animated_sprite = NodePath("Offset/Crew")
@@ -16,14 +18,17 @@ scale = Vector2(0.22, 0.22)
 
 [node name="Crew" parent="Offset" index="1" unique_id=552917447]
 scale = Vector2(0.2, 0.2)
+frame = 1
+frame_progress = 0.025604287
 
 [node name="Robot" parent="Offset" index="2" unique_id=264074984]
 scale = Vector2(0.22, 0.22)
 
 [node name="PawnNeedsComponent" parent="." index="1" unique_id=1968637232 instance=ExtResource("2_6fnyy")]
-has_health_need = true
-has_sleep_need = true
 has_hunger_need = true
-hunger_duration_hours = 10.0
-entertainment_duration_hours = 15.0
-social_duration_hours = 20.0
+has_sleep_need = true
+has_recreation_need = true
+
+[node name="PawnHealthComponent" parent="." index="2" unique_id=696141816 instance=ExtResource("3_health")]
+
+[node name="SocializeComponent" parent="." index="3" unique_id=266158254 instance=ExtResource("4_social")]

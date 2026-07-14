@@ -13,6 +13,7 @@ region = Rect2(0, 0, 192, 128)
 
 [resource]
 script = ExtResource("1_5lqk0")
+id = &"docking_bay"
 name = "Docking Bay"
 scene = ExtResource("2_11ty0")
 icon = SubResource("AtlasTexture_nlvn8")
@@ -24,4 +25,3 @@ tags = Array[String](["Dock"])
 flippable = true
 flipped_scene = ExtResource("1_vpvv2")
 metadata/_custom_type_script = "uid://vwmofdckg7hu"
-id = &"docking_bay"

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://cak8ey6rjuquw"]
+
+[ext_resource type="Texture2D" uid="uid://5g3aufvyla54" path="res://assets/sprites/holodeck.png" id="1_ne1fl"]
+[ext_resource type="PackedScene" uid="uid://dv8bch3r22mvf" path="res://modules/crew/holodeck.tscn" id="2_holo"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_holo"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="4_holo"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="5_holo"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="6_holo"]
+
+[resource]
+script = ExtResource("3_holo")
+id = &"holodeck_mdata"
+name = "Holodeck"
+description = "Simulated shore leave for hardworking crew."
+scene = ExtResource("2_holo")
+icon = ExtResource("1_ne1fl")
+instant_build = false
+resource_costs = Dictionary[ExtResource("4_holo"), int]({
+ExtResource("5_holo"): 4,
+ExtResource("6_holo"): 500
+})
+tags = Array[String](["Crew"])
+unlocked_by_default = false
+metadata/_custom_type_script = "uid://vwmofdckg7hu"

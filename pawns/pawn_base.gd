@@ -148,6 +148,24 @@ func queue_job(job: JobBase, to_front: bool = false) -> void:
 	else:
 		job_queue.push_back(job)
 
+## Moves an already-queued job to the queue front (critical-need promotion,
+## WI-05). Deliberately does NOT interrupt the current job - see the
+## starvation-lock comment in PawnNeedsComponent. No-op if the job isn't
+## queued (it may already be running or ended).
+func promote_queued_job(job: JobBase) -> void:
+	var index: int = job_queue.find(job)
+	if index > 0:
+		job_queue.remove_at(index)
+		job_queue.push_front(job)
+
+## Happiness consequence v1 (WI-05): work-rate multiplier consulted by jobs
+## (construction for now). Pawns without needs (drones) work at full speed.
+func work_speed() -> float:
+	var needs: PawnNeedsComponent = get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
+	if needs == null:
+		return 1.0
+	return lerpf(0.5, 1.1, needs.happiness)
+
 ## Ends the current job right now - gracefully, not as a failure, so
 ## anything the pawn is carrying is left for Job_StoreInventory to sweep up
 ## afterward instead of lost - and starts new_job immediately. For needs

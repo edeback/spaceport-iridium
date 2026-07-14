@@ -19,13 +19,13 @@ corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 corner_detail = 6
 
-[node name="PawnNeedsTab" type="PanelContainer" node_paths=PackedStringArray("health_bar", "sleep_bar", "hunger_bar", "entertainment_bar", "social_bar")]
+[node name="PawnNeedsTab" type="PanelContainer" node_paths=PackedStringArray("health_bar", "sleep_bar", "hunger_bar", "recreation_bar", "happiness_bar")]
 script = ExtResource("1_4dah2")
 health_bar = NodePath("MarginContainer/VBoxContainer/HealthContainer/HealthBar")
 sleep_bar = NodePath("MarginContainer/VBoxContainer/SleepContainer/SleepBar")
 hunger_bar = NodePath("MarginContainer/VBoxContainer/HungerContainer/HungerBar")
-entertainment_bar = NodePath("MarginContainer/VBoxContainer/EntertainmentContainer/EntertainmentBar")
-social_bar = NodePath("MarginContainer/VBoxContainer/SocialContainer/SocialBar")
+recreation_bar = NodePath("MarginContainer/VBoxContainer/RecreationContainer/RecreationBar")
+happiness_bar = NodePath("MarginContainer/VBoxContainer/HappinessContainer/HappinessBar")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2
@@ -53,7 +53,6 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/outline_size = 4
 theme_override_styles/background = SubResource("StyleBoxFlat_4dah2")
-value = 34.0
 
 [node name="SleepContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 unique_name_in_owner = true
@@ -89,34 +88,34 @@ size_flags_horizontal = 3
 theme_override_constants/outline_size = 4
 theme_override_styles/background = SubResource("StyleBoxFlat_4dah2")
 
-[node name="EntertainmentContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="RecreationContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/EntertainmentContainer"]
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/RecreationContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Entertainment"
+text = "Recreation"
 
-[node name="EntertainmentBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/EntertainmentContainer"]
+[node name="RecreationBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/RecreationContainer"]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/outline_size = 4
 theme_override_styles/background = SubResource("StyleBoxFlat_4dah2")
 
-[node name="SocialContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="HappinessContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/SocialContainer"]
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HappinessContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Social"
+text = "Happiness"
 
-[node name="SocialBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/SocialContainer"]
+[node name="HappinessBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/HappinessContainer"]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 size_flags_horizontal = 3

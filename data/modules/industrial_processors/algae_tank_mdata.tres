@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://d2l8ddcmr7rbx"]
+
+[ext_resource type="Texture2D" uid="uid://c1y80gethr3qf" path="res://assets/sprites/small_algae_tank.png" id="1_3oepn"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_1vcgf"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="3_y48wj"]
+[ext_resource type="PackedScene" uid="uid://bsrdvu5tc1m7k" path="res://modules/industrial_processors/algae_tank.tscn" id="4_3oepn"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="5_rcrg0"]
+
+[resource]
+script = ExtResource("5_rcrg0")
+id = &"algae_tank_mdata"
+name = "Algae Tank"
+description = "A small tank filled with bioengineered algae with all the nutrients one needs, if you don't care about the taste, texture, smell, or color."
+scene = ExtResource("4_3oepn")
+icon = ExtResource("1_3oepn")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_1vcgf"), int]({
+ExtResource("3_y48wj"): 2
+})
+tags = Array[String](["Industrial"])
+metadata/_custom_type_script = "uid://vwmofdckg7hu"

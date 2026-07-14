@@ -210,12 +210,15 @@ func _get_pawns_save() -> Array:
 					"stacks": stacks_to_dicts(pawn.inventory_component.carried[resource].stacks),
 				})
 		var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
+		# Health lives in its own component (WI-05), so it gets its own section.
+		var health: PawnHealthComponent = pawn.get_component_by_type(PawnHealthComponent) as PawnHealthComponent
 		out.append({
 			"scene": pawn.scene_file_path,
 			"name": pawn.pawn_name,
 			"position": [pawn.global_position.x, pawn.global_position.y],
 			"module": module_ref(pawn.current_module),
 			"needs": needs.get_save_data() if needs != null else {},
+			"health": health.get_save_data() if health != null else {},
 			"carried": carried,
 		})
 	return out
@@ -334,6 +337,9 @@ func _load_pawns(data: Array) -> void:
 		var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
 		if needs != null:
 			needs.load_save_data(entry.get("needs", {}))
+		var health: PawnHealthComponent = pawn.get_component_by_type(PawnHealthComponent) as PawnHealthComponent
+		if health != null:
+			health.load_save_data(entry.get("health", {}))
 		for content: Dictionary in entry.get("carried", []):
 			var resource: ResourceData = get_resource_by_id(StringName(String(content.get("resource", ""))))
 			if resource == null:

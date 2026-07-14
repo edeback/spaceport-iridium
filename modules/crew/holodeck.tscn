@@ -1,0 +1,55 @@
+[gd_scene format=3 uid="uid://dv8bch3r22mvf"]
+
+[ext_resource type="PackedScene" uid="uid://drvd8opv6enr8" path="res://modules/templates/module_2x1.tscn" id="1_holo"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_holo"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_holo"]
+[ext_resource type="Texture2D" uid="uid://5g3aufvyla54" path="res://assets/sprites/holodeck.png" id="4_al38j"]
+[ext_resource type="PackedScene" uid="uid://naseqms6fhn3" path="res://modules/components/entertainment_component.tscn" id="5_holo"]
+[ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="5_kors0"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="6_holo"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_kors0"]
+shader = ExtResource("2_holo")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
+shader_parameter/gradient_texture = ExtResource("3_holo")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1dr5p"]
+resource_local_to_scene = true
+size = Vector2(126, 126)
+
+[node name="Module" unique_id=2046568928 instance=ExtResource("1_holo")]
+
+[node name="Offset" parent="." index="0" unique_id=498681270]
+position = Vector2(64, 64)
+
+[node name="Sprite" parent="Offset" index="0" unique_id=1530003366]
+material = SubResource("ShaderMaterial_kors0")
+texture = ExtResource("4_al38j")
+region_enabled = false
+
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
+shape = SubResource("RectangleShape2D_1dr5p")
+
+[node name="LightingComponent" parent="Offset" index="2" unique_id=125104065 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("5_kors0")]
+scale = Vector2(2, 2)
+power_consumption_component = NodePath("../../PowerConsumptionComponent")
+
+[node name="PathComponent" parent="." index="1" unique_id=1088376714]
+path_points = Array[Vector2i]([Vector2i(32, 96)])
+
+[node name="StructureComponent" parent="." index="2" unique_id=2060859123]
+visible = false
+connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(1, -1), Vector2i(-1, 0), Vector2i(2, 0), Vector2i(-1, 1), Vector2i(2, 1), Vector2i(0, 2), Vector2i(1, 2)])
+internal_points = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)])
+size = Vector2i(2, 2)
+
+[node name="ConstructionComponent" parent="." index="3" unique_id=1206775965]
+position = Vector2(68, -3)
+
+[node name="EntertainmentComponent" parent="." index="4" unique_id=440163353 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("5_holo")]
+power_consumption_component = NodePath("../PowerConsumptionComponent")
+
+[node name="PowerConsumptionComponent" parent="." index="5" unique_id=1594719678 instance=ExtResource("6_holo")]

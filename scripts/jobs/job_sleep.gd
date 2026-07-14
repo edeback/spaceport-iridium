@@ -1,0 +1,114 @@
+class_name Job_Sleep
+extends JobBase
+
+## Personal-queue need job (never on the shared board): walk to the nearest
+## reachable pod with a free slot, lie down, restore sleep until full. The
+## slot is claimed up front and released in _on_end, which runs on every
+## termination path - slots can't leak.
+
+var pawn: PawnBase
+var sleep_component: SleepComponent
+
+enum SleepState { Starting, MovingToPod, Sleeping, Finished, Failed }
+var state: SleepState = SleepState.Starting:
+	set(new_state):
+		if new_state != state:
+			state = new_state
+			subtask_changed.emit()
+
+func get_category() -> Category:
+	return Category.NEEDS
+
+func get_job_description() -> String:
+	return "Getting some sleep"
+
+func get_subtask_description() -> String:
+	match state:
+		SleepState.MovingToPod:
+			return "Heading to a sleeping pod"
+		SleepState.Sleeping:
+			return "Sleeping"
+	return ""
+
+func can_do_job(_pawn: PawnBase) -> bool:
+	return _find_pod(_pawn) != null
+
+func start_job(_pawn: PawnBase) -> void:
+	pawn = _pawn
+	sleep_component = _find_pod(pawn)
+	if sleep_component == null or not sleep_component.claim_slot(self):
+		cancel(true)
+		return
+	SignalBus.module_removed.connect(_module_removed)
+	state = SleepState.MovingToPod
+	pawn.movement_component.movement_ended.connect(_arrived, CONNECT_ONE_SHOT)
+	pawn.movement_component.move_to(sleep_component.owner_module)
+
+func _arrived(prev_success: bool) -> void:
+	# _ended: a stale movement one-shot firing after an external cancel must
+	# not overwrite the terminal state (WI-04 lifecycle rule).
+	if not prev_success or _ended:
+		cancel(true)
+		return
+	state = SleepState.Sleeping
+	if pawn.animated_sprite != null:
+		pawn.animated_sprite.play("lay_down")
+
+func process_job(delta: float) -> void:
+	if state != SleepState.Sleeping:
+		return
+	var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
+	if needs == null or not is_instance_valid(sleep_component):
+		cancel(true)
+		return
+	# delta arrives sim-scaled from PawnBase._process; needs' own decay keeps
+	# ticking in parallel, so this must out-rate it (see base_hours_to_full).
+	var sim_hours: float = delta / TimeManager.SECONDS_PER_HOUR
+	needs.sleep_value += sleep_component.sleep_restored_per_hour(needs.sleep_max) * sim_hours
+	if needs.sleep_value >= needs.sleep_max:
+		state = SleepState.Finished
+
+func _module_removed(module: ModuleBase) -> void:
+	# Pod deconstructed/deleted mid-sleep: cancel gracefully; the pawn is
+	# ejected by the existing current_module null-safety.
+	if sleep_component != null and module == sleep_component.owner_module:
+		cancel(true)
+
+func _on_cancel(as_failed: bool) -> void:
+	if as_failed:
+		state = SleepState.Failed
+	else:
+		state = SleepState.Finished
+
+func _on_end() -> void:
+	if SignalBus.module_removed.is_connected(_module_removed):
+		SignalBus.module_removed.disconnect(_module_removed)
+	if is_instance_valid(sleep_component):
+		sleep_component.release_slot(self)
+	# Stand back up however the job ended - lay_down isn't a looping walk/idle
+	# state the movement code would naturally replace.
+	if pawn != null and is_instance_valid(pawn) and pawn.animated_sprite != null \
+			and pawn.animated_sprite.animation == &"lay_down":
+		pawn.animated_sprite.play("idle")
+
+func is_failed() -> bool:
+	return state == SleepState.Failed
+
+func is_finished() -> bool:
+	return state == SleepState.Finished
+
+## Nearest reachable pod with a free slot. Pure query - safe from can_do_job.
+func _find_pod(_pawn: PawnBase) -> SleepComponent:
+	var best: SleepComponent = null
+	var best_dist: int = 0
+	for node: Node in _pawn.get_tree().get_nodes_in_group("sleep_component"):
+		var pod: SleepComponent = node as SleepComponent
+		if pod == null or not pod.has_free_slot():
+			continue
+		if not Global.path_manager.is_reachable(_pawn, pod.owner_module):
+			continue
+		var dist: int = pod.owner_module.module_cell.distance_squared_to(Global.world_to_cell(_pawn.global_position))
+		if best == null or dist < best_dist:
+			best = pod
+			best_dist = dist
+	return best

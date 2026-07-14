@@ -62,7 +62,7 @@ path_points = Array[Vector2i]([Vector2i(32, 96)])
 recipe = ExtResource("5_txiy8")
 input_storage = NodePath("../Input")
 output_storage = NodePath("../Output")
-time_to_process = 30.0
+time_to_process = 10.0
 power_consumer = NodePath("../PowerConsumptionComponent")
 
 [node name="PowerConsumptionComponent" parent="." index="4" unique_id=593982705 instance=ExtResource("5_wub03")]

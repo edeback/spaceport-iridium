@@ -120,7 +120,7 @@ func construct_module(delta: float) -> void:
 	if shift_spot_elapsed >= shift_spot_interval:
 		pawn.global_position = module_to_construct.get_random_position_on_module()
 		shift_spot_elapsed = 0
-	construction_component.work_seconds_done += -delta if deconstruct else delta
+	construction_component.work_seconds_done += (-delta if deconstruct else delta) * pawn.work_speed()
 	
 	
 func is_failed() -> bool:

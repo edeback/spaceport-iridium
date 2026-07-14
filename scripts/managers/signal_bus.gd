@@ -23,6 +23,8 @@ signal set_up_trade(trade_component: TradeComponent)
 signal global_unlock_changed(unlock: UnlockData)
 @warning_ignore("unused_signal")
 signal module_upgraded(module: ModuleBase)
+@warning_ignore("unused_signal")
+signal pawn_critical_need(pawn: PawnBase, need: StringName)
 
 
 

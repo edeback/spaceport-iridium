@@ -13,6 +13,7 @@
 [ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="10_2dwtc"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="11_a4u0u"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="13_08lj0"]
+[ext_resource type="PackedScene" uid="uid://om27ryp74gd5" path="res://modules/components/social_component.tscn" id="14_social"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_08lj0"]
 shader = ExtResource("2_6dgag")
@@ -63,3 +64,5 @@ ExtResource("9_ilumi"): SubResource("Resource_byurn")
 display_storage_ui = false
 
 [node name="PowerConsumptionComponent" parent="." index="6" unique_id=1294074488 instance=ExtResource("13_08lj0")]
+
+[node name="SocialComponent" parent="." instance=ExtResource("14_social")]

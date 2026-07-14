@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="UnlockData" format=3 uid="uid://dsqiu8jxw0cdt"]
+
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_23tt7"]
+[ext_resource type="Script" uid="uid://c6vwp01mtmoyt" path="res://data/unlocks/effects/unlock_effect.gd" id="2_7kw00"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="2_e8rmp"]
+[ext_resource type="Resource" uid="uid://d2vqdhq8oy3lp" path="res://data/modules/industrial_processors/algae_vats_mdata.tres" id="3_e8rmp"]
+[ext_resource type="Script" uid="uid://byjsbe8qb3i7t" path="res://data/unlocks/effects/grant_module_effect.gd" id="4_swheg"]
+[ext_resource type="Texture2D" uid="uid://bfx85rb5crklr" path="res://assets/sprites/algae_tanks.png" id="5_da3sp"]
+[ext_resource type="Script" uid="uid://co6152j7b38nw" path="res://data/unlocks/unlock_data.gd" id="6_binu8"]
+[ext_resource type="Resource" uid="uid://cen0n7a2j58sn" path="res://data/unlocks/food_tree/algae_tank_unlock.tres" id="7_7kw00"]
+
+[sub_resource type="Resource" id="Resource_7o4g3"]
+script = ExtResource("4_swheg")
+module = ExtResource("3_e8rmp")
+metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
+
+[resource]
+script = ExtResource("6_binu8")
+id = &"algae_vats_unlock"
+name = "Algae Vats"
+description = "Large vats filled with bioengineered algae with all the nutrients one needs, if you don't care about the taste, texture, smell, or color."
+icon = ExtResource("5_da3sp")
+tree_id = &"food"
+cost = Dictionary[ExtResource("1_23tt7"), int]({
+ExtResource("2_e8rmp"): 500
+})
+prerequisites = Array[ExtResource("6_binu8")]([ExtResource("7_7kw00")])
+effects = Array[ExtResource("2_7kw00")]([SubResource("Resource_7o4g3")])
+metadata/_custom_type_script = "uid://co6152j7b38nw"

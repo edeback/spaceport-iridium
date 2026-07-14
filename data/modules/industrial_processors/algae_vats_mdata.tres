@@ -8,7 +8,9 @@
 
 [resource]
 script = ExtResource("1_ju4bj")
+id = &"algae_vats_mdata"
 name = "Algae Vats"
+description = "Large vats filled with bioengineered algae with all the nutrients one needs, if you don't care about the taste, texture, smell, or color."
 scene = ExtResource("2_308pd")
 icon = ExtResource("1_fx34i")
 instant_build = false
@@ -16,5 +18,5 @@ resource_costs = Dictionary[ExtResource("2_fx34i"), int]({
 ExtResource("3_fx34i"): 10
 })
 tags = Array[String](["Industrial"])
+unlocked_by_default = false
 metadata/_custom_type_script = "uid://vwmofdckg7hu"
-id = &"algae_vats_mdata"

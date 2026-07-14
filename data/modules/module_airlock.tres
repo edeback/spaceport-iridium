@@ -12,6 +12,7 @@ region = Rect2(40, 0, 64, 64)
 
 [resource]
 script = ExtResource("3_tpos6")
+id = &"module_airlock"
 name = "Airlock"
 scene = ExtResource("2_1gomn")
 icon = SubResource("AtlasTexture_aifhy")
@@ -19,4 +20,3 @@ tags = Array[String](["Core"])
 interaction_layer = 1
 flippable = true
 flipped_scene = ExtResource("1_cdc0w")
-id = &"module_airlock"

@@ -34,6 +34,7 @@ func _ready() -> void:
 	Global.ui_in_game.input_mode_changed.connect(_on_input_mode_changed)
 	_setup_unlock_ui()
 	_setup_save_ui()
+	_setup_alerts_strip()
 
 ## Minimal save/load controls next to the Research button: slot name field +
 ## Save/Load buttons. F5/F9 quick-slot shortcuts live on SaveManager.
@@ -62,6 +63,40 @@ func _setup_save_ui() -> void:
 	row.add_child(load_btn)
 	side_vbox.add_child(row)
 	side_vbox.move_child(row, info_margin.get_index())
+
+## Minimal alerts strip (WI-05): critical pawn needs surface as brief
+## top-center messages. Informational only - no forced job interrupts, the
+## pawn keeps handling its own queue (see PawnNeedsComponent).
+var _alerts_box: VBoxContainer
+var _active_alerts: Dictionary[String, Label] = {}
+
+func _setup_alerts_strip() -> void:
+	_alerts_box = VBoxContainer.new()
+	_alerts_box.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_alerts_box.offset_top = 8
+	_alerts_box.alignment = BoxContainer.ALIGNMENT_BEGIN
+	_alerts_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_alerts_box)
+	SignalBus.pawn_critical_need.connect(_on_pawn_critical_need)
+
+func _on_pawn_critical_need(pawn: PawnBase, need: StringName) -> void:
+	var pawn_label: String = pawn.pawn_name if not pawn.pawn_name.is_empty() else "A crew member"
+	var key: String = "%s|%s" % [pawn_label, need]
+	if _active_alerts.has(key):
+		return
+	var label := Label.new()
+	label.text = "%s: %s critical!" % [pawn_label, String(need)]
+	label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.3))
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_alerts_box.add_child(label)
+	_active_alerts[key] = label
+	# UI runs on wall-clock by design (TimeManager rule: UI stays real-time),
+	# so a plain scene-tree timer is correct here, not sim_seconds().
+	get_tree().create_timer(6.0).timeout.connect(func() -> void:
+		_active_alerts.erase(key)
+		if is_instance_valid(label):
+			label.queue_free()
+	)
 
 func _setup_unlock_ui() -> void:
 	unlock_panel = UnlockPanel.new()

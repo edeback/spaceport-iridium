@@ -292,7 +292,8 @@ region_rect = Rect2(16, 32, 64, 96)
 [node name="Crew" type="AnimatedSprite2D" parent="Offset" unique_id=552917447]
 scale = Vector2(0.25, 0.25)
 sprite_frames = SubResource("SpriteFrames_o283h")
-animation = &"idle"
+animation = &"idle_sit"
+frame_progress = 0.41255856
 
 [node name="Robot" type="AnimatedSprite2D" parent="Offset" unique_id=264074984]
 visible = false
