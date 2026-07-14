@@ -18,6 +18,9 @@ var job_state: StoreInventoryState = StoreInventoryState.Start:
 			job_state = new_state
 			subtask_changed.emit()
 
+func get_category() -> Category:
+	return Category.HAUL
+
 func get_job_description() -> String:
 	return "Store Carried Resources"
 
@@ -42,7 +45,7 @@ func is_finished() -> bool:
 func is_failed() -> bool:
 	return job_state == StoreInventoryState.Failed
 
-func cancel(as_failed: bool) -> void:
+func _on_cancel(as_failed: bool) -> void:
 	# Deliberately don't touch pawn.inventory_component here. Whatever is still
 	# carried stays with the pawn and gets picked up again on the next idle
 	# tick via PawnBase.start_job().
@@ -66,7 +69,9 @@ func move_to_storage() -> void:
 	pawn.movement_component.move_to(deposit_storage.owner_module)
 
 func deposit_resource(prev_success: bool) -> void:
-	if not prev_success:
+	# _ended: a stale movement one-shot firing after an external cancel must
+	# not overwrite the terminal state or move inventory on a dead job.
+	if not prev_success or _ended:
 		cancel(true)
 		return
 	job_state = StoreInventoryState.DepositResource

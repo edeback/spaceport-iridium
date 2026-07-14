@@ -144,14 +144,15 @@ func cancel() -> void:
 func get_debug_path_detailed() -> PackedVector2Array:
 	var packed_path: PackedVector2Array = []
 	for index: int in path.size():
-		var base_pos := path[index].node.global_position
-		var sub := get_sub_path(index)
-		if sub.size() > 0:
-			#packed_path.append(base_pos + sub[0].start_pos)
-			for data: PathComponent.PathTraversalEdgeData in sub:
-				packed_path.append(base_pos + data.end_pos)
-		else:
-			packed_path.append(extract_position(index))
+		if path[index] and path[index].node:
+			var base_pos := path[index].node.global_position
+			var sub := get_sub_path(index)
+			if sub.size() > 0:
+				#packed_path.append(base_pos + sub[0].start_pos)
+				for data: PathComponent.PathTraversalEdgeData in sub:
+					packed_path.append(base_pos + data.end_pos)
+			else:
+				packed_path.append(extract_position(index))
 			#if path[index] is ModuleBase:
 				#var mod := path[index] as ModuleBase
 				#packed_path.append(mod.get_global_center())

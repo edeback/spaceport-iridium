@@ -1,21 +1,55 @@
 class_name JobBase
 extends Resource
 
+## Which board queue a job lives in. Pawns can filter by category when
+## claiming (shift/assignment filtering arrives in WI-06); selection across
+## categories is still by effective priority, so categories are an index,
+## not a ranking.
+enum Category { HAUL, BUILD, WORK, NEEDS, MOVE, MISC }
+
 @export var name: String = ""
 @export var description: String = ""
 var priority: int = 0
+## Sim-seconds spent waiting unclaimed on the board (bumped by JobManager on
+## slow_tick). Feeds effective_priority() so starved jobs slowly surface.
+var age: float = 0.0
 
 enum JobState { Starting, Moving, Working, Finished, Failed }
 
 signal subtask_changed
 
+## Emitted exactly once, when the job terminates for any reason (success,
+## graceful cancel, or failure). Safe to CONNECT_ONE_SHOT.
 signal job_end
+
+## Lifecycle guard: set the moment end_job() runs. cancel() and end_job()
+## are both no-ops afterward, so reservations can't double-release and
+## job_end can't double-fire.
+## RULE for subclasses: any callback that can fire after the job ends (e.g.
+## a movement_ended one-shot still connected when the job is cancelled) must
+## early-return on _ended BEFORE mutating state or moving resources. cancel()
+## sets the terminal state exactly once; a late callback that overwrites it
+## can never be corrected (the _ended latch blocks re-cancel), which leaves
+## the pawn processing a dead job forever.
+var _ended: bool = false
+
+func get_category() -> Category:
+	return Category.MISC
+
+func get_category_name() -> String:
+	return String(Category.keys()[get_category()]).capitalize()
 
 func get_job_description() -> String:
 	return ""
 
 func get_subtask_description() -> String:
 	return ""
+
+## Board sort key: base priority plus a capped age bonus, so long-waiting
+## jobs eventually outrank fresher peers within nearby bands (the cap keeps
+## aging from ever crossing the ±99 construction routing bands).
+func effective_priority() -> float:
+	return priority + minf(age * JobPriorities.AGE_BONUS_RATE, JobPriorities.AGE_BONUS_CAP)
 
 func is_valid() -> bool:
 	return true
@@ -29,21 +63,52 @@ func start_job(_pawn: PawnBase) -> void:
 func process_job(_delta: float) -> void:
 	# Override by subclasses
 	pass
-	
+
 func is_failed() -> bool:
 	# Override by subclasses
 	return false
-	
+
 func is_finished() -> bool:
 	# Override by subclasses
 	return false
 
-func cancel(_as_failed: bool) -> void:
-	# Override by subclasses
+## Authoritative "this job is over" check - true once end_job() has run,
+## regardless of what the subclass state machine claims. Pawns use this as a
+## backstop against stale callbacks overwriting the terminal state.
+func is_ended() -> bool:
+	return _ended
+
+## THE single termination entry point (lifecycle contract, WI-04):
+## releases the job's resources, sets terminal state, and ends the job -
+## callers (JobManager, pawns, UI) call this and nothing else. Idempotent.
+## Subclasses override _on_cancel(), never this.
+func cancel(as_failed: bool) -> void:
+	if _ended:
+		return
+	_on_cancel(as_failed)
+	end_job()
+
+## Subclass hook: release reservations and set the terminal state
+## (Failed when as_failed, Finished otherwise). Runs at most once.
+func _on_cancel(_as_failed: bool) -> void:
 	pass
-	
+
+## Finalizer; fires job_end exactly once. cancel() calls this itself; the
+## pawn also calls it when it notices a job finished successfully (jobs set
+## their Finished state without going through cancel), and the guard makes
+## the overlap harmless.
 func end_job() -> void:
+	if _ended:
+		return
+	_ended = true
+	_on_end()
 	job_end.emit()
+
+## Subclass hook for one-time teardown that must happen however the job
+## ends - e.g. disconnecting from SignalBus signals so finished jobs don't
+## linger connected (and alive) forever.
+func _on_end() -> void:
+	pass
 
 ## Override to compute a followup job for pawn. Call this yourself (see
 ## Job_GetResource.deposit_resource()) at the exact moment you know you've

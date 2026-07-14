@@ -1,57 +1,93 @@
 class_name JobManager
 extends Node
 
-# Sorted low to high prio, as high prio is often removed first
-var job_board: Array[JobBase] = []
+## The shared job board: one priority-sorted queue per JobBase.Category.
+## Queues are sorted ascending by effective priority (high priority at the
+## back, where find_job scans from). Selection across categories is a merge
+## by effective priority, so categories act as an index/filter, not a
+## ranking - a high-priority MISC job still beats a low-priority HAUL job.
 
-# Called when the node enters the scene tree for the first time.
+var _board: Dictionary[JobBase.Category, Array] = {}
+var _all_categories: Array[JobBase.Category] = []
+
 func _ready() -> void:
 	Global.job_manager = self
+	for category: int in JobBase.Category.values():
+		_board[category] = []
+		_all_categories.append(category)
+	# Aging: bump every waiting job's age, then re-sort. Ages grow uniformly
+	# but bonuses cap out, so relative effective order genuinely changes over
+	# time; queues are small (tens of jobs), so a 4 Hz sim-time sort is
+	# nothing - and it also repairs ordering after external priority changes
+	# (StorageComponent.update_priority mutates posted jobs' priorities).
+	Global.time_manager.slow_tick.connect(_on_slow_tick)
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta: float) -> void:
-	## Temp insta-run jobs
-	#for index in range(job_board.size() -1, -1, -1):
-		#var job: JobBase = job_board[index]
-		#job.process_job(delta)
-		#if !job.is_finished():
-			#job_board.erase(job)
-	#pass
+func _on_slow_tick(interval: float) -> void:
+	for category: JobBase.Category in _board:
+		var queue: Array = _board[category]
+		if queue.is_empty():
+			continue
+		for job: JobBase in queue:
+			job.age += interval
+		queue.sort_custom(_sort_effective_ascending)
 
-func add_job(job_data: JobBase) -> void:
-	if job_board.is_empty():
-		job_board.append(job_data)
-	else:
-		job_board.insert(job_board.bsearch_custom(job_data, sort_priority_ascending), job_data)
-	pass
-	
-func remove_job(job_data: JobBase) -> void:
-	job_board.erase(job_data)
-	pass
+func add_job(job: JobBase) -> void:
+	var queue: Array = _board[job.get_category()]
+	queue.insert(queue.bsearch_custom(job, _sort_effective_ascending), job)
 
-func find_job(pawn: PawnBase) -> JobBase:
-	for index: int in range(job_board.size() - 1, -1, -1):
-		var job_to_do: JobBase = job_board[index]
+func remove_job(job: JobBase) -> void:
+	_board[job.get_category()].erase(job)
+
+## Best claimable job for this pawn across allowed_categories (empty = all).
+## Walks each queue from its high-priority end, always considering the
+## highest effective priority remaining in any queue; invalid jobs found
+## along the way are cancelled and removed.
+func find_job(pawn: PawnBase, allowed_categories: Array[JobBase.Category] = []) -> JobBase:
+	var categories: Array[JobBase.Category] = allowed_categories if not allowed_categories.is_empty() else _all_categories
+	var queues: Array[Array] = []
+	var cursors: Array[int] = []
+	for category: JobBase.Category in categories:
+		var queue: Array = _board[category]
+		if not queue.is_empty():
+			queues.append(queue)
+			cursors.append(queue.size() - 1)
+	while true:
+		var best_index: int = -1
+		var best_priority: float = 0.0
+		for index: int in queues.size():
+			if cursors[index] < 0:
+				continue
+			var candidate: JobBase = queues[index][cursors[index]]
+			var effective: float = candidate.effective_priority()
+			if best_index == -1 or effective > best_priority:
+				best_index = index
+				best_priority = effective
+		if best_index == -1:
+			return null
+		var job_to_do: JobBase = queues[best_index][cursors[best_index]]
 		# Check that the job is still possible. Cancel (not just end) so the
 		# requester releases its reservations / import-export slots.
 		if !job_to_do.is_valid():
 			job_to_do.cancel(true)
-			job_to_do.end_job()
-			job_board.remove_at(index)
+			queues[best_index].remove_at(cursors[best_index])
+			cursors[best_index] -= 1
 			continue
 		if job_to_do.can_do_job(pawn):
-			job_board.remove_at(index)
+			queues[best_index].remove_at(cursors[best_index])
 			return job_to_do
+		cursors[best_index] -= 1
 	return null
-	
+
 func re_sort_jobs() -> void:
-	job_board.sort_custom(sort_priority_ascending)
-	
-#func get_job() -> JobBase:
-	#return job_board.pop_back()
+	for category: JobBase.Category in _board:
+		_board[category].sort_custom(_sort_effective_ascending)
 
-func sort_priority_decending(a: JobBase, b: JobBase) -> bool:
-	return a.priority > b.priority
+## Total jobs waiting on the board (debug/UI).
+func board_size() -> int:
+	var total: int = 0
+	for category: JobBase.Category in _board:
+		total += _board[category].size()
+	return total
 
-func sort_priority_ascending(a: JobBase, b: JobBase) -> bool:
-	return a.priority < b.priority
+func _sort_effective_ascending(a: JobBase, b: JobBase) -> bool:
+	return a.effective_priority() < b.effective_priority()

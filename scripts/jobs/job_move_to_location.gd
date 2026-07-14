@@ -5,6 +5,9 @@ var pawn: PawnBase
 var destination_module: ModuleBase
 var state: JobState = JobState.Starting
 
+func get_category() -> Category:
+	return Category.MOVE
+
 func get_job_description() -> String:
 	return "Moving to location"
 
@@ -26,14 +29,11 @@ func start_job(_pawn: PawnBase) -> void:
 	else:
 		cancel(true)
 		
-func end_job() -> void:
-	super()
-		
 func complete(as_success: bool) -> void:
 	cancel(!as_success)
-		
-func cancel(_as_failed: bool) -> void:
-	if _as_failed:
+
+func _on_cancel(as_failed: bool) -> void:
+	if as_failed:
 		state = JobState.Failed
 	else:
 		state = JobState.Finished

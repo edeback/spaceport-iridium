@@ -6,6 +6,9 @@ var job_state: JobState = JobState.Starting
 var desired_sustenance: int = 70
 var target_component: SustenanceComponent = null
 
+func get_category() -> Category:
+	return Category.NEEDS
+
 func get_job_description() -> String:
 	return "Finding something to eat"
 
@@ -35,7 +38,7 @@ func is_finished() -> bool:
 func is_failed() -> bool:
 	return job_state == JobBase.JobState.Failed
 	
-func cancel(as_failed: bool) -> void:
+func _on_cancel(as_failed: bool) -> void:
 	if as_failed:
 		job_state = JobBase.JobState.Failed
 	else:
@@ -75,7 +78,9 @@ func move_to_module(module: ModuleBase) -> void:
 	pawn.movement_component.move_to(module)
 
 func eat(prev_success: bool) -> void:
-	if not prev_success:
+	# _ended: a stale movement one-shot firing after an external cancel must
+	# not consume sustenance or overwrite the terminal state on a dead job.
+	if not prev_success or _ended:
 		cancel(true)
 		return
 	# Eat from the component we chose and walked to, not whatever module we

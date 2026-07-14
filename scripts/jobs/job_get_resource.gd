@@ -19,6 +19,9 @@ var job_state: ResourceJobState = ResourceJobState.Start:
 			job_state = new_state
 			subtask_changed.emit()
 
+func get_category() -> Category:
+	return Category.HAUL
+
 func get_job_description() -> String:
 	return "Get resource"
 
@@ -67,7 +70,7 @@ func is_finished() -> bool:
 func is_failed() -> bool:
 	return job_state == ResourceJobState.Failed
 		
-func cancel(as_failed: bool) -> void:
+func _on_cancel(as_failed: bool) -> void:
 	if as_failed:
 		job_state = ResourceJobState.Failed
 	else:
@@ -165,7 +168,7 @@ func move_to_export_storage() -> void:
 	pawn.movement_component.move_to(export_storage.owner_module)
 		
 func gather_resource(prev_success: bool) -> void:
-	if not prev_success:
+	if not prev_success or _ended:
 		cancel(true)
 		return
 	job_state = ResourceJobState.GatherResource
@@ -190,10 +193,10 @@ func move_to_import_storage() -> void:
 	pawn.movement_component.move_to(deposit_storage.owner_module)
 		
 func deposit_resource(prev_success: bool) -> void:
-	job_state = ResourceJobState.DepositResource
-	if not prev_success:
+	if not prev_success or _ended:
 		cancel(true)
 		return
+	job_state = ResourceJobState.DepositResource
 	var carried_stacks: Array[ResourceStack] = pawn.inventory_component.withdraw_stacks(resource_data, amount)
 	if carried_stacks.is_empty():
 		cancel(true)

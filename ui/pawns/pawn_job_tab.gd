@@ -9,7 +9,7 @@ func set_pawn(_pawn: PawnBase) -> void:
 
 func job_changed() -> void:
 	if pawn and pawn.current_job:
-		%CurrentTask.text = pawn.current_job.get_job_description()
+		%CurrentTask.text = "%s  [%s]" % [pawn.current_job.get_job_description(), pawn.current_job.get_category_name()]
 		pawn.current_job.subtask_changed.connect(subtask_changed)
 		subtask_changed()
 	else:

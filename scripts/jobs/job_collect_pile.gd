@@ -26,6 +26,9 @@ var state: CollectPileState = CollectPileState.Starting:
 			state = new_state
 			subtask_changed.emit()
 
+func get_category() -> Category:
+	return Category.HAUL
+
 func get_job_description() -> String:
 	return "Collect Resource Pile"
 
@@ -74,7 +77,10 @@ func is_finished() -> bool:
 func is_failed() -> bool:
 	return state == CollectPileState.Failed
 
-func cancel(as_failed: bool) -> void:
+# The pile reservation is NOT idempotent to release (plain counter), so the
+# base class's _ended guard mattering here is exactly why the lifecycle
+# contract exists: _on_cancel runs at most once.
+func _on_cancel(as_failed: bool) -> void:
 	if as_failed:
 		state = CollectPileState.Failed
 	else:
@@ -146,7 +152,10 @@ func move_to_pile() -> void:
 		pawn.movement_component.move_to(pile, 1, true)
 
 func gather_from_pile(prev_success: bool) -> void:
-	if not prev_success:
+	# _ended: a stale movement one-shot firing after an external cancel must
+	# not withdraw from the pile - _on_cancel already released our reservation,
+	# so a late withdraw would take stock reserved by someone else.
+	if not prev_success or _ended:
 		cancel(true)
 		return
 	state = CollectPileState.GatherFromPile
@@ -154,6 +163,13 @@ func gather_from_pile(prev_success: bool) -> void:
 	if gathered.is_empty():
 		cancel(true)
 		return
+	# withdraw_stacks consumed that much of our reservation; shrink `amount`
+	# so a later cancel only releases the truly un-gathered remainder instead
+	# of double-releasing (and eating another job's reservation).
+	var gathered_total: int = 0
+	for stack: ResourceStack in gathered:
+		gathered_total += stack.amount
+	amount = maxi(amount - gathered_total, 0)
 	var leftover: Array[ResourceStack] = pawn.inventory_component.add_stacks(resource_data, gathered)
 	if not leftover.is_empty():
 		# Shouldn't normally happen - can_do_job()/job_start() already
@@ -168,10 +184,13 @@ func move_to_deposit_storage() -> void:
 	pawn.movement_component.move_to(deposit_storage.owner_module)
 
 func deposit_resource(prev_success: bool) -> void:
-	state = CollectPileState.DepositResource
-	if not prev_success:
+	# Guard BEFORE setting state: setting DepositResource on an already-ended
+	# job would overwrite the terminal state with no way to correct it (the
+	# _ended latch blocks re-cancel), leaving the pawn stuck forever.
+	if not prev_success or _ended:
 		cancel(true)
 		return
+	state = CollectPileState.DepositResource
 	var carried_amount: int = pawn.inventory_component.get_carried_amount(resource_data)
 	var deposit_amount: int = mini(carried_amount, deposit_storage.space_available())
 	if deposit_amount <= 0:

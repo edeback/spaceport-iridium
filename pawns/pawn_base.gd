@@ -78,7 +78,11 @@ func _process(delta: float) -> void:
 		return
 	job_length += sim_delta
 	if current_job != null:
-		if current_job.is_failed() or current_job.is_finished():
+		# is_ended() backstop: if a stale callback overwrote the terminal state
+		# after cancel() (the _ended latch blocks re-cancelling, so the subclass
+		# state can never be corrected), the latch itself is still authoritative -
+		# drop the job instead of processing it forever.
+		if current_job.is_ended() or current_job.is_failed() or current_job.is_finished():
 			_end_current_job()
 		else:
 			current_job.process_job(sim_delta)
@@ -92,6 +96,8 @@ func _process(delta: float) -> void:
 func _end_current_job() -> void:
 	var finished_job: JobBase = current_job
 	current_job = null
+	# Finalizer for jobs that reached Finished without going through cancel();
+	# idempotent, so it's a no-op when cancel() already ended the job.
 	finished_job.end_job()
 	# Intentionally don't start the next job immediately
 		
@@ -112,8 +118,7 @@ func start_job() -> void:
 		if queued_job.is_valid() and queued_job.can_do_job(self):
 			_begin_job(queued_job)
 			return
-		queued_job.cancel(true)
-		queued_job.end_job()
+		queued_job.cancel(true) # cancel implies end_job (lifecycle contract)
 	current_job = Global.job_manager.find_job(self)
 	if current_job:
 		current_job.start_job(self)
@@ -151,8 +156,7 @@ func interrupt_with_job(new_job: JobBase) -> void:
 	if current_job != null:
 		var interrupted: JobBase = current_job
 		current_job = null
-		interrupted.cancel(false)
-		interrupted.end_job()
+		interrupted.cancel(false) # cancel implies end_job (lifecycle contract)
 	job_length = 0
 	_begin_job(new_job)
 

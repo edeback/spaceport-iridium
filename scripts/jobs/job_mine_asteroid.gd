@@ -24,6 +24,9 @@ const ORE_RICHNESS_RANGE := Vector2(0.3, 1.0)
 
 enum MineAsteroidState { Starting, MovingToAsteroid, MineAsteroid, ReturningToModule, DepositMaterial, Finished, Failed }
 
+func get_category() -> Category:
+	return Category.WORK
+
 func get_job_description() -> String:
 	return "Mine Asteroid"
 
@@ -62,11 +65,19 @@ func start_job(_pawn: PawnBase) -> void:
 	if state != MineAsteroidState.Failed:
 		state = MineAsteroidState.Starting
 		
-func cancel(_as_failed: bool) -> void:
-	if _as_failed:
+func _on_cancel(as_failed: bool) -> void:
+	if as_failed:
 		state = MineAsteroidState.Failed
 	else:
 		state = MineAsteroidState.Finished
+
+func _on_end() -> void:
+	# Don't stay connected to the autoload after the job ends (leaks the job
+	# and keeps _module_removed firing forever).
+	if SignalBus.module_removed.is_connected(_module_removed):
+		SignalBus.module_removed.disconnect(_module_removed)
+	if asteroid != null and is_instance_valid(asteroid) and asteroid.despawning.is_connected(_asteroid_despawned):
+		asteroid.despawning.disconnect(_asteroid_despawned)
 	
 func process_job(delta: float) -> void:
 	match state:
@@ -86,6 +97,10 @@ func process_job(delta: float) -> void:
 			pass
 	
 func get_asteroid() -> void:
+	# Re-picking (previous one mined dry): stop listening to the old asteroid
+	# or its later despawn would wrongly reset/cancel this job.
+	if asteroid != null and is_instance_valid(asteroid) and asteroid.despawning.is_connected(_asteroid_despawned):
+		asteroid.despawning.disconnect(_asteroid_despawned)
 	var asteroids: Array[Node] = pawn.get_tree().get_nodes_in_group("asteroid")
 	asteroids.shuffle()
 	asteroid = null
@@ -108,10 +123,12 @@ func _asteroid_despawned() -> void:
 	# otherwise we don't care, we already came and left already
 
 func _module_removed(module: ModuleBase) -> void:
-	if module == requesting_component.owner_module:
+	# requesting_component nulls itself below, so a second removal must not
+	# dereference it; pawn is null while the job sits unclaimed on the board.
+	if requesting_component != null and module == requesting_component.owner_module:
 		requesting_component = null
 		state = MineAsteroidState.Failed
-		if pawn.movement_component.movement_ended.is_connected(next_state):
+		if pawn != null and pawn.movement_component.movement_ended.is_connected(next_state):
 			pawn.movement_component.movement_ended.disconnect(next_state)
 
 func move_to_asteroid() -> void:
@@ -121,6 +138,11 @@ func move_to_asteroid() -> void:
 		
 		
 func next_state(prev_success: bool) -> void:
+	# _ended: the state comparisons below only *happen* to no-op on the
+	# terminal enum values - don't rely on that for a stale one-shot firing
+	# after an external cancel.
+	if _ended:
+		return
 	if not prev_success:
 		if state < MineAsteroidState.ReturningToModule:
 			state = MineAsteroidState.Starting

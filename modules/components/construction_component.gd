@@ -53,6 +53,8 @@ func start_deconstruction() -> void:
 		construction_job = Job_ConstructModule.new()
 		construction_job.setup(owner_module)
 		construction_job.deconstruct = true
+		# Tearing down something already standing is "finish what's started".
+		construction_job.priority = JobPriorities.COMPLETION_BOOST
 		construction_job.job_end.connect(_on_deconstruction_job_end.bind(construction_job), CONNECT_ONE_SHOT)
 		Global.job_manager.add_job(construction_job)
 		current_state = ConstructionState.Deconstructing
@@ -114,6 +116,9 @@ func _start_construction_job(add_to_board: bool) -> Job_ConstructModule:
 	material_storage.display_info_panel_ui = false
 	construction_job = Job_ConstructModule.new()
 	construction_job.setup(owner_module)
+	# Only created once the site is fully resourced, so this is always a
+	# finish-what's-started job: boost it over starting fresh hauls.
+	construction_job.priority = JobPriorities.COMPLETION_BOOST
 	construction_job.job_end.connect(_on_construction_job_end.bind(construction_job), CONNECT_ONE_SHOT)
 	current_state = ConstructionState.Constructing
 	if add_to_board:
@@ -159,7 +164,7 @@ func setup_storage_for_construction() -> void:
 		material_storage.display_storage_ui = true
 		material_storage.display_info_panel_ui = true
 		material_storage.max_stored = 0
-		material_storage.priority = 99
+		material_storage.priority = JobPriorities.CONSTRUCTION_IMPORT
 		for resource : ResourceData in owner_module.module_data.resource_costs:
 			if resource != Global.resource_manager.credit_resource:
 				var new_data := StorageData.new()
@@ -172,6 +177,7 @@ func _on_deconstruction_job_end(finished_job: Job_ConstructModule) -> void:
 		construction_job = Job_ConstructModule.new()
 		construction_job.setup(owner_module)
 		construction_job.deconstruct = true
+		construction_job.priority = JobPriorities.COMPLETION_BOOST
 		construction_job.job_end.connect(_on_deconstruction_job_end.bind(construction_job), CONNECT_ONE_SHOT)
 		Global.job_manager.add_job(construction_job)
 
@@ -187,7 +193,7 @@ func setup_storage_post_deconstruction() -> void:
 		material_storage.accepts_exports = true
 		material_storage.display_storage_ui = true
 		material_storage.display_info_panel_ui = true
-		material_storage.priority = -99
+		material_storage.priority = JobPriorities.DECONSTRUCTION_EXPORT
 		for resource : ResourceData in owner_module.module_data.resource_costs:
 			if resource != Global.resource_manager.credit_resource:
 				var new_data := StorageData.new()
@@ -226,7 +232,7 @@ func _setup_deconstructed_for_load() -> void:
 	material_storage.accepts_exports = true
 	material_storage.display_storage_ui = true
 	material_storage.display_info_panel_ui = true
-	material_storage.priority = -99
+	material_storage.priority = JobPriorities.DECONSTRUCTION_EXPORT
 	var capacity: int = 0
 	for resource: ResourceData in owner_module.module_data.resource_costs:
 		if resource != Global.resource_manager.credit_resource:

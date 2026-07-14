@@ -24,13 +24,13 @@ func start_job(_pawn: PawnBase) -> void:
 	await Global.time_manager.sim_seconds(duration)
 	cancel(false)
 		
-func cancel(_as_failed: bool) -> void:
-	if _as_failed:
+func _on_cancel(as_failed: bool) -> void:
+	if as_failed:
 		state = JobState.Failed
 	else:
 		state = JobState.Finished
-	
-	
+
+
 func is_failed() -> bool:
 	return state == JobState.Failed
 	

@@ -15,6 +15,9 @@ var shift_spot_elapsed: float = 0.0
 
 enum ConstructModuleState { Starting, MovingToModule, ConstructModule, DeconstructModule, Finished, Failed }
 
+func get_category() -> Category:
+	return Category.BUILD
+
 func get_job_description() -> String:
 	if deconstruct:
 		return "Deconstruct Module"
@@ -40,14 +43,11 @@ func setup(_module: ModuleBase) -> void:
 		return
 	state = ConstructModuleState.Starting
 	SignalBus.module_removed.connect(_module_removed)
-	construction_component.construction_finished.connect(
-		func() -> void:
-			state = ConstructModuleState.Finished
-	)
-	construction_component.deconstruction_finished.connect(
-		func() -> void:
-			state = ConstructModuleState.Finished
-	)
+	construction_component.construction_finished.connect(_on_work_complete)
+	construction_component.deconstruction_finished.connect(_on_work_complete)
+
+func _on_work_complete() -> void:
+	state = ConstructModuleState.Finished
 	
 func is_valid() -> bool:
 	return is_instance_valid(module_to_construct) and is_instance_valid(construction_component)
@@ -61,11 +61,22 @@ func start_job(_pawn: PawnBase) -> void:
 	pawn = _pawn
 	move_to_module()
 		
-func cancel(_as_failed: bool) -> void:
-	if _as_failed:
+func _on_cancel(as_failed: bool) -> void:
+	if as_failed:
 		state = ConstructModuleState.Failed
 	else:
 		state = ConstructModuleState.Finished
+
+func _on_end() -> void:
+	# Ended jobs must not linger connected to the autoload or the component -
+	# the connections would both leak the job and keep its handlers firing.
+	if SignalBus.module_removed.is_connected(_module_removed):
+		SignalBus.module_removed.disconnect(_module_removed)
+	if is_instance_valid(construction_component):
+		if construction_component.construction_finished.is_connected(_on_work_complete):
+			construction_component.construction_finished.disconnect(_on_work_complete)
+		if construction_component.deconstruction_finished.is_connected(_on_work_complete):
+			construction_component.deconstruction_finished.disconnect(_on_work_complete)
 	
 func process_job(delta: float) -> void:
 	match state:
@@ -93,7 +104,10 @@ func move_to_module() -> void:
 	pawn.movement_component.move_to(module_to_construct, 1, true)
 		
 func move_complete(as_success: bool) -> void:
-	if not as_success:
+	# _ended: a stale movement one-shot firing after an external cancel must
+	# not overwrite the terminal state (Failed -> ConstructModule would leave
+	# the pawn working a dead job forever).
+	if not as_success or _ended:
 		cancel(true)
 		return
 	if deconstruct:

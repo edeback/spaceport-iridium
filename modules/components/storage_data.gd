@@ -11,6 +11,10 @@ extends ResourceStackContainer
 
 
 func end_all_jobs() -> void:
+	# Null/erase our references BEFORE cancelling: cancel() re-enters this
+	# storage via cancel_withdraw_job/cancel_deposit_job, and the erase-first
+	# ordering is what keeps that re-entrancy safe. cancel() implies end_job
+	# (lifecycle contract) - no separate end call needed.
 	if import_job != null:
 		var job: Job_GetResource = import_job
 		import_job = null
@@ -21,10 +25,11 @@ func end_all_jobs() -> void:
 		export_job = null
 		job.cancel(true)
 		Global.job_manager.remove_job(job)
-	for job in withdraw_jobs:
+	# Iterate copies: each cancel() re-enters and erases from the live array.
+	for job in withdraw_jobs.duplicate():
 		job.cancel(true)
 	withdraw_jobs.clear()
-	for job in deposit_jobs:
+	for job in deposit_jobs.duplicate():
 		job.cancel(true)
 	deposit_jobs.clear()
 
