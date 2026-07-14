@@ -124,6 +124,7 @@ Organic crew (needs, happiness, shifts) and robotic pawns (mining drones exist; 
 	- **Happiness** — derived from the others plus situational modifiers (menial-work penalty, food-quality boost, ambient noise/vibration penalties). Consequences: productivity, and ultimately crew departure (a lose-condition input).
 - **Robotic** pawns (drones)
 	- **Energy** - Slowly drains, recharged at their home module or recharger modules. Low energy causes slow movement/work, zero energy only allows it to move (slowly) back to the recharger (on "backup power")
+	- **Health** - Structural integrity. At zero, is destroyed. No native self-heal, must be repaired
 
 ### 6.3 Jobs
 - Shared job board; modules post notices with priority (storage posts hauling requests scaled to deficit; construction sites post build jobs).
