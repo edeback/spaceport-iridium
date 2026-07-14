@@ -12,3 +12,4 @@ scene = ExtResource("2_pq5fq")
 icon = ExtResource("1_pq5fq")
 tags = Array[String](["Power"])
 hidden = true
+id = &"battery"

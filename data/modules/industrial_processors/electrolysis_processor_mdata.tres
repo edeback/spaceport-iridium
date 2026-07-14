@@ -17,3 +17,4 @@ ExtResource("3_5y2kn"): 4
 })
 tags = Array[String](["Industrial"])
 unlocked_by_default = false
+id = &"electrolysis_processor_mdata"

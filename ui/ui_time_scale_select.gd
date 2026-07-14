@@ -10,6 +10,7 @@ extends MarginContainer
 @onready var speed_buttons: HBoxContainer = %SpeedButtons
 
 var _speed_button_group: ButtonGroup = ButtonGroup.new()
+var _preset_buttons: Array[Button] = []
 
 func _ready() -> void:
 	var tm: TimeManager = Global.time_manager
@@ -22,10 +23,18 @@ func _ready() -> void:
 		button.button_pressed = is_equal_approx(preset, tm.speed)
 		button.pressed.connect(_on_speed_selected.bind(preset))
 		speed_buttons.add_child(button)
+		_preset_buttons.append(button)
 	tm.hour_changed.connect(_on_time_changed)
 	tm.cycle_changed.connect(_on_time_changed)
 	tm.pause_state_changed.connect(_on_pause_state_changed)
+	tm.speed_changed.connect(_on_speed_changed)
 	_refresh_clock()
+
+## Keeps the preset buttons honest when speed is set from elsewhere (loading
+## a save, future event cards).
+func _on_speed_changed(new_speed: float) -> void:
+	for index: int in _preset_buttons.size():
+		_preset_buttons[index].set_pressed_no_signal(is_equal_approx(TimeManager.SPEED_PRESETS[index], new_speed))
 
 func _on_pause_toggled(toggled_on: bool) -> void:
 	Global.time_manager.paused = toggled_on

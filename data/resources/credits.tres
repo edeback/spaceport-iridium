@@ -10,3 +10,4 @@ icon = ExtResource("1_bjdx1")
 has_global_store = true
 global_total = 1000
 cached_total = null
+id = &"credits"

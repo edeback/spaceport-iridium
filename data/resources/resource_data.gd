@@ -2,6 +2,9 @@
 class_name ResourceData
 extends Resource
 
+## Stable identifier for save files (matches the .tres file stem). Never
+## rename once players have saves referencing it.
+@export var id: StringName = &""
 @export var name: String = ""
 @export var icon: Texture2D
 

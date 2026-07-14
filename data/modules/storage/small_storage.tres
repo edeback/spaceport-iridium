@@ -16,3 +16,4 @@ resource_costs = Dictionary[ExtResource("2_lqadu"), int]({
 ExtResource("3_lqadu"): 1
 })
 tags = Array[String](["Storage"])
+id = &"small_storage"

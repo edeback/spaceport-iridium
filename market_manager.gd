@@ -62,3 +62,18 @@ func deposit_resource(resource: ResourceData, amount: int) -> bool:
 		market_data[resource] += amount
 		return true
 	return false
+
+# --- persistence -------------------------------------------------------------
+
+func get_save_data() -> Dictionary:
+	var out: Dictionary = {}
+	for resource: ResourceData in market_data:
+		if resource.id != &"":
+			out[String(resource.id)] = market_data[resource]
+	return out
+
+func load_save_data(data: Dictionary) -> void:
+	for resource: ResourceData in market_data:
+		if data.has(String(resource.id)):
+			market_data[resource] = int(data[String(resource.id)])
+	market_updated.emit()

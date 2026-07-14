@@ -19,3 +19,4 @@ ExtResource("4_ywnif"): 4,
 ExtResource("5_i84d2"): 2
 })
 tags = Array[String](["Transportation"])
+id = &"module_teleporter"

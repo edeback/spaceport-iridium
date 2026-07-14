@@ -7,3 +7,4 @@
 script = ExtResource("1_r8nsh")
 name = "Ice"
 icon = ExtResource("1_bms27")
+id = &"ice"

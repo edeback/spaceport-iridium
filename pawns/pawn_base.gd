@@ -47,6 +47,7 @@ func get_component_by_type(type: Variant) -> PawnComponentBase:
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	add_to_group("pawn")
 	movement_component = PawnMovementComponent.new()
 	movement_component.owner_pawn = self
 	add_child(movement_component)

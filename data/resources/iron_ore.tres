@@ -7,3 +7,4 @@
 script = ExtResource("2_6cypi")
 name = "Iron Ore"
 icon = ExtResource("1_fn40q")
+id = &"iron_ore"

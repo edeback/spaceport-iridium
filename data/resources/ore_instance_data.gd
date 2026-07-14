@@ -21,3 +21,6 @@ func merged_with(other: ItemInstanceData, self_weight: float, other_weight: floa
 
 func get_display_suffix() -> String:
 	return "%d%%" % roundi(richness * 100.0)
+
+func to_dict() -> Dictionary:
+	return {"type": "ore", "richness": richness}

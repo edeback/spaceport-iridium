@@ -22,3 +22,4 @@ tags = Array[String](["Core"])
 multiplacement = 2
 ignore_multiplacement_connection_check = true
 interaction_layer = 2
+id = &"turbolift_mdata"

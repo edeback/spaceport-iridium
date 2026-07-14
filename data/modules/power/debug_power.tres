@@ -10,3 +10,4 @@ name = "Debug Power"
 scene = ExtResource("2_wsl8j")
 icon = ExtResource("1_wsl8j")
 tags = Array[String](["Power"])
+id = &"debug_power"

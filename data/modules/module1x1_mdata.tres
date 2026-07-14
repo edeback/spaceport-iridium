@@ -11,3 +11,4 @@ scene = ExtResource("2_7qkj1")
 icon = ExtResource("1_vfvtj")
 tags = Array[String](["Test"])
 hidden = true
+id = &"module1x1_mdata"

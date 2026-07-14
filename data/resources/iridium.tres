@@ -8,3 +8,4 @@ script = ExtResource("2_8ktpq")
 name = "Iridium"
 icon = ExtResource("1_2f26a")
 default_cost = 100
+id = &"iridium"

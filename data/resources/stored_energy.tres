@@ -7,3 +7,4 @@
 script = ExtResource("2_rm4fy")
 name = "Stored Energy"
 icon = ExtResource("1_l8ou6")
+id = &"stored_energy"

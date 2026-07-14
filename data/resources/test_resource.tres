@@ -7,3 +7,4 @@ script = ExtResource("1_i2m78")
 name = ""
 show_test = false
 test_val = ""
+id = &"test_resource"

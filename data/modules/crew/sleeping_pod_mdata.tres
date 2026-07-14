@@ -19,3 +19,4 @@ ExtResource("4_4chp3"): 300
 })
 tags = Array[String](["Crew"])
 metadata/_custom_type_script = "uid://vwmofdckg7hu"
+id = &"sleeping_pod_mdata"

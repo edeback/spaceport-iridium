@@ -38,6 +38,8 @@ func _ready() -> void:
 	pass # Replace with function body.
 
 func _startup() -> void:
+	if SaveManager.has_pending_load():
+		return # the save's world section places everything instead
 	await get_tree().create_timer(1.0).timeout
 	add_module(start_module, Vector2i(15,8))
 	
@@ -83,7 +85,7 @@ func purchase_and_add_module(module_data: ModuleData, cell: Vector2i, is_horizon
 	else:
 		module_data.withdraw_credit_cost()
 
-func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false) -> ModuleBase:
+func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false, defer_ready: bool = false) -> ModuleBase:
 	var module_scene: PackedScene = module_data.scene
 	if flipped and module_data.flippable:
 		module_scene = module_data.flipped_scene
@@ -107,6 +109,7 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 	new_module.module_cell = cell
 	new_module.module_data = module_data
 	new_module.is_horizontal = is_horizontal
+	new_module.flipped = flipped and module_data.flippable
 	for x in new_module.size.x:
 		for y in new_module.size.y:
 			layer_data[module_data.interaction_layer].cell_to_module[cell + Vector2i(x, y)] = new_module
@@ -114,12 +117,16 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 	var module_array: Array = modules_by_type.get_or_add(module_data, [])
 	module_array.append(new_module)
 	module_layers[module_data.interaction_layer].add_child(new_module)
-	# TODO: Hacky, find better way
-	var construction_component: ConstructionComponent = new_module.get_node("ConstructionComponent") as ConstructionComponent
-	if construction_component != null:
-		new_module.call_deferred("ready_blueprint")
-	else:
-		new_module.ready_constructed()
+	# defer_ready: save-loading places every module first, then runs a second
+	# ready pass per saved build state (see load_save_data) - mirroring how
+	# modules were built one at a time, so door hookups stay order-safe.
+	if not defer_ready:
+		# TODO: Hacky, find better way
+		var construction_component: ConstructionComponent = new_module.get_node_or_null("ConstructionComponent") as ConstructionComponent
+		if construction_component != null:
+			new_module.call_deferred("ready_blueprint")
+		else:
+			new_module.ready_constructed()
 	return new_module
 
 func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
@@ -149,6 +156,49 @@ func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 			add_module(replacement_module, replacement_location +replacement_point)
 	return true
 	
+# --- persistence ------------------------------------------------------------
+
+func get_save_data() -> Dictionary:
+	var modules_out: Array = []
+	# id_to_module preserves placement order, which the load replays.
+	for module: ModuleBase in id_to_module.values():
+		if module.module_data == null or module.module_data.id == &"":
+			push_warning("Module without a save id not saved: " + module.name)
+			continue
+		modules_out.append(module.get_save_data())
+	return {"modules": modules_out}
+
+## Two-phase: place every module with ready deferred, then run the ready pass
+## (built vs blueprint) + per-module state restore in placement order.
+func load_save_data(data: Dictionary) -> void:
+	var placed_modules: Array[ModuleBase] = []
+	var placed_entries: Array[Dictionary] = []
+	for entry: Dictionary in data.get("modules", []):
+		var module_data: ModuleData = Global.save_manager.get_module_data_by_id(StringName(String(entry.get("id", ""))))
+		if module_data == null:
+			push_warning("Unknown module id in save, skipping: " + str(entry.get("id")))
+			continue
+		var cell_arr: Array = entry.get("cell", [])
+		if cell_arr.size() != 2:
+			push_warning("Saved module has no cell, skipping: " + str(entry.get("id")))
+			continue
+		var cell := Vector2i(int(cell_arr[0]), int(cell_arr[1]))
+		var module: ModuleBase = add_module(module_data, cell, bool(entry.get("horizontal", true)), bool(entry.get("flipped", false)), true)
+		if module == null:
+			# Usually an auto-placed companion (e.g. a turbolift's truss) beat
+			# the saved copy to the cell - equivalent state, safe to skip.
+			continue
+		placed_modules.append(module)
+		placed_entries.append(entry)
+	for index: int in placed_modules.size():
+		var module: ModuleBase = placed_modules[index]
+		var entry: Dictionary = placed_entries[index]
+		if bool(entry.get("built", true)):
+			module.ready_constructed()
+		else:
+			module.ready_blueprint()
+		module.load_save_data(entry)
+
 func remove_module_by_cell(layer: StructureLayer, cell: Vector2i) -> void:
 	var module: ModuleBase = layer_data[layer].cell_to_module.get(cell)
 	if module != null:

@@ -7,3 +7,4 @@
 script = ExtResource("2_nqete")
 name = "Biowaste"
 icon = ExtResource("1_7gaxm")
+id = &"biowaste"

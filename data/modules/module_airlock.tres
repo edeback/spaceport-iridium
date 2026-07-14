@@ -19,3 +19,4 @@ tags = Array[String](["Core"])
 interaction_layer = 1
 flippable = true
 flipped_scene = ExtResource("1_cdc0w")
+id = &"module_airlock"

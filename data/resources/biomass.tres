@@ -7,3 +7,4 @@
 script = ExtResource("2_if2j3")
 name = "Biomass"
 icon = ExtResource("1_tf8hw")
+id = &"biomass"

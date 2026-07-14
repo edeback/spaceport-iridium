@@ -43,7 +43,8 @@ func ready_constructed() -> void:
 	material_storage.accepts_imports = false
 	material_storage.display_storage_ui = false
 	material_storage.display_info_panel_ui = false
-	if Global.path_manager.get_vertex(owner_module).group == &"space":
+	var owner_vertex := Global.path_manager.get_vertex(owner_module)
+	if owner_vertex and owner_vertex.group == &"space":
 		Global.path_manager.change_vertex_group(owner_module, "")
 
 func start_deconstruction() -> void:
@@ -193,6 +194,47 @@ func setup_storage_post_deconstruction() -> void:
 				new_data.deposit(owner_module.module_data.resource_costs[resource], false)
 				new_data.desired = 0
 				material_storage.storage_data[resource] = new_data
+
+# --- persistence ------------------------------------------------------------
+
+func get_save_data() -> Dictionary:
+	return {"state": current_state, "work_done": work_seconds_done}
+
+## Runs after the ready pass (ready_blueprint for unbuilt modules). Saved
+## Constructing collapses to NotStarted: the job wasn't persisted, and
+## NotStarted re-posts as soon as ready_for_construction() sees the restored
+## materials - work_seconds_done keeps the progress already made.
+func load_save_data(data: Dictionary) -> void:
+	var saved_state: ConstructionState = int(data.get("state", ConstructionState.NotStarted)) as ConstructionState
+	match saved_state:
+		ConstructionState.Built:
+			pass # ready_constructed already set everything
+		ConstructionState.Deconstructing, ConstructionState.Deconstructed:
+			_setup_deconstructed_for_load()
+		_:
+			current_state = ConstructionState.NotStarted
+			work_seconds_done = float(data.get("work_done", 0.0))
+
+## Deconstruction-in-progress collapses to Deconstructed on load (mirror of
+## the Constructing->NotStarted rule): reconfigure the material storage as an
+## export bin; the storage section restores the actual remaining contents.
+func _setup_deconstructed_for_load() -> void:
+	Global.path_manager.change_vertex_group(owner_module, &"space")
+	material_storage.empty_all()
+	material_storage.add_to_group("resource_storage")
+	material_storage.accepts_imports = false
+	material_storage.accepts_exports = true
+	material_storage.display_storage_ui = true
+	material_storage.display_info_panel_ui = true
+	material_storage.priority = -99
+	var capacity: int = 0
+	for resource: ResourceData in owner_module.module_data.resource_costs:
+		if resource != Global.resource_manager.credit_resource:
+			capacity += owner_module.module_data.resource_costs[resource]
+	material_storage.max_stored = maxi(capacity, material_storage.max_stored)
+	work_seconds_done = 0
+	current_state = ConstructionState.Deconstructed
+	set_process(true) # keeps polling until the export bin empties, then removes the module
 
 func has_ui() -> bool:
 	return (not owner_module.module_data.instant_build) if owner_module and owner_module.module_data else false

@@ -17,3 +17,4 @@ ExtResource("3_fx34i"): 10
 })
 tags = Array[String](["Industrial"])
 metadata/_custom_type_script = "uid://vwmofdckg7hu"
+id = &"algae_vats_mdata"

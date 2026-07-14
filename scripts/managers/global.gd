@@ -3,6 +3,7 @@ extends Node
 const CELL_SIZE: Vector2i = Vector2i(64, 64)
 
 var time_manager: TimeManager
+var save_manager: SaveManager
 var world_manager: WorldManager
 var path_manager: PathManager
 var structure_manager: StructureManager

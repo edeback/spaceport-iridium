@@ -24,6 +24,9 @@ var module_id: int = -1
 var module_cell: Vector2i
 var module_data: ModuleData
 var is_horizontal: bool = true
+## Whether this instance was placed flipped (the flipped_scene variant).
+## Set by WorldManager.add_module; needed so save/load can re-place it.
+var flipped: bool = false
 enum BuildState { Preview, Blueprint, Built }
 var build_state: BuildState = BuildState.Preview
 
@@ -169,6 +172,50 @@ func get_upgrade_save_data() -> Dictionary:
 	for upgrade: LocalUpgradeData in local_upgrade_tiers:
 		data[String(upgrade.id)] = local_upgrade_tiers[upgrade]
 	return data
+
+## Full per-instance save data: placement, build state, and component state
+## (construction progress, storage contents keyed by component path, upgrade
+## tiers). WorldManager's world section aggregates these.
+func get_save_data() -> Dictionary:
+	var data: Dictionary = {
+		"id": String(module_data.id),
+		"cell": [module_cell.x, module_cell.y],
+		"horizontal": is_horizontal,
+		"flipped": flipped,
+		"built": is_complete(),
+	}
+	var construction: ConstructionComponent = get_component_by_type(ConstructionComponent) as ConstructionComponent
+	if construction != null:
+		data["construction"] = construction.get_save_data()
+	var storages: Dictionary = {}
+	for component: ComponentBase in components:
+		if component is StorageComponent:
+			var storage_save: Dictionary = (component as StorageComponent).get_save_data()
+			if not storage_save.is_empty():
+				storages[String(get_path_to(component))] = storage_save
+	if not storages.is_empty():
+		data["storage"] = storages
+	var upgrades: Dictionary = get_upgrade_save_data()
+	if not upgrades.is_empty():
+		data["upgrades"] = upgrades
+	return data
+
+## Restore per-instance state. Call AFTER the ready pass (ready_constructed /
+## ready_blueprint) so components have done their normal state setup first.
+## Construction before storage: the deconstructed path reconfigures the
+## material storage, and the storage section then restores actual contents.
+func load_save_data(data: Dictionary) -> void:
+	var construction: ConstructionComponent = get_component_by_type(ConstructionComponent) as ConstructionComponent
+	if construction != null and data.has("construction"):
+		construction.load_save_data(data["construction"])
+	var storages: Dictionary = data.get("storage", {})
+	for path_str: String in storages:
+		var storage: StorageComponent = get_node_or_null(NodePath(path_str)) as StorageComponent
+		if storage == null:
+			push_warning("Saved storage component not found on " + name + ": " + path_str)
+			continue
+		storage.load_save_data(storages[path_str])
+	load_upgrade_save_data(data.get("upgrades", {}))
 
 ## Restore tiers saved by get_upgrade_save_data() and re-apply their modifiers,
 ## exactly as if each tier had been purchased. Call after module_data is set.

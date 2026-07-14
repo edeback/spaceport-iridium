@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://nwr8gusqocd6" path="res://scripts/managers/main.gd" id="1_lvssd"]
 [ext_resource type="Script" path="res://scripts/managers/time_manager.gd" id="1_timemgr"]
+[ext_resource type="Script" path="res://scripts/managers/save_manager.gd" id="1_savemgr"]
 [ext_resource type="Script" uid="uid://dcanuqi7bdrfp" path="res://scripts/managers/camera.gd" id="3_055fr"]
 [ext_resource type="Resource" uid="uid://c8o32mbasjok7" path="res://data/modules/special/starting_module_mdata.tres" id="3_facbu"]
 [ext_resource type="Script" uid="uid://d0hud6eqhyh68" path="res://scripts/managers/path_manager.gd" id="3_nkgie"]
@@ -7632,6 +7633,9 @@ parameters/looping = true
 [node name="UnlockManager" type="Node" parent="Managers" unique_id=1442880961]
 script = ExtResource("31_come4")
 metadata/_custom_type_script = "uid://bhfs7qjh80a6p"
+
+[node name="SaveManager" type="Node" parent="Managers"]
+script = ExtResource("1_savemgr")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=595998923]
 position = Vector2(961, 542)

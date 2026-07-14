@@ -89,6 +89,24 @@ func _process(delta: float) -> void:
 			
 func _needs_new_eat_job() -> bool:
 	return _pending_eat_job == null #or _pending_eat_job.is_finished() or _pending_eat_job.is_failed()
-			
+
 func finished_eating() -> void:
 	_pending_eat_job = null
+
+# --- persistence -------------------------------------------------------------
+
+func get_save_data() -> Dictionary:
+	return {
+		"health": health_value,
+		"sleep": sleep_value,
+		"hunger": hunger_value,
+		"entertainment": entertainment_value,
+		"social": social_value,
+	}
+
+func load_save_data(data: Dictionary) -> void:
+	health_value = float(data.get("health", health_value))
+	sleep_value = float(data.get("sleep", sleep_value))
+	hunger_value = float(data.get("hunger", hunger_value))
+	entertainment_value = float(data.get("entertainment", entertainment_value))
+	social_value = float(data.get("social", social_value))

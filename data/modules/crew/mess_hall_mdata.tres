@@ -17,3 +17,4 @@ ExtResource("3_whr4g"): 6
 })
 tags = Array[String](["Crew"])
 metadata/_custom_type_script = "uid://vwmofdckg7hu"
+id = &"mess_hall_mdata"

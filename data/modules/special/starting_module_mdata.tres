@@ -12,3 +12,4 @@ scene = ExtResource("3_h5dhg")
 icon = ExtResource("1_2veoo")
 hidden = true
 metadata/_custom_type_script = "uid://vwmofdckg7hu"
+id = &"starting_module_mdata"

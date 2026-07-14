@@ -33,6 +33,35 @@ func _ready() -> void:
 	Global.ui_main = self
 	Global.ui_in_game.input_mode_changed.connect(_on_input_mode_changed)
 	_setup_unlock_ui()
+	_setup_save_ui()
+
+## Minimal save/load controls next to the Research button: slot name field +
+## Save/Load buttons. F5/F9 quick-slot shortcuts live on SaveManager.
+func _setup_save_ui() -> void:
+	var info_btn: Button = %ModuleInfoButton
+	var info_margin: Node = info_btn.get_parent()
+	var side_vbox: Node = info_margin.get_parent()
+	var row := HBoxContainer.new()
+	var slot_edit := LineEdit.new()
+	slot_edit.text = SaveManager.QUICK_SLOT
+	slot_edit.custom_minimum_size.x = 110
+	row.add_child(slot_edit)
+	var save_btn := Button.new()
+	save_btn.text = "Save"
+	save_btn.pressed.connect(func() -> void:
+		if not slot_edit.text.strip_edges().is_empty():
+			Global.save_manager.save_slot(slot_edit.text.strip_edges())
+	)
+	row.add_child(save_btn)
+	var load_btn := Button.new()
+	load_btn.text = "Load"
+	load_btn.pressed.connect(func() -> void:
+		if not slot_edit.text.strip_edges().is_empty():
+			Global.save_manager.load_slot(slot_edit.text.strip_edges())
+	)
+	row.add_child(load_btn)
+	side_vbox.add_child(row)
+	side_vbox.move_child(row, info_margin.get_index())
 
 func _setup_unlock_ui() -> void:
 	unlock_panel = UnlockPanel.new()

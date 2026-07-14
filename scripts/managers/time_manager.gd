@@ -104,3 +104,27 @@ func sim_seconds(duration: float) -> void:
 ## "Cycle 3, 14:00" - shared by the clock UI and any log output.
 func format_time() -> String:
 	return "Cycle %d, %02d:00" % [cycle, hour]
+
+# --- persistence -------------------------------------------------------------
+
+func get_save_data() -> Dictionary:
+	return {
+		"cycle": cycle,
+		"hour": hour,
+		"hour_progress": _hour_progress,
+		"total_sim_seconds": total_sim_seconds,
+		"speed": speed,
+		"paused": paused,
+	}
+
+func load_save_data(data: Dictionary) -> void:
+	cycle = int(data.get("cycle", 1))
+	hour = int(data.get("hour", START_HOUR))
+	_hour_progress = float(data.get("hour_progress", 0.0))
+	total_sim_seconds = float(data.get("total_sim_seconds", 0.0))
+	speed = float(data.get("speed", 1.0))
+	paused = bool(data.get("paused", false))
+	# Direct field writes above don't pass through the tick loop, so tell
+	# listeners (clock UI, shift logic later) where the calendar now stands.
+	cycle_changed.emit(cycle)
+	hour_changed.emit(hour)

@@ -17,3 +17,4 @@ ExtResource("3_7jpe4"): 6
 })
 tags = Array[String](["Storage"])
 unlocked_by_default = false
+id = &"large_storage"

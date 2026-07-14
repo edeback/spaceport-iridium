@@ -19,3 +19,4 @@ ExtResource("4_tvdsv"): 4
 })
 tags = Array[String](["Power"])
 unlocked_by_default = false
+id = &"fusion_reactor"

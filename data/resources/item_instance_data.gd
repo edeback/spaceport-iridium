@@ -26,3 +26,9 @@ func merged_with(_other: ItemInstanceData, _self_weight: float, _other_weight: f
 ## Optional short label for UI (e.g. "78%", "Rich"). Default: nothing shown.
 func get_display_suffix() -> String:
 	return ""
+
+## Save-file form. Subclasses override with their own "type" tag + fields;
+## SaveManager.instance_from_dict() is the matching factory (kept there, not
+## here, so the base class never references its subclasses).
+func to_dict() -> Dictionary:
+	return {"type": "generic"}

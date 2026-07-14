@@ -17,3 +17,4 @@ ExtResource("3_xapty"): 5
 tags = Array[String](["Core"])
 multiplacement = 3
 ignore_multiplacement_connection_check = true
+id = &"truss_mdata"

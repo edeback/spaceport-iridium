@@ -24,3 +24,4 @@ tags = Array[String](["Dock"])
 flippable = true
 flipped_scene = ExtResource("1_vpvv2")
 metadata/_custom_type_script = "uid://vwmofdckg7hu"
+id = &"docking_bay"
