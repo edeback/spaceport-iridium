@@ -23,6 +23,10 @@ Sending a crew out from the station to acquire resources (or, per Research & Sci
 
 Ability to communicate and deal with other stations/planets in the system — negotiating, trading, or otherwise interacting diplomatically. Other stations can also simply be trade partners (see **02 – Resources & Economy**).
 
+## Factions
+
+Other people exist out there besides you. There are pirates, mercenaries, slavers, cults, independent merchants, other corporations, and of course nations. Some friendly, some not. Many will want things from you, either as deals, trades, or demands.
+
 ## Travel
 
 Ability to warp the entire station to a new system.

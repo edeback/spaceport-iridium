@@ -42,6 +42,7 @@ A central `SaveManager` that serializes the full game state to versioned JSON in
 - Pawn carrying stacks with ore instance data → richness survives round-trip.
 - A `.tres` id renamed between save and load → warn and skip that module/resource, don't crash the load.
 - Overflow `ResourcePile`s: v1 decision — save piles (position, contents, parent module by id) or drop them? Recommend **save them**; they're player-visible property. Files: `data/resources/resource_pile.gd` to_dict/from_dict + a piles subsection of world.
+	- Yes, save piles as not to lose resources.
 - Saving while paused (WI-02) → time section stores paused state; load resumes paused.
 - Two modules occupying same cell across layers (corridor over module) → order within world section is placement-order (`id_to_module` insertion order); hallway auto-placement in `connect_doors` must be suppressed during load (modules load with their connections re-derived — `make_connections` runs in `ready_constructed`; auto-hallway only triggers when `door_required` and no module present, which after full load is satisfied; ensure module load order = all modules placed *then* `ready_constructed` pass, two-phase, to avoid order-dependent door hookups).
 - **Two-phase load is the big one:** phase 1 instantiate/place all modules in Blueprint-suppressed mode; phase 2 call `ready_constructed`/`ready_blueprint` per saved state. `WorldManager.add_module` currently auto-calls these — add an optional `defer_ready: bool` parameter.

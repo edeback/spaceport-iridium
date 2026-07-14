@@ -10,11 +10,11 @@
 
 *Goal: current features stop lying to you; the two load-bearing systems every later feature depends on exist.*
 
-| # | Work item | Why now |
-|---|---|---|
-| WI-01 | [[Work Items/WI-01_Bug_Fix_Pass\|Bug-fix pass]] | Confirmed bugs (charge-without-build, turbolift crash, export-build data scan, signal type error) get more expensive to find later, and several corrupt play-tests |
-| WI-02 | [[Work Items/WI-02_Time_Manager\|Game clock & simulation tick]] | Needs, shifts, traders, market drift, solar cycles, events — all are expressed in game-time. Also retires the per-frame power/storage/needs polling in one stroke |
-| WI-03 | [[Work Items/WI-03_Save_Load\|Save/load system]] | Longest-lever foundation; every system added after this must ship its own save section, which is only cheap if the framework exists first. Unblocks long play-tests |
+| #     | Work item                                                       | Why now                                                                                                                                                             |
+| ----- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| WI-01 | [[Work Items/WI-01_Bug_Fix_Pass\|Bug-fix pass]]                 | Confirmed bugs (charge-without-build, turbolift crash, export-build data scan, signal type error) get more expensive to find later, and several corrupt play-tests  |
+| WI-02 | [[Work Items/WI-02_Time_Manager\|Game clock & simulation tick]] | Needs, shifts, traders, market drift, solar cycles, events — all are expressed in game-time. Also retires the per-frame power/storage/needs polling in one stroke   |
+| WI-03 | [[Work Items/WI-03_Save_Load\|Save/load system]]                | Longest-lever foundation; every system added after this must ship its own save section, which is only cheap if the framework exists first. Unblocks long play-tests |
 
 ## Phase 1 — Close the Core Loop
 
@@ -40,10 +40,13 @@
 | WI-12 | [[Work Items/WI-12_Storage_QoL\|Storage QoL: venting, config, mass-sell]] | Vent/dump, remove-option-without-destroying, priority visibility |
 | WI-13 | [[Work Items/WI-13_Events_v1\|Random events v1]] | Event-card framework + market shock & ARC levy events; foundation for pirates/crises |
 | WI-14 | [[Work Items/WI-14_Contracts\|Trade contracts]] | Deliver X by cycle Y; uses WI-02 deadlines + WI-08 traders |
+| WI-15 | [[Work Items/WI-15_Pathfinding_Exterior_Semantics\|Pathfinding: `is_exterior` semantics]] | Un-overloads the vertex group field (construction stops stealing the "space" group); unblocks teleporter networks; pairs naturally with WI-11 (same graph loops). From the 2026-07-14 pathfinding discussion |
+| WI-16 | [[Work Items/WI-16_Micro_Anchors_and_Pawn_Positioning\|Micro anchors & pawn positioning]] | Path-to-point-inside-module primitive + authored/generated anchors + cosmetic de-overlap (lanes, jitter); fixes turbolift waiting pop-in; foundation for beds (WI-05), workstations, and future combat form-up |
 
 ## Phase 3 — Threat & Expansion (outline only; docs to be written when Phase 2 nears completion)
 
-- **Combat v1** — module structural HP, damaged-truss degradation, repair jobs, one pirate raid event with pay-off option. (Depends: WI-13 events, WI-04 job categories.)
+- **Combat v1** — module structural HP, damaged-truss degradation, repair jobs, one pirate raid event with pay-off option. (Depends: WI-13 events, WI-04 job categories; form-up positioning consumes WI-16's generated anchors.)
+- **CONVEYED movement state** — position-ownership handoffs (turbolift rides; later trams/teleporter charge) become an explicit movement state instead of a suspended `await`, making rides serializable and interrupt-safe. Do it as part of the next major turbolift surgery, not standalone; until then WI-15's cab-save degradation covers save/load. Rule of thumb adopted now: awaits stay for cosmetic waits (door animations), anything that *owns a pawn's position* gets an explicit state.
 - **New modules pack** — Magscoop, Hydrogen Fuel Cells, Smelter/Polymer/Electronics factories as buildables (ProcessorComponent + recipes — mostly data work), Promenade, Holodeck.
 - **Logistics automation** — Logistics Bay (hauler robots reusing MiningDrone pattern), conveyor module. (Depends: WI-04.)
 - **Observatory & science trickle** — second research currency feeding unlock trees; early-warning hook for combat events.

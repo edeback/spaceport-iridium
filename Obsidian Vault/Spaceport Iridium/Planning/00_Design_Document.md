@@ -144,6 +144,7 @@ Later additions: Science Lab (experiment-driven research outside licensing), rev
 
 - **External arrivals:** planet → station ships (needs a planet + LocationData concept). Shuttles via Docking Bay; big freighters via Cargo Port (tiered connections à la Cities: Skylines). Teleport-in visitors later.
 - **Foreign relations:** other stations as trade partners / diplomacy targets.
+- **Natural(ish) Disasters:** meteor swarm, solar flares, dangerous xenobeasts
 - **Events (roguelite):** random event cards with choices; market shocks; inspections.
 - **Crises:** slow-building, visible-from-afar endgame threats (Starsector model). Pirates demand protection money; can be negotiated with.
 - **Combat:** modules have structural HP; destroyed modules degrade to damaged truss (station never disconnects). Defensive modules: armor, shields, EW, lasers/railguns. Combat should stay avoidable-at-a-cost.
@@ -154,6 +155,8 @@ Later additions: Science Lab (experiment-driven research outside licensing), rev
 - Build menu grouped by module tags (exists), research panel (exists), module info panel with per-component tabs (exists), pawn info panel with needs/inventory/job tabs (exists).
 - Needed: clock + calendar display, minimap (SimTower-style), power display polish, alerts/notifications feed, turbolift shaft panel, trade/contract screens, event card popups.
 - View modes (exploration idea): module detail vs. transport cutaway vs. transport detail (turbolift cabs, teleporter links). Layer-dimming toggle exists as a first pass.
+- Station alerts: Warnings to the player when things are going to have a problem (or already have one)
+	- Personal alerts: Individual pawns that are having a hard time should also be noticeable such that the player can examine them and address the problem
 
 ## 10. Losing
 

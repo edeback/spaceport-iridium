@@ -7,6 +7,10 @@
 - Modules will need max-occupancy numbers.
 - Pawns could be human or robotic (mining drones are an existing example of "robotic pawns" doing a specific job).
 - UI should show a pawn's current job.
+- Pawns have traits that affect which jobs they do and how they do them.
+- Pawns have skills which impact how well they do their jobs. These skills improve as they do their jobs.
+- Pawns have assigned roles perhaps? (Scientist, doctor, security officer?)
+- Pawns that experience low moods for long periods drop other tasks to feel better or suffer mental breaks if they can't
 
 ## Job Board / Assignment
 
@@ -39,3 +43,4 @@ These are served by dedicated modules: Dining Hall, Greenhouses/Hydroponics Bay/
 - External pawns (arriving from ships, etc.) can bring sickness onto the station.
 - Illness spreads to nearby pawns based on an infectiousness value, tracked via a `DiseaseData` resource.
 - Treated by a Medical Bay module.
+- Stasis Pods - pawns can be placed in stasis where time doesn't pass

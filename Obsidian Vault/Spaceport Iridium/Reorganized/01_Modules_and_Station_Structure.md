@@ -99,3 +99,12 @@ These pair with the life-related jobs pawns need to perform: sleeping, eating/dr
 - Tiles should distinguish "solid" vs. "sparse" rendering — sparse when 2+ sides are open (showing substructure or exterior detail underneath), solid otherwise. Might actually need to be tracked per-side rather than as a single solid/sparse flag for the whole tile.
 - Truss should render invisible when it's sitting behind another module.
 
+
+Concerns:
+- Modules are "chunky" - big uniform blocks
+	- Players like being able to make their own creative choices, which isn't possible here
+	- Decorative changes might be interesting but visual-only (and require a lot of assets)
+	- Could have "furniture" slots for the addition of small items?
+		- Partly visual, partly functional?
+		- But also maybe done via the "upgrade" window
+			- Upgrades _should_ have some sort of visible change

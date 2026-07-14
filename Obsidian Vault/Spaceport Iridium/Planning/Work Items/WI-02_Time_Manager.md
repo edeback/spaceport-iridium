@@ -5,7 +5,7 @@ A `TimeManager` that owns game time (cycles/days + hours), pause and speed contr
 
 ## Design decisions (make once, here)
 - **Time base:** real seconds × speed = sim seconds. Constants: `SECONDS_PER_HOUR` (suggest 30 real seconds at 1× — a 24h cycle = 12 min; tune later, keep in one place), `HOURS_PER_CYCLE = 24`.
-- **Speed:** `paused: bool` + `speed: float` (presets 1/2/4). Do **not** use `Engine.time_scale` (it distorts UI animation and input feel); instead TimeManager exposes `sim_delta` each frame and systems consume that. The existing `ui_time_scale_select.gd` is repointed at TimeManager.
+- **Speed:** `paused: bool` + `speed: float` (presets 0.5/1/2/4). Do **not** use `Engine.time_scale` (it distorts UI animation and input feel); instead TimeManager exposes `sim_delta` each frame and systems consume that. The existing `ui_time_scale_select.gd` is repointed at TimeManager.
 - **Ticks:** `signal sim_tick(sim_delta: float)` every frame (scaled, 0 when paused), `signal slow_tick(interval: float)` at 4 Hz sim-time, `signal hour_changed(hour: int)`, `signal cycle_changed(cycle: int)`.
 - Pausing stops sim signals entirely; `get_tree().paused` is no longer used for game pause (keep it only if you want a hard UI-freeze pause; process_mode juggling isn't worth it).
 

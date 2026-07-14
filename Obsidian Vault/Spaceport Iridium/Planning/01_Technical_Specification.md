@@ -45,7 +45,7 @@ This model is working well and should be preserved. New features should be new c
 - `PawnMovementComponent`: consumes graph path + per-module sub-paths, awaits behavior hooks (`path_enter`/`path_exit`/`traverse`), watches for module removal/group changes mid-route and re-paths.
 - Turbolifts: `TurboliftShaft` (RefCounted) + `TurboliftCab` + `RideRequest`; `path_exit` on a lift module awaits an actual cab ride.
 
-**Known weak points** (from the developer's own notes + reading): pathfinding to an arbitrary position inside a module isn't supported; movement vs. path-following are entangled (cab riding works via `path_position_override` but is delicate); edge-data/terrain speed multipliers are partial; forced re-path on vertex-group change exists but is coarse.
+**Known weak points** (from the developer's own notes + reading): the vertex `group` field is overloaded (networks AND exteriorness — construction steals the `"space"` group); pathfinding to an arbitrary position inside a module isn't supported; pawns sharing a path overlap visually; movement vs. path-following are entangled (cab riding works via `path_position_override` but is delicate, and rides can't be saved); edge-data/terrain speed multipliers are partial; forced re-path on vertex-group change exists but is coarse. All of these are semantic issues layered on the graph, not structural ones — resolutions were decided 2026-07-14 (see §2.6, [[Work Items/WI-15_Pathfinding_Exterior_Semantics]], [[Work Items/WI-16_Micro_Anchors_and_Pawn_Positioning]]).
 
 ### 1.4 Resources, storage, and hauling
 - `ResourceData` (.tres per resource) holds market data + a registry of every `StorageComponent` containing it; totals are cached and recalced on dirty flag each frame.
@@ -95,17 +95,25 @@ Storage job posting, sustenance refill, and power should react to `storage_chang
 - `PawnNeedsComponent` generalized: needs decay in game-hours, each need paired with a job type + serving component; happiness as a derived aggregate with modifier list (mirror `StatModifiers` — same pattern, pawn-scoped).
 - Shift schedule on pawns gating which job categories they'll take.
 
-### 2.6 Rendering/UX debt (lower priority, listed for completeness)
+### 2.6 Pathfinding semantics (decided 2026-07-14)
+The macro/micro split, group cliques, and subgraph reachability are confirmed as the right architecture for the perf target (dozens of pawns, GDScript, pathfinds only at job-claim/repath events). Four decisions refine the semantics on top of it:
+
+1. **Exteriorness is a flag, not a group** (`ModuleGraphVertex.is_exterior`; "space" stops being a group). `group` returns to meaning exactly one thing: implicit network cliques (turboshafts, future teleporter nets). Construction toggles the flag; teleporters keep their group for their network. → [[Work Items/WI-15_Pathfinding_Exterior_Semantics]]. A later evolution (not planned yet): per-module hull vertices for EVA topology — the flag doesn't preclude it.
+2. **Positions inside modules are anchors on the micro graph** — authored (bunks, workstations, turbolift queues) or generated at runtime by subdividing interior path edges (hallway stand-slots, future combat form-up). One new primitive: final-leg sub-path to a micro index + straight-line tail for offsets. → [[Work Items/WI-16_Micro_Anchors_and_Pawn_Positioning]].
+3. **Pawn overlap is solved cosmetically, never with avoidance**: persistent per-pawn perpendicular render offset + walk-speed jitter, plus one-shot anchor claims at arrival. RVO/physics separation and per-frame neighbor queries are explicitly rejected.
+4. **Position ownership becomes an explicit movement state** (CONVEYED) when the turbolift code next gets major surgery — awaits stay for cosmetic waits (door animations), but anything that owns a pawn's position (cab rides, future trams/teleporter charge) must be a serializable state, not a suspended coroutine. Until then, saves degrade gracefully: mid-ride pawns serialize at the cab's current floor (WI-15).
+
+### 2.7 Rendering/UX debt (lower priority, listed for completeness)
 Placement validity display, flip re-validation, stacked-cell click cycling, truss hiding behind modules, solid/sparse tile rendering, module hover interiors, minimap. None block systems work; schedule opportunistically.
 
-### 2.7 Performance posture
+### 2.8 Performance posture
 Current scale (tens of modules, handfuls of pawns) makes almost nothing hot. The rules to keep it that way:
 - No per-frame `get_nodes_in_group` scans in hot paths — cache membership via add/remove signals (PowerManager, `Job_*.can_do_job` searches).
 - Reachability stays O(1) via subgraphs (already true) — protect this invariant.
 - Job discovery must remain event/claim-driven, not per-pawn-per-frame evaluation of all jobs (the once-per-second `job_length` throttle in `PawnBase` is doing this today; keep an equivalent).
 - Pathfinding volume is the realistic future hotspot: paths are cheap individually, but `can_do_job` calling `is_reachable` per storage per job candidate is fine only while subgraph checks stay O(1).
 
-### 2.8 Testing & tooling
+### 2.9 Testing & tooling
 - The godot-ai MCP plugin is installed (editor automation available); `test_run` exists but there are no tests. Adopt **GUT or gdUnit4** minimally: pure-logic classes are highly testable (`ModuleGraph`, `StorageData`, `StatModifiers`, `MarketManager` pricing, `LocalUpgradeData` cost scaling).
 - A debug console action exists in the input map (`toggle_console`) with no console; a minimal cheat console (spawn resource, spawn pawn, force unlock, timeskip) pays for itself immediately in testing the systems above.
 - Keep the typed-GDScript warnings on; they've clearly caught real issues already.
