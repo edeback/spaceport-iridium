@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://dvf7wnwvh6siv" path="res://scripts/managers/power_manager.gd" id="4_deici"]
 [ext_resource type="Resource" uid="uid://p3ja7r43eh6c" path="res://data/modules/core/truss_mdata.tres" id="4_getpj"]
 [ext_resource type="PackedScene" uid="uid://umcjs6xyrnek" path="res://ui/ui_debug.tscn" id="4_m3cse"]
+[ext_resource type="Resource" uid="uid://boadffwat0kpp" path="res://data/modules/docking_bays/docking_bay.tres" id="5_0n3wm"]
 [ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/core/hallway_mdata.tres" id="5_b1qrp"]
 [ext_resource type="PackedScene" uid="uid://ce6npnqw8s3mu" path="res://ui/ui_main.tscn" id="5_uwp6h"]
 [ext_resource type="Script" uid="uid://6mx2qi4ecq8b" path="res://scripts/managers/turbolift_manager.gd" id="6_dg77c"]
@@ -7583,6 +7584,7 @@ script = ExtResource("1_timemgr")
 [node name="WorldManager" type="Node" parent="Managers" unique_id=1880931306 node_paths=PackedStringArray("module_layers", "pawn_layer")]
 script = ExtResource("6_i5kyc")
 start_module = ExtResource("3_facbu")
+docking_bay = ExtResource("5_0n3wm")
 module_layers = {
 0: NodePath("../../ForegroundLayers/ModuleLayer"),
 1: NodePath("../../ForegroundLayers/HorizontalTransportLayer"),

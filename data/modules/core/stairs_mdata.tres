@@ -12,6 +12,7 @@ region = Rect2(192, 0, 64, 64)
 
 [resource]
 script = ExtResource("4_21tvd")
+id = &"stairs_mdata"
 name = "Stairs"
 scene = ExtResource("3_rx11o")
 icon = SubResource("AtlasTexture_1lxco")
@@ -23,4 +24,3 @@ multiplacement = 2
 ignore_multiplacement_connection_check = true
 interaction_layer = 2
 metadata/_custom_type_script = "uid://vwmofdckg7hu"
-id = &"stairs_mdata"

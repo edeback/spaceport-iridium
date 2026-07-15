@@ -10,6 +10,7 @@ class LayerData:
 	#var id_to_module: Dictionary[int, ModuleBase] = {}
 
 @export var start_module: ModuleData
+@export var docking_bay: ModuleData
 # Only used for setup. Use layer_data at runtime
 @export var module_layers: Dictionary[StructureLayer, CanvasLayer]
 
@@ -42,6 +43,8 @@ func _startup() -> void:
 		return # the save's world section places everything instead
 	await get_tree().create_timer(1.0).timeout
 	add_module(start_module, Vector2i(15,8))
+	add_module(docking_bay, Vector2i(18,8), true, true, false, true)
+	add_module(hallway_module, Vector2i(17, 9))
 	
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -85,7 +88,7 @@ func purchase_and_add_module(module_data: ModuleData, cell: Vector2i, is_horizon
 	else:
 		module_data.withdraw_credit_cost()
 
-func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false, defer_ready: bool = false) -> ModuleBase:
+func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false, defer_ready: bool = false, force_complete: bool = false) -> ModuleBase:
 	var module_scene: PackedScene = module_data.scene
 	if flipped and module_data.flippable:
 		module_scene = module_data.flipped_scene
@@ -123,7 +126,7 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 	if not defer_ready:
 		# TODO: Hacky, find better way
 		var construction_component: ConstructionComponent = new_module.get_node_or_null("ConstructionComponent") as ConstructionComponent
-		if construction_component != null:
+		if construction_component != null and not force_complete:
 			new_module.call_deferred("ready_blueprint")
 		else:
 			new_module.ready_constructed()
