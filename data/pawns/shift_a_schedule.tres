@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="ScheduleData" format=3]
+
+[ext_resource type="Script" path="res://pawns/schedule_data.gd" id="1_shifta"]
+
+[resource]
+script = ExtResource("1_shifta")
+slots = Array[int]([1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])

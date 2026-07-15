@@ -30,10 +30,19 @@ func start_job(_pawn: PawnBase) -> void:
 	if _pawn.current_module:
 		var connections: Array[Node2D] = _pawn.current_module.get_path_component().module_connections.keys()
 		connections.shuffle()
-		for node in connections:
-			if node is ModuleBase and node is not ModuleTurbolift:
-				destination = node as ModuleBase
-				break
+		# Off-shift pawns drift toward company: prefer a connected social
+		# space when one exists (WI-06).
+		if not _pawn.is_on_shift():
+			for node in connections:
+				if node is ModuleBase and node is not ModuleTurbolift \
+						and (node as ModuleBase).get_component_by_type(SocialComponent) != null:
+					destination = node as ModuleBase
+					break
+		if destination == null:
+			for node in connections:
+				if node is ModuleBase and node is not ModuleTurbolift:
+					destination = node as ModuleBase
+					break
 	else:
 		var airlocks: Array[Node] = _pawn.get_tree().get_nodes_in_group("airlock")
 		var distance: float = -1

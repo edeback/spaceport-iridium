@@ -11,6 +11,10 @@ extends Node2D
 @export var animated_sprite: AnimatedSprite2D
 @export var pawn_name: String = ""
 @export var collision: Area2D
+## 24-hour WORK/REST schedule (WI-06). Null (drones, anything unscheduled)
+## means always on duty. Duplicated per pawn in _ready so the schedule tab
+## can paint one pawn without editing every pawn sharing the .tres.
+@export var schedule: ScheduleData
 
 var movement_component: PawnMovementComponent
 var inventory_component: PawnInventoryComponent
@@ -48,6 +52,8 @@ func get_component_by_type(type: Variant) -> PawnComponentBase:
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	add_to_group("pawn")
+	if schedule != null:
+		schedule = schedule.duplicate(true)
 	movement_component = PawnMovementComponent.new()
 	movement_component.owner_pawn = self
 	add_child(movement_component)
@@ -119,7 +125,15 @@ func start_job() -> void:
 			_begin_job(queued_job)
 			return
 		queued_job.cancel(true) # cancel implies end_job (lifecycle contract)
-	current_job = Global.job_manager.find_job(self)
+	if is_on_shift():
+		current_job = Global.job_manager.find_job(self)
+	else:
+		# Off-shift (WI-06): no station work - only needs/errand categories,
+		# which rarely sit on the shared board, so this usually falls through
+		# to wandering. A running job is never interrupted by shift end; this
+		# gate only applies when picking the NEXT job.
+		var off_shift: Array[JobBase.Category] = [JobBase.Category.NEEDS, JobBase.Category.MOVE, JobBase.Category.MISC]
+		current_job = Global.job_manager.find_job(self, off_shift)
 	if current_job:
 		current_job.start_job(self)
 	else:
@@ -157,6 +171,14 @@ func promote_queued_job(job: JobBase) -> void:
 	if index > 0:
 		job_queue.remove_at(index)
 		job_queue.push_front(job)
+
+## Stateless shift check (WI-06): derived from the current hour, so it's
+## automatically correct after save/load mid-hour. No schedule = always on
+## duty (drones).
+func is_on_shift() -> bool:
+	if schedule == null:
+		return true
+	return schedule.is_work_hour(Global.time_manager.hour)
 
 ## Happiness consequence v1 (WI-05): work-rate multiplier consulted by jobs
 ## (construction for now). Pawns without needs (drones) work at full speed.

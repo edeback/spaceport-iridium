@@ -219,6 +219,7 @@ func _get_pawns_save() -> Array:
 			"module": module_ref(pawn.current_module),
 			"needs": needs.get_save_data() if needs != null else {},
 			"health": health.get_save_data() if health != null else {},
+			"schedule": Array(pawn.schedule.slots) if pawn.schedule != null else [],
 			"carried": carried,
 		})
 	return out
@@ -340,6 +341,13 @@ func _load_pawns(data: Array) -> void:
 		var health: PawnHealthComponent = pawn.get_component_by_type(PawnHealthComponent) as PawnHealthComponent
 		if health != null:
 			health.load_save_data(entry.get("health", {}))
+		# Painted schedules are per-pawn state; _ready already duplicated the
+		# scene's shared default, so writing into slots is safe. Shift state
+		# itself isn't saved - is_on_shift() derives from the loaded hour.
+		var saved_schedule: Array = entry.get("schedule", [])
+		if pawn.schedule != null and not saved_schedule.is_empty():
+			for i: int in mini(saved_schedule.size(), pawn.schedule.slots.size()):
+				pawn.schedule.slots[i] = int(saved_schedule[i])
 		for content: Dictionary in entry.get("carried", []):
 			var resource: ResourceData = get_resource_by_id(StringName(String(content.get("resource", ""))))
 			if resource == null:

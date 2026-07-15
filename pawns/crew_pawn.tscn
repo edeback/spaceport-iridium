@@ -4,9 +4,11 @@
 [ext_resource type="PackedScene" uid="uid://b0bybnib3jtmj" path="res://pawns/pawn_needs_component.tscn" id="2_6fnyy"]
 [ext_resource type="PackedScene" path="res://pawns/pawn_health_component.tscn" id="3_health"]
 [ext_resource type="PackedScene" path="res://pawns/socialize_component.tscn" id="4_social"]
+[ext_resource type="Resource" path="res://data/pawns/shift_a_schedule.tres" id="5_sched"]
 
 [node name="PawnBase" unique_id=1067060448 node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_4e1f1")]
 animated_sprite = NodePath("Offset/Crew")
+schedule = ExtResource("5_sched")
 metadata/_edit_vertical_guides_ = [-9.0]
 metadata/_edit_horizontal_guides_ = [-14.0, 10.0, -10.0]
 
