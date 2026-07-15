@@ -2,8 +2,9 @@
 
 [ext_resource type="Script" uid="uid://c26rfwnde1t5h" path="res://ui/pawns/pawn_job_tab.gd" id="1_ymndu"]
 
-[node name="Job Info" type="PanelContainer" unique_id=1251231180]
+[node name="Job Info" type="PanelContainer" unique_id=1251231180 node_paths=PackedStringArray("cancel_button")]
 script = ExtResource("1_ymndu")
+cancel_button = NodePath("MarginContainer/VBoxContainer/CancelButton")
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=644253749]
 layout_mode = 2

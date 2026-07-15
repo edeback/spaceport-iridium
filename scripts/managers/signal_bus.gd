@@ -25,6 +25,23 @@ signal global_unlock_changed(unlock: UnlockData)
 signal module_upgraded(module: ModuleBase)
 @warning_ignore("unused_signal")
 signal pawn_critical_need(pawn: PawnBase, need: StringName)
+@warning_ignore("unused_signal")
+signal crew_hired(pawn: PawnBase)
+@warning_ignore("unused_signal")
+signal crew_resigning(pawn: PawnBase, grace_hours: float)
+@warning_ignore("unused_signal")
+signal crew_resignation_cancelled(pawn: PawnBase)
+## The grace window expired: the decision is final, CrewManager sends them off.
+@warning_ignore("unused_signal")
+signal crew_resigned(pawn: PawnBase)
+## The pawn is actually gone (despawned at the bay or by escape pod).
+@warning_ignore("unused_signal")
+signal crew_departed(pawn: PawnBase)
+@warning_ignore("unused_signal")
+signal game_over
+## Generic station-wide alert text for the UI alerts strip.
+@warning_ignore("unused_signal")
+signal station_alert(message: String)
 
 
 

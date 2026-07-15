@@ -35,6 +35,8 @@ func _ready() -> void:
 	_setup_unlock_ui()
 	_setup_save_ui()
 	_setup_alerts_strip()
+	_setup_crew_ui()
+	SignalBus.game_over.connect(_on_game_over)
 
 ## Minimal save/load controls next to the Research button: slot name field +
 ## Save/Load buttons. F5/F9 quick-slot shortcuts live on SaveManager.
@@ -78,14 +80,36 @@ func _setup_alerts_strip() -> void:
 	_alerts_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_alerts_box)
 	SignalBus.pawn_critical_need.connect(_on_pawn_critical_need)
+	SignalBus.station_alert.connect(_on_station_alert)
+	SignalBus.crew_resigning.connect(_on_crew_resigning)
+	SignalBus.crew_resignation_cancelled.connect(_on_crew_resignation_cancelled)
+	SignalBus.crew_departed.connect(_on_crew_departed)
+
+func _pawn_label(pawn: PawnBase) -> String:
+	return pawn.pawn_name if not pawn.pawn_name.is_empty() else "A crew member"
 
 func _on_pawn_critical_need(pawn: PawnBase, need: StringName) -> void:
-	var pawn_label: String = pawn.pawn_name if not pawn.pawn_name.is_empty() else "A crew member"
-	var key: String = "%s|%s" % [pawn_label, need]
+	_spawn_alert("%s|%s" % [_pawn_label(pawn), need], "%s: %s critical!" % [_pawn_label(pawn), String(need)])
+
+func _on_station_alert(message: String) -> void:
+	_spawn_alert(message, message)
+
+func _on_crew_resigning(pawn: PawnBase, grace_hours: float) -> void:
+	_spawn_alert("resign|" + _pawn_label(pawn),
+		"%s is fed up and will leave in %d hours unless things improve!" % [_pawn_label(pawn), int(grace_hours)])
+
+func _on_crew_resignation_cancelled(pawn: PawnBase) -> void:
+	_spawn_alert("stay|" + _pawn_label(pawn), "%s decided to stay." % _pawn_label(pawn))
+
+func _on_crew_departed(pawn: PawnBase) -> void:
+	_spawn_alert("depart|" + _pawn_label(pawn), "%s has left the station." % _pawn_label(pawn))
+
+## Dedupe-keyed transient alert label (shared by every alert source).
+func _spawn_alert(key: String, text: String) -> void:
 	if _active_alerts.has(key):
 		return
 	var label := Label.new()
-	label.text = "%s: %s critical!" % [pawn_label, String(need)]
+	label.text = text
 	label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.3))
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_alerts_box.add_child(label)
@@ -97,6 +121,34 @@ func _on_pawn_critical_need(pawn: PawnBase, need: StringName) -> void:
 		if is_instance_valid(label):
 			label.queue_free()
 	)
+
+# --- crew count & game over (WI-07) -------------------------------------------
+
+const GAME_OVER_SCENE: PackedScene = preload("res://ui/game_over_screen.tscn")
+
+var _crew_count_label: Label
+var _game_over_shown: bool = false
+
+func _setup_crew_ui() -> void:
+	_crew_count_label = Label.new()
+	resource_display_container.add_child(_crew_count_label)
+	SignalBus.crew_hired.connect(func(_pawn: PawnBase) -> void: _refresh_crew_count())
+	# Deferred: the departed pawn is still in the tree until end of frame.
+	SignalBus.crew_departed.connect(func(_pawn: PawnBase) -> void: _refresh_crew_count.call_deferred())
+	Global.save_manager.game_loaded.connect(func(_slot: String) -> void: _refresh_crew_count())
+	# Starting crew also spawns deferred (CrewManager), and its managers ready
+	# before this UI - so this deferred call lands after the spawn.
+	_refresh_crew_count.call_deferred()
+
+func _refresh_crew_count() -> void:
+	if Global.crew_manager != null and is_instance_valid(_crew_count_label):
+		_crew_count_label.text = "  Crew: %d" % Global.crew_manager.crew_count()
+
+func _on_game_over() -> void:
+	if _game_over_shown:
+		return
+	_game_over_shown = true
+	add_child(GAME_OVER_SCENE.instantiate())
 
 func _setup_unlock_ui() -> void:
 	unlock_panel = UnlockPanel.new()

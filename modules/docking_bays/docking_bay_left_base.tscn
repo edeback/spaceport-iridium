@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="4_yrg00"]
 [ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="5_18pmv"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="7_gu0qf"]
+[ext_resource type="PackedScene" path="res://modules/components/crew_recruitment_component.tscn" id="8_recruit"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_e63vr"]
 shader = ExtResource("2_jskn1")
@@ -76,3 +77,5 @@ player_configurable = true
 [node name="PowerConsumptionComponent" parent="." index="6" unique_id=1657948966 instance=ExtResource("7_gu0qf")]
 position = Vector2(128, 0)
 power_consumption = 60.0
+
+[node name="CrewRecruitmentComponent" parent="." index="8" unique_id=1630590133 instance=ExtResource("8_recruit")]

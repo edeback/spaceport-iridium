@@ -59,6 +59,20 @@ signal recreation_changed(new_recreation: float)
 var happiness: float = 1.0
 signal happiness_changed(new_happiness: float)
 
+# --- resignation (WI-07) ------------------------------------------------------
+## Happiness below this (0..1) counts as miserable.
+@export var resignation_threshold: float = 0.2
+## Continuous misery hours before the pawn decides to leave.
+@export var hours_to_resignation: float = 12.0
+## Grace window after deciding: recovering above the threshold cancels.
+@export var resignation_grace_hours: float = 6.0
+
+var resignation_pending: bool = false
+## Latched once the grace window expires - the decision is final.
+var resigned: bool = false
+var _misery_hours: float = 0.0
+var _grace_remaining: float = 0.0
+
 ## One row per enabled need so _process stays a single generic loop instead
 ## of three copy-pasted blocks. Callables rather than raw refs because the
 ## exported per-need vars must stay individually editable in the inspector.
@@ -141,6 +155,7 @@ func _process(delta: float) -> void:
 			remove_modifier(&"exhausted")
 	_tick_modifiers(sim_hours)
 	_recompute_happiness()
+	_tick_resignation(sim_hours)
 
 func _on_need_job_end(need: NeedDef) -> void:
 	need.pending_job = null
@@ -155,6 +170,33 @@ func _promote_critical_jobs() -> void:
 	criticals.sort_custom(func(a: NeedDef, b: NeedDef) -> bool: return a.percent() > b.percent())
 	for need: NeedDef in criticals:
 		owner_pawn.promote_queued_job(need.pending_job)
+
+# --- resignation (WI-07) --------------------------------------------------------
+
+## Sustained misery -> pending resignation (alert + grace window) -> final.
+## Recovery above the threshold at ANY point before the window expires
+## resets everything; once `resigned` latches, CrewManager walks them out.
+func _tick_resignation(sim_hours: float) -> void:
+	if resigned:
+		return
+	if happiness >= resignation_threshold:
+		_misery_hours = 0.0
+		if resignation_pending:
+			resignation_pending = false
+			SignalBus.crew_resignation_cancelled.emit(owner_pawn)
+		return
+	_misery_hours += sim_hours
+	if not resignation_pending:
+		if _misery_hours >= hours_to_resignation:
+			resignation_pending = true
+			_grace_remaining = resignation_grace_hours
+			SignalBus.crew_resigning.emit(owner_pawn, resignation_grace_hours)
+	else:
+		_grace_remaining -= sim_hours
+		if _grace_remaining <= 0.0:
+			resignation_pending = false
+			resigned = true
+			SignalBus.crew_resigned.emit(owner_pawn)
 
 # --- happiness ----------------------------------------------------------------
 
@@ -206,6 +248,10 @@ func get_save_data() -> Dictionary:
 		"hunger": hunger_value,
 		"sleep": sleep_value,
 		"recreation": recreation_value,
+		"misery_hours": _misery_hours,
+		"resignation_pending": resignation_pending,
+		"grace_remaining": _grace_remaining,
+		"resigned": resigned,
 	}
 
 func load_save_data(data: Dictionary) -> void:
@@ -213,3 +259,11 @@ func load_save_data(data: Dictionary) -> void:
 	sleep_value = float(data.get("sleep", sleep_value))
 	# Pre-WI-05 saves called this need "entertainment".
 	recreation_value = float(data.get("recreation", data.get("entertainment", recreation_value)))
+	_misery_hours = float(data.get("misery_hours", 0.0))
+	resignation_pending = bool(data.get("resignation_pending", false))
+	_grace_remaining = float(data.get("grace_remaining", 0.0))
+	resigned = bool(data.get("resigned", false))
+	if resigned:
+		# The decision was already final when saved - resume the walkout once
+		# the tree settles (CrewManager reacts by issuing Job_LeaveStation).
+		(func() -> void: SignalBus.crew_resigned.emit(owner_pawn)).call_deferred()

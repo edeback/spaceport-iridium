@@ -13,8 +13,8 @@ extends Node
 ## Engine.time_scale and get_tree().paused are deliberately NOT used - they
 ## distort UI animation and input feel. UI keeps running at real time.
 
-## Real seconds per game-hour at 1x speed. One cycle = 12 real minutes.
-const SECONDS_PER_HOUR: float = 30.0
+## Real seconds per game-hour at 1x speed. One cycle = 4 real minutes. (temp for testing, was 30 sec per hour/12 real min)
+const SECONDS_PER_HOUR: float = 10.0
 const HOURS_PER_CYCLE: int = 24
 ## Hour the game starts at (cycle 1). 06:00 lines up with the future
 ## shift-A work schedule so a new station wakes at start of day.

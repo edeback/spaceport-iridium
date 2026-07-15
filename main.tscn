@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://cgnfy2cj4760l"]
 
 [ext_resource type="Script" uid="uid://nwr8gusqocd6" path="res://scripts/managers/main.gd" id="1_lvssd"]
-[ext_resource type="Script" path="res://scripts/managers/time_manager.gd" id="1_timemgr"]
-[ext_resource type="Script" path="res://scripts/managers/save_manager.gd" id="1_savemgr"]
+[ext_resource type="Script" uid="uid://5jorwo0v8kof" path="res://scripts/managers/save_manager.gd" id="1_savemgr"]
+[ext_resource type="Script" uid="uid://dc6gfiufy3aj4" path="res://scripts/managers/time_manager.gd" id="1_timemgr"]
 [ext_resource type="Script" uid="uid://dcanuqi7bdrfp" path="res://scripts/managers/camera.gd" id="3_055fr"]
 [ext_resource type="Resource" uid="uid://c8o32mbasjok7" path="res://data/modules/special/starting_module_mdata.tres" id="3_facbu"]
 [ext_resource type="Script" uid="uid://d0hud6eqhyh68" path="res://scripts/managers/path_manager.gd" id="3_nkgie"]
@@ -41,6 +41,9 @@
 [ext_resource type="AudioStream" uid="uid://6j2kp23eqf8s" path="res://assets/external/sci_fi_music_pack/Sci-Fi 1 Loop.ogg" id="26_0rl1p"]
 [ext_resource type="Texture2D" uid="uid://rts0ktv4mj0v" path="res://assets/sprites/truss_structure_new.png" id="31_4k2k6"]
 [ext_resource type="Script" uid="uid://bhfs7qjh80a6p" path="res://scripts/managers/unlock_manager.gd" id="31_come4"]
+[ext_resource type="Script" uid="uid://ewev5w5lgt22" path="res://scripts/managers/crew_manager.gd" id="32_crewmgr"]
+[ext_resource type="PackedScene" uid="uid://2pp7va28ybgl" path="res://pawns/crew_pawn.tscn" id="33_crewpawn"]
+[ext_resource type="PackedScene" path="res://objects/arrival_shuttle.tscn" id="34_shuttle"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2cqfq"]
 atlas = ExtResource("11_2cqfq")
@@ -7574,7 +7577,7 @@ structure_tile_map = NodePath("ForegroundLayers/ModuleLayer/StructureTileMap")
 
 [node name="Managers" type="Node" parent="." unique_id=1398778298]
 
-[node name="TimeManager" type="Node" parent="Managers"]
+[node name="TimeManager" type="Node" parent="Managers" unique_id=593433451]
 script = ExtResource("1_timemgr")
 
 [node name="WorldManager" type="Node" parent="Managers" unique_id=1880931306 node_paths=PackedStringArray("module_layers", "pawn_layer")]
@@ -7634,7 +7637,12 @@ parameters/looping = true
 script = ExtResource("31_come4")
 metadata/_custom_type_script = "uid://bhfs7qjh80a6p"
 
-[node name="SaveManager" type="Node" parent="Managers"]
+[node name="CrewManager" type="Node" parent="Managers" unique_id=517115631]
+script = ExtResource("32_crewmgr")
+crew_pawn_scene = ExtResource("33_crewpawn")
+shuttle_scene = ExtResource("34_shuttle")
+
+[node name="SaveManager" type="Node" parent="Managers" unique_id=118411891]
 script = ExtResource("1_savemgr")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=595998923]

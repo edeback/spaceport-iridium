@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://objects/arrival_shuttle.gd" id="1_shuttle"]
+[ext_resource type="Texture2D" path="res://assets/sprites/kenny_spaceship_small.png" id="2_shuttle"]
+
+[node name="ArrivalShuttle" type="Sprite2D"]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_shuttle")
+script = ExtResource("1_shuttle")

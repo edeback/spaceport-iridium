@@ -45,6 +45,9 @@ func get_job_description() -> String:
 func get_subtask_description() -> String:
 	return ""
 
+func player_cancelable() -> bool:
+	return true
+
 ## Board sort key: base priority plus a capped age bonus, so long-waiting
 ## jobs eventually outrank fresher peers within nearby bands (the cap keeps
 ## aging from ever crossing the ±99 construction routing bands).

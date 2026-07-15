@@ -23,7 +23,7 @@ signal game_loaded(slot: String)
 ## survives reload_current_scene() (statics live on the script, not the node).
 static var _pending_load: Dictionary = {}
 ## True only while sections are being applied - spawn-on-ready code
-## (PawnStorageComponent) checks this so saved pawns aren't duplicated.
+## (CrewManager's starting crew) checks this so saved pawns aren't duplicated.
 static var _loading: bool = false
 
 var _module_data_by_id: Dictionary[StringName, ModuleData] = {}
@@ -145,6 +145,7 @@ func save_slot(slot: String) -> Error:
 			"world": Global.world_manager.get_save_data(),
 			"piles": _get_piles_save(),
 			"pawns": _get_pawns_save(),
+			"crew": Global.crew_manager.get_save_data(),
 		},
 	}
 	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
@@ -278,6 +279,8 @@ func _apply_pending_load() -> void:
 	Global.world_manager.load_save_data(sections.get("world", {}))
 	_load_piles(sections.get("piles", []))
 	_load_pawns(sections.get("pawns", []))
+	# After world: pending hires resolve their bay by layer+cell at arrival.
+	Global.crew_manager.load_save_data(sections.get("crew", {}))
 	_loading = false
 	print("Loaded save from %s" % Global.time_manager.format_time())
 	game_loaded.emit(QUICK_SLOT)
@@ -326,7 +329,7 @@ func _load_pawns(data: Array) -> void:
 			continue
 		pawn.pawn_name = String(entry.get("name", ""))
 		# Add to tree first: current_module's setter reparents, which needs a
-		# parent to exist (same reason PawnStorageComponent logs errors today).
+		# parent to exist (CrewManager.spawn_crew follows the same order).
 		Global.world_manager.pawn_layer.add_child(pawn)
 		var pos_arr: Array = entry.get("position", [0, 0])
 		pawn.global_position = Vector2(float(pos_arr[0]), float(pos_arr[1]))
