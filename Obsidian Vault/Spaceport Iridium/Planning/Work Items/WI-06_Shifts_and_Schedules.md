@@ -23,7 +23,7 @@ Pawns work on schedules: two default 12-hour shifts (A: 06–18, B: 18–06) so 
 1. ScheduleData + `is_on_shift()` + board gating in `start_job()`.
 2. Alternate default schedules for the two starter crew (hand-set in starting module data or first-ready assignment).
 3. Schedule tab UI (paint cells).
-4. (Optional, assess after 1–3) assigned_module preference filter.
+4. (Optional, assess after 1–3) assigned_module preference filter. *Assessed 2026-07-14: deferred.* Nothing can set an assignment yet (no UI, no arrival flow until WI-07), so the filter would be dead code; revisit alongside WI-07 arrivals.
 5. Save section.
 
 ## Edge cases

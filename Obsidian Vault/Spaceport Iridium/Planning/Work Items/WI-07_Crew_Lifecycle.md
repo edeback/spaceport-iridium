@@ -5,7 +5,7 @@ Population becomes dynamic: new crew arrive by shuttle at the docking bay (playe
 
 ## Design
 - **`CrewManager`** (new manager): owns the roster (`Array[PawnBase]` of organic crew), hiring, departures, and lose-condition check.
-- **Hiring:** a "Recruit crew" button (docking bay info panel via a small `CrewRecruitmentComponent`, or global UI button v1 — recommend the docking bay component: reinforces "the docking bay is your link to the world"). Cost: credits per hire (data-driven: `data/crew_costs.tres` or constants file). Requested crew arrives after a delay (N game-hours), spawning at the docking bay module.
+- **Hiring:** a "Recruit crew" button (docking bay info panel via a small `CrewRecruitmentComponent`: reinforces "the docking bay is your link to the world"). Cost: credits per hire (data-driven: `data/crew_costs.tres` or constants file). Requested crew arrives after a delay (N game-hours), spawning at the docking bay module.
 - **Capacity gate:** hire button disabled when crew ≥ sleeping slots (sum of SleepComponent capacities) — soft-communicates the housing loop.
 - **Departure:** happiness below threshold (e.g. 20%) continuously for M game-hours → pawn resigns: alert fires, pawn walks to docking bay and despawns (with a grace window to change their mind if happiness recovers, communicated in the alert). Inventory dumps to a pile at the bay (mechanism exists in PREDELETE).
 - **Death v1:** none (starvation doesn't kill yet; it drives happiness → resignation). Keeps scope contained; document as deliberate.
