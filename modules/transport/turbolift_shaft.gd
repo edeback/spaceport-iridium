@@ -63,7 +63,14 @@ func request_ride(pawn: PawnBase, from_floor: ModuleBase, to_floor: ModuleBase, 
 		return request
 	if cabs.size() < max_cabs:
 		create_new_cab(from_floor)
-	from_floor.assign_waiting_slot(pawn)
+	# Walk to the waiting spot BEFORE registering with a cab: nothing can emit
+	# request.finished until the request is on a cab, so a cancel can't slip
+	# past while we're not yet awaiting the signal.
+	await request.from_floor.assign_waiting_slot(request)
+	if not is_instance_valid(pawn):
+		request.cancelled = true
+		request.release_queue_anchor()
+		return request
 	var best_cab: TurboliftCab = _best_cab_for(request)
 	if best_cab:
 		best_cab.add_pickup_request(request)
@@ -72,7 +79,8 @@ func request_ride(pawn: PawnBase, from_floor: ModuleBase, to_floor: ModuleBase, 
 	await request.finished
 	#if cancel_signal.is_connected(on_cancel):
 		#cancel_signal.disconnect(on_cancel)
-	#_release_waiting_slot(from_floor, pawn)
+	# Backstop - normally released at boarding or by the cancel path.
+	request.release_queue_anchor()
 	return request
 
 func _cancel(request: RideRequest) -> void:

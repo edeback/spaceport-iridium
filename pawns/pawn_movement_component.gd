@@ -4,6 +4,10 @@ extends PawnComponentBase
 var target: Node2D
 var speed: float = 1.0
 var end_in_space: bool = false
+## Optional interior destination in the target module (WI-16): the final
+## module's sub-path ends at this anchor instead of the door/center. Survives
+## repaths (the anchor lives in the target module, which must still exist).
+var target_anchor: AnchorDef = null
 
 var next_path_index: int = 0
 var path: Array[ModuleGraph.PathPoint] = []
@@ -19,6 +23,7 @@ var state: State = State.Idle
 var _pending_target: Node2D = null
 var _pending_speed: float = 1.0
 var _pending_end_in_space: bool = false
+var _pending_anchor: AnchorDef = null
 var _busy_in_hook: bool = false   ## suspended inside path_exit/path_enter/traverse right now
 
 signal path_invalidated # Re-running pathfinding but not canceled yet
@@ -46,15 +51,19 @@ func _process(delta: float) -> void:
 			if state == State.Paused:
 				state = State.Moving
 		State.Paused:
-			owner_pawn.set_idle()
+			# A hook-driven manual walk (turbolift queue/boarding) owns the
+			# animation right now - don't stomp it back to idle.
+			if not owner_pawn.in_manual_walk:
+				owner_pawn.set_idle()
 		State.Idle:
 			if _pending_target != null:
 				_start_pending()
 				
-func move_to(new_target: Node2D, new_speed: float = 1.0, in_space: bool = false) -> void:
+func move_to(new_target: Node2D, new_speed: float = 1.0, in_space: bool = false, new_anchor: AnchorDef = null) -> void:
 	_pending_target = new_target
 	_pending_speed = new_speed
 	_pending_end_in_space = in_space
+	_pending_anchor = new_anchor
 
 func _start_pending() -> void:
 	if target != null:
@@ -62,7 +71,12 @@ func _start_pending() -> void:
 	target = _pending_target
 	speed = _pending_speed
 	end_in_space = _pending_end_in_space
+	target_anchor = _pending_anchor
 	_pending_target = null
+	_pending_anchor = null
+	# Any stand-around claim from the last arrival is stale once we move again
+	# (unless this movement is the walk TO that claim).
+	owner_pawn.notify_movement_starting(target_anchor)
 	run_pathfinding()
 
 func is_traveling() -> bool:
@@ -92,9 +106,16 @@ func run_pathfinding() -> void:
 		start_node = owner_pawn.current_module
 	if start_node != null:
 		if start_node == target:
-			movement_complete()
-			return
-		path = Global.path_manager.run_pathfinding_by_node(start_node, target, end_in_space)
+			if target_anchor == null:
+				movement_complete()
+				return
+			# Already in the target module but heading to an interior anchor:
+			# a single-node path whose partial sub-path is the anchor leg.
+			var only_point: ModuleGraph.PathPoint = ModuleGraph.PathPoint.new()
+			only_point.node = target
+			path.append(only_point)
+		else:
+			path = Global.path_manager.run_pathfinding_by_node(start_node, target, end_in_space)
 	else:
 		path = Global.path_manager.run_pathfinding_by_node(owner_pawn, target, end_in_space)
 
@@ -247,19 +268,28 @@ func _sub_path_speed_mult() -> float:
 	return 1.0
 
 func get_sub_path(index: int) -> Array[PathComponent.PathTraversalEdgeData]:
-	if index > 0 and index + 1 < path.size():
+	if index > 0 and index < path.size():
 		if !path[index].in_space and path[index].node is ModuleBase:
 			var current_module: ModuleBase = path[index].node as ModuleBase
 			if current_module.get_path_component() != null:
-				return current_module.get_path_component().get_path_through_module(path[index - 1].node, path[index + 1].node)
+				if index + 1 < path.size():
+					return current_module.get_path_component().get_path_through_module(path[index - 1].node, path[index + 1].node)
+				# Final module with an anchor (WI-16): interior path from the
+				# entry door to the anchor instead of stopping at the door.
+				if target_anchor != null and current_module == target:
+					return current_module.get_path_component().get_path_to_anchor(path[index - 1].node, target_anchor)
 	return []
-	
+
 func get_partial_sub_path(index: int) -> Array[PathComponent.PathTraversalEdgeData]:
-	if index >= 0 and index + 1 < path.size():
+	if index >= 0 and index < path.size():
 		if !path[index].in_space and path[index].node is ModuleBase:
 			var current_module: ModuleBase = path[index].node as ModuleBase
 			if current_module.get_path_component() != null:
-				return current_module.get_path_component().get_path_exiting_module(owner_pawn.global_position, path[index + 1].node)
+				if index + 1 < path.size():
+					return current_module.get_path_component().get_path_exiting_module(owner_pawn.global_position, path[index + 1].node)
+				# Already inside the target module, walking to its anchor.
+				if target_anchor != null and current_module == target:
+					return current_module.get_path_component().get_path_to_anchor_from_position(owner_pawn.global_position, target_anchor)
 	return []
 	
 func reached_next_subpath() -> void:
@@ -289,7 +319,7 @@ func move(delta: float) -> void:
 		await reached_next_node()
 		if target == null:
 			return
-	var dist_to_travel: float = owner_pawn.speed * delta * speed
+	var dist_to_travel: float = owner_pawn.speed * owner_pawn.speed_jitter * delta * speed
 	var next_position: Vector2 = owner_pawn.global_position
 	while dist_to_travel > 0:
 		if in_sub_path:
@@ -302,6 +332,11 @@ func move(delta: float) -> void:
 			if dist_to_next_point / seg_mult <= dist_to_travel + 0.0001:
 				next_position = next_path_position
 				dist_to_travel -= dist_to_next_point / seg_mult
+				# Snap BEFORE the await: hooks expect the pawn at the point,
+				# and if this was the path's last point the post-await reset
+				# to global_position would otherwise discard the snap and
+				# strand the pawn a frame short of its anchor (WI-16).
+				owner_pawn.move_to(next_position, sub_path[sub_path_index].use_exact_position)
 				await reached_next_subpath()
 				if target == null:
 					return
@@ -319,6 +354,8 @@ func move(delta: float) -> void:
 			if dist_to_next_point <= dist_to_travel + 0.0001:
 				next_position = next_path_position
 				dist_to_travel -= dist_to_next_point
+				# Same pre-await snap as the sub-path branch above.
+				owner_pawn.move_to(next_position)
 				await reached_next_node()
 				if target == null:
 					return

@@ -123,13 +123,23 @@ func load_save_data(data: Dictionary) -> void:
 	super(data)
 	floor_enabled = bool(data.get("floor_enabled", true))
 
-func get_waiting_slot() -> Vector2:
-	return Vector2(randi_range(-10, 10), randi_range(0, 5))
-	
-func assign_waiting_slot(pawn: PawnBase) -> void:
-	pawn.global_position += get_waiting_slot()
-	pawn.reparent(Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.CORRIDOR, module_cell))
-	pass
+## Walk the pawn to a claimed QUEUE spot in the corridor behind this floor
+## (WI-16) - replaces the old position teleport. Falls back to a small random
+## sidestep when there's no corridor or no free anchor: anchor scarcity must
+## never block the ride.
+func assign_waiting_slot(request: RideRequest) -> void:
+	var pawn: PawnBase = request.pawn
+	var dest: Vector2 = pawn.global_position + Vector2(randi_range(-10, 10), randi_range(0, 5))
+	var corridor: ModuleBase = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.CORRIDOR, module_cell)
+	if corridor != null:
+		pawn.reparent(corridor)
+		var pc: PathComponent = corridor.get_path_component()
+		if pc != null:
+			request.queue_anchor = pc.claim_anchor(AnchorDef.AnchorType.QUEUE, request)
+			if request.queue_anchor != null:
+				request.queue_path = pc
+				dest = pc.get_anchor_global_position(request.queue_anchor)
+	await pawn.walk_straight_to(dest)
 
 func has_custom_pathing() -> bool:
 	return true

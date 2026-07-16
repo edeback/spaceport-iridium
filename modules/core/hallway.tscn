@@ -81,6 +81,7 @@ Vector2i(2, 4): &"",
 Vector2i(4, 1): &"",
 Vector2i(4, 5): &""
 })
+anchors = null
 door_connections = Dictionary[int, int]({
 3: 2,
 5: 0

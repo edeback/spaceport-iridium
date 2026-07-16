@@ -19,6 +19,21 @@ extends Node2D
 var movement_component: PawnMovementComponent
 var inventory_component: PawnInventoryComponent
 
+## Cosmetic de-overlap (WI-16), both hashed from the instance id in _ready so
+## they're stable per pawn without being saved. The lane offset moves only the
+## sprite - logical position stays exactly on the path for pathfinding/save.
+var speed_jitter: float = 1.0
+var lane_offset: float = 0.0
+var _sprite_base_position: Vector2 = Vector2.ZERO
+## Set while walk_straight_to() drives the pawn so the suspended movement
+## component doesn't stomp the walk animation with set_idle() every frame.
+var in_manual_walk: bool = false
+
+## STAND anchor this pawn is parked on while idling (arrival spreading).
+## Released when the pawn next moves anywhere else.
+var _stand_anchor: AnchorDef = null
+var _stand_anchor_path: PathComponent = null
+
 var current_layer: WorldManager.StructureLayer = WorldManager.StructureLayer.SPACE
 var path_position_override: Node2D = null
 var traveling: bool = false
@@ -54,6 +69,13 @@ func _ready() -> void:
 	add_to_group("pawn")
 	if schedule != null:
 		schedule = schedule.duplicate(true)
+	# ±5-10% walk speed and a ±1-3px render lane, hashed so two pawns sharing a
+	# route drift apart instead of marching as one sprite (WI-16).
+	var h: int = absi(hash(get_instance_id()))
+	speed_jitter = 1.0 + (0.05 + float(h % 100) * 0.0005) * (1.0 if (h >> 7) % 2 == 0 else -1.0)
+	lane_offset = (1.0 + float((h >> 9) % 100) * 0.02) * (1.0 if (h >> 16) % 2 == 0 else -1.0)
+	if animated_sprite != null:
+		_sprite_base_position = animated_sprite.position
 	movement_component = PawnMovementComponent.new()
 	movement_component.owner_pawn = self
 	add_child(movement_component)
@@ -209,6 +231,7 @@ func interrupt_with_job(new_job: JobBase) -> void:
 		
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
+		release_stand_anchor()
 		if is_instance_valid(Global.path_manager):
 			Global.path_manager.remove_vertex(self)
 		if current_job != null:
@@ -224,7 +247,7 @@ func _notification(what: int) -> void:
 		var pile := ResourcePile.spawn(Global.world_manager.pawn_layer, global_position, current_module)
 		inventory_component.dump_all_to_pile(pile)
 
-func move_to(new_pos: Vector2) -> void:
+func move_to(new_pos: Vector2, use_exact_position: bool = false) -> void:
 	if animated_sprite != null:
 		if position.x == new_pos.x:
 			animated_sprite.play("idle")
@@ -232,9 +255,58 @@ func move_to(new_pos: Vector2) -> void:
 			animated_sprite.play("walk")
 			animated_sprite.flip_h = new_pos.x < position.x
 			animated_sprite.rotation_degrees = abs(animated_sprite.rotation_degrees) * (-1 if animated_sprite.flip_h else 1)
-	if global_position.distance_to(new_pos) > 100.0:
-		pass
+		# Render-only lane offset, perpendicular to travel (WI-16). Applied to
+		# the sprite, never global_position - the logical path stays exact.
+		var travel: Vector2 = new_pos - global_position
+		if use_exact_position:
+			animated_sprite.position = _sprite_base_position
+		elif travel.length_squared() > 0.01:
+			animated_sprite.position = _sprite_base_position + travel.orthogonal().normalized() * lane_offset
 	global_position = new_pos
+
+## Straight-line cosmetic walk (WI-16) for short legs that happen while the
+## movement component is suspended in a path hook (turbolift queue spots, cab
+## boarding). Interiors are open boxes, so the straight line is safe.
+func walk_straight_to(dest: Vector2) -> void:
+	var tree: SceneTree = get_tree()
+	in_manual_walk = true
+	while true:
+		if not is_instance_valid(self) or not is_inside_tree():
+			in_manual_walk = false
+			return
+		var sim_delta: float = Global.time_manager.scale(get_process_delta_time())
+		if sim_delta > 0.0:
+			move_to(global_position.move_toward(dest, speed * speed_jitter * sim_delta))
+			if global_position.distance_squared_to(dest) < 0.25:
+				break
+		await tree.process_frame
+	in_manual_walk = false
+	set_idle()
+
+## Claim a STAND spot in the current module for idle spreading; returns null
+## when the module has no free spot (caller just stays put - never block on
+## anchor scarcity). The claim is released automatically on the next movement.
+func claim_stand_anchor() -> AnchorDef:
+	release_stand_anchor()
+	if current_module == null or current_module.get_path_component() == null:
+		return null
+	var pc: PathComponent = current_module.get_path_component()
+	_stand_anchor = pc.claim_anchor(AnchorDef.AnchorType.STAND, self)
+	if _stand_anchor != null:
+		_stand_anchor_path = pc
+	return _stand_anchor
+
+func release_stand_anchor() -> void:
+	if _stand_anchor_path != null and is_instance_valid(_stand_anchor_path):
+		_stand_anchor_path.release_anchor(self)
+	_stand_anchor_path = null
+	_stand_anchor = null
+
+## Called by the movement component when a new movement starts: any parked
+## stand claim is stale unless this movement IS the walk to that claim.
+func notify_movement_starting(anchor: AnchorDef) -> void:
+	if _stand_anchor != null and anchor != _stand_anchor:
+		release_stand_anchor()
 
 func set_idle() -> void:
 	animated_sprite.play("idle")

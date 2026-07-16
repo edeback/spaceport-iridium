@@ -59,7 +59,38 @@ func start_job(_pawn: PawnBase) -> void:
 		cancel(true)
 		
 func complete(as_success: bool) -> void:
+	if as_success and not _ended and _try_spread():
+		return
 	cancel(!as_success)
+
+## Arrival spreading (WI-16): if we stopped in a module that already holds
+## other stationary pawns, claim a STAND anchor (generated for hallways) and
+## walk the short tail to it instead of stacking on the arrival point. One
+## group query at arrival - never per-frame. The pawn keeps the claim while
+## parked; it auto-releases on its next movement.
+func _try_spread() -> bool:
+	if pawn.current_module == null or not _module_has_other_idlers():
+		return false
+	var anchor: AnchorDef = pawn.claim_stand_anchor()
+	if anchor == null:
+		return false  # no free spot - staying put is the correct fallback
+	state = JobState.Working
+	pawn.movement_component.movement_ended.connect(_spread_done, CONNECT_ONE_SHOT)
+	pawn.movement_component.move_to(pawn.current_module, 0.4, false, anchor)
+	return true
+
+func _spread_done(_as_success: bool) -> void:
+	# However the spreading leg ended, the wander itself already succeeded.
+	cancel(false)
+
+func _module_has_other_idlers() -> bool:
+	for node: Node in pawn.get_tree().get_nodes_in_group("pawn"):
+		var other: PawnBase = node as PawnBase
+		if other == null or other == pawn:
+			continue
+		if other.current_module == pawn.current_module and not other.movement_component.is_traveling():
+			return true
+	return false
 
 func _on_cancel(as_failed: bool) -> void:
 	if as_failed:

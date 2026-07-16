@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_gvv4y"]
 [ext_resource type="Texture2D" uid="uid://kk5flkkimb6u" path="res://assets/sprites/sleeping_pod.png" id="3_xw5s6"]
 [ext_resource type="PackedScene" path="res://modules/components/sleep_component.tscn" id="4_sleep"]
+[ext_resource type="Script" uid="uid://c2qsvh4rhb1ta" path="res://scripts/pathing/anchor_def.gd" id="5_anchor"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_gvv4y"]
 shader = ExtResource("2_7yck1")
@@ -18,6 +19,11 @@ shader_parameter/gradient_texture = ExtResource("3_gvv4y")
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
+[sub_resource type="Resource" id="Resource_bunk1"]
+script = ExtResource("5_anchor")
+type = 1
+offset = Vector2(-8, -9)
+
 [node name="Module" unique_id=1872422855 instance=ExtResource("1_862pb")]
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
@@ -29,5 +35,6 @@ shape = SubResource("RectangleShape2D_jyy4u")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([Vector2i(50, 58)])
+anchors = Array[ExtResource("5_anchor")]([SubResource("Resource_bunk1")])
 
-[node name="SleepComponent" parent="." instance=ExtResource("4_sleep")]
+[node name="SleepComponent" parent="." index="4" unique_id=450256976 instance=ExtResource("4_sleep")]

@@ -79,7 +79,7 @@ func _process(delta: float) -> void:
 				state = CabState.WAITING
 				await current_turbolift.set_door(false)
 				unload_passengers(current_turbolift)
-				pickup_passengers(current_turbolift)
+				await pickup_passengers(current_turbolift)
 				if onboard.size() > 0:
 					destination_module = onboard[0].to_floor
 					state = CabState.MOVING
@@ -133,12 +133,28 @@ func pickup_passengers(cur_module: ModuleTurbolift) -> void:
 			entering_passengers.append(ride)
 			
 	for ride in entering_passengers:
+		if not is_instance_valid(ride.pawn):
+			pickup_requests.erase(ride)
+			ride.release_queue_anchor()
+			continue
+		# Boarding frees the queue spot for the next caller (WI-16).
+		ride.release_queue_anchor()
+		var free_marker: Marker2D = null
 		for marker in assigned_locations:
 			if assigned_locations[marker] == null:
-				assigned_locations[marker] = ride
-				ride.stand_position = marker
-				ride.pawn.global_position = marker.global_position
+				free_marker = marker
 				break
+		if free_marker != null:
+			assigned_locations[free_marker] = ride
+			ride.stand_position = free_marker
+			# Walk from the waiting spot into the cab, one pawn at a time
+			# (WI-16) - the doors stay open (cab is WAITING) while we board.
+			await ride.pawn.walk_straight_to(free_marker.global_position)
+			if ride.cancelled or not is_instance_valid(ride.pawn):
+				# Cancelled mid-boarding (floor toggled, cab destroyed): the
+				# cancel path already emitted finished - don't board a dead ride.
+				assigned_locations[free_marker] = null
+				continue
 		ride.pawn.path_position_override = self
 		pickup_requests.erase(ride)
 		onboard.append(ride)
@@ -192,6 +208,7 @@ func cancel_request(request: RideRequest) -> bool:
 	request.cancelled = true
 	if pickup_requests.has(request):
 		pickup_requests.erase(request)          # never picked up — just drop it
+		request.release_queue_anchor()
 		request.pawn.current_module = request.from_floor
 		request.finished.emit(false)
 		return true
@@ -248,6 +265,7 @@ func destroy() -> void:
 		request.finished.emit(false)
 	onboard.clear()
 	for request in pickup_requests:
+		request.release_queue_anchor()
 		request.pawn.current_module = request.from_floor
 		request.cancelled = true
 		request.finished.emit(false)

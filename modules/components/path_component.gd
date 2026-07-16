@@ -10,6 +10,7 @@ class PathTraversalEdgeData:
 	var start_index: int
 	var end_index: int
 	var edge_meta: StringName = ""
+	var use_exact_position: bool = false
 	
 @export var door_not_connected_image: Texture2D
 
@@ -49,6 +50,11 @@ func get_traversal_speed_mult() -> float:
 
 ## Custom behaviors for when pawns start pathing along a specific edge
 @export var edge_behaviors: Dictionary[Vector2i, PathBehavior] = {}
+
+## Authored interior anchors (WI-16): bunks, workstations, queue spots.
+## Generated STAND/QUEUE anchors (hallway subdivision) live in
+## _generated_anchors and never need authoring.
+@export var anchors: Array[AnchorDef] = []
 
 ## Which of the path points (by index) are actually doors, and what layer do they connect to?
 @export var door_connections: Dictionary[int, WorldManager.StructureLayer] = {}
@@ -193,6 +199,142 @@ func _get_path_within_module(start_index: int, end_index: int) -> Array[PathTrav
 				edge_data.edge_meta = path_edges[Vector2i(id_path[index + 1], id_path[index])]
 			path.append(edge_data)
 	return path
+
+#region Anchors (WI-16)
+
+## Target spacing for runtime-generated anchors along path edges.
+const GENERATED_ANCHOR_SPACING: float = 20.0
+
+## claimant instance id -> claimed anchor. Runtime-only (never saved): jobs
+## aren't saved either, so on load claims rebuild as jobs repopulate. Keyed by
+## instance id, not object ref, so a claim can never keep its claimant alive.
+var _anchor_claims: Dictionary[int, AnchorDef] = {}
+## Lazily generated anchors per type; micro graphs are static per scene, so
+## this is never invalidated.
+var _generated_anchors: Dictionary[AnchorDef.AnchorType, Array] = {}
+
+## Local-space position an anchor resolves to.
+func get_anchor_local_position(anchor: AnchorDef) -> Vector2:
+	if anchor.path_index >= 0 and anchor.path_index < path_points.size():
+		return Vector2(path_points[anchor.path_index]) + anchor.offset
+	return anchor.offset
+
+func get_anchor_global_position(anchor: AnchorDef) -> Vector2:
+	return owner_module.global_position + get_anchor_local_position(anchor)
+
+## Claim a free anchor of the given type for claimant. Returns null when none
+## are free (callers must treat that as "target the module center as before" -
+## never block movement on anchor scarcity). One claim per claimant per
+## component; re-claiming releases the old claim first. Same discipline as
+## storage reservations: release on EVERY job cancel path.
+func claim_anchor(type: AnchorDef.AnchorType, claimant: Object) -> AnchorDef:
+	if claimant == null:
+		return null
+	_anchor_claims.erase(claimant.get_instance_id())
+	var anchor: AnchorDef = _find_free_anchor(type)
+	if anchor == null:
+		# Leak detector: claims must be released by their claimant's cancel
+		# path. A claim whose claimant no longer exists is a bug - warn loudly,
+		# then self-heal so anchors don't stay lost for the whole session.
+		if _purge_dead_claims():
+			anchor = _find_free_anchor(type)
+	if anchor != null:
+		_anchor_claims[claimant.get_instance_id()] = anchor
+	return anchor
+
+func release_anchor(claimant: Object) -> void:
+	if claimant != null:
+		_anchor_claims.erase(claimant.get_instance_id())
+
+func _find_free_anchor(type: AnchorDef.AnchorType) -> AnchorDef:
+	var claimed: Array[AnchorDef] = []
+	claimed.assign(_anchor_claims.values())
+	for anchor: AnchorDef in anchors:
+		if anchor.type == type and not claimed.has(anchor):
+			return anchor
+	# No authored anchors of this type: fall back to generated floor spots for
+	# the "stand somewhere sensible" types. BUNK/WORKSTATION must be authored -
+	# a generated point in the middle of a hallway is not a bed.
+	if type == AnchorDef.AnchorType.STAND or type == AnchorDef.AnchorType.QUEUE:
+		for anchor: AnchorDef in get_generated_anchors(type):
+			if not claimed.has(anchor):
+				return anchor
+	return null
+
+func _purge_dead_claims() -> bool:
+	var purged: bool = false
+	for id: int in _anchor_claims.keys():
+		if instance_from_id(id) == null:
+			push_warning("PathComponent on %s: purged anchor claim from a freed claimant - a job leaked its claim" % owner_module.name)
+			_anchor_claims.erase(id)
+			purged = true
+	return purged
+
+## Subdivide interior path edges into evenly spaced anchors (~20px apart, at
+## least one per edge). Door-stub edges are skipped so generated spots never
+## sit in a doorway. Cached forever - the micro graph is static per scene.
+func get_generated_anchors(type: AnchorDef.AnchorType) -> Array[AnchorDef]:
+	if _generated_anchors.has(type):
+		var cached: Array[AnchorDef] = []
+		cached.assign(_generated_anchors[type])
+		return cached
+	var result: Array[AnchorDef] = []
+	for edge: Vector2i in path_edges:
+		if door_connections.has(edge.x) or door_connections.has(edge.y):
+			continue
+		var a: Vector2 = Vector2(path_points[edge.x])
+		var b: Vector2 = Vector2(path_points[edge.y])
+		var count: int = maxi(1, roundi(a.distance_to(b) / GENERATED_ANCHOR_SPACING) - 1)
+		for i: int in range(1, count + 1):
+			var t: float = float(i) / float(count + 1)
+			var point: Vector2 = a.lerp(b, t)
+			var anchor: AnchorDef = AnchorDef.new()
+			anchor.type = type
+			anchor.path_index = edge.x if t <= 0.5 else edge.y
+			anchor.offset = point - Vector2(path_points[anchor.path_index])
+			result.append(anchor)
+	_generated_anchors[type] = result
+	return result
+
+## Final-leg sub-path (WI-16): entry door -> anchor, instead of the exit door.
+func get_path_to_anchor(start_module: Node2D, anchor: AnchorDef) -> Array[PathTraversalEdgeData]:
+	return _path_to_anchor(get_connection_index_from(start_module), anchor)
+
+## Same, but starting from an arbitrary position already inside this module.
+func get_path_to_anchor_from_position(start_global_position: Vector2, anchor: AnchorDef) -> Array[PathTraversalEdgeData]:
+	var local_vec: Vector2 = start_global_position - owner_module.global_position
+	return _path_to_anchor(astar.get_closest_point(local_vec), anchor)
+
+func _path_to_anchor(start_index: int, anchor: AnchorDef) -> Array[PathTraversalEdgeData]:
+	var result: Array[PathTraversalEdgeData] = []
+	if anchor == null or start_index < 0 or anchor.path_index < 0 or anchor.path_index >= path_points.size():
+		return result
+	result = _get_path_within_module(start_index, anchor.path_index)
+	if result.is_empty() and start_index == anchor.path_index:
+		# Entry point IS the anchor's graph point: synthesize the starter hop
+		# (as _get_path_within_module does) so the offset tail has a base.
+		var starter: PathTraversalEdgeData = PathTraversalEdgeData.new()
+		starter.start_index = -1
+		starter.start_pos = Vector2.ZERO
+		starter.end_index = start_index
+		starter.end_pos = Vector2(path_points[start_index])
+		## Bunks and Workstations are specifically authored, don't use random offset
+		starter.use_exact_position = (anchor.type == AnchorDef.AnchorType.WORKSTATION or anchor.type == AnchorDef.AnchorType.BUNK)
+		result.append(starter)
+	if not result.is_empty() and anchor.offset != Vector2.ZERO:
+		# Straight-line tail off the micro graph; interiors are open boxes so
+		# this is safe. end_index -1 marks it synthetic (no behavior lookups).
+		var tail: PathTraversalEdgeData = PathTraversalEdgeData.new()
+		tail.start_index = anchor.path_index
+		tail.start_pos = Vector2(path_points[anchor.path_index])
+		tail.end_index = -1
+		tail.end_pos = tail.start_pos + anchor.offset
+		## Bunks and Workstations are specifically authored, don't use random offset
+		tail.use_exact_position = (anchor.type == AnchorDef.AnchorType.WORKSTATION or anchor.type == AnchorDef.AnchorType.BUNK)
+		result.append(tail)
+	return result
+
+#endregion
 
 ## Do we maybe have any connection?
 func _has_possible_connections() -> bool:
@@ -384,3 +526,9 @@ func _draw() -> void:
 			draw_string(ThemeDB.fallback_font, point + Vector2i(-1, 2), str(index), HORIZONTAL_ALIGNMENT_CENTER, -1, 4, Color.BLACK)
 		for edge: Vector2i in path_edges:
 			draw_line(path_points[edge.x], path_points[edge.y], Color.RED, 1)
+		for anchor: AnchorDef in anchors:
+			var point: Vector2i = anchor.offset
+			if path_points.get(anchor.path_index):
+				point += path_points[anchor.path_index]
+			draw_circle(point, 2, Color.LIGHT_BLUE)
+			draw_string(ThemeDB.fallback_font, point + Vector2i(-1, 1), AnchorDef.AnchorType.keys()[anchor.type], HORIZONTAL_ALIGNMENT_CENTER, -1, 3, Color.BLACK)

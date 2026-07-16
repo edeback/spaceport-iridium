@@ -8,6 +8,10 @@ extends JobBase
 
 var pawn: PawnBase
 var sleep_component: SleepComponent
+## Authored BUNK anchor (WI-16): the pawn sleeps on the bunk, not at module
+## center. Null when the pod has none - movement falls back to the old target.
+var bunk_anchor: AnchorDef = null
+var _bunk_path: PathComponent = null
 
 enum SleepState { Starting, MovingToPod, Sleeping, Finished, Failed }
 var state: SleepState = SleepState.Starting:
@@ -40,9 +44,12 @@ func start_job(_pawn: PawnBase) -> void:
 		cancel(true)
 		return
 	SignalBus.module_removed.connect(_module_removed)
+	_bunk_path = sleep_component.owner_module.get_path_component()
+	if _bunk_path != null:
+		bunk_anchor = _bunk_path.claim_anchor(AnchorDef.AnchorType.BUNK, self)
 	state = SleepState.MovingToPod
 	pawn.movement_component.movement_ended.connect(_arrived, CONNECT_ONE_SHOT)
-	pawn.movement_component.move_to(sleep_component.owner_module)
+	pawn.movement_component.move_to(sleep_component.owner_module, 1.0, false, bunk_anchor)
 
 func _arrived(prev_success: bool) -> void:
 	# _ended: a stale movement one-shot firing after an external cancel must
@@ -85,6 +92,9 @@ func _on_end() -> void:
 		SignalBus.module_removed.disconnect(_module_removed)
 	if is_instance_valid(sleep_component):
 		sleep_component.release_slot(self)
+	# Anchor claims release on EVERY termination path, like the slot above.
+	if _bunk_path != null and is_instance_valid(_bunk_path):
+		_bunk_path.release_anchor(self)
 	# Stand back up however the job ended - lay_down isn't a looping walk/idle
 	# state the movement code would naturally replace.
 	if pawn != null and is_instance_valid(pawn) and pawn.animated_sprite != null \
