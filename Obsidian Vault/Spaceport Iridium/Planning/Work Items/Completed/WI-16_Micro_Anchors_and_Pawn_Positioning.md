@@ -21,10 +21,10 @@ Explicitly **not** in scope: RVO/physics avoidance or any per-frame neighbor que
 - Consumers in this WI: turbolift waiting (below) and `Job_Idle`/arrival spreading. WI-05's Job_Sleep claims BUNK anchors if this lands first (see the note added there); combat claims generated STANDs later.
 
 ### Turbolift waiting spots walk-to
-- Replace `ModuleTurbolift.get_waiting_slot()`/`assign_waiting_slot()` position-teleport with QUEUE anchors on the lift (or its corridor cell's hallway): the ride request claims a queue anchor, and the pawn's final movement leg targets it — they *walk* to the waiting spot. When the cab arrives, the boarding walk starts from the anchor. Releases on board/cancel.
+- Replace `ModuleTurbolift.get_waiting_slot()`/`assign_waiting_slot()` position-teleport with QUEUE anchors on its corridor cell's hallway: the ride request claims a queue anchor, and the pawn's final movement leg targets it — they *walk* to the waiting spot. When the cab arrives, the boarding walk starts from the anchor. Releases on board/cancel.
 
 ### Cosmetic de-overlap
-- **Lane offset:** each pawn hashes its instance id to a persistent perpendicular render offset (±8–12 px). Logical position stays exactly on the path; only the sprite draws offset (apply in `PawnBase.move_to()` to the sprite/offset node, not to `global_position` — logical position feeds pathfinding and save).
+- **Lane offset:** each pawn hashes its instance id to a persistent perpendicular render offset (±1–3 px). Logical position stays exactly on the path; only the sprite draws offset (apply in `PawnBase.move_to()` to the sprite/offset node, not to `global_position` — logical position feeds pathfinding and save).
 - **Speed jitter:** per-pawn ±5–10% multiplier on `speed`, hashed the same way. Breaks lock-step conga lines for free.
 - **Arrival spreading:** when movement completes in a module that already contains stationary pawns, claim a free STAND anchor (generated) and walk the short tail to it — one query at arrival, never continuous.
 

@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="ResourceData" load_steps=3 format=3 uid="uid://8lxcuc68y27m"]
+[gd_resource type="Resource" script_class="ResourceData" format=3 uid="uid://8lxcuc68y27m"]
 
 [ext_resource type="Texture2D" uid="uid://bkb1dr2qo71j1" path="res://ui/icons/ore.svg" id="1_fn40q"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_6cypi"]
 
 [resource]
 script = ExtResource("2_6cypi")
+id = &"iron_ore"
 name = "Iron Ore"
 icon = ExtResource("1_fn40q")
-id = &"iron_ore"

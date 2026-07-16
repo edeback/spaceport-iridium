@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ResourceData" format=3 uid="uid://cns3lrfd8jekj"]
+
+[ext_resource type="Texture2D" uid="uid://yu18u38pl0b8" path="res://ui/icons/silicates.svg" id="1_cfxov"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_ohxop"]
+
+[resource]
+script = ExtResource("2_ohxop")
+id = &"silicon_ore"
+name = "Silicon Ore"
+icon = ExtResource("1_cfxov")

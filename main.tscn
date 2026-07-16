@@ -36,15 +36,19 @@
 [ext_resource type="Resource" uid="uid://b27jc67v174pi" path="res://data/resources/iridium.tres" id="18_come4"]
 [ext_resource type="Resource" uid="uid://tf727fx7vlah" path="res://data/resources/oxygen.tres" id="19_h8e4i"]
 [ext_resource type="Resource" uid="uid://c56jj6kgs36sx" path="res://data/resources/gold.tres" id="20_4lmeg"]
-[ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicates.tres" id="21_0cp0l"]
+[ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicon.tres" id="21_0cp0l"]
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="22_d2t1y"]
 [ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="23_gngh3"]
 [ext_resource type="AudioStream" uid="uid://6j2kp23eqf8s" path="res://assets/external/sci_fi_music_pack/Sci-Fi 1 Loop.ogg" id="26_0rl1p"]
 [ext_resource type="Texture2D" uid="uid://rts0ktv4mj0v" path="res://assets/sprites/truss_structure_new.png" id="31_4k2k6"]
 [ext_resource type="Script" uid="uid://bhfs7qjh80a6p" path="res://scripts/managers/unlock_manager.gd" id="31_come4"]
+[ext_resource type="Resource" uid="uid://cnje5k2redpx0" path="res://data/resources/gold_ore.tres" id="32_blkrb"]
 [ext_resource type="Script" uid="uid://ewev5w5lgt22" path="res://scripts/managers/crew_manager.gd" id="32_crewmgr"]
+[ext_resource type="Resource" uid="uid://c8o0o81ej48mp" path="res://data/resources/carbon_ore.tres" id="33_abqjc"]
 [ext_resource type="PackedScene" uid="uid://2pp7va28ybgl" path="res://pawns/crew_pawn.tscn" id="33_crewpawn"]
+[ext_resource type="Resource" uid="uid://bj04ftawqiwko" path="res://data/resources/iridium_ore.tres" id="34_6iyjs"]
 [ext_resource type="PackedScene" path="res://objects/arrival_shuttle.tscn" id="34_shuttle"]
+[ext_resource type="Resource" uid="uid://cns3lrfd8jekj" path="res://data/resources/silicon_ore.tres" id="35_4w656"]
 [ext_resource type="Script" uid="uid://d0bklsxrd4qvm" path="res://scripts/managers/trader_manager.gd" id="35_tradermgr"]
 [ext_resource type="Resource" path="res://data/traders/first_caravan.tres" id="36_caravan"]
 [ext_resource type="PackedScene" uid="uid://bqpttolexash5" path="res://objects/trader_shuttle.tscn" id="37_tradershuttle"]
@@ -7626,6 +7630,7 @@ market_resources = Array[ExtResource("13_4k2k6")]([ExtResource("16_b1qrp"), ExtR
 [node name="AsteroidManager" type="Node" parent="Managers" unique_id=1264283929 node_paths=PackedStringArray("start_point", "end_point", "asteroid_layer")]
 script = ExtResource("10_cegan")
 asteroid_scene = ExtResource("11_82xsv")
+ore_types_available = Array[ExtResource("13_4k2k6")]([ExtResource("16_b1qrp"), ExtResource("32_blkrb"), ExtResource("33_abqjc"), ExtResource("34_6iyjs"), ExtResource("35_4w656")])
 start_point = NodePath("../../BackgroundLayers/AsteroidLayer/AsteroidStart")
 end_point = NodePath("../../BackgroundLayers/AsteroidLayer/AsteroidEnd")
 asteroid_layer = NodePath("../../BackgroundLayers/AsteroidLayer")

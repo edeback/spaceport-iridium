@@ -1,17 +1,16 @@
 # WI-11 — Turbolift System Panel & Floor Control
 
 ## Goal
-One management panel per shaft (selecting any lift module selects the shaft): toggle floors on/off (skip floors), set cab count, choose a dispatch strategy. Plus the movement-cost polish from the notes: per-"terrain" speed multipliers so lift travel is genuinely faster than stairs and stairs genuinely slower than hallways.
+One management panel per shaft (selecting any lift module selects the shaft): toggle floors on/off (skip floors), turn on/off entire turboshaft (power), and set cab count. Plus the movement-cost polish from the notes: per-"terrain" speed multipliers so lift travel is genuinely faster than stairs and stairs genuinely slower than hallways.
 
 ## Current state
-Shafts (`TurboliftShaft`) already merge/split correctly, group-based pathfinding gives lift traversal a 0.5× cost multiplier, cabs dispatch with a 3-tier heuristic (contains the WI-01 crash fix), and cabs are created on demand (first request). Stairs have no penalty; there's no shaft UI.
+Shafts (`TurboliftShaft`) already merge/split correctly, group-based pathfinding gives lift traversal a 0.5× cost multiplier, and cabs are created on demand (first request). Stairs have no penalty; there's no shaft UI. Individual turbolifts can be turned on/off but not all at once.
 
 ## Design
 - **Floor disable:** per `ModuleTurbolift` flag `floor_enabled`. Disabled floor: its door stops being a valid group entry/exit — implement via `PathManager.disable_module`? No — that blocks through-traffic in the whole vertex. Instead remove the vertex's group membership benefit: cleanest is a new `ModuleGraphVertex.no_group_stop: bool` checked in the two group-expansion loops in `ModuleGraph.pathfind*` (skip `linked` vertices whose `no_group_stop` is true as *destinations* of the group jump, while still allowing them as physical shaft cells). Cabs additionally skip stopping there (`RideRequest` validation).
-- **Cab count:** panel +/− buttons; buying a cab costs credits (data constant); removing returns none (or partial). Cabs added via existing `create_new_cab()`; removal picks an idle cab, `destroy()`s it (exists).
-- **Dispatch strategy:** enum on shaft {NEAREST_IDLE (current), COLLECTIVE (elevator-standard: keep direction, serve en-route calls)} — implement COLLECTIVE only if cheap; the panel dropdown can ship with one option and a disabled second. Honest v1: cab count + floor toggles are the value; strategy is stretch.
+- **Cab count:** panel +/− buttons; buying a cab costs credits (data constant); removing returns none. Cabs added via existing `create_new_cab()`; removal picks an idle cab, `destroy()`s it (exists). If none idle, queues up destroying the first idle cab.
 - **Speed multipliers:** `PathComponent` or module-level `traversal_speed_mult` consumed by `PawnMovementComponent.move()` when computing `dist_to_travel` through that module's sub-path (stairs 0.5×, hallway 1.0×). Pathfinding *cost* should mirror it so route choice prefers lifts for long verticals but stairs for one floor: bake into edge cost at connection time (`make_connections` distance × multiplier) — simpler than dynamic evaluation and matches the existing group multiplier pattern.
-- **Panel:** new window opened from lift module info panel (or replaces it): floor list with toggles (sorted by y, labels "Floor −2…+3" relative to lowest), cab count control, live cab positions (text v1).
+- **Panel:** new window replaces lift module info panel as it is for the entire shaft: floor list with toggles (sorted by y, labels "Floor −2…+3" relative to lowest), cab count control, live cab positions (text v1). Has a "Force Shutdown" button the same as in power_consumption_component_ui, except it forces on/off _all_ the turbolifts in that shaft at once.
 - **Cross-refs (2026-07-14 pathfinding discussion):** the `no_group_stop` work lives in the same two group-expansion loops as [[WI-15_Pathfinding_Exterior_Semantics]]'s exterior branch — consider landing the two together. Waiting-spot pop-in is fixed by [[WI-16_Micro_Anchors_and_Pawn_Positioning]] (QUEUE anchors), not here. And if this WI grows into major cab surgery, that is the moment to introduce the CONVEYED movement state (roadmap Phase 3) rather than extending `path_position_override`.
 
 ## Files to touch
@@ -19,16 +18,15 @@ Shafts (`TurboliftShaft`) already merge/split correctly, group-based pathfinding
 - `modules/transport/module_turbolift.gd` — `floor_enabled` + graph flag sync + visual (dimmed door)
 - `modules/transport/turbolift_shaft.gd` — cab add/remove API, enabled-floor filtering in `request_ride`/`_best_cab_for`, strategy enum
 - `modules/transport/turbolift_cab.gd` — skip disabled floors in stop planning; `recheck_requests` on floor toggle
-- **New:** `ui/windows/turbolift_panel.gd/.tscn`; hooked from module info panel (`ui/windows/module_info_ingame_panel.gd`) when the module is a ModuleTurbolift
+- **New:** `ui/windows/turboshaft_panel.gd/.tscn`; replaces module info panel (`ui/windows/module_info_ingame_panel.gd`) when the module is a ModuleTurbolift
 - `modules/core/stairs.gd` / stairs scene + `modules/components/path_component.gd` — `traversal_speed_mult`; `pawns/pawn_movement_component.gd` — consume it in sub-path movement; `path_component.make_connections` — cost scaling
-- WI-03 followup: per-module `floor_enabled` and per-shaft cab count into save (floor flag via module save data; cab count re-derivable? No — save it on… shafts are rebuilt from modules; store `desired_cab_count` on the *lowest* module? Cleaner: TurboliftManager save section mapping shaft group_id is unstable across loads — instead store cab count on each lift module redundantly and shaft takes the max at rebuild). What if each lift module stored its group_id, which was then restored on load? Then TurboliftManager could store a map of group_id to all shaft data. TurboliftManager would also need to save last_turboshaft so that new shafts don't accidentally merge with old ones (or have some other way of ensuring no conflicts there).
+- WI-03 followup: per-module `floor_enabled` and per-shaft cab count into save (floor flag via module save data; cab count on TurboliftShaft). Each lift module could store its group_id, which was then restored on load. Then TurboliftManager could store a map of group_id to all shaft data. TurboliftManager would also need to save last_turboshaft so that new shafts don't accidentally merge with old ones (or have some other way of ensuring no conflicts there).
 
 ## Implementation order
 1. Speed multipliers (self-contained, immediately felt).
 2. `no_group_stop` + floor_enabled mechanics.
 3. Shaft panel UI (floors + cab count).
 4. Cab purchase/removal.
-5. (Stretch) collective dispatch.
 
 ## Edge cases
 - Disabling the floor a cab is currently at / traveling to → cab finishes current stop, then re-plans (`recheck_requests`).

@@ -8,7 +8,7 @@
 [ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="6_2upad"]
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="7_d4a3e"]
 [ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="8_wnbub"]
-[ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicates.tres" id="9_164ux"]
+[ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicon.tres" id="9_164ux"]
 
 [node name="AsteroidBase" type="Node2D" unique_id=1253064257 node_paths=PackedStringArray("sprite")]
 script = ExtResource("1_gwhge")

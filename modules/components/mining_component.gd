@@ -99,5 +99,4 @@ func has_ui() -> bool:
 	return false
 	
 func get_ui() -> ModuleComponentUI:
-	var ui: ProcessorComponentUI = ui_info_panel_element.instantiate() as ProcessorComponentUI
-	return ui
+	return null

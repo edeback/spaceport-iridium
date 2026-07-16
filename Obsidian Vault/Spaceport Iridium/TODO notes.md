@@ -24,3 +24,32 @@ Animations:
 - And keep updated via Global.time_manager.speed_changed
 - However LinkedDoorState is probably leaking as I get null callbacks even though I clear speed_changed on predelete
 - Maybe more important first to not have awaits...
+
+For trader screen
+- Create rows like other screen so better UI can be made
+- Putting values in buy zeros out sell and vice versa (like other UI)
+
+Build more detailed traders (types, buy/sell multipliers, etc)
+
+Ore! Figure out what we're doing here.
+
+Set first two pawns to work 100% of the time, pawns after that can work shifts (as there's a lot to do to start!)
+
+
+Have Fable "interview me" about the game and update the design document
+Also create more Work Items for the next batch of tasks
+
+|       |                            |                                                                    |
+| ----- | -------------------------- | ------------------------------------------------------------------ |
+| ==G== | ==Ground truth==           | ==Point it at what already exists. Let it read everything first.== |
+| ==O== | ==Outcome, not orders==    | ==Say what done looks like. "Better" is not a goal.==              |
+| ==A== | ==Autonomy over the path== | ==Tell it what you want. Not how to get there.==                   |
+| ==L== | ==Loop in proof==          | ==Make it verify the work and check in before big decisions.==     |
+Goal prompt:
+Here is [the thing you already have] in this folder. New goal: [what you want it to become — say it as a clear result you can check]. First, read everything here and map what it does today. Then turn my goal into specific, testable criteria. If anything is fuzzy, interview me one question at a time until it's clear. Check the criteria with me before you build anything. Figure out the best way to get there yourself. I'm not going to give you the steps. Then make the changes one at a time. After each one, prove it works — open it, test it, run it — and show me the before and after. Check in with me before any big or hard-to-undo decision.
+
+Meta prompt:
+have a project for you, but I'm not ready to brief you. So interview me first. Ask me one question at a time, in plain language. You're trying to learn four things: G — What I already have. Files, a folder, a site, a system, a doc. Get the location, then read all of it yourself before asking anything it could answer for you. O — What I want it to become. Push past vague answers. If I say "better," ask what better looks like and how we'd both know it happened. Turn my answers into specific, testable criteria. A — What's mine vs. yours. Find out which decisions I actually care about. Anything I don't claim is your call. L — What proof I need. Ask how I want it verified when you're done: opened live, tested with real data, before and after. Keep the interview short. Five to seven questions, then stop. Make reasonable calls on the small stuff yourself. Then write everything back to me as one master prompt: the ground truth, the goal with its testable criteria, what you'll decide on your own, and how you'll prove it works. Show it to me. When I approve it, execute it, and check in with me before any big or hard-to-undo decision.
+
+Simple prompt:
+Look at my code, think of what I want to accomplish and suggest improvements,

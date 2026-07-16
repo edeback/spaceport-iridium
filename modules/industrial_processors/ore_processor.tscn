@@ -17,7 +17,7 @@
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="12_8w55x"]
 [ext_resource type="Resource" uid="uid://bvhvi4mdylcq" path="res://data/recipes/steel_recipe.tres" id="12_arklq"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_vgcqb"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_arklq"]
 shader = ExtResource("2_gtfxg")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -25,7 +25,7 @@ shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 shader_parameter/gradient_texture = ExtResource("3_arklq")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_85tfa"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8w55x"]
 resource_local_to_scene = true
 size = Vector2(126, 62)
 
@@ -44,12 +44,12 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 [node name="OreProcessor" unique_id=749258774 instance=ExtResource("1_06jma")]
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_vgcqb")
+material = SubResource("ShaderMaterial_arklq")
 texture = ExtResource("3_pj0q4")
 region_enabled = false
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_85tfa")
+shape = SubResource("RectangleShape2D_8w55x")
 
 [node name="PowerConsumptionComponent" parent="." index="2" unique_id=2041634469 instance=ExtResource("3_gtfxg")]
 power_consumption = 50.0

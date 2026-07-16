@@ -2,6 +2,7 @@ class_name AsteroidManager
 extends Node
 
 @export var asteroid_scene: PackedScene
+@export var ore_types_available: Array[ResourceData]
 @export var start_point: Marker2D
 @export var end_point: Marker2D
 @export var asteroid_layer: CanvasLayer

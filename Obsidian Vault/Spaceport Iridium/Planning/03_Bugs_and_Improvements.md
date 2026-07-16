@@ -1,6 +1,6 @@
 # Bugs, Code Issues & Improvement Suggestions
 
-*Found while reading the full codebase (2026-07-13). Bugs are ordered by severity. Fixes for the Confirmed list are bundled as [[Work Items/WI-01_Bug_Fix_Pass]].*
+*Found while reading the full codebase (2026-07-13). Bugs are ordered by severity. Fixes for the Confirmed list are bundled as [[WI-01_Bug_Fix_Pass]].*
 
 ---
 
@@ -94,7 +94,7 @@ Response: This works as intended. It is not a post-job cooldown, it is a "don't 
 	1. I'm aiming for a combination of the two. Different factory _types_ will allow different recipes. This allows some flexibility in resource creation.
 3. Should pawns path to *positions* within modules (needed for beds/workstations) — yes eventually; WI-05 assumes "stand anywhere in module" is acceptable for sleep v1.
 	1. Yes. Ideally there will be specific points added to the modules to indicate specific places for pawns to move to.
-	2. *Planned (2026-07-14):* exactly this, as micro-graph **anchors** (authored + runtime-generated) — see [[Work Items/WI-16_Micro_Anchors_and_Pawn_Positioning]]. The related group-overloading fix (construction stealing the "space" group) is [[Work Items/WI-15_Pathfinding_Exterior_Semantics]]; both summarized in tech-spec §2.6.
+	2. *Planned (2026-07-14):* exactly this, as micro-graph **anchors** (authored + runtime-generated) — see [[WI-16_Micro_Anchors_and_Pawn_Positioning]]. The related group-overloading fix (construction stealing the "space" group) is [[WI-15_Pathfinding_Exterior_Semantics]]; both summarized in tech-spec §2.6.
 4. Save/load scope for in-flight jobs: serialize descriptors vs. cancel-on-save? (Spec recommends cancel-on-save v1.)
 	1. Cancel-on-save for now but serialization will eventually be necessary as the gameplay impacts for cancelling all jobs is very painful.
 5. How aggressively should unpowered modules fail? (Currently: freeze. Options: decay stored goods, hurt happiness, life-support pressure later.)

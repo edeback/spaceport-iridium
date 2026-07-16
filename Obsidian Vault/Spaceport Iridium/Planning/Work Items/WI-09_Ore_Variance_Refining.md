@@ -1,16 +1,18 @@
 # WI-09 — Ore Richness Through Refining
 
 ## Goal
-Make the existing ore variance system matter: asteroids carry a richness profile, mined ore stacks inherit it (already true), and the ore refinery's yield scales with the richness of the batch it consumes. Add a surface-level readout so players can see asteroid/batch quality (the "show asteroid contents" QoL note).
+Make the existing ore variance system matter: asteroids carry a richness profile, asteroids spawn with different types of ores available, mined ore stacks inherit it (already true), and the ore refinery's yield scales with the richness of the batch it consumes. Ore refineries can select which ore-type they should refine, with input storage updating accordingly. Add a surface-level readout so players can see asteroid/batch quality (the "show asteroid contents" QoL note). Add the ability to select asteroids that are then prioritized in Job_MineAsteroid. Create a UI for MiningComponent and allow selection of which type of ore is prioritized (used as next in line after explicitly designated asteroids - after that, random).
 
 ## Current state (verified in code)
 - `OreInstanceData.richness` is set in `Job_MineAsteroid.mine_asteroid()` from a placeholder `randf_range(0.3, 1.0)` with an explicit TODO to source it from the asteroid.
+- AsteroidManager uses one standard asteroid_scene with pre-set ores and does not vary them
+- AsteroidManager has ore_types_available but not currently used
 - Stacks preserve `instance_data` through inventory → storage → piles; merge tolerance works (`ResourceData.merge_tolerance`).
 - `ProcessorComponent` withdraws inputs via count-based `withdraw()` — instance data is discarded at the refinery door. This is the gap.
 
 ## Design
 - `AsteroidBase` gets `richness_range: Vector2` (per-asteroid, randomized at spawn within a band; richer asteroids rarer). Mined stacks sample within the asteroid's range.
-- `ProcessorComponent` (or a subclass `RefineryComponent` — decide: prefer a flag `use_input_richness: bool` on ProcessorComponent, avoiding a parallel class) withdraws input **stacks** (`withdraw_stacks`), averages richness weighted by amount, and scales outputs: `output_amount = round(recipe_output × lerp(min_yield_mult, max_yield_mult, avg_richness))` with data-driven multipliers on `RecipeData` (e.g. 0.5–1.5).
+- `RefineryComponent` withdraws input **stacks** (`withdraw_stacks`), averages richness weighted by amount, and scales outputs: `output_amount = round(recipe_output × lerp(min_yield_mult, max_yield_mult, avg_richness))` with data-driven multipliers on `RecipeData` (e.g. 0.5–1.5).
 - Fractional-yield fairness: accumulate remainders per output resource so long-run averages are exact (banker's residue, a float accumulator on the component).
 - UI: asteroid tooltip/click shows remaining resources + richness descriptor ("Rich (82%)"); storage rows and pile UI show average richness for variant resources; processor UI shows current batch richness.
 

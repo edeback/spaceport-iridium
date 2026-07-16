@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ResourceData" format=3 uid="uid://bj04ftawqiwko"]
+
+[ext_resource type="Texture2D" uid="uid://dndbetb7emkl1" path="res://ui/icons/iridium.svg" id="1_4o811"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_vak54"]
+
+[resource]
+script = ExtResource("2_vak54")
+id = &"iridium_ore"
+name = "Iridium Ore"
+icon = ExtResource("1_4o811")
+default_cost = 100

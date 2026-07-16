@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ResourceData" format=3 uid="uid://c8o0o81ej48mp"]
+
+[ext_resource type="Texture2D" uid="uid://ck5fpgwnd5vuw" path="res://ui/icons/carbon.svg" id="1_wvm1w"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_0v8oa"]
+
+[resource]
+script = ExtResource("2_0v8oa")
+id = &"carbon_ore"
+name = "Carbon Ore"
+icon = ExtResource("1_wvm1w")
+default_cost = 20
+default_market_supply = 80

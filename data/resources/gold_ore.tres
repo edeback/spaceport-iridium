@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ResourceData" format=3 uid="uid://cnje5k2redpx0"]
+
+[ext_resource type="Texture2D" uid="uid://268gxvltt1nr" path="res://ui/icons/precious_metals.svg" id="1_w1q6y"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_app0j"]
+
+[resource]
+script = ExtResource("2_app0j")
+id = &"gold_ore"
+name = "Gold Ore"
+icon = ExtResource("1_w1q6y")
+default_cost = 50
