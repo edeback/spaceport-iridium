@@ -195,6 +195,11 @@ func get_save_data() -> Dictionary:
 				storages[String(get_path_to(component))] = storage_save
 	if not storages.is_empty():
 		data["storage"] = storages
+	var trade: TradeComponent = get_component_by_type(TradeComponent) as TradeComponent
+	if trade != null:
+		var trade_save: Dictionary = trade.get_save_data()
+		if not trade_save.is_empty():
+			data["trade"] = trade_save
 	var upgrades: Dictionary = get_upgrade_save_data()
 	if not upgrades.is_empty():
 		data["upgrades"] = upgrades
@@ -215,6 +220,9 @@ func load_save_data(data: Dictionary) -> void:
 			push_warning("Saved storage component not found on " + name + ": " + path_str)
 			continue
 		storage.load_save_data(storages[path_str])
+	var trade: TradeComponent = get_component_by_type(TradeComponent) as TradeComponent
+	if trade != null and data.has("trade"):
+		trade.load_save_data(data["trade"])
 	load_upgrade_save_data(data.get("upgrades", {}))
 
 ## Restore tiers saved by get_upgrade_save_data() and re-apply their modifiers,

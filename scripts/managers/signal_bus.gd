@@ -42,6 +42,10 @@ signal game_over
 ## Generic station-wide alert text for the UI alerts strip.
 @warning_ignore("unused_signal")
 signal station_alert(message: String)
+@warning_ignore("unused_signal")
+signal trader_arrived(trader: TraderData)
+@warning_ignore("unused_signal")
+signal trader_departed(trader: TraderData)
 
 
 

@@ -7,6 +7,9 @@ extends RefCounted
 ##   +99  CONSTRUCTION_IMPORT   material delivery to a construction site
 ##   +50  COMPLETION_BOOST      finish-what's-started jobs (construct /
 ##                              deconstruct work on an already-resourced site)
+##    +3  TRADE_EXPORT_BIN      staging sell-order goods at the docking bay:
+##                              pulls from ordinary storerooms (+1) but loses
+##                              to real consumers (kitchen, construction)
 ##    +1  STORAGE_DEFAULT       ordinary storeroom rebalancing (scene default)
 ##     0  (unset)               ad-hoc jobs (pile collection, moves)
 ##   -99  DECONSTRUCTION_EXPORT refund materials leaving a torn-down module
@@ -20,6 +23,7 @@ extends RefCounted
 
 const CONSTRUCTION_IMPORT: int = 99
 const COMPLETION_BOOST: int = 50
+const TRADE_EXPORT_BIN: int = 3
 const STORAGE_DEFAULT: int = 1
 const DECONSTRUCTION_EXPORT: int = -99
 

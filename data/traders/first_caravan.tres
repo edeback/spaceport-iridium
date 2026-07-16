@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="TraderData" format=3]
+
+[ext_resource type="Script" path="res://data/traders/trader_data.gd" id="1_caravan"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_caravan"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="3_caravan"]
+[ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="4_caravan"]
+[ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="5_caravan"]
+[ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="6_caravan"]
+
+[resource]
+script = ExtResource("1_caravan")
+id = &"first_caravan"
+trader_name = "The Caravan"
+stock = Dictionary[ExtResource("2_caravan"), int]({
+ExtResource("3_caravan"): 80,
+ExtResource("5_caravan"): 30,
+ExtResource("6_caravan"): 30
+})
+price_multipliers = Dictionary[ExtResource("2_caravan"), float]({
+ExtResource("3_caravan"): 0.6,
+ExtResource("4_caravan"): 1.6
+})
+cargo_hold = 200

@@ -1,0 +1,146 @@
+[gd_scene format=3 uid="uid://bkjvsjolwnqoy"]
+
+[ext_resource type="Script" uid="uid://bsppcikmn17tx" path="res://ui/windows/trade/trader_screen.gd" id="1_trader"]
+[ext_resource type="Texture2D" uid="uid://d0as5orqnhkl4" path="res://assets/external/kenney_ui/Vector/Blue/button_square_flat.svg" id="2_274eo"]
+[ext_resource type="Texture2D" uid="uid://cc0ns2prdb577" path="res://ui/icons/credit_symbol.svg" id="3_44oiu"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e10ib"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0, 0, 0, 0.8862745)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[node name="TraderScreen" type="Control" unique_id=272099288]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_trader")
+
+[node name="Dim" type="ColorRect" parent="." unique_id=1938227298]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.55)
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=366426347]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="CenterContainer" unique_id=121189284]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_e10ib")
+
+[node name="NinePatchRect" type="NinePatchRect" parent="CenterContainer/Panel" unique_id=1476347136]
+self_modulate = Color(0.768243, 0.52438736, 0.7868966, 1)
+layout_mode = 2
+texture = ExtResource("2_274eo")
+patch_margin_left = 8
+patch_margin_top = 8
+patch_margin_right = 8
+patch_margin_bottom = 8
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Panel" unique_id=1680644384]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/Panel/MarginContainer" unique_id=1317887921]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TraderNameLabel" type="Label" parent="CenterContainer/Panel/MarginContainer/VBoxContainer" unique_id=32329928]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 30
+text = "Trader"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="CenterContainer/Panel/MarginContainer/VBoxContainer" unique_id=1382227297]
+layout_mode = 2
+
+[node name="TradeRows" type="VBoxContainer" parent="CenterContainer/Panel/MarginContainer/VBoxContainer" unique_id=1666949149]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="MarginContainer3" type="MarginContainer" parent="CenterContainer/Panel/MarginContainer/VBoxContainer" unique_id=1536710053]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="PanelContainer" type="PanelContainer" parent="CenterContainer/Panel/MarginContainer/VBoxContainer/MarginContainer3" unique_id=1822591539]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Panel/MarginContainer/VBoxContainer/MarginContainer3" unique_id=882167438]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterContainer/Panel/MarginContainer/VBoxContainer/MarginContainer3/MarginContainer" unique_id=2022197434]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="TotalLabel" type="Label" parent="CenterContainer/Panel/MarginContainer/VBoxContainer/MarginContainer3/MarginContainer/HBoxContainer" unique_id=254583770]
+layout_mode = 2
+text = "Total:"
+
+[node name="CreditIcon" type="TextureRect" parent="CenterContainer/Panel/MarginContainer/VBoxContainer/MarginContainer3/MarginContainer/HBoxContainer" unique_id=178604846]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+texture = ExtResource("3_44oiu")
+expand_mode = 3
+
+[node name="TotalCreditsLabel" type="Label" parent="CenterContainer/Panel/MarginContainer/VBoxContainer/MarginContainer3/MarginContainer/HBoxContainer" unique_id=1950869386]
+unique_name_in_owner = true
+layout_mode = 2
+text = "654891"
+
+[node name="Buttons" type="HBoxContainer" parent="CenterContainer/Panel/MarginContainer/VBoxContainer" unique_id=580944283]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="CommitButton" type="Button" parent="CenterContainer/Panel/MarginContainer/VBoxContainer/Buttons" unique_id=321109194]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+text = "Commit trades"
+
+[node name="CloseButton" type="Button" parent="CenterContainer/Panel/MarginContainer/VBoxContainer/Buttons" unique_id=1785777452]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+text = "Close"
+
+[node name="HintLabel" type="Label" parent="CenterContainer/Panel/MarginContainer/VBoxContainer" unique_id=1735270099]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "What's possible right now, at this trader's prices. Committed trades fulfill as goods reach the bay."
+horizontal_alignment = 1
+
+[connection signal="pressed" from="CenterContainer/Panel/MarginContainer/VBoxContainer/Buttons/CommitButton" to="." method="_on_commit_pressed"]
+[connection signal="pressed" from="CenterContainer/Panel/MarginContainer/VBoxContainer/Buttons/CloseButton" to="." method="_on_close_pressed"]

@@ -1,6 +1,11 @@
 class_name TradeResourceRow
 extends MarginContainer
 
+## One resource on the ORDER SHEET (WI-08): standing buy/sell targets, not an
+## instant trade. "Available" shows market stock (buy side) and total station
+## stock (sell side) as previews; prices are current market prices - actual
+## trades settle at the docked trader's snapshot prices.
+
 var resource: ResourceData = null
 var trade_component: TradeComponent = null
 
@@ -10,48 +15,49 @@ func set_up(_resource: ResourceData) -> void:
 	resource = _resource
 	%ResourceName.text = resource.name
 	%ResourceIcon.texture = resource.icon
-	%BuyAmountSpinBox.value_changed.connect(value_changed)
-	%SellAmountSpinBox.value_changed.connect(value_changed)
-	
+	%BuyAmountSpinBox.value_changed.connect(_buy_changed)
+	%SellAmountSpinBox.value_changed.connect(_sell_changed)
+
 func start(_trade_component: TradeComponent) -> void:
 	trade_component = _trade_component
 	Global.market_manager.market_updated.connect(refresh)
-	%BuyAmountSpinBox.value = 0
-	%SellAmountSpinBox.value = 0
+	%BuyAmountSpinBox.set_value_no_signal(trade_component.buy_orders.get(resource, 0))
+	%SellAmountSpinBox.set_value_no_signal(trade_component.sell_orders.get(resource, 0))
+	%BuyAmountSpinBox.max_value = 9999
+	%SellAmountSpinBox.max_value = 9999
 	refresh()
-	
+
 func stop() -> void:
 	trade_component = null
 	Global.market_manager.market_updated.disconnect(refresh)
 
 func refresh() -> void:
-	var buy_amount_available: int = Global.market_manager.get_quantity_available(resource)
-	%BuyAmountSpinBox.max_value = buy_amount_available
-	%BuyAvailableLabel.text = str(buy_amount_available)
+	# Orders aren't capped by today's market: the visiting trader's own stock
+	# is the real limit at trade time, so the spin boxes stay open-ended.
 	%BuyPriceLabel.text = str(Global.market_manager.get_buy_price(resource))
-	var sell_amount_available: int = 0
-	if trade_component.export_storage.storage_data.has(resource):
-		sell_amount_available = floori(trade_component.export_storage.storage_data[resource].stored)
-	%SellAmountSpinBox.max_value = sell_amount_available
-	%SellAvailableLabel.text = str(sell_amount_available)
 	%SellPriceLabel.text = str(Global.market_manager.get_sell_price(resource))
-	
+
+## Projected credits if the whole standing order fulfilled at today's prices -
+## a preview, not a charge.
 func get_total_credits() -> int:
-	var buy_cost: int = %BuyAmountSpinBox.value * Global.market_manager.get_buy_price(resource)
-	var sell_profit: int = %SellAmountSpinBox.value * Global.market_manager.get_sell_price(resource)
+	var buy_cost: int = int(%BuyAmountSpinBox.value) * Global.market_manager.get_buy_price(resource)
+	var sell_profit: int = int(%SellAmountSpinBox.value) * Global.market_manager.get_sell_price(resource)
 	return sell_profit - buy_cost
 
-func value_changed(_new_value: float) -> void:
+## Buying and selling the same resource cancels itself - setting one side
+## zeroes the other.
+func _buy_changed(new_value: float) -> void:
+	if new_value > 0:
+		%SellAmountSpinBox.set_value_no_signal(0)
 	row_updated.emit()
 
+func _sell_changed(new_value: float) -> void:
+	if new_value > 0:
+		%BuyAmountSpinBox.set_value_no_signal(0)
+	row_updated.emit()
+
+## Writes this row's standing order onto the trade component. No credits
+## move here - fulfillment (and payment) happens while a trader is docked.
 func commit() -> void:
-	var sell_amount: int = %SellAmountSpinBox.value
-	var sell_price: int = Global.market_manager.get_sell_price(resource)
-	if  sell_amount > 0 and trade_component.export_storage.can_withdraw(resource, sell_amount) and Global.market_manager.deposit_resource(resource, sell_amount):
-		trade_component.export_storage.withdraw(resource, sell_amount)
-		Global.resource_manager.credit_resource.change_global_total(sell_amount * sell_price)
-	var buy_amount: int = %BuyAmountSpinBox.value
-	var buy_price: int = Global.market_manager.get_buy_price(resource)
-	if  buy_amount > 0 and trade_component.import_storage.can_deposit(resource, buy_amount) and Global.market_manager.withdraw_resource(resource, buy_amount):
-		trade_component.import_storage.deposit(resource, buy_amount)
-		Global.resource_manager.credit_resource.change_global_total(-buy_amount * buy_price)
+	trade_component.set_buy_order(resource, int(%BuyAmountSpinBox.value))
+	trade_component.set_sell_order(resource, int(%SellAmountSpinBox.value))

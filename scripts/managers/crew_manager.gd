@@ -126,8 +126,8 @@ func _arrive(hire: Dictionary) -> void:
 		return
 	var shuttle: ArrivalShuttle = shuttle_scene.instantiate() as ArrivalShuttle
 	Global.world_manager.pawn_layer.add_child(shuttle)
-	var dock: Vector2 = _bay_dock_position(bay)
-	shuttle.setup(dock, dock + Vector2(_bay_approach_sign(bay) * shuttle_approach_distance, 0.0))
+	var dock: Vector2 = DockingBay.dock_position_for(bay)
+	shuttle.setup(dock, dock + Vector2(DockingBay.approach_sign_for(bay) * shuttle_approach_distance, 0.0))
 	shuttle.docked.connect(_on_shuttle_docked.bind(shuttle, bay), CONNECT_ONE_SHOT)
 
 ## Bay deconstructed while the shuttle was inbound: refund (WI-07 edge case).
@@ -160,15 +160,6 @@ func spawn_crew(at_module: ModuleBase) -> PawnBase:
 	pawn.current_module = at_module
 	pawn.global_position = Global.cell_to_world(at_module.module_cell, true)
 	return pawn
-
-## Center of the bay in world space - where the shuttle noses up to.
-func _bay_dock_position(bay: ModuleBase) -> Vector2:
-	return Global.cell_to_world(bay.module_cell) + Vector2(bay.size * Global.CELL_SIZE) / 2.0
-
-## Which side ships approach from: left normally, right if flipped
-## -1 = left, +1 = right.
-func _bay_approach_sign(bay: ModuleBase) -> float:
-	return 1 if bay.flipped else -1
 
 # --- departure & lose condition -------------------------------------------------
 

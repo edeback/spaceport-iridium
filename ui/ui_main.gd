@@ -37,6 +37,7 @@ func _ready() -> void:
 	_setup_alerts_strip()
 	_setup_crew_ui()
 	SignalBus.game_over.connect(_on_game_over)
+	_setup_trader_ui()
 
 ## Minimal save/load controls next to the Research button: slot name field +
 ## Save/Load buttons. F5/F9 quick-slot shortcuts live on SaveManager.
@@ -149,6 +150,31 @@ func _on_game_over() -> void:
 		return
 	_game_over_shown = true
 	add_child(GAME_OVER_SCENE.instantiate())
+
+# --- trader screen (WI-08) ------------------------------------------------------
+
+const TRADER_SCREEN_SCENE: PackedScene = preload("res://ui/windows/trade/trader_screen.tscn")
+
+var _trader_screen: TraderScreen
+
+func _setup_trader_ui() -> void:
+	_trader_screen = TRADER_SCREEN_SCENE.instantiate() as TraderScreen
+	_trader_screen.visible = false
+	add_child(_trader_screen)
+	SignalBus.trader_arrived.connect(_on_trader_arrived)
+	SignalBus.trader_departed.connect(_on_trader_departed)
+
+func open_trader_screen() -> void:
+	_trader_screen.open()
+
+func _on_trader_arrived(trader: TraderData) -> void:
+	_spawn_alert("trader_arrived", "%s has docked!" % trader.trader_name)
+	_trader_screen.open()
+
+func _on_trader_departed(trader: TraderData) -> void:
+	if _trader_screen.visible:
+		_trader_screen.close()
+	_spawn_alert("trader_departed", "%s has departed." % trader.trader_name)
 
 func _setup_unlock_ui() -> void:
 	unlock_panel = UnlockPanel.new()

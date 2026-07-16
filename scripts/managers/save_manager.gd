@@ -146,6 +146,7 @@ func save_slot(slot: String) -> Error:
 			"piles": _get_piles_save(),
 			"pawns": _get_pawns_save(),
 			"crew": Global.crew_manager.get_save_data(),
+			"traders": Global.trader_manager.get_save_data(),
 		},
 	}
 	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
@@ -281,6 +282,9 @@ func _apply_pending_load() -> void:
 	_load_pawns(sections.get("pawns", []))
 	# After world: pending hires resolve their bay by layer+cell at arrival.
 	Global.crew_manager.load_save_data(sections.get("crew", {}))
+	# After world AND market: an active visit re-parks its shuttle at the bay
+	# and its price snapshot/stock restore by resource id.
+	Global.trader_manager.load_save_data(sections.get("traders", {}))
 	_loading = false
 	print("Loaded save from %s" % Global.time_manager.format_time())
 	game_loaded.emit(QUICK_SLOT)

@@ -45,6 +45,9 @@
 [ext_resource type="Script" uid="uid://ewev5w5lgt22" path="res://scripts/managers/crew_manager.gd" id="32_crewmgr"]
 [ext_resource type="PackedScene" uid="uid://2pp7va28ybgl" path="res://pawns/crew_pawn.tscn" id="33_crewpawn"]
 [ext_resource type="PackedScene" path="res://objects/arrival_shuttle.tscn" id="34_shuttle"]
+[ext_resource type="Script" uid="uid://d0bklsxrd4qvm" path="res://scripts/managers/trader_manager.gd" id="35_tradermgr"]
+[ext_resource type="Resource" path="res://data/traders/first_caravan.tres" id="36_caravan"]
+[ext_resource type="PackedScene" uid="uid://bqpttolexash5" path="res://objects/trader_shuttle.tscn" id="37_tradershuttle"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2cqfq"]
 atlas = ExtResource("11_2cqfq")
@@ -7618,7 +7621,7 @@ credit_resource = ExtResource("13_facbu")
 
 [node name="MarketManager" type="Node" parent="Managers" unique_id=386020720]
 script = ExtResource("12_d13ii")
-market_resources = Array[ExtResource("13_4k2k6")]([ExtResource("14_0rl1p"), ExtResource("15_ok6jj"), ExtResource("16_facbu"), ExtResource("17_b1qrp"), ExtResource("18_come4"), ExtResource("19_h8e4i"), ExtResource("20_4lmeg"), ExtResource("21_0cp0l"), ExtResource("22_d2t1y"), ExtResource("23_gngh3")])
+market_resources = Array[ExtResource("13_4k2k6")]([ExtResource("16_b1qrp"), ExtResource("17_b1qrp"), ExtResource("14_0rl1p"), ExtResource("15_ok6jj"), ExtResource("16_facbu"), ExtResource("18_come4"), ExtResource("19_h8e4i"), ExtResource("20_4lmeg"), ExtResource("21_0cp0l"), ExtResource("22_d2t1y"), ExtResource("23_gngh3")])
 
 [node name="AsteroidManager" type="Node" parent="Managers" unique_id=1264283929 node_paths=PackedStringArray("start_point", "end_point", "asteroid_layer")]
 script = ExtResource("10_cegan")
@@ -7643,6 +7646,11 @@ metadata/_custom_type_script = "uid://bhfs7qjh80a6p"
 script = ExtResource("32_crewmgr")
 crew_pawn_scene = ExtResource("33_crewpawn")
 shuttle_scene = ExtResource("34_shuttle")
+
+[node name="TraderManager" type="Node" parent="Managers" unique_id=335245492]
+script = ExtResource("35_tradermgr")
+first_caravan_profile = ExtResource("36_caravan")
+trader_shuttle_scene = ExtResource("37_tradershuttle")
 
 [node name="SaveManager" type="Node" parent="Managers" unique_id=118411891]
 script = ExtResource("1_savemgr")

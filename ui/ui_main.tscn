@@ -263,10 +263,10 @@ layout_mode = 2
 [node name="TradeScreen" parent="." unique_id=1329679237 instance=ExtResource("19_xyc40")]
 visible = false
 layout_mode = 1
-offset_left = -300.0
-offset_top = -349.5
-offset_right = 300.0
-offset_bottom = 349.5
+offset_left = -503.0
+offset_top = -301.0
+offset_right = 503.0
+offset_bottom = 301.0
 
 [node name="ModuleInfoPanel" parent="." unique_id=1500315581 instance=ExtResource("38_x3wcs")]
 unique_name_in_owner = true

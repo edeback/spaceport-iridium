@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://bqpttolexash5"]
+
+[ext_resource type="Script" uid="uid://d058cm3oe0k7l" path="res://objects/arrival_shuttle.gd" id="1_trader"]
+[ext_resource type="Texture2D" uid="uid://xxtkrfj1lpi8" path="res://assets/sprites/kenny_spaceship_trader.png" id="2_trader"]
+
+[node name="TraderShuttle" type="Sprite2D" unique_id=1807369276]
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("2_trader")
+script = ExtResource("1_trader")
+speed = 350.0
