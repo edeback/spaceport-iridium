@@ -14,8 +14,10 @@ var powered: bool = true:
 			powered = new_powered
 			powered_changed.emit(powered)
 			if powered:
+				last_error = ""
 				animation_player.play("RESET")
 			else:
+				last_error = "No power!"
 				animation_player.play("no_power")
 
 signal powered_changed(new_power: bool)

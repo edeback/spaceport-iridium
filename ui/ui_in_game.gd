@@ -26,10 +26,27 @@ var preview_multimodules: Array[PreviewModule] = []
 
 var last_hovered_cell: Vector2i
 
+## Selection brackets (WI-10): module and pawn selection each get their own
+## instance - both info panels can be open at once.
+var module_brackets: SelectionBrackets
+var pawn_brackets: SelectionBrackets
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	Global.ui_in_game = self
-	pass # Replace with function body.
+	module_brackets = SelectionBrackets.new()
+	add_child(module_brackets)
+	pawn_brackets = SelectionBrackets.new()
+	pawn_brackets.padding = 0
+	add_child(pawn_brackets)
+	SignalBus.module_selected.connect(_on_module_selected)
+
+## ModuleBase.selected emits on every change, select and deselect alike.
+func _on_module_selected(module: ModuleBase) -> void:
+	if module.selected:
+		module_brackets.show_around(module, Rect2(Vector2.ZERO, Vector2(module.size * Global.CELL_SIZE)))
+	else:
+		module_brackets.clear_if_target(module)
 
 func change_input_mode(mode: InputMode, module: ModuleData = null) -> void:
 	#Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -63,6 +80,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		if event.is_action_pressed("flip_module"):
 			preview_module.flipped = not preview_module.flipped
+			# The flipped variant has its own structure points - revalidate now
+			# rather than waiting for the mouse to move to a new cell.
+			update_module_placement(true)
 		if event.is_action_pressed("show_details"):
 			get_tree().call_group("module", "show_label")
 		if event.is_action_released("show_details"):
@@ -136,11 +156,9 @@ func update_module_placement(force: bool = false) -> void:
 		var hovered_cell: Vector2i = Global.world_to_cell(get_global_mouse_position() - preview_module.offset + Vector2(Global.CELL_SIZE) / 2)
 		if hovered_cell != last_hovered_cell or force:
 			preview_module.update_placeable(hovered_cell)
-		if preview_module.can_place:
-				var snapped_position: Vector2 = Global.cell_to_world(hovered_cell) + preview_module.offset
-				selector.position = snapped_position
-		else:
-			selector.position = get_global_mouse_position()
+		# Always grid-snap, even when invalid: the per-cell blocked overlay is
+		# only meaningful if the preview sits on the cells being judged.
+		selector.position = Global.cell_to_world(hovered_cell) + preview_module.offset
 		last_hovered_cell = hovered_cell
 
 func update_structure_placement() -> void:

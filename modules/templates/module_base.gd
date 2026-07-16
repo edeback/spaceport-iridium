@@ -355,7 +355,7 @@ func get_or_create_overflow_pile() -> ResourcePile:
 		overflow_pile = ResourcePile.spawn(get_parent(), spawn_pos, self)
 		overflow_pile.despawning.connect(func() -> void: overflow_pile = null)
 	return overflow_pile
-	
+
 func show_label() -> void:
 	if nameplate != null:
 		nameplate.visible = true
@@ -373,8 +373,10 @@ func _on_footprint_input_event(_viewport: Node, event: InputEvent, _shape_idx: i
 			#print("clicked " + module_data.name)
 			if event.is_action_pressed("build"):
 					get_viewport().set_input_as_handled()
-					Global.ui_main.toggle_info_panel(self)
-					#on_select(!selected)
+					# Routed through UIMain's click arbiter: stacked footprints
+					# (corridor/turbolift/module on one cell) all receive this
+					# event, and repeated clicks cycle the stack (WI-10).
+					Global.ui_main.module_clicked(self)
 			if event.is_action_pressed("remove"):
 				get_viewport().set_input_as_handled()
 				Global.world_manager.remove_module(self)

@@ -25,6 +25,7 @@ func _process(_delta: float) -> void:
 	if recheck_pathfinding:
 		recheck_pathfinding = false
 		check_pathfinding()
+		_update_disconnected_indicators()
 	
 func _on_module_added(module: ModuleBase) -> void:
 	graph.add_vertex(module)
@@ -49,6 +50,9 @@ func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: 
 	graph.change_vertex_group(vertex, new_group, new_group_door)
 	if vertex is ModuleBase:
 		SignalBus.module_group_changed.emit(vertex as ModuleBase)
+		# Group swaps move modules in/out of "space" (blueprints, deconstruction),
+		# which changes their disconnected-indicator eligibility - recheck.
+		recheck_pathfinding = true
 	
 func remove_vertex(vertex: Node2D) -> void:
 	graph.remove_vertex(vertex)
@@ -69,7 +73,38 @@ func _on_module_selected(module: ModuleBase) -> void:
 		selected_modules.append(module)
 	else:
 		selected_modules.erase(module)
-	recheck_pathfinding = true
+
+## WI-10 no-path indicator: blink any built, pawn-traversable non-SPACE layer
+## module whose vertex sits outside the station's largest subgraph. Exempt:
+## blueprints and "space"-group vertices (ConstructionComponent parks
+## construction/deconstruction sites in "space" deliberately - without the
+## exemption every construction site would blink), plus modules with no
+## PathComponent (truss, external hardware) - pawns never enter those, so
+## "disconnected" is meaningless for them.
+func _update_disconnected_indicators() -> void:
+	var subgraph_counts: Dictionary[int, int] = {}
+	var eligible: Array[ModuleBase] = []
+	for node: Node2D in graph._vertices:
+		var module := node as ModuleBase
+		if module == null or module.module_data == null or module.get_path_component() == null:
+			continue
+		if module.module_data.interaction_layer == WorldManager.StructureLayer.SPACE:
+			continue
+		var vertex: ModuleGraphVertex = graph._vertices[node]
+		if vertex.group == &"space" or not module.is_complete() or module.get_path_component().path_points.is_empty():
+			module.get_path_component().set_disconnected_indicator(false)
+			continue
+		eligible.append(module)
+		subgraph_counts[vertex.subgraph] = subgraph_counts.get(vertex.subgraph, 0) + 1
+	var main_subgraph: int = -1
+	var best_count: int = 0
+	for subgraph: int in subgraph_counts:
+		if subgraph_counts[subgraph] > best_count:
+			best_count = subgraph_counts[subgraph]
+			main_subgraph = subgraph
+	for module: ModuleBase in eligible:
+		module.get_path_component().set_disconnected_indicator(graph._vertices[module].subgraph != main_subgraph)
+
 
 func check_pathfinding() -> void:
 	if selected_modules.size() > 1:

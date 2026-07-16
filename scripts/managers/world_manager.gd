@@ -235,6 +235,16 @@ func get_overlaps(layer: StructureLayer, cell: Vector2i, size: Vector2i = Vector
 						return overlaps
 	return overlaps
 
+## Everything stacked on one cell across the clickable layers (a cell can hold
+## a corridor, a turbolift and a room at once). Order is the click-cycle order.
+func get_stack_at_cell(cell: Vector2i) -> Array[ModuleBase]:
+	var stack: Array[ModuleBase] = []
+	for layer: StructureLayer in [StructureLayer.CORRIDOR, StructureLayer.TURBOLIFT, StructureLayer.MODULE]:
+		var module: ModuleBase = layer_data[layer].cell_to_module.get(cell)
+		if module != null and not stack.has(module):
+			stack.append(module)
+	return stack
+
 func get_module_by_id(id: int) -> ModuleBase:
 	return id_to_module.get(id)
 	

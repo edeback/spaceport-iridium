@@ -256,6 +256,20 @@ func pawn_clicked(pawn: PawnBase) -> void:
 	cur_pawn_info = pawn_info_screen.instantiate()
 	cur_pawn_info.set_pawn(pawn)
 	add_child(cur_pawn_info)
+	Global.ui_in_game.pawn_brackets.show_around(pawn, _pawn_bracket_rect(pawn))
+	# tree_exiting fires on both close paths (exit button and the re-click
+	# toggle's queue_free above); clear_if_target keeps a newly selected pawn's
+	# brackets alive when the old panel's deferred free lands after them.
+	cur_pawn_info.tree_exiting.connect(func() -> void:
+		Global.ui_in_game.pawn_brackets.clear_if_target(pawn))
+
+func _pawn_bracket_rect(pawn: PawnBase) -> Rect2:
+	if pawn.animated_sprite != null and pawn.animated_sprite.sprite_frames != null:
+		var frame_texture: Texture2D = pawn.animated_sprite.sprite_frames.get_frame_texture(pawn.animated_sprite.animation, pawn.animated_sprite.frame)
+		if frame_texture != null:
+			var sprite_size: Vector2 = frame_texture.get_size() * pawn.animated_sprite.scale
+			return Rect2(Vector2(-sprite_size.x / 2,-sprite_size.y), sprite_size)
+	return Rect2(Vector2(-16, -24), Vector2(32, 48))
 	
 func resource_pile_clicked(pile: ResourcePile) -> void:
 	if cur_resource_pile_screen != null:
@@ -266,6 +280,18 @@ func resource_pile_clicked(pile: ResourcePile) -> void:
 	cur_resource_pile_screen.set_resource_pile(pile)
 	add_child(cur_resource_pile_screen)
 	
+var _click_cycler: ClickCycler = ClickCycler.new()
+
+## Entry point for module footprint clicks - arbitrates stacked cells and
+## cycles through them on repeated clicks (WI-10).
+func module_clicked(module: ModuleBase) -> void:
+	var cell: Vector2i = Global.world_to_cell(module.get_global_mouse_position())
+	var panel_open: bool = %ModuleInfoPanel.visible and %ModuleInfoPanel.module_viewed != null
+	var target: ModuleBase = _click_cycler.handle_click(module, cell, panel_open)
+	if target == null:
+		return
+	toggle_info_panel(target)
+
 func toggle_info_panel(selected_module: ModuleBase) -> void:
 	if %ModuleInfoPanel.visible == true and %ModuleInfoPanel.module_viewed == selected_module:
 		close_info_panel()

@@ -6,6 +6,15 @@ extends Node2D
 
 const SHADER_PARAM_PLACEABLE = "PLACEABLE"
 
+const CELL_CLEAR_COLOR: Color = Color(0.25, 1.0, 0.35, 0.22)
+const CELL_BLOCKED_COLOR: Color = Color(1.0, 0.12, 0.12, 0.4)
+
+## Per-cell validity from the last update_placeable(): local footprint cell
+## (including must_be_clear points) -> clear. Drawn by _cell_overlay, which
+## sits after the sprite in tree order so the tint renders on top of it.
+var _cell_states: Dictionary[Vector2i, bool] = {}
+var _cell_overlay: Node2D
+
 var module_size: Vector2i
 var connection_points: Array[Vector2i]
 var internal_points: Array[Vector2i]
@@ -80,6 +89,7 @@ func _update_shader() -> void:
 
 
 func update_placeable(module_cell: Vector2i, ignore_connections: bool = false) -> void:
+	var any_blocked: bool = _update_cell_states(module_cell)
 	# Must be able to pay
 	if !module_data.can_afford():
 		%ErrorLabel.visible = true
@@ -87,17 +97,11 @@ func update_placeable(module_cell: Vector2i, ignore_connections: bool = false) -
 		can_place = false
 		return
 	# Footprint must not overlap
-	if Global.world_manager.is_blocked(module_layer, module_cell, module_size):
+	if any_blocked:
 		%ErrorLabel.visible = true
 		%ErrorLabel.text = "Blocked!"
 		can_place = false
 		return
-	for point: Vector2i in must_be_clear_points:
-		if Global.world_manager.has_overlaps(module_layer, module_cell + point):
-			%ErrorLabel.visible = true
-			%ErrorLabel.text = "Blocked!"
-			can_place = false
-			return
 	# Must be connected to at least one other module
 	if ignore_connections:
 		can_place = true
@@ -109,6 +113,33 @@ func update_placeable(module_cell: Vector2i, ignore_connections: bool = false) -
 	else:
 		%ErrorLabel.visible = true
 		%ErrorLabel.text = "Not connected to anything!"
+
+## Recompute per-cell validity for the footprint at module_cell. Returns true
+## if any cell is blocked (the whole-placement answer the caller needs).
+func _update_cell_states(module_cell: Vector2i) -> bool:
+	_cell_states.clear()
+	var any_blocked: bool = false
+	for x: int in module_size.x:
+		for y: int in module_size.y:
+			var local_cell := Vector2i(x, y)
+			var clear: bool = not Global.world_manager.is_blocked(module_layer, module_cell + local_cell)
+			_cell_states[local_cell] = clear
+			any_blocked = any_blocked or not clear
+	# must_be_clear cells fail on ANY overlap, not just building-blockers.
+	for point: Vector2i in must_be_clear_points:
+		var clear: bool = not Global.world_manager.has_overlaps(module_layer, module_cell + point)
+		_cell_states[point] = _cell_states.get(point, true) and clear
+		any_blocked = any_blocked or not clear
+	if _cell_overlay != null:
+		_cell_overlay.queue_redraw()
+	return any_blocked
+
+func _draw_cell_overlay() -> void:
+	if module_data == null or not visible:
+		return
+	for local_cell: Vector2i in _cell_states:
+		var rect := Rect2(Vector2(local_cell * Global.CELL_SIZE) - offset, Vector2(Global.CELL_SIZE))
+		_cell_overlay.draw_rect(rect, CELL_CLEAR_COLOR if _cell_states[local_cell] else CELL_BLOCKED_COLOR)
 
 func _has_possible_connections(module_cell: Vector2i) -> bool:
 	# Explicit connection points
@@ -126,3 +157,13 @@ func _ready() -> void:
 	sprite.texture = default_texture
 	if (sprite && sprite.material != null):
 		sprite.material = sprite.material.duplicate()
+	# Overlay node added last so per-cell tints draw over the sprite; a plain
+	# Node2D can't override _draw, so hook its draw signal instead. Multiplace
+	# duplicates this whole node (overlay child and remapped connection
+	# included), so reuse a cloned overlay rather than stacking a second one.
+	_cell_overlay = get_node_or_null("CellOverlay")
+	if _cell_overlay == null:
+		_cell_overlay = Node2D.new()
+		_cell_overlay.name = "CellOverlay"
+		add_child(_cell_overlay)
+		_cell_overlay.draw.connect(_draw_cell_overlay)

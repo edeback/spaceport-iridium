@@ -321,6 +321,34 @@ func disconnect_from(other_module: ModuleBase) -> void:
 	module_connections.erase(other_module)
 	check_doors()
 
+var _disconnected_label: Label = null
+
+## Blinking "no path" marker (WI-10): shown while this module's path vertex is
+## cut off from the station's main subgraph (driven by PathManager). The blink
+## is UI feedback, so it runs on wall-clock (tween), per the TimeManager rules.
+func set_disconnected_indicator(active: bool) -> void:
+	if not active:
+		last_error = ""
+		if _disconnected_label != null:
+			_disconnected_label.queue_free()
+			_disconnected_label = null
+		return
+	last_error = "No path to station!"
+	if _disconnected_label != null:
+		return
+	_disconnected_label = Label.new()
+	_disconnected_label.text = "!"
+	_disconnected_label.add_theme_font_size_override("font_size", 36)
+	_disconnected_label.add_theme_color_override("font_color", Color(1.0, 0.25, 0.15))
+	_disconnected_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_disconnected_label.add_theme_constant_override("outline_size", 8)
+	_disconnected_label.position = Vector2(owner_module.size.x * Global.CELL_SIZE.x / 2.0 - 8.0, 0)
+	_disconnected_label.z_index = 10
+	owner_module.add_child(_disconnected_label)
+	# Bound to the label, so the loop dies with it on queue_free above.
+	var blink: Tween = _disconnected_label.create_tween().set_loops()
+	blink.tween_property(_disconnected_label, "modulate:a", 0.15, 0.45)
+	blink.tween_property(_disconnected_label, "modulate:a", 1.0, 0.45)
 
 func _draw() -> void:
 	if show_debug && Engine.is_editor_hint():
