@@ -19,6 +19,9 @@ func set_module(module: ModuleBase) -> void:
 	for child_node: Node in data_tabs.get_children():
 		data_tabs.remove_child(child_node)
 		child_node.queue_free()
+	for component: ComponentBase in component_alerts.keys():
+		if is_instance_valid(component):
+			component.new_error.disconnect(_on_component_error)
 	component_alerts.clear()
 	if module_viewed != null:
 		module_viewed.selected = true

@@ -5,8 +5,9 @@
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="3_hevvg"]
 [ext_resource type="Texture2D" uid="uid://r2nt1fhbsql4" path="res://assets/sprites/turbolift.png" id="4_vm5pc"]
 [ext_resource type="Texture2D" uid="uid://crwswrrwpu3gu" path="res://assets/sprites/turboliftdoor.png" id="5_hevvg"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="6_rb34t"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_hevvg"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mmo4w"]
 shader = ExtResource("3_hevvg")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -112,7 +113,7 @@ animations = [{
 "speed": 30.0
 }]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_mmo4w"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1c20m"]
 resource_local_to_scene = true
 size = Vector2(33, 25)
 
@@ -130,7 +131,7 @@ collision_lower = NodePath("Offset/Footprint/CollisionLower")
 door_sprite = NodePath("Offset/Sprite/DoorSprite")
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_hevvg")
+material = SubResource("ShaderMaterial_mmo4w")
 texture = ExtResource("4_vm5pc")
 region_rect = Rect2(192, 0, 64, 64)
 
@@ -142,7 +143,7 @@ animation = &"open"
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
 position = Vector2(-9.5, 14.5)
-shape = SubResource("RectangleShape2D_mmo4w")
+shape = SubResource("RectangleShape2D_1c20m")
 
 [node name="CollisionUpper" type="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="1" unique_id=914468920]
 position = Vector2(-9.5, -15)
@@ -154,7 +155,7 @@ position = Vector2(-9.5, 29.5)
 shape = SubResource("RectangleShape2D_rb34t")
 disabled = true
 
-[node name="PathComponent" parent="." index="1" unique_id=1088376714]
+[node name="PathComponent" parent="." index="1" unique_id=1088376714 node_paths=PackedStringArray("power_consumption_component")]
 self_connection_only = true
 path_points = Array[Vector2i]([Vector2i(22, 58), Vector2i(22, 58)])
 path_edges = Dictionary[Vector2i, StringName]({
@@ -164,7 +165,12 @@ door_data = Dictionary[int, StringName]({
 0: &"turbolift_door"
 })
 door_required = false
+power_required = true
+power_consumption_component = NodePath("../PowerConsumptionComponent")
 
 [node name="StructureComponent" parent="." index="2" unique_id=2060859123]
 visible = false
 connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(0, 0), Vector2i(0, 1)])
+
+[node name="PowerConsumptionComponent" parent="." index="4" unique_id=1553574564 instance=ExtResource("6_rb34t")]
+power_consumption = 5.0
