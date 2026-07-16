@@ -9,10 +9,19 @@ class PathPoint:
 
 signal graph_changed
 
+## Cost multiplier for travel across the implicit exterior clique. Was the
+## "space" group's (defaulted) multiple before exteriorness became a flag.
+const EXTERIOR_COST_MULT: float = 1.0
+
 ## StringName, Array[ModuleGraphVertex]
 var _linked_groups: Dictionary[StringName, Array] = {}
 # When pathing through a group, what do we multiply the distance heuristic by?
 var _group_multiple: Dictionary[StringName, float] = {}
+
+## All vertices with is_exterior set - the "open space" clique, maintained the
+## same way _linked_groups entries are (implicitly interconnected in pathfinding
+## and subgraph flooding).
+var _exterior_vertices: Array[ModuleGraphVertex] = []
 
 var _vertices: Dictionary[Node2D, ModuleGraphVertex]
 
@@ -28,14 +37,14 @@ func _flush_subgraphs() -> void:
 		_rebuild_subgraphs()
 		_subgraph_dirty = false
 
-func add_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "", group_door: int = 0) -> void:
+func add_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "", group_door: int = 0, exterior: bool = false) -> void:
 	if _vertices.has(vertex):
 		print("trying to add existing vertex! skipping. Module: " + vertex.name)
 		return
-	_vertices[vertex] = _make_vertex(vertex, is_endpoint, group, group_door)
+	_vertices[vertex] = _make_vertex(vertex, is_endpoint, group, group_door, exterior)
 	_emit_graph_changed()
-	
-func _make_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "", group_door: int = 0) -> ModuleGraphVertex:
+
+func _make_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "", group_door: int = 0, exterior: bool = false) -> ModuleGraphVertex:
 	var new_vertex: ModuleGraphVertex = ModuleGraphVertex.new()
 	new_vertex.node = vertex
 	new_vertex.endpoint = is_endpoint
@@ -49,6 +58,12 @@ func _make_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName =
 			# Default dump this in the same subgraph as they're all connected
 			new_vertex.subgraph = group_array[0].subgraph
 		group_array.append(new_vertex)
+	if exterior:
+		new_vertex.is_exterior = true
+		if not _exterior_vertices.is_empty():
+			# Default dump this in the same subgraph as they're all connected
+			new_vertex.subgraph = _exterior_vertices[0].subgraph
+		_exterior_vertices.append(new_vertex)
 	return new_vertex
 	
 func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: int = -1) -> void:
@@ -68,6 +83,43 @@ func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: 
 		if not graph_vertex.endpoint:
 			_mark_dirty()
 	
+## Returns true if the flag actually changed. Mirrors change_vertex_group's
+## subgraph bookkeeping: endpoints get their subgraph patched directly (no
+## rebuild needed - nothing paths *through* them), everything else marks dirty.
+func set_vertex_exterior(vertex: Node2D, exterior: bool, exterior_door: int = -1) -> bool:
+	var graph_vertex: ModuleGraphVertex = _vertices.get(vertex)
+	if graph_vertex == null or graph_vertex.is_exterior == exterior:
+		return false
+	graph_vertex.is_exterior = exterior
+	if exterior:
+		if not _exterior_vertices.is_empty():
+			graph_vertex.subgraph = _exterior_vertices[0].subgraph
+		_exterior_vertices.append(graph_vertex)
+	else:
+		_exterior_vertices.erase(graph_vertex)
+		last_subgraph += 1
+		graph_vertex.subgraph = last_subgraph
+	if exterior_door >= 0:
+		graph_vertex.exterior_door = exterior_door
+	if not graph_vertex.endpoint:
+		_mark_dirty()
+	return true
+
+func is_vertex_exterior(vertex: Node2D) -> bool:
+	var graph_vertex: ModuleGraphVertex = _vertices.get(vertex)
+	return graph_vertex != null and graph_vertex.is_exterior
+
+## Returns true if the flag actually changed. Toggling a group stop on/off can
+## split or rejoin subgraphs (a floor whose only link to the shaft is the group
+## jump), so it always marks dirty.
+func set_vertex_no_group_stop(vertex: Node2D, no_stop: bool) -> bool:
+	var graph_vertex: ModuleGraphVertex = _vertices.get(vertex)
+	if graph_vertex == null or graph_vertex.no_group_stop == no_stop:
+		return false
+	graph_vertex.no_group_stop = no_stop
+	_mark_dirty()
+	return true
+
 func set_group_multiple(group: StringName, multiple: float) -> void:
 	if group:
 		_group_multiple.get_or_add(group, multiple)
@@ -116,6 +168,8 @@ func remove_vertex(vertex: Node2D) -> void:
 		edge_vertex.edges.erase(old_vertex)
 	if old_vertex.group:
 		_linked_groups[old_vertex.group].erase(old_vertex)
+	if old_vertex.is_exterior:
+		_exterior_vertices.erase(old_vertex)
 	_vertices.erase(vertex)
 	# Vertices are RefCounted: dropping the dict/group references above is the
 	# cleanup. Erasing its edges from both sides (done above) also breaks the
@@ -166,12 +220,10 @@ func _assign_subgraph_from(start: ModuleGraphVertex, subgraph: int) -> void:
 		return
 	start.subgraph = subgraph
 	var added_groups: Array[StringName] = []
+	var added_exterior: bool = false
 	var frontier: Array[ModuleGraphVertex] = start.edges.keys()
-	if start.group and not added_groups.has(start.group):
-		added_groups.append(start.group)
-		for vertex: ModuleGraphVertex in _linked_groups[start.group]:
-			if vertex != start:
-				frontier.append(vertex)
+	_expand_implicit_links(start, frontier, added_groups, added_exterior)
+	added_exterior = added_exterior or start.is_exterior
 	while !frontier.is_empty():
 		var next: ModuleGraphVertex = frontier.pop_front() as ModuleGraphVertex
 		if next.blocked:
@@ -180,11 +232,24 @@ func _assign_subgraph_from(start: ModuleGraphVertex, subgraph: int) -> void:
 			continue
 		next.subgraph = subgraph
 		frontier.append_array(next.edges.keys())
-		if next.group and not added_groups.has(next.group):
-			added_groups.append(next.group)
-			for vertex: ModuleGraphVertex in _linked_groups[next.group]:
-				if vertex != next:
-					frontier.append(vertex)
+		_expand_implicit_links(next, frontier, added_groups, added_exterior)
+		added_exterior = added_exterior or next.is_exterior
+
+## Shared by the flood above: push the vertices this one is implicitly linked
+## to (its group clique, the exterior clique) onto the frontier. no_group_stop
+## vertices don't ride the group jump in either direction - they only join a
+## subgraph through their real edges - so is_reachable stays consistent with
+## what pathfinding will actually allow.
+func _expand_implicit_links(from: ModuleGraphVertex, frontier: Array[ModuleGraphVertex], added_groups: Array[StringName], added_exterior: bool) -> void:
+	if from.group and not from.no_group_stop and not added_groups.has(from.group):
+		added_groups.append(from.group)
+		for vertex: ModuleGraphVertex in _linked_groups[from.group]:
+			if vertex != from and not vertex.no_group_stop:
+				frontier.append(vertex)
+	if from.is_exterior and not added_exterior:
+		for vertex: ModuleGraphVertex in _exterior_vertices:
+			if vertex != from:
+				frontier.append(vertex)
 
 func _rebuild_subgraphs() -> void:
 	var cur_subgraph: int = 0
@@ -233,7 +298,14 @@ func is_reachable(start: Node2D, end: Node2D) -> bool:
 func is_space_reachable(start: Node2D) -> bool:
 	_flush_subgraphs()
 	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
-	return start_vertex and start_vertex.subgraph == get_group_subgraph(&"space")
+	return start_vertex != null and start_vertex.subgraph == get_exterior_subgraph()
+
+## Subgraph shared by every exterior vertex, or -1 when nothing is exterior
+## (no airlocks, no blueprints) - is_space_reachable then cleanly returns false.
+func get_exterior_subgraph() -> int:
+	if _exterior_vertices.is_empty():
+		return -1
+	return _exterior_vertices[0].subgraph
 
 func pathfind(start: Node2D, end: Node2D) -> Array[PathPoint]:
 	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
@@ -256,8 +328,12 @@ func pathfind_by_vertex(start_vertex: ModuleGraphVertex, end_vertex: ModuleGraph
 		if current == end_vertex:
 			break
 			
-		if current.group:
+		# A no_group_stop vertex is a physical shaft cell but never a boarding
+		# or alighting point: it neither offers the group jump nor receives it.
+		if current.group and not current.no_group_stop:
 			for linked: ModuleGraphVertex in _linked_groups[current.group]:
+				if linked.no_group_stop:
+					continue
 				if linked == end_vertex or (linked != current and not linked.endpoint):
 					var new_cost: float = cost_so_far[current] + linked.dist_to(current) * get_group_multiple(current.group)
 					if not cost_so_far.has(linked) or new_cost < cost_so_far[linked]:
@@ -265,7 +341,17 @@ func pathfind_by_vertex(start_vertex: ModuleGraphVertex, end_vertex: ModuleGraph
 						var prio: float = new_cost + _heuristic(linked, end_vertex)
 						frontier.insert(linked, prio)
 						came_from[linked] = current
-						
+
+		if current.is_exterior:
+			for linked: ModuleGraphVertex in _exterior_vertices:
+				if linked == end_vertex or (linked != current and not linked.endpoint):
+					var new_cost: float = cost_so_far[current] + linked.dist_to(current) * EXTERIOR_COST_MULT
+					if not cost_so_far.has(linked) or new_cost < cost_so_far[linked]:
+						cost_so_far[linked] = new_cost
+						var prio: float = new_cost + _heuristic(linked, end_vertex)
+						frontier.insert(linked, prio)
+						came_from[linked] = current
+
 		for next: ModuleGraphVertex in current.edges.keys():
 			if next.blocked or (next.endpoint and next != end_vertex):
 				continue
@@ -276,7 +362,7 @@ func pathfind_by_vertex(start_vertex: ModuleGraphVertex, end_vertex: ModuleGraph
 				frontier.insert(next, prio)
 				came_from[next] = current
 
-				
+
 	# Did we ever find it?
 	if not came_from.has(end_vertex):
 		return []
@@ -288,7 +374,7 @@ func pathfind_by_vertex(start_vertex: ModuleGraphVertex, end_vertex: ModuleGraph
 	while cur_vertex != start_vertex:
 		var next_point := PathPoint.new()
 		next_point.node = cur_vertex.node
-		next_point.in_space = (cur_vertex.group == &"space")
+		next_point.in_space = cur_vertex.is_exterior
 		next_point.debug = cur_vertex.node.name
 		if prev_vertex != null:
 			var edge_data: ModuleGraphVertex.EdgeData = prev_vertex.edges.get(cur_vertex)
@@ -301,7 +387,7 @@ func pathfind_by_vertex(start_vertex: ModuleGraphVertex, end_vertex: ModuleGraph
 		cur_vertex = came_from[cur_vertex]
 	var start_point := PathPoint.new()
 	start_point.node = start_vertex.node
-	start_point.in_space = (start_vertex.group == &"space")
+	start_point.in_space = start_vertex.is_exterior
 	start_point.debug = start_vertex.node.name
 	if prev_vertex != null:
 		var edge_data: ModuleGraphVertex.EdgeData = prev_vertex.edges.get(cur_vertex)
@@ -318,11 +404,13 @@ func _heuristic(_start: ModuleGraphVertex, _end: ModuleGraphVertex) -> float:
 	return 0 # Otherwise we never check teleporters...
 	#return start.dist_to(end)
 	
+## Temporarily splice a free-floating node (asteroid, debris pile) into the
+## exterior clique for the duration of one pathfind. _make_vertex handles the
+## clique membership and subgraph adoption; erase both here so nothing leaks.
 func pathfind_to_node_in_space(start: Node2D, end: Node2D) -> Array[PathPoint]:
-	var temp_vertex: ModuleGraphVertex = _make_vertex(end, true, "space")
-	_linked_groups.get_or_add("space", []).append(temp_vertex)
+	var temp_vertex: ModuleGraphVertex = _make_vertex(end, true, "", 0, true)
 	var path := pathfind_by_vertex(get_vertex_for_path(start), temp_vertex)
-	_linked_groups["space"].erase(temp_vertex)
+	_exterior_vertices.erase(temp_vertex)
 	return path
 	
 func pathfind_to_type(start: Node2D, end_type: ModuleData) -> Array[PathPoint]:
@@ -361,8 +449,12 @@ func pathfind_to_func(start: Node2D, end_func: Callable) -> Array[PathPoint]:
 			end_vertex = current
 			break
 		
-		if current.group:
+		# Same no_group_stop rules as pathfind_by_vertex: disabled floors never
+		# offer or receive the group jump.
+		if current.group and not current.no_group_stop:
 			for linked: ModuleGraphVertex in _linked_groups[current.group]:
+				if linked.no_group_stop:
+					continue
 				if linked == end_vertex or (linked != current and not linked.endpoint):
 					var new_cost: float = cost_so_far[current] + linked.dist_to(current) * get_group_multiple(current.group)
 					if not cost_so_far.has(linked) or new_cost < cost_so_far[linked]:
@@ -370,7 +462,17 @@ func pathfind_to_func(start: Node2D, end_func: Callable) -> Array[PathPoint]:
 						var prio: float = new_cost + _heuristic(linked, end_vertex)
 						frontier.insert(linked, prio)
 						came_from[linked] = current
-						
+
+		if current.is_exterior:
+			for linked: ModuleGraphVertex in _exterior_vertices:
+				if linked == end_vertex or (linked != current and not linked.endpoint):
+					var new_cost: float = cost_so_far[current] + linked.dist_to(current) * EXTERIOR_COST_MULT
+					if not cost_so_far.has(linked) or new_cost < cost_so_far[linked]:
+						cost_so_far[linked] = new_cost
+						var prio: float = new_cost + _heuristic(linked, end_vertex)
+						frontier.insert(linked, prio)
+						came_from[linked] = current
+
 		for next: ModuleGraphVertex in current.edges.keys():
 			if next.blocked or (next.endpoint and next != end_vertex):
 				continue
@@ -380,23 +482,23 @@ func pathfind_to_func(start: Node2D, end_func: Callable) -> Array[PathPoint]:
 				var prio: float = new_cost + _heuristic(next, end_vertex)
 				frontier.insert(next, prio)
 				came_from[next] = current
-				
+
 	# Did we ever find it?
 	if not end_vertex:
 		return []
-	
+
 	# Reconstruct path
 	var cur_vertex: ModuleGraphVertex = end_vertex
 	var path: Array[PathPoint] = []
 	while cur_vertex != start_vertex:
 		var next_point := PathPoint.new()
 		next_point.node = cur_vertex.node
-		next_point.in_space = (cur_vertex.group == &"space")
+		next_point.in_space = cur_vertex.is_exterior
 		path.append(next_point)
 		cur_vertex = came_from[cur_vertex]
 	var start_point := PathPoint.new()
 	start_point.node = start_vertex.node
-	start_point.in_space = (start_vertex.group == &"space")
+	start_point.in_space = start_vertex.is_exterior
 	path.append(start_point)
 	path.reverse()
 	return path

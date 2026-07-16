@@ -41,6 +41,8 @@ func _process(delta: float) -> void:
 		CabState.WAITING:
 			pass
 		CabState.IDLE:
+			if shaft != null and shaft.try_consume_pending_removal(self):
+				return
 			destination_module = null
 			if not onboard.is_empty():
 				for request in onboard:
@@ -146,20 +148,27 @@ func get_closest_exit() -> ModuleTurbolift:
 	var best_lift: ModuleTurbolift = null
 	var dist: float = -1
 	for turbolift in shaft.floors:
-		if turbolift.get_path_component().has_door_connected():
+		if turbolift.floor_enabled and turbolift.get_path_component().has_door_connected():
 			if dist < 0 or turbolift.global_position.distance_squared_to(get_apparent_position()) < dist:
 				dist = turbolift.global_position.distance_squared_to(get_apparent_position())
 				best_lift = turbolift
 	return best_lift
 
+## Can rides still start/end at this floor? False for another shaft's floors
+## (post-split) and for floors toggled off (WI-11).
+func _floor_served(floor_module: ModuleBase) -> bool:
+	return shaft != null and shaft.is_floor_served(floor_module)
+
 func recheck_requests() -> void:
 	for request in pickup_requests.duplicate():
-		if request.from_floor and request.from_floor.shaft != shaft:
+		if request.from_floor and not _floor_served(request.from_floor):
+			cancel_request(request)
+		elif request.to_floor and not _floor_served(request.to_floor):
 			cancel_request(request)
 	for request in onboard:
-		if request.to_floor and request.to_floor.shaft != shaft:
+		if request.to_floor and not _floor_served(request.to_floor):
 			cancel_request(request)
-	if not is_instance_valid(destination_module) or destination_module.shaft != shaft:
+	if not is_instance_valid(destination_module) or not _floor_served(destination_module):
 		destination_module = null
 	if destination_module == null and state == CabState.MOVING:
 		for ride in onboard:
@@ -229,6 +238,7 @@ func get_available_capacity() -> int:
 	return capacity - (onboard.size() + pickup_requests.size())
 
 func destroy() -> void:
+	Global.path_manager.remove_vertex(self)
 	assigned_locations.clear()
 	for request in onboard:
 		request.pawn.path_position_override = null

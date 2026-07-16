@@ -25,6 +25,18 @@ class PathTraversalEdgeData:
 		
 @export var self_connection_only: bool = false
 
+## Per-"terrain" movement speed multiplier (WI-11): pawns traverse this
+## module's interior sub-path at this fraction of their normal speed (stairs
+## 0.5x, hallway 1.0x). Pathfinding edge costs mirror it (make_connections)
+## so route choice agrees with actual travel time.
+@export var traversal_speed_mult: float = 1.0
+
+func get_traversal_speed_mult() -> float:
+	var mult: float = traversal_speed_mult
+	if owner_module != null:
+		mult = owner_module.get_effective_stat(&"traversal_speed_mult", traversal_speed_mult)
+	return maxf(mult, 0.05)
+
 @export var path_points: Array[Vector2i] = []:
 	set(new_points):
 		path_points = new_points
@@ -128,11 +140,15 @@ func get_connection_index_from(other_module: Node2D) -> int:
 	# First check direct connection
 	var index: int = module_connections.get(other_module, -1)
 	if index < 0:
-		# Check group connections
+		# Check implicit connections: shared network group, or both exterior
+		# (the jump across open space - was the "space" group before WI-15).
 		var owner_vertex: ModuleGraphVertex = Global.path_manager.get_vertex(owner_module)
 		var other_vertex: ModuleGraphVertex = Global.path_manager.get_vertex(other_module)
-		if owner_vertex and other_vertex and owner_vertex.group and owner_vertex.group == other_vertex.group:
-			index = owner_vertex.group_door
+		if owner_vertex and other_vertex:
+			if owner_vertex.group and owner_vertex.group == other_vertex.group:
+				index = owner_vertex.group_door
+			elif owner_vertex.is_exterior and other_vertex.is_exterior:
+				index = owner_vertex.exterior_door
 	return index
 	
 func get_connection_point_from(prev_module: Node2D) -> Vector2i:
@@ -218,7 +234,12 @@ func make_connections() -> void:
 	for module in connected_modules:
 		if module.get_path_component().try_connect(owner_module):
 			module_connections[module] = connected_modules[module]
-			Global.path_manager.add_connection(owner_module, module, owner_module.global_position.distance_to(module.global_position))
+			# Edge cost = travel time, not raw distance: half the span crossed
+			# at each module's speed. Keeps slow terrain (stairs) honestly more
+			# expensive than the same distance of corridor.
+			var distance: float = owner_module.global_position.distance_to(module.global_position)
+			var cost: float = distance * 0.5 / get_traversal_speed_mult() + distance * 0.5 / module.get_path_component().get_traversal_speed_mult()
+			Global.path_manager.add_connection(owner_module, module, cost)
 	connect_doors()
 		
 	
@@ -263,7 +284,7 @@ func connect_doors() -> void:
 			var space_node := Node2D.new()
 			owner_module.add_child(space_node)
 			space_node.global_position = Vector2(path_points[index]) + owner_module.global_position
-			Global.path_manager.add_vertex(space_node, false, "space")
+			Global.path_manager.add_vertex(space_node, false, "", true)
 			Global.path_manager.add_connection(owner_module, space_node, 30)
 			module_connections[space_node] = index
 			space_connections.append(space_node)

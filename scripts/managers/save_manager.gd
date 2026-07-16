@@ -143,6 +143,7 @@ func save_slot(slot: String) -> Error:
 			"resources": _get_resources_save(),
 			"market": Global.market_manager.get_save_data(),
 			"world": Global.world_manager.get_save_data(),
+			"turbolifts": Global.turbolift_manager.get_save_data(),
 			"piles": _get_piles_save(),
 			"pawns": _get_pawns_save(),
 			"crew": Global.crew_manager.get_save_data(),
@@ -214,11 +215,24 @@ func _get_pawns_save() -> Array:
 		var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
 		# Health lives in its own component (WI-05), so it gets its own section.
 		var health: PawnHealthComponent = pawn.get_component_by_type(PawnHealthComponent) as PawnHealthComponent
+		# Mid-turbolift-ride pawns (WI-15): rides aren't serialized, so instead
+		# of popping out at their raw position inside the shaft wall, they
+		# "arrive early" - saved standing at the cab's current floor module.
+		var save_module: ModuleBase = pawn.current_module
+		var save_position: Vector2 = pawn.global_position
+		var cab: TurboliftCab = pawn.path_position_override as TurboliftCab
+		if cab != null:
+			var ride_floor: ModuleTurbolift = cab.current_turbolift
+			if ride_floor == null and cab.shaft != null:
+				ride_floor = cab.get_closest_exit()
+			if ride_floor != null:
+				save_module = ride_floor
+				save_position = ride_floor.global_position + ride_floor.get_waiting_slot()
 		out.append({
 			"scene": pawn.scene_file_path,
 			"name": pawn.pawn_name,
-			"position": [pawn.global_position.x, pawn.global_position.y],
-			"module": module_ref(pawn.current_module),
+			"position": [save_position.x, save_position.y],
+			"module": module_ref(save_module),
 			"needs": needs.get_save_data() if needs != null else {},
 			"health": health.get_save_data() if health != null else {},
 			"schedule": Array(pawn.schedule.slots) if pawn.schedule != null else [],
@@ -278,6 +292,8 @@ func _apply_pending_load() -> void:
 	_load_resources(sections.get("resources", {}))
 	Global.market_manager.load_save_data(sections.get("market", {}))
 	Global.world_manager.load_save_data(sections.get("world", {}))
+	# After world: shafts have re-merged from module adjacency by now.
+	Global.turbolift_manager.load_save_data(sections.get("turbolifts", {}))
 	_load_piles(sections.get("piles", []))
 	_load_pawns(sections.get("pawns", []))
 	# After world: pending hires resolve their bay by layer+cell at arrival.

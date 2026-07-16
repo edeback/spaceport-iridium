@@ -237,6 +237,15 @@ func reached_next_node() -> void:
 
 
 
+## Terrain speed of the module whose interior sub-path we're currently on.
+func _sub_path_speed_mult() -> float:
+	if next_path_index >= 0 and next_path_index < path.size() and path[next_path_index].node is ModuleBase:
+		var module: ModuleBase = path[next_path_index].node as ModuleBase
+		var pc: PathComponent = module.get_path_component()
+		if pc != null:
+			return pc.get_traversal_speed_mult()
+	return 1.0
+
 func get_sub_path(index: int) -> Array[PathComponent.PathTraversalEdgeData]:
 	if index > 0 and index + 1 < path.size():
 		if !path[index].in_space and path[index].node is ModuleBase:
@@ -284,18 +293,21 @@ func move(delta: float) -> void:
 	var next_position: Vector2 = owner_pawn.global_position
 	while dist_to_travel > 0:
 		if in_sub_path:
+			# Interior movement runs at the module's terrain speed (WI-11):
+			# a segment of length d consumes d / mult of the travel budget.
+			var seg_mult: float = _sub_path_speed_mult()
 			var next_path_position: Vector2 = path[next_path_index].node.global_position + sub_path[sub_path_index].end_pos
 			var travel_vector: Vector2 = next_path_position - next_position
 			var dist_to_next_point: float = travel_vector.length()
-			if dist_to_next_point <= dist_to_travel + 0.0001:
+			if dist_to_next_point / seg_mult <= dist_to_travel + 0.0001:
 				next_position = next_path_position
-				dist_to_travel -= dist_to_next_point
+				dist_to_travel -= dist_to_next_point / seg_mult
 				await reached_next_subpath()
 				if target == null:
 					return
 				next_position = owner_pawn.global_position
 			else:
-				next_position = next_position + travel_vector / dist_to_next_point * dist_to_travel
+				next_position = next_position + travel_vector / dist_to_next_point * (dist_to_travel * seg_mult)
 				dist_to_travel = 0
 				break
 		else:

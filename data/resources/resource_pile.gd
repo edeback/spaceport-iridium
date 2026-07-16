@@ -20,8 +20,8 @@ const RESOURCE_PILE = preload("uid://vw2q5so630yo")
 ## If parent_module is null, the pile is free-floating and is only ever
 ## spliced into the pathing graph for the duration of a single pathfind
 ## (see ModuleGraph.pathfind_to_node_in_space) - the same trick
-## AsteroidBase pathing already relies on. It never sits in the "space"
-## group at rest, so it costs nothing on pathfinds that don't target it.
+## AsteroidBase pathing already relies on. It never sits in the exterior
+## clique at rest, so it costs nothing on pathfinds that don't target it.
 ## If parent_module is set, the pile isn't in the graph at all: reachability
 ## and movement both target the module itself, since anywhere inside a
 ## reachable module is already reachable - no new pathfinding concept

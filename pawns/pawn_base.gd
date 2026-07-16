@@ -60,7 +60,7 @@ func _ready() -> void:
 	inventory_component = PawnInventoryComponent.new()
 	inventory_component.owner_pawn = self
 	add_child(inventory_component)
-	Global.path_manager.add_vertex(self, true, "" if current_module != null else "space")
+	Global.path_manager.add_vertex(self, true, "", current_module == null)
 	SignalBus.module_removed.connect(_on_module_removed)
 	#SignalBus.module_selected.connect(_on_module_selected)
 	pass # Replace with function body.
@@ -246,10 +246,10 @@ func _on_module_changed(new_module: ModuleBase) -> void:
 			if current_layer != WorldManager.StructureLayer.SPACE:
 				current_layer = WorldManager.StructureLayer.SPACE
 				reparent(Global.world_manager.get_canvas_for_layer(current_layer))
-			Global.path_manager.change_vertex_group(self, "space", -1)
+			Global.path_manager.set_exterior(self, true)
 			animated_sprite.rotation_degrees = 90
 		else:
-			Global.path_manager.change_vertex_group(self, "", -1)
+			Global.path_manager.set_exterior(self, false)
 			animated_sprite.rotation_degrees = 0
 			if current_layer != new_module.module_data.interaction_layer:
 				current_layer = new_module.module_data.interaction_layer

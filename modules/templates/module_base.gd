@@ -310,8 +310,8 @@ func get_global_center() -> Vector2:
 	return global_position + Vector2(Global.CELL_SIZE * size) / 2
 	
 func enter_module_from(pawn: PawnBase, _prev_module: ModuleBase = null) -> void:
-	# TODO Hack for not going "inside" space things but there must be a better way
-	if Global.path_manager.graph._vertices[self].group != "space":
+	# Exterior modules (blueprints, deconstruction sites) have no "inside" yet.
+	if not Global.path_manager.is_exterior(self):
 		pawn.current_module = self
 	else:
 		pawn.current_module = null

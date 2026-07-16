@@ -32,8 +32,8 @@ func ready_blueprint() -> void:
 	current_state = ConstructionState.NotStarted
 	owner_module.progress = 0
 	work_seconds_done = 0
-	Global.path_manager.change_vertex_group(owner_module, &"space")
-	
+	Global.path_manager.set_exterior(owner_module, true)
+
 func ready_constructed() -> void:
 	set_process(false)
 	# Ensure state is set if this was spawned already built
@@ -43,9 +43,7 @@ func ready_constructed() -> void:
 	material_storage.accepts_imports = false
 	material_storage.display_storage_ui = false
 	material_storage.display_info_panel_ui = false
-	var owner_vertex := Global.path_manager.get_vertex(owner_module)
-	if owner_vertex and owner_vertex.group == &"space":
-		Global.path_manager.change_vertex_group(owner_module, "")
+	Global.path_manager.set_exterior(owner_module, false)
 
 func start_deconstruction() -> void:
 	if current_state == ConstructionState.Built:
@@ -182,7 +180,7 @@ func _on_deconstruction_job_end(finished_job: Job_ConstructModule) -> void:
 		Global.job_manager.add_job(construction_job)
 
 func setup_storage_post_deconstruction() -> void:
-	Global.path_manager.change_vertex_group(owner_module, &"space")
+	Global.path_manager.set_exterior(owner_module, true)
 	material_storage.empty_all()
 	material_storage.add_to_group("resource_storage")
 	material_storage.accepts_imports = false
@@ -225,7 +223,7 @@ func load_save_data(data: Dictionary) -> void:
 ## the Constructing->NotStarted rule): reconfigure the material storage as an
 ## export bin; the storage section restores the actual remaining contents.
 func _setup_deconstructed_for_load() -> void:
-	Global.path_manager.change_vertex_group(owner_module, &"space")
+	Global.path_manager.set_exterior(owner_module, true)
 	material_storage.empty_all()
 	material_storage.add_to_group("resource_storage")
 	material_storage.accepts_imports = false

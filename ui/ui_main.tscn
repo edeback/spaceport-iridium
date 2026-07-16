@@ -40,6 +40,7 @@
 [ext_resource type="Resource" uid="uid://ch5rdw0jfhvft" path="res://data/modules/module_airlock.tres" id="32_k34tn"]
 [ext_resource type="PackedScene" uid="uid://cmkeqkbs2pdr1" path="res://ui/ui_time_scale_select.tscn" id="37_848xd"]
 [ext_resource type="PackedScene" uid="uid://byip82db78f7" path="res://ui/windows/module_info_ingame_panel.tscn" id="38_x3wcs"]
+[ext_resource type="PackedScene" path="res://ui/windows/turboshaft_panel.tscn" id="39_tshft"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xdhp5"]
 bg_color = Color(0.0782779, 0.271425, 7.21961e-08, 1)
@@ -269,6 +270,18 @@ offset_right = 503.0
 offset_bottom = 301.0
 
 [node name="ModuleInfoPanel" parent="." unique_id=1500315581 instance=ExtResource("38_x3wcs")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="TurboshaftPanel" parent="." instance=ExtResource("39_tshft")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1

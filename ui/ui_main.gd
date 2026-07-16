@@ -293,11 +293,18 @@ func module_clicked(module: ModuleBase) -> void:
 	toggle_info_panel(target)
 
 func toggle_info_panel(selected_module: ModuleBase) -> void:
+	# Turbolifts are managed per-shaft (WI-11): any lift in a shaft opens the
+	# shaft panel instead of the per-module info panel.
+	if selected_module is ModuleTurbolift and selected_module.is_complete():
+		close_info_panel()
+		%TurboshaftPanel.toggle_for(selected_module as ModuleTurbolift)
+		return
+	%TurboshaftPanel.close()
 	if %ModuleInfoPanel.visible == true and %ModuleInfoPanel.module_viewed == selected_module:
 		close_info_panel()
 	else:
 		%ModuleInfoPanel.set_module(selected_module)
-		%ModuleInfoPanel.visible = true	
+		%ModuleInfoPanel.visible = true
 
 func close_info_panel() -> void:
 	%ModuleInfoPanel.set_module(null)

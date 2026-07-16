@@ -12,6 +12,18 @@ var blocked: bool = false
 var group: StringName = ""
 # When going to this group, what index in the path component counts as the "door"?
 var group_door: int = 0
+## Still a physical member of its group (cabs pass through) but never a valid
+## boarding/alighting point for the implicit group jump - a turbolift floor
+## that's been toggled off. Checked in both group-expansion loops AND in
+## subgraph flooding, so is_reachable stays honest about it.
+var no_group_stop: bool = false
+## Exterior/unfinished: part of the implicit "open space" clique (blueprints,
+## deconstruction sites, pawns on EVA, space-door nodes). Orthogonal to group -
+## a vertex can be in a network group and exterior at once (WI-15).
+var is_exterior: bool = false
+# When entering this module from open space, what index in the path component
+# counts as the "door"? Mirrors group_door for the exterior clique.
+var exterior_door: int = 0
 ## If endpoint, never try to path through this. Generally only valid for non-module entities
 var endpoint: bool = false
 

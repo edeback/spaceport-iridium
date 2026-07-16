@@ -40,18 +40,36 @@ func _on_module_connection_added(from: ModuleBase, to: ModuleBase, distance: flo
 	graph.add_edge(from, to, distance)
 	recheck_pathfinding = true
 	
-func add_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "") -> void:
-	graph.add_vertex(vertex, is_endpoint, group)
-	
+func add_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "", exterior: bool = false) -> void:
+	graph.add_vertex(vertex, is_endpoint, group, 0, exterior)
+
 func get_vertex(vertex: Node2D) -> ModuleGraphVertex:
 	return graph._vertices.get(vertex)
-	
+
 func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: int = -1) -> void:
 	graph.change_vertex_group(vertex, new_group, new_group_door)
 	if vertex is ModuleBase:
 		SignalBus.module_group_changed.emit(vertex as ModuleBase)
-		# Group swaps move modules in/out of "space" (blueprints, deconstruction),
-		# which changes their disconnected-indicator eligibility - recheck.
+		recheck_pathfinding = true
+
+## Exteriorness is derived state (build state, pawn position) - never saved,
+## always re-flagged by the same code paths that set it live. Reuses the
+## module_group_changed repath hook: in-flight paths crossing this module
+## re-check exactly as they do for group swaps.
+func set_exterior(vertex: Node2D, exterior: bool) -> void:
+	if graph.set_vertex_exterior(vertex, exterior) and vertex is ModuleBase:
+		SignalBus.module_group_changed.emit(vertex as ModuleBase)
+		# Exterior flips change disconnected-indicator eligibility - recheck.
+		recheck_pathfinding = true
+
+func is_exterior(vertex: Node2D) -> bool:
+	return graph.is_vertex_exterior(vertex)
+
+## Turbolift floor disable (WI-11): the vertex stays a physical shaft cell but
+## stops being a boarding/alighting point for the group jump.
+func set_no_group_stop(vertex: Node2D, no_stop: bool) -> void:
+	if graph.set_vertex_no_group_stop(vertex, no_stop) and vertex is ModuleBase:
+		SignalBus.module_group_changed.emit(vertex as ModuleBase)
 		recheck_pathfinding = true
 	
 func remove_vertex(vertex: Node2D) -> void:
@@ -76,8 +94,8 @@ func _on_module_selected(module: ModuleBase) -> void:
 
 ## WI-10 no-path indicator: blink any built, pawn-traversable non-SPACE layer
 ## module whose vertex sits outside the station's largest subgraph. Exempt:
-## blueprints and "space"-group vertices (ConstructionComponent parks
-## construction/deconstruction sites in "space" deliberately - without the
+## blueprints and exterior vertices (ConstructionComponent flags
+## construction/deconstruction sites exterior deliberately - without the
 ## exemption every construction site would blink), plus modules with no
 ## PathComponent (truss, external hardware) - pawns never enter those, so
 ## "disconnected" is meaningless for them.
@@ -91,7 +109,7 @@ func _update_disconnected_indicators() -> void:
 		if module.module_data.interaction_layer == WorldManager.StructureLayer.SPACE:
 			continue
 		var vertex: ModuleGraphVertex = graph._vertices[node]
-		if vertex.group == &"space" or not module.is_complete() or module.get_path_component().path_points.is_empty():
+		if vertex.is_exterior or not module.is_complete() or module.get_path_component().path_points.is_empty():
 			module.get_path_component().set_disconnected_indicator(false)
 			continue
 		eligible.append(module)

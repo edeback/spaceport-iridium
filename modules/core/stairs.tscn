@@ -43,6 +43,7 @@ disabled = true
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(0, 1)])
 self_connection_only = true
+traversal_speed_mult = 0.5
 path_points = Array[Vector2i]([Vector2i(21, 0), Vector2i(21, 64), Vector2i(22, 58), Vector2i(10, 55), Vector2i(34, 39), Vector2i(10, 23), Vector2i(34, 7)])
 path_edges = Dictionary[Vector2i, StringName]({
 Vector2i(1, 3): &"",

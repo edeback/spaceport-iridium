@@ -18,7 +18,6 @@ func _ready() -> void:
 	cur_resources = max_resources
 	for weight: float in resource_weighted_values.values():
 		resource_total_weights += weight
-	#Global.path_manager.add_vertex(self, true, "space")
 	
 func _exit_tree() -> void:
 	despawning.emit()

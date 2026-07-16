@@ -11,6 +11,25 @@ var truss: ModuleData = preload("res://data/modules/core/truss_mdata.tres")
 var shaft: TurboliftShaft
 var open_requests: Array[RideRequest] = []
 
+## Skip-floor toggle (WI-11): a disabled floor stays a physical shaft cell
+## (cabs ride through it) but pawns can't board or alight there.
+var floor_enabled: bool = true:
+	set = set_floor_enabled
+
+const DISABLED_DIM := Color(0.45, 0.45, 0.45)
+
+func set_floor_enabled(new_enabled: bool) -> void:
+	if floor_enabled == new_enabled:
+		return
+	floor_enabled = new_enabled
+	# no_group_stop marks the graph dirty and fires the module_group_changed
+	# repath hook, so pawns mid-route re-plan (stairs, or honest failure).
+	Global.path_manager.set_no_group_stop(self, not new_enabled)
+	door_sprite.modulate = Color.WHITE if new_enabled else DISABLED_DIM
+	sprite.self_modulate = Color.WHITE if new_enabled else DISABLED_DIM
+	if shaft != null:
+		shaft.on_floor_toggled(self)
+
 func _ready() -> void:
 	add_to_group("turbolifts")
 	super()
@@ -93,6 +112,16 @@ func set_door(is_close: bool) -> void:
 	print("Starting animation to " + ("close " if is_close else "open ") + "turbolift")
 	anim_sprite.play(&"open", -1 if is_close else 1, is_close)
 	await anim_sprite.animation_finished
+
+func get_save_data() -> Dictionary:
+	var data: Dictionary = super()
+	if not floor_enabled:
+		data["floor_enabled"] = false
+	return data
+
+func load_save_data(data: Dictionary) -> void:
+	super(data)
+	floor_enabled = bool(data.get("floor_enabled", true))
 
 func get_waiting_slot() -> Vector2:
 	return Vector2(randi_range(-10, 10), randi_range(0, 5))

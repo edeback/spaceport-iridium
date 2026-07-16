@@ -2,6 +2,8 @@ class_name TurboliftManager
 extends Node
 
 @export var default_cab: PackedScene
+## Credits charged per extra cab bought from the shaft panel (WI-11).
+@export var cab_cost: int = 500
 
 var _turbolift_shafts: Array[TurboliftShaft] = []
 
@@ -61,6 +63,42 @@ func _get_shaft_at_cell(cell: Vector2i) -> TurboliftShaft:
 	if module is ModuleTurbolift and module.shaft != null:
 		return module.shaft
 	return null
+
+# --- persistence ------------------------------------------------------------
+
+## Per-shaft state (cab count, force shutdown), keyed by the shaft's topmost
+## floor cell. Shafts rebuild from module adjacency during the world load, so
+## group ids regenerate fresh - nothing persists them, which also sidesteps
+## any id-collision worries between runs. floor_enabled travels in each
+## module's own save entry.
+func get_save_data() -> Dictionary:
+	var shafts_out: Array = []
+	for shaft: TurboliftShaft in _turbolift_shafts:
+		if shaft.floors.is_empty():
+			continue
+		shafts_out.append({
+			"cell": [shaft.floors[0].module_cell.x, shaft.floors[0].module_cell.y],
+			"cabs": shaft.max_cabs,
+			"force_shutdown": shaft.force_shutdown,
+		})
+	return {"shafts": shafts_out}
+
+## Runs after the world section: modules are placed and shafts re-merged, so
+## each saved entry resolves to exactly one rebuilt shaft. Restored cabs are
+## free - they were paid for when bought.
+func load_save_data(data: Dictionary) -> void:
+	for entry: Dictionary in data.get("shafts", []):
+		var cell_arr: Array = entry.get("cell", [])
+		if cell_arr.size() != 2:
+			continue
+		var shaft: TurboliftShaft = _get_shaft_at_cell(Vector2i(int(cell_arr[0]), int(cell_arr[1])))
+		if shaft == null:
+			push_warning("Saved turboshaft has no rebuilt shaft at " + str(cell_arr) + ", skipping")
+			continue
+		if bool(entry.get("force_shutdown", false)):
+			shaft.set_force_shutdown(true)
+		var cab_count: int = int(entry.get("cabs", 0))
+		shaft.max_cabs = cab_cost
 
 func _merge_shafts(primary_shaft: TurboliftShaft, secondary_shaft: TurboliftShaft) -> TurboliftShaft:
 	if primary_shaft == secondary_shaft:
