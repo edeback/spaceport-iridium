@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ScheduleData" format=3]
+[gd_resource type="Resource" script_class="ScheduleData" format=3 uid="uid://jnlouoxu2vc1"]
 
-[ext_resource type="Script" path="res://pawns/schedule_data.gd" id="1_shifta"]
+[ext_resource type="Script" uid="uid://cpy6byep67dl5" path="res://pawns/schedule_data.gd" id="1_shifta"]
 
 [resource]
 script = ExtResource("1_shifta")

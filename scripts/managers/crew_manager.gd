@@ -152,8 +152,12 @@ func _deliver_crew(bay: ModuleBase) -> void:
 ## parity so hires keep covering the clock (WI-06).
 func spawn_crew(at_module: ModuleBase) -> PawnBase:
 	var pawn: PawnBase = crew_pawn_scene.instantiate() as PawnBase
-	if pawn.schedule != null and crew_count() % 2 == 1:
-		pawn.schedule = ScheduleData.shift_b()
+	# First two keep their always-on schedule
+	if pawn.schedule != null and crew_count() >= 2:
+		if crew_count() % 2 == 1:
+			pawn.schedule = ScheduleData.shift_a()
+		else:
+			pawn.schedule = ScheduleData.shift_b()
 	# Add to tree BEFORE setting current_module: the setter reparents, which
 	# needs a parent (this was the old PawnStorageComponent boot error).
 	Global.world_manager.pawn_layer.add_child(pawn)
