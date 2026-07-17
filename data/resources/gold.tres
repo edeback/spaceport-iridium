@@ -5,7 +5,8 @@
 
 [resource]
 script = ExtResource("2_27x56")
+id = &"gold"
 name = "Gold"
 icon = ExtResource("1_biixu")
-default_cost = 50
-id = &"gold"
+default_cost = 90
+default_market_supply = 50

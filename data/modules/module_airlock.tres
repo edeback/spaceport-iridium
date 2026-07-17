@@ -14,6 +14,7 @@ region = Rect2(40, 0, 64, 64)
 script = ExtResource("3_tpos6")
 id = &"module_airlock"
 name = "Airlock"
+description = "Allows crew to access space for module contruction, asteroid mining, and more."
 scene = ExtResource("2_1gomn")
 icon = SubResource("AtlasTexture_aifhy")
 tags = Array[String](["Core"])

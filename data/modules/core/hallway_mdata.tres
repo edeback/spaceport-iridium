@@ -14,6 +14,7 @@ region = Rect2(192, 0, 64, 64)
 script = ExtResource("4_l800v")
 id = &"hallway_mdata"
 name = "Corridor"
+description = "A way to get from module to module."
 scene = ExtResource("3_fka6u")
 icon = SubResource("AtlasTexture_hpgmt")
 resource_costs = Dictionary[ExtResource("2_ug0gx"), int]({

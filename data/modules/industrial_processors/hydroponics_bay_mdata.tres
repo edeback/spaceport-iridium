@@ -8,7 +8,9 @@
 
 [resource]
 script = ExtResource("5_lqt3h")
+id = &"hydroponics_bay_mdata"
 name = "Hydroponics Bay"
+description = "A way to create tasty food for the crew."
 scene = ExtResource("4_x74ts")
 icon = ExtResource("1_0roq3")
 instant_build = false
@@ -18,4 +20,3 @@ ExtResource("3_0roq3"): 6
 tags = Array[String](["Industrial"])
 unlocked_by_default = false
 metadata/_custom_type_script = "uid://vwmofdckg7hu"
-id = &"hydroponics_bay_mdata"

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://c1bm4el22672i"]
+
+[ext_resource type="Texture2D" uid="uid://crratymv7uh2n" path="res://assets/sprites/forge.png" id="1_3qdf5"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_plfav"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="3_onh7b"]
+[ext_resource type="PackedScene" uid="uid://c4o14n56g7nfa" path="res://modules/industrial_processors/forge.tscn" id="4_plfav"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="5_xgu85"]
+
+[resource]
+script = ExtResource("5_xgu85")
+id = &"forge_mdata"
+name = "Forge"
+description = "Processes iron and carbon into steel."
+scene = ExtResource("4_plfav")
+icon = ExtResource("1_3qdf5")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_plfav"), int]({
+ExtResource("3_onh7b"): 8
+})
+tags = Array[String](["Industrial"])

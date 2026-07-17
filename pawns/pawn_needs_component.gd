@@ -27,7 +27,7 @@ extends PawnComponentBase
 			hunger_changed.emit(hunger_value)
 signal hunger_changed(new_hunger: float)
 ## Game-hours from full to empty. ~12h means a pawn eats roughly twice per cycle.
-@export var hunger_duration_hours: float = 12.0
+@export var hunger_duration_hours: float = 24.0
 
 @export var has_sleep_need: bool = false
 @export var sleep_max: float = 100

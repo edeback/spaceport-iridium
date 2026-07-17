@@ -8,7 +8,9 @@
 
 [resource]
 script = ExtResource("3_hmp15")
+id = &"small_storage"
 name = "Small Storage"
+description = "A large closet to store resources in."
 scene = ExtResource("2_rwlpt")
 icon = ExtResource("1_2mdjr")
 instant_build = false
@@ -16,4 +18,3 @@ resource_costs = Dictionary[ExtResource("2_lqadu"), int]({
 ExtResource("3_lqadu"): 1
 })
 tags = Array[String](["Storage"])
-id = &"small_storage"

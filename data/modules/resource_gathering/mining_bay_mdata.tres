@@ -8,7 +8,9 @@
 
 [resource]
 script = ExtResource("3_nni1g")
+id = &"mining_bay_mdata"
 name = "Mining Bay"
+description = "Creates drones which mine asteroids for ore."
 scene = ExtResource("2_qbuko")
 icon = ExtResource("1_cxmgm")
 instant_build = false
@@ -16,4 +18,3 @@ resource_costs = Dictionary[ExtResource("2_2vdph"), int]({
 ExtResource("3_2vdph"): 8
 })
 tags = Array[String](["Industrial"])
-id = &"mining_bay_mdata"

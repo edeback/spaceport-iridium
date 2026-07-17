@@ -8,7 +8,9 @@
 
 [resource]
 script = ExtResource("3_unrx2")
+id = &"medium_storage"
 name = "Medium Storage"
+description = "A large room to store resources in."
 scene = ExtResource("2_f8b1t")
 icon = ExtResource("1_dtut3")
 instant_build = false
@@ -17,4 +19,3 @@ ExtResource("3_pyd4u"): 4
 })
 tags = Array[String](["Storage"])
 unlocked_by_default = false
-id = &"medium_storage"

@@ -1,8 +1,11 @@
 
 Life Support/Oxygen System:
 - Implement basic oxygen diffusion system
-- Regenerative O2 Scrubber (CO2 -> O2)
-- O2 generator (releases O2 directly)
+	- 
+- Oxygen component of some sort?
+	- Regenerative O2 Scrubber (CO2 -> O2)
+	- O2 generator (releases O2 directly)
+- 
 
 
 
@@ -21,3 +24,8 @@ Recurring costs:
 - ARC Levy/fees
 - Perhaps some of this doesn't start until Tier 2?
 	- Keeps the pressure from being so awful at the start
+
+
+Pawn Development:
+- Names (from some sort of name generator)
+- 

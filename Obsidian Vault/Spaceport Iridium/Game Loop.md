@@ -44,4 +44,6 @@ Goals:
 			- You start out with one, don't destroy it!
 		- Set up sales via order sheet, confirm them when a trader arrives
 			- Sell excess ores or processed goods
-	- 
+
+Non-obvious controls:
+- "f" to flip modules that have two possible facings (airlocks and docks)

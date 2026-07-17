@@ -16,7 +16,7 @@ height = 64
 generate_mipmaps = false
 noise = SubResource("FastNoiseLite_aqnlt")
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_aqnlt"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_p3bqt"]
 shader = ExtResource("2_elnck")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -24,7 +24,7 @@ shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 shader_parameter/gradient_texture = SubResource("NoiseTexture2D_pbf7i")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_pbf7i"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_aqnlt"]
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
@@ -46,11 +46,11 @@ fill_to = Vector2(0.8, 0.8)
 sprite = NodePath("../Sprite")
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="1" unique_id=1530003366]
-material = SubResource("ShaderMaterial_aqnlt")
+material = SubResource("ShaderMaterial_p3bqt")
 texture = ExtResource("4_p3bqt")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_pbf7i")
+shape = SubResource("RectangleShape2D_aqnlt")
 
 [node name="Sprite2D" type="Sprite2D" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="3" unique_id=304492415]
 material = SubResource("CanvasItemMaterial_aqnlt")
@@ -60,7 +60,7 @@ texture = SubResource("GradientTexture2D_xcypy")
 script = ExtResource("4_gocud")
 scales_by_surroundings = true
 structure_component = NodePath("../StructureComponent")
-power_output = 50.0
+power_output = 75.0
 
 [node name="PathComponent" parent="." index="2" unique_id=1088376714]
 path_points = Array[Vector2i]([])

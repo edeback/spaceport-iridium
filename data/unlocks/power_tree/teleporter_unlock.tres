@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="UnlockData" format=3 uid="uid://dwkdoo1xwxbd3"]
+
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_42p5d"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="2_ucr0m"]
+[ext_resource type="Script" uid="uid://c6vwp01mtmoyt" path="res://data/unlocks/effects/unlock_effect.gd" id="3_d3htv"]
+[ext_resource type="Resource" uid="uid://detljhx2721g" path="res://data/modules/teleporter_mdata.tres" id="4_42p5d"]
+[ext_resource type="Script" uid="uid://byjsbe8qb3i7t" path="res://data/unlocks/effects/grant_module_effect.gd" id="5_yyc2v"]
+[ext_resource type="Texture2D" uid="uid://lebwd4trp72s" path="res://assets/sprites/teleporter.png" id="6_ucr0m"]
+[ext_resource type="Script" uid="uid://co6152j7b38nw" path="res://data/unlocks/unlock_data.gd" id="7_pvjva"]
+[ext_resource type="Resource" uid="uid://dpo43pgrpraj4" path="res://data/unlocks/power_tree/fusion_reactor_unlock.tres" id="8_d3htv"]
+
+[sub_resource type="Resource" id="Resource_hg6n5"]
+script = ExtResource("5_yyc2v")
+module = ExtResource("4_42p5d")
+metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
+
+[resource]
+script = ExtResource("7_pvjva")
+id = &"teleporter_unlock"
+name = "Teleporter"
+description = "Fast Travel"
+icon = ExtResource("6_ucr0m")
+tree_id = &"power"
+cost = Dictionary[ExtResource("1_42p5d"), int]({
+ExtResource("2_ucr0m"): 2000
+})
+prerequisites = Array[ExtResource("7_pvjva")]([ExtResource("8_d3htv")])
+effects = Array[ExtResource("3_d3htv")]([SubResource("Resource_hg6n5")])
+metadata/_custom_type_script = "uid://co6152j7b38nw"

@@ -8,7 +8,9 @@
 
 [resource]
 script = ExtResource("3_3caao")
+id = &"ice_processor_mdata"
 name = "Ice Processor"
+description = "Filters dirty space ice into pure water."
 scene = ExtResource("2_skbq3")
 icon = ExtResource("1_bhv6k")
 instant_build = false
@@ -16,4 +18,3 @@ resource_costs = Dictionary[ExtResource("2_lbwgg"), int]({
 ExtResource("3_lbwgg"): 4
 })
 tags = Array[String](["Industrial"])
-id = &"ice_processor_mdata"

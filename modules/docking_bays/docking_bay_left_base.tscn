@@ -63,19 +63,21 @@ import_storage = NodePath("../Imported Goods")
 [node name="Imported Goods" parent="." index="4" unique_id=1475305824 instance=ExtResource("5_18pmv")]
 position = Vector2(32, 0)
 priority = -50
-max_stored = 40
+max_stored = 80
 accepts_imports = false
 allow_any_resource = true
 
 [node name="Goods To Export" parent="." index="5" unique_id=1010662297 instance=ExtResource("5_18pmv")]
 position = Vector2(192, 0)
-priority = 0
-max_stored = 40
+max_stored = 80
 accepts_exports = false
 player_configurable = true
 
 [node name="PowerConsumptionComponent" parent="." index="6" unique_id=1657948966 instance=ExtResource("7_gu0qf")]
 position = Vector2(128, 0)
 power_consumption = 60.0
+
+[node name="ConstructionComponent" parent="." index="7" unique_id=1206775965]
+position = Vector2(32, 0)
 
 [node name="CrewRecruitmentComponent" parent="." index="8" unique_id=1630590133 instance=ExtResource("8_recruit")]

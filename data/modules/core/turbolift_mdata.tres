@@ -14,6 +14,7 @@ region = Rect2(64, 0, 64, 64)
 script = ExtResource("4_2f7uq")
 id = &"turbolift_mdata"
 name = "Turbolift"
+description = "A quick way to access other floors."
 scene = ExtResource("3_4qj6a")
 icon = SubResource("AtlasTexture_waae6")
 resource_costs = Dictionary[ExtResource("2_waae6"), int]({

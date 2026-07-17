@@ -14,6 +14,7 @@ region = Rect2(0, 192, 64, 64)
 script = ExtResource("3_6le0c")
 id = &"solar_panel_mdata"
 name = "Solar Panel"
+description = "Turns sunlight into power. The fewer modules surrounding the panels, the more power they can produce."
 scene = ExtResource("2_7kodw")
 icon = SubResource("AtlasTexture_15jww")
 instant_build = false

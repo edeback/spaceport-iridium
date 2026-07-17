@@ -32,6 +32,7 @@
 [ext_resource type="Resource" uid="uid://0iqtgbc2dqvn" path="res://data/modules/industrial_processors/ice_processor_mdata.tres" id="19_0lj05"]
 [ext_resource type="PackedScene" uid="uid://mroynql4rcbs" path="res://ui/windows/trade/trade_screen.tscn" id="19_xyc40"]
 [ext_resource type="Resource" uid="uid://c7ecu8kiaopc7" path="res://data/modules/industrial_processors/ore_processor_mdata.tres" id="20_qj0xk"]
+[ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="21_bgs1r"]
 [ext_resource type="Resource" uid="uid://crhsnxhuro0k" path="res://data/modules/crew/sleeping_pod_mdata.tres" id="21_qj7ft"]
 [ext_resource type="Resource" uid="uid://753weg0dtsl7" path="res://data/modules/power/battery.tres" id="22_vt8g8"]
 [ext_resource type="Resource" uid="uid://bcv5sug5sammf" path="res://data/modules/power/debug_power.tres" id="23_tmpp0"]
@@ -41,7 +42,7 @@
 [ext_resource type="Resource" uid="uid://cu4vq33kxfwb8" path="res://data/modules/storage/large_storage.tres" id="27_6porg"]
 [ext_resource type="Resource" uid="uid://c0o6agquw83kw" path="res://data/modules/storage/medium_storage.tres" id="28_s5567"]
 [ext_resource type="Resource" uid="uid://ibkvk5lxr6ut" path="res://data/modules/storage/small_storage.tres" id="29_qnfs5"]
-[ext_resource type="Resource" uid="uid://detljhx2721g" path="res://data/modules/module_teleporter.tres" id="30_4mt1o"]
+[ext_resource type="Resource" uid="uid://detljhx2721g" path="res://data/modules/teleporter_mdata.tres" id="30_4mt1o"]
 [ext_resource type="Resource" uid="uid://p3ja7r43eh6c" path="res://data/modules/core/truss_mdata.tres" id="31_wy7eg"]
 [ext_resource type="Resource" uid="uid://ch5rdw0jfhvft" path="res://data/modules/module_airlock.tres" id="32_k34tn"]
 [ext_resource type="PackedScene" uid="uid://cmkeqkbs2pdr1" path="res://ui/ui_time_scale_select.tscn" id="37_848xd"]
@@ -76,7 +77,7 @@ corner_radius_bottom_left = 16
 shadow_size = 6
 shadow_offset = Vector2(-3, -3)
 
-[sub_resource type="FoldableGroup" id="FoldableGroup_qj0xk"]
+[sub_resource type="FoldableGroup" id="FoldableGroup_6porg"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1h8lm"]
 content_margin_left = 4.0
@@ -115,7 +116,7 @@ button_group = ExtResource("3_ka3re")
 button_container = NodePath("VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer")
 resource_display_container = NodePath("ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer")
 resource_display_ui = ExtResource("4_wyidc")
-resources_to_display = Array[ExtResource("4_pqeum")]([ExtResource("5_47oex"), ExtResource("9_pset1"), ExtResource("6_b5r2u"), ExtResource("8_u34n7"), ExtResource("9_bgs1r"), ExtResource("5_rtsem"), ExtResource("11_6porg"), ExtResource("13_0sakr"), ExtResource("13_s5567"), ExtResource("12_6re3r"), ExtResource("15_qnfs5"), ExtResource("10_j1br4"), ExtResource("8_xyc40"), ExtResource("14_p3y7p"), ExtResource("7_1h8lm"), ExtResource("11_lnfpq")])
+resources_to_display = Array[ExtResource("4_pqeum")]([ExtResource("5_47oex"), ExtResource("9_pset1"), ExtResource("6_b5r2u"), ExtResource("8_u34n7"), ExtResource("9_bgs1r"), ExtResource("5_rtsem"), ExtResource("11_6porg"), ExtResource("13_0sakr"), ExtResource("13_s5567"), ExtResource("12_6re3r"), ExtResource("15_qnfs5"), ExtResource("10_j1br4"), ExtResource("8_xyc40"), ExtResource("14_p3y7p"), ExtResource("7_1h8lm"), ExtResource("11_lnfpq"), ExtResource("21_bgs1r")])
 pawn_info_screen = ExtResource("15_x3wcs")
 resource_pile_screen = ExtResource("17_w7nyr")
 asteroid_info_screen = ExtResource("18_astinfo")
@@ -247,7 +248,7 @@ layout_mode = 2
 
 [node name="FoldableContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer" unique_id=1698963565 instance=ExtResource("3_ka3re")]
 layout_mode = 2
-foldable_group = SubResource("FoldableGroup_qj0xk")
+foldable_group = SubResource("FoldableGroup_6porg")
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer" unique_id=39982694]
 layout_mode = 2

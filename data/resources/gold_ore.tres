@@ -8,6 +8,6 @@ script = ExtResource("2_app0j")
 id = &"gold_ore"
 name = "Gold Ore"
 icon = ExtResource("1_w1q6y")
-default_cost = 50
+default_cost = 30
 has_variance = true
 merge_tolerance = 0.1

@@ -34,31 +34,37 @@ size = Vector2(126, 126)
 [sub_resource type="Resource" id="Resource_avr65"]
 resource_local_to_scene = true
 script = ExtResource("7_2l5du")
+resource_data = ExtResource("6_2l5du")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [sub_resource type="Resource" id="Resource_25qps"]
 resource_local_to_scene = true
 script = ExtResource("7_2l5du")
+resource_data = ExtResource("8_0tx88")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [sub_resource type="Resource" id="Resource_delo2"]
 resource_local_to_scene = true
 script = ExtResource("7_2l5du")
+resource_data = ExtResource("9_wt5jo")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [sub_resource type="Resource" id="Resource_l11el"]
 resource_local_to_scene = true
 script = ExtResource("7_2l5du")
+resource_data = ExtResource("7_krpv1")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [sub_resource type="Resource" id="Resource_jb6fk"]
 resource_local_to_scene = true
 script = ExtResource("7_2l5du")
+resource_data = ExtResource("11_avr65")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [sub_resource type="Resource" id="Resource_d3svm"]
 resource_local_to_scene = true
 script = ExtResource("7_2l5du")
+resource_data = ExtResource("14_2l5du")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [node name="Module" unique_id=1936147960 instance=ExtResource("1_4oagm")]
@@ -83,7 +89,7 @@ power_consumption = 30.0
 
 [node name="StorageComponent" parent="." index="4" unique_id=1572091566 instance=ExtResource("5_hpqm1")]
 priority = -1
-max_stored = 40
+max_stored = 80
 accepts_imports = false
 storage_data = Dictionary[ExtResource("5_5m057"), ExtResource("7_2l5du")]({
 ExtResource("6_2l5du"): SubResource("Resource_avr65"),

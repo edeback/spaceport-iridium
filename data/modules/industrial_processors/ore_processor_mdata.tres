@@ -8,7 +8,9 @@
 
 [resource]
 script = ExtResource("3_fabqw")
+id = &"ore_processor_mdata"
 name = "Ore Processor"
+description = "Processes ore into usable base materials."
 scene = ExtResource("2_wvxdi")
 icon = ExtResource("1_fabqw")
 instant_build = false
@@ -16,4 +18,3 @@ resource_costs = Dictionary[ExtResource("2_fabqw"), int]({
 ExtResource("3_fwlkr"): 6
 })
 tags = Array[String](["Industrial"])
-id = &"ore_processor_mdata"

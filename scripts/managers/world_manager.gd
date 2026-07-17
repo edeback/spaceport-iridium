@@ -20,6 +20,8 @@ class LayerData:
 
 @export var hallway_module: ModuleData
 
+@export var module_airlock: ModuleData
+
 var layer_data: Dictionary[StructureLayer, LayerData]
 
 var last_id : int = 0
@@ -45,6 +47,7 @@ func _startup() -> void:
 	add_module(start_module, Vector2i(15,8))
 	add_module(docking_bay, Vector2i(18,8), true, true, false, true)
 	add_module(hallway_module, Vector2i(17, 9))
+	add_module(module_airlock, Vector2i(19, 9), true, true)
 	
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.

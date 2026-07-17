@@ -15,6 +15,7 @@ region = Rect2(0, 0, 192, 128)
 script = ExtResource("1_5lqk0")
 id = &"docking_bay"
 name = "Docking Bay"
+description = "Allows ships to dock, both to bring in new crew as well as trade items."
 scene = ExtResource("2_11ty0")
 icon = SubResource("AtlasTexture_nlvn8")
 instant_build = false

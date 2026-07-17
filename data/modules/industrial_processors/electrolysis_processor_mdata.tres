@@ -8,7 +8,9 @@
 
 [resource]
 script = ExtResource("3_gy8o1")
+id = &"electrolysis_processor_mdata"
 name = "Electrolyzer"
+description = "Breaks water down into oxygen and hydrogen."
 scene = ExtResource("2_b70be")
 icon = ExtResource("1_b70be")
 instant_build = false
@@ -17,4 +19,3 @@ ExtResource("3_5y2kn"): 4
 })
 tags = Array[String](["Industrial"])
 unlocked_by_default = false
-id = &"electrolysis_processor_mdata"

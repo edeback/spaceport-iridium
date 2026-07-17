@@ -11,9 +11,9 @@ script = ExtResource("2_4k3vq")
 name = "Forge Steel"
 inputs = Dictionary[ExtResource("1_vpk8h"), int]({
 ExtResource("3_mpb2s"): 1,
-ExtResource("3_oq1vj"): 4
+ExtResource("3_oq1vj"): 2
 })
 outputs = Dictionary[ExtResource("1_vpk8h"), int]({
-ExtResource("4_uddw8"): 1
+ExtResource("4_uddw8"): 2
 })
 metadata/_custom_type_script = "uid://by2n6rwcttgyx"

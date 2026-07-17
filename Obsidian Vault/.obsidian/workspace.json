@@ -151,12 +151,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/TODO notes.md",
+                "file": "Spaceport Iridium/Game Loop.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "TODO notes"
+              "title": "Game Loop"
             }
           },
           {
@@ -247,7 +247,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Spaceport Iridium/TODO notes.md",
+                "file": "Spaceport Iridium/Game Loop.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -257,7 +257,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for TODO notes"
+              "title": "Backlinks for Game Loop"
             }
           },
           {
@@ -293,13 +293,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Spaceport Iridium/TODO notes.md",
+                "file": "Spaceport Iridium/Game Loop.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of TODO notes"
+              "title": "Outline of Game Loop"
             }
           }
         ],
@@ -324,9 +324,20 @@
   "active": "471944f5475eac00",
   "lastOpenFiles": [
     "Spaceport Iridium/Reorganized/New Work.md",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.71924.4dfea19b2405",
+    "Spaceport Iridium/Planning/02_Roadmap.md",
+    "Spaceport Iridium/Inspirations.md",
+    "Spaceport Iridium/Notes from Project Highrise.md",
+    "Spaceport Iridium/Game Loop.md",
+    "Spaceport Iridium/Game Settings.md",
     "Spaceport Iridium/TODO notes.md",
     "Spaceport Iridium/Reorganized/Spaceport Iridium Plan.md",
+    "Spaceport Iridium/Audio.md",
+    "Spaceport Iridium/Notes from SimTower.md",
+    "Spaceport Iridium/Planning/Work Items/WI-12_Storage_QoL.md",
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-13_Events_v1.md",
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-06_Shifts_and_Schedules.md",
+    "Spaceport Iridium/Power System.md",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.71924.4dfea19b2405",
     "Spaceport Iridium/Planning/01_Technical_Specification.md",
     "Spaceport Iridium/Planning/00_Design_Document.md",
     "Spaceport Iridium/Reorganized/05_Engineering_and_Technical_TODO.md",
@@ -336,23 +347,13 @@
     "Spaceport Iridium/Reorganized/01_Modules_and_Station_Structure.md",
     "Spaceport Iridium/Reorganized/00_Overview.md",
     "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md",
-    "Spaceport Iridium/Planning/02_Roadmap.md",
-    "Spaceport Iridium/Planning/Work Items/WI-12_Storage_QoL.md",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-13_Events_v1.md",
-    "Spaceport Iridium/Game Loop.md",
-    "Spaceport Iridium/Power System.md",
     "Spaceport Iridium/Game Mechanics/Story/Background.md",
     "Spaceport Iridium/Game Mechanics/Story/Tutorial.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-14_Contracts.md",
     "Spaceport Iridium/Planning/Work Items/WI-14_Contracts.md.tmp.53868.a09fbc1eef6f",
     "Spaceport Iridium/Planning/Work Items/WI-13_Events_v1.md.tmp.53868.bef66934b615",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-09_Ore_Variance_Refining.md",
     "Spaceport Iridium/Planning/Work Items/WI-09_Ore_Variance_Refining.md.tmp.67104.9e48bbc8a8c2",
     "Spaceport Iridium/Planning/Work Items/WI-09_Ore_Variance_Refining.md.tmp.67104.e3b1012a31a8",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-02_Time_Manager.md",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-15_Pathfinding_Exterior_Semantics.md",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-11_Turbolift_Management.md",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-10_Placement_UX.md",
     "Spaceport Iridium/Planning/Work Items/Completed",
     "Spaceport Iridium/Planning/Work Items/WI-10_Placement_UX.md.tmp.50156.3aa983ee7f81",
     "Spaceport Iridium/Planning/Work Items/WI-10_Placement_UX.md.tmp.50156.a125f4b21644",

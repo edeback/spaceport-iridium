@@ -7,9 +7,10 @@
 
 [resource]
 script = ExtResource("3_14ht2")
+id = &"starting_module_mdata"
 name = "Command Center"
+description = "Core of the station, holds basic storage and power facilities."
 scene = ExtResource("3_h5dhg")
 icon = ExtResource("1_2veoo")
 hidden = true
 metadata/_custom_type_script = "uid://vwmofdckg7hu"
-id = &"starting_module_mdata"

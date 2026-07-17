@@ -12,10 +12,7 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="6_ucso1"]
 [ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="7_ymsq2"]
 [ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="9_pj0q4"]
-[ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="10_560w6"]
-[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="11_ymsq2"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="12_8w55x"]
-[ext_resource type="Resource" uid="uid://bvhvi4mdylcq" path="res://data/recipes/steel_recipe.tres" id="12_arklq"]
 [ext_resource type="Resource" uid="uid://bdtv1cjftf2g1" path="res://data/resources/iron.tres" id="13_iron"]
 [ext_resource type="Script" uid="uid://by2n6rwcttgyx" path="res://data/recipes/recipe_data.gd" id="14_rcpd"]
 [ext_resource type="Resource" path="res://data/recipes/refining/iron_refining_recipe.tres" id="15_rfiron"]
@@ -24,7 +21,7 @@
 [ext_resource type="Resource" path="res://data/recipes/refining/gold_refining_recipe.tres" id="18_rfgold"]
 [ext_resource type="Resource" path="res://data/recipes/refining/iridium_refining_recipe.tres" id="19_rfiridium"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_arklq"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_lqugb"]
 shader = ExtResource("2_gtfxg")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
@@ -32,7 +29,7 @@ shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 shader_parameter/gradient_texture = ExtResource("3_arklq")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_8w55x"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xsx6o"]
 resource_local_to_scene = true
 size = Vector2(126, 62)
 
@@ -47,12 +44,12 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 [node name="OreProcessor" unique_id=749258774 instance=ExtResource("1_06jma")]
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_arklq")
+material = SubResource("ShaderMaterial_lqugb")
 texture = ExtResource("3_pj0q4")
 region_enabled = false
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_8w55x")
+shape = SubResource("RectangleShape2D_xsx6o")
 
 [node name="PowerConsumptionComponent" parent="." index="2" unique_id=2041634469 instance=ExtResource("3_gtfxg")]
 power_consumption = 50.0
@@ -80,7 +77,7 @@ ExtResource("13_iron"): SubResource("Resource_pj0q4")
 
 [node name="ProcessorComponent" parent="." index="7" unique_id=1865115011 node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("6_av0o4")]
 recipe = ExtResource("15_rfiron")
-available_recipes = Array[ExtResource("14_rcpd")]([ExtResource("15_rfiron"), ExtResource("16_rfcarbon"), ExtResource("17_rfsilicon"), ExtResource("18_rfgold"), ExtResource("19_rfiridium"), ExtResource("12_arklq")])
+available_recipes = Array[ExtResource("14_rcpd")]([ExtResource("15_rfiron"), ExtResource("16_rfcarbon"), ExtResource("17_rfsilicon"), ExtResource("18_rfgold"), ExtResource("19_rfiridium")])
 input_storage = NodePath("../Input Storage")
 output_storage = NodePath("../Output Storage")
 time_to_process = 15.0

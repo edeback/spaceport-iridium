@@ -8,3 +8,4 @@ script = ExtResource("2_66wp1")
 id = &"silicon"
 name = "Silicon"
 icon = ExtResource("1_sr5dd")
+default_cost = 30

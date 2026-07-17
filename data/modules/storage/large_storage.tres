@@ -8,7 +8,9 @@
 
 [resource]
 script = ExtResource("3_jk2tm")
+id = &"large_storage"
 name = "Large Storage"
+description = "An efficiently-organized warehouse to store a lot of resources in."
 scene = ExtResource("2_iiu8r")
 icon = ExtResource("1_mx08c")
 instant_build = false
@@ -17,4 +19,3 @@ ExtResource("3_7jpe4"): 6
 })
 tags = Array[String](["Storage"])
 unlocked_by_default = false
-id = &"large_storage"

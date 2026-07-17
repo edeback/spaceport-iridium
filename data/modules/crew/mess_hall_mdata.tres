@@ -8,7 +8,9 @@
 
 [resource]
 script = ExtResource("3_kc8va")
+id = &"mess_hall_mdata"
 name = "Mess Hall"
+description = "Where crew come to eat and socialize."
 scene = ExtResource("2_iuoys")
 icon = ExtResource("1_gennt")
 instant_build = false
@@ -17,4 +19,3 @@ ExtResource("3_whr4g"): 6
 })
 tags = Array[String](["Crew"])
 metadata/_custom_type_script = "uid://vwmofdckg7hu"
-id = &"mess_hall_mdata"

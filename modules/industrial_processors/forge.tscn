@@ -1,0 +1,83 @@
+[gd_scene format=3 uid="uid://c4o14n56g7nfa"]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_j57s1"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_htbuk"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_hwfke"]
+[ext_resource type="Texture2D" uid="uid://crratymv7uh2n" path="res://assets/sprites/forge.png" id="4_htbuk"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="5_2qdcj"]
+[ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="5_t70i4"]
+[ext_resource type="PackedScene" uid="uid://c63swhm7yiir" path="res://modules/components/processor_component.tscn" id="6_ar0w4"]
+[ext_resource type="Resource" uid="uid://bvhvi4mdylcq" path="res://data/recipes/steel_recipe.tres" id="7_71at3"]
+[ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="8_ar0w4"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="9_nrkwy"]
+[ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="10_t70i4"]
+[ext_resource type="Resource" uid="uid://bdtv1cjftf2g1" path="res://data/resources/iron.tres" id="11_160wt"]
+[ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="12_rsq1u"]
+[ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="13_30eyd"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_pwov3"]
+shader = ExtResource("2_htbuk")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
+shader_parameter/gradient_texture = ExtResource("3_hwfke")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_2qdcj"]
+resource_local_to_scene = true
+size = Vector2(192, 128)
+
+[sub_resource type="Resource" id="Resource_71at3"]
+script = ExtResource("10_t70i4")
+desired = 20
+resource_data = ExtResource("11_160wt")
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
+[node name="Module" unique_id=1683111138 instance=ExtResource("1_j57s1")]
+size = Vector2i(3, 2)
+
+[node name="Offset" parent="." index="0" unique_id=498681270]
+position = Vector2(96, 64)
+
+[node name="Sprite" parent="Offset" index="0" unique_id=1530003366]
+material = SubResource("ShaderMaterial_pwov3")
+texture = ExtResource("4_htbuk")
+region_enabled = false
+
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
+shape = SubResource("RectangleShape2D_2qdcj")
+
+[node name="LightingComponent" parent="Offset" index="2" unique_id=125104065 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("5_t70i4")]
+scale = Vector2(3, 2)
+power_consumption_component = NodePath("../../PowerConsumptionComponent")
+
+[node name="PathComponent" parent="." index="1" unique_id=1088376714]
+path_points = Array[Vector2i]([Vector2i(32, 96)])
+
+[node name="StructureComponent" parent="." index="2" unique_id=2060859123]
+visible = false
+connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(1, -1), Vector2i(2, -1), Vector2i(-1, 0), Vector2i(3, 0), Vector2i(-1, 1), Vector2i(3, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2)])
+internal_points = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)])
+size = Vector2i(3, 2)
+
+[node name="PowerConsumptionComponent" parent="." index="4" unique_id=1482911695 instance=ExtResource("5_2qdcj")]
+power_consumption = 80.0
+
+[node name="ProcessorComponent" parent="." index="5" unique_id=315007697 node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("6_ar0w4")]
+recipe = ExtResource("7_71at3")
+input_storage = NodePath("../Input Storage")
+output_storage = NodePath("../Output Storage")
+time_to_process = 30.0
+power_consumer = NodePath("../PowerConsumptionComponent")
+
+[node name="Input Storage" parent="." index="6" unique_id=1971387764 instance=ExtResource("8_ar0w4")]
+max_stored = 30
+accepts_exports = false
+storage_data = Dictionary[ExtResource("9_nrkwy"), ExtResource("10_t70i4")]({
+ExtResource("11_160wt"): SubResource("Resource_71at3")
+})
+
+[node name="Output Storage" parent="." index="7" unique_id=937491388 instance=ExtResource("8_ar0w4")]
+priority = -1
+max_stored = 20
+accepts_imports = false

@@ -10,6 +10,8 @@
 [ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="9_btupe"]
 [ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="10_4yt2q"]
 [ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="11_d0haa"]
+[ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="12_do1gr"]
+[ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="13_4yt2q"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="13_btupe"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_btupe"]
@@ -26,7 +28,19 @@ size = Vector2(192, 128)
 [sub_resource type="Resource" id="Resource_m0sbv"]
 script = ExtResource("9_btupe")
 resource_data = ExtResource("10_4yt2q")
-stored = 40
+stored = 50
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
+[sub_resource type="Resource" id="Resource_qt1fp"]
+script = ExtResource("9_btupe")
+resource_data = ExtResource("12_do1gr")
+stored = 20
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
+[sub_resource type="Resource" id="Resource_d0haa"]
+script = ExtResource("9_btupe")
+resource_data = ExtResource("13_4yt2q")
+stored = 10
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [node name="Module" unique_id=1483217976 instance=ExtResource("1_gv2ro")]
@@ -56,8 +70,10 @@ visible = false
 [node name="Storage Bay" parent="." index="5" unique_id=3501451 instance=ExtResource("7_l8ygt")]
 position = Vector2(128, 0)
 priority = -1
-max_stored = 40
+max_stored = 80
 allow_any_resource = true
 storage_data = Dictionary[ExtResource("8_do1gr"), ExtResource("9_btupe")]({
-ExtResource("10_4yt2q"): SubResource("Resource_m0sbv")
+ExtResource("10_4yt2q"): SubResource("Resource_m0sbv"),
+ExtResource("12_do1gr"): SubResource("Resource_qt1fp"),
+ExtResource("13_4yt2q"): SubResource("Resource_d0haa")
 })

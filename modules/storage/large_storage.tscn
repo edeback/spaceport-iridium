@@ -42,7 +42,7 @@ visible = false
 
 [node name="Storage Bay" parent="." index="3" unique_id=1955642490 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("4_47vfk")]
 priority = 0
-max_stored = 80
+max_stored = 160
 power_consumption_component = NodePath("../PowerConsumptionComponent")
 player_configurable = true
 

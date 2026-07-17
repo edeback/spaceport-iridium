@@ -9,7 +9,9 @@
 
 [resource]
 script = ExtResource("3_qnek6")
+id = &"fusion_reactor"
 name = "Fusion Reactor"
+description = "Power from fusing hydrogen, very efficient."
 scene = ExtResource("2_remso")
 icon = ExtResource("1_41ymn")
 instant_build = false
@@ -19,4 +21,3 @@ ExtResource("4_tvdsv"): 4
 })
 tags = Array[String](["Power"])
 unlocked_by_default = false
-id = &"fusion_reactor"

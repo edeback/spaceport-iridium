@@ -5,9 +5,9 @@
 
 [resource]
 script = ExtResource("2_qhd7a")
+id = &"credits"
 name = "Credits"
 icon = ExtResource("1_bjdx1")
+default_cost = 1
 has_global_store = true
 global_total = 1000
-cached_total = null
-id = &"credits"

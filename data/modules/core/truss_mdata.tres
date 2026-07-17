@@ -8,7 +8,9 @@
 
 [resource]
 script = ExtResource("4_8vpgq")
+id = &"truss_mdata"
 name = "Truss"
+description = "Structural backbone of the station. Modules come attached to trusses, though you can add more independently."
 scene = ExtResource("3_h5mru")
 icon = ExtResource("1_jwfst")
 resource_costs = Dictionary[ExtResource("2_xapty"), int]({
@@ -17,4 +19,3 @@ ExtResource("3_xapty"): 5
 tags = Array[String](["Core"])
 multiplacement = 3
 ignore_multiplacement_connection_check = true
-id = &"truss_mdata"
