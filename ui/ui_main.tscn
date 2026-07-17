@@ -22,6 +22,7 @@
 [ext_resource type="Resource" uid="uid://boadffwat0kpp" path="res://data/modules/docking_bays/docking_bay.tres" id="16_x3wcs"]
 [ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/core/hallway_mdata.tres" id="17_848xd"]
 [ext_resource type="PackedScene" uid="uid://1cce1a2cba56" path="res://ui/windows/component_ui_panels/resource_pile_inventory_tab.tscn" id="17_w7nyr"]
+[ext_resource type="PackedScene" path="res://ui/windows/component_ui_panels/asteroid_info_panel.tscn" id="18_astinfo"]
 [ext_resource type="Resource" uid="uid://b0cfkopyrq5xk" path="res://data/modules/industrial_processors/electrolysis_processor_mdata.tres" id="18_w7nyr"]
 [ext_resource type="Resource" uid="uid://0iqtgbc2dqvn" path="res://data/modules/industrial_processors/ice_processor_mdata.tres" id="19_0lj05"]
 [ext_resource type="PackedScene" uid="uid://mroynql4rcbs" path="res://ui/windows/trade/trade_screen.tscn" id="19_xyc40"]
@@ -112,6 +113,7 @@ resource_display_ui = ExtResource("4_wyidc")
 resources_to_display = Array[ExtResource("4_pqeum")]([ExtResource("5_47oex"), ExtResource("5_rtsem"), ExtResource("6_b5r2u"), ExtResource("7_1h8lm"), ExtResource("8_xyc40"), ExtResource("9_pset1"), ExtResource("10_j1br4"), ExtResource("11_lnfpq"), ExtResource("12_6re3r"), ExtResource("13_0sakr"), ExtResource("14_p3y7p")])
 pawn_info_screen = ExtResource("15_x3wcs")
 resource_pile_screen = ExtResource("17_w7nyr")
+asteroid_info_screen = ExtResource("18_astinfo")
 temp_modules = Array[ExtResource("15_47oex")]([ExtResource("16_x3wcs"), ExtResource("17_848xd"), ExtResource("18_w7nyr"), ExtResource("19_0lj05"), ExtResource("20_qj0xk"), ExtResource("21_qj7ft"), ExtResource("22_vt8g8"), ExtResource("23_tmpp0"), ExtResource("24_wt573"), ExtResource("25_u34n7"), ExtResource("26_bgs1r"), ExtResource("27_6porg"), ExtResource("28_s5567"), ExtResource("29_qnfs5"), ExtResource("30_4mt1o"), ExtResource("31_wy7eg"), ExtResource("32_k34tn")])
 
 [node name="ResourceDisplayPanel" type="PanelContainer" parent="." unique_id=1186352041]

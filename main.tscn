@@ -7630,7 +7630,15 @@ market_resources = Array[ExtResource("13_4k2k6")]([ExtResource("16_b1qrp"), ExtR
 [node name="AsteroidManager" type="Node" parent="Managers" unique_id=1264283929 node_paths=PackedStringArray("start_point", "end_point", "asteroid_layer")]
 script = ExtResource("10_cegan")
 asteroid_scene = ExtResource("11_82xsv")
-ore_types_available = Array[ExtResource("13_4k2k6")]([ExtResource("16_b1qrp"), ExtResource("32_blkrb"), ExtResource("33_abqjc"), ExtResource("34_6iyjs"), ExtResource("35_4w656")])
+ore_types_available = Array[ExtResource("13_4k2k6")]([ExtResource("16_b1qrp"), ExtResource("32_blkrb"), ExtResource("33_abqjc"), ExtResource("34_6iyjs"), ExtResource("35_4w656"), ExtResource("16_facbu")])
+ore_spawn_weights = Dictionary[ExtResource("13_4k2k6"), float]({
+ExtResource("16_b1qrp"): 1.0,
+ExtResource("32_blkrb"): 0.35,
+ExtResource("33_abqjc"): 0.9,
+ExtResource("34_6iyjs"): 0.2,
+ExtResource("35_4w656"): 0.7,
+ExtResource("16_facbu"): 0.8
+})
 start_point = NodePath("../../BackgroundLayers/AsteroidLayer/AsteroidStart")
 end_point = NodePath("../../BackgroundLayers/AsteroidLayer/AsteroidEnd")
 asteroid_layer = NodePath("../../BackgroundLayers/AsteroidLayer")

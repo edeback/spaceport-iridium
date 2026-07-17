@@ -113,3 +113,17 @@ func withdraw_amount(quantity: int, strategy: WithdrawStrategy = WithdrawStrateg
 
 func _value_of(stack: ResourceStack) -> float:
 	return stack.instance_data.get_primary_value() if stack.instance_data != null else 0.0
+
+## Amount-weighted average of get_primary_value() across stacks that carry
+## instance data (ore richness etc). -1.0 when none do, so UI callers can
+## tell "no variance info" apart from a legitimate 0.0 average.
+func average_instance_value() -> float:
+	var variant_units: int = 0
+	var weighted: float = 0.0
+	for stack: ResourceStack in stacks:
+		if stack.instance_data != null:
+			weighted += stack.instance_data.get_primary_value() * stack.amount
+			variant_units += stack.amount
+	if variant_units <= 0:
+		return -1.0
+	return weighted / variant_units

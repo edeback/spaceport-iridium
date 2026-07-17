@@ -9,3 +9,5 @@ id = &"iridium_ore"
 name = "Iridium Ore"
 icon = ExtResource("1_4o811")
 default_cost = 100
+has_variance = true
+merge_tolerance = 0.1

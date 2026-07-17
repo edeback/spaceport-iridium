@@ -16,6 +16,13 @@
 [ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="11_ymsq2"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="12_8w55x"]
 [ext_resource type="Resource" uid="uid://bvhvi4mdylcq" path="res://data/recipes/steel_recipe.tres" id="12_arklq"]
+[ext_resource type="Resource" uid="uid://bdtv1cjftf2g1" path="res://data/resources/iron.tres" id="13_iron"]
+[ext_resource type="Script" uid="uid://by2n6rwcttgyx" path="res://data/recipes/recipe_data.gd" id="14_rcpd"]
+[ext_resource type="Resource" path="res://data/recipes/refining/iron_refining_recipe.tres" id="15_rfiron"]
+[ext_resource type="Resource" path="res://data/recipes/refining/carbon_refining_recipe.tres" id="16_rfcarbon"]
+[ext_resource type="Resource" path="res://data/recipes/refining/silicon_refining_recipe.tres" id="17_rfsilicon"]
+[ext_resource type="Resource" path="res://data/recipes/refining/gold_refining_recipe.tres" id="18_rfgold"]
+[ext_resource type="Resource" path="res://data/recipes/refining/iridium_refining_recipe.tres" id="19_rfiridium"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_arklq"]
 shader = ExtResource("2_gtfxg")
@@ -30,10 +37,6 @@ resource_local_to_scene = true
 size = Vector2(126, 62)
 
 [sub_resource type="Resource" id="Resource_8w55x"]
-script = ExtResource("7_ymsq2")
-metadata/_custom_type_script = "uid://b75b02hdqaib1"
-
-[sub_resource type="Resource" id="Resource_vgcqb"]
 script = ExtResource("7_ymsq2")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
@@ -64,8 +67,7 @@ position = Vector2(-32, 0)
 max_stored = 20
 accepts_exports = false
 storage_data = Dictionary[ExtResource("6_ucso1"), ExtResource("7_ymsq2")]({
-ExtResource("3_560w6"): SubResource("Resource_8w55x"),
-ExtResource("10_560w6"): SubResource("Resource_vgcqb")
+ExtResource("3_560w6"): SubResource("Resource_8w55x")
 })
 
 [node name="Output Storage" parent="." index="5" unique_id=818868622 instance=ExtResource("5_83mgx")]
@@ -73,11 +75,12 @@ position = Vector2(64, 0)
 priority = -1
 accepts_imports = false
 storage_data = Dictionary[ExtResource("6_ucso1"), ExtResource("7_ymsq2")]({
-ExtResource("11_ymsq2"): SubResource("Resource_pj0q4")
+ExtResource("13_iron"): SubResource("Resource_pj0q4")
 })
 
 [node name="ProcessorComponent" parent="." index="7" unique_id=1865115011 node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("6_av0o4")]
-recipe = ExtResource("12_arklq")
+recipe = ExtResource("15_rfiron")
+available_recipes = Array[ExtResource("14_rcpd")]([ExtResource("15_rfiron"), ExtResource("16_rfcarbon"), ExtResource("17_rfsilicon"), ExtResource("18_rfgold"), ExtResource("19_rfiridium"), ExtResource("12_arklq")])
 input_storage = NodePath("../Input Storage")
 output_storage = NodePath("../Output Storage")
 time_to_process = 15.0

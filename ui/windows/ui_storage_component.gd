@@ -33,7 +33,7 @@ func refresh_display() -> void:
 	for resource: ResourceData in storage_component.storage_data:
 		var storage_line: StorageResourceLine = resource_line.instantiate() as StorageResourceLine
 		storage_line.stored_resource_name.text = resource.name
-		storage_line.stored_resource_value.text = _format_resouce_value(storage_component.total_stored_by_resource(resource))
+		storage_line.stored_resource_value.text = _format_slot_value(resource)
 		storage_line.debug_add_button.pressed.connect(_on_debug_add_button_pressed.bind(resource))
 		storage_line.dump_button.pressed.connect(_on_dump_button_pressed.bind(resource))
 		if storage_component.player_configurable:
@@ -57,11 +57,24 @@ func refresh_display() -> void:
 		
 func _format_resouce_value(value: int) -> String:
 	return "%d" % value
-	
+
+## Amount plus, for variance-carrying resources with known instance data, the
+## slot's average richness/quality - e.g. "14 (72%)".
+func _format_slot_value(resource: ResourceData) -> String:
+	var data: StorageData = storage_component.storage_data.get(resource)
+	if data == null:
+		return _format_resouce_value(0)
+	var text: String = _format_resouce_value(data.stored)
+	if resource.has_variance:
+		var avg: float = data.average_instance_value()
+		if avg >= 0.0:
+			text += " (%d%%)" % roundi(avg * 100.0)
+	return text
+
 func _on_storage_changed(resource: ResourceData, new_value: int) -> void:
 	var storage_line: StorageResourceLine = storage_lines.get(resource)
 	if storage_line != null:
-		storage_line.stored_resource_value.text = _format_resouce_value(new_value)
+		storage_line.stored_resource_value.text = _format_slot_value(resource)
 		storage_line.remove_resource_button.disabled = new_value > 0
 	%FreeSpaceAvailableLabel.text = _format_resouce_value(storage_component.space_available())
 

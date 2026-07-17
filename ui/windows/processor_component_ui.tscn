@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dtey8oi52oy67" path="res://ui/windows/processor_component_ui.gd" id="1_je4c3"]
 
-[node name="Process Stats" type="PanelContainer" node_paths=PackedStringArray("processor_recipe_label", "continuous_label", "processor_progress_bar")]
+[node name="Process Stats" type="PanelContainer" node_paths=PackedStringArray("processor_recipe_label", "continuous_label", "processor_progress_bar", "recipe_selector", "batch_richness_label")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -14,6 +14,8 @@ script = ExtResource("1_je4c3")
 processor_recipe_label = NodePath("MarginContainer/VBoxContainer/ProcessorRecipe")
 continuous_label = NodePath("MarginContainer/VBoxContainer/MarginContainer/ContinuousLabel")
 processor_progress_bar = NodePath("MarginContainer/VBoxContainer/MarginContainer/ProgressBar")
+recipe_selector = NodePath("MarginContainer/VBoxContainer/RecipeSelector")
+batch_richness_label = NodePath("MarginContainer/VBoxContainer/BatchRichness")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2
@@ -32,6 +34,15 @@ size_flags_vertical = 3
 text = "Make Gizmo: 3 Splorks processed into 1 Gizmo in 10.0 seconds"
 horizontal_alignment = 1
 autowrap_mode = 2
+
+[node name="RecipeSelector" type="OptionButton" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="BatchRichness" type="Label" parent="MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+text = "Batch richness: 50%"
+horizontal_alignment = 1
 
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2

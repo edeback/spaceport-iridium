@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://udm67iu3w25e"]
+[gd_scene load_steps=3 format=3 uid="uid://udm67iu3w25e"]
 
 [ext_resource type="Script" uid="uid://0ha8qo8v7a5v" path="res://modules/components/mining_component.gd" id="1_klg84"]
+[ext_resource type="PackedScene" path="res://ui/windows/mining_component_ui.tscn" id="2_mcui"]
 
 [node name="MiningComponent" type="Node2D"]
 script = ExtResource("1_klg84")
+ui_info_panel_element = ExtResource("2_mcui")

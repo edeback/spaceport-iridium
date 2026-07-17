@@ -37,7 +37,14 @@ func _on_pile_changed(resource: ResourceData, new_amount: int) -> void:
 		resource_container.add_child(inventory_row)
 		resource_rows[resource] = inventory_row
 		resource_rows[resource].stored_name.text = resource.name
-	resource_rows[resource].stored_value.text = str(new_amount)
+	var value_text: String = str(new_amount)
+	if resource.has_variance:
+		var container: ResourceStackContainer = resource_pile.contents.get(resource)
+		if container != null:
+			var avg: float = container.average_instance_value()
+			if avg >= 0.0:
+				value_text += " (%d%%)" % roundi(avg * 100.0)
+	resource_rows[resource].stored_value.text = value_text
 
 func _process(_delta: float) -> void:
 	# Turns out this is necessary to keep the panel in the correct position if you move your screen around

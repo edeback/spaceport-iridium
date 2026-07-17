@@ -10,3 +10,5 @@ name = "Carbon Ore"
 icon = ExtResource("1_wvm1w")
 default_cost = 20
 default_market_supply = 80
+has_variance = true
+merge_tolerance = 0.1

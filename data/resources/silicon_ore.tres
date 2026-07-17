@@ -8,3 +8,5 @@ script = ExtResource("2_ohxop")
 id = &"silicon_ore"
 name = "Silicon Ore"
 icon = ExtResource("1_cfxov")
+has_variance = true
+merge_tolerance = 0.1

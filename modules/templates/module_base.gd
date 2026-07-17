@@ -200,6 +200,11 @@ func get_save_data() -> Dictionary:
 		var trade_save: Dictionary = trade.get_save_data()
 		if not trade_save.is_empty():
 			data["trade"] = trade_save
+	var processor: ProcessorComponent = get_component_by_type(ProcessorComponent) as ProcessorComponent
+	if processor != null:
+		var processor_save: Dictionary = processor.get_save_data()
+		if not processor_save.is_empty():
+			data["processor"] = processor_save
 	var upgrades: Dictionary = get_upgrade_save_data()
 	if not upgrades.is_empty():
 		data["upgrades"] = upgrades
@@ -213,6 +218,12 @@ func load_save_data(data: Dictionary) -> void:
 	var construction: ConstructionComponent = get_component_by_type(ConstructionComponent) as ConstructionComponent
 	if construction != null and data.has("construction"):
 		construction.load_save_data(data["construction"])
+	# Processor before storage: restoring the selected recipe reconfigures the
+	# input/output slots, and the storage section then restores actual
+	# contents on top of that configuration.
+	var processor: ProcessorComponent = get_component_by_type(ProcessorComponent) as ProcessorComponent
+	if processor != null and data.has("processor"):
+		processor.load_save_data(data["processor"])
 	var storages: Dictionary = data.get("storage", {})
 	for path_str: String in storages:
 		var storage: StorageComponent = get_node_or_null(NodePath(path_str)) as StorageComponent

@@ -3,12 +3,15 @@
 [ext_resource type="Script" uid="uid://cbikuxxna03ab" path="res://objects/asteroid_base.gd" id="1_gwhge"]
 [ext_resource type="Texture2D" uid="uid://cmbwcxe4uwwwt" path="res://assets/sprites/asteroid.png" id="1_yx8kc"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="4_iee0s"]
-[ext_resource type="Resource" uid="uid://b27jc67v174pi" path="res://data/resources/iridium.tres" id="4_j8ppu"]
-[ext_resource type="Resource" uid="uid://c56jj6kgs36sx" path="res://data/resources/gold.tres" id="5_mx1br"]
-[ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="6_2upad"]
+[ext_resource type="Resource" uid="uid://bj04ftawqiwko" path="res://data/resources/iridium_ore.tres" id="4_j8ppu"]
+[ext_resource type="Resource" uid="uid://cnje5k2redpx0" path="res://data/resources/gold_ore.tres" id="5_mx1br"]
+[ext_resource type="Resource" uid="uid://c8o0o81ej48mp" path="res://data/resources/carbon_ore.tres" id="6_2upad"]
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="7_d4a3e"]
 [ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="8_wnbub"]
-[ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicon.tres" id="9_164ux"]
+[ext_resource type="Resource" uid="uid://cns3lrfd8jekj" path="res://data/resources/silicon_ore.tres" id="9_164ux"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_click"]
+radius = 28.01785
 
 [node name="AsteroidBase" type="Node2D" unique_id=1253064257 node_paths=PackedStringArray("sprite")]
 script = ExtResource("1_gwhge")
@@ -25,3 +28,8 @@ ExtResource("8_wnbub"): 10.0
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=986573433]
 position = Vector2(-7, -8)
 texture = ExtResource("1_yx8kc")
+
+[node name="ClickArea" type="Area2D" parent="." unique_id=1336197347]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ClickArea" unique_id=891619700]
+shape = SubResource("CircleShape2D_click")

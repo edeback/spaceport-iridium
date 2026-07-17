@@ -9,3 +9,5 @@ id = &"gold_ore"
 name = "Gold Ore"
 icon = ExtResource("1_w1q6y")
 default_cost = 50
+has_variance = true
+merge_tolerance = 0.1

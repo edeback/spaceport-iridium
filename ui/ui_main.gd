@@ -14,6 +14,9 @@ var cur_pawn_info: PawnInfoPanel
 @export var resource_pile_screen: PackedScene
 var cur_resource_pile_screen: ResourcePileInventoryTab
 
+@export var asteroid_info_screen: PackedScene
+var cur_asteroid_info_screen: AsteroidInfoPanel
+
 @export var temp_modules: Array[ModuleData] = []
 
 # Dictionary[String, Array[ModuleData]]
@@ -279,6 +282,17 @@ func resource_pile_clicked(pile: ResourcePile) -> void:
 	cur_resource_pile_screen = resource_pile_screen.instantiate()
 	cur_resource_pile_screen.set_resource_pile(pile)
 	add_child(cur_resource_pile_screen)
+
+func asteroid_clicked(asteroid: AsteroidBase) -> void:
+	if cur_asteroid_info_screen != null:
+		var was_same: bool = cur_asteroid_info_screen.asteroid == asteroid
+		cur_asteroid_info_screen.queue_free()
+		cur_asteroid_info_screen = null
+		if was_same:
+			return
+	cur_asteroid_info_screen = asteroid_info_screen.instantiate() as AsteroidInfoPanel
+	cur_asteroid_info_screen.set_asteroid(asteroid)
+	add_child(cur_asteroid_info_screen)
 	
 var _click_cycler: ClickCycler = ClickCycler.new()
 

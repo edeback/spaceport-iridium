@@ -16,12 +16,6 @@ var default_seconds_to_mine: float = 1.0
 var max_mined: int = 5
 var resources_mined_count: int = 0
 
-## Placeholder sampling range until AsteroidBase exposes real per-chunk
-## richness data - this is here so mined ore actually carries continuous
-## variance end-to-end. Swap for something asteroid-driven whenever that
-## data exists (e.g. richer asteroids biasing toward the high end).
-const ORE_RICHNESS_RANGE := Vector2(0.3, 1.0)
-
 enum MineAsteroidState { Starting, MovingToAsteroid, MineAsteroid, ReturningToModule, DepositMaterial, Finished, Failed }
 
 func get_category() -> Category:
@@ -103,11 +97,25 @@ func get_asteroid() -> void:
 		asteroid.despawning.disconnect(_asteroid_despawned)
 	var asteroids: Array[Node] = pawn.get_tree().get_nodes_in_group("asteroid")
 	asteroids.shuffle()
+	# Priority order: player-designated asteroids first, then ones carrying
+	# this mining bay's priority ore, then whatever the shuffle found first.
+	# requesting_component can be null (module removed while unclaimed).
+	var priority_ore: ResourceData = requesting_component.priority_ore if requesting_component != null else null
+	var ore_match: AsteroidBase = null
+	var fallback: AsteroidBase = null
 	asteroid = null
-	for test_asteroid: AsteroidBase in asteroids: 
-		if not test_asteroid.is_empty():
+	for test_asteroid: AsteroidBase in asteroids:
+		if test_asteroid.is_empty():
+			continue
+		if test_asteroid.designated:
 			asteroid = test_asteroid
 			break
+		if ore_match == null and priority_ore != null and test_asteroid.has_ore(priority_ore):
+			ore_match = test_asteroid
+		if fallback == null:
+			fallback = test_asteroid
+	if asteroid == null:
+		asteroid = ore_match if ore_match != null else fallback
 	if asteroid == null:
 		state = MineAsteroidState.Failed
 		return
@@ -172,7 +180,7 @@ func mine_asteroid(delta: float) -> void:
 			stack.amount = 1
 			if mined_resource.has_variance:
 				var instance := OreInstanceData.new()
-				instance.richness = randf_range(ORE_RICHNESS_RANGE.x, ORE_RICHNESS_RANGE.y)
+				instance.richness = asteroid.sample_richness()
 				stack.instance_data = instance
 			pawn.inventory_component.add_stacks(mined_resource, [stack])
 			resources_mined_count += 1

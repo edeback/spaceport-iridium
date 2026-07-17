@@ -8,3 +8,5 @@ script = ExtResource("2_6cypi")
 id = &"iron_ore"
 name = "Iron Ore"
 icon = ExtResource("1_fn40q")
+has_variance = true
+merge_tolerance = 0.1

@@ -13,6 +13,11 @@ var drones: Array[MiningDronePawn] = []
 ## Only ticks while powered, so it pauses and fast-forwards with the game.
 var _respawn_time_left: float = -1.0
 
+## Player-selected ore this bay's drones seek out once no designated
+## asteroids remain (see Job_MineAsteroid.get_asteroid). Null = no
+## preference, random asteroid. Per-bay, not persisted (see 03_Bugs).
+var priority_ore: ResourceData = null
+
 var output_resource: ResourceData
 
 var processing: bool = false
@@ -33,10 +38,10 @@ func _ready() -> void:
 
 func ready_preview() -> void:
 	set_process(false)
-	
+
 func ready_blueprint() -> void:
 	set_process(false)
-	
+
 func ready_constructed() -> void:
 	set_process(true)
 	add_to_group("processor")
@@ -64,7 +69,7 @@ func _process(delta: float) -> void:
 			build_drone()
 	else:
 		_respawn_time_left = -1.0
-		
+
 func build_drone() -> void:
 	var new_drone: MiningDronePawn = mining_drone_scene.instantiate() as MiningDronePawn
 	new_drone.global_position = Global.cell_to_world(owner_module.module_cell, true)
@@ -79,7 +84,7 @@ func _exit_tree() -> void:
 
 func _can_output(amount: int) -> bool:
 	return output_storage.space_available(true) >= amount
-	
+
 ## Intentionally not offer_followup_job or else construction workers end up picking this up
 func get_next_job(_pawn: PawnBase) -> JobBase:
 	if power_consumer.powered:
@@ -96,7 +101,9 @@ func get_next_job(_pawn: PawnBase) -> JobBase:
 	return Job_Idle.new()
 
 func has_ui() -> bool:
-	return false
-	
+	return true
+
 func get_ui() -> ModuleComponentUI:
-	return null
+	var ui: MiningComponentUI = ui_info_panel_element.instantiate() as MiningComponentUI
+	ui.set_mining_component(self)
+	return ui
