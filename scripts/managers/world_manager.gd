@@ -48,6 +48,11 @@ func _startup() -> void:
 	add_module(docking_bay, Vector2i(18,8), true, true, false, true)
 	add_module(hallway_module, Vector2i(17, 9))
 	add_module(module_airlock, Vector2i(19, 9), true, true)
+	# New game only (load never reaches here): the starting station begins
+	# fully O2-pressurized so the player has slack while expanding (WI-17).
+	# Deferred: construction-capable starters run ready_blueprint via
+	# call_deferred above, so their atmosphere registration hasn't happened yet.
+	Global.atmosphere_manager.seed_starting_atmosphere.call_deferred()
 	
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.

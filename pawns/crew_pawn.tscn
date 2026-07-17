@@ -5,6 +5,7 @@
 [ext_resource type="Resource" uid="uid://c6dglp2nbs0f1" path="res://data/pawns/all_work_schedule.tres" id="2_f4e1i"]
 [ext_resource type="PackedScene" path="res://pawns/pawn_health_component.tscn" id="3_health"]
 [ext_resource type="PackedScene" path="res://pawns/socialize_component.tscn" id="4_social"]
+[ext_resource type="PackedScene" path="res://pawns/pawn_breathing_component.tscn" id="5_breath"]
 
 [node name="PawnBase" unique_id=1067060448 node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_4e1f1")]
 animated_sprite = NodePath("Offset/Crew")
@@ -34,3 +35,5 @@ has_recreation_need = true
 [node name="PawnHealthComponent" parent="." index="2" unique_id=696141816 instance=ExtResource("3_health")]
 
 [node name="SocializeComponent" parent="." index="3" unique_id=266158254 instance=ExtResource("4_social")]
+
+[node name="PawnBreathingComponent" parent="." instance=ExtResource("5_breath")]

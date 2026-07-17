@@ -13,15 +13,16 @@
 [ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="12_do1gr"]
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="13_4yt2q"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="13_btupe"]
+[ext_resource type="PackedScene" path="res://modules/components/oxygen_scrubber_component.tscn" id="15_scrub"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_btupe"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4yt2q"]
 shader = ExtResource("2_gm7c8")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_4yt2q"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_d0haa"]
 resource_local_to_scene = true
 size = Vector2(192, 128)
 
@@ -48,7 +49,7 @@ can_delete = false
 structure_check_before_delete = true
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_btupe")
+material = SubResource("ShaderMaterial_4yt2q")
 texture = ExtResource("3_do1gr")
 region_enabled = false
 
@@ -57,7 +58,7 @@ scale = Vector2(3, 2)
 power_generation_component = NodePath("../../../PowerGenerationComponent")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_4yt2q")
+shape = SubResource("RectangleShape2D_d0haa")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([Vector2i(96, 96)])
@@ -77,3 +78,5 @@ ExtResource("10_4yt2q"): SubResource("Resource_m0sbv"),
 ExtResource("12_do1gr"): SubResource("Resource_qt1fp"),
 ExtResource("13_4yt2q"): SubResource("Resource_d0haa")
 })
+
+[node name="OxygenScrubberComponent" parent="." index="6" unique_id=538387780 instance=ExtResource("15_scrub")]

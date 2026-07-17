@@ -35,12 +35,14 @@ func start_job(_pawn: PawnBase) -> void:
 		if not _pawn.is_on_shift():
 			for node in connections:
 				if node is ModuleBase and node is not ModuleTurbolift \
-						and (node as ModuleBase).get_component_by_type(SocialComponent) != null:
+						and (node as ModuleBase).get_component_by_type(SocialComponent) != null \
+						and PawnBreathingComponent.is_module_safe_for(_pawn, node as ModuleBase):
 					destination = node as ModuleBase
 					break
 		if destination == null:
 			for node in connections:
-				if node is ModuleBase and node is not ModuleTurbolift:
+				if node is ModuleBase and node is not ModuleTurbolift \
+						and PawnBreathingComponent.is_module_safe_for(_pawn, node as ModuleBase):
 					destination = node as ModuleBase
 					break
 	else:

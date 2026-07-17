@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="UnlockData" format=3]
+
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_rdata"]
+[ext_resource type="Script" uid="uid://c6vwp01mtmoyt" path="res://data/unlocks/effects/unlock_effect.gd" id="2_effect"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="3_credits"]
+[ext_resource type="Script" uid="uid://co6152j7b38nw" path="res://data/unlocks/unlock_data.gd" id="4_unlock"]
+[ext_resource type="Resource" path="res://data/modules/life_support/o2_scrubber_mdata.tres" id="5_scrubber"]
+[ext_resource type="Resource" path="res://data/modules/life_support/o2_generator_mdata.tres" id="6_generator"]
+[ext_resource type="Script" uid="uid://byjsbe8qb3i7t" path="res://data/unlocks/effects/grant_module_effect.gd" id="7_grant"]
+[ext_resource type="Texture2D" uid="uid://em32jg7ghdyl" path="res://ui/icons/oxygen.png" id="8_icon"]
+[ext_resource type="Resource" uid="uid://byjlxgedr7ghp" path="res://data/unlocks/industrial_tree/electrolyzer_unlock.tres" id="9_prereq"]
+
+[sub_resource type="Resource" id="Resource_grant_scrubber"]
+script = ExtResource("7_grant")
+module = ExtResource("5_scrubber")
+metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
+
+[sub_resource type="Resource" id="Resource_grant_generator"]
+script = ExtResource("7_grant")
+module = ExtResource("6_generator")
+metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
+
+[resource]
+script = ExtResource("4_unlock")
+id = &"life_support_unlock"
+name = "Life Support Systems"
+description = "Standalone O2 scrubbers and oxygen generators to keep a growing station breathing."
+icon = ExtResource("8_icon")
+tree_id = &"industrial"
+cost = Dictionary[ExtResource("1_rdata"), int]({
+ExtResource("3_credits"): 300
+})
+prerequisites = Array[ExtResource("4_unlock")]([ExtResource("9_prereq")])
+effects = Array[ExtResource("2_effect")]([SubResource("Resource_grant_scrubber"), SubResource("Resource_grant_generator")])
+metadata/_custom_type_script = "uid://co6152j7b38nw"

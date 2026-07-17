@@ -19,6 +19,7 @@ size = Vector2(62, 62)
 [node name="Module" unique_id=754556263 instance=ExtResource("1_uwdk4")]
 script = ExtResource("2_m657s")
 blocks_building = false
+has_atmosphere = false
 structure_check_before_delete = true
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]

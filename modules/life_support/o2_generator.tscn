@@ -1,0 +1,33 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_base"]
+[ext_resource type="Texture2D" uid="uid://s0o2e0b05pv6" path="res://assets/sprites/module_generic_blue.png" id="2_tex"]
+[ext_resource type="PackedScene" path="res://modules/components/oxygen_generator_component.tscn" id="3_gen"]
+[ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="4_storage"]
+[ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="5_sdata"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="6_rdata"]
+[ext_resource type="Resource" uid="uid://tf727fx7vlah" path="res://data/resources/oxygen.tres" id="7_oxygen"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="8_pwr"]
+
+[sub_resource type="Resource" id="Resource_o2slot"]
+script = ExtResource("5_sdata")
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
+[node name="Module" instance=ExtResource("1_base")]
+
+[node name="Sprite" parent="Offset" index="0"]
+texture = ExtResource("2_tex")
+
+[node name="InputStorage" parent="." instance=ExtResource("4_storage")]
+accepts_exports = false
+storage_data = Dictionary[ExtResource("6_rdata"), ExtResource("5_sdata")]({
+ExtResource("7_oxygen"): SubResource("Resource_o2slot")
+})
+
+[node name="PowerConsumptionComponent" parent="." instance=ExtResource("8_pwr")]
+power_consumption = 20.0
+
+[node name="OxygenGeneratorComponent" parent="." node_paths=PackedStringArray("storage_bay", "power_consumption_component") instance=ExtResource("3_gen")]
+storage_bay = NodePath("../InputStorage")
+power_consumption_component = NodePath("../PowerConsumptionComponent")
+oxygen_resource = ExtResource("7_oxygen")

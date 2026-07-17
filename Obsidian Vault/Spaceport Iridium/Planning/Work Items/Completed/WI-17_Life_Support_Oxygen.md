@@ -1,5 +1,15 @@
 # WI-17 — Life Support: Oxygen & Atmosphere
 
+> **Status: Implemented** (2026-07-17). Deviations from the design below:
+> - No per-scene AtmosphereComponent edits: `AtmosphereManager` runtime-attaches one to any module with a PathComponent on a non-SPACE layer whose new `ModuleBase.has_atmosphere` export is true (truss opts out — it has a PathComponent for EVA traversal but holds no air). One eligibility rule in one place; future modules need no wiring.
+> - Starting station seeds at **full O2** (user revision), via `seed_starting_atmosphere()` deferred from `WorldManager._startup` plus a 2-sim-second registration window (starter corridors register a few deferred frames late).
+> - Diffusion runs on `slow_tick`, pairwise over PathManager door edges (reduced-volume relaxation, exactly mass-conserving) + turbolift-shaft groups equalized as a shared plenum. Verified conservation: total gas constant to the unit across diffusion/expansion; only breaches destroy and the generator adds.
+> - Low-O2 alerts fire only on a healthy→low transition (pre-latched at registration), so vacuum fresh builds don't spam the strip.
+> - Generator throughput is diffusion-limited: it holds its own 1×1 module at the setpoint and exports via the door edges (~90%/h per hop), so refilling a big station after a breach takes hours — feels right, tune `release_rate_per_hour`/`diffusion_rate_per_hour` if too slow.
+> - Idle wander also *avoids* modules below the flee threshold (`PawnBreathingComponent.is_module_safe_for`), preventing flee/wander thrash.
+> - Generator canister-in-flight gas (`buffer`) rides an `o2_generator` module-save section so cracking a canister survives save/load.
+> - Verified headless via a temporary scripted driver (31 checks: seeding, scrubber equilibrium, dilution + fill, breach vent/drag/seal, generator supply + recovery, flee, UI, save sections). Debug: `Global.atmosphere_manager.debug_dump()`.
+
 ## Goal
 Per-module atmosphere simulation: O2 and CO2 with pressures, quick diffusion between connected modules (implicit vents — no player-built ducting), crew breathing (O2 → CO2) with suffocation damage at low O2, two restoration machines (regenerative O2 scrubber: CO2 → O2; O2 generator: consumes stored `oxygen` resource to raise pressure), and hull-breach venting driven by events (combat hooks in later). Crew in space are exempt — assume suit supply (personal O2 tanks limiting EVA time are a future WI, not this one).
 

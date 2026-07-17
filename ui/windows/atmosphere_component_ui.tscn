@@ -1,0 +1,68 @@
+[gd_scene format=3 uid="uid://dytaqheck3ddv"]
+
+[ext_resource type="Script" uid="uid://blyi00rnea30c" path="res://ui/windows/atmosphere_component_ui.gd" id="1_atmoui"]
+
+[node name="AtmosphereComponentUI" type="PanelContainer" unique_id=1255143015 node_paths=PackedStringArray("pressure_label", "o2_label", "co2_label", "breach_label")]
+script = ExtResource("1_atmoui")
+pressure_label = NodePath("MarginContainer/ContentsBox/PressureRow/PressureLabel")
+o2_label = NodePath("MarginContainer/ContentsBox/O2Row/O2Label")
+co2_label = NodePath("MarginContainer/ContentsBox/CO2Row/CO2Label")
+breach_label = NodePath("MarginContainer/ContentsBox/BreachLabel")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1348966335]
+layout_mode = 2
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
+
+[node name="ContentsBox" type="VBoxContainer" parent="MarginContainer" unique_id=1262196034]
+layout_mode = 2
+
+[node name="PressureRow" type="HBoxContainer" parent="MarginContainer/ContentsBox" unique_id=1744362714]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/ContentsBox/PressureRow" unique_id=1754000621]
+layout_mode = 2
+text = "Pressure: "
+
+[node name="PressureLabel" type="Label" parent="MarginContainer/ContentsBox/PressureRow" unique_id=1894729340]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "100 kPa"
+
+[node name="O2Row" type="HBoxContainer" parent="MarginContainer/ContentsBox" unique_id=1881771187]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/ContentsBox/O2Row" unique_id=2075586877]
+layout_mode = 2
+text = "Oxygen: "
+
+[node name="O2Label" type="Label" parent="MarginContainer/ContentsBox/O2Row" unique_id=1186486274]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "100 kPa"
+
+[node name="CO2Row" type="HBoxContainer" parent="MarginContainer/ContentsBox" unique_id=390284293]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/ContentsBox/CO2Row" unique_id=1002974750]
+layout_mode = 2
+text = "CO2: "
+
+[node name="CO2Label" type="Label" parent="MarginContainer/ContentsBox/CO2Row" unique_id=1962739963]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "0 kPa"
+
+[node name="BreachLabel" type="Label" parent="MarginContainer/ContentsBox" unique_id=741697027]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.35, 0.3, 1)
+text = "BREACHED"
+
+[node name="BreachButton" type="Button" parent="MarginContainer/ContentsBox" unique_id=2114198886]
+layout_mode = 2
+text = "Cause Breach"
+
+[connection signal="pressed" from="MarginContainer/ContentsBox/BreachButton" to="." method="_on_breach_button_pressed"]

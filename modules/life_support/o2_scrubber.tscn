@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_base"]
+[ext_resource type="Texture2D" uid="uid://beq5cwfdlfv54" path="res://assets/sprites/module_generic_yellow.png" id="2_tex"]
+[ext_resource type="PackedScene" path="res://modules/components/oxygen_scrubber_component.tscn" id="3_scrub"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="4_pwr"]
+
+[node name="Module" instance=ExtResource("1_base")]
+
+[node name="Sprite" parent="Offset" index="0"]
+texture = ExtResource("2_tex")
+
+[node name="PowerConsumptionComponent" parent="." instance=ExtResource("4_pwr")]
+power_consumption = 15.0
+
+[node name="OxygenScrubberComponent" parent="." node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("3_scrub")]
+power_consumption_component = NodePath("../PowerConsumptionComponent")

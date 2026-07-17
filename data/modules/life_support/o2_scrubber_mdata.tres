@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://htksqhvpj1o1"]
+
+[ext_resource type="Texture2D" uid="uid://d2c777465bqbh" path="res://assets/sprites/small_storage.png" id="1_3pdwn"]
+[ext_resource type="PackedScene" path="res://modules/life_support/o2_scrubber.tscn" id="2_scene"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="3_rdata"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="4_steel"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="5_mdata"]
+
+[resource]
+script = ExtResource("5_mdata")
+id = &"o2_scrubber_mdata"
+name = "O2 Scrubber"
+description = "Regenerates breathable air by converting CO2 back into oxygen. Does not raise pressure."
+scene = ExtResource("2_scene")
+icon = ExtResource("1_3pdwn")
+instant_build = false
+resource_costs = Dictionary[ExtResource("3_rdata"), int]({
+ExtResource("4_steel"): 3
+})
+tags = Array[String](["Industrial"])
+unlocked_by_default = false

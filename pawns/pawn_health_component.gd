@@ -24,13 +24,17 @@ signal health_changed(new_health: float)
 @export var regen_per_hour: float = 1.0
 ## Applied INSTEAD of regen while the pawn's hunger sits at 0.
 @export var starvation_decay_per_hour: float = 3.0
+## Applied INSTEAD of regen while suffocating (WI-17) - much faster than
+## starvation; thin air is an emergency. Stacks with starvation decay.
+@export var suffocation_decay_per_hour: float = 25.0
 ## Alert threshold - higher than the decaying needs' 5% so the player gets
 ## warning while there is still time to fix the cause.
 @export var percent_critical: float = 25.0
 
 var _was_critical: bool = false
-## Sibling lookup cached lazily - component _ready order isn't guaranteed.
+## Sibling lookups cached lazily - component _ready order isn't guaranteed.
 var _needs: PawnNeedsComponent = null
+var _breathing: PawnBreathingComponent = null
 
 func _process(delta: float) -> void:
 	var sim_hours: float = Global.time_manager.scale(delta) / TimeManager.SECONDS_PER_HOUR
@@ -38,9 +42,19 @@ func _process(delta: float) -> void:
 		return
 	if _needs == null:
 		_needs = owner_pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
+	if _breathing == null:
+		_breathing = owner_pawn.get_component_by_type(PawnBreathingComponent) as PawnBreathingComponent
 	var starving: bool = _needs != null and _needs.has_hunger_need and _needs.hunger_value <= 0.0
-	if starving:
-		health_value -= starvation_decay_per_hour * sim_hours
+	var suffocating: bool = _breathing != null and _breathing.is_suffocating
+	if starving or suffocating:
+		# Both emergencies at once stack their decay; regen never applies
+		# while either is active (same exclusivity rule as before WI-17).
+		var decay: float = 0.0
+		if starving:
+			decay += starvation_decay_per_hour
+		if suffocating:
+			decay += suffocation_decay_per_hour
+		health_value -= decay * sim_hours
 	elif health_value < health_max:
 		health_value += regen_per_hour * sim_hours
 	var percent: float = health_value / health_max * 100.0

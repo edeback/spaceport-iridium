@@ -15,6 +15,11 @@ extends ObjectBase
 		
 @export var blocks_building: bool = true
 @export var can_delete: bool = true
+## Whether this module holds a breathable atmosphere when built (WI-17).
+## AtmosphereManager attaches an AtmosphereComponent to modules that have a
+## PathComponent on a non-SPACE layer AND this flag. Set false for structures
+## pawns traverse but that hold no air (truss).
+@export var has_atmosphere: bool = true
 @export var structure_check_before_delete: bool = true
 @export var add_to_groups: Array[StringName] = []
 
@@ -205,6 +210,14 @@ func get_save_data() -> Dictionary:
 		var processor_save: Dictionary = processor.get_save_data()
 		if not processor_save.is_empty():
 			data["processor"] = processor_save
+	var atmosphere: AtmosphereComponent = get_component_by_type(AtmosphereComponent) as AtmosphereComponent
+	if atmosphere != null:
+		data["atmosphere"] = atmosphere.get_save_data()
+	var o2_generator: OxygenGeneratorComponent = get_component_by_type(OxygenGeneratorComponent) as OxygenGeneratorComponent
+	if o2_generator != null:
+		var generator_save: Dictionary = o2_generator.get_save_data()
+		if not generator_save.is_empty():
+			data["o2_generator"] = generator_save
 	var upgrades: Dictionary = get_upgrade_save_data()
 	if not upgrades.is_empty():
 		data["upgrades"] = upgrades
@@ -234,6 +247,12 @@ func load_save_data(data: Dictionary) -> void:
 	var trade: TradeComponent = get_component_by_type(TradeComponent) as TradeComponent
 	if trade != null and data.has("trade"):
 		trade.load_save_data(data["trade"])
+	var atmosphere: AtmosphereComponent = get_component_by_type(AtmosphereComponent) as AtmosphereComponent
+	if atmosphere != null and data.has("atmosphere"):
+		atmosphere.load_save_data(data["atmosphere"])
+	var o2_generator: OxygenGeneratorComponent = get_component_by_type(OxygenGeneratorComponent) as OxygenGeneratorComponent
+	if o2_generator != null and data.has("o2_generator"):
+		o2_generator.load_save_data(data["o2_generator"])
 	load_upgrade_save_data(data.get("upgrades", {}))
 
 ## Restore tiers saved by get_upgrade_save_data() and re-apply their modifiers,
