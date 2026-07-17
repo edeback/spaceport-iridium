@@ -151,12 +151,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/Game Loop.md",
+                "file": "Spaceport Iridium/Reorganized/New Work.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Game Loop"
+              "title": "New Work"
             }
           },
           {
@@ -247,7 +247,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Spaceport Iridium/Game Loop.md",
+                "file": "Spaceport Iridium/Reorganized/New Work.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -257,7 +257,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Game Loop"
+              "title": "Backlinks for New Work"
             }
           },
           {
@@ -293,13 +293,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Spaceport Iridium/Game Loop.md",
+                "file": "Spaceport Iridium/Reorganized/New Work.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Game Loop"
+              "title": "Outline of New Work"
             }
           }
         ],
@@ -323,22 +323,27 @@
   },
   "active": "471944f5475eac00",
   "lastOpenFiles": [
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-04_Job_System_Refactor.md",
     "Spaceport Iridium/Reorganized/New Work.md",
+    "Spaceport Iridium/Planning/Work Items/WI-17_Life_Support_Oxygen.md",
     "Spaceport Iridium/Planning/02_Roadmap.md",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md",
+    "Spaceport Iridium/Planning/Work Items/WI-17_Life_Support_Oxygen.md.tmp.81408.d96d4cdc4f3a",
+    "Spaceport Iridium/Planning/Work Items/WI-17_Life_Support_Oxygen.md.tmp.81408.5643c5d80c58",
+    "Spaceport Iridium/Planning/Work Items/WI-17_Life_Support_Oxygen.md.tmp.81408.104a0a7e09df",
+    "Spaceport Iridium/Reorganized/Spaceport Iridium Plan.md",
+    "Spaceport Iridium/Planning/Work Items/WI-12_Storage_QoL.md",
+    "Spaceport Iridium/Game Loop.md",
     "Spaceport Iridium/Inspirations.md",
     "Spaceport Iridium/Notes from Project Highrise.md",
-    "Spaceport Iridium/Game Loop.md",
     "Spaceport Iridium/Game Settings.md",
     "Spaceport Iridium/TODO notes.md",
-    "Spaceport Iridium/Reorganized/Spaceport Iridium Plan.md",
     "Spaceport Iridium/Audio.md",
     "Spaceport Iridium/Notes from SimTower.md",
-    "Spaceport Iridium/Planning/Work Items/WI-12_Storage_QoL.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-13_Events_v1.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-06_Shifts_and_Schedules.md",
     "Spaceport Iridium/Power System.md",
     "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.71924.4dfea19b2405",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md",
     "Spaceport Iridium/Planning/00_Design_Document.md",
     "Spaceport Iridium/Reorganized/05_Engineering_and_Technical_TODO.md",
     "Spaceport Iridium/Reorganized/04_World_Meta_and_Progression.md",
@@ -348,17 +353,12 @@
     "Spaceport Iridium/Reorganized/00_Overview.md",
     "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md",
     "Spaceport Iridium/Game Mechanics/Story/Background.md",
-    "Spaceport Iridium/Game Mechanics/Story/Tutorial.md",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-14_Contracts.md",
     "Spaceport Iridium/Planning/Work Items/WI-14_Contracts.md.tmp.53868.a09fbc1eef6f",
     "Spaceport Iridium/Planning/Work Items/WI-13_Events_v1.md.tmp.53868.bef66934b615",
     "Spaceport Iridium/Planning/Work Items/WI-09_Ore_Variance_Refining.md.tmp.67104.9e48bbc8a8c2",
     "Spaceport Iridium/Planning/Work Items/WI-09_Ore_Variance_Refining.md.tmp.67104.e3b1012a31a8",
     "Spaceport Iridium/Planning/Work Items/Completed",
     "Spaceport Iridium/Planning/Work Items/WI-10_Placement_UX.md.tmp.50156.3aa983ee7f81",
-    "Spaceport Iridium/Planning/Work Items/WI-10_Placement_UX.md.tmp.50156.a125f4b21644",
-    "Spaceport Iridium/Planning/Work Items/WI-10_Placement_UX.md.tmp.50156.c9f24d7dd2e8",
-    "Spaceport Iridium/Planning/Work Items/WI-10_Placement_UX.md.tmp.50156.5ca7894652b0",
     "Pasted image 20251208125343.png",
     "Pasted image 20260712204434.png",
     "Pasted image 20251208125118.png",

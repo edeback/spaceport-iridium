@@ -28,7 +28,8 @@ Goals:
 	- Establish mining/refining/smelting loop to create a sustainable source of steel
 		- Mining Bay -> Mining Drones -> mine asteroid for various ores
 		- Ore Refiner -> turn ore into resources
-		- Smelter -> turn iron + carbon into steel
+		- Forge -> turn iron + carbon into steel
+		- Steel used for basically all buildings
 	- Establish food loop to create a sustainable source of food
 		- Ice Refinery -> turn ice (from mining) into water
 		- Algae Tank -> turn water + carbon into biomass
@@ -36,7 +37,7 @@ Goals:
 	- Satisfy crew needs
 		- Food (via Mess Hall)
 		- Sleep (via Sleeping Pods)
-		- Recreation (can socialize in Mess Hall, later on Holodeck is more fun)
+		- Recreation (can socialize in Mess Hall for now)
 	- Ensure there is enough power to do all of the above
 		- Basically just solar panels to start
 	- Earn money to pay for modules and resources you lack
@@ -44,6 +45,11 @@ Goals:
 			- You start out with one, don't destroy it!
 		- Set up sales via order sheet, confirm them when a trader arrives
 			- Sell excess ores or processed goods
+	- Hire more crew
+		- From Docking Bay, requires credits and a space for them to sleep
 
 Non-obvious controls:
 - "f" to flip modules that have two possible facings (airlocks and docks)
+
+Useful tips:
+- Almost all the systems are based on components of modules. You can see the components of modules as tabs on the module info box (clicking on the module). Go through the tabs to see what a module can do/is doing.
