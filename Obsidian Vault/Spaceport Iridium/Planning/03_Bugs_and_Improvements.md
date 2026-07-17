@@ -6,48 +6,7 @@
 
 ## A. Confirmed Bugs
 
-### A1. Failed placement still charges the player
-`WorldManager.purchase_and_add_module()` (scripts/managers/world_manager.gd:72) withdraws the cost **before** calling `add_module()`, but `add_module()` has two failure paths (`is_blocked`, `cancel_add` from `overlap_module`) that free the module and return without refunding. Resources/credits vanish. `add_module` also returns `null` on failure (implicitly, via bare `return`) while being typed `-> ModuleBase`; callers never check.
-**Fix direction:** validate placement first, or refund on failure; make `add_module` failure explicit.
-
-### A2. Turbolift cab selection can crash (operator precedence + null deref)
-`TurboliftShaft._best_cab_for()` (modules/transport/turbolift_shaft.gd:83-85), third fallback loop:
-```gdscript
-if cab.is_available() and best_cab == null or cab.get_available_capacity() < best_cab.get_available_capacity():
-```
-Parses as `(a and b) or c`. When `best_cab == null` and the cab isn't available, `c` dereferences `best_cab.get_available_capacity()` on null → crash. Logic is also wrong when best_cab is set (ignores availability). Same precedence pattern appears (harmlessly) in `split_at()` line 109.
-
-### A3. Turbolift upper collision never disables
-`ModuleTurbolift.set_sprite()` (modules/transport/module_turbolift.gd:60-65): both the if and else branches set `collision_upper.disabled = false`. The sprite index math is right, but the top-of-shaft collision is always on (or always off — either way, one branch is wrong).
-
-### A4. Typed-signal emit with wrong type for space connections
-`PathComponent.remove_connections()` (modules/components/path_component.gd:299-308) iterates `module_connections`, which can contain plain `Node2D` space nodes (added in `connect_doors()` line 268: `module_connections[space_node] = index`). It then emits `SignalBus.module_path_connection_removed.emit(owner_module, node)` — a signal typed `(from: ModuleBase, to: ModuleBase)` — with a `Node2D`. Runtime error when removing any module that has a direct-to-space door (airlocks).
-
-### A5. Module scanning breaks in exported builds
-`UIMain.get_all_file_paths_resourceloader()` (ui/ui_main.gd:80): `file_name.replace(".import", "")` discards its return value (strings are immutable) — and the real issue in exports is `.remap` suffixes on `.tres` files, which the `ends_with("tres")` check will miss. Build menu will be empty in an exported game. Same pattern in `UnlockManager._tres_paths()` uses `DirAccess`, which also needs `.remap` handling in exports.
-**Fix direction:** one shared resource-scanning helper that strips `.remap`/`.import` and is used by both; or replace directory scanning with explicit registry resources.
-
-### A6. `ModuleData.can_afford()` / cost withdrawal double-charges materials conceptually
-For non-instant modules, `purchase_and_add_module` withdraws only credits, then `ConstructionComponent` requires the material resources to be *delivered* — but `can_afford()` still requires the full material cost to exist station-wide at click time, and those materials are not reserved. Two blueprints placed back-to-back can both pass `can_afford()` against the same steel. Minor now, worth a reservation or at least awareness.
-
-### A7. `Job_MineAsteroid` can add a null-resource stack
-`mine_asteroid()` (scripts/jobs/job_mine_asteroid.gd:144-152): `asteroid.mine_resource()` can return `null` (race: another drone empties it the same frame), but a `ResourceStack` is created unconditionally; `add_stacks(null, [stack])` silently drops it, and `resources_mined_count` still increments. Cosmetic, but masks the empty-asteroid case.
-
-### A8. `PawnBase` PREDELETE spawns piles during teardown
-`_notification(NOTIFICATION_PREDELETE)` (pawns/pawn_base.gd:162) unconditionally spawns a `ResourcePile` via `Global.world_manager` — on game exit this runs while the tree is being destroyed (null managers / freed parents → error spam). Guard with `is_instance_valid(Global.world_manager)` and empty-inventory check.
-
-### A9. `ModuleGraph` vertices are `Object`s freed manually
-`remove_vertex()` calls `old_vertex.free()` — `ModuleGraphVertex` extends Object (checked: scripts/utility/module_graph_vertex.gd), so anything still holding a reference (an in-flight path, `came_from` dict on another thread of logic) dereferences a freed object. Pathfinding results hold `PathPoint.node` (a Node2D, fine) not vertices, so today this is safe-ish, but `pathfind_to_node_in_space` leaks its temp vertex: it's appended to `_linked_groups["space"]` and erased after, but **never freed** → small object leak per space pathfind; and if pathfind throws/early-returns, it stays in the group list. Make vertices `RefCounted`.
-
-### A10. `SustenanceComponent` never disables `_process`
-Unlike siblings, it has no `set_process(false)` in preview/blueprint states (modules/components/sustenance_component.gd) — a mess hall blueprint tries to withdraw food every frame. Harmless-looking but wrong-state behavior; also `sustenance_available` isn't clamped against overfill if `sustenance_per_food` changes.
-
-### A11. `Job_Eat` targets a component, eats from wherever it lands
-`eat()` grabs `pawn.current_module.get_component_by_type(SustenanceComponent)` instead of using `target_component` — after `find_best_sustenance()` chose a specific one. If the pawn ends movement in a different module (repath, cab quirks), it silently eats from the wrong module or fails. Use the chosen component and re-validate it.
-
-### A12. ~~Comment/behavior mismatch: post-job cooldown doesn't exist~~
-`PawnBase._process` accumulates `job_length` **during** a job, so when the job ends, `job_length > 1.0` is already true and the next job starts next frame — the "don't start new jobs more than once a second" throttle only applies to consecutive *failed* searches. Works, but the comment lies; reset `job_length` in `_end_current_job()` if the cooldown is desired.
-Response: This works as intended. It is not a post-job cooldown, it is a "don't start new jobs more than once a second" throttle. If the previous job has taken more than a second, we are free to take a _new_ job immediately once it has finished without waiting. The throttle is for when jobs are completed (or, more often, canceled) quickly or repeatedly in order to limit can_do_job checks. If the previous job took a while, this is unnecessary, however. Long jobs should go directly into new jobs without waiting.
+all fixed
 
 ## B. Design-Debt / Known-Disabled Code (already on your radar, confirming)
 

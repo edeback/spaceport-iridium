@@ -38,8 +38,8 @@
 | WI-10 | [[WI-10_Placement_UX\|Placement & selection UX]] | Blocked-cell display, flip re-validation, stacked-cell click cycling, no-path indicator |
 | WI-11 | [[WI-11_Turbolift_Management\|Turbolift system panel & floor control]] | Shaft-wide UI, floor skip, cab count, terrain speed multipliers |
 | WI-12 | [[Work Items/WI-12_Storage_QoL\|Storage QoL: venting, config, mass-sell]] | Vent/dump, remove-option-without-destroying, priority visibility |
-| WI-13 | [[Work Items/WI-13_Events_v1\|Random events v1]] | Event-card framework + market shock & ARC levy events; foundation for pirates/crises |
-| WI-14 | [[Work Items/WI-14_Contracts\|Trade contracts]] | Deliver X by cycle Y; uses WI-02 deadlines + WI-08 traders |
+| WI-13 | [[WI-13_Events_v1\|Random events v1]] | Event-card framework + market shock & ARC levy events; foundation for pirates/crises |
+| WI-14 | [[WI-14_Contracts\|Trade contracts]] | Deliver X by cycle Y; uses WI-02 deadlines + WI-08 traders |
 | WI-15 | [[WI-15_Pathfinding_Exterior_Semantics\|Pathfinding: `is_exterior` semantics]] | Un-overloads the vertex group field (construction stops stealing the "space" group); unblocks teleporter networks; pairs naturally with WI-11 (same graph loops). From the 2026-07-14 pathfinding discussion |
 | WI-16 | [[WI-16_Micro_Anchors_and_Pawn_Positioning\|Micro anchors & pawn positioning]] | Path-to-point-inside-module primitive + authored/generated anchors + cosmetic de-overlap (lanes, jitter); fixes turbolift waiting pop-in; foundation for beds (WI-05), workstations, and future combat form-up |
 

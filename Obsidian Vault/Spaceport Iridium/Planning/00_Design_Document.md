@@ -28,7 +28,7 @@ Use these to test every feature:
 ## 3. World & Story Frame
 
 - **Setting:** an asteroid field rich in iridium. Player is the station's onboard AI; SAI is the tutorial/advisor sub-AI voice.
-- **ARC (parent corp):** takes a cut of profits, sends inspectors, demands payments, but will bail you out in crisis (at future cost). Late game: buy, negotiate, or fight for independence. Independence trades protection (ARC Asset Integrity Service defense) for freedom (lower taxes, system travel).
+- **ARC - Astral Resource Corporation (parent corp):** takes a cut of profits, sends inspectors, demands payments, but will bail you out in crisis (at future cost). Late game: buy, negotiate, or fight for independence. Independence trades protection (ARC Asset Integrity Service defense) for freedom (lower taxes, system travel).
 - **New Game+ (far future):** start under a different parent corporation with different starting techs/bonuses, unlocked by maxing that corp's tree in a prior run.
 - **Endgame:** sandbox. Lose by station destruction, bankruptcy, or total crew abandonment. A distant aspirational goal (RimWorld-style "escape hatch") is worth adding eventually — candidate: full independence + first station warp.
 

@@ -1,5 +1,11 @@
 # WI-13 — Random Events v1
 
+> **Status: Implemented** (2026-07-16, together with WI-14). Deviations from the design below:
+> - Notification-only events carry their effects in `EventData.auto_effects` (choices stay purely for card events).
+> - Market shock scales the drift *target* and snaps current stock by the multiplier immediately, so the price jump is instant; pricing still measures against the unshocked default, so prices decay back via ordinary drift after expiry.
+> - Shock persistence rides EventManager's save section (keeps the market section's original flat shape).
+> - Debug: F6 force-fires a random eligible event; `Global.event_manager.fire_event_by_id(&"id")` for a specific one.
+
 ## Goal
 The event-card framework: data-driven events that trigger on a schedule/conditions, present a choice card (or fire silently), and apply effects. Ships with a starter set exercising each effect type: market shock, ARC profit levy, drifting salvage cluster, and a morale event. Pirates/crises build on this later (Phase 3).
 

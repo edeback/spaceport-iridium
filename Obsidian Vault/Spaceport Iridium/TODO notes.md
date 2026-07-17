@@ -30,6 +30,9 @@ For trader screen
 - Putting values in buy zeros out sell and vice versa (like other UI)
 - When buying something that wasn't on the order sheet, make sure it ends up in the storage so it can actually be exported
 
+For events:
+- have event options that are only valid when certain things are true (like having a module) so the player knows they _could_ have done something
+
 Build more detailed traders (types, buy/sell multipliers, etc)
 
 Factory!
@@ -42,6 +45,8 @@ Set first two pawns to work 100% of the time, pawns after that can work shifts (
 
 Have Fable "interview me" about the game and update the design document
 Also create more Work Items for the next batch of tasks
+
+
 
 |       |                            |                                                                    |
 | ----- | -------------------------- | ------------------------------------------------------------------ |

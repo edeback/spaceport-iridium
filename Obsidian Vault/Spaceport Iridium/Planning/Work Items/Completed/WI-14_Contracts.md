@@ -1,5 +1,12 @@
 # WI-14 — Trade Contracts
 
+> **Status: Implemented** (2026-07-16, together with WI-13). Deviations/decisions:
+> - Contract goods are consigned freight: they use no trader cargo space and never touch the shared market settlement; the issuer pays on completion.
+> - Partial goods are paid at market sell price *at failure resolution* (not at pickup), keeping the all-or-nothing bonus clean.
+> - Contract demand on the bay's TradeComponent is re-synced lazily each slow_tick against whichever constructed bay exists — one mechanism covers accept, save/load, bay destruction, and rebuilt bays. Demand is not saved on the component.
+> - The final-day courier dispatches (via slow_tick check) only once staged goods can fully complete the contract.
+> - Debug: F7 forces an offer; the "Rush Delivery Request" event (WI-13) adds offers with a +20% premium.
+
 ## Goal
 Deadline-driven delivery contracts: "Deliver 40 steel by cycle 12 for a 30% premium; penalty on failure." Offered periodically (and via events), accepted from a contracts screen, fulfilled through the docking-bay export flow (WI-08), paid on completion. This is the game's first proactive economic goal-setting for the player.
 
