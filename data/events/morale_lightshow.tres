@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EventData" format=3 uid="uid://co030x1ixf6gj"]
+
+[ext_resource type="Script" uid="uid://p3ck66sptlw8" path="res://data/events/event_data.gd" id="1_evdata"]
+[ext_resource type="Script" uid="uid://dcwi3tudyit34" path="res://data/events/event_effect.gd" id="2_effect"]
+[ext_resource type="Script" uid="uid://crby7y3cmmsfa" path="res://data/events/event_condition.gd" id="3_condition"]
+[ext_resource type="Script" uid="uid://c22hiw2cjh3o" path="res://data/events/event_choice.gd" id="3_dfboy"]
+[ext_resource type="Script" uid="uid://1qceeprbdwmm" path="res://data/events/effects/effect_happiness_modifier.gd" id="4_happy"]
+[ext_resource type="Script" uid="uid://dfisauhtobwoj" path="res://data/events/conditions/condition_min_crew.gd" id="5_mincrew"]
+
+[sub_resource type="Resource" id="Resource_boost"]
+script = ExtResource("4_happy")
+id = &"meteor_lightshow"
+value = 0.08
+duration_hours = 12.0
+
+[sub_resource type="Resource" id="Resource_cond"]
+script = ExtResource("5_mincrew")
+
+[resource]
+script = ExtResource("1_evdata")
+id = &"morale_lightshow"
+title = "Meteor Shower Light Show"
+body = "A dense meteor swarm burns up against the planet's atmosphere below. The crew crowds the viewports - morale is up for the rest of the shift."
+conditions = Array[ExtResource("3_condition")]([SubResource("Resource_cond")])
+auto_effects = Array[ExtResource("2_effect")]([SubResource("Resource_boost")])

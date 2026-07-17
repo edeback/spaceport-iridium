@@ -18,6 +18,10 @@ extends ComponentBase
 ## resource -> amount still wanted. Persisted via the module save section.
 var sell_orders: Dictionary[ResourceData, int] = {}
 var buy_orders: Dictionary[ResourceData, int] = {}
+## resource -> units still to be staged+picked up for accepted contracts
+## (WI-14). NOT persisted here: ContractManager re-registers from its own
+## saved contract states each slow_tick, so the two can't drift apart.
+var contract_demand: Dictionary[ResourceData, int] = {}
 
 var override_ui: bool = false
 
@@ -59,13 +63,17 @@ func set_buy_order(resource: ResourceData, amount: int) -> void:
 ## a ResourcePile at the bay for haulers to sweep up (WI-08 edge case).
 func clear_sell_order(resource: ResourceData) -> void:
 	sell_orders.erase(resource)
-	var staged: int = export_storage.total_stored_by_resource(resource)
+	# Contract-earmarked stock stays in the bin (WI-14) - only the surplus
+	# beyond remaining contract demand gets dumped.
+	var staged: int = export_storage.total_stored_by_resource(resource) - contract_demand.get(resource, 0)
 	if staged > 0:
 		var stacks: Array[ResourceStack] = export_storage.withdraw_stacks(resource, staged)
 		if not stacks.is_empty():
 			var pile := ResourcePile.spawn(Global.world_manager.pawn_layer, DockingBay.dock_position_for(owner_module), owner_module)
 			pile.add_stacks(resource, stacks)
-	export_storage.remove_stored_resource(resource)
+	if not contract_demand.has(resource):
+		export_storage.remove_stored_resource(resource)
+	_sync_sell_slot(resource)
 	orders_changed.emit()
 
 ## Called by TraderManager as committed trades fulfill.
@@ -75,11 +83,9 @@ func reduce_sell_order(resource: ResourceData, amount: int) -> void:
 	sell_orders[resource] -= amount
 	if sell_orders[resource] <= 0:
 		sell_orders.erase(resource)
-		# Order complete: the slot stays (residual stock can still sell next
-		# visit if re-ordered) but stops requesting hauls.
-		_set_slot_desired(resource, 0)
-	else:
-		_sync_sell_slot(resource)
+	# Re-sync rather than zero: a contract may still want hauls of this
+	# resource even when the generic order just completed.
+	_sync_sell_slot(resource)
 	orders_changed.emit()
 
 func reduce_buy_order(resource: ResourceData, amount: int) -> void:
@@ -90,11 +96,49 @@ func reduce_buy_order(resource: ResourceData, amount: int) -> void:
 		buy_orders.erase(resource)
 	orders_changed.emit()
 
+# --- contract allocation (WI-14) ---------------------------------------------------
+# Contract goods ride the same export bin as sell orders; the demand ledger
+# here only sizes the bin's `desired` so crew keep hauling. Which units belong
+# to which contract is decided at pickup time (ContractManager iterates its
+# active list in accept order) - the bin itself stays fungible.
+
+func add_contract_demand(resource: ResourceData, amount: int) -> void:
+	if resource == null or amount <= 0:
+		return
+	contract_demand[resource] = contract_demand.get(resource, 0) + amount
+	export_storage.add_stored_resource(resource)
+	_sync_sell_slot(resource)
+	orders_changed.emit()
+
+## A trader/courier picked up `amount` of contract goods from the bin.
+func reduce_contract_demand(resource: ResourceData, amount: int) -> void:
+	if not contract_demand.has(resource) or amount <= 0:
+		return
+	contract_demand[resource] -= amount
+	if contract_demand[resource] <= 0:
+		contract_demand.erase(resource)
+	_sync_sell_slot(resource)
+	orders_changed.emit()
+
+## A contract stopped wanting `amount` units WITHOUT them shipping (failure,
+## or a demand re-sync shrinking it). Staged stock beyond everything still
+## wanted is dumped to a pile at the bay, same as cancelling a sell order.
+func release_contract_demand(resource: ResourceData, amount: int) -> void:
+	reduce_contract_demand(resource, amount)
+	var wanted: int = sell_orders.get(resource, 0) + contract_demand.get(resource, 0)
+	var surplus: int = export_storage.total_stored_by_resource(resource) - wanted
+	if surplus > 0:
+		var stacks: Array[ResourceStack] = export_storage.withdraw_stacks(resource, surplus)
+		if not stacks.is_empty():
+			var pile := ResourcePile.spawn(Global.world_manager.pawn_layer, DockingBay.dock_position_for(owner_module), owner_module)
+			pile.add_stacks(resource, stacks)
+
 ## The bin's per-resource `desired` drives the existing import-job posting:
-## keep it equal to the outstanding order (capped by bin capacity) so crew
-## stage exactly what's still wanted and no more.
+## keep it equal to the outstanding orders + contract demand (capped by bin
+## capacity) so crew stage exactly what's still wanted and no more.
 func _sync_sell_slot(resource: ResourceData) -> void:
-	_set_slot_desired(resource, mini(sell_orders.get(resource, 0), export_storage.max_stored))
+	var wanted: int = sell_orders.get(resource, 0) + contract_demand.get(resource, 0)
+	_set_slot_desired(resource, mini(wanted, export_storage.max_stored))
 
 func _set_slot_desired(resource: ResourceData, desired: int) -> void:
 	var slot: StorageData = export_storage.storage_data.get(resource)

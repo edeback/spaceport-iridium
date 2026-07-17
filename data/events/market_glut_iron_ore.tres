@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="EventData" format=3 uid="uid://u4mgyd46khui"]
+
+[ext_resource type="Script" uid="uid://p3ck66sptlw8" path="res://data/events/event_data.gd" id="1_evdata"]
+[ext_resource type="Script" uid="uid://dcwi3tudyit34" path="res://data/events/event_effect.gd" id="2_effect"]
+[ext_resource type="Script" uid="uid://bt4d61d4seg4q" path="res://data/events/effects/effect_market_supply_shock.gd" id="3_shock"]
+[ext_resource type="Script" uid="uid://c22hiw2cjh3o" path="res://data/events/event_choice.gd" id="4_jx5ts"]
+[ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="4_ore"]
+[ext_resource type="Script" uid="uid://crby7y3cmmsfa" path="res://data/events/event_condition.gd" id="5_ay31o"]
+
+[sub_resource type="Resource" id="Resource_glut"]
+script = ExtResource("3_shock")
+resource = ExtResource("4_ore")
+multiplier = 2.5
+
+[resource]
+script = ExtResource("1_evdata")
+id = &"market_glut_iron_ore"
+title = "Mining Boom in the Belt"
+body = "A rich strike in the nearby belt floods the market with iron ore. Prices crater for a cycle - a good moment to buy feedstock cheap."
+min_cycle = 2
+cooldown_cycles = 6
+auto_effects = Array[ExtResource("2_effect")]([SubResource("Resource_glut")])

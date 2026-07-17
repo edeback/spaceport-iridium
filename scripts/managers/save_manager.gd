@@ -148,6 +148,8 @@ func save_slot(slot: String) -> Error:
 			"pawns": _get_pawns_save(),
 			"crew": Global.crew_manager.get_save_data(),
 			"traders": Global.trader_manager.get_save_data(),
+			"events": Global.event_manager.get_save_data(),
+			"contracts": Global.contract_manager.get_save_data(),
 		},
 	}
 	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
@@ -301,6 +303,12 @@ func _apply_pending_load() -> void:
 	# After world AND market: an active visit re-parks its shuttle at the bay
 	# and its price snapshot/stock restore by resource id.
 	Global.trader_manager.load_save_data(sections.get("traders", {}))
+	# After pawns: station-wide happiness effects re-apply to the loaded crew.
+	# After market: supply shocks re-register without re-snapping stock.
+	Global.event_manager.load_save_data(sections.get("events", {}))
+	# After world: contract demand re-registers on the restored bay via the
+	# first slow_tick; staged goods are already back in the bin.
+	Global.contract_manager.load_save_data(sections.get("contracts", {}))
 	_loading = false
 	print("Loaded save from %s" % Global.time_manager.format_time())
 	game_loaded.emit(QUICK_SLOT)

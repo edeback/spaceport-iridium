@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="EventData" format=3]
+
+[ext_resource type="Script" path="res://data/events/event_data.gd" id="1_evdata"]
+[ext_resource type="Script" path="res://data/events/event_choice.gd" id="2_choice"]
+[ext_resource type="Script" path="res://data/events/event_effect.gd" id="3_effect"]
+[ext_resource type="Script" path="res://data/events/event_condition.gd" id="4_condition"]
+[ext_resource type="Script" path="res://data/events/effects/effect_offer_contract.gd" id="5_offer"]
+[ext_resource type="Script" path="res://data/events/conditions/condition_has_module_tag.gd" id="6_tag"]
+
+[sub_resource type="Resource" id="Resource_offer"]
+script = ExtResource("5_offer")
+premium_bonus = 0.2
+
+[sub_resource type="Resource" id="Resource_hear"]
+script = ExtResource("2_choice")
+label = "Hear them out"
+description = "The offer lands on the contracts board - accept it there if the terms look good."
+effects = Array[ExtResource("3_effect")]([SubResource("Resource_offer")])
+
+[sub_resource type="Resource" id="Resource_refuse"]
+script = ExtResource("2_choice")
+label = "Turn them away"
+description = "The station has enough on its plate."
+
+[sub_resource type="Resource" id="Resource_cond"]
+script = ExtResource("6_tag")
+tag = "Dock"
+
+[resource]
+script = ExtResource("1_evdata")
+id = &"rush_contract"
+title = "Rush Delivery Request"
+body = "A freight broker hails the station: a client further out needs goods on a hard deadline, and every licensed hauler is booked. They're offering above-market rates for whatever the station can commit."
+weight = 1.0
+min_cycle = 3
+cooldown_cycles = 4
+conditions = Array[ExtResource("4_condition")]([SubResource("Resource_cond")])
+choices = Array[ExtResource("2_choice")]([SubResource("Resource_hear"), SubResource("Resource_refuse")])

@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="EventData" format=3 uid="uid://baob6lttj65ln"]
+
+[ext_resource type="Script" uid="uid://p3ck66sptlw8" path="res://data/events/event_data.gd" id="1_evdata"]
+[ext_resource type="Script" uid="uid://c22hiw2cjh3o" path="res://data/events/event_choice.gd" id="2_choice"]
+[ext_resource type="Script" uid="uid://dcwi3tudyit34" path="res://data/events/event_effect.gd" id="3_effect"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="3_s4kea"]
+[ext_resource type="Script" uid="uid://crby7y3cmmsfa" path="res://data/events/event_condition.gd" id="4_condition"]
+[ext_resource type="Script" uid="uid://dovhyub1hu6nh" path="res://data/events/effects/effect_spawn_salvage.gd" id="5_salvage"]
+[ext_resource type="Script" uid="uid://dfisauhtobwoj" path="res://data/events/conditions/condition_min_crew.gd" id="6_mincrew"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="7_steel"]
+[ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="8_ore"]
+
+[sub_resource type="Resource" id="Resource_steel_salvage"]
+script = ExtResource("5_salvage")
+resource = ExtResource("7_steel")
+min_amount = 15
+max_amount = 30
+
+[sub_resource type="Resource" id="Resource_ore_salvage"]
+script = ExtResource("5_salvage")
+resource = ExtResource("8_ore")
+max_amount = 25
+pile_count = 1
+
+[sub_resource type="Resource" id="Resource_collect"]
+script = ExtResource("2_choice")
+label = "Mark it for collection"
+description = "Crew will suit up and haul the debris in through the airlocks."
+effects = Array[ExtResource("3_effect")]([SubResource("Resource_steel_salvage"), SubResource("Resource_ore_salvage")])
+
+[sub_resource type="Resource" id="Resource_ignore"]
+script = ExtResource("2_choice")
+label = "Let it drift"
+description = "Not worth pulling anyone off their shift."
+
+[sub_resource type="Resource" id="Resource_cond"]
+script = ExtResource("6_mincrew")
+
+[resource]
+script = ExtResource("1_evdata")
+id = &"salvage_cluster"
+title = "Drifting Salvage Cluster"
+body = "Long-range sensors flag a debris cluster tumbling past the station - the remains of an old freighter break-up. Hull plating and raw ore, free for whoever bothers to grab it."
+weight = 1.2
+min_cycle = 2
+cooldown_cycles = 5
+conditions = Array[ExtResource("4_condition")]([SubResource("Resource_cond")])
+choices = Array[ExtResource("2_choice")]([SubResource("Resource_collect"), SubResource("Resource_ignore")])

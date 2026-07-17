@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="EventData" format=3 uid="uid://cbq042lispr0i"]
+
+[ext_resource type="Script" uid="uid://p3ck66sptlw8" path="res://data/events/event_data.gd" id="1_evdata"]
+[ext_resource type="Script" uid="uid://dcwi3tudyit34" path="res://data/events/event_effect.gd" id="2_effect"]
+[ext_resource type="Script" uid="uid://bt4d61d4seg4q" path="res://data/events/effects/effect_market_supply_shock.gd" id="3_shock"]
+[ext_resource type="Script" uid="uid://c22hiw2cjh3o" path="res://data/events/event_choice.gd" id="4_qkwad"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="4_steel"]
+[ext_resource type="Script" uid="uid://crby7y3cmmsfa" path="res://data/events/event_condition.gd" id="5_ab7t8"]
+
+[sub_resource type="Resource" id="Resource_shock"]
+script = ExtResource("3_shock")
+resource = ExtResource("4_steel")
+multiplier = 0.3
+
+[resource]
+script = ExtResource("1_evdata")
+id = &"market_shock_steel"
+title = "Shipping Lane Disruption"
+body = "Pirate activity along the inner shipping lanes has choked off steel freight. Market steel supply collapses for a cycle - sell high while it lasts."
+min_cycle = 2
+cooldown_cycles = 6
+auto_effects = Array[ExtResource("2_effect")]([SubResource("Resource_shock")])

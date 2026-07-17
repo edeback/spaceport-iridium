@@ -76,7 +76,7 @@ func _process(delta: float) -> void:
 # --- scheduling & arrival -------------------------------------------------------
 
 func _begin_visit() -> void:
-	var bay: ModuleBase = _find_bay()
+	var bay: ModuleBase = find_trade_bay()
 	if bay == null:
 		# No (constructed) docking bay: the trader passes by. Reschedule the
 		# full cadence - the safety valve resumes once a bay exists.
@@ -136,8 +136,9 @@ func _snapshot_prices() -> void:
 		sell_prices[resource] = maxi(floori(Global.market_manager.get_sell_price(resource) * multiplier), 1)
 
 ## First constructed docking bay with a TradeComponent. Multi-bay routing is
-## deliberately future work (WI-08 edge case).
-func _find_bay() -> ModuleBase:
+## deliberately future work (WI-08 edge case). Public: ContractManager syncs
+## its demand registration against this too.
+func find_trade_bay() -> ModuleBase:
 	for node: Node in get_tree().get_nodes_in_group("module"):
 		var module: ModuleBase = node as ModuleBase
 		if module == null or not module is DockingBay or not module.is_complete():
@@ -193,6 +194,11 @@ func _on_slow_tick(_interval: float) -> void:
 func _fulfill(bay_trade: TradeComponent) -> void:
 	var credits: ResourceData = Global.resource_manager.credit_resource
 	var traded: bool = false
+	# Contract goods first (WI-14): allocation beats generic sales, and what
+	# the contracts take never reaches the sell loop below. Consigned freight -
+	# no cargo space used, no market settlement, paid by the issuer on
+	# completion rather than here.
+	Global.contract_manager.collect_contract_goods(bay_trade)
 	# Sells: bin contents -> trader hold, credits in.
 	for resource: ResourceData in committed_sells.keys():
 		var in_bin: int = bay_trade.export_storage.total_stored_by_resource(resource)
@@ -231,6 +237,44 @@ func _fulfill(bay_trade: TradeComponent) -> void:
 		traded = true
 	if traded:
 		visit_changed.emit()
+
+# --- contract courier (WI-14) -----------------------------------------------------
+# The final-day rescue: if contract goods sit staged with no caravan due, the
+# issuer sends their own shuttle. It ONLY collects contract-allocated goods -
+# no trade screen, no market settlement, no cargo limit.
+
+var _courier_active: bool = false
+
+func is_inbound() -> bool:
+	return _inbound
+
+func dispatch_contract_courier() -> bool:
+	if visit_active or _inbound or _courier_active:
+		return false
+	var bay: ModuleBase = find_trade_bay()
+	if bay == null:
+		return false
+	_courier_active = true
+	if trader_shuttle_scene == null:
+		_courier_collect(bay, null)
+		return true
+	var shuttle := trader_shuttle_scene.instantiate() as ArrivalShuttle
+	Global.world_manager.pawn_layer.add_child(shuttle)
+	var dock: Vector2 = DockingBay.dock_position_for(bay)
+	shuttle.setup(dock, dock + Vector2(DockingBay.approach_sign_for(bay) * 1500.0, 0.0))
+	shuttle.docked.connect(_courier_collect.bind(bay, shuttle), CONNECT_ONE_SHOT)
+	return true
+
+func _courier_collect(bay: ModuleBase, shuttle: ArrivalShuttle) -> void:
+	if is_instance_valid(bay):
+		var bay_trade: TradeComponent = bay.get_component_by_type(TradeComponent) as TradeComponent
+		if bay_trade != null:
+			Global.contract_manager.collect_contract_goods(bay_trade)
+	if shuttle != null and is_instance_valid(shuttle):
+		# Linger briefly at the dock before flying off, like the hire shuttle.
+		await Global.time_manager.sim_seconds(TimeManager.SECONDS_PER_HOUR)
+		shuttle.depart()
+	_courier_active = false
 
 # --- departure ------------------------------------------------------------------
 

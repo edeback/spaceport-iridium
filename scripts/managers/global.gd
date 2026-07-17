@@ -16,6 +16,8 @@ var asteroid_manager: AsteroidManager
 var unlock_manager: UnlockManager
 var crew_manager: CrewManager
 var trader_manager: TraderManager
+var event_manager: EventManager
+var contract_manager: ContractManager
 var ui_in_game: UIInGame
 var ui_main: UIMain
 var tilemap: TileMapLayer

@@ -41,6 +41,8 @@ func _ready() -> void:
 	_setup_crew_ui()
 	SignalBus.game_over.connect(_on_game_over)
 	_setup_trader_ui()
+	_setup_event_ui()
+	_setup_contracts_ui()
 
 ## Minimal save/load controls next to the Research button: slot name field +
 ## Save/Load buttons. F5/F9 quick-slot shortcuts live on SaveManager.
@@ -78,9 +80,9 @@ var _active_alerts: Dictionary[String, Label] = {}
 
 func _setup_alerts_strip() -> void:
 	_alerts_box = VBoxContainer.new()
-	_alerts_box.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_alerts_box.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	_alerts_box.offset_top = 8
-	_alerts_box.alignment = BoxContainer.ALIGNMENT_BEGIN
+	_alerts_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	_alerts_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_alerts_box)
 	SignalBus.pawn_critical_need.connect(_on_pawn_critical_need)
@@ -120,7 +122,7 @@ func _spawn_alert(key: String, text: String) -> void:
 	_active_alerts[key] = label
 	# UI runs on wall-clock by design (TimeManager rule: UI stays real-time),
 	# so a plain scene-tree timer is correct here, not sim_seconds().
-	get_tree().create_timer(6.0).timeout.connect(func() -> void:
+	get_tree().create_timer(15.0).timeout.connect(func() -> void:
 		_active_alerts.erase(key)
 		if is_instance_valid(label):
 			label.queue_free()
@@ -179,24 +181,48 @@ func _on_trader_departed(trader: TraderData) -> void:
 		_trader_screen.close()
 	_spawn_alert("trader_departed", "%s has departed." % trader.trader_name)
 
+# --- events & contracts (WI-13 / WI-14) ------------------------------------------
+
+const EVENT_CARD_SCENE: PackedScene = preload("res://ui/windows/event_card.tscn")
+const CONTRACTS_SCREEN_SCENE: PackedScene = preload("res://ui/windows/contracts_screen.tscn")
+
+var _contracts_screen: ContractsScreen
+
+## The card manages its own visibility/queue off SignalBus.event_triggered.
+func _setup_event_ui() -> void:
+	add_child(EVENT_CARD_SCENE.instantiate())
+
+func _setup_contracts_ui() -> void:
+	_contracts_screen = CONTRACTS_SCREEN_SCENE.instantiate() as ContractsScreen
+	add_child(_contracts_screen)
+	_add_side_button("Contracts", func() -> void:
+		if _contracts_screen.visible:
+			_contracts_screen.visible = false
+		else:
+			_contracts_screen.open()
+	)
+
 func _setup_unlock_ui() -> void:
 	unlock_panel = UnlockPanel.new()
 	unlock_panel.visible = false
 	add_child(unlock_panel)
+	_add_side_button("Research", toggle_unlock_panel)
 
-	# Add a "Research" button just above the existing "Module Info" button,
-	# reusing its style so it fits in.
+## Adds a button just above the existing "Module Info" button, reusing its
+## style so it fits in (Research, Contracts, ...).
+func _add_side_button(label: String, on_pressed: Callable) -> Button:
 	var info_btn: Button = %ModuleInfoButton
 	var info_margin: Node = info_btn.get_parent()
 	var side_vbox: Node = info_margin.get_parent()
-	var research_btn := Button.new()
-	research_btn.text = "Research"
+	var button := Button.new()
+	button.text = label
 	var style: StyleBox = info_btn.get_theme_stylebox("normal")
 	if style != null:
-		research_btn.add_theme_stylebox_override("normal", style)
-	research_btn.pressed.connect(toggle_unlock_panel)
-	side_vbox.add_child(research_btn)
-	side_vbox.move_child(research_btn, info_margin.get_index())
+		button.add_theme_stylebox_override("normal", style)
+	button.pressed.connect(on_pressed)
+	side_vbox.add_child(button)
+	side_vbox.move_child(button, info_margin.get_index())
+	return button
 
 func toggle_unlock_panel() -> void:
 	unlock_panel.visible = not unlock_panel.visible

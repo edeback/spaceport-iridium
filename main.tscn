@@ -24,6 +24,8 @@
 [ext_resource type="Texture2D" uid="uid://byf3wu6nq1gun" path="res://assets/sprites/star_spritesheet.png" id="11_2cqfq"]
 [ext_resource type="PackedScene" uid="uid://cvrcrbshj8cre" path="res://objects/asteroid_base.tscn" id="11_82xsv"]
 [ext_resource type="Script" uid="uid://6xb1ct163od4" path="res://market_manager.gd" id="12_d13ii"]
+[ext_resource type="Script" path="res://scripts/managers/event_manager.gd" id="12_eventmgr"]
+[ext_resource type="Script" path="res://scripts/managers/contract_manager.gd" id="12_contractmgr"]
 [ext_resource type="Texture2D" uid="uid://dmlscjahmhtu8" path="res://assets/sprites/planet_spritesheet.png" id="12_yaehf"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="13_4k2k6"]
 [ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="13_facbu"]
@@ -7664,6 +7666,12 @@ shuttle_scene = ExtResource("34_shuttle")
 script = ExtResource("35_tradermgr")
 first_caravan_profile = ExtResource("36_caravan")
 trader_shuttle_scene = ExtResource("37_tradershuttle")
+
+[node name="EventManager" type="Node" parent="Managers" unique_id=1873220461]
+script = ExtResource("12_eventmgr")
+
+[node name="ContractManager" type="Node" parent="Managers" unique_id=1526834902]
+script = ExtResource("12_contractmgr")
 
 [node name="SaveManager" type="Node" parent="Managers" unique_id=118411891]
 script = ExtResource("1_savemgr")

@@ -46,6 +46,18 @@ signal station_alert(message: String)
 signal trader_arrived(trader: TraderData)
 @warning_ignore("unused_signal")
 signal trader_departed(trader: TraderData)
+## A random event fired (WI-13). Card events queue on EventManager; the UI
+## shows them sequentially. Notification-only events already applied.
+@warning_ignore("unused_signal")
+signal event_triggered(event: EventData)
+@warning_ignore("unused_signal")
+signal contract_offered(contract: ContractData)
+@warning_ignore("unused_signal")
+signal contract_accepted(contract: ContractData)
+@warning_ignore("unused_signal")
+signal contract_completed(contract: ContractData)
+@warning_ignore("unused_signal")
+signal contract_failed(contract: ContractData)
 
 
 

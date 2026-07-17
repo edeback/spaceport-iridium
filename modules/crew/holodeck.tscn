@@ -21,6 +21,7 @@ resource_local_to_scene = true
 size = Vector2(126, 126)
 
 [node name="Module" unique_id=2046568928 instance=ExtResource("1_holo")]
+size = Vector2i(2, 2)
 
 [node name="Offset" parent="." index="0" unique_id=498681270]
 position = Vector2(64, 64)
