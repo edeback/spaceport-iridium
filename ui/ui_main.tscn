@@ -9,20 +9,25 @@
 [ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="5_rtsem"]
 [ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="6_b5r2u"]
 [ext_resource type="Resource" uid="uid://1an3ftgpeh6u" path="res://data/resources/hydrogen.tres" id="7_1h8lm"]
+[ext_resource type="Resource" uid="uid://bdtv1cjftf2g1" path="res://data/resources/iron.tres" id="8_u34n7"]
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="8_xyc40"]
+[ext_resource type="Resource" uid="uid://c8o0o81ej48mp" path="res://data/resources/carbon_ore.tres" id="9_bgs1r"]
 [ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="9_pset1"]
 [ext_resource type="Resource" uid="uid://b27jc67v174pi" path="res://data/resources/iridium.tres" id="10_j1br4"]
+[ext_resource type="Resource" uid="uid://cns3lrfd8jekj" path="res://data/resources/silicon_ore.tres" id="11_6porg"]
 [ext_resource type="Resource" uid="uid://tf727fx7vlah" path="res://data/resources/oxygen.tres" id="11_lnfpq"]
 [ext_resource type="Resource" uid="uid://c56jj6kgs36sx" path="res://data/resources/gold.tres" id="12_6re3r"]
 [ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicon.tres" id="13_0sakr"]
+[ext_resource type="Resource" uid="uid://cnje5k2redpx0" path="res://data/resources/gold_ore.tres" id="13_s5567"]
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="14_p3y7p"]
 [ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="15_47oex"]
+[ext_resource type="Resource" uid="uid://bj04ftawqiwko" path="res://data/resources/iridium_ore.tres" id="15_qnfs5"]
 [ext_resource type="Script" uid="uid://c6excany0u70v" path="res://ui/energy_display_ui.gd" id="15_rtsem"]
 [ext_resource type="PackedScene" uid="uid://dtipd1rwqes7u" path="res://ui/pawns/pawn_info_panel.tscn" id="15_x3wcs"]
 [ext_resource type="Resource" uid="uid://boadffwat0kpp" path="res://data/modules/docking_bays/docking_bay.tres" id="16_x3wcs"]
 [ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/core/hallway_mdata.tres" id="17_848xd"]
 [ext_resource type="PackedScene" uid="uid://1cce1a2cba56" path="res://ui/windows/component_ui_panels/resource_pile_inventory_tab.tscn" id="17_w7nyr"]
-[ext_resource type="PackedScene" path="res://ui/windows/component_ui_panels/asteroid_info_panel.tscn" id="18_astinfo"]
+[ext_resource type="PackedScene" uid="uid://wjvf1i75pf0u" path="res://ui/windows/component_ui_panels/asteroid_info_panel.tscn" id="18_astinfo"]
 [ext_resource type="Resource" uid="uid://b0cfkopyrq5xk" path="res://data/modules/industrial_processors/electrolysis_processor_mdata.tres" id="18_w7nyr"]
 [ext_resource type="Resource" uid="uid://0iqtgbc2dqvn" path="res://data/modules/industrial_processors/ice_processor_mdata.tres" id="19_0lj05"]
 [ext_resource type="PackedScene" uid="uid://mroynql4rcbs" path="res://ui/windows/trade/trade_screen.tscn" id="19_xyc40"]
@@ -71,7 +76,7 @@ corner_radius_bottom_left = 16
 shadow_size = 6
 shadow_offset = Vector2(-3, -3)
 
-[sub_resource type="FoldableGroup" id="FoldableGroup_0lj05"]
+[sub_resource type="FoldableGroup" id="FoldableGroup_qj0xk"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1h8lm"]
 content_margin_left = 4.0
@@ -110,7 +115,7 @@ button_group = ExtResource("3_ka3re")
 button_container = NodePath("VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer")
 resource_display_container = NodePath("ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer")
 resource_display_ui = ExtResource("4_wyidc")
-resources_to_display = Array[ExtResource("4_pqeum")]([ExtResource("5_47oex"), ExtResource("5_rtsem"), ExtResource("6_b5r2u"), ExtResource("7_1h8lm"), ExtResource("8_xyc40"), ExtResource("9_pset1"), ExtResource("10_j1br4"), ExtResource("11_lnfpq"), ExtResource("12_6re3r"), ExtResource("13_0sakr"), ExtResource("14_p3y7p")])
+resources_to_display = Array[ExtResource("4_pqeum")]([ExtResource("5_47oex"), ExtResource("9_pset1"), ExtResource("6_b5r2u"), ExtResource("8_u34n7"), ExtResource("9_bgs1r"), ExtResource("5_rtsem"), ExtResource("11_6porg"), ExtResource("13_0sakr"), ExtResource("13_s5567"), ExtResource("12_6re3r"), ExtResource("15_qnfs5"), ExtResource("10_j1br4"), ExtResource("8_xyc40"), ExtResource("14_p3y7p"), ExtResource("7_1h8lm"), ExtResource("11_lnfpq")])
 pawn_info_screen = ExtResource("15_x3wcs")
 resource_pile_screen = ExtResource("17_w7nyr")
 asteroid_info_screen = ExtResource("18_astinfo")
@@ -242,7 +247,7 @@ layout_mode = 2
 
 [node name="FoldableContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer" unique_id=1698963565 instance=ExtResource("3_ka3re")]
 layout_mode = 2
-foldable_group = SubResource("FoldableGroup_0lj05")
+foldable_group = SubResource("FoldableGroup_qj0xk")
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer" unique_id=39982694]
 layout_mode = 2

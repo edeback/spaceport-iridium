@@ -140,9 +140,9 @@ func _setup_crew_ui() -> void:
 	# Deferred: the departed pawn is still in the tree until end of frame.
 	SignalBus.crew_departed.connect(func(_pawn: PawnBase) -> void: _refresh_crew_count.call_deferred())
 	Global.save_manager.game_loaded.connect(func(_slot: String) -> void: _refresh_crew_count())
-	# Starting crew also spawns deferred (CrewManager), and its managers ready
+	# Starting crew also spawns deferred after the first module is added (CrewManager), and its managers ready
 	# before this UI - so this deferred call lands after the spawn.
-	_refresh_crew_count.call_deferred()
+	SignalBus.module_added.connect(func(_module: ModuleBase) -> void: _refresh_crew_count.call_deferred(), CONNECT_ONE_SHOT)
 
 func _refresh_crew_count() -> void:
 	if Global.crew_manager != null and is_instance_valid(_crew_count_label):
