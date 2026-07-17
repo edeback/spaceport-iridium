@@ -34,7 +34,7 @@
 
 | # | Work item | Notes |
 |---|---|---|
-| WI-09 | [[Work Items/WI-09_Ore_Variance_Refining\|Ore richness through refining]] | Small, high flavor-per-effort; variance data already flows end-to-end |
+| WI-09 | [[WI-09_Ore_Variance_Refining\|Ore richness through refining]] | Small, high flavor-per-effort; variance data already flows end-to-end |
 | WI-10 | [[WI-10_Placement_UX\|Placement & selection UX]] | Blocked-cell display, flip re-validation, stacked-cell click cycling, no-path indicator |
 | WI-11 | [[WI-11_Turbolift_Management\|Turbolift system panel & floor control]] | Shaft-wide UI, floor skip, cab count, terrain speed multipliers |
 | WI-12 | [[Work Items/WI-12_Storage_QoL\|Storage QoL: venting, config, mass-sell]] | Vent/dump, remove-option-without-destroying, priority visibility |

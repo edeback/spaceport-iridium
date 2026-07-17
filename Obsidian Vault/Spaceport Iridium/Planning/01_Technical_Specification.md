@@ -58,7 +58,7 @@ This model is working well and should be preserved. New features should be new c
 Every frame: sum desired power over `power_consumer` group, sum generation over `power_generator` group, drain/charge `battery` group with the difference, then tell each consumer whether it's powered. Solar output scales by free (unconnected) structure sides. Works, but is O(all components) × 60fps and uses `get_tree().get_nodes_in_group` every frame.
 
 ### 1.6 Persistence
-Only `UnlockManager` has save/load (versioned JSON of unlocked ids; local upgrade tiers have per-module serialize hooks awaiting a central system). **There is no game save system.** This is the largest structural gap.
+A save system has been implemented.
 
 ### 1.7 Timing model
 Everything runs on wall-clock `_process(delta)` scaled by `Engine.time_scale` (debug spinbox). There is no game calendar, no tick system, no shift schedule. Needs decay over real seconds (`hunger_duration_seconds = 600`).

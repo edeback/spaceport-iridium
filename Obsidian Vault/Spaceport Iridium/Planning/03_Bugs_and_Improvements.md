@@ -59,6 +59,7 @@ Response: This works as intended. It is not a post-job cooldown, it is a "don't 
 - Power system per-frame group scans (`main.gd` → `PowerManager.power_modules`) — your "shouldn't run every frame" TODO stands.
 - `DockingBay` class is empty; docking is entirely the TradeComponent UI — fine until traders become entities.
 - `ResourceData.cached_total`/`global_total` are `@export`ed runtime state on shared resources — they get written into memory-shared .tres instances; harmless at runtime but confusing in the inspector and a save/load foot-gun. Consider stripping `@export` from runtime fields.
+- **WI-09 punted persistence**: asteroid state (ore mix, richness range, `designated` flag) and `MiningComponent.priority_ore` are not saved — asteroids aren't in save files at all, so designations and per-bay ore priority reset on load. Selected refinery recipe *is* saved (`ProcessorComponent.get_save_data`). Revisit if/when asteroids get persisted.
 
 ## C. Improvement Suggestions (code)
 
@@ -78,7 +79,7 @@ Response: This works as intended. It is not a post-job cooldown, it is a "don't 
 	2. Day/night makes sense for other games but not here as we are not orbiting a planet and therefore don't have day and night. A rare eclipse event could impact sun-exposure but not often and would require other work for it to be visible in-game.
 2. **Trade gating**: moving from instant-trade to trader-present trade (design intent) changes early-game pacing a lot. Suggest an intermediate: orders can be *placed* anytime (queue into export bin), fulfillment happens on trader arrival — keeps UI usable and makes the docking bay's export bin meaningful.
 3. **Priority-as-routing needs a UI**: the ±99 construction/deconstruction priorities work, but players will eventually need to see/set storage priorities; a single "logistics" overlay showing storage priorities and current flows would expose the whole hauling system's mental model.
-4. **Ore richness is plumbed but unused** — refining ignores `OreInstanceData.richness`. This is a small, high-flavor win: yield multiplier on the ore refinery recipe (see [[Work Items/WI-09_Ore_Variance_Refining]]).
+4. **Ore richness is plumbed but unused** — refining ignores `OreInstanceData.richness`. This is a small, high-flavor win: yield multiplier on the ore refinery recipe (see [[WI-09_Ore_Variance_Refining]]).
 5. **Needs decay tuning**: hunger at 600s wall-clock will interact badly with time-scale changes; convert all need durations to game-hours when TimeManager lands.
 6. **`percent_critical` exists but interrupts are disabled** (the starvation-lock comment in PawnNeedsComponent is right). The fix isn't interrupting harder — it's making *food availability* a station alert so the player intervenes, plus letting critical pawns abandon jobs that aren't food-producing. Worth designing before implementing sleep the same way.
 7. **Job board spam guard**: storage posts one import job per resource at a time (good), but a fully-empty new storeroom posts for every allowed resource simultaneously; consider a per-module concurrent-notice cap (your design note about not spamming the board).

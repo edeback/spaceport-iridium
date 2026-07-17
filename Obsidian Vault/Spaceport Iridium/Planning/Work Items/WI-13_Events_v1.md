@@ -32,7 +32,7 @@ The event-card framework: data-driven events that trigger on a schedule/conditio
 - Choice with a cost the player can't afford → button disabled with reason (every event must keep ≥1 always-available choice — validate at load, warn otherwise).
 - Timed effects (shock, happiness) expiring across save/load → durations saved as remaining hours.
 - SpawnSalvage while AsteroidManager is at its 15-asteroid cap → salvage spawns independent of that cap (piles, not asteroids, when possible).
-- CreditDelta below zero credits → clamp at 0 v1 and note "debt" as future ARC mechanic (bankruptcy lose-condition is Phase 3+ with proper debt).
+- CreditDelta below zero credits → acceptable, debt will need to be paid off and contributes to game over flow (unable to hire new pawns)
 - Event rolls while paused → EventManager runs on sim ticks, so it can't (verify).
 - All events on cooldown/ineligible → roll is a no-op, no error.
 

@@ -28,10 +28,14 @@ Animations:
 For trader screen
 - Create rows like other screen so better UI can be made
 - Putting values in buy zeros out sell and vice versa (like other UI)
+- When buying something that wasn't on the order sheet, make sure it ends up in the storage so it can actually be exported
 
 Build more detailed traders (types, buy/sell multipliers, etc)
 
-Ore! Figure out what we're doing here.
+Factory!
+- For steel, future things too
+Ore refiner:
+- "Any" as an option? 
 
 Set first two pawns to work 100% of the time, pawns after that can work shifts (as there's a lot to do to start!)
 
