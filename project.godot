@@ -35,8 +35,8 @@ config/icon="res://icon.svg"
 
 Global="*res://scripts/managers/global.gd"
 SignalBus="*res://scripts/managers/signal_bus.gd"
-_mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 Panku="*res://addons/panku_console/console.tscn"
+_mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 
 [debug]
 
