@@ -47,16 +47,13 @@
 
 - **Combat v1** — module structural HP, damaged-truss degradation, repair jobs, one pirate raid event with pay-off option. (Depends: WI-13 events, WI-04 job categories; form-up positioning consumes WI-16's generated anchors.)
 - **CONVEYED movement state** — position-ownership handoffs (turbolift rides; later trams/teleporter charge) become an explicit movement state instead of a suspended `await`, making rides serializable and interrupt-safe. Do it as part of the next major turbolift surgery, not standalone; until then WI-15's cab-save degradation covers save/load. Rule of thumb adopted now: awaits stay for cosmetic waits (door animations), anything that *owns a pawn's position* gets an explicit state.
-- **New modules pack** — Magscoop, Hydrogen Fuel Cells, Smelter/Polymer/Electronics factories as buildables (ProcessorComponent + recipes — mostly data work), Promenade, Holodeck.
 - **Logistics automation** — Logistics Bay (hauler robots reusing MiningDrone pattern), conveyor module. (Depends: WI-04.)
-- **Observatory & science trickle** — second research currency feeding unlock trees; early-warning hook for combat events.
 - **Health & disease** — DiseaseData, infection spread, Medical Bay. (Depends: WI-07 visitors.)
 - **Minimap & alerts feed** — becomes necessary as stations grow past a few screens.
-- **Turbolift Dispatch strategy:** enum on shaft {NEAREST_IDLE (current), COLLECTIVE (elevator-standard: keep direction, serve en-route calls)} — implement COLLECTIVE only if cheap; the panel dropdown can ship with one option and a disabled second. Honest v1: cab count + floor toggles are the value; strategy is stretch.
 
 ## Phase 4 — Horizon (design only, no commitments)
 
-ARC relationship arc & independence; expeditions; foreign relations/other stations; crises framework; station warp travel; New Game+ corporations; exotic elements; tutorial (SAI); audio pass.
+ARC relationship arc & independence; expeditions; observatory and research, foreign relations/other stations; crises framework; station warp travel; New Game+ corporations; exotic elements; tutorial (SAI); audio pass.
 
 ---
 

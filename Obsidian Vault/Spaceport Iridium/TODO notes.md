@@ -11,6 +11,19 @@ Pawn issues should be promoted to the alerts section of the pawn screen too
 
 There's Module.size and StructureComponent.size and they need to be aligned but why are they in two different spots?
 
+Trade order screen - show current supplies for validation
+
+Forge
+- Needs carbon input storage or else won't run!
+
+Room info at a glance
+- For example, show that it is iron ore being processed and how much time
+
+Starting module should have (almost) everything needed for first 2 pawns
+- Sleeping quarters?
+- Eating quarters?
+	- Or maybe pawns will "eat" even without a mess hall if there is food available? very wasteful!
+
 Happiness modifiers don't persist saving:
 - "misery driven purely by _happiness modifiers_ doesn't survive save/load (modifiers are transient by design since WI-05), so a pending resignation whose cause was a modifier cancels on load as "recovered." Real need-driven misery persists correctly."
 
@@ -40,6 +53,8 @@ Factory!
 Ore refiner:
 - "Any" as an option? 
 
+- **New modules pack** — Magscoop, Hydrogen Fuel Cells, Smelter/Polymer/Electronics factories as buildables (ProcessorComponent + recipes — mostly data work), Promenade, Holodeck.
+
 Set first two pawns to work 100% of the time, pawns after that can work shifts (as there's a lot to do to start!)
 
 
@@ -62,3 +77,9 @@ have a project for you, but I'm not ready to brief you. So interview me first. A
 
 Simple prompt:
 Look at my code, think of what I want to accomplish and suggest improvements,
+
+Prompt for work items:
+
+I'd like to create a new Work Item.
+Goal: etc etc
+Please write out a Work Item similar to those already created (Goal, Design, Files to Touch, Implementation Order, Edge Cases, Verification) and place it in the Work Items folder. If there is a part of the design that is unclear or needs elaboration, come up with some options and ask me which one to use.
