@@ -13,16 +13,18 @@
 [ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="12_do1gr"]
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="13_4yt2q"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="13_btupe"]
+[ext_resource type="PackedScene" uid="uid://bq43tqtyycblj" path="res://modules/components/oxygen_generator_component.tscn" id="15_m0sbv"]
 [ext_resource type="PackedScene" path="res://modules/components/oxygen_scrubber_component.tscn" id="15_scrub"]
+[ext_resource type="Resource" uid="uid://tf727fx7vlah" path="res://data/resources/oxygen.tres" id="16_4oiqu"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_4yt2q"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_d0haa"]
 shader = ExtResource("2_gm7c8")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_d0haa"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_m0sbv"]
 resource_local_to_scene = true
 size = Vector2(192, 128)
 
@@ -35,7 +37,7 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 [sub_resource type="Resource" id="Resource_qt1fp"]
 script = ExtResource("9_btupe")
 resource_data = ExtResource("12_do1gr")
-stored = 20
+stored = 10
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [sub_resource type="Resource" id="Resource_d0haa"]
@@ -44,12 +46,18 @@ resource_data = ExtResource("13_4yt2q")
 stored = 10
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
+[sub_resource type="Resource" id="Resource_4oiqu"]
+script = ExtResource("9_btupe")
+resource_data = ExtResource("16_4oiqu")
+stored = 10
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
 [node name="Module" unique_id=1483217976 instance=ExtResource("1_gv2ro")]
 can_delete = false
 structure_check_before_delete = true
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_4yt2q")
+material = SubResource("ShaderMaterial_d0haa")
 texture = ExtResource("3_do1gr")
 region_enabled = false
 
@@ -58,7 +66,7 @@ scale = Vector2(3, 2)
 power_generation_component = NodePath("../../../PowerGenerationComponent")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_d0haa")
+shape = SubResource("RectangleShape2D_m0sbv")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([Vector2i(96, 96)])
@@ -76,7 +84,12 @@ allow_any_resource = true
 storage_data = Dictionary[ExtResource("8_do1gr"), ExtResource("9_btupe")]({
 ExtResource("10_4yt2q"): SubResource("Resource_m0sbv"),
 ExtResource("12_do1gr"): SubResource("Resource_qt1fp"),
-ExtResource("13_4yt2q"): SubResource("Resource_d0haa")
+ExtResource("13_4yt2q"): SubResource("Resource_d0haa"),
+ExtResource("16_4oiqu"): SubResource("Resource_4oiqu")
 })
 
 [node name="OxygenScrubberComponent" parent="." index="6" unique_id=538387780 instance=ExtResource("15_scrub")]
+
+[node name="OxygenGeneratorComponent" parent="." index="7" unique_id=34724177 node_paths=PackedStringArray("storage_bay") instance=ExtResource("15_m0sbv")]
+release_rate_per_hour = 100.0
+storage_bay = NodePath("../Storage Bay")

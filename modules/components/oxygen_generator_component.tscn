@@ -1,6 +1,8 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://bq43tqtyycblj"]
 
-[ext_resource type="Script" path="res://modules/components/oxygen_generator_component.gd" id="1_gen"]
+[ext_resource type="Script" uid="uid://7exnn2se63q5" path="res://modules/components/oxygen_generator_component.gd" id="1_gen"]
+[ext_resource type="Resource" uid="uid://tf727fx7vlah" path="res://data/resources/oxygen.tres" id="2_gtfas"]
 
-[node name="OxygenGeneratorComponent" type="Node2D"]
+[node name="OxygenGeneratorComponent" type="Node2D" unique_id=868034087]
 script = ExtResource("1_gen")
+oxygen_resource = ExtResource("2_gtfas")
