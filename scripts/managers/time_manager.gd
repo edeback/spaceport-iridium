@@ -105,6 +105,20 @@ func sim_seconds(duration: float) -> void:
 func format_time() -> String:
 	return "Cycle %d, %02d:00" % [cycle, hour]
 
+## Debug/cheat (WI-19): jump the calendar forward `hours` game-hours, firing
+## hour_changed/cycle_changed for each step so calendar-driven systems (market
+## drift, event rolls, contract deadlines, shifts) advance as if time passed.
+## This is a calendar skip, not a replay of the elapsed sim - per-frame progress
+## (movement, processing, needs) is NOT ticked for the skipped span.
+func advance_hours(hours: int) -> void:
+	for _i: int in maxi(hours, 0):
+		hour += 1
+		if hour >= HOURS_PER_CYCLE:
+			hour = 0
+			cycle += 1
+			cycle_changed.emit(cycle)
+		hour_changed.emit(hour)
+
 # --- persistence -------------------------------------------------------------
 
 func get_save_data() -> Dictionary:

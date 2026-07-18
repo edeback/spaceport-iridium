@@ -22,6 +22,9 @@ var atmosphere_manager: AtmosphereManager
 var ui_in_game: UIInGame
 var ui_main: UIMain
 var tilemap: TileMapLayer
+## Debug/cheat helper (WI-19), installed by Main. Callable from the Panku REPL
+## as Global.cheats.<method>(...). Null in builds where Main hasn't run yet.
+var cheats: Cheats
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
