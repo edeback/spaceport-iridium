@@ -312,6 +312,10 @@ func _apply_pending_load() -> void:
 	_loading = false
 	print("Loaded save from %s" % Global.time_manager.format_time())
 	game_loaded.emit(QUICK_SLOT)
+	# Load-path counterpart to Main's new-game emission (WI-18): the world is now
+	# fully restored and playable. Fires after all sections apply, mirroring the
+	# new-game path where it fires after spawn_starting_station.
+	SignalBus.game_bootstrapped.emit()
 
 func _load_resources(data: Dictionary) -> void:
 	for id_str: String in data:

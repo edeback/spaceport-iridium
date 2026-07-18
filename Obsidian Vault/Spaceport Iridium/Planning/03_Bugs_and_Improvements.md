@@ -12,7 +12,6 @@ all fixed
 
 - `StructureManager.can_remove_module` check is disabled in `remove_module` because under-construction modules aren't structure-connected → you can currently delete a module out from under the station.
 - `Global.gd` lines 54-85: dead scene-introspection experiments; `market_manager.gd` lives at project root instead of `scripts/managers/`.
-- `WorldManager._startup()` awaits a 1-second timer before spawning the start module — manager-ordering hack; replace with explicit bootstrap ordering.
 - `JobManager.find_job` `end_job()`s invalid jobs without `cancel()` — the exact lifecycle question from your notes; resolve as "cancel always, cancel implies end."
 - Power system per-frame group scans (`main.gd` → `PowerManager.power_modules`) — your "shouldn't run every frame" TODO stands.
 - `DockingBay` class is empty; docking is entirely the TradeComponent UI — fine until traders become entities.

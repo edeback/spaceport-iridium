@@ -43,6 +43,12 @@ signal crew_resigned(pawn: PawnBase)
 signal crew_departed(pawn: PawnBase)
 @warning_ignore("unused_signal")
 signal game_over
+## The game world is up and ready to play (WI-18): emitted by Main once the
+## starting station has spawned (new game) or SaveManager has applied a pending
+## load. A single defined "game ready" moment for systems that need one
+## (deterministic tests, loading screens) instead of guessing at boot timing.
+@warning_ignore("unused_signal")
+signal game_bootstrapped
 ## Generic station-wide alert text for the UI alerts strip.
 @warning_ignore("unused_signal")
 signal station_alert(message: String)

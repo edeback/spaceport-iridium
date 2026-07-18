@@ -151,12 +151,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/Planning/00_Design_Document.md",
+                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-18_Bootstrap_Cleanup.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "00_Design_Document"
+              "title": "WI-18_Bootstrap_Cleanup"
             }
           },
           {
@@ -247,7 +247,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Spaceport Iridium/Planning/00_Design_Document.md",
+                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-18_Bootstrap_Cleanup.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -257,7 +257,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for 00_Design_Document"
+              "title": "Backlinks for WI-18_Bootstrap_Cleanup"
             }
           },
           {
@@ -293,13 +293,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Spaceport Iridium/Planning/00_Design_Document.md",
+                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-18_Bootstrap_Cleanup.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of 00_Design_Document"
+              "title": "Outline of WI-18_Bootstrap_Cleanup"
             }
           }
         ],
@@ -323,6 +323,29 @@
   },
   "active": "471944f5475eac00",
   "lastOpenFiles": [
+    "Spaceport Iridium/Planning/Work Items/WI-12_Storage_QoL.md",
+    "Spaceport Iridium/Planning/Work Items/WI-18_Bootstrap_Cleanup.md",
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-18_Bootstrap_Cleanup.md",
+    "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md.tmp.126060.188a6a701b31",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.126060.ed125f7b1a76",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.126060.a45873c9c74a",
+    "Spaceport Iridium/TODO notes.md",
+    "Spaceport Iridium/Power System.md",
+    "Spaceport Iridium/Notes from SimTower.md",
+    "Spaceport Iridium/Notes from Project Highrise.md",
+    "Spaceport Iridium/Inspirations.md",
+    "Spaceport Iridium/Game Settings.md",
+    "Spaceport Iridium/Game Loop.md",
+    "Spaceport Iridium/Audio.md",
+    "Spaceport Iridium/Reorganized/Spaceport Iridium Plan.md",
+    "Spaceport Iridium/Reorganized/Future Work.md",
+    "Spaceport Iridium/Reorganized/05_Engineering_and_Technical_TODO.md",
+    "Spaceport Iridium/Reorganized/04_World_Meta_and_Progression.md",
+    "Spaceport Iridium/Reorganized/03_Pawns_Jobs_and_Life.md",
+    "Spaceport Iridium/Reorganized/02_Resources_and_Economy.md",
+    "Spaceport Iridium/Reorganized/01_Modules_and_Station_Structure.md",
+    "Spaceport Iridium/Reorganized/00_Overview.md",
+    "Spaceport Iridium/Planning/00_Design_Document.md",
     "Spaceport Iridium/Planning/02_Roadmap.md.tmp.127376.32d7aed95304",
     "Spaceport Iridium/Planning/02_Roadmap.md.tmp.127376.ba36429c1e9f",
     "Spaceport Iridium/Planning/Work Items/WI-37_Difficulty_Levels.md",
@@ -336,29 +359,6 @@
     "Spaceport Iridium/Planning/Work Items/WI-33_Visitors_and_Commerce.md",
     "Spaceport Iridium/Planning/Work Items/WI-33_Visitors_and_Commerce.md.tmp.127376.0d45b60f3058",
     "Spaceport Iridium/Planning/Work Items/WI-32_Combat_v1.md",
-    "Spaceport Iridium/Planning/Work Items/WI-32_Combat_v1.md.tmp.127376.5f1729a8a593",
-    "Spaceport Iridium/Planning/Work Items/WI-31_Health_and_Disease.md",
-    "Spaceport Iridium/Planning/Work Items/WI-31_Health_and_Disease.md.tmp.127376.87ea2bbf7f86",
-    "Spaceport Iridium/Planning/Work Items/WI-30_Module_Adjacency.md",
-    "Spaceport Iridium/Planning/Work Items/WI-30_Module_Adjacency.md.tmp.127376.841a95901552",
-    "Spaceport Iridium/Planning/Work Items/WI-29_Food_Quality.md",
-    "Spaceport Iridium/Planning/Work Items/WI-29_Food_Quality.md.tmp.127376.c1585c96eca5",
-    "Spaceport Iridium/Planning/Work Items/WI-28_Robotic_Needs.md",
-    "Spaceport Iridium/Planning/Work Items/WI-27_Logistics_Automation.md",
-    "Spaceport Iridium/Planning/Work Items/WI-26_Station_Tiers.md",
-    "Spaceport Iridium/Planning/Work Items/WI-25_Economic_Sinks.md",
-    "Spaceport Iridium/Planning/Work Items/WI-24_Combat_Setup.md",
-    "Spaceport Iridium/Planning/Work Items/WI-23_Work_Improvements.md",
-    "Spaceport Iridium/Planning/Work Items/WI-22_Pawn_Identity.md",
-    "Spaceport Iridium/Planning/Work Items/WI-21_Job_Serialization.md",
-    "Spaceport Iridium/Planning/Work Items/WI-20_Movement_and_Animation.md",
-    "Spaceport Iridium/Planning/Work Items/WI-19_Testing_and_Tooling.md",
-    "Spaceport Iridium/Planning/Work Items/WI-18_Bootstrap_Cleanup.md",
-    "Spaceport Iridium/Reorganized/00_Overview.md",
-    "Spaceport Iridium/Reorganized/01_Modules_and_Station_Structure.md",
-    "Spaceport Iridium/TODO notes.md",
-    "Spaceport Iridium/Planning/New Work For Phase 3.md",
-    "Spaceport Iridium/Planning/02_Roadmap.md",
     "Pasted image 20251208125343.png",
     "Pasted image 20260712204434.png",
     "Pasted image 20251208125118.png",

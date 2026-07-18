@@ -27,10 +27,6 @@ extends Node
 var _components: Dictionary[ModuleBase, AtmosphereComponent] = {}
 ## Modules currently latched in the low-O2 alert state.
 var _low_o2_alerted: Dictionary[ModuleBase, bool] = {}
-## While positive (sim-seconds), newly registered modules seed at full O2 -
-## covers starter modules whose ready pass lands a few deferred frames after
-## seed_starting_atmosphere() (auto-placed corridors, force-completed bays).
-var _seed_window_sim_seconds: float = 0.0
 
 func _ready() -> void:
 	Global.atmosphere_manager = self
@@ -56,8 +52,6 @@ func _on_module_added(module: ModuleBase) -> void:
 
 func register_component(component: AtmosphereComponent) -> void:
 	_components[component.owner_module] = component
-	if _seed_window_sim_seconds > 0.0:
-		component.seed_full_o2()
 	# Pre-latch when registering already-low (fresh builds start at vacuum,
 	# loads restore gas after this): the alert only fires on a healthy->low
 	# transition, so construction sprees don't spam the strip.
@@ -72,15 +66,14 @@ func unregister_component(component: AtmosphereComponent) -> void:
 func get_component(module: ModuleBase) -> AtmosphereComponent:
 	return _components.get(module)
 
-## New-game seeding (WorldManager._startup): the starting station begins fully
-## O2-pressurized so the player has slack while expanding. Never runs on load -
-## saved pressures arrive via the module save section instead.
+## New-game seeding (WorldManager.spawn_starting_station): the starting station
+## begins fully O2-pressurized so the player has slack while expanding. Never
+## runs on load - saved pressures arrive via the module save section instead.
+## Every starter module registers synchronously before this call (WI-18), so a
+## single pass over the registered components covers them all.
 func seed_starting_atmosphere() -> void:
 	for component: AtmosphereComponent in _components.values():
 		component.seed_full_o2()
-	# Nested-deferred starter placements (auto corridors) register over the
-	# next few frames; no player construction can complete this fast.
-	_seed_window_sim_seconds = 2.0
 
 ## Random target for the hull-breach event effect. Prefers un-breached
 ## modules; if everything is already venting, refreshing one is fine.
@@ -100,8 +93,6 @@ func get_random_breach_target() -> AtmosphereComponent:
 	return candidates.pick_random()
 
 func _on_slow_tick(interval: float) -> void:
-	if _seed_window_sim_seconds > 0.0:
-		_seed_window_sim_seconds -= interval
 	var sim_hours: float = interval / TimeManager.SECONDS_PER_HOUR
 	_diffuse(sim_hours)
 	_check_alerts()

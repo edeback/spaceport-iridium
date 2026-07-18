@@ -44,7 +44,7 @@ This model is working well and should be preserved. New features should be new c
 
 Cross-system events go through `SignalBus` typed signals (including the generic `station_alert(message)` feeding the UI alerts strip).
 
-**Known hack:** `WorldManager._startup()` still awaits a 1-second wall-clock timer before spawning the starting station (skipped when a save is pending). Replace with explicit bootstrap ordering eventually; `CrewManager` already avoids depending on it by reacting to `module_added` instead.
+**Bootstrap ordering (WI-18):** the starting station spawns from `Main._ready()` (the root readies after every manager, so every `Global.*` is registered) via `WorldManager.spawn_starting_station()` — no wall-clock timer. `Main` emits `SignalBus.game_bootstrapped` after the spawn; the load path emits it from `SaveManager._apply_pending_load` once every section is applied. `CrewManager` still reacts to `module_added` for the starting-crew spawn.
 
 ### 1.3 Time & simulation (WI-02)
 `TimeManager` owns game time: cycles of 24 hours, `SECONDS_PER_HOUR` (currently 10.0 — testing value), pause, and speed presets (0.5×–4×). `Engine.time_scale` and `get_tree().paused` are deliberately **not** used — UI stays real-time. Consumption rules (enforced across the codebase):
@@ -140,7 +140,6 @@ Current scale (tens of modules, handfuls of pawns) makes almost nothing hot. The
 Truss hiding behind modules, solid/sparse tile rendering, module hover interiors, minimap, logistics/priority overlay (make storage-priority routing visible), main menu + settings screens. None block systems work; schedule opportunistically.
 
 ### 2.6 Cleanups on the radar
-- Replace `WorldManager._startup()`'s 1-second timer with explicit bootstrap ordering.
 - Animations don't follow the sim time-scale (`AnimationPlayer.speed_scale` needs to track `TimeManager.speed`); `LinkedDoorState` may be leaking speed-changed callbacks.
 - `AudioManager` is a scriptless placeholder — needs a real design (buses, module emitters, sim-time awareness) when the audio pass happens.
 - `StructureManager.can_remove_module` is still disabled (under-construction modules aren't structure-connected), so a module can be deleted out from under the station.

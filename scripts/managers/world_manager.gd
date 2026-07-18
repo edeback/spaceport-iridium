@@ -37,23 +37,27 @@ func _ready() -> void:
 		var new_data: LayerData = LayerData.new()
 		new_data.canvas = module_layers[layer]
 		layer_data[layer] = new_data
-	_startup()
-	pass # Replace with function body.
+	# Starting-station spawn is driven from Main._ready (WI-18): the root readies
+	# after every manager, so only there is every Global.* guaranteed registered.
 
-func _startup() -> void:
+## New-game bootstrap: place the starting station and seed its atmosphere.
+## Called from Main._ready (see WI-18) - the old _startup ran inside _ready with
+## a 1.0s create_timer to paper over managers that hadn't registered yet; that
+## race is gone now that the call happens after the whole tree is ready.
+func spawn_starting_station() -> void:
 	if SaveManager.has_pending_load():
 		return # the save's world section places everything instead
-	await get_tree().create_timer(1.0).timeout
 	add_module(start_module, Vector2i(15,8))
 	add_module(docking_bay, Vector2i(18,8), true, true, false, true)
 	add_module(hallway_module, Vector2i(17, 9))
 	add_module(module_airlock, Vector2i(19, 9), true, true)
 	# New game only (load never reaches here): the starting station begins
 	# fully O2-pressurized so the player has slack while expanding (WI-17).
-	# Deferred: construction-capable starters run ready_blueprint via
-	# call_deferred above, so their atmosphere registration hasn't happened yet.
-	Global.atmosphere_manager.seed_starting_atmosphere.call_deferred()
-	
+	# Every starter module (and the corridors/truss they auto-place) registers
+	# its AtmosphereComponent synchronously above - none defer ready_blueprint -
+	# so this is a plain direct call, no registration window needed.
+	Global.atmosphere_manager.seed_starting_atmosphere()
+
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
@@ -134,7 +138,7 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 	if not defer_ready:
 		# TODO: Hacky, find better way
 		var construction_component: ConstructionComponent = new_module.get_node_or_null("ConstructionComponent") as ConstructionComponent
-		if construction_component != null and not force_complete:
+		if construction_component != null and not force_complete and not module_data.instant_build:
 			new_module.call_deferred("ready_blueprint")
 		else:
 			new_module.ready_constructed()
