@@ -38,6 +38,8 @@ func _ready() -> void:
 	get_path_component().door_connected.connect(door_connected)
 	get_path_component().door_disconnected.connect(door_disconnected)
 	set_sprite(null)
+	# Door open/close is a gameplay-blocking wait: play it at sim speed (WI-20).
+	Global.time_manager.sync_animation(door_sprite)
 	door_sprite.animation_finished.connect(func() -> void:
 		if door_sprite.frame != 0:
 			await Global.time_manager.sim_seconds(2.0)
@@ -154,6 +156,9 @@ func path_enter(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2
 	
 func path_exit(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D, cancel_signal: Signal) -> void:
 	if next_node is ModuleTurbolift:
+		# Awaits only through boarding (WI-20): on success the pawn comes back
+		# Conveyed and the movement chain unwinds here; the cab drives the ride
+		# and calls exit_conveyed at the drop-off floor, which repaths from there.
 		var ride_request: RideRequest = await shaft.request_ride(_pawn, self, next_node, cancel_signal)
 		if ride_request.cancelled:
 			_pawn.movement_component.cancel()

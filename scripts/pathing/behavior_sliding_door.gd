@@ -6,6 +6,9 @@ extends PathBehavior
 	
 func create_state(pc: PathComponent) -> RefCounted:
 	var door: AnimatedSprite2D = pc.get_node(door_node_path)
+	# Doors are a gameplay-blocking wait: play at sim speed, freeze on pause
+	# (WI-20). The open_seconds hold below is already sim_seconds.
+	Global.time_manager.sync_animation(door)
 	door.animation_finished.connect(func() -> void:
 		if door.frame != 0:
 			await Global.time_manager.sim_seconds(open_seconds)

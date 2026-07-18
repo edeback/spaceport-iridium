@@ -151,12 +151,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-19_Testing_and_Tooling.md",
+                "file": "Spaceport Iridium/Planning/Work Items/WI-12_Storage_QoL.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "WI-19_Testing_and_Tooling"
+              "title": "WI-12_Storage_QoL"
             }
           },
           {
@@ -247,7 +247,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-19_Testing_and_Tooling.md",
+                "file": "Spaceport Iridium/Planning/Work Items/WI-12_Storage_QoL.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -257,7 +257,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for WI-19_Testing_and_Tooling"
+              "title": "Backlinks for WI-12_Storage_QoL"
             }
           },
           {
@@ -293,13 +293,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-19_Testing_and_Tooling.md",
+                "file": "Spaceport Iridium/Planning/Work Items/WI-12_Storage_QoL.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of WI-19_Testing_and_Tooling"
+              "title": "Outline of WI-12_Storage_QoL"
             }
           }
         ],
@@ -323,18 +323,21 @@
   },
   "active": "471944f5475eac00",
   "lastOpenFiles": [
-    "Spaceport Iridium/Planning/Work Items/WI-20_Movement_and_Animation.md",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-19_Testing_and_Tooling.md",
-    "Spaceport Iridium/Planning/Work Items/WI-22_Pawn_Identity.md",
     "Spaceport Iridium/Planning/Work Items/WI-21_Job_Serialization.md",
+    "Spaceport Iridium/Planning/Work Items/WI-22_Pawn_Identity.md",
+    "Spaceport Iridium/TODO notes.md",
+    "Spaceport Iridium/Planning/Work Items/WI-20_Movement_and_Animation.md",
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-20_Movement_and_Animation.md",
+    "Spaceport Iridium/Planning/Work Items/WI-20_Movement_and_Animation.md.tmp.134204.d0f45566cab3",
+    "Spaceport Iridium/Planning/Work Items/WI-23_Work_Improvements.md",
+    "Spaceport Iridium/Planning/Work Items/WI-12_Storage_QoL.md",
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-19_Testing_and_Tooling.md",
     "Spaceport Iridium/Planning/Work Items/WI-19_Testing_and_Tooling.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-18_Bootstrap_Cleanup.md",
-    "Spaceport Iridium/Planning/Work Items/WI-12_Storage_QoL.md",
     "Spaceport Iridium/Planning/Work Items/WI-18_Bootstrap_Cleanup.md",
     "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md.tmp.126060.188a6a701b31",
     "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.126060.ed125f7b1a76",
     "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.126060.a45873c9c74a",
-    "Spaceport Iridium/TODO notes.md",
     "Spaceport Iridium/Power System.md",
     "Spaceport Iridium/Notes from SimTower.md",
     "Spaceport Iridium/Notes from Project Highrise.md",
@@ -350,15 +353,12 @@
     "Spaceport Iridium/Reorganized/02_Resources_and_Economy.md",
     "Spaceport Iridium/Reorganized/01_Modules_and_Station_Structure.md",
     "Spaceport Iridium/Reorganized/00_Overview.md",
-    "Spaceport Iridium/Planning/00_Design_Document.md",
     "Spaceport Iridium/Planning/02_Roadmap.md.tmp.127376.32d7aed95304",
     "Spaceport Iridium/Planning/02_Roadmap.md.tmp.127376.ba36429c1e9f",
-    "Spaceport Iridium/Planning/Work Items/WI-37_Difficulty_Levels.md",
     "Spaceport Iridium/Planning/Work Items/WI-37_Difficulty_Levels.md.tmp.127376.a54bffcf544e",
     "Spaceport Iridium/Planning/Work Items/WI-36_Main_UI_Flow.md.tmp.127376.e7cfee1b2f8f",
     "Spaceport Iridium/Planning/Work Items/WI-35_UI_Overlays.md.tmp.127376.ba7c7acb3511",
     "Spaceport Iridium/Planning/Work Items/WI-34_Minimap.md.tmp.127376.5b90182f08c9",
-    "Spaceport Iridium/Planning/Work Items/WI-33_Visitors_and_Commerce.md.tmp.127376.0d45b60f3058",
     "Pasted image 20251208125343.png",
     "Pasted image 20260712204434.png",
     "Pasted image 20251208125118.png",

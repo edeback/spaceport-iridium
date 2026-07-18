@@ -217,9 +217,10 @@ func _get_pawns_save() -> Array:
 		var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
 		# Health lives in its own component (WI-05), so it gets its own section.
 		var health: PawnHealthComponent = pawn.get_component_by_type(PawnHealthComponent) as PawnHealthComponent
-		# Mid-turbolift-ride pawns (WI-15): rides aren't serialized, so instead
-		# of popping out at their raw position inside the shaft wall, they
-		# "arrive early" - saved standing at the cab's current floor module.
+		# Conveyed pawns (WI-15, formalized by WI-20): rides aren't serialized -
+		# a pawn a carrier owns saves as standing at the cab's current floor
+		# module, never a mid-shaft position. If ride state ever does get
+		# saved (WI-21+), RideRequest.to_floor is the module ref to record.
 		var save_module: ModuleBase = pawn.current_module
 		var save_position: Vector2 = pawn.global_position
 		var cab: TurboliftCab = pawn.path_position_override as TurboliftCab
@@ -229,7 +230,7 @@ func _get_pawns_save() -> Array:
 				ride_floor = cab.get_closest_exit()
 			if ride_floor != null:
 				save_module = ride_floor
-				save_position = ride_floor.global_position + ride_floor.get_waiting_slot()
+				save_position = ride_floor.get_global_center()
 		out.append({
 			"scene": pawn.scene_file_path,
 			"name": pawn.pawn_name,

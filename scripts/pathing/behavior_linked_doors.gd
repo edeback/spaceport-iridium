@@ -12,6 +12,9 @@ func create_state(pc: PathComponent) -> RefCounted:
 	for door_name in doors:
 		var door_sprite: AnimatedSprite2D = pc.get_node(doors[door_name])
 		state.door_sprites[door_name] = door_sprite
+		# Gameplay-blocking wait (airlock cycles ride on these): sim speed,
+		# frozen while paused (WI-20). The auto-close hold is already sim_seconds.
+		Global.time_manager.sync_animation(door_sprite)
 		# Automatically close the door after the timeout
 		door_sprite.animation_finished.connect(func() -> void:
 			if door_sprite.frame != 0:

@@ -101,6 +101,12 @@ func try_start_job(new_job: JobBase) -> bool:
 		
 
 func _process(delta: float) -> void:
+	# Sprite playback tracks sim speed (WI-20): 4x pawns animate 4x instead of
+	# gliding, and pause freezes the cycle. Re-applied per-frame rather than via
+	# TimeManager's sim_animation group because pawns reparent constantly
+	# (canvas layers, cab boarding) and group resyncs miss out-of-tree nodes.
+	if animated_sprite != null:
+		animated_sprite.speed_scale = Global.time_manager.animation_speed()
 	var sim_delta: float = Global.time_manager.scale(delta)
 	if sim_delta <= 0.0:
 		return
@@ -214,6 +220,10 @@ func work_speed() -> float:
 ## anything the pawn is carrying is left for Job_StoreInventory to sweep up
 ## afterward instead of lost - and starts new_job immediately. For needs
 ## that can't wait, e.g. a pawn about to collapse from hunger.
+## While the pawn is Conveyed (riding a turbolift cab, WI-20) the job swap
+## still happens immediately, but the new job's first movement only starts
+## once the carrier releases the pawn at its next floor stop - carriers never
+## dump a pawn between floors.
 func interrupt_with_job(new_job: JobBase) -> void:
 	if current_job != null:
 		var interrupted: JobBase = current_job

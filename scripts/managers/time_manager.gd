@@ -23,6 +23,9 @@ const START_HOUR: int = 6
 ## the tick fires proportionally more often in real time).
 const SLOW_TICK_INTERVAL: float = 0.25
 const SPEED_PRESETS: Array[float] = [0.5, 1.0, 2.0, 4.0]
+## Gameplay AnimatedSprite2Ds registered via sync_animation (WI-20); resynced
+## on every speed/pause change. UI animation must never join this group.
+const SIM_ANIMATION_GROUP: StringName = &"sim_animation"
 
 ## Fires once per frame with that frame's scaled delta. Not emitted while
 ## paused (no zero-delta spam) - awaiting sim_seconds() simply stretches.
@@ -65,6 +68,8 @@ func _ready() -> void:
 	Global.time_manager = self
 	# Run before everything that reads sim_delta this frame.
 	process_priority = -100
+	speed_changed.connect(_resync_sim_animations)
+	pause_state_changed.connect(_resync_sim_animations)
 
 func _process(delta: float) -> void:
 	sim_delta = scale(delta)
@@ -100,6 +105,28 @@ func sim_seconds(duration: float) -> void:
 	var remaining: float = duration
 	while remaining > 0.0:
 		remaining -= await sim_tick
+
+## Playback rate for gameplay-blocking animations (doors, walk cycles): the
+## sim speed, 0 while paused - so no animation finishes "for free" during a
+## pause, and door time scales with fast-forward like everything else (WI-20).
+func animation_speed() -> float:
+	return 0.0 if paused else speed
+
+## Register a gameplay AnimatedSprite2D whose playback must track sim speed.
+## Group-based so freed sprites drop out automatically. Sprites that reparent
+## at runtime (pawns) must instead re-apply animation_speed() per-frame -
+## group resyncs can't reach a node that's momentarily out of the tree.
+func sync_animation(sprite: AnimatedSprite2D) -> void:
+	sprite.add_to_group(SIM_ANIMATION_GROUP)
+	sprite.speed_scale = animation_speed()
+
+## Single Variant-typed handler so both speed_changed(float) and
+## pause_state_changed(bool) can share it.
+func _resync_sim_animations(_changed: Variant) -> void:
+	for node: Node in get_tree().get_nodes_in_group(SIM_ANIMATION_GROUP):
+		var sprite: AnimatedSprite2D = node as AnimatedSprite2D
+		if sprite != null:
+			sprite.speed_scale = animation_speed()
 
 ## "Cycle 3, 14:00" - shared by the clock UI and any log output.
 func format_time() -> String:

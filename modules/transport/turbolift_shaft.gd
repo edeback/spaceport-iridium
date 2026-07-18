@@ -72,13 +72,17 @@ func request_ride(pawn: PawnBase, from_floor: ModuleBase, to_floor: ModuleBase, 
 		request.release_queue_anchor()
 		return request
 	var best_cab: TurboliftCab = _best_cab_for(request)
-	if best_cab:
-		best_cab.add_pickup_request(request)
-	#var on_cancel := func(): _cancel(request)
-	#cancel_signal.connect(on_cancel, CONNECT_ONE_SHOT)
+	if best_cab == null:
+		# Every cab at capacity and none allowed to spawn: fail the boarding
+		# rather than awaiting a signal nothing will ever emit.
+		request.cancelled = true
+		request.release_queue_anchor()
+		return request
+	best_cab.add_pickup_request(request)
+	# Awaits only until boarding resolves (WI-20): finished(true) means the
+	# pawn is onboard and Conveyed - the cab drives the ride from here and
+	# calls exit_conveyed at drop-off; nothing awaits the ride itself.
 	await request.finished
-	#if cancel_signal.is_connected(on_cancel):
-		#cancel_signal.disconnect(on_cancel)
 	# Backstop - normally released at boarding or by the cancel path.
 	request.release_queue_anchor()
 	return request

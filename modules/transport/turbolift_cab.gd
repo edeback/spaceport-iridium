@@ -155,10 +155,14 @@ func pickup_passengers(cur_module: ModuleTurbolift) -> void:
 				# cancel path already emitted finished - don't board a dead ride.
 				assigned_locations[free_marker] = null
 				continue
-		ride.pawn.path_position_override = self
 		pickup_requests.erase(ride)
 		onboard.append(ride)
 		ride.pawn.reparent(self)
+		# Boarding complete: the cab owns the pawn's position from here (WI-20).
+		# finished(true) ends the awaited part of request_ride - the ride itself
+		# is cab-driven and resolved via exit_conveyed at drop-off.
+		ride.pawn.movement_component.enter_conveyed(self)
+		ride.finished.emit(true)
 
 func get_closest_exit() -> ModuleTurbolift:
 	var best_lift: ModuleTurbolift = null
@@ -223,11 +227,15 @@ func unload_passengers(cur_module: ModuleTurbolift) -> void:
 		if request.to_floor == cur_module or request.to_floor == null:
 			onboard.erase(request)
 			assigned_locations[request.stand_position] = null
+			if not is_instance_valid(request.pawn):
+				continue
 			request.actual_dropoff_floor = cur_module
 			request.pawn.current_module = cur_module
-			request.pawn.path_position_override = null
 			request.pawn.reparent(cur_module.get_parent())
-			request.finished.emit(request.to_floor != null)
+			# Normal arrival and a cancelled ride's next-stop drop are the same
+			# handoff (WI-20): exit_conveyed repaths from this floor, so a
+			# diverted drop-off self-corrects and a dead target just fails.
+			request.pawn.movement_component.exit_conveyed()
 			
 			
 func get_onboard_request_for(pawn: PawnBase) -> RideRequest:
@@ -255,14 +263,23 @@ func get_available_capacity() -> int:
 	return capacity - (onboard.size() + pickup_requests.size())
 
 func destroy() -> void:
+	# queue_free only deletes at end of frame; without this, _process can run
+	# once more after shaft is nulled below and crash on shaft.get_floor_module.
+	set_process(false)
 	Global.path_manager.remove_vertex(self)
 	assigned_locations.clear()
 	for request in onboard:
-		request.pawn.path_position_override = null
-		# Dump into hallway if it exists, will fallback to space automatically
-		request.pawn.current_module = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.CORRIDOR, Global.world_to_cell(global_position))
 		request.cancelled = true
-		request.finished.emit(false)
+		if not is_instance_valid(request.pawn):
+			continue
+		# Dump into hallway if it exists, will fallback to space automatically.
+		# No finished emit - boarding already resolved it (WI-20).
+		request.pawn.current_module = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.CORRIDOR, Global.world_to_cell(global_position))
+		if request.pawn.get_parent() == self:
+			# The module-change setter only reparents on a layer change; force
+			# the pawn out regardless - it must not be freed with the cab.
+			request.pawn.reparent(Global.world_manager.get_canvas_for_layer(request.pawn.current_layer))
+		request.pawn.movement_component.exit_conveyed()
 	onboard.clear()
 	for request in pickup_requests:
 		request.release_queue_anchor()
