@@ -27,6 +27,16 @@ signal module_upgraded(module: ModuleBase)
 signal module_breach_started(module: ModuleBase)
 @warning_ignore("unused_signal")
 signal module_breach_sealed(module: ModuleBase)
+## Module durability (WI-24). damaged fires on every hp loss (amount > 0),
+## repaired on every hp gain, destroyed the instant a non-truss module hits 0
+## (right before remove_module tears it down). Truss never emits destroyed - it
+## enters its damaged state instead so the station can't split.
+@warning_ignore("unused_signal")
+signal module_damaged(module: ModuleBase, amount: float)
+@warning_ignore("unused_signal")
+signal module_repaired(module: ModuleBase, amount: float)
+@warning_ignore("unused_signal")
+signal module_destroyed(module: ModuleBase)
 @warning_ignore("unused_signal")
 signal pawn_critical_need(pawn: PawnBase, need: StringName)
 @warning_ignore("unused_signal")

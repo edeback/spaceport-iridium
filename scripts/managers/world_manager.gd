@@ -257,6 +257,20 @@ func get_stack_at_cell(cell: Vector2i) -> Array[ModuleBase]:
 			stack.append(module)
 	return stack
 
+## Built modules on `layer`, deduped (multi-cell modules appear once). Used by
+## the pirate raid (WI-24) to pick damage targets; excludes the structural
+## placeholder (truss) so raids strike real hardware, not existing wreckage.
+func get_built_modules(layer: StructureLayer = StructureLayer.MODULE, exclude_replacement: bool = true) -> Array[ModuleBase]:
+	var result: Array[ModuleBase] = []
+	for module: ModuleBase in layer_data[layer].cell_to_module.values():
+		if module == null or not module.is_complete():
+			continue
+		if exclude_replacement and module.module_data == replacement_module:
+			continue
+		if not result.has(module):
+			result.append(module)
+	return result
+
 func get_module_by_id(id: int) -> ModuleBase:
 	return id_to_module.get(id)
 	

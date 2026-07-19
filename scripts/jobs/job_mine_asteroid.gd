@@ -185,7 +185,10 @@ func mine_asteroid(delta: float) -> void:
 		return
 	# work_rate folds in miner happiness + mining skill, floored (WI-22). Drones
 	# have neither component, so it resolves to 1.0 and timing is unchanged.
-	time_mining += delta * efficiency * pawn.work_rate(get_skill())
+	# The bay's mining_rate stat (WI-24) scales it too, so a damaged/broken bay
+	# mines measurably slower; 1.0 at full health keeps timing unchanged.
+	var bay_rate: float = requesting_component.get_mining_rate() if requesting_component != null else 1.0
+	time_mining += delta * efficiency * bay_rate * pawn.work_rate(get_skill())
 	if time_mining >= default_seconds_to_mine:
 		time_mining = 0
 		# Can be null if another drone emptied the asteroid this frame - the

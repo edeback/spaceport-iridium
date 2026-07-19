@@ -73,6 +73,27 @@ func test_remove_source_strips_all_its_contributions_across_stats() -> void:
 	assert_eq(mods.get_effective(&"speed", 10.0), 10.0, "the upg mult on speed is gone")
 	assert_eq(mods.tier_count(&"output", &"upg"), 0, "no upg tiers left anywhere")
 
+# --- set_single_modifier (WI-24 update-in-place) -----------------------------
+
+func test_set_single_modifier_adds_when_absent() -> void:
+	mods.set_single_modifier(&"output", StatModifiers.Op.MULT, 0.5, &"damage")
+	assert_eq(mods.get_effective(&"output", 10.0), 5.0)
+
+func test_set_single_modifier_replaces_prior_value_in_place() -> void:
+	mods.set_single_modifier(&"output", StatModifiers.Op.MULT, 0.5, &"damage")
+	mods.set_single_modifier(&"output", StatModifiers.Op.MULT, 0.8, &"damage")
+	# The 0.5 is gone, not compounded - one modifier per (stat, source).
+	assert_almost_eq(mods.get_effective(&"output", 10.0), 8.0, 0.001)
+	assert_eq(mods.tier_count(&"output", &"damage"), 1, "still exactly one")
+
+func test_set_single_modifier_leaves_other_sources_untouched() -> void:
+	mods.add_modifier(&"output", StatModifiers.Op.MULT, 2.0, &"upgrade")
+	mods.set_single_modifier(&"output", StatModifiers.Op.MULT, 0.5, &"damage")
+	# base 10 * upgrade 2 * damage 0.5 = 10
+	assert_eq(mods.get_effective(&"output", 10.0), 10.0)
+	mods.set_single_modifier(&"output", StatModifiers.Op.MULT, 1.0, &"damage")
+	assert_eq(mods.get_effective(&"output", 10.0), 20.0, "upgrade survives the damage rewrite")
+
 # --- change signal -----------------------------------------------------------
 
 func test_changed_signal_fires_on_add() -> void:

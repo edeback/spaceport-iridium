@@ -28,9 +28,15 @@ func ready_blueprint() -> void:
 func ready_constructed() -> void:
 	add_to_group("power_generator")
 
+## Stat key routed through the owner module's modifier layer so damage (WI-24)
+## and future upgrades scale generation without touching the base export.
+const STAT_POWER_OUTPUT := &"power_output"
+
 func get_power_output() -> float:
+	if owner_module != null:
+		return owner_module.get_effective_stat(STAT_POWER_OUTPUT, power_output)
 	return power_output
-	
+
 func disable_generation(disable: bool) -> void:
 	if disable != force_off:
 		force_off = disable

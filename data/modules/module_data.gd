@@ -29,6 +29,21 @@ extends Resource
 @export var flippable: bool = false
 @export var flipped_scene: PackedScene
 
+## --- combat / durability (WI-24) --------------------------------------------
+## Hit points at full health. Trusses and armor sit high, fragile hardware
+## (solar panels) low. Balance lives here per module; the export default is the
+## catch-all for the many modules that don't override it.
+@export var max_hp: float = 100.0
+## Output multiplier at (near) zero HP - damage lerps efficiency between this and
+## 1.0 by hp fraction. 1.0 = damage never degrades output (structure/decor).
+@export var min_damaged_efficiency: float = 0.25
+## Industrial hardware wears out; roll a breakdown each game-hour when true.
+@export var can_break_down: bool = false
+## Per-game-hour breakdown probability (0..1) when can_break_down. Read through
+## get_effective_stat(&"breakdown_chance", ...) so WI-30's Maintenance Facility
+## can lower it via adjacency later for free.
+@export var breakdown_chance_per_hour: float = 0.0
+
 signal module_lock_changed(locked: bool)
 
 func can_afford() -> bool:

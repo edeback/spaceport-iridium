@@ -28,6 +28,7 @@ static func _ensure_registry() -> void:
 	_factories[&"collect_pile"] = Job_CollectPile.restore
 	_factories[&"mine_asteroid"] = Job_MineAsteroid.restore
 	_factories[&"work_processor"] = Job_WorkProcessor.restore
+	_factories[&"repair"] = Job_Repair.restore
 	_factories[&"move_to_location"] = Job_MoveToLocation.restore
 	_factories[&"eat"] = Job_Eat.restore
 	_factories[&"sleep"] = Job_Sleep.restore

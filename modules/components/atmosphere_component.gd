@@ -107,6 +107,19 @@ func start_breach(duration_hours: float) -> void:
 		SignalBus.module_breach_started.emit(owner_module)
 		SignalBus.station_alert.emit("Hull breach in %s! Emergency bulkheads will seal in %.1f hours." % [_module_name(), breach_remaining_hours])
 
+## Accelerated sealing driven by a repair worker (WI-24). A pawn patching the
+## hull closes the breach far faster than the emergency-bulkhead self-seal (the
+## WI-17 timer stays the slow fallback). Reuses the same countdown, so it emits
+## module_breach_sealed at zero exactly like the self-seal path.
+func advance_seal(hours: float) -> void:
+	if hours <= 0.0 or not is_breached():
+		return
+	breach_remaining_hours -= hours
+	if breach_remaining_hours <= 0.0:
+		breach_remaining_hours = 0.0
+		SignalBus.module_breach_sealed.emit(owner_module)
+		SignalBus.station_alert.emit("Repairs sealed the breach in %s." % _module_name())
+
 func _process(delta: float) -> void:
 	var sim_hours: float = Global.time_manager.scale(delta) / TimeManager.SECONDS_PER_HOUR
 	if sim_hours <= 0.0 or not is_breached():

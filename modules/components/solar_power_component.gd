@@ -21,4 +21,6 @@ func connections_changed(new_connections: Dictionary[ModuleBase, bool]) -> void:
 	power_scaling = (possible_connections - current_connections) / possible_connections
 		
 func get_power_output()  -> float:
-	return power_output * power_scaling
+	# super() reads the effective (damage/upgrade-scaled) base output; the
+	# surroundings scaling then applies on top of that.
+	return super() * power_scaling

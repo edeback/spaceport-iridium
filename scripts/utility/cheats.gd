@@ -30,6 +30,36 @@ func build_module(id: StringName, cell: Vector2i, flipped: bool) -> String:
 		return _report("built module %s at %s" % [id, cell])
 	return _report("Could not find module with id: %" % id)
 
+## Deals `amount` HP of damage to the built module at `cell` (WI-24). At 0 HP a
+## normal module is destroyed (truss replaces it); a truss becomes wreckage.
+func damage_module(cell: Vector2i, amount: float) -> String:
+	var module: ModuleBase = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, cell)
+	if module == null:
+		return _report("damage_module found no MODULE-layer module at %s" % cell)
+	module.apply_damage(amount, &"cheat")
+	if is_instance_valid(module):
+		return _report("dealt %.0f damage to %s (now %.0f/%.0f HP)" % [amount, module._display_name(), module.hp, module.max_hp()])
+	return _report("dealt %.0f damage - module at %s destroyed" % [amount, cell])
+
+## Restores `amount` HP to the module at `cell` (WI-24). -1 = repair to full.
+func repair_module(cell: Vector2i, amount: float = -1.0) -> String:
+	var module: ModuleBase = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, cell)
+	if module == null:
+		return _report("repair_module found no MODULE-layer module at %s" % cell)
+	if amount < 0.0:
+		amount = module.max_hp()
+	module.repair(amount)
+	module.clear_breakdown()
+	return _report("repaired %s to %.0f/%.0f HP" % [module._display_name(), module.hp, module.max_hp()])
+
+## Forces a breakdown on the module at `cell` (WI-24), ignoring the hourly roll.
+func break_module(cell: Vector2i) -> String:
+	var module: ModuleBase = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, cell)
+	if module == null or not module.is_complete():
+		return _report("break_module found no built MODULE-layer module at %s" % cell)
+	module._trigger_breakdown()
+	return _report("forced a breakdown on %s" % module._display_name())
+
 # --- resources & pawns --------------------------------------------------------
 
 ## Drops `amount` of resource `id` at `cell`. If a module there has storage with

@@ -18,6 +18,17 @@ var _respawn_time_left: float = -1.0
 ## preference, random asteroid. Per-bay, not persisted (see 03_Bugs).
 var priority_ore: ResourceData = null
 
+## Stat key for the bay's extraction rate (WI-24): damage/upgrades scale this
+## and Job_MineAsteroid folds it into its per-unit timing. 1.0 base = no-op.
+const STAT_MINING_RATE := &"mining_rate"
+
+## Effective extraction-rate multiplier for this bay's drones. Reads the module's
+## modifier layer so a damaged mining bay measurably slows.
+func get_mining_rate() -> float:
+	if owner_module != null:
+		return maxf(owner_module.get_effective_stat(STAT_MINING_RATE, 1.0), 0.05)
+	return 1.0
+
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:

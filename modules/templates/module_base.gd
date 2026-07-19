@@ -56,6 +56,27 @@ const SHADER_PARAM_PREVIEW = "PREVIEW"
 const SHADER_PARAM_PLACEABLE = "PLACEABLE"
 const SHADER_PARAM_SELECTED = "SELECTED"
 const SHADER_PARAM_PROGRESS = "PROGRESS"
+const SHADER_PARAM_DAMAGE = "DAMAGE"
+
+## Reserved StatModifiers source ids (WI-24). Damage efficiency and breakdowns
+## each own one source so they update/clear independently of upgrades and of
+## each other (their MULTs compound by design).
+const DAMAGE_SOURCE := &"damage"
+const BREAKDOWN_SOURCE := &"breakdown"
+## Output multiplier a broken-down module runs at until a repair job clears it.
+const BREAKDOWN_EFFICIENCY := 0.5
+
+## Current hit points (WI-24). -1 until the module is built, so previews and
+## blueprints read as undamaged (hp_fraction guards on build state). Set to
+## max_hp on build and restored from the save.
+var hp: float = -1.0
+## Set while a repair job for this module is live on the board / being worked, so
+## the slow-tick poll doesn't post a duplicate (mirrors ProcessorComponent._work_job).
+var _repair_job: Job_Repair = null
+## True while a rolled breakdown's efficiency modifier is active (WI-24). Cleared
+## when a repair job completes; persisted so a broken machine stays broken across
+## a save. Direct-damage breakdowns don't set this - HP repair fixes those.
+var _broken_down: bool = false
 
 var previewing: bool = false:
 	get:
@@ -122,12 +143,28 @@ func ready_blueprint() -> void:
 	
 func ready_constructed() -> void:
 	build_state = BuildState.Built
+	# Freshly built modules start at full health (WI-24). A load overwrites this
+	# via load_save_data after this pass; the -1 sentinel only ever survives on
+	# never-built modules.
+	if hp < 0.0:
+		hp = max_hp()
 	# Pull in any global (module-type-wide) stat modifiers unlocked so far.
 	if Global.unlock_manager != null:
 		Global.unlock_manager.apply_global_modifiers(self)
 	for component: ComponentBase in components:
 		component.ready_constructed()
 	make_connections()
+	_update_shader()
+	# Durability upkeep (WI-24): the slow tick re-posts repair jobs as needed and
+	# the hourly tick rolls breakdowns. Both no-op when nothing is wrong, so idle
+	# healthy modules cost a cheap early-return. Guarded against a double ready
+	# pass (blueprint -> built already only readies once, but connecting twice
+	# would push an error).
+	if not Engine.is_editor_hint() and Global.time_manager != null:
+		if not Global.time_manager.slow_tick.is_connected(_on_durability_slow_tick):
+			Global.time_manager.slow_tick.connect(_on_durability_slow_tick)
+		if not Global.time_manager.hour_changed.is_connected(_on_durability_hour_changed):
+			Global.time_manager.hour_changed.connect(_on_durability_hour_changed)
 
 func is_complete() -> bool:
 	return build_state == BuildState.Built
@@ -137,6 +174,150 @@ func is_complete() -> bool:
 ## through here rather than reading the raw value directly.
 func get_effective_stat(stat: StringName, base: float) -> float:
 	return stat_modifiers.get_effective(stat, base)
+
+# --- durability / combat (WI-24) ------------------------------------------
+
+func max_hp() -> float:
+	return module_data.max_hp if module_data != null else 100.0
+
+## 0..1 health, clamped. Previews/blueprints and zero-max modules read full so
+## the shader and efficiency modifier stay inert before a module is built.
+func hp_fraction() -> float:
+	var mx: float = max_hp()
+	if mx <= 0.0 or not is_complete() or hp < 0.0:
+		return 1.0
+	return clampf(hp / mx, 0.0, 1.0)
+
+## True when there is work for a repair job to do: missing HP, an active
+## breakdown, or an open breach.
+func needs_repair() -> bool:
+	if not is_complete():
+		return false
+	if hp >= 0.0 and hp < max_hp():
+		return true
+	if _broken_down:
+		return true
+	var atmo: AtmosphereComponent = get_atmosphere()
+	return atmo != null and atmo.is_breached()
+
+func get_atmosphere() -> AtmosphereComponent:
+	return get_component_by_type(AtmosphereComponent) as AtmosphereComponent
+
+## Deal `amount` damage from `source` (attribution only). Refreshes the damage
+## visual + efficiency modifier and, at 0 HP, routes into _on_hp_zero (removal
+## for normal modules, the wreckage state for truss). No-op on non-built modules
+## and on anything already at 0 HP (a wrecked truss can't be hurt further).
+func apply_damage(amount: float, source: StringName = &"") -> void:
+	if amount <= 0.0 or not is_complete():
+		return
+	# Already at 0 (a wrecked truss) - nothing left to damage. Built modules
+	# always have hp >= 0 here, so this never blocks the -1 preview sentinel.
+	if hp <= 0.0:
+		return
+	hp = maxf(hp - amount, 0.0)
+	_refresh_damage_modifier()
+	_update_shader()
+	SignalBus.module_damaged.emit(self, amount)
+	if hp <= 0.0:
+		_on_hp_zero(source)
+
+## Restore `amount` HP (never past max). Repair jobs call this each tick; the
+## breakdown and breach fixes are separate (clear_breakdown / breach sealing) so
+## a full-HP-but-broken module still heals.
+func repair(amount: float) -> void:
+	if amount <= 0.0 or hp < 0.0 or hp >= max_hp():
+		return
+	hp = minf(hp + amount, max_hp())
+	_refresh_damage_modifier()
+	_update_shader()
+	SignalBus.module_repaired.emit(self, amount)
+
+## 0 HP reached. Base behaviour: announce destruction and remove the module
+## (remove_module ejects stored resources as debris and auto-places truss on the
+## MODULE layer). Truss overrides this to stay put (station can't split).
+func _on_hp_zero(_source: StringName) -> void:
+	SignalBus.module_destroyed.emit(self)
+	Global.world_manager.remove_module(self, false)
+
+## Writes the reserved &"damage" MULT layer from the current HP fraction: output
+## stats scale by efficiency, process_time inversely (a hurt machine is slower).
+## Cleared entirely at full health so an undamaged module's effective stats are
+## byte-for-byte their base values (regression guarantee).
+func _refresh_damage_modifier() -> void:
+	var frac: float = hp_fraction()
+	if frac >= 1.0:
+		stat_modifiers.remove_source(DAMAGE_SOURCE)
+		return
+	var min_eff: float = module_data.min_damaged_efficiency if module_data != null else 0.25
+	var efficiency: float = maxf(lerpf(min_eff, 1.0, frac), 0.05)
+	stat_modifiers.set_single_modifier(&"power_output", StatModifiers.Op.MULT, efficiency, DAMAGE_SOURCE)
+	stat_modifiers.set_single_modifier(&"mining_rate", StatModifiers.Op.MULT, efficiency, DAMAGE_SOURCE)
+	stat_modifiers.set_single_modifier(&"traversal_speed_mult", StatModifiers.Op.MULT, efficiency, DAMAGE_SOURCE)
+	stat_modifiers.set_single_modifier(&"process_time", StatModifiers.Op.MULT, 1.0 / efficiency, DAMAGE_SOURCE)
+
+# --- breakdowns (WI-24) ---------------------------------------------------
+
+func has_breakdown() -> bool:
+	return _broken_down
+
+## Hourly breakdown roll for industrial modules. The chance is read through
+## get_effective_stat so WI-30's Maintenance Facility can lower it via adjacency.
+func _on_durability_hour_changed(_hour: int) -> void:
+	if not is_complete() or module_data == null or not module_data.can_break_down:
+		return
+	if _broken_down:
+		return
+	var chance: float = get_effective_stat(&"breakdown_chance", module_data.breakdown_chance_per_hour)
+	if chance > 0.0 and randf() < chance:
+		_trigger_breakdown()
+
+## Rolled effect: half a wear breakdown (direct damage, fixed by HP repair), half
+## a jam (a lingering efficiency modifier cleared only when a repair job finishes).
+func _trigger_breakdown() -> void:
+	if randf() < 0.5:
+		apply_damage(max_hp() * 0.15, &"breakdown")
+	else:
+		_broken_down = true
+		_apply_breakdown_modifier()
+	SignalBus.station_alert.emit("%s has broken down!" % _display_name())
+
+func _apply_breakdown_modifier() -> void:
+	stat_modifiers.set_single_modifier(&"power_output", StatModifiers.Op.MULT, BREAKDOWN_EFFICIENCY, BREAKDOWN_SOURCE)
+	stat_modifiers.set_single_modifier(&"mining_rate", StatModifiers.Op.MULT, BREAKDOWN_EFFICIENCY, BREAKDOWN_SOURCE)
+	stat_modifiers.set_single_modifier(&"process_time", StatModifiers.Op.MULT, 1.0 / BREAKDOWN_EFFICIENCY, BREAKDOWN_SOURCE)
+
+## Called by a completing repair job (WI-24). Lifts the lingering breakdown hit.
+func clear_breakdown() -> void:
+	if not _broken_down:
+		return
+	_broken_down = false
+	stat_modifiers.remove_source(BREAKDOWN_SOURCE)
+
+# --- repair-job posting (WI-24) -------------------------------------------
+
+## Slow-tick poll: keep exactly one repair job posted while this module needs
+## work. Re-posts automatically once a previous job ends (its slot clears), which
+## also covers a job cancelled by the module being knocked out from under it.
+func _on_durability_slow_tick(_interval: float) -> void:
+	if not needs_repair():
+		return
+	if _repair_job != null and not _repair_job.is_ended():
+		return
+	if Global.job_manager == null:
+		return
+	_repair_job = Job_Repair.new()
+	_repair_job.setup(self)
+	Global.job_manager.add_job(_repair_job)
+
+## Claim the outstanding-repair-job slot for a restored job (WI-24), so the
+## slow-tick poll doesn't post a duplicate before the loaded pawn runs it.
+func adopt_repair_job(job: Job_Repair) -> void:
+	_repair_job = job
+
+func _display_name() -> String:
+	if module_data != null and module_data.name != "":
+		return module_data.name
+	return name
 
 # --- local (per-instance) upgrades ---------------------------------------
 
@@ -227,6 +408,12 @@ func get_save_data() -> Dictionary:
 	var upgrades: Dictionary = get_upgrade_save_data()
 	if not upgrades.is_empty():
 		data["upgrades"] = upgrades
+	# Durability (WI-24): only written when it deviates from a pristine module, so
+	# untouched saves stay compact and old saves load as full-health.
+	if is_complete() and hp >= 0.0 and hp < max_hp():
+		data["hp"] = hp
+	if _broken_down:
+		data["broken_down"] = true
 	return data
 
 ## Restore per-instance state. Call AFTER the ready pass (ready_constructed /
@@ -265,6 +452,15 @@ func load_save_data(data: Dictionary) -> void:
 	if o2_generator != null and data.has("o2_generator"):
 		o2_generator.load_save_data(data["o2_generator"])
 	load_upgrade_save_data(data.get("upgrades", {}))
+	# Durability (WI-24). Restore HP and any lingering breakdown, then re-derive
+	# the damage modifier + visual from the loaded HP. Missing keys = pristine.
+	if data.has("hp"):
+		hp = float(data["hp"])
+	if bool(data.get("broken_down", false)):
+		_broken_down = true
+		_apply_breakdown_modifier()
+	_refresh_damage_modifier()
+	_update_shader()
 
 ## Restore tiers saved by get_upgrade_save_data() and re-apply their modifiers,
 ## exactly as if each tier had been purchased. Call after module_data is set.
@@ -322,6 +518,7 @@ func _update_shader() -> void:
 		get_sprite().material.set_shader_parameter(SHADER_PARAM_PLACEABLE, can_place)
 		get_sprite().material.set_shader_parameter(SHADER_PARAM_SELECTED, selected)
 		get_sprite().material.set_shader_parameter(SHADER_PARAM_PROGRESS, progress)
+		get_sprite().material.set_shader_parameter(SHADER_PARAM_DAMAGE, 1.0 - hp_fraction())
 		
 func get_path_component() -> PathComponent:
 	if _cached_path_component:

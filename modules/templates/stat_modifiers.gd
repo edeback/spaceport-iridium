@@ -46,6 +46,16 @@ func add_modifier(stat: StringName, op: Op, value: float, source: StringName) ->
 	_dirty[stat] = true
 	changed.emit(stat)
 
+## Replace whatever `source` contributes to `stat` with a single modifier
+## (WI-24). For continuously-rewritten layers like damage efficiency and
+## breakdowns that keep exactly one modifier per stat and update its value in
+## place, rather than piling up a new modifier each refresh.
+func set_single_modifier(stat: StringName, op: Op, value: float, source: StringName) -> void:
+	if _modifiers.has(stat):
+		var arr: Array = _modifiers[stat]
+		arr.assign(arr.filter(func(m: Modifier) -> bool: return m.source != source))
+	add_modifier(stat, op, value, source)
+
 ## Remove every modifier contributed by `source`, across all stats.
 func remove_source(source: StringName) -> void:
 	for stat: StringName in _modifiers.keys():

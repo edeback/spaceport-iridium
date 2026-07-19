@@ -19,4 +19,6 @@ ExtResource("3_0roq3"): 6
 })
 tags = Array[String](["Industrial"])
 unlocked_by_default = false
+can_break_down = true
+breakdown_chance_per_hour = 0.006
 metadata/_custom_type_script = "uid://vwmofdckg7hu"
