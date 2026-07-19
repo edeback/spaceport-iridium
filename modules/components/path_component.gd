@@ -85,6 +85,8 @@ signal door_disconnected(cell: Vector2i, from_layer: WorldManager.StructureLayer
 
 func _ready() -> void:
 	super()
+	if Engine.is_editor_hint():
+		return
 	for index in path_points.size():
 		astar.add_point(index, path_points[index])
 	for edge in path_edges:
