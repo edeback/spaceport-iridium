@@ -58,7 +58,12 @@ func find_job(pawn: PawnBase, allowed_categories: Array[JobBase.Category] = []) 
 			if cursors[index] < 0:
 				continue
 			var candidate: JobBase = queues[index][cursors[index]]
-			var effective: float = candidate.effective_priority()
+			# Per-pawn key (WI-23): folds in the workspace affinity bonus so an
+			# assignee prefers their own workspace's job. The queues stay sorted by
+			# the pawn-agnostic effective_priority(); the affinity bump is modest
+			# and within-band, so scanning cursor-tops by this key still surfaces
+			# the right job in every case the assignment mechanic cares about.
+			var effective: float = candidate.effective_priority_for(pawn)
 			if best_index == -1 or effective > best_priority:
 				best_index = index
 				best_priority = effective

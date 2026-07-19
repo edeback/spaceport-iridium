@@ -20,6 +20,8 @@
 [ext_resource type="Resource" path="res://data/recipes/refining/silicon_refining_recipe.tres" id="17_rfsilicon"]
 [ext_resource type="Resource" path="res://data/recipes/refining/gold_refining_recipe.tres" id="18_rfgold"]
 [ext_resource type="Resource" path="res://data/recipes/refining/iridium_refining_recipe.tres" id="19_rfiridium"]
+[ext_resource type="Script" uid="uid://c2qsvh4rhb1ta" path="res://scripts/pathing/anchor_def.gd" id="20_anchor"]
+[ext_resource type="Script" uid="uid://d4aeiirm7ox7s" path="res://modules/components/workspace_component.gd" id="21_wksp"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_lqugb"]
 shader = ExtResource("2_gtfxg")
@@ -29,9 +31,16 @@ shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 shader_parameter/gradient_texture = ExtResource("3_arklq")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_xsx6o"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_q5qum"]
 resource_local_to_scene = true
 size = Vector2(126, 62)
+
+[sub_resource type="Resource" id="Resource_wkstn"]
+script = ExtResource("20_anchor")
+type = 0
+offset = Vector2(24, 0)
+animation = &"interact"
+metadata/_custom_type_script = "uid://c2qsvh4rhb1ta"
 
 [sub_resource type="Resource" id="Resource_8w55x"]
 script = ExtResource("7_ymsq2")
@@ -49,7 +58,10 @@ texture = ExtResource("3_pj0q4")
 region_enabled = false
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_xsx6o")
+shape = SubResource("RectangleShape2D_q5qum")
+
+[node name="PathComponent" parent="." index="1" unique_id=1088376714]
+anchors = Array[ExtResource("20_anchor")]([SubResource("Resource_wkstn")])
 
 [node name="PowerConsumptionComponent" parent="." index="2" unique_id=2041634469 instance=ExtResource("3_gtfxg")]
 power_consumption = 50.0
@@ -82,3 +94,7 @@ input_storage = NodePath("../Input Storage")
 output_storage = NodePath("../Output Storage")
 time_to_process = 15.0
 power_consumer = NodePath("../PowerConsumptionComponent")
+requires_worker = true
+
+[node name="WorkspaceComponent" type="Node2D" parent="." index="8" unique_id=771230001]
+script = ExtResource("21_wksp")

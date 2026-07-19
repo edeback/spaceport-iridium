@@ -3,13 +3,22 @@ extends ComponentBase
 
 @export var recipe: RecipeData
 ## When this holds 2+ recipes, the player can switch the processor between
-## them (ore refinery). Empty or single-entry = fixed-recipe processor,
-## exactly the pre-WI-09 behavior, and input storage is never touched.
+## them (ore refinery). Empty or single-entry = fixed-recipe processor
 @export var available_recipes: Array[RecipeData] = []
 @export var input_storage: StorageComponent
 @export var output_storage: StorageComponent
 @export var time_to_process: float = 1
 @export var power_consumer: PowerConsumptionComponent
+
+## When true (WI-23), a batch still readies automatically (inputs withdrawn, held
+## at partial progress) but progress only advances while a pawn is working at the
+## module - a Job_WorkProcessor drives current_process_time via advance_work().
+## Existing scenes default false = fully-automated, byte-for-byte the pre-WI-23
+## behavior; refinery/forge opt in, solar/scrubber stay unmanned.
+@export var requires_worker: bool = false
+## Skill (WI-22) that gates a manned batch's work rate and earns xp. Only
+## consulted when requires_worker.
+@export var worker_skill: StringName = &"crafting"
 
 ## Stat key routed through the owner module's stat-modifier layer. A MULT < 1
 ## from a "faster processing" upgrade shortens the effective processing time.
@@ -37,6 +46,18 @@ var _yield_residue: Dictionary[ResourceData, float] = {}
 ## recipe; applied when the batch completes so already-consumed inputs
 ## finish at the recipe they were withdrawn for.
 var pending_recipe: RecipeData = null
+
+## Manned processing (WI-23). The outstanding Job_WorkProcessor for this module -
+## either sitting on the board unclaimed, being walked to, or actively advancing
+## a batch. Non-null (and not ended) means "a worker is already accounted for",
+## so _manned_processing won't post a second. Handed straight to a followup on
+## batch completion so the operating pawn stays at the machine across batches
+## with no board round-trip and no window for another pawn to be double-posted.
+var _work_job: Job_WorkProcessor = null
+## Set by advance_work() each time a worker drives a batch; read and cleared by
+## _manned_processing() once per frame to tell "actively worked" (progress bar
+## live) from "waiting for a worker" (stalled, distinct from unpowered).
+var _worked_this_frame: bool = false
 
 signal processor_progress_changed(new_progress: float)
 signal batch_richness_changed(new_richness: float)
@@ -68,8 +89,8 @@ func ready_blueprint() -> void:
 func ready_constructed() -> void:
 	add_to_group("processor")
 	set_process(true)
-	if can_select_recipes():
-		_sync_storages()
+	# Changing this to always sync storage
+	_sync_storages()
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
@@ -80,7 +101,10 @@ func _process(delta: float) -> void:
 		# Do nothing if unpowered
 		last_error = "No power!"
 		return
-	_stepwise_processing(sim_delta)
+	if requires_worker:
+		_manned_processing(sim_delta)
+	else:
+		_stepwise_processing(sim_delta)
 
 func can_select_recipes() -> bool:
 	return available_recipes.size() > 1
@@ -109,17 +133,19 @@ func _apply_recipe(new_recipe: RecipeData) -> void:
 	recipe_changed.emit(recipe)
 
 ## Reconfigures input/output storage slots to match the current recipe.
-## Only ever called on selectable-recipe processors - fixed-recipe scenes
-## keep whatever their storage was authored with.
 func _sync_storages() -> void:
 	for resource: ResourceData in input_storage.storage_data.keys():
 		if not recipe.inputs.has(resource):
 			_clear_input_slot(resource)
+	var total_ingredients: float = 0
+	for ingredient: ResourceData in recipe.inputs:
+		total_ingredients += recipe.inputs[ingredient]
 	for ingredient: ResourceData in recipe.inputs:
 		input_storage.add_stored_resource(ingredient)
 		# Explicit rather than relying on add_stored_resource: the slot may
 		# survive a round-trip switch (had stock) with desired zeroed below.
-		input_storage.storage_data[ingredient].desired = input_storage.max_stored
+		# Set desired proportionally so multi-ingredient recipes don't clog on one
+		input_storage.storage_data[ingredient].desired = ceili(recipe.inputs[ingredient] / total_ingredients * input_storage.max_stored) if total_ingredients > 0 else input_storage.max_stored
 	for resource: ResourceData in output_storage.storage_data.keys():
 		var data: StorageData = output_storage.storage_data[resource]
 		if not recipe.outputs.has(resource) and data.stored <= 0 and data.reserved_deposit <= 0:
@@ -239,27 +265,138 @@ func _stepwise_processing(delta: float) -> void:
 			current_process_time = 0
 			last_error = ""
 
+# --- manned processing (WI-23) ----------------------------------------------
+
+## Powered per-frame step for requires_worker processors. Readies a batch when
+## inputs are available (withdrawing them, then holding at partial progress) and
+## keeps a Job_WorkProcessor posted, but never advances progress itself - that's
+## advance_work(), called by the operating pawn. _worked_this_frame tells a live
+## worker from a stall so the alert reads "Waiting for worker" (not "No power!").
+func _manned_processing(_delta: float) -> void:
+	var worked: bool = _worked_this_frame
+	_worked_this_frame = false
+	if not processing:
+		if _satisfies_recipe():
+			_withdraw_inputs()
+			processor_progress_changed.emit(0)
+			processing = true
+			current_process_time = 0
+		# else: last_error was set by _satisfies_recipe (Missing input / no space).
+	if processing:
+		_ensure_work_job()
+		if not worked:
+			last_error = "Waiting for worker"
+
+## True when a fresh batch could be readied right now (inputs present, output
+## room). Used by a finishing Job_WorkProcessor to decide whether to chain.
+func can_ready_batch() -> bool:
+	return not processing and _satisfies_recipe()
+
+## True while a batch is ready or mid-progress and thus needs an operator.
+func has_active_batch() -> bool:
+	return processing
+
+## Ensures exactly one Job_WorkProcessor is outstanding for this module. No-op
+## while one is still live (on the board, being walked to, or working, or handed
+## to a followup); posts a fresh board job otherwise.
+func _ensure_work_job() -> void:
+	if _work_job != null and not _work_job.is_ended():
+		return
+	if owner_module == null or not owner_module.is_complete():
+		return
+	_work_job = Job_WorkProcessor.new()
+	_work_job.setup(self)
+	Global.job_manager.add_job(_work_job)
+
+## Called by a Job_WorkProcessor when it terminates. Clears the outstanding-job
+## slot only if this job is still the one we're tracking - a job that chained
+## into a followup already re-pointed _work_job at that followup, so its own end
+## must not null it (which would double-post).
+func notify_work_job_ended(job: Job_WorkProcessor) -> void:
+	if _work_job == job:
+		_work_job = null
+
+## Transfers the outstanding-job slot to a followup so the operating pawn keeps
+## the machine across batches without a board round-trip (no double-post window).
+func adopt_followup_work_job(job: Job_WorkProcessor) -> void:
+	_work_job = job
+
+## Advances the current batch by `amount` sim-seconds (already folded with the
+## worker's happiness x skill rate). Returns true when the batch completes this
+## call. Deposits outputs and applies any pending recipe on completion, exactly
+## like the unmanned path; holds at full progress if the output has no room.
+func advance_work(amount: float) -> bool:
+	# The worker drives this directly from its job, bypassing the _process power
+	# gate - so re-check power here, or an unpowered manned processor would keep
+	# producing for free while someone stands at it. The job should already have
+	# been canceled by now, though - we don't want someone stuck here
+	if power_consumer != null and not power_consumer.powered:
+		return false
+	if not processing:
+		# No batch readied yet this frame (the processor's own _process readies it),
+		# or one just completed - nothing to advance. "Not complete", so the worker
+		# stays put and tries again next frame instead of falsely finishing.
+		_worked_this_frame = true
+		return false
+	_worked_this_frame = true
+	last_error = ""
+	var effective_time: float = get_process_time()
+	current_process_time += amount
+	processor_progress_changed.emit(current_process_time / effective_time)
+	if current_process_time < effective_time:
+		return false
+	if not _try_deposit_outputs():
+		# Batch is done but the output is full - hold at completion (progress
+		# capped) until room frees up; the worker keeps "working" meanwhile.
+		current_process_time = effective_time
+		return false
+	processor_progress_changed.emit(0)
+	processing = false
+	current_process_time = 0
+	current_batch_richness = -1.0
+	batch_richness_changed.emit(current_batch_richness)
+	if pending_recipe != null:
+		_apply_recipe(pending_recipe)
+	return true
+
 # --- persistence ------------------------------------------------------------
-# Mid-batch progress and residue are deliberately not saved (matching the
-# pre-existing behavior of losing in-progress batches); only the selected
-# recipe is, because input/output storage configuration depends on it.
+# The selected recipe is saved because input/output storage configuration
+# depends on it. For UNMANNED processors mid-batch progress and residue are
+# still deliberately dropped (pre-existing behavior). For MANNED processors a
+# mid-batch state IS saved (WI-23): a pawn invested time and the inputs are
+# already withdrawn, so losing it would strand the withdrawn stock and let the
+# reload re-withdraw a second batch (double-withdrawal). Restoring processing +
+# progress + richness resumes the exact same batch, and _manned_processing sees
+# processing == true so it won't withdraw again.
 
 func get_save_data() -> Dictionary:
-	if not can_select_recipes() or recipe == null:
-		return {}
-	return {"recipe": recipe.resource_path}
+	var data: Dictionary = {}
+	if can_select_recipes() and recipe != null:
+		data["recipe"] = recipe.resource_path
+	if requires_worker and processing:
+		data["processing"] = true
+		data["process_time"] = current_process_time
+		data["batch_richness"] = current_batch_richness
+	return data
 
 func load_save_data(data: Dictionary) -> void:
 	var path: String = data.get("recipe", "")
-	if path == "" or not can_select_recipes():
-		return
-	# load() returns the cached instance, so equality against
-	# available_recipes entries holds.
-	var loaded: RecipeData = load(path) as RecipeData
-	if loaded == null or not available_recipes.has(loaded):
-		push_warning("Saved processor recipe not available, keeping default: " + path)
-		return
-	select_recipe(loaded)
+	if path != "" and can_select_recipes():
+		# load() returns the cached instance, so equality against
+		# available_recipes entries holds.
+		var loaded: RecipeData = load(path) as RecipeData
+		if loaded == null or not available_recipes.has(loaded):
+			push_warning("Saved processor recipe not available, keeping default: " + path)
+		else:
+			select_recipe(loaded)
+	# Manned mid-batch resume (WI-23). Set after the recipe so the batch's inputs
+	# were already withdrawn against the right recipe before the save.
+	if requires_worker and bool(data.get("processing", false)):
+		processing = true
+		current_process_time = float(data.get("process_time", 0.0))
+		current_batch_richness = float(data.get("batch_richness", -1.0))
+		batch_richness_changed.emit(current_batch_richness)
+		processor_progress_changed.emit(current_process_time / get_process_time())
 
 func has_ui() -> bool:
 	return true

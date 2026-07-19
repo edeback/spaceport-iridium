@@ -295,6 +295,8 @@ func _get_pawns_save() -> Array:
 		var entry: Dictionary = {
 			"scene": pawn.scene_file_path,
 			"name": pawn.pawn_name,
+			# Stable save id (WI-23): workspace assignments persist by this id.
+			"pawn_id": pawn.pawn_id,
 			# Identity tint (WI-22) - saved so a pawn keeps its colour, unlike the
 			# instance-id-reseeded cosmetic jitter.
 			"tint": [pawn.tint.r, pawn.tint.g, pawn.tint.b, pawn.tint.a],
@@ -465,6 +467,10 @@ func _load_pawns(data: Array) -> void:
 			push_warning("Saved pawn scene is not a PawnBase, skipping: " + scene_path)
 			continue
 		pawn.pawn_name = String(entry.get("name", ""))
+		# Stable save id (WI-23). Set before add_child so _ready sees a non-zero id
+		# and bumps the counter past it instead of allocating a fresh one. Pre-WI-23
+		# saves lack the key (0) and get a freshly-allocated id, same as a new pawn.
+		pawn.pawn_id = int(entry.get("pawn_id", 0))
 		# Identity tint (WI-22). Set before add_child: the setter no-ops until the
 		# sprite resolves, and _ready re-applies the stored value. Pre-WI-22 saves
 		# lack the key and keep the scene default (proper crew migration is step 5).

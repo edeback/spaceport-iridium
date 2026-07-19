@@ -211,6 +211,11 @@ func get_save_data() -> Dictionary:
 		var processor_save: Dictionary = processor.get_save_data()
 		if not processor_save.is_empty():
 			data["processor"] = processor_save
+	var workspace: WorkspaceComponent = get_component_by_type(WorkspaceComponent) as WorkspaceComponent
+	if workspace != null:
+		var workspace_save: Dictionary = workspace.get_save_data()
+		if not workspace_save.is_empty():
+			data["workspace"] = workspace_save
 	var atmosphere: AtmosphereComponent = get_component_by_type(AtmosphereComponent) as AtmosphereComponent
 	if atmosphere != null:
 		data["atmosphere"] = atmosphere.get_save_data()
@@ -238,6 +243,11 @@ func load_save_data(data: Dictionary) -> void:
 	var processor: ProcessorComponent = get_component_by_type(ProcessorComponent) as ProcessorComponent
 	if processor != null and data.has("processor"):
 		processor.load_save_data(data["processor"])
+	# Workspace assignments (WI-23) restore as pending pawn_ids; the component
+	# re-links them to live pawns on the first slow_tick, once the roster loads.
+	var workspace: WorkspaceComponent = get_component_by_type(WorkspaceComponent) as WorkspaceComponent
+	if workspace != null and data.has("workspace"):
+		workspace.load_save_data(data["workspace"])
 	var storages: Dictionary = data.get("storage", {})
 	for path_str: String in storages:
 		var storage: StorageComponent = get_node_or_null(NodePath(path_str)) as StorageComponent

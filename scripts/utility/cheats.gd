@@ -19,6 +19,17 @@ func _report(message: String) -> String:
 	SignalBus.station_alert.emit("CHEAT: " + message)
 	return message
 
+# --- modules ------------------------------------------------------------------
+
+## Force-build a module 'id' at 'cell' without cost and without needing construction
+## 'flipped' only matters for modules that can be placed multiple ways (docking bay and airlock)
+func build_module(id: StringName, cell: Vector2i, flipped: bool) -> String:
+	var module_data := Global.save_manager.get_module_data_by_id(id)
+	if module_data != null:
+		Global.world_manager.add_module(module_data, cell, true, false, flipped, true)
+		return _report("built module %s at %s" % [id, cell])
+	return _report("Could not find module with id: %" % id)
+
 # --- resources & pawns --------------------------------------------------------
 
 ## Drops `amount` of resource `id` at `cell`. If a module there has storage with

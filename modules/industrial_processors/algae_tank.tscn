@@ -25,7 +25,7 @@ shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 shader_parameter/gradient_texture = ExtResource("3_j3wfl")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_mpxn8"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_jn2eo"]
 resource_local_to_scene = true
 size = Vector2(60, 61)
 
@@ -55,7 +55,7 @@ region_rect = Rect2(0, 0, 128, 128)
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
 position = Vector2(0, -0.5)
-shape = SubResource("RectangleShape2D_mpxn8")
+shape = SubResource("RectangleShape2D_jn2eo")
 
 [node name="LightingComponent" parent="Offset" index="2" unique_id=1074918199 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("5_wdg3g")]
 power_consumption_component = NodePath("../../PowerConsumptionComponent")
@@ -77,7 +77,7 @@ power_consumption = 20.0
 
 [node name="Input" parent="." index="5" unique_id=1294834415 instance=ExtResource("9_hkc3h")]
 position = Vector2(-37, -1)
-max_stored = 15
+max_stored = 20
 accepts_exports = false
 storage_data = Dictionary[ExtResource("10_po53d"), ExtResource("11_88cdb")]({
 ExtResource("12_hdqlg"): SubResource("Resource_twimy"),

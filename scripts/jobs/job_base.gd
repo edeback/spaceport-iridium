@@ -14,6 +14,13 @@ var priority: int = 0
 ## slow_tick). Feeds effective_priority() so starved jobs slowly surface.
 var age: float = 0.0
 
+## Optional workspace gate (WI-23). null = open to any pawn. When set to a
+## module's WorkspaceComponent that has assignees, only those assignees pass
+## can_do_job (posting subclasses enforce it), and they get an affinity bump in
+## effective_priority_for so they prefer their own workspace's jobs. An empty
+## assignment reopens the job to everyone with no affinity effect.
+var workspace: WorkspaceComponent = null
+
 enum JobState { Starting, Moving, Working, Finished, Failed }
 
 signal subtask_changed
@@ -65,6 +72,17 @@ func player_cancelable() -> bool:
 ## aging from ever crossing the ±99 construction routing bands).
 func effective_priority() -> float:
 	return priority + minf(age * JobPriorities.AGE_BONUS_RATE, JobPriorities.AGE_BONUS_CAP)
+
+## Per-pawn selection key (WI-23): the board-sort effective_priority() plus a
+## workspace affinity bonus when this job's workspace lists `pawn`. JobManager
+## uses this to pick a pawn's next job, while the board stays sorted by the
+## pawn-agnostic effective_priority(), so assignees prefer their workspace's
+## work without disturbing global ordering.
+func effective_priority_for(pawn: PawnBase) -> float:
+	var base: float = effective_priority()
+	if workspace != null and workspace.lists(pawn):
+		base += JobPriorities.WORKSPACE_AFFINITY_BONUS
+	return base
 
 func is_valid() -> bool:
 	return true

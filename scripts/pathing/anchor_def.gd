@@ -14,3 +14,7 @@ enum AnchorType { WORKSTATION, BUNK, QUEUE, STAND }
 @export var path_index: int = 0
 ## Local-space offset from that path point; the pawn walks a straight tail to it.
 @export var offset: Vector2 = Vector2.ZERO
+## Sprite animation the pawn plays while parked on this anchor (WI-23):
+## interact, interact_sit, lay_down, ... whatever the pawn's SpriteFrames
+## defines. &"" (default) or an animation the sprite lacks falls back to idle.
+@export var animation: StringName = &""

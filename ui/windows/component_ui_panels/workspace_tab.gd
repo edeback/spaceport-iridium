@@ -1,0 +1,103 @@
+class_name WorkspaceTab
+extends ModuleComponentUI
+
+## Module-panel tab (WI-23) listing the station crew with an assign/unassign
+## toggle per pawn, so the player picks who works this module. Code-generated
+## like LocalUpgradesTab so the info panel can add it as an ordinary component UI
+## (WorkspaceComponent.get_ui()). An empty assignment leaves the module's jobs
+## open to everyone; a non-empty one restricts them to the listed crew.
+
+var workspace: WorkspaceComponent
+var _list: VBoxContainer
+var _header: Label
+
+func setup(component: WorkspaceComponent) -> void:
+	workspace = component
+	associated_module = component.owner_module
+	name = "Crew"
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+	var margin := MarginContainer.new()
+	for side in ["left", "top", "right", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 6)
+	add_child(margin)
+
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 6)
+	margin.add_child(outer)
+
+	_header = Label.new()
+	outer.add_child(_header)
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	outer.add_child(scroll)
+
+	_list = VBoxContainer.new()
+	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_list.add_theme_constant_override("separation", 4)
+	scroll.add_child(_list)
+
+	if not workspace.assignment_changed.is_connected(refresh):
+		workspace.assignment_changed.connect(refresh)
+	# Roster changes (hires/resignations) change who's listable.
+	SignalBus.crew_hired.connect(_on_roster_changed)
+	SignalBus.crew_resigned.connect(_on_roster_changed)
+	refresh()
+
+func _on_roster_changed(_pawn: PawnBase) -> void:
+	refresh()
+
+func refresh() -> void:
+	if not is_instance_valid(workspace):
+		return
+	for child: Node in _list.get_children():
+		child.queue_free()
+
+	var crew: Array[PawnBase] = Global.crew_manager.get_crew(false)
+	if workspace.max_workers > 0:
+		_header.text = "Assigned: %d / %d" % [workspace.get_assigned().size(), workspace.max_workers]
+	else:
+		_header.text = "Assigned: %d" % workspace.get_assigned().size()
+	if workspace.is_open():
+		_header.text += "  (open to all)"
+
+	if crew.is_empty():
+		var empty := Label.new()
+		empty.text = "No crew to assign."
+		_list.add_child(empty)
+		return
+
+	for pawn: PawnBase in crew:
+		_list.add_child(_build_row(pawn))
+
+func _build_row(pawn: PawnBase) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+
+	var label := Label.new()
+	label.text = pawn.pawn_name if pawn.pawn_name != "" else "Crew"
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
+
+	var is_assigned: bool = workspace.lists(pawn)
+	var toggle := Button.new()
+	toggle.toggle_mode = true
+	toggle.button_pressed = is_assigned
+	toggle.text = "Assigned" if is_assigned else "Assign"
+	# Can't newly assign when the workspace is full (already-assigned crew keep
+	# their toggle so they can be unassigned).
+	toggle.disabled = not is_assigned and not workspace.can_assign_more()
+	toggle.toggled.connect(_on_toggled.bind(pawn))
+	row.add_child(toggle)
+
+	return row
+
+func _on_toggled(pressed: bool, pawn: PawnBase) -> void:
+	if pressed:
+		workspace.assign(pawn)
+	else:
+		workspace.unassign(pawn)
+	# refresh() runs via assignment_changed to re-evaluate every row's disabled state.

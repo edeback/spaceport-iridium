@@ -31,3 +31,12 @@ const DECONSTRUCTION_EXPORT: int = -99
 ## +1 per game-hour (30 sim-seconds), capped at +10.
 const AGE_BONUS_RATE: float = 1.0 / 30.0
 const AGE_BONUS_CAP: float = 10.0
+
+## Per-pawn effective-priority bump (WI-23) a job gets when its WorkspaceComponent
+## lists that pawn as an assignee, so an assignee prefers their own workspace's
+## work over equal-priority board jobs. Applied only in the per-pawn selection
+## key (effective_priority_for), never the board sort. Sized to win ties and
+## nudge across modest bands (out-ranks the +10 age cap so a fresh workspace job
+## still beats a long-starved generic haul) but far short of the ±99 routing
+## bands, so it never reorders construction/deconstruction hauling.
+const WORKSPACE_AFFINITY_BONUS: float = 15.0

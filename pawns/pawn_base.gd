@@ -10,6 +10,12 @@ extends Node2D
 @export var carrying_capacity: int = 10
 @export var animated_sprite: AnimatedSprite2D
 @export var pawn_name: String = ""
+## Stable per-pawn save id (WI-23), assigned once from a static counter and
+## round-tripped through the save's pawn section. Workspace assignments
+## (WorkspaceComponent) persist as these ids, since module save data loads
+## before pawns exist and can't hold live references. 0 = unassigned; _ready
+## allocates one lazily so scene-embedded and spawned pawns both get an id.
+@export var pawn_id: int = 0
 ## Per-pawn identity tint (WI-22), rolled from CrewManager's palette at spawn.
 ## Unlike the cosmetic speed_jitter/lane_offset (reseeded from the instance id
 ## each load), this is identity - it's saved and restored so a pawn keeps its
@@ -41,10 +47,20 @@ var _sprite_base_position: Vector2 = Vector2.ZERO
 ## component doesn't stomp the walk animation with set_idle() every frame.
 var in_manual_walk: bool = false
 
+## Monotonic source for pawn_id (WI-23). Static, so it lives on the script and
+## survives the scene swap a load performs; load bumps it past every restored id.
+static var _next_pawn_id: int = 1
+
 ## STAND anchor this pawn is parked on while idling (arrival spreading).
 ## Released when the pawn next moves anywhere else.
 var _stand_anchor: AnchorDef = null
 var _stand_anchor_path: PathComponent = null
+
+## WORKSTATION anchor whose authored animation the pawn is currently playing
+## (WI-23). Set by a work job when the pawn arrives at its claimed anchor;
+## cleared when the pawn moves away (notify_movement_starting) or the job ends.
+## While set, set_idle() plays the anchor's animation instead of idle.
+var _work_anchor: AnchorDef = null
 
 var current_layer: WorldManager.StructureLayer = WorldManager.StructureLayer.SPACE
 var path_position_override: Node2D = null
@@ -84,6 +100,14 @@ func get_component_by_type(type: Variant) -> PawnComponentBase:
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	add_to_group("pawn")
+	# Stable save id (WI-23): fresh pawns take the next counter value; loaded
+	# pawns arrive with pawn_id already set (before add_child) and just push the
+	# counter past themselves so a later fresh pawn can't collide.
+	if pawn_id == 0:
+		pawn_id = _next_pawn_id
+		_next_pawn_id += 1
+	else:
+		_next_pawn_id = maxi(_next_pawn_id, pawn_id + 1)
 	if schedule != null:
 		schedule = schedule.duplicate(true)
 	# ±5-10% walk speed and a ±1-3px render lane, hashed so two pawns sharing a
@@ -317,6 +341,13 @@ func _notification(what: int) -> void:
 		if current_job != null:
 			current_job.cancel(true)
 			current_job = null
+		# Cancel queued jobs too (WI-23): a queued job that never runs otherwise
+		# never reaches _on_end, leaking its reservations/claims - e.g. a chained
+		# Job_WorkProcessor would pin its processor's outstanding-job slot forever
+		# and deadlock the machine. cancel() is idempotent and releases cleanly.
+		for queued_job: JobBase in job_queue:
+			queued_job.cancel(true)
+		job_queue.clear()
 		# TODO: We don't have pawn death in any meaningful way yet, so just conclude
 		# if we're being destroyed, dump our inventory. Skipped during game
 		# teardown (managers already gone) and when there's nothing to dump.
@@ -387,9 +418,36 @@ func release_stand_anchor() -> void:
 func notify_movement_starting(anchor: AnchorDef) -> void:
 	if _stand_anchor != null and anchor != _stand_anchor:
 		release_stand_anchor()
+	# Leaving a workstation drops its animation (unless we're walking to it);
+	# the move animation takes over immediately once travel begins (WI-23).
+	if _work_anchor != null and anchor != _work_anchor:
+		_work_anchor = null
+
+## Parks the pawn on a WORKSTATION anchor and plays its authored animation
+## (WI-23). Called by a work job the moment its pawn arrives at the anchor.
+func begin_anchor_animation(anchor: AnchorDef) -> void:
+	_work_anchor = anchor
+	_play_work_or_idle()
+
+## Stops any anchor animation and returns to idle (WI-23). Called by a work job
+## when it ends so a pawn that stays put doesn't keep working an empty machine.
+func end_anchor_animation() -> void:
+	_work_anchor = null
+	_play_work_or_idle()
+
+## Plays the active work anchor's animation if the sprite defines it, else idle.
+func _play_work_or_idle() -> void:
+	if animated_sprite == null:
+		return
+	if _work_anchor != null and _work_anchor.animation != &"" \
+			and animated_sprite.sprite_frames != null \
+			and animated_sprite.sprite_frames.has_animation(_work_anchor.animation):
+		animated_sprite.play(_work_anchor.animation)
+	else:
+		animated_sprite.play("idle")
 
 func set_idle() -> void:
-	animated_sprite.play("idle")
+	_play_work_or_idle()
 
 ## Pushes the identity tint (WI-22) onto the sprite. Safe to call before the
 ## sprite resolves - it just no-ops, and _ready re-applies once it exists.

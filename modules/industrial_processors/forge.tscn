@@ -14,6 +14,9 @@
 [ext_resource type="Resource" uid="uid://bdtv1cjftf2g1" path="res://data/resources/iron.tres" id="11_160wt"]
 [ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="12_rsq1u"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="13_30eyd"]
+[ext_resource type="Script" uid="uid://c2qsvh4rhb1ta" path="res://scripts/pathing/anchor_def.gd" id="14_anchor"]
+[ext_resource type="Script" uid="uid://d4aeiirm7ox7s" path="res://modules/components/workspace_component.gd" id="15_wksp"]
+[ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="16_30eyd"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_pwov3"]
 shader = ExtResource("2_htbuk")
@@ -23,14 +26,26 @@ shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 shader_parameter/gradient_texture = ExtResource("3_hwfke")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_2qdcj"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ny4rw"]
 resource_local_to_scene = true
 size = Vector2(192, 128)
+
+[sub_resource type="Resource" id="Resource_wkstn"]
+script = ExtResource("14_anchor")
+type = 0
+offset = Vector2(64, 0)
+animation = &"interact"
+metadata/_custom_type_script = "uid://c2qsvh4rhb1ta"
 
 [sub_resource type="Resource" id="Resource_71at3"]
 script = ExtResource("10_t70i4")
 desired = 20
 resource_data = ExtResource("11_160wt")
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
+[sub_resource type="Resource" id="Resource_j1jt4"]
+script = ExtResource("10_t70i4")
+resource_data = ExtResource("16_30eyd")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [node name="Module" unique_id=1683111138 instance=ExtResource("1_j57s1")]
@@ -45,7 +60,7 @@ texture = ExtResource("4_htbuk")
 region_enabled = false
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_2qdcj")
+shape = SubResource("RectangleShape2D_ny4rw")
 
 [node name="LightingComponent" parent="Offset" index="2" unique_id=125104065 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("5_t70i4")]
 scale = Vector2(3, 2)
@@ -53,6 +68,7 @@ power_consumption_component = NodePath("../../PowerConsumptionComponent")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([Vector2i(32, 96)])
+anchors = Array[ExtResource("14_anchor")]([SubResource("Resource_wkstn")])
 
 [node name="StructureComponent" parent="." index="2" unique_id=2060859123]
 visible = false
@@ -69,15 +85,20 @@ input_storage = NodePath("../Input Storage")
 output_storage = NodePath("../Output Storage")
 time_to_process = 30.0
 power_consumer = NodePath("../PowerConsumptionComponent")
+requires_worker = true
 
 [node name="Input Storage" parent="." index="6" unique_id=1971387764 instance=ExtResource("8_ar0w4")]
 max_stored = 30
 accepts_exports = false
 storage_data = Dictionary[ExtResource("9_nrkwy"), ExtResource("10_t70i4")]({
-ExtResource("11_160wt"): SubResource("Resource_71at3")
+ExtResource("11_160wt"): SubResource("Resource_71at3"),
+ExtResource("16_30eyd"): SubResource("Resource_j1jt4")
 })
 
 [node name="Output Storage" parent="." index="7" unique_id=937491388 instance=ExtResource("8_ar0w4")]
 priority = -1
 max_stored = 20
 accepts_imports = false
+
+[node name="WorkspaceComponent" type="Node2D" parent="." index="8" unique_id=771230002]
+script = ExtResource("15_wksp")
