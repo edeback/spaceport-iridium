@@ -38,14 +38,11 @@ func refresh_display() -> void:
 		storage_line.dump_button.pressed.connect(_on_dump_button_pressed.bind(resource))
 		if storage_component.player_configurable:
 			storage_line.remove_resource_button.pressed.connect(_on_remove_resource_pressed.bind(resource))
-			if storage_component.storage_data[resource].stored > 0:
-				storage_line.remove_resource_button.disabled = true
-			storage_line.desired_resources_spinbox.value = storage_component.storage_data[resource].desired
-			storage_line.desired_resources_spinbox.value_changed.connect(_on_desired_resources_changed.bind(resource))
 		else:
 			storage_line.remove_resource_button.visible = false
-			storage_line.desired_resources_spinbox.editable = false
-			storage_line.desired_resources_spinbox.value = storage_component.storage_data[resource].desired
+		# Desired amounts are always configurable
+		storage_line.desired_resources_spinbox.value = storage_component.storage_data[resource].desired
+		storage_line.desired_resources_spinbox.value_changed.connect(_on_desired_resources_changed.bind(resource))
 		storage_lines[resource] = storage_line
 		resource_container.add_child(storage_line)
 	%FreeSpaceAvailableLabel.text = _format_resouce_value(storage_component.space_available())
@@ -98,11 +95,23 @@ func _on_id_pressed(id: int) -> void:
 			storage_component.add_stored_resource(resource)
 			refresh_display()
 
+func dump_stacks(resource: ResourceData, amount: int) -> void:
+	var withdrawn: Array[ResourceStack] = storage_component.withdraw_stacks(resource, amount, true)
+	if not withdrawn.is_empty():
+		if storage_component.owner_module != null:
+			storage_component.owner_module.get_or_create_overflow_pile().add_stacks(current_dumped_resource, withdrawn)
+		else:
+			# This should never happen as components are always on modules, but here for completeness
+			var pile: ResourcePile = ResourcePile.spawn(Global.world_manager.pawn_layer, storage_component.global_position)
+			pile.add_stacks(resource, withdrawn)
+
 func _on_remove_resource_pressed(resource: ResourceData) -> void:
-	if storage_component != null:
-		if storage_component.storage_data.has(resource) and storage_component.storage_data[resource].stored == 0:
-			storage_component.remove_stored_resource(resource)
-			refresh_display()
+	if storage_component != null and storage_component.storage_data.has(resource):
+		# Dump any that are already here
+		if storage_component.storage_data[resource].stored != 0:
+			dump_stacks(resource, storage_component.storage_data[resource].stored)
+		storage_component.remove_stored_resource(resource)
+		refresh_display()
 
 func _on_desired_resources_changed(new_value: float, resource: ResourceData) -> void:
 	var storage_data: StorageData = storage_component.storage_data[resource]
@@ -120,18 +129,18 @@ func _on_dump_button_pressed(resource: ResourceData) -> void:
 	%ResourceToDumpLabel.text = resource.name
 	var storage_data: StorageData = storage_component.storage_data[resource]
 	%ResourceToDumpAmount.max_value = storage_data.stored
-	%ResourceToDumpAmount.value = storage_data.stored
+	%ResourceToDumpAmount.value = 0
+	(%AutodumpButton as Button).set_pressed_no_signal(storage_data.autodump)
 	%DumpResourcePanel.visible = true
 	
 func _on_confirm_dump_button_pressed() -> void:
-	var withdrawn: Array[ResourceStack] = storage_component.withdraw_stacks(current_dumped_resource, %ResourceToDumpAmount.value, true)
-	if not withdrawn.is_empty() and storage_component.owner_module != null:
-		storage_component.owner_module.get_or_create_overflow_pile().add_stacks(current_dumped_resource, withdrawn)
-	current_dumped_resource = null
+	# Gone forever!
+	storage_component.withdraw_stacks(current_dumped_resource, %ResourceToDumpAmount.value, true)
+	storage_component.storage_data[current_dumped_resource].autodump = (%AutodumpButton as Button).button_pressed
 	%DumpResourcePanel.visible = false
 	
 func _on_cancel_dump_button_pressed() -> void:
 	current_dumped_resource = null
 	%DumpResourcePanel.visible = false
-	
-	
+
+		

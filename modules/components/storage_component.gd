@@ -160,6 +160,11 @@ func _on_slow_tick(_interval: float) -> void:
 		last_error = "No power!"
 		return
 	last_error = ""
+	# Autodump destroys extra resources (in case you are just overwhelmed with them)
+	for resource: ResourceData in storage_data.keys():
+		var data: StorageData = storage_data[resource]
+		if data.autodump and data.desired < data.stored:
+			destroy_resource(resource, data.stored - data.desired)
 	if accepts_imports:
 		# Shared budget across resources so several under-desired resources in
 		# the same bin don't each request up to the bin's full free space and
@@ -230,6 +235,13 @@ func dump_all_to_pile(pile: ResourcePile) -> void:
 		storage_changed.emit(resource, data.stored)
 		resource.needs_recalc = true
 	
+func destroy_resource(resource: ResourceData, amount: int) -> void:
+	var data: StorageData = storage_data[resource]
+	data.withdraw_stacks(amount, ResourceStackContainer.WithdrawStrategy.FIFO)
+	storage_value_changed = true
+	storage_changed.emit(resource, data.stored)
+	resource.needs_recalc = true
+	
 func update_priority(new_priority: int) -> void:
 	if priority != new_priority:
 		priority = new_priority
@@ -238,13 +250,6 @@ func update_priority(new_priority: int) -> void:
 		#for job: Job_GetResource in default_import_jobs.values():
 			#job.priority = priority
 		
-	
-#func find_first_stored_resource_with_base(base_resource: ResourceData, minimum: float = 0) -> ResourceData:
-	#for resource: ResourceData in cur_stored:
-		#if resource == base_resource or resource.base_resource == base_resource:
-			#if minimum == 0 or (minimum > 0 and can_withdraw(resource, minimum)):
-				#return resource
-	#return null
 	
 func can_store_resource(resource: ResourceData) -> bool:
 	if allow_any_resource:

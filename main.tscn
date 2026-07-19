@@ -33,7 +33,6 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="13_4k2k6"]
 [ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="13_facbu"]
 [ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="14_0rl1p"]
-[ext_resource type="Resource" uid="uid://8t3hl170s6gi" path="res://data/resources/biowaste.tres" id="14_ok6jj"]
 [ext_resource type="Resource" uid="uid://1an3ftgpeh6u" path="res://data/resources/hydrogen.tres" id="15_ok6jj"]
 [ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="16_b1qrp"]
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="16_facbu"]
@@ -7631,7 +7630,7 @@ script = ExtResource("8_w48qg")
 
 [node name="ResourceManager" type="Node" parent="Managers" unique_id=1368405648]
 script = ExtResource("9_074og")
-storable_resources = Array[ExtResource("13_4k2k6")]([ExtResource("13_facbu"), ExtResource("23_gngh3"), ExtResource("14_ok6jj"), ExtResource("14_0rl1p"), ExtResource("16_b1qrp"), ExtResource("15_ok6jj"), ExtResource("16_facbu"), ExtResource("17_b1qrp"), ExtResource("18_come4"), ExtResource("19_h8e4i"), ExtResource("20_4lmeg"), ExtResource("21_0cp0l"), ExtResource("22_d2t1y")])
+storable_resources = Array[ExtResource("13_4k2k6")]([ExtResource("17_b1qrp"), ExtResource("16_b1qrp"), ExtResource("30_4w656"), ExtResource("33_abqjc"), ExtResource("14_0rl1p"), ExtResource("35_4w656"), ExtResource("21_0cp0l"), ExtResource("32_blkrb"), ExtResource("20_4lmeg"), ExtResource("34_6iyjs"), ExtResource("18_come4"), ExtResource("16_facbu"), ExtResource("22_d2t1y"), ExtResource("15_ok6jj"), ExtResource("19_h8e4i"), ExtResource("23_gngh3")])
 credit_resource = ExtResource("13_facbu")
 
 [node name="MarketManager" type="Node" parent="Managers" unique_id=386020720]

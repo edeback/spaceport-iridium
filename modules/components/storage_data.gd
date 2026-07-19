@@ -8,7 +8,7 @@ extends ResourceStackContainer
 @export var export_job: Job_GetResource
 @export var withdraw_jobs: Array[Job_GetResource] = []
 @export var deposit_jobs: Array[Job_GetResource] = []
-
+@export var autodump: bool = false
 
 func end_all_jobs() -> void:
 	# Null/erase our references BEFORE cancelling: cancel() re-enters this

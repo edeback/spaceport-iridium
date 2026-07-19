@@ -174,6 +174,13 @@ layout_mode = 2
 text = "Dump Resource"
 horizontal_alignment = 1
 
+[node name="Label2" type="Label" parent="DumpResourcePanel/VBoxContainer" unique_id=766746218]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.29696628, 0, 0.11984318, 1)
+theme_override_font_sizes/font_size = 12
+text = "Warning: This will PERMANENTLY DESTROY dumped resources"
+horizontal_alignment = 1
+
 [node name="MarginContainer" type="MarginContainer" parent="DumpResourcePanel/VBoxContainer" unique_id=778677883]
 layout_mode = 2
 theme_override_constants/margin_left = 20
@@ -211,5 +218,12 @@ text = "Confirm"
 unique_name_in_owner = true
 layout_mode = 2
 text = "Cancel"
+
+[node name="AutodumpButton" type="CheckBox" parent="DumpResourcePanel/VBoxContainer" unique_id=1479354128]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 12
+text = "Auto-dump all resources above Desired level (until unchecked)"
 
 [connection signal="toggled" from="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer/DisplayFillMeterCheckbox" to="." method="_on_display_fill_meter_changed"]
