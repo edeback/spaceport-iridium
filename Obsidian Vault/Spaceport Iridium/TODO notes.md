@@ -6,6 +6,7 @@ Use SelfModulate on crew pawns to give them different colors (at random). They a
 
 For resources:
 Show relationships between resources in the UI
+Give them categories? So ore can be shown together, tier one/two/three materials etc
 
 Hunger/Eat should take time. (~1 hr) Allows lingering in the mess hall for a bit.
 

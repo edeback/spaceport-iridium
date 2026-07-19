@@ -151,12 +151,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-12_Storage_QoL.md",
+                "file": "Spaceport Iridium/Planning/Work Items/WI-22_Pawn_Identity.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "WI-12_Storage_QoL"
+              "title": "WI-22_Pawn_Identity"
             }
           },
           {
@@ -247,7 +247,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-12_Storage_QoL.md",
+                "file": "Spaceport Iridium/Planning/Work Items/WI-22_Pawn_Identity.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -257,7 +257,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for WI-12_Storage_QoL"
+              "title": "Backlinks for WI-22_Pawn_Identity"
             }
           },
           {
@@ -293,13 +293,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-12_Storage_QoL.md",
+                "file": "Spaceport Iridium/Planning/Work Items/WI-22_Pawn_Identity.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of WI-12_Storage_QoL"
+              "title": "Outline of WI-22_Pawn_Identity"
             }
           }
         ],
@@ -321,19 +321,20 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "cf9c918be843db58",
+  "active": "471944f5475eac00",
   "lastOpenFiles": [
-    "Spaceport Iridium/Planning/Work Items/WI-22_Pawn_Identity.md",
-    "Spaceport Iridium/Planning/Work Items/WI-26_Station_Tiers.md",
-    "Spaceport Iridium/Planning/Work Items/WI-27_Logistics_Automation.md",
-    "Spaceport Iridium/Planning/Work Items/WI-25_Economic_Sinks.md",
-    "Spaceport Iridium/Planning/Work Items/WI-23_Work_Improvements.md",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-12_Storage_QoL.md",
-    "Spaceport Iridium/Planning/Work Items/WI-37_Difficulty_Levels.md",
     "Spaceport Iridium/Planning/Work Items/WI-36_Main_UI_Flow.md",
+    "Spaceport Iridium/Planning/Work Items/WI-35_UI_Overlays.md",
     "Spaceport Iridium/Planning/Work Items/WI-34_Minimap.md",
-    "Spaceport Iridium/Planning/Work Items/WI-33_Visitors_and_Commerce.md",
+    "Spaceport Iridium/Planning/Work Items/WI-27_Logistics_Automation.md",
     "Spaceport Iridium/Planning/Work Items/WI-24_Combat_Setup.md",
+    "Spaceport Iridium/Planning/Work Items/WI-23_Work_Improvements.md",
+    "Spaceport Iridium/Planning/Work Items/WI-22_Pawn_Identity.md",
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-12_Storage_QoL.md",
+    "Spaceport Iridium/Planning/Work Items/WI-26_Station_Tiers.md",
+    "Spaceport Iridium/Planning/Work Items/WI-25_Economic_Sinks.md",
+    "Spaceport Iridium/Planning/Work Items/WI-37_Difficulty_Levels.md",
+    "Spaceport Iridium/Planning/Work Items/WI-33_Visitors_and_Commerce.md",
     "Spaceport Iridium/TODO notes.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-20_Movement_and_Animation.md",
     "Spaceport Iridium/Reorganized/Future Work.md",
@@ -352,7 +353,6 @@
     "Spaceport Iridium/Notes from Project Highrise.md",
     "Spaceport Iridium/Inspirations.md",
     "Spaceport Iridium/Game Settings.md",
-    "Spaceport Iridium/Game Loop.md",
     "Spaceport Iridium/Planning/02_Roadmap.md.tmp.127376.32d7aed95304",
     "Spaceport Iridium/Planning/02_Roadmap.md.tmp.127376.ba36429c1e9f",
     "Spaceport Iridium/Planning/Work Items/WI-37_Difficulty_Levels.md.tmp.127376.a54bffcf544e",

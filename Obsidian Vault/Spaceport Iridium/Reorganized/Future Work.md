@@ -44,3 +44,7 @@ ARC relationship arc & independence; expeditions; observatory and research, fore
 1. **Solar exposure model**: current formula (free structure-connection sides / (connection_points+1)) is a neat proxy but invisible to the player when placing.
 	1. Change preview sprite to use correct image?
 	2. Add interesting eclipse events, solar storm that knocks out power, etc
+
+
+Refactor jobs again
+- More like Rimworld model, composable blocks, probably easier to save too
