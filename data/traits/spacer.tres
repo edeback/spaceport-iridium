@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="TraitData" format=3]
+
+[ext_resource type="Script" uid="uid://bproqb32oeyib" path="res://data/traits/trait_data.gd" id="1_trait"]
+
+[resource]
+script = ExtResource("1_trait")
+id = &"spacer"
+display_name = "Spacer"
+description = "At home in the void - happier while working outside."
+exterior_happiness_offset = 0.1
+price_modifier = 1.05

@@ -31,6 +31,13 @@ signal module_breach_sealed(module: ModuleBase)
 signal pawn_critical_need(pawn: PawnBase, need: StringName)
 @warning_ignore("unused_signal")
 signal crew_hired(pawn: PawnBase)
+## A pawn's skill just leveled up (WI-22) - for UI flavor / alerts.
+@warning_ignore("unused_signal")
+signal pawn_skill_leveled(pawn: PawnBase, skill: StringName, new_level: int)
+## The recruitment candidate pool changed (WI-22): refreshed on a trader visit
+## or a candidate hired. The open recruitment window re-reads on this.
+@warning_ignore("unused_signal")
+signal hire_candidates_changed
 @warning_ignore("unused_signal")
 signal crew_resigning(pawn: PawnBase, grace_hours: float)
 @warning_ignore("unused_signal")

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="TraitData" format=3]
+
+[ext_resource type="Script" uid="uid://bproqb32oeyib" path="res://data/traits/trait_data.gd" id="1_trait"]
+
+[resource]
+script = ExtResource("1_trait")
+id = &"hardy"
+display_name = "Hardy"
+description = "Tough constitution - takes less damage from hunger and vacuum."
+exclusive_group = &"constitution"
+damage_multiplier = 0.75
+price_modifier = 1.2

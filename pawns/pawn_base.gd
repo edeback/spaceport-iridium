@@ -19,6 +19,9 @@ extends Node2D
 	set(value):
 		tint = value
 		_apply_tint()
+## What this pawn cost to hire (WI-22), stored so WI-25 wages can read it.
+## Starting crew get the base hire_cost; hires get their candidate's price.
+@export var hire_price: int = 0
 @export var collision: Area2D
 ## 24-hour WORK/REST schedule (WI-06). Null (drones, anything unscheduled)
 ## means always on duty. Duplicated per pawn in _ready so the schedule tab
@@ -66,6 +69,10 @@ var job_length: float = 1
 var components: Array[PawnComponentBase] = []
 
 signal job_changed
+## Emitted when current_module actually changes (WI-22): traits watch this to
+## toggle the Spacer exterior modifier and re-evaluate Introvert solitude
+## without per-frame group scans.
+signal module_changed
 
 func get_component_by_type(type: Variant) -> PawnComponentBase:
 	for component: PawnComponentBase in components:
@@ -143,6 +150,11 @@ func _process(delta: float) -> void:
 func _end_current_job() -> void:
 	var finished_job: JobBase = current_job
 	current_job = null
+	# Skill xp on SUCCESSFUL completion only (WI-22) - cancelled/failed jobs
+	# grant nothing (a job abandoned at 99% teaches nothing). Trickle-xp jobs
+	# like mining keep whatever they earned mid-trip; those return 0 here.
+	if finished_job.is_finished():
+		grant_skill_xp(finished_job.get_skill(), finished_job.xp_reward())
 	# Finalizer for jobs that reached Finished without going through cancel();
 	# idempotent, so it's a no-op when cancel() already ended the job.
 	finished_job.end_job()
@@ -228,6 +240,51 @@ func work_speed() -> float:
 	if needs == null:
 		return 1.0
 	return lerpf(0.5, 1.1, needs.happiness)
+
+## Lazily-resolved skills component (WI-22). Children run _ready after this
+## pawn, so it can't be cached in _ready; the flag caches the (possibly null,
+## for drones) lookup after the first job needs it.
+var _skills_component: PawnSkillsComponent = null
+var _skills_checked: bool = false
+func get_skills_component() -> PawnSkillsComponent:
+	if not _skills_checked:
+		_skills_checked = true
+		_skills_component = get_component_by_type(PawnSkillsComponent) as PawnSkillsComponent
+	return _skills_component
+
+## Lazily-resolved traits component (WI-22), null for drones. Same caching
+## contract as get_skills_component().
+var _traits_component: PawnTraitsComponent = null
+var _traits_checked: bool = false
+func get_traits_component() -> PawnTraitsComponent:
+	if not _traits_checked:
+		_traits_checked = true
+		_traits_component = get_component_by_type(PawnTraitsComponent) as PawnTraitsComponent
+	return _traits_component
+
+## Skill multiplier (WI-22) for `skill`; 1.0 for pawns without a skills
+## component (drones) or an empty/unknown skill - same no-op contract as
+## work_speed() for needless pawns.
+func skill_mult(skill: StringName) -> float:
+	var skills: PawnSkillsComponent = get_skills_component()
+	if skills == null:
+		return 1.0
+	return skills.skill_mult(skill)
+
+## Combined work rate a job should scale progress by (WI-22): happiness times
+## skill, floored so a miserable unskilled pawn still inches forward rather
+## than effectively stalling. Unskilled jobs (skill &"") get work_speed() alone.
+func work_rate(skill: StringName) -> float:
+	return maxf(0.3, work_speed() * skill_mult(skill))
+
+## Routes an xp grant to the skills component if present (WI-22). No-op for
+## drones or an empty skill, so jobs can call it unconditionally.
+func grant_skill_xp(skill: StringName, amount: float) -> void:
+	if skill == &"" or amount <= 0.0:
+		return
+	var skills: PawnSkillsComponent = get_skills_component()
+	if skills != null:
+		skills.add_xp(skill, amount)
 
 ## Ends the current job right now - gracefully, not as a failure, so
 ## anything the pawn is carrying is left for Job_StoreInventory to sweep up
@@ -344,6 +401,7 @@ func _on_module_changed(new_module: ModuleBase) -> void:
 	if current_module != new_module:
 		current_module = new_module
 		update_layer_and_sprite()
+		module_changed.emit()
 
 func update_layer_and_sprite() -> void:
 	if current_module == null:

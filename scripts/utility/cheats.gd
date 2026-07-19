@@ -40,6 +40,36 @@ func spawn_resource(id: StringName, amount: int, cell: Vector2i) -> String:
 	pile.add_amount(resource, amount)
 	return _report("spawned a pile of %d %s at %s" % [amount, resource.name, cell])
 
+## Sets skill `skill` to `level` (0..10) on the crew pawn nearest `cell` (WI-22).
+## Pass ids as plain strings, e.g. set_skill("construction", 10, Vector2i(16, 8)).
+func set_skill(skill: StringName, level: int, cell: Vector2i) -> String:
+	if SkillData.by_id(skill) == null:
+		return _report("no such skill id: %s" % skill)
+	var pawn: PawnBase = _crew_at_or_near(cell)
+	if pawn == null:
+		return _report("set_skill found no crew pawn near %s" % cell)
+	var skills: PawnSkillsComponent = pawn.get_component_by_type(PawnSkillsComponent) as PawnSkillsComponent
+	if skills == null:
+		return _report("%s has no skills component" % pawn.pawn_name)
+	skills.set_level(skill, level)
+	return _report("set %s's %s to level %d" % [pawn.pawn_name, skill, clampi(level, 0, SkillData.MAX_LEVEL)])
+
+## Adds trait `trait_id` to the crew pawn nearest `cell` (WI-22). Bypasses the
+## roll's exclusive-group rule so you can force any combination for testing,
+## e.g. add_trait("optimist", Vector2i(16, 8)).
+func add_trait(trait_id: StringName, cell: Vector2i) -> String:
+	var trait_data: TraitData = TraitData.by_id(trait_id)
+	if trait_data == null:
+		return _report("no such trait id: %s" % trait_id)
+	var pawn: PawnBase = _crew_at_or_near(cell)
+	if pawn == null:
+		return _report("add_trait found no crew pawn near %s" % cell)
+	var traits: PawnTraitsComponent = pawn.get_traits_component()
+	if traits == null:
+		return _report("%s has no traits component" % pawn.pawn_name)
+	traits.add_trait(trait_data)
+	return _report("gave %s the %s trait" % [pawn.pawn_name, trait_data.display_name])
+
 ## Spawns one crew pawn at the module on `cell` (or the nearest built module).
 func spawn_pawn(cell: Vector2i) -> String:
 	var module: ModuleBase = _module_at_or_near(cell)
@@ -102,6 +132,19 @@ func offer_contract() -> String:
 		[contract.amount, contract.resource.name, contract.deadline_cycle])
 
 # --- helpers ------------------------------------------------------------------
+
+## The living crew pawn (drones excluded) nearest `cell` by world distance, or
+## null if the roster is empty.
+func _crew_at_or_near(cell: Vector2i) -> PawnBase:
+	var target: Vector2 = Global.cell_to_world(cell, true)
+	var best: PawnBase = null
+	var best_dist: float = -1.0
+	for pawn: PawnBase in Global.crew_manager.get_crew():
+		var dist: float = pawn.global_position.distance_squared_to(target)
+		if best == null or dist < best_dist:
+			best = pawn
+			best_dist = dist
+	return best
 
 ## The module on `cell` (MODULE layer), or the nearest module by cell distance.
 func _module_at_or_near(cell: Vector2i) -> ModuleBase:

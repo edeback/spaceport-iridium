@@ -54,6 +54,11 @@ func _process(delta: float) -> void:
 			decay += starvation_decay_per_hour
 		if suffocating:
 			decay += suffocation_decay_per_hour
+		# Traits scale incoming damage (Hardy tougher, Weak frailer); 1.0 for
+		# pawns without a traits component (WI-22).
+		var traits: PawnTraitsComponent = owner_pawn.get_traits_component()
+		if traits != null:
+			decay *= traits.damage_multiplier()
 		health_value -= decay * sim_hours
 	elif health_value < health_max:
 		health_value += regen_per_hour * sim_hours

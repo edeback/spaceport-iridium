@@ -12,11 +12,21 @@ var state: ConstructModuleState = ConstructModuleState.Starting:
 			subtask_changed.emit()
 var shift_spot_interval: float = 3.0
 var shift_spot_elapsed: float = 0.0
+## XP granted to the builder's construction skill on completion (WI-22).
+var construction_xp_reward: float = 30.0
 
 enum ConstructModuleState { Starting, MovingToModule, ConstructModule, DeconstructModule, Finished, Failed }
 
 func get_category() -> Category:
 	return Category.BUILD
+
+## Both build and deconstruct are construction work (WI-22).
+func get_skill() -> StringName:
+	return &"construction"
+
+## Completion-only: one grant when the module finishes (see PawnBase._end_current_job).
+func xp_reward() -> float:
+	return construction_xp_reward
 
 func get_job_description() -> String:
 	if deconstruct:
@@ -120,7 +130,9 @@ func construct_module(delta: float) -> void:
 	if shift_spot_elapsed >= shift_spot_interval:
 		pawn.global_position = module_to_construct.get_random_position_on_module()
 		shift_spot_elapsed = 0
-	construction_component.work_seconds_done += (-delta if deconstruct else delta) * pawn.work_speed()
+	# work_rate folds the builder's happiness (work_speed) and construction skill
+	# together, floored so the worst case still makes slow progress (WI-22).
+	construction_component.work_seconds_done += (-delta if deconstruct else delta) * pawn.work_rate(get_skill())
 	
 	
 func is_failed() -> bool:

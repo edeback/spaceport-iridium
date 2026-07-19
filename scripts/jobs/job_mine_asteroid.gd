@@ -15,11 +15,19 @@ var time_mining: float = 0.0
 var default_seconds_to_mine: float = 1.0
 var max_mined: int = 5
 var resources_mined_count: int = 0
+## XP granted to the miner's mining skill per unit extracted (WI-22). Trickled
+## rather than paid on completion because mining trips are long.
+var mining_xp_per_unit: float = 6.0
 
 enum MineAsteroidState { Starting, MovingToAsteroid, MineAsteroid, ReturningToModule, DepositMaterial, Finished, Failed }
 
 func get_category() -> Category:
 	return Category.WORK
+
+## Mining skill (WI-22). Currently only drones mine (no skills component -> the
+## multiplier and xp calls below no-op), but the hook is here for crew miners.
+func get_skill() -> StringName:
+	return &"mining"
 
 func get_job_description() -> String:
 	return "Mine Asteroid"
@@ -175,7 +183,9 @@ func mine_asteroid(delta: float) -> void:
 	if pawn.inventory_component != null and pawn.inventory_component.space_available() <= 0:
 		move_to_module()
 		return
-	time_mining += delta * efficiency
+	# work_rate folds in miner happiness + mining skill, floored (WI-22). Drones
+	# have neither component, so it resolves to 1.0 and timing is unchanged.
+	time_mining += delta * efficiency * pawn.work_rate(get_skill())
 	if time_mining >= default_seconds_to_mine:
 		time_mining = 0
 		# Can be null if another drone emptied the asteroid this frame - the
@@ -191,6 +201,8 @@ func mine_asteroid(delta: float) -> void:
 				stack.instance_data = instance
 			pawn.inventory_component.add_stacks(mined_resource, [stack])
 			resources_mined_count += 1
+			# Trickle mining xp as ore comes in (no-op for drones - WI-22).
+			pawn.grant_skill_xp(get_skill(), mining_xp_per_unit)
 	if resources_mined_count >= max_mined or pawn.inventory_component.space_available() <= 0:
 		move_to_module()
 	elif asteroid.is_empty():

@@ -2,10 +2,10 @@
 
 [ext_resource type="Script" path="res://ui/windows/ui_crew_recruitment.gd" id="1_recruit"]
 
-[node name="UiCrewRecruitment" type="PanelContainer" node_paths=PackedStringArray("status_label", "recruit_button")]
+[node name="UiCrewRecruitment" type="PanelContainer" node_paths=PackedStringArray("status_label", "candidate_list")]
 script = ExtResource("1_recruit")
 status_label = NodePath("MarginContainer/ContentsBox/StatusLabel")
-recruit_button = NodePath("MarginContainer/ContentsBox/RecruitButton")
+candidate_list = NodePath("MarginContainer/ContentsBox/CandidateList")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2
@@ -16,12 +16,13 @@ theme_override_constants/margin_bottom = 2
 
 [node name="ContentsBox" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
+theme_override_constants/separation = 4
 
 [node name="StatusLabel" type="Label" parent="MarginContainer/ContentsBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "Crew 0 / 0 beds"
 
-[node name="RecruitButton" type="Button" parent="MarginContainer/ContentsBox"]
+[node name="CandidateList" type="VBoxContainer" parent="MarginContainer/ContentsBox"]
 layout_mode = 2
-text = "Recruit crew"
+theme_override_constants/separation = 4

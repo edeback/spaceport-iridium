@@ -36,6 +36,18 @@ var _ended: bool = false
 func get_category() -> Category:
 	return Category.MISC
 
+## The skill (WI-22) whose multiplier gates this job's work rate and that gains
+## xp when the job completes. &"" (default) = unskilled: no multiplier applied,
+## no xp granted. Skilled subclasses (construct, mine, ...) override this.
+func get_skill() -> StringName:
+	return &""
+
+## XP granted to get_skill() on successful completion. Completion-only jobs
+## (construction) return their whole reward here; long jobs that trickle xp
+## during process_job (mining) return 0 and grant as they work.
+func xp_reward() -> float:
+	return 0.0
+
 func get_category_name() -> String:
 	return String(Category.keys()[get_category()]).capitalize()
 

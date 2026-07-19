@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" path="res://pawns/pawn_health_component.tscn" id="3_health"]
 [ext_resource type="PackedScene" path="res://pawns/socialize_component.tscn" id="4_social"]
 [ext_resource type="PackedScene" path="res://pawns/pawn_breathing_component.tscn" id="5_breath"]
+[ext_resource type="Script" uid="uid://cdfody6twuk73" path="res://pawns/pawn_skills_component.gd" id="7_e7ror"]
+[ext_resource type="Script" uid="uid://c2m45tq3mak8h" path="res://pawns/pawn_traits_component.gd" id="8_vy4ld"]
 
 [node name="PawnBase" unique_id=1067060448 node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_4e1f1")]
 animated_sprite = NodePath("Offset/Crew")
@@ -36,4 +38,10 @@ has_recreation_need = true
 
 [node name="SocializeComponent" parent="." index="3" unique_id=266158254 instance=ExtResource("4_social")]
 
-[node name="PawnBreathingComponent" parent="." instance=ExtResource("5_breath")]
+[node name="PawnBreathingComponent" parent="." index="4" unique_id=552070220 instance=ExtResource("5_breath")]
+
+[node name="PawnSkillsComponent" type="Node2D" parent="." index="5" unique_id=588775313]
+script = ExtResource("7_e7ror")
+
+[node name="PawnTraitsComponent" type="Node2D" parent="." index="6" unique_id=1652760519]
+script = ExtResource("8_vy4ld")

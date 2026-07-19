@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TraitData" format=3]
+
+[ext_resource type="Script" uid="uid://bproqb32oeyib" path="res://data/traits/trait_data.gd" id="1_trait"]
+
+[resource]
+script = ExtResource("1_trait")
+id = &"introvert"
+display_name = "Introvert"
+description = "Recharges alone; crowds do nothing for them."
+exclusive_group = &"sociability"
+passive_social_multiplier = 0.0
+solitude_recreation = true
+price_modifier = 0.95

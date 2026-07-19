@@ -272,6 +272,11 @@ func _get_pawns_save() -> Array:
 		var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
 		# Health lives in its own component (WI-05), so it gets its own section.
 		var health: PawnHealthComponent = pawn.get_component_by_type(PawnHealthComponent) as PawnHealthComponent
+		# Skills (WI-22): levels + partial xp, own section like needs/health.
+		var skills: PawnSkillsComponent = pawn.get_component_by_type(PawnSkillsComponent) as PawnSkillsComponent
+		# Traits (WI-22): just the id list; happiness modifiers are re-derived
+		# from it on load (see PawnTraitsComponent), never saved as modifiers.
+		var traits: PawnTraitsComponent = pawn.get_component_by_type(PawnTraitsComponent) as PawnTraitsComponent
 		# Conveyed pawns (WI-15, formalized by WI-20): rides aren't serialized -
 		# a pawn a carrier owns saves as standing at the cab's current floor
 		# module, never a mid-shaft position. If ride state ever does get
@@ -293,10 +298,14 @@ func _get_pawns_save() -> Array:
 			# Identity tint (WI-22) - saved so a pawn keeps its colour, unlike the
 			# instance-id-reseeded cosmetic jitter.
 			"tint": [pawn.tint.r, pawn.tint.g, pawn.tint.b, pawn.tint.a],
+			# What the pawn cost to hire (WI-22); WI-25 wages read it.
+			"hire_price": pawn.hire_price,
 			"position": [save_position.x, save_position.y],
 			"module": module_ref(save_module),
 			"needs": needs.get_save_data() if needs != null else {},
 			"health": health.get_save_data() if health != null else {},
+			"skills": skills.get_save_data() if skills != null else {},
+			"traits": traits.get_save_data() if traits != null else [],
 			"schedule": Array(pawn.schedule.slots) if pawn.schedule != null else [],
 			"carried": carried,
 		}
@@ -463,6 +472,7 @@ func _load_pawns(data: Array) -> void:
 		if tint_arr.size() >= 3:
 			var alpha: float = float(tint_arr[3]) if tint_arr.size() >= 4 else 1.0
 			pawn.tint = Color(float(tint_arr[0]), float(tint_arr[1]), float(tint_arr[2]), alpha)
+		pawn.hire_price = int(entry.get("hire_price", 0))
 		# Add to tree first: current_module's setter reparents, which needs a
 		# parent to exist (CrewManager.spawn_crew follows the same order).
 		Global.world_manager.pawn_layer.add_child(pawn)
@@ -482,6 +492,12 @@ func _load_pawns(data: Array) -> void:
 		var health: PawnHealthComponent = pawn.get_component_by_type(PawnHealthComponent) as PawnHealthComponent
 		if health != null:
 			health.load_save_data(entry.get("health", {}))
+		var skills: PawnSkillsComponent = pawn.get_component_by_type(PawnSkillsComponent) as PawnSkillsComponent
+		if skills != null:
+			skills.load_save_data(entry.get("skills", {}))
+		var traits: PawnTraitsComponent = pawn.get_component_by_type(PawnTraitsComponent) as PawnTraitsComponent
+		if traits != null:
+			traits.load_save_data(entry.get("traits", []))
 		# Painted schedules are per-pawn state; _ready already duplicated the
 		# scene's shared default, so writing into slots is safe. Shift state
 		# itself isn't saved - is_on_shift() derives from the loaded hour.

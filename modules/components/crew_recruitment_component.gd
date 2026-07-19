@@ -18,8 +18,8 @@ func ready_constructed() -> void:
 	override_ui = true
 	add_to_group("crew_recruitment")
 
-func request_hire() -> bool:
-	return Global.crew_manager.request_hire(owner_module)
+func request_hire(candidate: HireCandidate) -> bool:
+	return Global.crew_manager.request_hire(owner_module, candidate)
 
 func has_ui() -> bool:
 	return override_ui

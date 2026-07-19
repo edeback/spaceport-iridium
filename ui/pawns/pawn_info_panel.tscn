@@ -5,8 +5,9 @@
 [ext_resource type="PackedScene" uid="uid://bp3buujhvc0n6" path="res://ui/pawns/pawn_needs_tab.tscn" id="3_k5q5c"]
 [ext_resource type="PackedScene" uid="uid://dylvcpn3hgjkx" path="res://ui/pawns/pawn_job_tab.tscn" id="4_jaanw"]
 [ext_resource type="PackedScene" uid="uid://3ut5swia4ahi" path="res://ui/pawns/pawn_inventory_tab.tscn" id="5_1dtbj"]
-[ext_resource type="PackedScene" path="res://ui/pawns/pawn_schedule_tab.tscn" id="6_sched"]
+[ext_resource type="PackedScene" uid="uid://duujjj8ycp78l" path="res://ui/pawns/pawn_schedule_tab.tscn" id="6_sched"]
 [ext_resource type="Texture2D" uid="uid://dx10vvcmha2ht" path="res://assets/external/craftpix_space_shooter/Buttons/BTNs/Close_BTN.png" id="7_cugvx"]
+[ext_resource type="PackedScene" path="res://ui/pawns/pawn_skills_tab.tscn" id="7_d8grh"]
 [ext_resource type="Texture2D" uid="uid://doewhgldu2cyr" path="res://assets/external/craftpix_space_shooter/Buttons/BTNs_Active/Close_BTN.png" id="8_p6u53"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_n8fgc"]
@@ -123,10 +124,15 @@ visible = false
 layout_mode = 2
 metadata/_tab_index = 2
 
-[node name="Schedule" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer/DataTabs" instance=ExtResource("6_sched")]
+[node name="Schedule" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer/DataTabs" unique_id=252210076 instance=ExtResource("6_sched")]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 3
+
+[node name="Skills" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer/DataTabs" unique_id=310816360 instance=ExtResource("7_d8grh")]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 4
 
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/BaseScreen" unique_id=1491866804]
 layout_mode = 2

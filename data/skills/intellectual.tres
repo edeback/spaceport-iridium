@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" uid="uid://c4u12nrejmop1" path="res://data/skills/skill_data.gd" id="1_skill"]
+
+[resource]
+script = ExtResource("1_skill")
+id = &"intellectual"
+display_name = "Intellectual"
+sort_order = 90

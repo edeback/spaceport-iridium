@@ -39,17 +39,35 @@ func _on_slow_tick(interval: float) -> void:
 		_needs = owner_pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
 	if _needs == null or not _needs.has_recreation_need:
 		return
-	var cap: float = _needs.recreation_max * passive_cap_percent / 100.0
+	# Trait hooks (WI-22): Introvert recharges while ALONE and gets nothing from
+	# company; Extrovert gains faster and to a higher cap. No traits component
+	# (or no relevant trait) leaves the original company-based behavior intact.
+	var traits: PawnTraitsComponent = owner_pawn.get_traits_component()
+	var solitary: bool = traits != null and traits.prefers_solitude()
+	var social_mult: float = traits.passive_social_multiplier() if traits != null else 1.0
+	var cap_bonus: float = traits.passive_social_cap_bonus() if traits != null else 0.0
+	var cap: float = _needs.recreation_max * (passive_cap_percent + cap_bonus) / 100.0
 	if _needs.recreation_value >= cap:
 		return
 	var company: int = _count_company()
-	if company <= 0:
-		return
+	# counted drives the company-scaled rate; mult scales the whole gain.
+	var counted: int
+	var mult: float
+	if solitary:
+		if company > 0:
+			return
+		counted = 1
+		mult = 1.0
+	else:
+		if company <= 0 or social_mult <= 0.0:
+			return
+		counted = company
+		mult = social_mult
 	# Each pawn's component restores only its own recreation; the partner's
 	# component does the same for them symmetrically - "both tick up" without
 	# anyone double-applying.
 	var sim_hours: float = interval / TimeManager.SECONDS_PER_HOUR
-	var rate: float = passive_fun_per_hour + (mini(company, max_counted_company) - 1) * fun_per_extra_pawn_per_hour
+	var rate: float = (passive_fun_per_hour + (mini(counted, max_counted_company) - 1) * fun_per_extra_pawn_per_hour) * mult
 	# Never overshoot the cap: passive tops out, it doesn't fill.
 	_needs.recreation_value = minf(_needs.recreation_value + rate * sim_hours, cap)
 
