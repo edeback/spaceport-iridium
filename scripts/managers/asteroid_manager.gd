@@ -26,6 +26,11 @@ var asteroids: Array[AsteroidBase] = []
 
 var last_spawn: float = 0
 
+## Monotonic id source for asteroid save refs (WI-21). Instance-scoped so a
+## fresh scene starts clean; load_save_data restores it past every saved id so
+## post-load spawns never collide with restored asteroids.
+var _next_asteroid_id: int = 0
+
 func _ready() -> void:
 	Global.asteroid_manager = self
 
@@ -62,6 +67,8 @@ func spawn_asteroid() -> void:
 	if not mix.is_empty():
 		asteroid.resource_weighted_values = mix
 	asteroid.richness_range = _roll_richness_range()
+	asteroid.asteroid_id = _next_asteroid_id
+	_next_asteroid_id += 1
 	asteroids.append(asteroid)
 	asteroid_layer.add_child(asteroid)
 
@@ -94,3 +101,75 @@ func _roll_ore_mix() -> Dictionary[ResourceData, float]:
 func _roll_richness_range() -> Vector2:
 	var center: float = lerpf(richness_band.x, richness_band.y, pow(randf(), richness_skew))
 	return Vector2(clampf(center - richness_spread, 0.0, 1.0), clampf(center + richness_spread, 0.0, 1.0))
+
+## Live asteroid with this save id, or null (mined dry / despawned / bad ref).
+## Backs SaveManager.resolve_asteroid_ref for mining-job restore.
+func get_asteroid_by_id(id: int) -> AsteroidBase:
+	if id < 0:
+		return null
+	for asteroid: AsteroidBase in asteroids:
+		if is_instance_valid(asteroid) and asteroid.asteroid_id == id:
+			return asteroid
+	return null
+
+# --- persistence (WI-21) ------------------------------------------------------
+
+## The whole asteroid field plus the spawn-cadence counter and next-id source,
+## so a load reconstructs the same rocks (contents, richness, drift) rather than
+## regenerating a fresh random field.
+func get_save_data() -> Dictionary:
+	var out: Array = []
+	for asteroid: AsteroidBase in asteroids:
+		if not is_instance_valid(asteroid):
+			continue
+		out.append(asteroid.get_save_data())
+	return {
+		"next_id": _next_asteroid_id,
+		"last_spawn": last_spawn,
+		"asteroids": out,
+	}
+
+func load_save_data(data: Dictionary) -> void:
+	# Drop anything the fresh scene may have spawned before the load applied
+	# (_process runs between _ready and the deferred apply); the save is the
+	# full truth for the field.
+	for asteroid: AsteroidBase in asteroids:
+		if is_instance_valid(asteroid):
+			asteroid.queue_free()
+	asteroids.clear()
+	_next_asteroid_id = int(data.get("next_id", 0))
+	last_spawn = float(data.get("last_spawn", 0.0))
+	for entry: Dictionary in data.get("asteroids", []):
+		_spawn_asteroid_from_save(entry)
+
+## Rebuilds one asteroid from its saved dict. Mirrors spawn_asteroid's ordering
+## constraint: resource_weighted_values must be set before add_child (_ready sums
+## the weights), and cur_resources is restored AFTER add_child because _ready
+## resets it to max_resources.
+func _spawn_asteroid_from_save(entry: Dictionary) -> void:
+	var asteroid: AsteroidBase = asteroid_scene.instantiate() as AsteroidBase
+	var pos_arr: Array = entry.get("position", [0, 0])
+	asteroid.position = Vector2(float(pos_arr[0]), float(pos_arr[1]))
+	var dir_arr: Array = entry.get("direction", [0, 0])
+	asteroid.direction = Vector2(float(dir_arr[0]), float(dir_arr[1]))
+	asteroid.speed_pixels_per_sec = float(entry.get("speed", 15.0))
+	asteroid.max_resources = int(entry.get("max_resources", asteroid.max_resources))
+	var richness_arr: Array = entry.get("richness_range", [0.3, 0.7])
+	asteroid.richness_range = Vector2(float(richness_arr[0]), float(richness_arr[1]))
+	var mix: Dictionary[ResourceData, float] = {}
+	var ore_mix: Dictionary = entry.get("ore_mix", {})
+	for id_str: String in ore_mix:
+		var resource: ResourceData = Global.save_manager.get_resource_by_id(StringName(id_str))
+		if resource != null:
+			mix[resource] = float(ore_mix[id_str])
+	# Before add_child: _ready() sums the ore weights into resource_total_weights.
+	if not mix.is_empty():
+		asteroid.resource_weighted_values = mix
+	asteroids.append(asteroid)
+	asteroid_layer.add_child(asteroid)
+	# After _ready: it reset cur_resources to max and summed the weights.
+	asteroid.asteroid_id = int(entry.get("id", -1))
+	asteroid.cur_resources = int(entry.get("cur_resources", asteroid.max_resources))
+	asteroid.designated = bool(entry.get("designated", false))
+	if asteroid.sprite != null:
+		asteroid.sprite.rotation_degrees = float(entry.get("rotation", 0.0))

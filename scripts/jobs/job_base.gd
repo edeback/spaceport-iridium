@@ -113,6 +113,17 @@ func end_job() -> void:
 func _on_end() -> void:
 	pass
 
+## Serialization hook (WI-21). Base returns {} = "not saveable, drop on save"
+## - correct for board-derived, idle, and store-inventory jobs that a system
+## re-derives on load. Saveable subclasses (the ones a pawn carries as
+## current_job / job_queue) override this to return
+## {"type": <String job id>, ...target refs + ctor params...}. JobSerializer
+## maps the type id back to the subclass's static restore(data) -> JobBase
+## factory, which rebuilds the job in its initial state pointed at resolved
+## targets; start_job() then re-runs the normal claim/validity gauntlet.
+func get_save_data() -> Dictionary:
+	return {}
+
 ## Override to compute a followup job for pawn. Call this yourself (see
 ## Job_GetResource.deposit_resource()) at the exact moment you know you've
 ## succeeded, and push the result onto the pawn's queue immediately - don't

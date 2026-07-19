@@ -160,6 +160,31 @@ func _process(delta: float) -> void:
 func _on_need_job_end(need: NeedDef) -> void:
 	need.pending_job = null
 
+## WI-21: adopt a needs job restored from a save so the decay loop treats it as
+## the already-pending job for its need instead of queuing a second one. On load
+## the component is fresh (pending_job is null), so without this a persisted
+## Job_Eat/Sleep/Recreate in the pawn's queue would be doubled by the first
+## _process tick. Matched to its need by job class; no-op for anything else.
+func adopt_restored_need_job(job: JobBase) -> void:
+	var target_name: StringName = _need_name_for_job(job)
+	if target_name == &"":
+		return
+	for need: NeedDef in _needs:
+		if need.need_name == target_name:
+			if need.pending_job == null:
+				need.pending_job = job
+				job.job_end.connect(_on_need_job_end.bind(need))
+			return
+
+func _need_name_for_job(job: JobBase) -> StringName:
+	if job is Job_Eat:
+		return &"hunger"
+	if job is Job_Sleep:
+		return &"sleep"
+	if job is Job_Recreate:
+		return &"recreation"
+	return &""
+
 ## Most-critical-percentage first: promote in descending-percent order so the
 ## worst-off need is pushed to the queue front last and ends up frontmost.
 func _promote_critical_jobs() -> void:

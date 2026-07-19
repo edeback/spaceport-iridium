@@ -44,6 +44,13 @@ var active_jobs: Dictionary[ResourceData, Job_CollectPile] = {}
 ## to this node's exact position.
 var parent_module: ModuleBase = null
 
+## Stable save id (WI-21), assigned by spawn(). Lets a Job_CollectPile persist
+## the pile it targets and re-resolve it on load. Static counter because spawn()
+## is static (no instance to hang it on); SaveManager bumps it past every
+## restored id on load so post-load piles never collide with saved ones.
+static var _next_pile_id: int = 0
+var pile_id: int = -1
+
 signal despawning
 signal pile_changed(resource: ResourceData, new_amount: int)
 signal resource_pile_clicked(resource_pile: ResourcePile)
@@ -161,6 +168,8 @@ func _despawn() -> void:
 static func spawn(parent_node: Node, at_position: Vector2, owning_module: ModuleBase = null) -> ResourcePile:
 	var pile := RESOURCE_PILE.instantiate() as ResourcePile
 	pile.parent_module = owning_module
+	pile.pile_id = _next_pile_id
+	_next_pile_id += 1
 	parent_node.add_child(pile)
 	pile.global_position = at_position
 	return pile

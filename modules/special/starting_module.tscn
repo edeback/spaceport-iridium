@@ -17,14 +17,14 @@
 [ext_resource type="PackedScene" path="res://modules/components/oxygen_scrubber_component.tscn" id="15_scrub"]
 [ext_resource type="Resource" uid="uid://tf727fx7vlah" path="res://data/resources/oxygen.tres" id="16_4oiqu"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_d0haa"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_m0sbv"]
 shader = ExtResource("2_gm7c8")
 shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_m0sbv"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4oiqu"]
 resource_local_to_scene = true
 size = Vector2(192, 128)
 
@@ -57,7 +57,7 @@ can_delete = false
 structure_check_before_delete = true
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
-material = SubResource("ShaderMaterial_d0haa")
+material = SubResource("ShaderMaterial_m0sbv")
 texture = ExtResource("3_do1gr")
 region_enabled = false
 
@@ -66,7 +66,7 @@ scale = Vector2(3, 2)
 power_generation_component = NodePath("../../../PowerGenerationComponent")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_m0sbv")
+shape = SubResource("RectangleShape2D_4oiqu")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([Vector2i(96, 96)])

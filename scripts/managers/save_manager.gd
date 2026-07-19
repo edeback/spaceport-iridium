@@ -131,6 +131,60 @@ static func resolve_module_ref(ref: Dictionary) -> ModuleBase:
 	var layer: WorldManager.StructureLayer = int(ref.get("layer", 0)) as WorldManager.StructureLayer
 	return Global.world_manager.get_module_by_cell(layer, Vector2i(int(cell_arr[0]), int(cell_arr[1])))
 
+## Reference to a component inside a placed module (WI-21): the owning module's
+## layer+cell (as module_ref) plus the node path from the module to the
+## component. Same layer+cell+path scheme ModuleBase already uses to key its
+## per-storage save data, so a re-placed module resolves the exact component.
+static func component_ref(component: ComponentBase) -> Dictionary:
+	if component == null or not is_instance_valid(component) or component.owner_module == null:
+		return {}
+	var ref: Dictionary = module_ref(component.owner_module)
+	if ref.is_empty():
+		return {}
+	ref["path"] = String(component.owner_module.get_path_to(component))
+	return ref
+
+static func resolve_component_ref(ref: Dictionary) -> ComponentBase:
+	var module: ModuleBase = resolve_module_ref(ref)
+	if module == null:
+		return null
+	var path_str: String = String(ref.get("path", ""))
+	if path_str == "":
+		return null
+	return module.get_node_or_null(NodePath(path_str)) as ComponentBase
+
+## Reference to an asteroid by its stable id (WI-21). Empty for a null/freed
+## rock; resolve returns null when the id is gone (mined dry, despawned, or a
+## hand-edited save) so a mining job cancels cleanly through its lifecycle.
+static func asteroid_ref(asteroid: AsteroidBase) -> Dictionary:
+	if asteroid == null or not is_instance_valid(asteroid):
+		return {}
+	return {"id": asteroid.asteroid_id}
+
+static func resolve_asteroid_ref(ref: Dictionary) -> AsteroidBase:
+	if ref.is_empty() or Global.asteroid_manager == null:
+		return null
+	return Global.asteroid_manager.get_asteroid_by_id(int(ref.get("id", -1)))
+
+## Reference to a resource pile by its stable id (WI-21). Piles are saved in the
+## piles section with their ids, so resolve scans the live resource_debris group.
+static func pile_ref(pile: ResourcePile) -> Dictionary:
+	if pile == null or not is_instance_valid(pile):
+		return {}
+	return {"id": pile.pile_id}
+
+static func resolve_pile_ref(ref: Dictionary) -> ResourcePile:
+	if ref.is_empty() or Global.world_manager == null:
+		return null
+	var target_id: int = int(ref.get("id", -1))
+	if target_id < 0:
+		return null
+	for node: Node in Global.world_manager.get_tree().get_nodes_in_group("resource_debris"):
+		var pile: ResourcePile = node as ResourcePile
+		if pile != null and pile.pile_id == target_id:
+			return pile
+	return null
+
 # --- save --------------------------------------------------------------------
 
 func save_slot(slot: String) -> Error:
@@ -143,6 +197,7 @@ func save_slot(slot: String) -> Error:
 			"resources": _get_resources_save(),
 			"market": Global.market_manager.get_save_data(),
 			"world": Global.world_manager.get_save_data(),
+			"asteroids": Global.asteroid_manager.get_save_data(),
 			"turbolifts": Global.turbolift_manager.get_save_data(),
 			"piles": _get_piles_save(),
 			"pawns": _get_pawns_save(),
@@ -191,6 +246,7 @@ func _get_piles_save() -> Array:
 				"stacks": stacks_to_dicts(pile.contents[resource].stacks),
 			})
 		out.append({
+			"id": pile.pile_id,
 			"position": [pile.global_position.x, pile.global_position.y],
 			"module": module_ref(pile.parent_module),
 			"contents": contents,
@@ -201,9 +257,8 @@ func _get_pawns_save() -> Array:
 	var out: Array = []
 	for node: Node in get_tree().get_nodes_in_group("pawn"):
 		var pawn: PawnBase = node as PawnBase
-		# Drones are transient: their MiningComponent rebuilds them (cargo in
-		# flight is acceptable v1 loss - documented in WI-03).
-		if pawn == null or pawn is MiningDronePawn:
+		# All pawns must be saved and loaded
+		if pawn == null:
 			continue
 		var carried: Array = []
 		if pawn.inventory_component != null:
@@ -231,7 +286,8 @@ func _get_pawns_save() -> Array:
 			if ride_floor != null:
 				save_module = ride_floor
 				save_position = ride_floor.get_global_center()
-		out.append({
+
+		var entry: Dictionary = {
 			"scene": pawn.scene_file_path,
 			"name": pawn.pawn_name,
 			"position": [save_position.x, save_position.y],
@@ -240,7 +296,30 @@ func _get_pawns_save() -> Array:
 			"health": health.get_save_data() if health != null else {},
 			"schedule": Array(pawn.schedule.slots) if pawn.schedule != null else [],
 			"carried": carried,
-		})
+		}
+		# Mining Drones need their parent
+		if pawn is MiningDronePawn and (pawn as MiningDronePawn).parent_mining_component != null:
+			entry["mining_comp"] = component_ref((pawn as MiningDronePawn).parent_mining_component)
+		# In-flight jobs (WI-21): type + target refs, restarting their current
+		# stage on load. Only saveable jobs serialize (board/idle/store-inventory
+		# jobs return {}); omit the keys entirely when there's nothing to save.
+		var current_job_data: Dictionary = JobSerializer.serialize(pawn.current_job)
+		if not current_job_data.is_empty():
+			entry["current_job"] = current_job_data
+		var queue_data: Array = _serialize_job_queue(pawn.job_queue)
+		if not queue_data.is_empty():
+			entry["job_queue"] = queue_data
+		out.append(entry)
+	return out
+
+## Serializes a pawn's personal queue, preserving order and dropping any jobs
+## that aren't saveable (get_save_data() == {}).
+func _serialize_job_queue(queue: Array[JobBase]) -> Array:
+	var out: Array = []
+	for job: JobBase in queue:
+		var job_data: Dictionary = JobSerializer.serialize(job)
+		if not job_data.is_empty():
+			out.append(job_data)
 	return out
 
 # --- load --------------------------------------------------------------------
@@ -284,7 +363,8 @@ func _migrate(data: Dictionary) -> Dictionary:
 ## Runs on the fresh scene, one deferred tick after every _ready(). Section
 ## order matters: time first (systems tick in loaded time), unlocks before
 ## world (ready_constructed applies global modifiers / granted-module checks),
-## world before piles/pawns (they resolve module refs by layer+cell).
+## world before asteroids/piles/pawns (jobs restored on pawns resolve their
+## targets - modules, asteroids, piles - so all three must exist first).
 func _apply_pending_load() -> void:
 	var data: Dictionary = _pending_load
 	_pending_load = {}
@@ -295,8 +375,11 @@ func _apply_pending_load() -> void:
 	_load_resources(sections.get("resources", {}))
 	Global.market_manager.load_save_data(sections.get("market", {}))
 	Global.world_manager.load_save_data(sections.get("world", {}))
+	# After world, before pawns: mining jobs resolve their asteroid by id.
+	Global.asteroid_manager.load_save_data(sections.get("asteroids", {}))
 	# After world: shafts have re-merged from module adjacency by now.
 	Global.turbolift_manager.load_save_data(sections.get("turbolifts", {}))
+	# Before pawns: Job_CollectPile resolves its pile by id.
 	_load_piles(sections.get("piles", []))
 	_load_pawns(sections.get("pawns", []))
 	# After world: pending hires resolve their bay by layer+cell at arrival.
@@ -328,12 +411,17 @@ func _load_resources(data: Dictionary) -> void:
 		resource.needs_recalc = true
 
 func _load_piles(data: Array) -> void:
+	var max_saved_id: int = -1
 	for entry: Dictionary in data:
 		var pos_arr: Array = entry.get("position", [0, 0])
 		var pos := Vector2(float(pos_arr[0]), float(pos_arr[1]))
 		var module: ModuleBase = resolve_module_ref(entry.get("module", {}))
 		var parent_node: Node = module.get_parent() if module != null else Global.world_manager.pawn_layer
 		var pile: ResourcePile = ResourcePile.spawn(parent_node, pos, module)
+		# Restore the saved id (spawn() assigned a fresh one) so Job_CollectPile
+		# refs resolve to this exact pile.
+		pile.pile_id = int(entry.get("id", pile.pile_id))
+		max_saved_id = maxi(max_saved_id, pile.pile_id)
 		if module != null:
 			# Re-link so future overflow tops up this pile instead of spawning
 			# a second one; _despawn() clears the link itself.
@@ -348,6 +436,10 @@ func _load_piles(data: Array) -> void:
 				stacks.append(stack_from_dict(resource, stack_dict))
 			# add_stacks also posts the collection job, same as live overflow.
 			pile.add_stacks(resource, stacks)
+	# Bump the shared counter past every restored id so post-load piles (which
+	# take fresh ids from spawn()) can never collide with a restored one.
+	if max_saved_id >= 0:
+		ResourcePile._next_pile_id = maxi(ResourcePile._next_pile_id, max_saved_id + 1)
 
 func _load_pawns(data: Array) -> void:
 	for entry: Dictionary in data:
@@ -371,6 +463,9 @@ func _load_pawns(data: Array) -> void:
 		var module: ModuleBase = resolve_module_ref(entry.get("module", {}))
 		if module != null:
 			pawn.current_module = module
+		else:
+			# These values won't get updated if we don't push a new module value
+			pawn.update_layer_and_sprite()
 		var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
 		if needs != null:
 			needs.load_save_data(entry.get("needs", {}))
@@ -393,3 +488,33 @@ func _load_pawns(data: Array) -> void:
 			for stack_dict: Dictionary in content.get("stacks", []):
 				stacks.append(stack_from_dict(resource, stack_dict))
 			pawn.inventory_component.add_stacks(resource, stacks)
+		if pawn is MiningDronePawn:
+			(pawn as MiningDronePawn).set_owner_component(resolve_component_ref(entry.get("mining_comp", {})) as MiningComponent)
+		# Jobs last (WI-21): module/needs/inventory are all in place, so the
+		# restored job's claim gauntlet - run on the pawn's first start_job()
+		# tick, not here - sees the true world. Queue in saved order, then push
+		# the current job to the front so it runs first; queue_job (not direct
+		# assignment) routes it through start_job()'s normal validity/claim path,
+		# and a pawn carrying cargo sweeps it via Job_StoreInventory before the
+		# restored haul re-runs (no double-withdraw). Jobs whose targets are gone
+		# deserialize to null and are silently dropped.
+		_load_pawn_jobs(pawn, entry, needs)
+
+## Rebuilds current_job + job_queue onto a freshly restored pawn.
+func _load_pawn_jobs(pawn: PawnBase, entry: Dictionary, needs: PawnNeedsComponent) -> void:
+	for job_data: Dictionary in entry.get("job_queue", []):
+		var job: JobBase = JobSerializer.deserialize(job_data)
+		if job != null:
+			pawn.queue_job(job)
+			_adopt_if_need_job(needs, job)
+	var current_job: JobBase = JobSerializer.deserialize(entry.get("current_job", {}))
+	if current_job != null:
+		pawn.queue_job(current_job, true) # to front: runs before the restored queue
+		_adopt_if_need_job(needs, current_job)
+
+## A restored Eat/Sleep/Recreate must be re-linked to its need slot, or the
+## decay loop (which lost its pending_job pointer on load) would queue a second
+## job for the same need. No-op for non-need jobs and pawns without needs.
+func _adopt_if_need_job(needs: PawnNeedsComponent, job: JobBase) -> void:
+	if needs != null and (job is Job_Eat or job is Job_Sleep or job is Job_Recreate):
+		needs.adopt_restored_need_job(job)

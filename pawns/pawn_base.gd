@@ -51,7 +51,8 @@ var current_job: JobBase = null:
 ## by other pawns or JobManager.
 var job_queue: Array[JobBase] = []
 
-var job_length: float = 0
+## Start the very first job immediately
+var job_length: float = 1
 
 var components: Array[PawnComponentBase] = []
 
@@ -324,18 +325,21 @@ func set_idle() -> void:
 func _on_module_changed(new_module: ModuleBase) -> void:
 	if current_module != new_module:
 		current_module = new_module
-		if new_module == null:
-			if current_layer != WorldManager.StructureLayer.SPACE:
-				current_layer = WorldManager.StructureLayer.SPACE
-				reparent(Global.world_manager.get_canvas_for_layer(current_layer))
-			Global.path_manager.set_exterior(self, true)
-			animated_sprite.rotation_degrees = 90
-		else:
-			Global.path_manager.set_exterior(self, false)
-			animated_sprite.rotation_degrees = 0
-			if current_layer != new_module.module_data.interaction_layer:
-				current_layer = new_module.module_data.interaction_layer
-				reparent(Global.world_manager.get_canvas_for_layer(current_layer))
+		update_layer_and_sprite()
+
+func update_layer_and_sprite() -> void:
+	if current_module == null:
+		if current_layer != WorldManager.StructureLayer.SPACE:
+			current_layer = WorldManager.StructureLayer.SPACE
+			reparent(Global.world_manager.get_canvas_for_layer(current_layer))
+		Global.path_manager.set_exterior(self, true)
+		animated_sprite.rotation_degrees = 90
+	else:
+		Global.path_manager.set_exterior(self, false)
+		animated_sprite.rotation_degrees = 0
+		if current_layer != current_module.module_data.interaction_layer:
+			current_layer = current_module.module_data.interaction_layer
+			reparent(Global.world_manager.get_canvas_for_layer(current_layer))
 
 #func _find_next_job() -> void:
 	#if current_job == null:

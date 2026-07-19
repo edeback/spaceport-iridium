@@ -33,6 +33,9 @@ func get_subtask_description() -> String:
 	return ""
 
 func can_do_job(_pawn: PawnBase) -> bool:
+	# If we have a specific storage we're trying to get to, only check that one
+	if deposit_storage != null:
+		return Global.path_manager.is_reachable(_pawn, deposit_storage.owner_module)
 	return not _find_storage_target(_pawn).is_empty()
 
 func start_job(_pawn: PawnBase) -> void:
@@ -55,12 +58,14 @@ func _on_cancel(as_failed: bool) -> void:
 		job_state = StoreInventoryState.Finished
 
 func job_start() -> void:
-	var target: Dictionary = _find_storage_target(pawn)
-	if target.is_empty():
-		cancel(true)
-		return
-	resource_data = target["resource"]
-	deposit_storage = target["storage"]
+	# No specific deposit set, search for anything
+	if deposit_storage == null:
+		var target: Dictionary = _find_storage_target(pawn)
+		if target.is_empty():
+			cancel(true)
+			return
+		resource_data = target["resource"]
+		deposit_storage = target["storage"]
 	move_to_storage()
 
 func move_to_storage() -> void:
@@ -75,21 +80,37 @@ func deposit_resource(prev_success: bool) -> void:
 		cancel(true)
 		return
 	job_state = StoreInventoryState.DepositResource
-	var carried_amount: int = pawn.inventory_component.get_carried_amount(resource_data)
+	# If there is a specific resource stated, deposit it
+	# Otherwise try to deposit everything it can
+	var success := false
+	if resource_data != null:
+		success = deposit_one_resource(resource_data)
+	else:
+		for resource: ResourceData in pawn.inventory_component.get_carried_resources():
+			if deposit_storage.can_store_resource(resource):
+				success = deposit_one_resource(resource)
+			if not success:
+				break
+	if success:
+		job_state = StoreInventoryState.Finished
+	else:
+		cancel(true)
+		
+func deposit_one_resource(resource: ResourceData) -> bool:
+	var carried_amount: int = pawn.inventory_component.get_carried_amount(resource)
 	var deposit_amount: int = mini(carried_amount, deposit_storage.space_available())
 	if deposit_amount <= 0:
 		# Storage filled up while we were walking over — try again next tick.
-		cancel(true)
-		return
-	var withdrawn: Array[ResourceStack] = pawn.inventory_component.withdraw_stacks(resource_data, deposit_amount)
-	if not withdrawn.is_empty() and deposit_storage.deposit_stacks(resource_data, withdrawn):
-		job_state = StoreInventoryState.Finished
+		return false
+	var withdrawn: Array[ResourceStack] = pawn.inventory_component.withdraw_stacks(resource, deposit_amount)
+	if not withdrawn.is_empty() and deposit_storage.deposit_stacks(resource, withdrawn):
+		return true
 	else:
 		# Something went wrong after we already took it off the pawn — give it back
 		# rather than losing it.
 		if not withdrawn.is_empty():
-			pawn.inventory_component.add_stacks(resource_data, withdrawn)
-		cancel(true)
+			pawn.inventory_component.add_stacks(resource, withdrawn)
+		return false
 
 ## Finds one carried resource type and the closest reachable storage that will
 ## accept it. Returns {} if nothing carried has anywhere to go right now.

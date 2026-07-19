@@ -15,6 +15,9 @@ There's Module.size and StructureComponent.size and they need to be aligned but 
 
 Trade order screen - show current supplies for validation
 
+Ice should get quality and that should matter for ice purifier
+Introduce comets which are asteroids except mostly ice and some carbon
+
 Forge
 - Needs carbon input storage or else won't run!
 
@@ -57,7 +60,8 @@ Ore refiner:
 
 - **New modules pack** — Magscoop, Hydrogen Fuel Cells, Smelter/Polymer/Electronics factories as buildables (ProcessorComponent + recipes — mostly data work), Promenade, Holodeck.
 
-Set first two pawns to work 100% of the time, pawns after that can work shifts (as there's a lot to do to start!)
+Events:
+- Minimum time between events (now is pure random, should be semi-random)
 
 
 Have Fable "interview me" about the game and update the design document

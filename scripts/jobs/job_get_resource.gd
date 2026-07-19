@@ -223,3 +223,40 @@ func get_followup_job(pawn: PawnBase) -> JobBase:
 		if offered != null:
 			return offered
 	return null
+
+# --- persistence (WI-21) ------------------------------------------------------
+
+## Both endpoints are recorded (a running haul has both); restore re-reserves
+## against them through job_start()'s fully-specified branch. A pawn carrying
+## cargo when saved sweeps it via Job_StoreInventory before this re-runs, so the
+## re-withdraw doesn't duplicate. Reservations themselves are never saved.
+func get_save_data() -> Dictionary:
+	if resource_data == null or resource_data.id == &"":
+		return {}
+	return {
+		"type": "get_resource",
+		"resource": String(resource_data.id),
+		"amount": amount,
+		"export": SaveManager.component_ref(export_storage),
+		"deposit": SaveManager.component_ref(deposit_storage),
+	}
+
+static func restore(data: Dictionary) -> JobBase:
+	var resource: ResourceData = Global.save_manager.get_resource_by_id(StringName(String(data.get("resource", ""))))
+	if resource == null:
+		return null
+	var export_component: StorageComponent = SaveManager.resolve_component_ref(data.get("export", {})) as StorageComponent
+	var deposit_component: StorageComponent = SaveManager.resolve_component_ref(data.get("deposit", {})) as StorageComponent
+	# Need at least one live endpoint; job_start() re-finds the other side if
+	# only one survived, or cancels cleanly if neither works out on this tick.
+	if export_component == null and deposit_component == null:
+		return null
+	var job := Job_GetResource.new()
+	job.resource_data = resource
+	job.amount = maxi(int(data.get("amount", 1)), 1)
+	job.export_storage = export_component
+	job.deposit_storage = deposit_component
+	# requester drives is_valid() and the source/dest finders; the posting
+	# storage isn't recorded, so anchor to a surviving endpoint component.
+	job.requester = deposit_component if deposit_component != null else export_component
+	return job

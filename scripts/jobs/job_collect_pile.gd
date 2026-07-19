@@ -205,3 +205,30 @@ func deposit_resource(prev_success: bool) -> void:
 		if not withdrawn.is_empty():
 			pawn.inventory_component.add_stacks(resource_data, withdrawn)
 		cancel(true)
+
+# --- persistence (WI-21) ------------------------------------------------------
+
+## Records the pile (by stable id) + which resource to pull. Restore rebuilds a
+## fresh job via setup(); job_start() re-finds a deposit storage and re-reserves
+## against the pile - the pile-side reservation is never saved. A pawn already
+## carrying gathered material sweeps it via Job_StoreInventory before this
+## re-runs, so no double-reserve.
+func get_save_data() -> Dictionary:
+	if not is_instance_valid(pile) or resource_data == null or resource_data.id == &"":
+		return {}
+	return {
+		"type": "collect_pile",
+		"pile": SaveManager.pile_ref(pile),
+		"resource": String(resource_data.id),
+	}
+
+static func restore(data: Dictionary) -> JobBase:
+	var pile: ResourcePile = SaveManager.resolve_pile_ref(data.get("pile", {}))
+	if pile == null:
+		return null
+	var resource: ResourceData = Global.save_manager.get_resource_by_id(StringName(String(data.get("resource", ""))))
+	if resource == null:
+		return null
+	var job := Job_CollectPile.new()
+	job.setup(pile, resource)
+	return job

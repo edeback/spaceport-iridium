@@ -18,23 +18,12 @@ var _respawn_time_left: float = -1.0
 ## preference, random asteroid. Per-bay, not persisted (see 03_Bugs).
 var priority_ore: ResourceData = null
 
-var output_resource: ResourceData
-
-var processing: bool = false
-var current_process_time: float = 0
-
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	super()
-	assert(output_storage != null, "Processor must have output_storage!")
-	assert(power_consumer != null, "Processor must have power_consumer!")
-	#output_resource = base_output_resource.duplicate()
-	#output_resource.base_resource = base_output_resource
-	#var mutiple: float = 0.0
-	#for resource_data: ResourceData in sub_resources:
-		#mutiple += 0.1
-		#output_resource.sub_resources[resource_data] = mutiple
+	assert(output_storage != null, "MiningComponent must have output_storage!")
+	assert(power_consumer != null, "MiningComponent must have power_consumer!")
 
 func ready_preview() -> void:
 	set_process(false)
@@ -77,6 +66,10 @@ func build_drone() -> void:
 	new_drone.parent_mining_component = self
 	Global.world_manager.pawn_layer.add_child(new_drone)
 	drones.append(new_drone)
+
+## Add a drone to tracked drones externally, used for save/load
+func register_drone(drone: MiningDronePawn) -> void:
+	drones.append(drone)
 
 func _exit_tree() -> void:
 	for drone: MiningDronePawn in drones:

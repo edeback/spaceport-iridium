@@ -91,3 +91,15 @@ func eat(prev_success: bool) -> void:
 		job_state = JobBase.JobState.Finished
 	else:
 		cancel(true)
+
+# --- persistence (WI-21) ------------------------------------------------------
+
+## No target ref: start_job() re-picks the best reachable sustenance on load
+## (find_best_sustenance), so the provider is re-derived, not stored. SaveManager
+## re-links the restored job to the hunger need via adopt_restored_need_job so
+## the decay loop doesn't queue a duplicate.
+func get_save_data() -> Dictionary:
+	return {"type": "eat"}
+
+static func restore(_data: Dictionary) -> JobBase:
+	return Job_Eat.new()

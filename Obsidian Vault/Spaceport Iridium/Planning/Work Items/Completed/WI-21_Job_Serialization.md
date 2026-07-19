@@ -1,7 +1,7 @@
 # WI-21 — Job & Asteroid Serialization
 
 ## Goal
-A player can save and re-load without pawns losing their jobs. Requires serializing the parts of the world jobs point at that aren't saved yet — asteroids above all (a miner mid-trip needs its rock to still exist).
+A player can save and re-load without pawns losing their jobs. Requires serializing the parts of the world jobs point at that aren't saved yet — asteroids above all (a miner mid-trip needs its rock to still exist). (This means Mining Drones will also need saving!)
 
 **Depth decision (user-confirmed):** *type + targets, restart stage.* Each pawn's `current_job` and `job_queue` save as job class + target references; on load the job re-claims its reservations through the normal claim path and restarts its current stage (re-walks to the target, re-does partial work). The shared board keeps re-deriving from storage deficits/construction state exactly as today — board jobs are NOT saved. Bit-exact resume (timers, movement progress) is explicitly out of scope.
 
@@ -35,7 +35,6 @@ A player can save and re-load without pawns losing their jobs. Requires serializ
 - Two pawns saved targeting the same storage stock: first restored claim wins, second cancels cleanly — order-dependent but harmless. Assert reservations reconcile after load (debug check).
 - Asteroid fully mined between job save and load: impossible in a consistent save (same file), but `resolve_asteroid_ref` returning null must cancel cleanly anyway (defends against hand-edited/old saves).
 - Pawn saved off-shift with queued needs jobs: queue restores in order; shift gate applies as normal on pick-up.
-- Version bump: this changes the pawn section shape — bump `SAVE_VERSION`, add a migration that maps old pawn sections to "no jobs" (current behavior) so existing playtest saves still load.
 
 ## Verification
 1. Save mid-haul (pawn walking to pick up ore) → load → pawn resumes the same haul (re-walks, completes, deposits). Repeat for mid-mine (EVA on the asteroid), mid-construction, mid-eat/sleep.
@@ -43,4 +42,3 @@ A player can save and re-load without pawns losing their jobs. Requires serializ
 3. Save mid-turbolift-ride → load → pawn at floor per WI-20 contract, job re-paths and completes.
 4. Sabotage test: hand-edit a save to point a job at a missing asteroid/module → loads without errors, job dropped, pawn re-tasks.
 5. GUT round-trip suite green; reservation reconciliation assert clean after every load above.
-6. Regression: load of a pre-WI-21 save (migration) still works; board re-derivation unchanged for unsaved job types.

@@ -117,6 +117,19 @@ func is_failed() -> bool:
 func is_finished() -> bool:
 	return state == RecreateState.Finished
 
+# --- persistence (WI-21) ------------------------------------------------------
+
+## No target ref: start_job() re-gathers reachable providers and re-claims a
+## slot on load. Persisting lets a pawn resume a recreation session already
+## above the need threshold (which the decay loop wouldn't re-queue). SaveManager
+## re-links it to the recreation need via adopt_restored_need_job so no
+## duplicate is queued.
+func get_save_data() -> Dictionary:
+	return {"type": "recreate"}
+
+static func restore(_data: Dictionary) -> JobBase:
+	return Job_Recreate.new()
+
 ## All reachable providers (either kind) with a free slot and a nonzero rate.
 ## Pure query - safe from can_do_job.
 func _gather_candidates(_pawn: PawnBase) -> Array[RecreationProviderComponent]:

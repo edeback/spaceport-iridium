@@ -125,6 +125,32 @@ func construct_module(delta: float) -> void:
 	
 func is_failed() -> bool:
 	return state == ConstructModuleState.Failed
-	
+
 func is_finished() -> bool:
 	return state == ConstructModuleState.Finished
+
+# --- persistence (WI-21) ------------------------------------------------------
+
+## Module refs resolve by layer+cell regardless of build state, so this works
+## whether the site is a blueprint or a deconstruction target. If the module
+## finished (or was removed) between save and load, restore's resolve returns
+## null / is_valid() fails and the job drops cleanly.
+func get_save_data() -> Dictionary:
+	if not is_instance_valid(module_to_construct):
+		return {}
+	return {
+		"type": "construct_module",
+		"module": SaveManager.module_ref(module_to_construct),
+		"deconstruct": deconstruct,
+	}
+
+static func restore(data: Dictionary) -> JobBase:
+	var module: ModuleBase = SaveManager.resolve_module_ref(data.get("module", {}))
+	if module == null:
+		return null
+	var job := Job_ConstructModule.new()
+	job.deconstruct = bool(data.get("deconstruct", false))
+	# setup() re-wires the construction component + signals, or sets Failed when
+	# the module has none - is_valid() then drops it through the pawn's gauntlet.
+	job.setup(module)
+	return job

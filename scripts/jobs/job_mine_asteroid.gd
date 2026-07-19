@@ -90,32 +90,36 @@ func process_job(delta: float) -> void:
 		MineAsteroidState.Failed:
 			pass
 	
-func get_asteroid() -> void:
-	# Re-picking (previous one mined dry): stop listening to the old asteroid
-	# or its later despawn would wrongly reset/cancel this job.
+## Reset the set asteroid so we can find a new one
+func cancel_asteroid() -> void:
 	if asteroid != null and is_instance_valid(asteroid) and asteroid.despawning.is_connected(_asteroid_despawned):
 		asteroid.despawning.disconnect(_asteroid_despawned)
-	var asteroids: Array[Node] = pawn.get_tree().get_nodes_in_group("asteroid")
-	asteroids.shuffle()
-	# Priority order: player-designated asteroids first, then ones carrying
-	# this mining bay's priority ore, then whatever the shuffle found first.
-	# requesting_component can be null (module removed while unclaimed).
-	var priority_ore: ResourceData = requesting_component.priority_ore if requesting_component != null else null
-	var ore_match: AsteroidBase = null
-	var fallback: AsteroidBase = null
 	asteroid = null
-	for test_asteroid: AsteroidBase in asteroids:
-		if test_asteroid.is_empty():
-			continue
-		if test_asteroid.designated:
-			asteroid = test_asteroid
-			break
-		if ore_match == null and priority_ore != null and test_asteroid.has_ore(priority_ore):
-			ore_match = test_asteroid
-		if fallback == null:
-			fallback = test_asteroid
-	if asteroid == null:
-		asteroid = ore_match if ore_match != null else fallback
+	
+func get_asteroid() -> void:
+	# If an asteroid is still set (and valid), it came from a save - honor it, otherwise find a new one
+	if asteroid == null or not is_instance_valid(asteroid):
+		var asteroids: Array[Node] = pawn.get_tree().get_nodes_in_group("asteroid")
+		asteroids.shuffle()
+		# Priority order: player-designated asteroids first, then ones carrying
+		# this mining bay's priority ore, then whatever the shuffle found first.
+		# requesting_component can be null (module removed while unclaimed).
+		var priority_ore: ResourceData = requesting_component.priority_ore if requesting_component != null else null
+		var ore_match: AsteroidBase = null
+		var fallback: AsteroidBase = null
+		asteroid = null
+		for test_asteroid: AsteroidBase in asteroids:
+			if test_asteroid.is_empty():
+				continue
+			if test_asteroid.designated:
+				asteroid = test_asteroid
+				break
+			if ore_match == null and priority_ore != null and test_asteroid.has_ore(priority_ore):
+				ore_match = test_asteroid
+			if fallback == null:
+				fallback = test_asteroid
+		if asteroid == null:
+			asteroid = ore_match if ore_match != null else fallback
 	if asteroid == null:
 		state = MineAsteroidState.Failed
 		return
@@ -127,6 +131,7 @@ func _asteroid_despawned() -> void:
 	pawn.movement_component.cancel()
 	# Find a different one!
 	if state < MineAsteroidState.ReturningToModule:
+		cancel_asteroid()
 		state = MineAsteroidState.Starting
 	# otherwise we don't care, we already came and left already
 
@@ -153,6 +158,8 @@ func next_state(prev_success: bool) -> void:
 		return
 	if not prev_success:
 		if state < MineAsteroidState.ReturningToModule:
+			# We didn't make it there, try a different asteroid
+			cancel_asteroid()
 			state = MineAsteroidState.Starting
 		else:
 			cancel(true)
@@ -187,6 +194,7 @@ func mine_asteroid(delta: float) -> void:
 	if resources_mined_count >= max_mined or pawn.inventory_component.space_available() <= 0:
 		move_to_module()
 	elif asteroid.is_empty():
+		cancel_asteroid()
 		state = MineAsteroidState.Starting
 		
 func move_to_module() -> void:
@@ -215,9 +223,32 @@ func deposit_material() -> void:
 	
 func is_failed() -> bool:
 	return state == MineAsteroidState.Failed
-	
+
 func is_finished() -> bool:
 	return state == MineAsteroidState.Finished
+
+# --- persistence (WI-21) ------------------------------------------------------
+
+## Records the mining bay (component) that owns this job plus the targeted rock.
+func get_save_data() -> Dictionary:
+	# Lose the job if we were already on our way back, we don't want to start with locating an asteroid again
+	if requesting_component == null or not is_instance_valid(requesting_component) or state > MineAsteroidState.MineAsteroid:
+		return {}
+	return {
+		"type": "mine_asteroid",
+		"mining_component": SaveManager.component_ref(requesting_component),
+		"asteroid": SaveManager.asteroid_ref(asteroid),
+	}
+
+static func restore(data: Dictionary) -> JobBase:
+	var component: MiningComponent = SaveManager.resolve_component_ref(data.get("mining_component", {})) as MiningComponent
+	if component == null:
+		return null
+	var job := Job_MineAsteroid.new()
+	job.setup(component)
+	job.output_storage = component.output_storage
+	job.asteroid = SaveManager.resolve_asteroid_ref(data.get("asteroid", {}))
+	return job
 
 # Probably don't need this - MiningDronePawns have their own way of getting new jobs
 #func get_followup_job(_pawn: PawnBase) -> JobBase:

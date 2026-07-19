@@ -46,6 +46,27 @@ func move_to_module() -> void:
 	
 func is_failed() -> bool:
 	return state == JobState.Failed
-	
+
 func is_finished() -> bool:
 	return state == JobState.Finished
+
+# --- persistence (WI-21) ------------------------------------------------------
+
+## Just the destination module. Restore rebuilds a fresh job that re-paths from
+## wherever the pawn loaded (WI-20 CONVEYED contract: a pawn saved mid-ride is
+## recorded at a floor, so re-pathing starts from there).
+func get_save_data() -> Dictionary:
+	if not is_instance_valid(destination_module):
+		return {}
+	return {
+		"type": "move_to_location",
+		"destination": SaveManager.module_ref(destination_module),
+	}
+
+static func restore(data: Dictionary) -> JobBase:
+	var destination: ModuleBase = SaveManager.resolve_module_ref(data.get("destination", {}))
+	if destination == null:
+		return null
+	var job := Job_MoveToLocation.new()
+	job.destination_module = destination
+	return job

@@ -7,6 +7,11 @@ extends ObjectBase
 var cur_resources: int
 var resource_total_weights: float = 0
 
+## Stable save id (WI-21), assigned by AsteroidManager at spawn. -1 = never
+## registered (a bare instance not owned by the manager). Jobs that target this
+## rock persist it as SaveManager.asteroid_ref({"id": asteroid_id}).
+var asteroid_id: int = -1
+
 var speed_pixels_per_sec: float = 15
 var direction: Vector2
 var rotation_speed_deg_per_sec: float = 30
@@ -17,8 +22,8 @@ var rotation_speed_deg_per_sec: float = 30
 var richness_range: Vector2 = Vector2(0.3, 0.7)
 
 ## Player-flagged for priority mining: Job_MineAsteroid targets designated
-## asteroids before ore-priority or random picks. Not persisted - asteroids
-## themselves aren't saved, so the flag lives and dies with the instance.
+## asteroids before ore-priority or random picks. Persisted with the asteroid
+## (WI-21) so a designation survives save/load like the rest of the field.
 var designated: bool = false:
 	set(new_designated):
 		if designated != new_designated:
@@ -97,3 +102,28 @@ func has_ore(resource: ResourceData) -> bool:
 
 func is_empty() -> bool:
 	return cur_resources <= 0
+
+# --- persistence (WI-21) ------------------------------------------------------
+
+## Full serializable state. AsteroidManager aggregates these into the world
+## save so mining jobs still have their rock on load and the asteroid field
+## (contents, richness, positions) round-trips identically. resource_total_weights
+## is derived in _ready() from the ore mix, so it isn't stored.
+func get_save_data() -> Dictionary:
+	var ore_mix: Dictionary = {}
+	for resource: ResourceData in resource_weighted_values:
+		if resource == null or resource.id == &"":
+			continue
+		ore_mix[String(resource.id)] = resource_weighted_values[resource]
+	return {
+		"id": asteroid_id,
+		"position": [position.x, position.y],
+		"direction": [direction.x, direction.y],
+		"speed": speed_pixels_per_sec,
+		"rotation": sprite.rotation_degrees if sprite != null else 0.0,
+		"max_resources": max_resources,
+		"cur_resources": cur_resources,
+		"richness_range": [richness_range.x, richness_range.y],
+		"ore_mix": ore_mix,
+		"designated": designated,
+	}

@@ -107,6 +107,19 @@ func is_failed() -> bool:
 func is_finished() -> bool:
 	return state == SleepState.Finished
 
+# --- persistence (WI-21) ------------------------------------------------------
+
+## No target ref: start_job() re-finds the nearest pod and re-claims a slot on
+## load (the slot claim itself is never saved). Persisting the job lets a pawn
+## resume a sleep session that had already risen above the "look for needs"
+## threshold, which the decay loop wouldn't re-queue. SaveManager re-links it to
+## the sleep need via adopt_restored_need_job so no duplicate is queued.
+func get_save_data() -> Dictionary:
+	return {"type": "sleep"}
+
+static func restore(_data: Dictionary) -> JobBase:
+	return Job_Sleep.new()
+
 ## Nearest reachable pod with a free slot. Pure query - safe from can_do_job.
 func _find_pod(_pawn: PawnBase) -> SleepComponent:
 	var best: SleepComponent = null
