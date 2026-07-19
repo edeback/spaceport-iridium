@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bqpuv7wysl1nf" path="res://ui/windows/ui_storage_component.gd" id="1_6j2gs"]
 [ext_resource type="PackedScene" uid="uid://dprv5w0bvxvvb" path="res://ui/windows/storage_resource_line.tscn" id="2_4o4nm"]
 [ext_resource type="Theme" uid="uid://be0o5q2vl2xnx" path="res://ui/themes/spinbox_theme.tres" id="3_oliwk"]
+[ext_resource type="Texture2D" uid="uid://bkb1dr2qo71j1" path="res://ui/icons/ore.svg" id="4_w6hf2"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4o4nm"]
 content_margin_left = 0.0
@@ -36,7 +37,7 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 corner_detail = 5
 
-[node name="Storage" type="PanelContainer" unique_id=1597534492 node_paths=PackedStringArray("resource_container", "priority_value", "add_resource_menu")]
+[node name="Storage" type="PanelContainer" unique_id=1597534492 node_paths=PackedStringArray("resource_container", "priority_value", "edit_resources_button")]
 custom_minimum_size = Vector2(400, 0)
 anchors_preset = 15
 anchor_right = 1.0
@@ -49,7 +50,7 @@ script = ExtResource("1_6j2gs")
 resource_container = NodePath("MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/ResourceContainer")
 resource_line = ExtResource("2_4o4nm")
 priority_value = NodePath("MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer/HBoxContainer/PriorityValue")
-add_resource_menu = NodePath("MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer/PanelContainer/AddStoredResourceMenuButton")
+edit_resources_button = NodePath("MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer/PanelContainer/EditResourcesButton")
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=99127212]
 layout_mode = 2
@@ -79,10 +80,9 @@ layout_mode = 2
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_4o4nm")
 
-[node name="AddStoredResourceMenuButton" type="MenuButton" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer/PanelContainer" unique_id=1785318346]
+[node name="EditResourcesButton" type="Button" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer/PanelContainer" unique_id=1785318346]
 layout_mode = 2
-text = "Add new stored resource"
-flat = false
+text = "Edit Stored Resources"
 
 [node name="AvailableAndDesiredLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1120317562]
 layout_mode = 2
@@ -225,5 +225,95 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 12
 text = "Auto-dump all resources above Desired level (until unchecked)"
+
+[node name="EditResourcesPanel" type="PanelContainer" parent="." unique_id=612000001]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_4o4nm")
+
+[node name="MarginContainer" type="MarginContainer" parent="EditResourcesPanel" unique_id=612000002]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="EditResourcesPanel/MarginContainer" unique_id=612000003]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="EditResourcesPanel/MarginContainer/VBoxContainer" unique_id=612000004]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Edit Stored Resources"
+horizontal_alignment = 1
+
+[node name="Label2" type="Label" parent="EditResourcesPanel/MarginContainer/VBoxContainer" unique_id=612000005]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Check the resources this storage should hold. Unchecked resources with stock are dumped to a pile."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="CenterContainer" type="PanelContainer" parent="EditResourcesPanel/MarginContainer/VBoxContainer" unique_id=1346512500]
+layout_mode = 2
+
+[node name="ColorRect" type="ColorRect" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer" unique_id=1794972628]
+layout_mode = 2
+color = Color(0, 0.48226744, 0.57925403, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer" unique_id=1861089702]
+layout_mode = 2
+
+[node name="ResourceChecklistContainer" type="GridContainer" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer/CenterContainer" unique_id=275988871]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 4
+
+[node name="CheckBox" type="CheckBox" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer/CenterContainer/ResourceChecklistContainer" unique_id=1968354425]
+layout_mode = 2
+theme_override_constants/icon_max_width = 30
+text = "Resource1!"
+icon = ExtResource("4_w6hf2")
+
+[node name="CheckBox2" type="CheckBox" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer/CenterContainer/ResourceChecklistContainer" unique_id=721545790]
+layout_mode = 2
+theme_override_constants/icon_max_width = 30
+text = "Resource1!"
+icon = ExtResource("4_w6hf2")
+
+[node name="CheckBox3" type="CheckBox" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer/CenterContainer/ResourceChecklistContainer" unique_id=304089231]
+layout_mode = 2
+theme_override_constants/icon_max_width = 30
+text = "Resource1!"
+icon = ExtResource("4_w6hf2")
+
+[node name="CheckBox4" type="CheckBox" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer/CenterContainer/ResourceChecklistContainer" unique_id=1761985334]
+layout_mode = 2
+theme_override_constants/icon_max_width = 30
+text = "Resource1!"
+icon = ExtResource("4_w6hf2")
+
+[node name="CheckBox5" type="CheckBox" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer/CenterContainer/ResourceChecklistContainer" unique_id=569968520]
+layout_mode = 2
+theme_override_constants/icon_max_width = 30
+text = "Resource1!"
+icon = ExtResource("4_w6hf2")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="EditResourcesPanel/MarginContainer/VBoxContainer" unique_id=612000008]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 10
+
+[node name="ConfirmEditButton" type="Button" parent="EditResourcesPanel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=612000009]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Confirm"
+
+[node name="CancelEditButton" type="Button" parent="EditResourcesPanel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=612000010]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Cancel"
 
 [connection signal="toggled" from="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer/DisplayFillMeterCheckbox" to="." method="_on_display_fill_meter_changed"]

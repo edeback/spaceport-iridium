@@ -7630,7 +7630,7 @@ script = ExtResource("8_w48qg")
 
 [node name="ResourceManager" type="Node" parent="Managers" unique_id=1368405648]
 script = ExtResource("9_074og")
-storable_resources = Array[ExtResource("13_4k2k6")]([ExtResource("17_b1qrp"), ExtResource("16_b1qrp"), ExtResource("30_4w656"), ExtResource("33_abqjc"), ExtResource("14_0rl1p"), ExtResource("35_4w656"), ExtResource("21_0cp0l"), ExtResource("32_blkrb"), ExtResource("20_4lmeg"), ExtResource("34_6iyjs"), ExtResource("18_come4"), ExtResource("16_facbu"), ExtResource("22_d2t1y"), ExtResource("15_ok6jj"), ExtResource("19_h8e4i"), ExtResource("23_gngh3")])
+storable_resources = Array[ExtResource("13_4k2k6")]([ExtResource("23_gngh3"), ExtResource("17_b1qrp"), ExtResource("16_b1qrp"), ExtResource("30_4w656"), ExtResource("33_abqjc"), ExtResource("14_0rl1p"), ExtResource("35_4w656"), ExtResource("21_0cp0l"), ExtResource("32_blkrb"), ExtResource("20_4lmeg"), ExtResource("34_6iyjs"), ExtResource("18_come4"), ExtResource("16_facbu"), ExtResource("22_d2t1y"), ExtResource("15_ok6jj"), ExtResource("19_h8e4i")])
 credit_resource = ExtResource("13_facbu")
 
 [node name="MarketManager" type="Node" parent="Managers" unique_id=386020720]

@@ -1,14 +1,14 @@
 # WI-12 — Storage QoL: Venting, Configuration, Mass-Sell
 
+STATUS: Done, 7/19. Most by hand, some tasks removed.
 ## Goal
-Player control over storage: configure which resources a storeroom accepts (the `player_configurable` flag exists but the UI is minimal), remove a resource option without destroying stock (drain naturally), vent/dump unwanted stock (creating debris piles — mechanism exists), auto-dump toggle, per-storage priority editing, and a mass-sell shortcut at the docking bay.
+Player control over storage: configure which resources a storeroom accepts (the `player_configurable` flag exists but the UI is minimal), remove a resource option without destroying stock (drain naturally), vent/dump unwanted stock (creating debris piles — mechanism exists), auto-dump toggle, per-storage priority editing.
 
 ## Design
 - **Config UI:** storage tab gains an "Edit" mode for `player_configurable` storages: checklist of storable resources (from `ResourceManager.storable_resources`), desired-amount spinbox per resource, priority spinbox for the whole component. Non-configurable storages (processor input/output bays) unchanged.
-- **Soft remove:** unchecking a resource with stock → `StorageData` flagged `draining`: `desired = 0`, `accepts` no new imports of it, export job posts (surplus = stored, existing logic), slot auto-erases at 0. This is the same pattern WI-08 uses for sell orders — implement here first if WI-12 lands earlier, share the flag.
-- **Vent:** per-resource button → immediate `dump_all_to_pile`-style ejection of that resource (respect reservations: only unreserved amount) into the module's overflow pile (`get_or_create_overflow_pile` exists). A confirm on >N units. Piles then post collection jobs — **venting to destroy** is different: a "Vent to space" option destroys the stock outright (gases especially); v1: modules with a space-adjacent door get true venting, others get floor-dump. Simplification if that's fiddly: floor-dump always, true-vent only for a future gas system. **Recommend floor-dump always + true-destroy behind a second confirm.**
+- Unchecking a resource with stock → dump_all_to_pile that resource, automatic haul jobs will move it to where it needs to go
+- **Vent to Space:** per-resource button → resources are destroyed. Requires confirmation.
 - **Auto-dump toggle:** per-resource: when stored > desired for T hours and no export sink exists, dump the surplus. Off by default.
-- **Mass-sell:** button on docking-bay export bin: "sell all contents now" if WI-08 not yet landed (instant-market path exists), or "flag all for next trader" after WI-08. Write against whichever is current at implementation time.
 
 ## Files to touch
 - `modules/components/storage_component.gd` — draining flag handling in the posting scan; vent methods; auto-dump check on slow_tick
@@ -21,7 +21,7 @@ Player control over storage: configure which resources a storeroom accepts (the 
 
 ## Implementation order
 1. Priority + desired-amount editing in the storage tab (pure UI over existing fields).
-2. Add/remove resource options with the draining flow.
+2. Add/remove resource options.
 3. Vent (floor-dump + destroy variant).
 4. Auto-dump.
 5. Mass-sell.
