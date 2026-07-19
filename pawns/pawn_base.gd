@@ -10,6 +10,15 @@ extends Node2D
 @export var carrying_capacity: int = 10
 @export var animated_sprite: AnimatedSprite2D
 @export var pawn_name: String = ""
+## Per-pawn identity tint (WI-22), rolled from CrewManager's palette at spawn.
+## Unlike the cosmetic speed_jitter/lane_offset (reseeded from the instance id
+## each load), this is identity - it's saved and restored so a pawn keeps its
+## colour across sessions. Applied to the AnimatedSprite2D's modulate so it
+## rides along through animation frame changes.
+@export var tint: Color = Color.WHITE:
+	set(value):
+		tint = value
+		_apply_tint()
 @export var collision: Area2D
 ## 24-hour WORK/REST schedule (WI-06). Null (drones, anything unscheduled)
 ## means always on duty. Duplicated per pawn in _ready so the schedule tab
@@ -77,6 +86,9 @@ func _ready() -> void:
 	lane_offset = (1.0 + float((h >> 9) % 100) * 0.02) * (1.0 if (h >> 16) % 2 == 0 else -1.0)
 	if animated_sprite != null:
 		_sprite_base_position = animated_sprite.position
+	# Re-apply in case tint was assigned (spawn/load) before animated_sprite
+	# resolved - the setter no-ops until the sprite exists.
+	_apply_tint()
 	movement_component = PawnMovementComponent.new()
 	movement_component.owner_pawn = self
 	add_child(movement_component)
@@ -321,6 +333,12 @@ func notify_movement_starting(anchor: AnchorDef) -> void:
 
 func set_idle() -> void:
 	animated_sprite.play("idle")
+
+## Pushes the identity tint (WI-22) onto the sprite. Safe to call before the
+## sprite resolves - it just no-ops, and _ready re-applies once it exists.
+func _apply_tint() -> void:
+	if animated_sprite != null:
+		animated_sprite.modulate = tint
 
 func _on_module_changed(new_module: ModuleBase) -> void:
 	if current_module != new_module:

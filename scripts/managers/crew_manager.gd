@@ -17,6 +17,24 @@ extends Node
 @export var arrival_delay_hours: float = 4.0
 ## How far off to the side of the bay the shuttle spawns and exits, in px.
 @export var shuttle_approach_distance: float = 1200.0
+## Curated identity tints (WI-22) rolled per crew member at spawn. Deliberately
+## light and low-saturation: modulate multiplies the sprite art, so full-random
+## colours muddy it - these keep the pawn readable against module interiors.
+## Data, not a code constant, so the palette is tunable without a recompile.
+@export var crew_tint_palette: PackedColorArray = PackedColorArray([
+	Color(1.0, 0.76, 0.72),   # salmon
+	Color(0.98, 0.85, 0.68),  # tan
+	Color(0.98, 0.92, 0.70),  # gold
+	Color(0.86, 0.94, 0.70),  # chartreuse
+	Color(0.78, 0.94, 0.76),  # sage
+	Color(0.72, 0.92, 0.86),  # aqua
+	Color(0.74, 0.90, 0.98),  # sky
+	Color(0.78, 0.82, 0.98),  # periwinkle
+	Color(0.87, 0.79, 0.97),  # lavender
+	Color(0.98, 0.80, 0.92),  # rose
+	Color(0.88, 0.85, 0.80),  # warm grey
+	Color(0.74, 0.83, 0.88),  # slate
+])
 
 ## Pending hires: {"remaining": sim-hours left, "bay": module ref Dictionary
 ## (layer+cell, JSON-safe - resolved at arrival so a deconstructed bay can
@@ -163,7 +181,19 @@ func spawn_crew(at_module: ModuleBase) -> PawnBase:
 	Global.world_manager.pawn_layer.add_child(pawn)
 	pawn.current_module = at_module
 	pawn.global_position = Global.cell_to_world(at_module.module_cell, true)
+	# Identity (WI-22): name + tint, rolled here so hires and starting crew both
+	# get them. Set after add_child so the tint setter sees the resolved sprite.
+	# Both round-trip through the save's pawn section.
+	pawn.pawn_name = NameGenerator.random_name()
+	pawn.tint = roll_tint()
 	return pawn
+
+## Random tint from the curated palette (WI-22). Public so save-load migration
+## of pre-identity crew can reuse the same roll.
+func roll_tint() -> Color:
+	if crew_tint_palette.is_empty():
+		return Color.WHITE
+	return crew_tint_palette[randi() % crew_tint_palette.size()]
 
 # --- departure & lose condition -------------------------------------------------
 

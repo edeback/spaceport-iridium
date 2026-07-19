@@ -290,6 +290,9 @@ func _get_pawns_save() -> Array:
 		var entry: Dictionary = {
 			"scene": pawn.scene_file_path,
 			"name": pawn.pawn_name,
+			# Identity tint (WI-22) - saved so a pawn keeps its colour, unlike the
+			# instance-id-reseeded cosmetic jitter.
+			"tint": [pawn.tint.r, pawn.tint.g, pawn.tint.b, pawn.tint.a],
 			"position": [save_position.x, save_position.y],
 			"module": module_ref(save_module),
 			"needs": needs.get_save_data() if needs != null else {},
@@ -453,6 +456,13 @@ func _load_pawns(data: Array) -> void:
 			push_warning("Saved pawn scene is not a PawnBase, skipping: " + scene_path)
 			continue
 		pawn.pawn_name = String(entry.get("name", ""))
+		# Identity tint (WI-22). Set before add_child: the setter no-ops until the
+		# sprite resolves, and _ready re-applies the stored value. Pre-WI-22 saves
+		# lack the key and keep the scene default (proper crew migration is step 5).
+		var tint_arr: Array = entry.get("tint", [])
+		if tint_arr.size() >= 3:
+			var alpha: float = float(tint_arr[3]) if tint_arr.size() >= 4 else 1.0
+			pawn.tint = Color(float(tint_arr[0]), float(tint_arr[1]), float(tint_arr[2]), alpha)
 		# Add to tree first: current_module's setter reparents, which needs a
 		# parent to exist (CrewManager.spawn_crew follows the same order).
 		Global.world_manager.pawn_layer.add_child(pawn)
