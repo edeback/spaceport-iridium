@@ -60,7 +60,7 @@ signal total_changed(new_total: int)
 # Returns new global total
 func change_global_total(amount: int) -> int:
 	global_total += amount
-	needs_recalc = true
+	_recalc_resource(true)
 	return global_total
 
 func get_total(force_recalc: bool = false) -> int:

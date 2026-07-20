@@ -179,7 +179,9 @@ func collect_contract_goods(bay_trade: TradeComponent) -> bool:
 func _complete(contract: ContractData) -> void:
 	contract.state = ContractData.State.FULFILLED
 	active.erase(contract)
-	Global.resource_manager.credit_resource.change_global_total(contract.total_payout())
+	# Contract payouts are income - the ARC levy applies (WI-25).
+	var net: int = Global.economy_manager.record_income(contract.total_payout(), &"contract")
+	Global.resource_manager.credit_resource.change_global_total(net)
 	reputation += 1
 	_push_history(contract)
 	SignalBus.contract_completed.emit(contract)
@@ -207,6 +209,10 @@ func _fail(contract: ContractData) -> void:
 	active.erase(contract)
 	var salvage_pay: int = contract.delivered * Global.market_manager.get_sell_price(contract.resource)
 	Global.resource_manager.credit_resource.change_global_total(salvage_pay - contract.penalty)
+	# A penalty is a cost, not negative income: it bypasses the levy but still
+	# shows on the economy page (WI-25 edge case). Salvage on partial goods is a
+	# loss recovery, deliberately not booked as levy-eligible income.
+	Global.economy_manager.record_external_cost(contract.penalty, &"penalty")
 	if _demand_component != null and is_instance_valid(_demand_component):
 		_demand_component.release_contract_demand(contract.resource, contract.remaining())
 	_push_history(contract)

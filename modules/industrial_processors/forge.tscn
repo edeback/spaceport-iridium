@@ -24,6 +24,7 @@ shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/DAMAGE = 0.0
 shader_parameter/gradient_texture = ExtResource("3_hwfke")
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ny4rw"]

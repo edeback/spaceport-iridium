@@ -18,5 +18,6 @@ resource_costs = Dictionary[ExtResource("2_fabqw"), int]({
 ExtResource("3_fwlkr"): 6
 })
 tags = Array[String](["Industrial"])
+upkeep_per_cycle = 8
 can_break_down = true
 breakdown_chance_per_hour = 0.006

@@ -44,6 +44,13 @@ extends Resource
 ## can lower it via adjacency later for free.
 @export var breakdown_chance_per_hour: float = 0.0
 
+## --- economy (WI-25) --------------------------------------------------------
+## Credits this module costs per cycle in upkeep once EconomyManager's upkeep
+## toggle is on (WI-26's first ARC inspection). 0 for most modules; industrial
+## and comfort modules carry a running cost. Charged over BUILT modules only -
+## blueprints and truss are free. Balance lives here per module.
+@export var upkeep_per_cycle: int = 0
+
 signal module_lock_changed(locked: bool)
 
 func can_afford() -> bool:

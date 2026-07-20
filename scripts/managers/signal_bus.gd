@@ -58,8 +58,15 @@ signal crew_resigned(pawn: PawnBase)
 ## The pawn is actually gone (despawned at the bay or by escape pod).
 @warning_ignore("unused_signal")
 signal crew_departed(pawn: PawnBase)
+## Game over (WI-07/WI-25): carries a player-facing reason so the end screen can
+## explain how the run ended (crew abandonment, ARC repossession, ...). "" =
+## keep the screen's default text.
 @warning_ignore("unused_signal")
-signal game_over
+signal game_over(reason: String)
+## Any economy ledger/loan/toggle state changed (WI-25). The economy page
+## refreshes off this while open; charges, skims, and settlement all emit it.
+@warning_ignore("unused_signal")
+signal economy_changed
 ## The game world is up and ready to play (WI-18): emitted by Main once the
 ## starting station has spawned (new game) or SaveManager has applied a pending
 ## load. A single defined "game ready" moment for systems that need one

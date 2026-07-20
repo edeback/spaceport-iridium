@@ -12,6 +12,7 @@ var job_manager: JobManager
 var turbolift_manager: TurboliftManager
 var resource_manager: ResourceManager
 var market_manager: MarketManager
+var economy_manager: EconomyManager
 var asteroid_manager: AsteroidManager
 var unlock_manager: UnlockManager
 var crew_manager: CrewManager
@@ -60,36 +61,3 @@ func node_path_to_point_path(path: Array[Node2D], use_global_position: bool = fa
 			else:
 				point_path.append(world_to_cell(node.global_position))
 	return point_path
-
-# All the below functions don't really work as they don't read values that aren't overridden
-# Need to figure out how to find the base class
-func get_node_index_from_scene(scene: PackedScene, node: String) -> int:
-	var packed_state = scene.get_state()
-	for id in packed_state.get_node_count():
-		var node_name = packed_state.get_node_name(id)
-		if node_name == node:
-			return id
-	return -1
-
-func get_property_from_scene(scene: PackedScene, node: String, property: String):
-	debug_print_properties_from_scene(scene)
-	var node_id = get_node_index_from_scene(scene, node)
-	if node_id >= 0:
-		var packed_state = scene.get_state()
-		for prop_id in packed_state.get_node_property_count(node_id):
-			if packed_state.get_node_property_name(node_id, prop_id) == property:
-				return packed_state.get_node_property_value(node_id, prop_id)
-		
-	return null
-
-func debug_print_properties_from_scene(scene: PackedScene) -> void:
-	print(scene._bundled)
-	var packed_state = scene.get_state()
-	for node_id in packed_state.get_node_count():
-		var node_name = packed_state.get_node_name(node_id)
-		print("Node: " + node_name)
-		for prop_id in packed_state.get_node_property_count(node_id):
-			print(packed_state.get_node_property_name(node_id, prop_id))
-			if packed_state.get_node_property_name(node_id, prop_id) == "script":
-				var script_instance = packed_state.get_node_property_value(node_id, prop_id) as GDScript
-				print(script_instance.get_script_property_list())

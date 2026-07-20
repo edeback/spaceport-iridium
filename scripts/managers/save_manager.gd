@@ -196,6 +196,7 @@ func save_slot(slot: String) -> Error:
 			"unlocks": Global.unlock_manager.get_save_data(),
 			"resources": _get_resources_save(),
 			"market": Global.market_manager.get_save_data(),
+			"economy": Global.economy_manager.get_save_data(),
 			"world": Global.world_manager.get_save_data(),
 			"asteroids": Global.asteroid_manager.get_save_data(),
 			"turbolifts": Global.turbolift_manager.get_save_data(),
@@ -388,6 +389,10 @@ func _apply_pending_load() -> void:
 	Global.unlock_manager.load_save_data(sections.get("unlocks", {}))
 	_load_resources(sections.get("resources", {}))
 	Global.market_manager.load_save_data(sections.get("market", {}))
+	# After resources: the economy ledger/loan/insolvency counters restore. The
+	# cycle_changed replay from time.load_save_data above is suppressed inside
+	# EconomyManager while is_loading(), so no phantom settlement fires.
+	Global.economy_manager.load_save_data(sections.get("economy", {}))
 	Global.world_manager.load_save_data(sections.get("world", {}))
 	# After world, before pawns: mining jobs resolve their asteroid by id.
 	Global.asteroid_manager.load_save_data(sections.get("asteroids", {}))

@@ -20,5 +20,6 @@ ExtResource("5_holo"): 4,
 ExtResource("6_holo"): 500
 })
 tags = Array[String](["Crew"])
+upkeep_per_cycle = 8
 unlocked_by_default = false
 metadata/_custom_type_script = "uid://vwmofdckg7hu"

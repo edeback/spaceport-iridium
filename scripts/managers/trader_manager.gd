@@ -207,7 +207,9 @@ func _fulfill(bay_trade: TradeComponent) -> void:
 			continue
 		if not bay_trade.export_storage.withdraw(resource, amount):
 			continue
-		credits.change_global_total(amount * sell_prices.get(resource, 0))
+		# Route through the ARC levy (WI-25): the player banks the net, ARC skims
+		# its cut off the top. Levy-disabled games get the gross back unchanged.
+		credits.change_global_total(Global.economy_manager.record_income(amount * sell_prices.get(resource, 0), &"trade"))
 		cargo_used += amount
 		committed_sells[resource] -= amount
 		if committed_sells[resource] <= 0:

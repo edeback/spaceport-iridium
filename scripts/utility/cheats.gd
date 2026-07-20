@@ -127,6 +127,29 @@ func add_credits(amount: int) -> String:
 	return _report("adjusted credits by %d (now %d)" %
 		[amount, Global.resource_manager.credit_resource.get_total()])
 
+## Sets the credit balance to exactly `amount` (negative allowed - drives the
+## bankruptcy arc for testing, WI-25).
+func set_credits(amount: int) -> String:
+	var credits: ResourceData = Global.resource_manager.credit_resource
+	credits.change_global_total(amount - credits.get_total())
+	return _report("set credits to %d" % credits.get_total())
+
+## Debug stand-in for WI-26's first ARC inspection: flips all three recurring
+## cost streams (wages, upkeep, ARC levy) on or off at once (WI-25).
+func set_economy_costs(enabled: bool) -> String:
+	var economy: EconomyManager = Global.economy_manager
+	economy.wages_enabled = enabled
+	economy.upkeep_enabled = enabled
+	economy.levy_enabled = enabled
+	SignalBus.economy_changed.emit()
+	return _report("economy cost streams %s" % ("ENABLED" if enabled else "disabled"))
+
+## Takes an ARC loan of `principal` credits (WI-25), same as the economy page.
+func take_loan(principal: int) -> String:
+	if Global.economy_manager.take_loan(principal):
+		return _report("took a loan of %d credits" % principal)
+	return _report("could not take a loan (one already active?)")
+
 ## Force-unlocks the global tech-tree node with the given id (no cost/prereqs).
 func force_unlock(id: StringName) -> String:
 	var unlock: UnlockData = Global.unlock_manager.get_unlock_by_id(id)

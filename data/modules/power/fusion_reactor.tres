@@ -20,4 +20,5 @@ ExtResource("3_uny6y"): 10,
 ExtResource("4_tvdsv"): 4
 })
 tags = Array[String](["Power"])
+upkeep_per_cycle = 12
 unlocked_by_default = false

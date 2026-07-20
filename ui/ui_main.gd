@@ -43,6 +43,7 @@ func _ready() -> void:
 	_setup_trader_ui()
 	_setup_event_ui()
 	_setup_contracts_ui()
+	_setup_economy_ui()
 
 ## Minimal save/load controls next to the Research button: slot name field +
 ## Save/Load buttons. F5/F9 quick-slot shortcuts live on SaveManager.
@@ -150,11 +151,17 @@ func _refresh_crew_count() -> void:
 	if Global.crew_manager != null and is_instance_valid(_crew_count_label):
 		_crew_count_label.text = "  Crew: %d" % Global.crew_manager.crew_count()
 
-func _on_game_over() -> void:
+## Shared by every game-over path (WI-07 crew abandonment, WI-25 bankruptcy).
+## The first to fire wins - _game_over_shown keeps the two paths from stacking
+## two screens if they trip in the same frame.
+func _on_game_over(reason: String) -> void:
 	if _game_over_shown:
 		return
 	_game_over_shown = true
-	add_child(GAME_OVER_SCENE.instantiate())
+	var screen: GameOverScreen = GAME_OVER_SCENE.instantiate() as GameOverScreen
+	if reason != "":
+		screen.configure(reason)
+	add_child(screen)
 
 # --- trader screen (WI-08) ------------------------------------------------------
 
@@ -200,6 +207,20 @@ func _setup_contracts_ui() -> void:
 			_contracts_screen.visible = false
 		else:
 			_contracts_screen.open()
+	)
+
+## Economy page (WI-25): a top-bar toggle next to Contracts, opening the ledger /
+## loan / cost-toggle window. Code-built like the research panel.
+var _economy_screen: EconomyScreen
+
+func _setup_economy_ui() -> void:
+	_economy_screen = EconomyScreen.new()
+	add_child(_economy_screen)
+	_add_side_button("Economy", func() -> void:
+		if _economy_screen.visible:
+			_economy_screen.visible = false
+		else:
+			_economy_screen.open()
 	)
 
 func _setup_unlock_ui() -> void:

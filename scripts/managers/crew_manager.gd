@@ -317,6 +317,19 @@ func _on_crew_resigned(pawn: PawnBase) -> void:
 	# carried cargo stays with them and piles up at despawn.
 	pawn.interrupt_with_job(Job_LeaveStation.new())
 
+## Player-initiated firing (WI-25): reuses the resignation departure but is NOT
+## morale-driven. Latching `resigned` before emitting stops the pawn drawing a
+## wage from the next cycle (get_crew(false) filters it out) and blocks its needs
+## component from also running the misery-resignation path. The severance charge
+## itself lives in EconomyManager.fire_pawn, which calls this.
+func fire_crew(pawn: PawnBase) -> void:
+	if pawn == null or not is_instance_valid(pawn):
+		return
+	var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
+	if needs != null:
+		needs.resigned = true
+	SignalBus.crew_resigned.emit(pawn)
+
 func _on_slow_tick(_interval: float) -> void:
 	_check_lose_condition()
 
@@ -330,7 +343,7 @@ func _check_lose_condition() -> void:
 	if Global.resource_manager.credit_resource.get_total() >= hire_cost:
 		return
 	_game_over_fired = true
-	SignalBus.game_over.emit()
+	SignalBus.game_over.emit("The last of your crew has left, and you can't afford replacements.")
 
 # --- persistence ---------------------------------------------------------------
 
