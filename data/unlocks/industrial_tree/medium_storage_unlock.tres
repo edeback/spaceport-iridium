@@ -17,6 +17,7 @@ metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
 [resource]
 script = ExtResource("6_8d740")
 id = &"medium_storage_unlock"
+min_tier = 2
 name = "Medium Storage"
 description = "More efficient per-area than small."
 icon = ExtResource("6_mj8g3")

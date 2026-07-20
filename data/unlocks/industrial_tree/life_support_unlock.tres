@@ -23,6 +23,7 @@ metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
 [resource]
 script = ExtResource("4_unlock")
 id = &"life_support_unlock"
+min_tier = 2
 name = "Life Support Systems"
 description = "Standalone O2 scrubbers and oxygen generators to keep a growing station breathing."
 icon = ExtResource("8_icon")

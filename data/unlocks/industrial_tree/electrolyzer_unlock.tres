@@ -17,6 +17,7 @@ metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
 [resource]
 script = ExtResource("3_4fych")
 id = &"electrolyzer_unlock"
+min_tier = 2
 name = "Electrolyzer"
 description = "Breaks apart water into hydrogen and oxygen."
 icon = ExtResource("6_5o4pb")

@@ -210,6 +210,8 @@ func _fulfill(bay_trade: TradeComponent) -> void:
 		# Route through the ARC levy (WI-25): the player banks the net, ARC skims
 		# its cut off the top. Levy-disabled games get the gross back unchanged.
 		credits.change_global_total(Global.economy_manager.record_income(amount * sell_prices.get(resource, 0), &"trade"))
+		# Goods physically left the station (WI-26): counts toward the tier goals.
+		SignalBus.resources_exported.emit(resource, amount)
 		cargo_used += amount
 		committed_sells[resource] -= amount
 		if committed_sells[resource] <= 0:

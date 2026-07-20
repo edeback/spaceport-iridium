@@ -17,6 +17,7 @@ metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
 [resource]
 script = ExtResource("4_s6u3x")
 id = &"hydroponics_unlock"
+min_tier = 2
 name = "Hydroponics Bay"
 description = "Flowers and vegetables!"
 icon = ExtResource("6_s6u3x")

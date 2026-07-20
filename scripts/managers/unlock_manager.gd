@@ -13,6 +13,23 @@ extends Node
 
 const UNLOCK_PATH: String = "res://data/unlocks/"
 const LOCAL_UPGRADE_PATH: String = "res://data/local_upgrades/"
+const TIER_PATH: String = "res://data/tiers/"
+## Weight-0 event fired explicitly by UnlockManager when goals are met (WI-26);
+## its Accept/Decline choices route back here via EventEffectInspectionResponse.
+const INSPECTION_EVENT_ID: StringName = &"arc_inspection_offer"
+
+# --- station tiers (WI-26) tunables -------------------------------------------
+## Per-cycle chance an ARC inspection is offered once the current tier's export
+## goals are met (and a docking bay exists). Two-ish cycles between offers on
+## average; declining just re-rolls later.
+@export var inspection_offer_chance_per_cycle: float = 0.5
+## Cycles the offer stays silent after a decline or a failed inspection.
+@export var inspection_reoffer_cooldown_cycles: int = 2
+## Sim-hours the inspector dwells at each checklist module.
+@export var inspection_dwell_hours: float = 1.0
+## The inspector fails (and leaves) the moment its health drops below this
+## (0..100). Low O2 is the realistic path; the threshold trips well before death.
+@export var inspection_health_fail_threshold: float = 70.0
 
 ## Bump when the save format changes incompatibly.
 const SAVE_VERSION: int = 1
@@ -53,10 +70,33 @@ var _global_modifiers: Dictionary[StringName, GlobalStatMod] = {}
 ## All known local upgrade definitions, keyed by id.
 var _local_upgrades: Dictionary[StringName, LocalUpgradeData] = {}
 
+# --- station tier runtime state (WI-26) ---------------------------------------
+## Known tiers keyed by tier number (1..N).
+var _tiers: Dictionary[int, TierData] = {}
+## The station's current tier. Gates unlock nodes (min_tier) and later WIs.
+var current_tier: int = 1
+## resource id -> units exported so far toward the CURRENT tier's goals. Reset on
+## every tier-up (overflow doesn't carry). Populated by SignalBus.resources_exported.
+var _export_progress: Dictionary[StringName, int] = {}
+## Cycles left before another inspection offer may roll (set after a decline/fail).
+var _inspection_cooldown_cycles: int = 0
+## True while an ARC inspection offer card is pending OR an inspector is touring.
+## Runtime-only: never saved, so a load always resolves to "no inspection".
+var _inspection_offer_pending: bool = false
+var _inspection_in_progress: bool = false
+
+## For the tier panel: is an inspector currently aboard the station?
+func is_inspection_active() -> bool:
+	return _inspection_in_progress
+
 func _ready() -> void:
 	Global.unlock_manager = self
 	_load_unlocks()
 	_load_local_upgrades()
+	_load_tiers()
+	SignalBus.resources_exported.connect(_on_resources_exported)
+	# Offer pacing rides the calendar (WI-26), so it can't roll while paused.
+	Global.time_manager.cycle_changed.connect(_on_cycle_changed)
 	if auto_persist:
 		load_from_file()
 
@@ -83,6 +123,16 @@ func _load_local_upgrades() -> void:
 				push_warning("LocalUpgradeData with empty id, skipping: " + file_path)
 				continue
 			_local_upgrades[upgrade.id] = upgrade
+
+func _load_tiers() -> void:
+	for file_path: String in ResourceScanner.scan_paths(TIER_PATH):
+		var res: Resource = ResourceLoader.load(file_path)
+		if res is TierData:
+			var tier := res as TierData
+			if _tiers.has(tier.tier):
+				push_warning("Duplicate TierData for tier %d, keeping the first: %s" % [tier.tier, file_path])
+				continue
+			_tiers[tier.tier] = tier
 
 # --- queries --------------------------------------------------------------
 
@@ -125,11 +175,16 @@ func prerequisites_met(unlock: UnlockData) -> bool:
 			return false
 	return true
 
-## Purchasable = not already owned, all prerequisites owned, and affordable.
+## True if the station tier is high enough to purchase this node (WI-26). A
+## node's min_tier is authored on the .tres (default 1 = always available).
+func meets_tier(unlock: UnlockData) -> bool:
+	return unlock != null and unlock.available_at_tier(current_tier)
+
+## Purchasable = not already owned, tier reached, all prerequisites owned, affordable.
 func can_unlock(unlock: UnlockData) -> bool:
 	if unlock == null or is_unlocked(unlock):
 		return false
-	return prerequisites_met(unlock) and unlock.can_afford()
+	return meets_tier(unlock) and prerequisites_met(unlock) and unlock.can_afford()
 
 # --- mutation -------------------------------------------------------------
 
@@ -156,6 +211,153 @@ func force_unlock(unlock: UnlockData) -> void:
 		if effect != null:
 			effect.apply(self, unlock)
 	SignalBus.global_unlock_changed.emit(unlock)
+
+# --- station tiers (WI-26) ----------------------------------------------------
+
+func get_tier_data(tier: int) -> TierData:
+	return _tiers.get(tier)
+
+func current_tier_data() -> TierData:
+	return _tiers.get(current_tier)
+
+## Highest defined tier - the cap, past which no advancement happens.
+func max_tier() -> int:
+	var top: int = 1
+	for tier: int in _tiers:
+		top = maxi(top, tier)
+	return top
+
+func is_max_tier() -> bool:
+	return current_tier >= max_tier()
+
+## Units exported so far toward the current tier's goal for `resource_id`.
+func export_progress_for(resource_id: StringName) -> int:
+	return _export_progress.get(resource_id, 0)
+
+## How many built modules currently carry `tag`. Used both by the goal check
+## (at least one per checklist tag) and by the inspector's checklist targeting.
+func built_module_count_with_tag(tag: String) -> int:
+	var count: int = 0
+	for module: ModuleBase in _constructed_modules():
+		if module.module_data != null and module.module_data.tags.has(tag):
+			count += 1
+	return count
+
+## True when every export goal is met AND at least one built module exists for
+## each inspection checklist tag (so accepting can't instant-fail on a missing
+## facility - WI-26 edge case). Vacuously false at the cap tier (empty goals, but
+## advancement is separately gated by is_max_tier).
+func tier_goals_met() -> bool:
+	var data: TierData = current_tier_data()
+	if data == null:
+		return false
+	var tag_counts: Dictionary = {}
+	for tag: String in data.inspection_tags:
+		tag_counts[tag] = built_module_count_with_tag(tag)
+	return data.goals_reached(_export_progress, tag_counts)
+
+## Accumulates exported goods against the current tier's goals (SignalBus hook).
+## Counts every export additively; overflow past a goal is harmless (display caps).
+func _on_resources_exported(resource: ResourceData, amount: int) -> void:
+	if resource == null or amount <= 0 or resource.id == &"":
+		return
+	var data: TierData = current_tier_data()
+	# Only track resources this tier actually asks for - keeps progress bounded
+	# and the tier panel uncluttered.
+	if data == null or not data.export_goals.has(resource.id):
+		return
+	_export_progress[resource.id] = _export_progress.get(resource.id, 0) + amount
+	SignalBus.station_tier_progress_changed.emit()
+
+## Advances the station one tier (a passed inspection or the tier_up cheat).
+## Resets export progress to the new tier's goals and, on the FIRST promotion
+## (tier 1 -> 2), switches on WI-25's recurring costs. No-op at the cap.
+func advance_tier() -> void:
+	if is_max_tier():
+		return
+	var was_first: bool = current_tier == 1
+	current_tier += 1
+	_export_progress.clear()
+	_inspection_cooldown_cycles = 0
+	if was_first and Global.economy_manager != null:
+		Global.economy_manager.enable_recurring_costs()
+	var data: TierData = current_tier_data()
+	var label: String = data.display_name if data != null and data.display_name != "" else str(current_tier)
+	SignalBus.station_tier_changed.emit(current_tier)
+	SignalBus.station_alert.emit("Station promoted to Tier %d: %s" % [current_tier, label])
+	# Nudge every listener that gates on tier (unlock cards, tier panel).
+	SignalBus.station_tier_progress_changed.emit()
+
+# --- inspection offer pacing & lifecycle (WI-26) ------------------------------
+
+## Once per cycle: tick the re-offer cooldown, and if the current tier's goals are
+## met (and a docking bay exists to receive the ARC ship), roll a chance to offer
+## an inspection. The offer is fired explicitly through EventManager so it ignores
+## natural-event pacing; declining or failing sets a cooldown before the next roll.
+func _on_cycle_changed(_cycle: int) -> void:
+	if SaveManager.is_loading():
+		return
+	if _inspection_cooldown_cycles > 0:
+		_inspection_cooldown_cycles -= 1
+	if _inspection_offer_pending or _inspection_in_progress:
+		return
+	if is_max_tier() or _inspection_cooldown_cycles > 0:
+		return
+	if not tier_goals_met():
+		return
+	# The ARC ship needs a bay; no bay means no way to run the tour.
+	if Global.trader_manager == null or Global.trader_manager.find_trade_bay() == null:
+		return
+	if randf() < inspection_offer_chance_per_cycle:
+		_offer_inspection()
+
+func _offer_inspection() -> void:
+	if Global.event_manager == null:
+		return
+	_inspection_offer_pending = true
+	Global.event_manager.fire_event_by_id(INSPECTION_EVENT_ID)
+	SignalBus.station_tier_progress_changed.emit()
+
+## Accept path (EventEffectInspectionResponse): dock the ARC ship and start the
+## tour. Aborts harmlessly if the bay vanished between offer and accept.
+func begin_inspection() -> void:
+	_inspection_offer_pending = false
+	if _inspection_in_progress:
+		return
+	var bay: ModuleBase = Global.trader_manager.find_trade_bay() if Global.trader_manager != null else null
+	if bay == null:
+		SignalBus.station_alert.emit("The ARC inspector found no docking bay to receive them. They'll return later.")
+		_inspection_cooldown_cycles = inspection_reoffer_cooldown_cycles
+		SignalBus.station_tier_progress_changed.emit()
+		return
+	var data: TierData = current_tier_data()
+	var checklist: Array[String] = []
+	if data != null:
+		checklist.assign(data.inspection_tags)
+	_inspection_in_progress = true
+	var runner := InspectionRunner.new()
+	add_child(runner)
+	runner.setup(bay, checklist, inspection_dwell_hours, inspection_health_fail_threshold)
+	runner.begin()
+	SignalBus.station_tier_progress_changed.emit()
+
+## Decline path: no penalty, another offer rolls after the cooldown (WI-26).
+func decline_inspection() -> void:
+	_inspection_offer_pending = false
+	_inspection_cooldown_cycles = inspection_reoffer_cooldown_cycles
+	SignalBus.station_alert.emit("You declined the ARC inspection. They'll offer another in a few cycles.")
+	SignalBus.station_tier_progress_changed.emit()
+
+## Called by InspectionRunner when the tour completes successfully.
+func on_inspection_passed() -> void:
+	_inspection_in_progress = false
+	advance_tier()
+
+## Called by InspectionRunner on any fail (harmed, ejected, unreachable target).
+func on_inspection_failed(_reason: String) -> void:
+	_inspection_in_progress = false
+	_inspection_cooldown_cycles = inspection_reoffer_cooldown_cycles
+	SignalBus.station_tier_progress_changed.emit()
 
 ## Called by GrantModuleEffect. Marks a module buildable and notifies its UI.
 func grant_module(module: ModuleData) -> void:
@@ -213,7 +415,19 @@ func get_save_data() -> Dictionary:
 	var ids: Array[String] = []
 	for id: StringName in _unlocked_ids:
 		ids.append(String(id))
-	return {"version": SAVE_VERSION, "unlocked": ids}
+	# Tier state (WI-26): current tier, per-goal export progress (id-keyed, so
+	# JSON-safe), and the re-offer cooldown. An in-progress inspection is NOT
+	# saved - it cancels cleanly on load and the offer re-rolls (WI-26 v1).
+	var progress: Dictionary = {}
+	for resource_id: StringName in _export_progress:
+		progress[String(resource_id)] = _export_progress[resource_id]
+	return {
+		"version": SAVE_VERSION,
+		"unlocked": ids,
+		"tier": current_tier,
+		"export_progress": progress,
+		"inspection_cooldown": _inspection_cooldown_cycles,
+	}
 
 func load_save_data(data: Dictionary) -> void:
 	_clear_unlock_state()
@@ -225,6 +439,16 @@ func load_save_data(data: Dictionary) -> void:
 			force_unlock(unlock)
 		else:
 			push_warning("Unknown unlock id in save, skipping: " + id_str)
+	# Tier state (WI-26). Pre-WI-26 saves lack these keys -> tier 1, fresh goals,
+	# no cooldown. Already-purchased nodes above the new tier stay purchased
+	# (force_unlock above ignores min_tier); the tier gate only blocks NEW buys.
+	current_tier = int(data.get("tier", 1))
+	_export_progress.clear()
+	var progress: Dictionary = data.get("export_progress", {})
+	for id_str: String in progress:
+		_export_progress[StringName(id_str)] = int(progress[id_str])
+	_inspection_cooldown_cycles = int(data.get("inspection_cooldown", 0))
+	SignalBus.station_tier_changed.emit(current_tier)
 
 ## Reset all owned/derived global-unlock state. Intended for a fresh load; if
 ## called mid-game it also strips applied global modifiers from live modules and

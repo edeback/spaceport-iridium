@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TierData" format=3]
+
+[ext_resource type="Script" path="res://data/tiers/tier_data.gd" id="1_tier"]
+
+[resource]
+script = ExtResource("1_tier")
+tier = 2
+display_name = "Waystation"
+flavor = "Recognized, taxed, and expected to grow. Refine your ore into steel and keep a crew alive around the clock to earn the next rung."
+export_goals = Dictionary[StringName, int]({
+&"iron_ore": 40,
+&"steel": 60
+})
+inspection_tags = Array[String](["Industrial", "Crew", "Power"])

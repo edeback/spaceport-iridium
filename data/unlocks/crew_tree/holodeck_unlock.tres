@@ -16,6 +16,7 @@ metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
 [resource]
 script = ExtResource("1_holo")
 id = &"holodeck_unlock"
+min_tier = 2
 name = "Holodeck"
 description = "Dedicated recreation: simulated beaches, mountains, and anywhere that isn't a corridor."
 icon = ExtResource("6_yturd")

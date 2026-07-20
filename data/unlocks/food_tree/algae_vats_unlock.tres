@@ -17,6 +17,7 @@ metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
 [resource]
 script = ExtResource("6_binu8")
 id = &"algae_vats_unlock"
+min_tier = 3
 name = "Algae Vats"
 description = "Large vats filled with bioengineered algae with all the nutrients one needs, if you don't care about the taste, texture, smell, or color."
 icon = ExtResource("5_da3sp")

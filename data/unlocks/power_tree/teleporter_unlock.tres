@@ -17,6 +17,7 @@ metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
 [resource]
 script = ExtResource("7_pvjva")
 id = &"teleporter_unlock"
+min_tier = 5
 name = "Teleporter"
 description = "Fast Travel"
 icon = ExtResource("6_ucr0m")

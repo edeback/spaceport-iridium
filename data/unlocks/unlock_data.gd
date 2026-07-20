@@ -22,6 +22,17 @@ extends Resource
 @export var effects: Array[UnlockEffect]
 ## Some techs are unlocked by default in order to give the tech tree a starting node
 @export var unlocked_by_default: bool = false
+## Minimum station tier (WI-26) before this node is purchasable. 1 = available
+## from the start (today's behavior). Higher values render the node tier-locked
+## in the unlock panel until the station is promoted; UnlockManager.can_unlock
+## enforces it. The re-bucketing of existing nodes across tiers lives in the
+## authored .tres, not here.
+@export var min_tier: int = 1
+
+## Pure tier gate (WI-26): is the station high enough for this node? Extracted so
+## it's unit-testable without Global (UnlockManager.meets_tier calls it).
+func available_at_tier(current_tier: int) -> bool:
+	return current_tier >= min_tier
 
 func can_afford() -> bool:
 	for resource: ResourceData in cost:

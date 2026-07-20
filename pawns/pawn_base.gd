@@ -28,6 +28,10 @@ extends Node2D
 ## What this pawn cost to hire (WI-22), stored so WI-25 wages can read it.
 ## Starting crew get the base hire_cost; hires get their candidate's price.
 @export var hire_price: int = 0
+## Visitor pawns (WI-26 ARC inspector; WI-33 guests reuse this) are transient:
+## not crew, never saved, never draw a wage. CrewManager.get_crew and the
+## SaveManager pawn section both skip them, the same way both skip drones.
+@export var is_visitor: bool = false
 @export var collision: Area2D
 ## 24-hour WORK/REST schedule (WI-06). Null (drones, anything unscheduled)
 ## means always on duty. Duplicated per pawn in _ready so the schedule tab

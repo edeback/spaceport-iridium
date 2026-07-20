@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="TierData" format=3]
+
+[ext_resource type="Script" path="res://data/tiers/tier_data.gd" id="1_tier"]
+
+[resource]
+script = ExtResource("1_tier")
+tier = 5
+display_name = "Spaceport"
+flavor = "The pinnacle: a self-sustaining spaceport that answers to no one's inspection. There is nothing left to prove to the Authority."
+export_goals = Dictionary[StringName, int]({})
+inspection_tags = Array[String]([])

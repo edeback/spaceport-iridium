@@ -43,7 +43,7 @@ Pacing: the station starts at Tier 1 and climbs to 5. Each tier-up requires meet
 - Turbolift-only routes: inspector rides cabs like any pawn (WI-20 conveyed state) — verify.
 - Offer card while another card is open: normal pending_events queue behavior.
 - Export progress across tier-up: progress resets to the new tier's goals; overflow doesn't carry (simple; note for balance).
-- Loaded pre-WI-26 save: migrate to tier max(1, derived-from-unlocks?) — keep it simple: tier 1 with goals fresh, but *don't* re-lock already-purchased unlocks above the tier (purchased stays purchased).
+- Loaded pre-WI-26 save: migrate to tier 1 with goals fresh, but *don't* re-lock already-purchased unlocks above the tier (purchased stays purchased).
 
 ## Verification
 1. Fresh game: tier 1 shows, high-tier unlock nodes visibly tier-locked and unpurchasable; `Global.cheats.tier_up()` unlocks them.

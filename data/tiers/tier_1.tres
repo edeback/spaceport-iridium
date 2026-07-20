@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TierData" format=3]
+
+[ext_resource type="Script" path="res://data/tiers/tier_data.gd" id="1_tier"]
+
+[resource]
+script = ExtResource("1_tier")
+tier = 1
+display_name = "Outpost"
+flavor = "A pressurized tin can bolted to an ore claim. Prove it can turn rock into revenue and the Authority may recognize it as a real station."
+export_goals = Dictionary[StringName, int]({
+&"iron_ore": 50
+})
+inspection_tags = Array[String](["Industrial", "Storage"])

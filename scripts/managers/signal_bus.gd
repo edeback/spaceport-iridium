@@ -92,6 +92,20 @@ signal contract_accepted(contract: ContractData)
 signal contract_completed(contract: ContractData)
 @warning_ignore("unused_signal")
 signal contract_failed(contract: ContractData)
+## Goods physically left the station (WI-26): trader sell fulfillment and
+## contract deliveries both emit this the moment stock leaves the export bin.
+## UnlockManager accumulates it against the current station tier's export goals.
+@warning_ignore("unused_signal")
+signal resources_exported(resource: ResourceData, amount: int)
+## The station tier advanced (WI-26): a passed ARC inspection (or the tier_up
+## cheat) bumped UnlockManager.current_tier. The unlock panel re-evaluates
+## tier-locked nodes off this; later WIs read current_tier for tier-gated systems.
+@warning_ignore("unused_signal")
+signal station_tier_changed(new_tier: int)
+## Export-goal progress or inspection state changed (WI-26): the tier panel in
+## the unlock screen refreshes off this without a full tier-up.
+@warning_ignore("unused_signal")
+signal station_tier_progress_changed
 
 
 

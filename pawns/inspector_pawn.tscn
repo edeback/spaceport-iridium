@@ -1,0 +1,28 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" uid="uid://ddoebv5qw5lfm" path="res://pawns/pawn_base.tscn" id="1_base"]
+[ext_resource type="Script" path="res://pawns/inspector_pawn.gd" id="2_insp"]
+[ext_resource type="PackedScene" path="res://pawns/pawn_health_component.tscn" id="3_health"]
+[ext_resource type="PackedScene" path="res://pawns/pawn_breathing_component.tscn" id="4_breath"]
+
+[node name="InspectorPawn" node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_base")]
+script = ExtResource("2_insp")
+animated_sprite = NodePath("Offset/Crew")
+is_visitor = true
+
+[node name="Offset" parent="." index="0"]
+position = Vector2(0, -9)
+
+[node name="Sprite2D" parent="Offset" index="0"]
+scale = Vector2(0.22, 0.22)
+
+[node name="Crew" parent="Offset" index="1"]
+scale = Vector2(0.2, 0.2)
+frame = 1
+
+[node name="Robot" parent="Offset" index="2"]
+scale = Vector2(0.22, 0.22)
+
+[node name="PawnHealthComponent" parent="." index="1" instance=ExtResource("3_health")]
+
+[node name="PawnBreathingComponent" parent="." index="2" instance=ExtResource("4_breath")]

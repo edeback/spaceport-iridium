@@ -17,6 +17,7 @@ metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
 [resource]
 script = ExtResource("3_hg6n5")
 id = &"fusion_reactor_unlock"
+min_tier = 3
 name = "Fusion Reactor"
 description = "Extreme power!"
 icon = ExtResource("3_vg7nl")

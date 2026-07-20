@@ -16,6 +16,9 @@ const COLOR_UNLOCKED := Color(0.25, 0.55, 0.30)
 const COLOR_AVAILABLE := Color(0.24, 0.42, 0.66)
 const COLOR_LOCKED := Color(0.30, 0.30, 0.34)
 const COLOR_UNAFFORDABLE := Color(0.55, 0.40, 0.22)
+## Tier-locked (WI-26): a distinct purple so a node the station hasn't earned
+## reads differently from a prerequisite lock.
+const COLOR_TIER_LOCKED := Color(0.42, 0.30, 0.55)
 
 func setup(u: UnlockData) -> void:
 	unlock = u
@@ -94,7 +97,14 @@ func refresh() -> void:
 		_cost_label.visible = true
 		_cost_label.text = _cost_text()
 		_button.visible = true
-		if not mgr.prerequisites_met(unlock):
+		if not mgr.meets_tier(unlock):
+			# Tier lock takes precedence: until the station is promoted the node
+			# can't be earned regardless of prereqs or credits (WI-26).
+			_button.disabled = true
+			_status_label.text = "Requires Station Tier %d" % unlock.min_tier
+			_status_label.modulate = Color(0.80, 0.70, 0.95)
+			border_color = COLOR_TIER_LOCKED
+		elif not mgr.prerequisites_met(unlock):
 			_button.disabled = true
 			_status_label.text = "Requires: " + _prereq_names()
 			_status_label.modulate = Color(0.7, 0.7, 0.75)

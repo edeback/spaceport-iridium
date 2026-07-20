@@ -17,6 +17,7 @@ metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
 [resource]
 script = ExtResource("7_wvunh")
 id = &"large_storage_unlock"
+min_tier = 3
 name = "Large Storage"
 description = "The biggest, most efficient storage."
 icon = ExtResource("6_ftsw1")

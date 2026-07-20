@@ -125,6 +125,21 @@ static func loan_schedule(principal: int, interest_fraction: float, term_cycles:
 			break
 	return out
 
+# --- cost activation (WI-26) --------------------------------------------------
+
+## Switches on wages, upkeep, and the ARC levy together. Called by UnlockManager
+## the first time the station passes an ARC inspection (tier 1 -> 2); the debug
+## Cheats.set_economy_costs covers the same flip. Idempotent - a no-op once the
+## streams are already live (a loaded higher-tier save restores them enabled).
+func enable_recurring_costs() -> void:
+	if wages_enabled and upkeep_enabled and levy_enabled:
+		return
+	wages_enabled = true
+	upkeep_enabled = true
+	levy_enabled = true
+	SignalBus.station_alert.emit("ARC now levies wages, upkeep, and a profit tax on your promoted station.")
+	_emit_changed()
+
 # --- income routing (called by trade/contract payouts) ------------------------
 
 ## Records `amount` of gross income under `category`, skims the ARC levy if

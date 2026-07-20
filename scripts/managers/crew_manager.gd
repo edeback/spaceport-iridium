@@ -107,7 +107,8 @@ func get_crew(include_leaving: bool = true) -> Array[PawnBase]:
 	var crew: Array[PawnBase] = []
 	for node: Node in get_tree().get_nodes_in_group("pawn"):
 		var pawn: PawnBase = node as PawnBase
-		if pawn == null or pawn is MiningDronePawn or pawn.is_queued_for_deletion():
+		# Drones and visitors (WI-26 inspector) aren't crew: no wage, no roster.
+		if pawn == null or pawn is MiningDronePawn or pawn.is_visitor or pawn.is_queued_for_deletion():
 			continue
 		if not include_leaving:
 			var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent

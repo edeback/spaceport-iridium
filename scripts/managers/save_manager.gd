@@ -258,8 +258,11 @@ func _get_pawns_save() -> Array:
 	var out: Array = []
 	for node: Node in get_tree().get_nodes_in_group("pawn"):
 		var pawn: PawnBase = node as PawnBase
-		# All pawns must be saved and loaded
-		if pawn == null:
+		# All pawns must be saved and loaded - except transient visitors (WI-26
+		# inspector): they're driven by a runtime-only InspectionRunner that a load
+		# doesn't restore, so a saved inspector would dangle. The in-progress
+		# inspection cancels cleanly on load and the offer re-rolls.
+		if pawn == null or pawn.is_visitor:
 			continue
 		var carried: Array = []
 		if pawn.inventory_component != null:

@@ -150,6 +150,32 @@ func take_loan(principal: int) -> String:
 		return _report("took a loan of %d credits" % principal)
 	return _report("could not take a loan (one already active?)")
 
+## Promotes the station one tier (WI-26), bypassing goals and the inspection.
+## Resets export progress and, on the first promotion, flips WI-25 costs on -
+## the same path a passed inspection takes.
+func tier_up() -> String:
+	var mgr: UnlockManager = Global.unlock_manager
+	if mgr.is_max_tier():
+		return _report("already at the top tier (%d)" % mgr.current_tier)
+	mgr.advance_tier()
+	return _report("promoted to station tier %d" % mgr.current_tier)
+
+## Credits `amount` of resource `id` toward the current tier's export goals
+## (WI-26), as if it had been sold/delivered. Only counts if the resource is one
+## the current tier actually asks for.
+func grant_export(id: StringName, amount: int) -> String:
+	var resource: ResourceData = Global.save_manager.get_resource_by_id(id)
+	if resource == null:
+		return _report("no such resource id: %s" % id)
+	SignalBus.resources_exported.emit(resource, amount)
+	return _report("credited %d %s toward tier export goals" % [amount, resource.name])
+
+## Starts an ARC inspection immediately (WI-26), skipping the goal check and the
+## offer card. Needs a docking bay for the inspector's ship to arrive at.
+func start_inspection() -> String:
+	Global.unlock_manager.begin_inspection()
+	return _report("requested an ARC inspection now")
+
 ## Force-unlocks the global tech-tree node with the given id (no cost/prereqs).
 func force_unlock(id: StringName) -> String:
 	var unlock: UnlockData = Global.unlock_manager.get_unlock_by_id(id)

@@ -169,6 +169,9 @@ func collect_contract_goods(bay_trade: TradeComponent) -> bool:
 			continue
 		bay_trade.reduce_contract_demand(contract.resource, take)
 		contract.delivered += take
+		# Delivered goods leave the station (WI-26): they count toward tier goals
+		# just like a plain trader sale (verification 2 fills bars from both paths).
+		SignalBus.resources_exported.emit(contract.resource, take)
 		collected = true
 		if contract.remaining() <= 0:
 			_complete(contract)
