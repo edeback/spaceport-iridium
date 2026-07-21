@@ -41,8 +41,13 @@ extends Resource
 @export var can_break_down: bool = false
 ## Per-game-hour breakdown probability (0..1) when can_break_down. Read through
 ## get_effective_stat(&"breakdown_chance", ...) so WI-30's Maintenance Facility
-## can lower it via adjacency later for free.
+## can lower it via adjacency for free.
 @export var breakdown_chance_per_hour: float = 0.0
+## How strongly a nearby Maintenance Facility's &"maintenance" field suppresses
+## this module's breakdown chance (WI-30): effective chance is multiplied by
+## 1/(1 + maintenance * k). Higher = more protective. Only matters when
+## can_break_down.
+@export var maintenance_breakdown_k: float = 1.0
 
 ## --- economy (WI-25) --------------------------------------------------------
 ## Credits this module costs per cycle in upkeep once EconomyManager's upkeep

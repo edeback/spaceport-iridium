@@ -6,7 +6,7 @@ Layout matters: industrial modules radiate vibration that penalizes nearby rest/
 ## Design
 - **Propagation model.** Effects travel over the **StructureManager** graph (physical attachment — the design's "connection-based" requirement) with hop-count falloff. Each source defines `{effect_id: StringName, intensity: float, range_hops: int, falloff: per-hop multiplier}`; a receiving module's *field level* for an effect = sum over sources of `intensity × falloff^hops` (BFS within range). Truss conducts (it's structure) — exported per-effect flag if some effect shouldn't cross truss later.
 - **Recompute on topology change only.** New `AdjacencyManager` (manager node, `Global.adjacency_manager`, after StructureManager): maintains `field: Dictionary[effect_id, Dictionary[ModuleBase, float]]`. Rebuilds affected neighborhoods on `module_added` / `module_removed` / build-state change (sources only radiate when Built) — never per-frame, never slow_tick scans. Query API: `get_field(module, effect_id) -> float`. Stations are hundreds of modules at most; a scoped BFS per change is cheap.
-- **Sources.** `AdjacencyEmitterComponent` (`modules/components/adjacency_emitter_component.gd`): exported list of effect specs, registers with the manager on `ready_constructed`. Authored into scenes: refinery/forge/reactor emit `&"vibration"`; garden emits `&"greenery"`; Maintenance Facility (new module, this WI) emits `&"maintenance"`; air purifier (built in WI-31) emits `&"purified_air"`. Intensity/range in the scene exports or mdata (balance in data).
+- **Sources.** `AdjacencyEmitterComponent` (`modules/components/adjacency_emitter_component.gd`): exported list of effect specs, registers with the manager on `ready_constructed`. Authored into scenes: refinery/forge/reactor emit `&"vibration"`; garden (new module, this WI) emits `&"greenery"`; Maintenance Facility (new module, this WI) emits `&"maintenance"`; air purifier (built in WI-31) emits `&"purified_air"`. Intensity/range in the scene exports or mdata (balance in data).
 - **Receivers decide meaning.** Consumers read the field and translate locally — the manager never pushes modifiers:
   - `SleepComponent`: rest effectiveness × `1/(1 + vibration × k)`; + desirability bonus from `greenery` (desirability = tie-break when choosing among free bunks; rest bonus small).
   - Recreation/entertainment components: same vibration penalty shape on recreation gain.
@@ -14,11 +14,12 @@ Layout matters: industrial modules radiate vibration that penalizes nearby rest/
   - WI-31 will read `purified_air` in its transmission roll.
   - Receivers refresh on a manager `fields_changed(module)` signal, not by polling.
 - **Maintenance Facility.** New module (industrial tree, mid-tier): no jobs v1, pure emitter + upkeep cost — its value is the aura. (A future version could require a stocked parts storage; note only.)
+- **Garden.** New module (crew tree, mid-tier): no jobs v1, pure emitter + upkeep cost — its value is the aura. (A future version could require a water input storage; note only.)
 - **UI.** Module panel gains an "Environment" section listing nonzero fields with friendly wording ("Vibration: high — rest quality −30%"). The vibration overlay ships in WI-35; this WI exposes `get_field` for it.
 - **Save:** nothing — fields are pure derived state, rebuilt on load after world placement.
 
 ## Files to touch
-- **New:** `scripts/managers/adjacency_manager.gd` (+ `Global` slot + `main.tscn` node after StructureManager), `modules/components/adjacency_emitter_component.gd`, `modules/maintenance/maintenance_facility.tscn` + mdata + unlock entry
+- **New:** `scripts/managers/adjacency_manager.gd` (+ `Global` slot + `main.tscn` node after StructureManager), `modules/components/adjacency_emitter_component.gd`, `modules/maintenance/maintenance_facility.tscn` + mdata + unlock entry, `modules/crew/garden.tscn` + mdata + unlock entry
 - `modules/components/sleep_component.gd`, `recreation_provider_component.gd`, `entertainment_component.gd`, `social_component.gd` (whichever grant recreation) — vibration/greenery consumption
 - Industrial + garden module scenes — emitter components
 - `modules/templates/module_base.gd` — breakdown-chance adjacency modifier refresh (or wherever WI-24 put the roll)
@@ -29,7 +30,7 @@ Layout matters: industrial modules radiate vibration that penalizes nearby rest/
 ## Implementation order
 1. AdjacencyManager + emitter component + `get_field` + debug dump (cheat: print fields for the selected module).
 2. Vibration → sleep/recreation penalties + Environment UI.
-3. Greenery + garden emitter; maintenance + the new facility + breakdown hook.
+3. Greenery + garden module + garden emitter; maintenance + the new facility + breakdown hook.
 4. Overlay data hook for WI-35; tests.
 
 ## Edge cases

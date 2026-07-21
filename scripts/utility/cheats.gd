@@ -52,6 +52,22 @@ func repair_module(cell: Vector2i, amount: float = -1.0) -> String:
 	module.clear_breakdown()
 	return _report("repaired %s to %.0f/%.0f HP" % [module._display_name(), module.hp, module.max_hp()])
 
+## Prints every nonzero adjacency field (WI-30) on the module at `cell` - the
+## debug readout for vibration/greenery/maintenance propagation.
+func dump_adjacency(cell: Vector2i) -> String:
+	var module: ModuleBase = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, cell)
+	if module == null:
+		return _report("dump_adjacency found no MODULE-layer module at %s" % cell)
+	if Global.adjacency_manager == null:
+		return _report("adjacency manager unavailable")
+	var fields: Dictionary[StringName, float] = Global.adjacency_manager.get_all_fields(module)
+	if fields.is_empty():
+		return _report("%s sits in no adjacency fields" % module._display_name())
+	var parts: Array[String] = []
+	for effect_id: StringName in fields:
+		parts.append("%s=%.3f" % [effect_id, fields[effect_id]])
+	return _report("%s fields: %s" % [module._display_name(), ", ".join(parts)])
+
 ## Forces a breakdown on the module at `cell` (WI-24), ignoring the hourly roll.
 func break_module(cell: Vector2i) -> String:
 	var module: ModuleBase = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, cell)

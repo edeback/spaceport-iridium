@@ -22,6 +22,8 @@
 [ext_resource type="Resource" path="res://data/recipes/refining/iridium_refining_recipe.tres" id="19_rfiridium"]
 [ext_resource type="Script" uid="uid://c2qsvh4rhb1ta" path="res://scripts/pathing/anchor_def.gd" id="20_anchor"]
 [ext_resource type="Script" uid="uid://d4aeiirm7ox7s" path="res://modules/components/workspace_component.gd" id="21_wksp"]
+[ext_resource type="PackedScene" path="res://modules/components/adjacency_emitter_component.tscn" id="22_adjem"]
+[ext_resource type="Script" uid="uid://b2cqiums4fmk0" path="res://modules/components/adjacency_effect_spec.gd" id="23_adjsp"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_lqugb"]
 shader = ExtResource("2_gtfxg")
@@ -49,6 +51,14 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 [sub_resource type="Resource" id="Resource_pj0q4"]
 script = ExtResource("7_ymsq2")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
+[sub_resource type="Resource" id="Resource_vibration"]
+script = ExtResource("23_adjsp")
+effect_id = &"vibration"
+intensity = 1.0
+range_hops = 3
+falloff = 0.5
+metadata/_custom_type_script = "uid://b2cqiums4fmk0"
 
 [node name="OreProcessor" unique_id=749258774 instance=ExtResource("1_06jma")]
 
@@ -98,3 +108,6 @@ requires_worker = true
 
 [node name="WorkspaceComponent" type="Node2D" parent="." index="8" unique_id=771230001]
 script = ExtResource("21_wksp")
+
+[node name="AdjacencyEmitterComponent" parent="." instance=ExtResource("22_adjem")]
+effects = Array[ExtResource("23_adjsp")]([SubResource("Resource_vibration")])

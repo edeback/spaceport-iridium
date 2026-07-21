@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="UnlockData" format=3]
+
+[ext_resource type="Script" uid="uid://co6152j7b38nw" path="res://data/unlocks/unlock_data.gd" id="1_maint"]
+[ext_resource type="Script" uid="uid://c6vwp01mtmoyt" path="res://data/unlocks/effects/unlock_effect.gd" id="2_maint"]
+[ext_resource type="Script" uid="uid://byjsbe8qb3i7t" path="res://data/unlocks/effects/grant_module_effect.gd" id="3_maint"]
+[ext_resource type="Resource" path="res://data/modules/maintenance/maintenance_facility_mdata.tres" id="4_maint"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="5_maint"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="6_maint"]
+[ext_resource type="Texture2D" uid="uid://beq5cwfdlfv54" path="res://assets/sprites/module_generic_yellow.png" id="7_maint"]
+
+[sub_resource type="Resource" id="Resource_grant_maint"]
+script = ExtResource("3_maint")
+module = ExtResource("4_maint")
+metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
+
+[resource]
+script = ExtResource("1_maint")
+id = &"maintenance_facility_unlock"
+min_tier = 2
+name = "Maintenance Facility"
+description = "A workshop that services surrounding machinery, lowering breakdown rates across the neighborhood."
+icon = ExtResource("7_maint")
+tree_id = &"industrial"
+cost = Dictionary[ExtResource("5_maint"), int]({
+ExtResource("6_maint"): 900
+})
+effects = Array[ExtResource("2_maint")]([SubResource("Resource_grant_maint")])
+metadata/_custom_type_script = "uid://co6152j7b38nw"

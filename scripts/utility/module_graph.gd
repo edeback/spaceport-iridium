@@ -307,6 +307,33 @@ func get_exterior_subgraph() -> int:
 		return -1
 	return _exterior_vertices[0].subgraph
 
+## Breadth-first hop distances from `start` over real structural edges only, out
+## to `max_hops`. Returns {node: hops} for every reachable vertex within range,
+## excluding `start` itself. Unlike pathfind, this deliberately ignores the
+## implicit group/exterior cliques: adjacency effects (WI-30) conduct through
+## physical attachment (edges), not the pawn-traversal shortcuts. Truss is a
+## normal edged vertex, so it conducts. BFS order guarantees each node is first
+## reached at its shortest hop count.
+func bfs_hops(start: Node2D, max_hops: int) -> Dictionary[Node2D, int]:
+	var out: Dictionary[Node2D, int] = {}
+	var start_vertex: ModuleGraphVertex = _vertices.get(start)
+	if start_vertex == null or max_hops <= 0:
+		return out
+	var depth: Dictionary[ModuleGraphVertex, int] = {start_vertex: 0}
+	var frontier: Array[ModuleGraphVertex] = [start_vertex]
+	while not frontier.is_empty():
+		var current: ModuleGraphVertex = frontier.pop_front()
+		var hops: int = depth[current]
+		if hops >= max_hops:
+			continue
+		for next: ModuleGraphVertex in current.edges.keys():
+			if depth.has(next):
+				continue
+			depth[next] = hops + 1
+			out[next.node] = hops + 1
+			frontier.append(next)
+	return out
+
 func pathfind(start: Node2D, end: Node2D) -> Array[PathPoint]:
 	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
 	var end_vertex: ModuleGraphVertex = get_vertex_for_path(end)

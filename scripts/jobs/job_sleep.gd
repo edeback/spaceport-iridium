@@ -12,6 +12,10 @@ var sleep_component: SleepComponent
 ## center. Null when the pod has none - movement falls back to the old target.
 var bunk_anchor: AnchorDef = null
 var _bunk_path: PathComponent = null
+## Pods within this many cells of the nearest free pod are treated as equally
+## close, so adjacency desirability (greenery/quiet, WI-30) can pick between
+## them without sending the pawn on a station-crossing trek for a nicer bunk.
+@export var desirability_distance_tolerance: float = 3.0
 
 enum SleepState { Starting, MovingToPod, Sleeping, Finished, Failed }
 var state: SleepState = SleepState.Starting:
@@ -120,18 +124,37 @@ func get_save_data() -> Dictionary:
 static func restore(_data: Dictionary) -> JobBase:
 	return Job_Sleep.new()
 
-## Nearest reachable pod with a free slot. Pure query - safe from can_do_job.
+## Nearest reachable free pod, with adjacency desirability (WI-30) as a tie-break
+## among comparably-close pods. Pure query - safe from can_do_job.
 func _find_pod(_pawn: PawnBase) -> SleepComponent:
-	var best: SleepComponent = null
-	var best_dist: int = 0
+	var origin: Vector2i = Global.world_to_cell(_pawn.global_position)
+	# First pass: every reachable free pod with its (unsquared) cell distance,
+	# tracking the closest so the second pass can define the "comparably close" band.
+	var pods: Array[SleepComponent] = []
+	var dists: PackedFloat32Array = []
+	var nearest: float = -1.0
 	for node: Node in _pawn.get_tree().get_nodes_in_group("sleep_component"):
 		var pod: SleepComponent = node as SleepComponent
 		if pod == null or not pod.has_free_slot():
 			continue
 		if not Global.path_manager.is_reachable(_pawn, pod.owner_module):
 			continue
-		var dist: int = pod.owner_module.module_cell.distance_squared_to(Global.world_to_cell(_pawn.global_position))
-		if best == null or dist < best_dist:
-			best = pod
-			best_dist = dist
+		var dist: float = Vector2(pod.owner_module.module_cell - origin).length()
+		pods.append(pod)
+		dists.append(dist)
+		if nearest < 0.0 or dist < nearest:
+			nearest = dist
+	# Second pass: within the band, prefer the most desirable pod; break remaining
+	# ties by distance.
+	var best: SleepComponent = null
+	var best_desire: float = 0.0
+	var best_dist: float = 0.0
+	for i: int in pods.size():
+		if dists[i] > nearest + desirability_distance_tolerance:
+			continue
+		var desire: float = pods[i].desirability()
+		if best == null or desire > best_desire or (is_equal_approx(desire, best_desire) and dists[i] < best_dist):
+			best = pods[i]
+			best_desire = desire
+			best_dist = dists[i]
 	return best

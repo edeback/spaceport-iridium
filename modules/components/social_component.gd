@@ -11,7 +11,7 @@ extends RecreationProviderComponent
 ## Company bonus stops growing past this many extra pawns.
 @export var max_counted_company: int = 5
 
-func recreation_per_hour(_pawn: PawnBase) -> float:
+func _raw_recreation_per_hour(_pawn: PawnBase) -> float:
 	var present: int = 0
 	for node: Node in get_tree().get_nodes_in_group("pawn"):
 		var pawn: PawnBase = node as PawnBase

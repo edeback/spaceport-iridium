@@ -12,6 +12,8 @@
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="7_yku0m"]
 [ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="8_3i5gt"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="11_wjy4w"]
+[ext_resource type="PackedScene" path="res://modules/components/adjacency_emitter_component.tscn" id="12_adjem"]
+[ext_resource type="Script" uid="uid://b2cqiums4fmk0" path="res://modules/components/adjacency_effect_spec.gd" id="13_adjsp"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_oklni"]
 shader = ExtResource("3_f8t3n")
@@ -28,6 +30,14 @@ size = Vector2(126, 190)
 [sub_resource type="Resource" id="Resource_6mgch"]
 script = ExtResource("7_ghcwy")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
+[sub_resource type="Resource" id="Resource_vibration"]
+script = ExtResource("13_adjsp")
+effect_id = &"vibration"
+intensity = 1.0
+range_hops = 3
+falloff = 0.5
+metadata/_custom_type_script = "uid://b2cqiums4fmk0"
 
 [node name="Module" unique_id=1971618792 instance=ExtResource("1_j1fwt")]
 
@@ -61,3 +71,6 @@ ExtResource("5_mg4bu"): SubResource("Resource_6mgch")
 position = Vector2(64, 96)
 scale = Vector2(2, 3)
 power_generation_component = NodePath("../PowerGenerationComponent")
+
+[node name="AdjacencyEmitterComponent" parent="." instance=ExtResource("12_adjem")]
+effects = Array[ExtResource("13_adjsp")]([SubResource("Resource_vibration")])

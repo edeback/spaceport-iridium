@@ -15,6 +15,13 @@ extends ComponentBase
 ## while asleep, so net restore is slower than this.
 @export var base_hours_to_full: float = 6.0
 
+## Adjacency tuning (WI-30). Nearby industrial vibration divides rest
+## effectiveness by (1 + vibration * k); nearby greenery adds a small rest bonus
+## and (more importantly) makes the bunk more desirable when picking one.
+@export var vibration_penalty_k: float = 1.0
+@export var greenery_rest_bonus_k: float = 0.15
+@export var greenery_desirability_k: float = 1.0
+
 var _claims: Array[JobBase] = []
 
 func ready_constructed() -> void:
@@ -33,4 +40,24 @@ func release_slot(job: JobBase) -> void:
 	_claims.erase(job)
 
 func sleep_restored_per_hour(sleep_max: float) -> float:
-	return sleep_max / base_hours_to_full * sleep_quality
+	return sleep_max / base_hours_to_full * sleep_quality * environment_rest_multiplier()
+
+## Adjacency modifier on rest effectiveness (WI-30): vibration divides it,
+## greenery gives a small bonus. 1.0 when nothing is nearby (or the manager
+## isn't up yet), so an isolated pod restores exactly its authored rate.
+func environment_rest_multiplier() -> float:
+	if Global.adjacency_manager == null or owner_module == null:
+		return 1.0
+	var vibration: float = Global.adjacency_manager.get_field(owner_module, &"vibration")
+	var greenery: float = Global.adjacency_manager.get_field(owner_module, &"greenery")
+	return (1.0 / (1.0 + vibration * vibration_penalty_k)) * (1.0 + greenery * greenery_rest_bonus_k)
+
+## Desirability score for choosing among free bunks (WI-30): greener is nicer,
+## noisier is worse. Only a tie-break between comparably-close pods - see
+## Job_Sleep._find_pod.
+func desirability() -> float:
+	if Global.adjacency_manager == null or owner_module == null:
+		return 0.0
+	var vibration: float = Global.adjacency_manager.get_field(owner_module, &"vibration")
+	var greenery: float = Global.adjacency_manager.get_field(owner_module, &"greenery")
+	return greenery * greenery_desirability_k - vibration * vibration_penalty_k

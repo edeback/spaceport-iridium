@@ -1,0 +1,34 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" uid="uid://drvd8opv6enr8" path="res://modules/templates/module_2x1.tscn" id="1_garden"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_garden"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_garden"]
+[ext_resource type="Texture2D" uid="uid://bun3faac31aog" path="res://assets/sprites/hydroponics_bay.png" id="4_garden"]
+[ext_resource type="PackedScene" path="res://modules/components/adjacency_emitter_component.tscn" id="5_garden"]
+[ext_resource type="Script" uid="uid://b2cqiums4fmk0" path="res://modules/components/adjacency_effect_spec.gd" id="6_garden"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_garden"]
+shader = ExtResource("2_garden")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
+shader_parameter/gradient_texture = ExtResource("3_garden")
+
+[sub_resource type="Resource" id="Resource_greenery"]
+script = ExtResource("6_garden")
+effect_id = &"greenery"
+intensity = 1.0
+range_hops = 3
+falloff = 0.5
+metadata/_custom_type_script = "uid://b2cqiums4fmk0"
+
+[node name="Module" instance=ExtResource("1_garden")]
+
+[node name="Sprite" parent="Offset" index="0"]
+material = SubResource("ShaderMaterial_garden")
+texture = ExtResource("4_garden")
+region_enabled = false
+
+[node name="AdjacencyEmitterComponent" parent="." instance=ExtResource("5_garden")]
+effects = Array[ExtResource("6_garden")]([SubResource("Resource_greenery")])

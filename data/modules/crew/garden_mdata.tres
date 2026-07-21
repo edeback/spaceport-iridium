@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3]
+
+[ext_resource type="Texture2D" uid="uid://bun3faac31aog" path="res://assets/sprites/hydroponics_bay.png" id="1_garden"]
+[ext_resource type="PackedScene" path="res://modules/crew/garden.tscn" id="2_garden"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_garden"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="4_garden"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="5_garden"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="6_garden"]
+
+[resource]
+script = ExtResource("3_garden")
+id = &"garden_mdata"
+name = "Garden"
+description = "A pocket of green. Its calm and clean air lift the spirits of crew bunking nearby."
+scene = ExtResource("2_garden")
+icon = ExtResource("1_garden")
+instant_build = false
+resource_costs = Dictionary[ExtResource("4_garden"), int]({
+ExtResource("5_garden"): 4,
+ExtResource("6_garden"): 400
+})
+tags = Array[String](["Crew"])
+upkeep_per_cycle = 6
+unlocked_by_default = false
+metadata/_custom_type_script = "uid://vwmofdckg7hu"

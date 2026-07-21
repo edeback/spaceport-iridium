@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3]
+
+[ext_resource type="Texture2D" uid="uid://beq5cwfdlfv54" path="res://assets/sprites/module_generic_yellow.png" id="1_maint"]
+[ext_resource type="PackedScene" path="res://modules/maintenance/maintenance_facility.tscn" id="2_maint"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_maint"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="4_maint"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="5_maint"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="6_maint"]
+
+[resource]
+script = ExtResource("3_maint")
+id = &"maintenance_facility_mdata"
+name = "Maintenance Facility"
+description = "A stocked workshop whose technicians keep nearby machinery serviced, cutting its breakdown rate."
+scene = ExtResource("2_maint")
+icon = ExtResource("1_maint")
+instant_build = false
+resource_costs = Dictionary[ExtResource("4_maint"), int]({
+ExtResource("5_maint"): 6,
+ExtResource("6_maint"): 600
+})
+tags = Array[String](["Industrial"])
+upkeep_per_cycle = 10
+unlocked_by_default = false
+metadata/_custom_type_script = "uid://vwmofdckg7hu"

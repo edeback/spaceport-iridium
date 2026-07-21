@@ -7,6 +7,7 @@ var save_manager: SaveManager
 var world_manager: WorldManager
 var path_manager: PathManager
 var structure_manager: StructureManager
+var adjacency_manager: AdjacencyManager
 var power_manager: PowerManager
 var job_manager: JobManager
 var turbolift_manager: TurboliftManager

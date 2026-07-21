@@ -17,6 +17,7 @@
 [ext_resource type="Script" uid="uid://6mx2qi4ecq8b" path="res://scripts/managers/turbolift_manager.gd" id="6_dg77c"]
 [ext_resource type="Script" uid="uid://bsy2db6ssn3vt" path="res://scripts/managers/world_manager.gd" id="6_i5kyc"]
 [ext_resource type="Script" uid="uid://cyou4qqxr66bq" path="res://scripts/managers/structure_manager.gd" id="6_ryguw"]
+[ext_resource type="Script" uid="uid://csa0pk5oc8wc8" path="res://scripts/managers/adjacency_manager.gd" id="6_adjmgr"]
 [ext_resource type="Resource" uid="uid://ch5rdw0jfhvft" path="res://data/modules/module_airlock.tres" id="8_e71vb"]
 [ext_resource type="Script" uid="uid://cx2dttwf32bok" path="res://scripts/managers/job_manager.gd" id="8_w48qg"]
 [ext_resource type="Script" uid="uid://d1myskwk0m3o0" path="res://scripts/managers/resource_manager.gd" id="9_074og"]
@@ -7618,6 +7619,9 @@ atmosphere_ui_scene = ExtResource("3_atmoui")
 
 [node name="StructureManager" type="Node" parent="Managers" unique_id=1933613655]
 script = ExtResource("6_ryguw")
+
+[node name="AdjacencyManager" type="Node" parent="Managers" unique_id=1933613656]
+script = ExtResource("6_adjmgr")
 
 [node name="PowerManager" type="Node" parent="Managers" unique_id=1129733551]
 script = ExtResource("4_deici")

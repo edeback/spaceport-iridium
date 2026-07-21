@@ -63,6 +63,10 @@ const SHADER_PARAM_DAMAGE = "DAMAGE"
 ## each other (their MULTs compound by design).
 const DAMAGE_SOURCE := &"damage"
 const BREAKDOWN_SOURCE := &"breakdown"
+## StatModifiers source id for the WI-30 adjacency layer (a nearby Maintenance
+## Facility lowering breakdown_chance). Owns its own source so it refreshes
+## independently of damage/breakdown when the module's maintenance field moves.
+const ADJACENCY_SOURCE := &"adjacency"
 ## Output multiplier a broken-down module runs at until a repair job clears it.
 const BREAKDOWN_EFFICIENCY := 0.5
 
@@ -165,6 +169,16 @@ func ready_constructed() -> void:
 			Global.time_manager.slow_tick.connect(_on_durability_slow_tick)
 		if not Global.time_manager.hour_changed.is_connected(_on_durability_hour_changed):
 			Global.time_manager.hour_changed.connect(_on_durability_hour_changed)
+	# Adjacency (WI-30): only break-down-capable modules react to the maintenance
+	# field (it only touches breakdown_chance), keeping the fields_changed
+	# subscriber set small. The initial refresh reads the field as it stands now;
+	# a pod built inside an existing field, or one whose neighborhood is still
+	# being placed at load, is corrected by the manager's deferred fields_changed.
+	if not Engine.is_editor_hint() and Global.adjacency_manager != null \
+			and module_data != null and module_data.can_break_down:
+		if not Global.adjacency_manager.fields_changed.is_connected(_on_adjacency_fields_changed):
+			Global.adjacency_manager.fields_changed.connect(_on_adjacency_fields_changed)
+		_refresh_maintenance_modifier()
 
 func is_complete() -> bool:
 	return build_state == BuildState.Built
@@ -285,6 +299,27 @@ func _apply_breakdown_modifier() -> void:
 	stat_modifiers.set_single_modifier(&"power_output", StatModifiers.Op.MULT, BREAKDOWN_EFFICIENCY, BREAKDOWN_SOURCE)
 	stat_modifiers.set_single_modifier(&"mining_rate", StatModifiers.Op.MULT, BREAKDOWN_EFFICIENCY, BREAKDOWN_SOURCE)
 	stat_modifiers.set_single_modifier(&"process_time", StatModifiers.Op.MULT, 1.0 / BREAKDOWN_EFFICIENCY, BREAKDOWN_SOURCE)
+
+# --- adjacency (WI-30) ----------------------------------------------------
+
+## The module's maintenance field changed - re-derive our breakdown suppression.
+func _on_adjacency_fields_changed(module: ModuleBase) -> void:
+	if module == self:
+		_refresh_maintenance_modifier()
+
+## Writes the reserved &"adjacency" MULT layer on breakdown_chance from the
+## current &"maintenance" field: 1/(1 + maintenance * k). Cleared entirely when
+## no maintenance reaches this module, so an unprotected module's breakdown
+## chance is byte-for-byte its authored base.
+func _refresh_maintenance_modifier() -> void:
+	if Global.adjacency_manager == null:
+		return
+	var maintenance: float = Global.adjacency_manager.get_field(self, &"maintenance")
+	if maintenance <= 0.0:
+		stat_modifiers.remove_source(ADJACENCY_SOURCE)
+		return
+	var k: float = module_data.maintenance_breakdown_k if module_data != null else 1.0
+	stat_modifiers.set_single_modifier(&"breakdown_chance", StatModifiers.Op.MULT, 1.0 / (1.0 + maintenance * k), ADJACENCY_SOURCE)
 
 ## Called by a completing repair job (WI-24). Lifts the lingering breakdown hit.
 func clear_breakdown() -> void:

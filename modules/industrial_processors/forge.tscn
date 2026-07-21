@@ -17,6 +17,8 @@
 [ext_resource type="Script" uid="uid://c2qsvh4rhb1ta" path="res://scripts/pathing/anchor_def.gd" id="14_anchor"]
 [ext_resource type="Script" uid="uid://d4aeiirm7ox7s" path="res://modules/components/workspace_component.gd" id="15_wksp"]
 [ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="16_30eyd"]
+[ext_resource type="PackedScene" path="res://modules/components/adjacency_emitter_component.tscn" id="17_adjem"]
+[ext_resource type="Script" uid="uid://b2cqiums4fmk0" path="res://modules/components/adjacency_effect_spec.gd" id="18_adjsp"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_pwov3"]
 shader = ExtResource("2_htbuk")
@@ -48,6 +50,14 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 script = ExtResource("10_t70i4")
 resource_data = ExtResource("16_30eyd")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
+[sub_resource type="Resource" id="Resource_vibration"]
+script = ExtResource("18_adjsp")
+effect_id = &"vibration"
+intensity = 1.0
+range_hops = 3
+falloff = 0.5
+metadata/_custom_type_script = "uid://b2cqiums4fmk0"
 
 [node name="Module" unique_id=1683111138 instance=ExtResource("1_j57s1")]
 size = Vector2i(3, 2)
@@ -103,3 +113,6 @@ accepts_imports = false
 
 [node name="WorkspaceComponent" type="Node2D" parent="." index="8" unique_id=771230002]
 script = ExtResource("15_wksp")
+
+[node name="AdjacencyEmitterComponent" parent="." instance=ExtResource("17_adjem")]
+effects = Array[ExtResource("18_adjsp")]([SubResource("Resource_vibration")])
