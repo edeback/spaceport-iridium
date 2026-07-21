@@ -1,10 +1,10 @@
 # WI-31 — Health & Disease
 
 ## Goal
-Expand crew health: diseases with staged effects (health drain, skill maluses, worsening untreated), transmission between co-located pawns, a Medical Bay where crew heal and get treated (with a Doctoring job whose quality depends on the doctor's Medical skill), and air purifiers that passively suppress spread nearby. Acquisition v1: events (outbreak), space-exposure sickness, and a hook for infected visitors (activates with WI-33).
+Expand crew health: diseases with staged effects (health drain, skill maluses, worsening untreated), transmission between co-located pawns, a Medical Bay where crew heal and get treated (with a Doctoring job whose quality depends on the doctor's Medical skill), and air purifiers that passively suppress spread nearby. Acquisition v1: events (outbreak), space-exposure sickness, and a hook for infected visitors (activates with WI-33). Diseases have per-station-level unlock, no disease (and therefore no outbreak events either) at station level 1.
 
 ## Design
-- **`DiseaseData`** .tres in `data/diseases/` (ResourceScanner): id, name, description, `stages: Array` of `{duration_hours, health_drain_per_hour, skill_maluses: {skill: -levels}, mood_modifier}`, `contagious_rate` (0 = non-infectious), `acquisition` tags (outbreak/space/visitor), treatment parameters (`treat_hours_base`, `cure_at_stage_reset: bool`). v1 content: **Station Flu** (contagious, mild drain, social/crafting malus, worsens to heavy drain), **Void Sickness** (non-contagious, from cumulative EVA hours, intellectual/accuracy malus), **Corvid-19** or similar third for outbreak flavor.
+- **`DiseaseData`** .tres in `data/diseases/` (ResourceScanner): id, name, description, `stages: Array` of `{duration_hours, health_drain_per_hour, skill_maluses: {skill: -levels}, mood_modifier}`, `contagious_rate` (0 = non-infectious), `acquisition` tags (outbreak/space/visitor), treatment parameters (`treat_hours_base`, `cure_at_stage_reset: bool`), station unlock level. v1 content: **Station Flu** (contagious, mild drain, social/crafting malus, worsens to heavy drain), **Void Sickness** (non-contagious, from cumulative EVA hours, intellectual/accuracy malus), **Fervent Fever** (mildly contagious, mild drain, minus intellectual/social, **bonus** movement speed).
 - **`PawnDiseaseComponent`** (crew scene only; robots never): active diseases `{disease_id: {stage, stage_hours}}`. Per sim-hour: advance stage timers, apply stage effects —
   - health drain joins the WI-24/WI-17 pattern in `PawnHealthComponent`: a `disease_drain_per_hour` contribution that *stacks* with starvation/suffocation and, like them, suppresses regen while any drain is active (extend the exclusivity rule: regen only when no drain source active).
   - skill maluses: `PawnSkillsComponent.skill_mult` consults a malus overlay set by the disease component (temporary level reduction, floor 0).
@@ -16,7 +16,7 @@ Expand crew health: diseases with staged effects (health drain, skill maluses, w
   - **Cure:** treatment progress ≥ disease's `treat_hours` → cured (or stage regression per data flag). Untreated diseases run their stages to the final one, which persists until treated (drains indefinitely — death only via the existing health-at-0-does-nothing rule until pawn death exists; keep that boundary explicit).
 - **Air purifier module.** Small module: powered + `AdjacencyEmitterComponent` radiating `purified_air` (WI-30 delivers the mechanism; this WI ships the module + the transmission consumption).
 - **Void Sickness accrual:** `PawnBreathingComponent` (or the disease component) tracks cumulative exterior hours; roll chance per EVA hour beyond a threshold, reset partially by cycles inside.
-- **Outbreak event:** `data/events/outbreak.tres` + `EffectDiseaseOutbreak` (infect 1–3 random crew with a data-chosen disease).
+- **Outbreak event:** `data/events/outbreak.tres` + `EffectDiseaseOutbreak` (infect 1–3 random crew with a data-chosen disease). Only possible when at least one disease is unlocked, and can only choose an infectious disease (in this case, no Void Sickness).
 - **UI:** pawn panel health tab lists diseases + stage + treatment state; alerts on infection and on worsening.
 - **Save:** disease states + EVA accrual in the pawn section; treatment jobs via WI-21.
 
@@ -47,12 +47,13 @@ Expand crew health: diseases with staged effects (health drain, skill maluses, w
 - Disease modifiers must re-apply from disease state on load, not save as modifiers (the WI-22 trait rule).
 - Outbreak event on a 2-crew station: cap infections at crew − 1 so it's survivable.
 - Transmission roll when a conveyor/robot shares the module: robots excluded by component absence — verify the occupant filter.
+- No outbreaks when no disease is unlocked (station level 1), even via event.
 
 ## Verification
 1. Cheat-infect a pawn: stage effects appear (drain, malus visible in skills tab, mood), worsen on schedule untreated.
 2. Sick pawn + healthy pawn share a corridor for hours: transmission occurs at the expected rate; add a purifier next door → measurably rarer (force rates high for the test).
 3. Medical Bay: patient walks in, lies down; doctor mans the station; treatment completes several times faster than untended baseline; skill-10 doctor beats skill-0.
 4. Void Sickness: park a miner on long EVA rotations → eventually sick; interior crew never.
-5. Outbreak event fires and resolves end-to-end through treatment.
+5. Outbreak event fires and resolves end-to-end through treatment. Can not fire when no diseases available to be chosen. Void Sickness never chosen.
 6. Save/load mid-disease, mid-treatment: stages, progress, EVA accrual round-trip; no doubled modifiers.
 7. Regression: healthy-station behavior unchanged; suffocation/starvation drain interplay still correct (all three at once stack).

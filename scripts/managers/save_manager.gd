@@ -320,6 +320,20 @@ func _get_pawns_save() -> Array:
 			"schedule": Array(pawn.schedule.slots) if pawn.schedule != null else [],
 			"carried": carried,
 		}
+		# Diseases (WI-31): active-disease state (stage/timers/treatment progress);
+		# staged effects re-derive from it on load, never saved as modifiers. Absent
+		# when the crew member is well, so a healthy station stays lean.
+		var disease: PawnDiseaseComponent = pawn.get_component_by_type(PawnDiseaseComponent) as PawnDiseaseComponent
+		if disease != null:
+			var disease_save: Dictionary = disease.get_save_data()
+			if not disease_save.is_empty():
+				entry["disease"] = disease_save
+		# EVA accrual toward Void Sickness (WI-31); absent for interior crew.
+		var breathing: PawnBreathingComponent = pawn.get_component_by_type(PawnBreathingComponent) as PawnBreathingComponent
+		if breathing != null:
+			var breathing_save: Dictionary = breathing.get_save_data()
+			if not breathing_save.is_empty():
+				entry["breathing"] = breathing_save
 		# Mining Drones need their parent
 		if pawn is MiningDronePawn and (pawn as MiningDronePawn).parent_mining_component != null:
 			entry["mining_comp"] = component_ref((pawn as MiningDronePawn).parent_mining_component)
@@ -528,6 +542,15 @@ func _load_pawns(data: Array) -> void:
 		var traits: PawnTraitsComponent = pawn.get_component_by_type(PawnTraitsComponent) as PawnTraitsComponent
 		if traits != null:
 			traits.load_save_data(entry.get("traits", []))
+		# Diseases (WI-31) after skills/traits: load_save_data re-derives the skill
+		# maluses / mood modifiers / move-speed from the restored disease state, so
+		# the base skill levels and trait modifiers must already be in place.
+		var disease: PawnDiseaseComponent = pawn.get_component_by_type(PawnDiseaseComponent) as PawnDiseaseComponent
+		if disease != null:
+			disease.load_save_data(entry.get("disease", {}))
+		var breathing: PawnBreathingComponent = pawn.get_component_by_type(PawnBreathingComponent) as PawnBreathingComponent
+		if breathing != null:
+			breathing.load_save_data(entry.get("breathing", {}))
 		# Painted schedules are per-pawn state; _ready already duplicated the
 		# scene's shared default, so writing into slots is safe. Shift state
 		# itself isn't saved - is_on_shift() derives from the loaded hour.
@@ -596,3 +619,9 @@ func _adopt_if_need_job(pawn: PawnBase, needs: PawnNeedsComponent, job: JobBase)
 		var integrity: RobotIntegrityComponent = pawn.get_component_by_type(RobotIntegrityComponent) as RobotIntegrityComponent
 		if integrity != null:
 			integrity.adopt_restored_repair_job(job as Job_GetRepaired)
+	elif job is Job_GetTreatment:
+		# Health & disease (WI-31): re-link so the disease component's seek loop
+		# treats it as the already-pending job instead of queuing a second.
+		var disease: PawnDiseaseComponent = pawn.get_component_by_type(PawnDiseaseComponent) as PawnDiseaseComponent
+		if disease != null:
+			disease.adopt_restored_treatment_job(job as Job_GetTreatment)

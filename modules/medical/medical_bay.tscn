@@ -1,0 +1,47 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" uid="uid://bas8aepborlv5" path="res://modules/templates/module_3x2.tscn" id="1_base"]
+[ext_resource type="Texture2D" path="res://assets/sprites/module_generic_red.png" id="2_tex"]
+[ext_resource type="Script" uid="uid://c2qsvh4rhb1ta" path="res://scripts/pathing/anchor_def.gd" id="3_anchor"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="4_pwr"]
+[ext_resource type="Script" path="res://modules/components/medical_component.gd" id="5_medical"]
+[ext_resource type="Script" uid="uid://d4aeiirm7ox7s" path="res://modules/components/workspace_component.gd" id="6_wksp"]
+
+[sub_resource type="Resource" id="Resource_bunk1"]
+script = ExtResource("3_anchor")
+type = 1
+offset = Vector2(-64, -56)
+metadata/_custom_type_script = "uid://c2qsvh4rhb1ta"
+
+[sub_resource type="Resource" id="Resource_bunk2"]
+script = ExtResource("3_anchor")
+type = 1
+offset = Vector2(0, -56)
+metadata/_custom_type_script = "uid://c2qsvh4rhb1ta"
+
+[sub_resource type="Resource" id="Resource_workstation"]
+script = ExtResource("3_anchor")
+type = 0
+offset = Vector2(64, 0)
+animation = &"interact"
+metadata/_custom_type_script = "uid://c2qsvh4rhb1ta"
+
+[node name="Module" instance=ExtResource("1_base")]
+
+[node name="Sprite" parent="Offset" index="0"]
+texture = ExtResource("2_tex")
+
+[node name="PathComponent" parent="."]
+path_points = Array[Vector2i]([Vector2i(96, 96)])
+anchors = Array[ExtResource("3_anchor")]([SubResource("Resource_bunk1"), SubResource("Resource_bunk2"), SubResource("Resource_workstation")])
+
+[node name="PowerConsumptionComponent" parent="." instance=ExtResource("4_pwr")]
+power_consumption = 30.0
+
+[node name="MedicalComponent" type="Node2D" parent="." node_paths=PackedStringArray("power_consumption_component")]
+script = ExtResource("5_medical")
+power_consumption_component = NodePath("../PowerConsumptionComponent")
+capacity = 2
+
+[node name="WorkspaceComponent" type="Node2D" parent="."]
+script = ExtResource("6_wksp")

@@ -16,6 +16,11 @@ signal skill_changed(skill: StringName)
 
 var _skills: Dictionary[StringName, Dictionary] = {}
 
+## Temporary per-skill level reductions from active diseases (WI-31), set by
+## PawnDiseaseComponent. skill id -> levels subtracted; the effective level floors
+## at 0. Not saved - re-derived from disease state on load, like trait modifiers.
+var _disease_malus: Dictionary[StringName, int] = {}
+
 func _ready() -> void:
 	super()
 	# Seed every known skill at level 0 so lookups and the tab always have an
@@ -30,21 +35,37 @@ func get_level(skill: StringName) -> int:
 	var entry: Dictionary = _skills[skill]
 	return int(entry.get("level", 0))
 
+## The level after subtracting any active disease malus, floored at 0 (WI-31).
+## Jobs and skill_mult() consult this, not the raw level.
+func effective_level(skill: StringName) -> int:
+	return maxi(0, get_level(skill) - int(_disease_malus.get(skill, 0)))
+
+## Replace the disease malus overlay and refresh the skills tab. Empty overlay =
+## no disease reduction. Called by PawnDiseaseComponent on any change.
+func set_disease_malus(overlay: Dictionary[StringName, int]) -> void:
+	_disease_malus = overlay
+	skill_changed.emit(&"")
+
+## The current malus on `skill` (0 when none) - for the skills tab display.
+func malus_for(skill: StringName) -> int:
+	return int(_disease_malus.get(skill, 0))
+
 func get_xp(skill: StringName) -> float:
 	if not _skills.has(skill):
 		return 0.0
 	var entry: Dictionary = _skills[skill]
 	return float(entry.get("xp", 0.0))
 
-## Work-rate multiplier for `skill` at its current level. 1.0 for an empty or
-## unknown skill so unskilled jobs are unaffected.
+## Work-rate multiplier for `skill` at its effective level. 1.0 for an empty or
+## unknown skill so unskilled jobs are unaffected. Reads effective_level so an
+## active disease's malus (WI-31) slows the pawn's skilled work.
 func skill_mult(skill: StringName) -> float:
 	if skill == &"":
 		return 1.0
 	var def: SkillData = SkillData.by_id(skill)
 	if def == null:
 		return 1.0
-	return def.multiplier_for_level(get_level(skill))
+	return def.multiplier_for_level(effective_level(skill))
 
 ## Adds xp and rolls any level-ups (a large grant can cross several levels).
 ## Emits skill_changed once; fires a station_alert + SignalBus signal per level

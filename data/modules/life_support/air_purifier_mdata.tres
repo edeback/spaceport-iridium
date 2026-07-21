@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3]
+
+[ext_resource type="Texture2D" uid="uid://s0o2e0b05pv6" path="res://assets/sprites/module_generic_blue.png" id="1_icon"]
+[ext_resource type="PackedScene" path="res://modules/life_support/air_purifier.tscn" id="2_scn"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="3_mdata"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="4_res"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="5_steel"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="6_credits"]
+
+[resource]
+script = ExtResource("3_mdata")
+id = &"air_purifier_mdata"
+name = "Air Purifier"
+description = "Scrubs pathogens from the recycled air of nearby modules, slowing the spread of contagious disease. Powered; its effect falls off with distance."
+scene = ExtResource("2_scn")
+icon = ExtResource("1_icon")
+instant_build = false
+resource_costs = Dictionary[ExtResource("4_res"), int]({
+ExtResource("5_steel"): 5,
+ExtResource("6_credits"): 350
+})
+tags = Array[String](["Life Support"])
+upkeep_per_cycle = 4
+unlocked_by_default = false
+metadata/_custom_type_script = "uid://vwmofdckg7hu"

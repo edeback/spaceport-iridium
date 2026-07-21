@@ -75,7 +75,16 @@ func _update_row(def: SkillData) -> void:
 		return
 	var level: int = skills.get_level(def.id)
 	var refs: Dictionary = _rows[def.id]
-	(refs["level"] as Label).text = "Lv %d" % level
+	var level_label := refs["level"] as Label
+	# Show the disease-reduced effective level (WI-31): "Lv 3 (-2)" and a warning
+	# tint when a disease is dulling this skill, plain "Lv N" otherwise.
+	var malus: int = skills.malus_for(def.id)
+	if malus > 0:
+		level_label.text = "Lv %d (-%d)" % [skills.effective_level(def.id), malus]
+		level_label.modulate = Color(1.0, 0.6, 0.6)
+	else:
+		level_label.text = "Lv %d" % level
+		level_label.modulate = Color.WHITE
 	var bar := refs["bar"] as ProgressBar
 	if level >= SkillData.MAX_LEVEL:
 		bar.value = 1.0

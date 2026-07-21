@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="DiseaseData" format=3]
+
+[ext_resource type="Script" path="res://data/diseases/disease_data.gd" id="1_disease"]
+[ext_resource type="Script" path="res://data/diseases/disease_stage.gd" id="2_stage"]
+
+[sub_resource type="Resource" id="Stage_flu_0"]
+script = ExtResource("2_stage")
+duration_hours = 24.0
+health_drain_per_hour = 1.0
+skill_maluses = Dictionary[StringName, int]({
+&"social": 2,
+&"crafting": 2
+})
+mood_modifier = -0.08
+move_speed_mult = 1.0
+
+[sub_resource type="Resource" id="Stage_flu_1"]
+script = ExtResource("2_stage")
+duration_hours = 24.0
+health_drain_per_hour = 4.0
+skill_maluses = Dictionary[StringName, int]({
+&"social": 3,
+&"crafting": 3
+})
+mood_modifier = -0.12
+move_speed_mult = 1.0
+
+[resource]
+script = ExtResource("1_disease")
+id = &"station_flu"
+display_name = "Station Flu"
+description = "A common recycled-air bug. Sniffles and aches at first, dragging down social and fine-motor work; left untreated it settles into the chest and drains health fast."
+stages = Array[ExtResource("2_stage")]([SubResource("Stage_flu_0"), SubResource("Stage_flu_1")])
+contagious_rate = 0.04
+acquisition = Array[StringName]([&"outbreak"])
+treat_hours_base = 10.0
+cure_at_stage_reset = false
+min_station_tier = 2

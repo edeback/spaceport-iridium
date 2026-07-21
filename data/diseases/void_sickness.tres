@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="DiseaseData" format=3]
+
+[ext_resource type="Script" path="res://data/diseases/disease_data.gd" id="1_disease"]
+[ext_resource type="Script" path="res://data/diseases/disease_stage.gd" id="2_stage"]
+
+[sub_resource type="Resource" id="Stage_void_0"]
+script = ExtResource("2_stage")
+duration_hours = 30.0
+health_drain_per_hour = 0.5
+skill_maluses = Dictionary[StringName, int]({
+&"intellectual": 2,
+&"accuracy": 2
+})
+mood_modifier = -0.06
+move_speed_mult = 1.0
+
+[sub_resource type="Resource" id="Stage_void_1"]
+script = ExtResource("2_stage")
+duration_hours = 30.0
+health_drain_per_hour = 2.5
+skill_maluses = Dictionary[StringName, int]({
+&"intellectual": 3,
+&"accuracy": 3
+})
+mood_modifier = -0.1
+move_speed_mult = 1.0
+
+[resource]
+script = ExtResource("1_disease")
+id = &"void_sickness"
+display_name = "Void Sickness"
+description = "The creeping disorientation of too many hours outside the hull. Vision swims and hands shake, dulling intellect and aim. It doesn't spread - only the vacuum gives it - but it worsens the longer a spacer stays exposed."
+stages = Array[ExtResource("2_stage")]([SubResource("Stage_void_0"), SubResource("Stage_void_1")])
+contagious_rate = 0.0
+acquisition = Array[StringName]([&"space"])
+treat_hours_base = 12.0
+cure_at_stage_reset = false
+min_station_tier = 2

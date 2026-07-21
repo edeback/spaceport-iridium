@@ -127,6 +127,35 @@ func add_trait(trait_id: StringName, cell: Vector2i) -> String:
 	traits.add_trait(trait_data)
 	return _report("gave %s the %s trait" % [pawn.pawn_name, trait_data.display_name])
 
+## Infects the crew pawn nearest `cell` with disease `id` (WI-31), e.g.
+## infect("station_flu", Vector2i(16, 8)). Bypasses the station-tier unlock gate
+## and transmission so you can force a disease for testing.
+func infect(id: StringName, cell: Vector2i) -> String:
+	if DiseaseData.by_id(id) == null:
+		return _report("no such disease id: %s" % id)
+	var pawn: PawnBase = _crew_at_or_near(cell)
+	if pawn == null:
+		return _report("infect found no crew pawn near %s" % cell)
+	var disease: PawnDiseaseComponent = pawn.get_component_by_type(PawnDiseaseComponent) as PawnDiseaseComponent
+	if disease == null:
+		return _report("%s has no disease component" % pawn.pawn_name)
+	if disease.infect(id):
+		return _report("infected %s with %s" % [pawn.pawn_name, id])
+	return _report("%s already has %s" % [pawn.pawn_name, id])
+
+## Cures every active disease on the crew pawn nearest `cell` (WI-31).
+func cure(cell: Vector2i) -> String:
+	var pawn: PawnBase = _crew_at_or_near(cell)
+	if pawn == null:
+		return _report("cure found no crew pawn near %s" % cell)
+	var disease: PawnDiseaseComponent = pawn.get_component_by_type(PawnDiseaseComponent) as PawnDiseaseComponent
+	if disease == null:
+		return _report("%s has no disease component" % pawn.pawn_name)
+	var ids: Array[StringName] = disease.active_ids()
+	for disease_id: StringName in ids:
+		disease.cure(disease_id)
+	return _report("cured %d disease(s) on %s" % [ids.size(), pawn.pawn_name])
+
 ## Spawns one crew pawn at the module on `cell` (or the nearest built module).
 func spawn_pawn(cell: Vector2i) -> String:
 	var module: ModuleBase = _module_at_or_near(cell)

@@ -35,6 +35,7 @@ var _was_critical: bool = false
 ## Sibling lookups cached lazily - component _ready order isn't guaranteed.
 var _needs: PawnNeedsComponent = null
 var _breathing: PawnBreathingComponent = null
+var _disease: PawnDiseaseComponent = null
 
 func _process(delta: float) -> void:
 	var sim_hours: float = Global.time_manager.scale(delta) / TimeManager.SECONDS_PER_HOUR
@@ -44,12 +45,19 @@ func _process(delta: float) -> void:
 		_needs = owner_pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
 	if _breathing == null:
 		_breathing = owner_pawn.get_component_by_type(PawnBreathingComponent) as PawnBreathingComponent
+	if _disease == null:
+		_disease = owner_pawn.get_component_by_type(PawnDiseaseComponent) as PawnDiseaseComponent
 	var starving: bool = _needs != null and _needs.has_hunger_need and _needs.hunger_value <= 0.0
 	var suffocating: bool = _breathing != null and _breathing.is_suffocating
-	if starving or suffocating:
-		# Both emergencies at once stack their decay; regen never applies
-		# while either is active (same exclusivity rule as before WI-17).
-		var decay: float = 0.0
+	# Disease drain (WI-31) joins starvation/suffocation as a third decay source;
+	# it stacks with them and, like them, suppresses passive regen while active.
+	# The Medical Bay treatment job restores health directly on top of this, so a
+	# treated patient still nets positive despite the suppressed passive regen.
+	var disease_drain: float = _disease.total_health_drain_per_hour() if _disease != null else 0.0
+	if starving or suffocating or disease_drain > 0.0:
+		# Multiple sources at once stack their decay; regen never applies while any
+		# is active (the exclusivity rule, extended for disease in WI-31).
+		var decay: float = disease_drain
 		if starving:
 			decay += starvation_decay_per_hour
 		if suffocating:

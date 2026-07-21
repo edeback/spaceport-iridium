@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="DiseaseData" format=3]
+
+[ext_resource type="Script" path="res://data/diseases/disease_data.gd" id="1_disease"]
+[ext_resource type="Script" path="res://data/diseases/disease_stage.gd" id="2_stage"]
+
+[sub_resource type="Resource" id="Stage_fever_0"]
+script = ExtResource("2_stage")
+duration_hours = 20.0
+health_drain_per_hour = 1.0
+skill_maluses = Dictionary[StringName, int]({
+&"intellectual": 2,
+&"social": 2
+})
+mood_modifier = -0.08
+move_speed_mult = 1.25
+
+[sub_resource type="Resource" id="Stage_fever_1"]
+script = ExtResource("2_stage")
+duration_hours = 20.0
+health_drain_per_hour = 3.0
+skill_maluses = Dictionary[StringName, int]({
+&"intellectual": 3,
+&"social": 3
+})
+mood_modifier = -0.12
+move_speed_mult = 1.4
+
+[resource]
+script = ExtResource("1_disease")
+id = &"fervent_fever"
+display_name = "Fervent Fever"
+description = "A wired, restless fever. The afflicted burn hot and pace fast - unnaturally quick on their feet - while their focus and patience fray. Mildly catching in close quarters."
+stages = Array[ExtResource("2_stage")]([SubResource("Stage_fever_0"), SubResource("Stage_fever_1")])
+contagious_rate = 0.03
+acquisition = Array[StringName]([&"outbreak"])
+treat_hours_base = 9.0
+cure_at_stage_reset = false
+min_station_tier = 3
