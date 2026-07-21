@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://crchgstn0wi28"]
+
+[ext_resource type="PackedScene" uid="uid://c4cgh4tautltt" path="res://modules/templates/module_2x2.tscn" id="1"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="2"]
+[ext_resource type="Script" uid="uid://clty12u78h7h7" path="res://modules/components/recharge_component.gd" id="3"]
+
+[node name="Module" instance=ExtResource("1")]
+
+[node name="PathComponent" parent="."]
+path_points = Array[Vector2i]([Vector2i(96, 96)])
+
+[node name="PowerConsumptionComponent" parent="." instance=ExtResource("2")]
+power_consumption = 20.0
+
+[node name="RechargeComponent" type="Node2D" parent="." node_paths=PackedStringArray("power_consumption_component")]
+script = ExtResource("3")
+power_consumption_component = NodePath("../PowerConsumptionComponent")
+charge_rate_per_hour = 240.0
+capacity = 2

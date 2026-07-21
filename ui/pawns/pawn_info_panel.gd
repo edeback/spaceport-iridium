@@ -4,6 +4,11 @@ extends MarginContainer
 @export var data_tabs: TabContainer
 var pawn: PawnBase
 
+## Robot readout widgets (WI-28), built in code for RobotPawnBase pawns only.
+var _robot_energy_bar: ProgressBar = null
+var _robot_integrity_bar: ProgressBar = null
+var _robot_state_label: Label = null
+
 
 func set_pawn(_pawn: PawnBase) -> void:
 	pawn = _pawn
@@ -22,12 +27,13 @@ func set_pawn(_pawn: PawnBase) -> void:
 	if pawn.schedule != null:
 		pawn.schedule.this_shift_changed.connect(_refresh_title)
 	_setup_crew_controls()
+	_setup_robot_controls()
 
 ## Wage readout + fire button (WI-25) for organic crew only - drones and robots
 ## draw no wage and can't be fired. Built in code and inserted just under the
 ## name row; the panel is instantiated fresh per pawn, so nothing to tear down.
 func _setup_crew_controls() -> void:
-	if pawn is MiningDronePawn or pawn.get_component_by_type(PawnNeedsComponent) == null:
+	if pawn is RobotPawnBase or pawn.get_component_by_type(PawnNeedsComponent) == null:
 		return
 	var header_hbox: Node = %PawnNameLabel.get_parent()
 	var vbox: Node = header_hbox.get_parent()
@@ -63,6 +69,81 @@ func _on_fire_pressed() -> void:
 	dialog.canceled.connect(dialog.queue_free)
 	add_child(dialog)
 	dialog.popup_centered()
+
+## Robot energy + integrity bars and a live state line (WI-28), for RobotPawnBase
+## pawns only. Built in code and inserted under the name row, mirroring
+## _setup_crew_controls - robots have no needs tab, so this is their vitals view.
+func _setup_robot_controls() -> void:
+	if not pawn is RobotPawnBase:
+		return
+	var robot := pawn as RobotPawnBase
+	var power: RobotPowerComponent = robot.power_component
+	var integrity: RobotIntegrityComponent = robot.integrity_component
+	var header_hbox: Node = %PawnNameLabel.get_parent()
+	var vbox: Node = header_hbox.get_parent()
+	var section := VBoxContainer.new()
+	section.add_theme_constant_override("separation", 2)
+	if power != null:
+		_robot_energy_bar = _make_stat_row(section, "Energy", power.energy_max, power.energy)
+		power.energy_changed.connect(_on_robot_energy_changed)
+	if integrity != null:
+		_robot_integrity_bar = _make_stat_row(section, "Integrity", integrity.integrity_max, integrity.integrity)
+		integrity.integrity_changed.connect(_on_robot_integrity_changed)
+	_robot_state_label = Label.new()
+	_robot_state_label.self_modulate = Color(1, 1, 1, 0.7)
+	section.add_child(_robot_state_label)
+	vbox.add_child(section)
+	vbox.move_child(section, header_hbox.get_index() + 1)
+	pawn.job_changed.connect(_refresh_robot_state)
+	_refresh_robot_state()
+
+## A "<label> [====]" row appended to `parent`; returns the ProgressBar.
+func _make_stat_row(parent: VBoxContainer, label_text: String, max_value: float, value: float) -> ProgressBar:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	var label := Label.new()
+	label.text = label_text
+	label.custom_minimum_size = Vector2(56, 0)
+	row.add_child(label)
+	var bar := ProgressBar.new()
+	bar.custom_minimum_size = Vector2(90, 0)
+	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bar.max_value = max_value
+	bar.value = value
+	bar.show_percentage = true
+	row.add_child(bar)
+	parent.add_child(row)
+	return bar
+
+func _on_robot_energy_changed(new_energy: float) -> void:
+	if is_instance_valid(_robot_energy_bar):
+		_robot_energy_bar.value = new_energy
+	_refresh_robot_state()
+
+func _on_robot_integrity_changed(new_integrity: float) -> void:
+	if is_instance_valid(_robot_integrity_bar):
+		_robot_integrity_bar.value = new_integrity
+	_refresh_robot_state()
+
+func _refresh_robot_state() -> void:
+	if not is_instance_valid(_robot_state_label) or not pawn is RobotPawnBase:
+		return
+	_robot_state_label.text = "State: " + _robot_state_text()
+
+func _robot_state_text() -> String:
+	var robot := pawn as RobotPawnBase
+	if robot.power_component != null and robot.power_component.must_recharge():
+		return "Out of power — crawling"
+	var job: JobBase = pawn.current_job
+	if job is Job_Recharge:
+		return "Recharging"
+	if job is Job_GetRepaired:
+		return "Getting repaired"
+	if robot.power_component != null and robot.power_component.wants_recharge():
+		return "Seeking a charger"
+	if job == null or job is Job_Idle or job is Job_IdleWander:
+		return "Idle"
+	return "Working"
 
 func _process(_delta: float) -> void:
 	if is_instance_valid(pawn):

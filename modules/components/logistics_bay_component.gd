@@ -63,8 +63,9 @@ func _process(delta: float) -> void:
 		return
 	var powered: bool = power_consumer == null or power_consumer.powered
 	last_error = "" if powered else "No power!"
-	# Sync power each frame so a power loss freezes robots promptly (mirrors
-	# MiningComponent). Stat changes are rarer and handled via the upgrade signal.
+	# Reflect bay power onto robots each frame (WI-28): no longer a freeze - robots
+	# run on their own battery - it tracks whether the bay's implicit charger is
+	# available. Stat changes are rarer and handled via the upgrade signal.
 	for robot: HaulerRobotPawn in robots:
 		robot.powered = powered
 
@@ -122,6 +123,11 @@ func _on_module_upgraded(module: ModuleBase) -> void:
 func register_robot(robot: HaulerRobotPawn) -> void:
 	robots.append(robot)
 	_apply_robot_stats_to(robot)
+
+## A robot was destroyed (WI-28): drop it from the roster so a slot frees under the
+## cap and the player can buy a replacement. Called before the robot frees itself.
+func notify_robot_destroyed(robot: HaulerRobotPawn) -> void:
+	robots.erase(robot)
 
 func _exit_tree() -> void:
 	# Robots die with the bay; each dumps carried cargo as a pile via PawnBase's

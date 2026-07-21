@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="UnlockData" format=3 uid="uid://crchgstn0un28"]
+
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_res"]
+[ext_resource type="Script" uid="uid://c6vwp01mtmoyt" path="res://data/unlocks/effects/unlock_effect.gd" id="2_eff"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="3_cred"]
+[ext_resource type="Resource" uid="uid://crchgstn0md28" path="res://data/modules/logistics/recharge_station_mdata.tres" id="4_mod"]
+[ext_resource type="Script" uid="uid://byjsbe8qb3i7t" path="res://data/unlocks/effects/grant_module_effect.gd" id="5_grant"]
+[ext_resource type="Script" uid="uid://co6152j7b38nw" path="res://data/unlocks/unlock_data.gd" id="6_unlock"]
+[ext_resource type="Texture2D" path="res://assets/sprites/module_generic_blue.png" id="7_icon"]
+[ext_resource type="Resource" uid="uid://c3lgu9bay0unl" path="res://data/unlocks/industrial_tree/logistics_bay_unlock.tres" id="8_prereq"]
+
+[sub_resource type="Resource" id="Resource_grant"]
+script = ExtResource("5_grant")
+module = ExtResource("4_mod")
+metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
+
+[resource]
+script = ExtResource("6_unlock")
+id = &"recharge_station_unlock"
+min_tier = 1
+name = "Recharge Station"
+description = "A dedicated charger for robots. Build it near your work zones so drones and haulers top up without a long trip home."
+icon = ExtResource("7_icon")
+tree_id = &"industrial"
+cost = Dictionary[ExtResource("1_res"), int]({
+ExtResource("3_cred"): 300
+})
+prerequisites = Array[ExtResource("6_unlock")]([ExtResource("8_prereq")])
+effects = Array[ExtResource("2_eff")]([SubResource("Resource_grant")])
+metadata/_custom_type_script = "uid://co6152j7b38nw"

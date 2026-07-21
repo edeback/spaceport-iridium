@@ -375,7 +375,9 @@ func move(delta: float) -> void:
 		await reached_next_node()
 		if target == null or state == State.Conveyed:
 			return
-	var dist_to_travel: float = owner_pawn.speed * owner_pawn.speed_jitter * delta * speed
+	# move_speed_scale is 1.0 for everyone except a robot crawling on backup
+	# power at zero energy (WI-28), which travels at a fraction of its speed.
+	var dist_to_travel: float = owner_pawn.speed * owner_pawn.speed_jitter * delta * speed * owner_pawn.move_speed_scale
 	var next_position: Vector2 = owner_pawn.global_position
 	while dist_to_travel > 0:
 		if in_sub_path:

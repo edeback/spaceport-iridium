@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://drprbay0md28"]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/module_generic_blue.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_res"]
+[ext_resource type="PackedScene" uid="uid://drprbay00wi28" path="res://modules/logistics/repair_bay.tscn" id="3_scn"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="4_steel"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="5_mdata"]
+
+[resource]
+script = ExtResource("5_mdata")
+id = &"repair_bay_mdata"
+name = "Repair Bay"
+description = "Restores a damaged robot's integrity. Robots wear out and malfunction over time; without a Repair Bay, a battered robot eventually breaks for good."
+scene = ExtResource("3_scn")
+icon = ExtResource("1_icon")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_res"), int]({
+ExtResource("4_steel"): 18
+})
+tags = Array[String](["Logistics"])
+unlocked_by_default = false
+max_hp = 100.0
+upkeep_per_cycle = 2

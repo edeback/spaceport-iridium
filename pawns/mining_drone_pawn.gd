@@ -1,60 +1,34 @@
 class_name MiningDronePawn
-extends PawnBase
+extends RobotPawnBase
 
 @export var drone_efficiency: float = 0.2
 
-@export var powered: bool = true:
-	set(new_powered):
-		if powered != new_powered:
-			powered = new_powered
-			powered_changed(new_powered)
-
 var parent_mining_component: MiningComponent = null
 
-func powered_changed(new_powered: bool) -> void:
-	pass
-
-
-func _process(delta: float) -> void:
-	if powered:
-		super(delta)
-	
-	
-## Overrides start_job as we only want to get mining jobs, and only from our parent mining component
-## Storing inventory and forced jobs are fine though, just not from the job board
-func start_job() -> void:
-	# First check for chained followups and queued needs. Checked once
-	# here rather than polled every frame by whatever queued them.
-	while not job_queue.is_empty():
-		var queued_job: JobBase = job_queue.pop_front()
-		if queued_job.is_valid() and queued_job.can_do_job(self):
-			_begin_job(queued_job)
-			return
-		queued_job.cancel(true)
-	# If we have an inventory, try to store it, but only in our parent module
-	if inventory_component != null and not inventory_component.is_empty():
-		var return_job: Job_StoreInventory = Job_StoreInventory.new()
-		return_job.deposit_storage = parent_mining_component.output_storage
-		if return_job.can_do_job(self):
-			_begin_job(return_job)
-			return
-		# No storage will take what we're carrying right now — fall through and
-		# look for a normal job anyway rather than stalling the pawn entirely.
-	if parent_mining_component:
+## Drones only mine, and only for their own bay - never the shared board. The
+## shared RobotPawnBase.start_job handles the cargo sweep, personal queue, and the
+## WI-28 energy gates; these two hooks supply the drone-specific bits.
+func _claim_work_job() -> void:
+	if parent_mining_component != null:
 		current_job = parent_mining_component.get_next_job(self)
-	if current_job:
-		current_job.start_job(self)
-	else:
-		# No job, idle pose
-		if animated_sprite != null:
-			animated_sprite.play("idle")
-
-
-func self_destruct() -> void:
 	if current_job != null:
-		current_job.cancel(true)
-		current_job = null
-	queue_free()
+		current_job.start_job(self)
+	elif animated_sprite != null:
+		# No job, idle pose
+		animated_sprite.play("idle")
+
+## Drones deposit only in their own bay's output storage.
+func _make_store_inventory_job() -> Job_StoreInventory:
+	var return_job := Job_StoreInventory.new()
+	if parent_mining_component != null:
+		return_job.deposit_storage = parent_mining_component.output_storage
+	return return_job
+
+## Destroyed (WI-28): drop off the bay's roster so its respawn timer builds a
+## replacement (a bay always keeps up to max_drones running).
+func _notify_owner_removed() -> void:
+	if parent_mining_component != null:
+		parent_mining_component.notify_drone_destroyed(self)
 
 # --- persistence ------------------------------------------------------------
 

@@ -18,6 +18,7 @@
 [ext_resource type="Resource" uid="uid://cns3lrfd8jekj" path="res://data/resources/silicon_ore.tres" id="11_avr65"]
 [ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="14_2l5du"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="14_5m057"]
+[ext_resource type="Script" uid="uid://clty12u78h7h7" path="res://modules/components/recharge_component.gd" id="15_rchg"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wt5jo"]
 shader = ExtResource("2_58pc6")
@@ -107,3 +108,9 @@ power_consumption_component = NodePath("../PowerConsumptionComponent")
 
 [node name="StructureComponent" parent="." index="6" unique_id=2060859123]
 visible = false
+
+[node name="RechargeComponent" type="Node2D" parent="." node_paths=PackedStringArray("power_consumption_component")]
+script = ExtResource("15_rchg")
+power_consumption_component = NodePath("../PowerConsumptionComponent")
+charge_rate_per_hour = 200.0
+capacity = 3

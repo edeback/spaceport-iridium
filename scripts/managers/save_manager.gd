@@ -321,6 +321,14 @@ func _get_pawns_save() -> Array:
 		# Hauler robots (WI-27) ride the same way, referencing their Logistics Bay.
 		if pawn is HaulerRobotPawn and (pawn as HaulerRobotPawn).parent_bay != null:
 			entry["logistics_bay"] = component_ref((pawn as HaulerRobotPawn).parent_bay)
+		# Robot battery + integrity (WI-28), only present on robots. Charger and
+		# repair-bay slot occupancy is runtime-only and re-derives on load.
+		var robot_power: RobotPowerComponent = pawn.get_component_by_type(RobotPowerComponent) as RobotPowerComponent
+		if robot_power != null:
+			entry["robot_power"] = robot_power.get_save_data()
+		var robot_integrity: RobotIntegrityComponent = pawn.get_component_by_type(RobotIntegrityComponent) as RobotIntegrityComponent
+		if robot_integrity != null:
+			entry["robot_integrity"] = robot_integrity.get_save_data()
 		# In-flight jobs (WI-21): type + target refs, restarting their current
 		# stage on load. Only saveable jobs serialize (board/idle/store-inventory
 		# jobs return {}); omit the keys entirely when there's nothing to save.
@@ -536,6 +544,15 @@ func _load_pawns(data: Array) -> void:
 		# Hauler robots (WI-27) re-register with their bay so it re-owns/powers them.
 		if pawn is HaulerRobotPawn:
 			(pawn as HaulerRobotPawn).set_owner_component(resolve_component_ref(entry.get("logistics_bay", {})) as LogisticsBayComponent)
+		# Robot battery + integrity (WI-28). The components are created in
+		# RobotPawnBase._ready (on add_child, above), so they resolve here.
+		# Missing keys (pre-WI-28 saves) default to full inside load_save_data.
+		var robot_power: RobotPowerComponent = pawn.get_component_by_type(RobotPowerComponent) as RobotPowerComponent
+		if robot_power != null:
+			robot_power.load_save_data(entry.get("robot_power", {}))
+		var robot_integrity: RobotIntegrityComponent = pawn.get_component_by_type(RobotIntegrityComponent) as RobotIntegrityComponent
+		if robot_integrity != null:
+			robot_integrity.load_save_data(entry.get("robot_integrity", {}))
 		# Jobs last (WI-21): module/needs/inventory are all in place, so the
 		# restored job's claim gauntlet - run on the pawn's first start_job()
 		# tick, not here - sees the true world. Queue in saved order, then push
@@ -552,15 +569,25 @@ func _load_pawn_jobs(pawn: PawnBase, entry: Dictionary, needs: PawnNeedsComponen
 		var job: JobBase = JobSerializer.deserialize(job_data)
 		if job != null:
 			pawn.queue_job(job)
-			_adopt_if_need_job(needs, job)
+			_adopt_if_need_job(pawn, needs, job)
 	var current_job: JobBase = JobSerializer.deserialize(entry.get("current_job", {}))
 	if current_job != null:
 		pawn.queue_job(current_job, true) # to front: runs before the restored queue
-		_adopt_if_need_job(needs, current_job)
+		_adopt_if_need_job(pawn, needs, current_job)
 
-## A restored Eat/Sleep/Recreate must be re-linked to its need slot, or the
-## decay loop (which lost its pending_job pointer on load) would queue a second
-## job for the same need. No-op for non-need jobs and pawns without needs.
-func _adopt_if_need_job(needs: PawnNeedsComponent, job: JobBase) -> void:
+## A restored need job must be re-linked to the component that queued it, or that
+## component (which lost its pending-job pointer on load) would queue a second
+## job for the same need. Covers organic needs (Eat/Sleep/Recreate) and the robot
+## needs (WI-28: recharge -> RobotPowerComponent, repair -> RobotIntegrityComponent).
+## No-op for anything else.
+func _adopt_if_need_job(pawn: PawnBase, needs: PawnNeedsComponent, job: JobBase) -> void:
 	if needs != null and (job is Job_Eat or job is Job_Sleep or job is Job_Recreate):
 		needs.adopt_restored_need_job(job)
+	elif job is Job_Recharge:
+		var power: RobotPowerComponent = pawn.get_component_by_type(RobotPowerComponent) as RobotPowerComponent
+		if power != null:
+			power.adopt_restored_recharge_job(job as Job_Recharge)
+	elif job is Job_GetRepaired:
+		var integrity: RobotIntegrityComponent = pawn.get_component_by_type(RobotIntegrityComponent) as RobotIntegrityComponent
+		if integrity != null:
+			integrity.adopt_restored_repair_job(job as Job_GetRepaired)

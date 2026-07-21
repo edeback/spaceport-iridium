@@ -6,17 +6,24 @@
 [node name="PawnBase" unique_id=581295898 node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_gfyck")]
 script = ExtResource("2_ows4s")
 drone_efficiency = 0.2
-cargo_size = 5.0
 powered = true
+energy_max = 100.0
+energy_idle_drain_per_hour = 0.5
+energy_drain_moving_per_hour = 4.0
+energy_drain_working_per_hour = 4.0
+energy_seek_threshold_percent = 30.0
+energy_crawl_speed_scale = 0.25
+integrity_max = 100.0
+integrity_repair_threshold_percent = 50.0
+integrity_malfunction_chance_per_hour = 0.02
+integrity_malfunction_damage_min = 5.0
+integrity_malfunction_damage_max = 10.0
 animated_sprite = NodePath("Offset/Robot")
 
-[node name="TurboliftBase" parent="Offset" parent_id_path=PackedInt32Array(1164109464) index="0" unique_id=1258126832]
-position = Vector2(0, -10)
-
-[node name="Crew" parent="Offset" parent_id_path=PackedInt32Array(1164109464) index="2" unique_id=552917447]
+[node name="Crew" parent="Offset" parent_id_path=PackedInt32Array(1164109464) index="1" unique_id=552917447]
 visible = false
 
-[node name="Robot" parent="Offset" parent_id_path=PackedInt32Array(1164109464) index="3" unique_id=264074984]
+[node name="Robot" parent="Offset" parent_id_path=PackedInt32Array(1164109464) index="2" unique_id=264074984]
 visible = true
 position = Vector2(0, -7)
 scale = Vector2(0.2, 0.2)

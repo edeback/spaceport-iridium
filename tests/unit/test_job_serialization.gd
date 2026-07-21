@@ -94,6 +94,16 @@ func test_recreate_round_trips_through_registry() -> void:
 	assert_eq(Job_Recreate.new().get_save_data(), {"type": "recreate"}, "recreate saves just its type")
 	assert_true(JobSerializer.deserialize({"type": "recreate"}) is Job_Recreate, "recreate restores to a Job_Recreate")
 
+# --- robot need jobs (WI-28: target-less, re-found on load) -------------------
+
+func test_recharge_round_trips_through_registry() -> void:
+	assert_eq(Job_Recharge.new().get_save_data(), {"type": "recharge"}, "recharge saves just its type")
+	assert_true(JobSerializer.deserialize({"type": "recharge"}) is Job_Recharge, "recharge restores to a Job_Recharge")
+
+func test_get_repaired_round_trips_through_registry() -> void:
+	assert_eq(Job_GetRepaired.new().get_save_data(), {"type": "get_repaired"}, "get_repaired saves just its type")
+	assert_true(JobSerializer.deserialize({"type": "get_repaired"}) is Job_GetRepaired, "get_repaired restores to a Job_GetRepaired")
+
 # --- SaveManager ref-helper null guards --------------------------------------
 
 func test_component_ref_null_is_empty() -> void:

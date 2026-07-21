@@ -51,15 +51,18 @@ func _process(delta: float) -> void:
 	var sim_delta: float = Global.time_manager.scale(delta)
 	if sim_delta <= 0.0:
 		return
-	if !power_consumer.powered:
-		for drone: MiningDronePawn in drones:
-			drone.powered = false
-		# Do nothing if unpowered
+	# Reflect bay power onto drones (WI-28): this no longer freezes them - drones
+	# run on their own battery - it just tracks whether the bay's implicit charger
+	# is available. An unpowered bay still can't build a new drone, so respawn
+	# pauses while the drones themselves keep flying (and draining).
+	var bay_powered: bool = power_consumer.powered
+	for drone: MiningDronePawn in drones:
+		drone.powered = bay_powered
+	if !bay_powered:
 		last_error = "No power!"
+		_respawn_time_left = -1.0
 		return
 	last_error = ""
-	for drone: MiningDronePawn in drones:
-		drone.powered = true
 	if drones.size() < max_drones:
 		if _respawn_time_left < 0.0:
 			_respawn_time_left = drone_respawn_seconds
@@ -81,6 +84,11 @@ func build_drone() -> void:
 ## Add a drone to tracked drones externally, used for save/load
 func register_drone(drone: MiningDronePawn) -> void:
 	drones.append(drone)
+
+## A drone was destroyed (WI-28): drop it from the roster so the respawn timer
+## rebuilds one (up to max_drones). Called before the drone frees itself.
+func notify_drone_destroyed(drone: MiningDronePawn) -> void:
+	drones.erase(drone)
 
 func _exit_tree() -> void:
 	for drone: MiningDronePawn in drones:

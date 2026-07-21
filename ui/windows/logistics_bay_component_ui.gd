@@ -39,7 +39,20 @@ func _process(_delta: float) -> void:
 		_refresh()
 
 func _refresh() -> void:
-	_robots_label.text = "Hauler robots: %d / %d" % [bay.robots.size(), bay.effective_max_robots()]
+	# Header count plus a per-robot energy/integrity line (WI-28) so the player can
+	# see at a glance which robots are running low or getting battered.
+	var text: String = "Hauler robots: %d / %d" % [bay.robots.size(), bay.effective_max_robots()]
+	for robot: HaulerRobotPawn in bay.robots:
+		if not is_instance_valid(robot):
+			continue
+		var energy_pct: int = 100
+		if robot.power_component != null:
+			energy_pct = int(round(robot.power_component.energy_percent()))
+		var integrity_pct: int = 100
+		if robot.integrity_component != null:
+			integrity_pct = int(round(robot.integrity_component.integrity_percent()))
+		text += "\n  • Energy %d%%   Integrity %d%%" % [energy_pct, integrity_pct]
+	_robots_label.text = text
 	_buy_button.text = "Buy robot (%d cr)" % bay.robot_cost
 	_buy_button.disabled = not bay.can_buy_robot()
 

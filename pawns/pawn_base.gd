@@ -51,6 +51,11 @@ var _sprite_base_position: Vector2 = Vector2.ZERO
 ## component doesn't stomp the walk animation with set_idle() every frame.
 var in_manual_walk: bool = false
 
+## Movement speed multiplier (WI-28). Default 1.0 = no-op for crew and normal
+## pawns; a robot at zero energy sets this below 1.0 so it crawls to a charger
+## on emergency backup power. PawnMovementComponent.move() folds it into travel.
+var move_speed_scale: float = 1.0
+
 ## Monotonic source for pawn_id (WI-23). Static, so it lives on the script and
 ## survives the scene swap a load performs; load bumps it past every restored id.
 static var _next_pawn_id: int = 1
@@ -242,6 +247,12 @@ func queue_job(job: JobBase, to_front: bool = false) -> void:
 		job_queue.push_front(job)
 	else:
 		job_queue.push_back(job)
+
+## Removes a job from the personal queue if present (WI-28): used when a queued
+## job is about to be promoted to current via interrupt_with_job, so it isn't
+## also left sitting in the queue to be re-popped after it ends. No-op if absent.
+func dequeue_job(job: JobBase) -> void:
+	job_queue.erase(job)
 
 ## Moves an already-queued job to the queue front (critical-need promotion,
 ## WI-05). Deliberately does NOT interrupt the current job - see the

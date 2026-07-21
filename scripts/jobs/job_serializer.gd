@@ -33,6 +33,10 @@ static func _ensure_registry() -> void:
 	_factories[&"eat"] = Job_Eat.restore
 	_factories[&"sleep"] = Job_Sleep.restore
 	_factories[&"recreate"] = Job_Recreate.restore
+	# Robot needs (WI-28): recharge/repair resume above their seek threshold, so
+	# they persist like the organic need jobs and re-link to their robot component.
+	_factories[&"recharge"] = Job_Recharge.restore
+	_factories[&"get_repaired"] = Job_GetRepaired.restore
 
 ## A job's save dict, or {} when it isn't saveable (base get_save_data()).
 static func serialize(job: JobBase) -> Dictionary:

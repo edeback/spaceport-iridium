@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://d3gb4ym0d0l31"]
+[gd_scene load_steps=5 format=3 uid="uid://d3gb4ym0d0l31"]
 
 [ext_resource type="PackedScene" uid="uid://c4cgh4tautltt" path="res://modules/templates/module_2x2.tscn" id="1"]
 [ext_resource type="PackedScene" uid="uid://d1gb4yc0mp0n1" path="res://modules/components/logistics_bay_component.tscn" id="2"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="3"]
+[ext_resource type="Script" uid="uid://clty12u78h7h7" path="res://modules/components/recharge_component.gd" id="4"]
 
 [node name="Module" instance=ExtResource("1")]
 
@@ -14,3 +15,9 @@ power_consumption = 15.0
 
 [node name="LogisticsBayComponent" parent="." node_paths=PackedStringArray("power_consumer") instance=ExtResource("2")]
 power_consumer = NodePath("../PowerConsumptionComponent")
+
+[node name="RechargeComponent" type="Node2D" parent="." node_paths=PackedStringArray("power_consumption_component")]
+script = ExtResource("4")
+power_consumption_component = NodePath("../PowerConsumptionComponent")
+charge_rate_per_hour = 200.0
+capacity = 3
