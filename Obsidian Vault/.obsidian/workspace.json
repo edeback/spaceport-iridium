@@ -151,7 +151,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/WI-29_Food_Quality.md",
+                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-29_Food_Quality.md",
                 "mode": "source",
                 "source": false
               },
@@ -247,7 +247,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/WI-29_Food_Quality.md",
+                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-29_Food_Quality.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -293,7 +293,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/WI-29_Food_Quality.md",
+                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-29_Food_Quality.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -321,8 +321,10 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "471944f5475eac00",
+  "active": "cf9c918be843db58",
   "lastOpenFiles": [
+    "Spaceport Iridium/Planning/Work Items/WI-30_Module_Adjacency.md",
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-29_Food_Quality.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-28_Robotic_Needs.md",
     "Spaceport Iridium/Reorganized/Future Work.md",
     "Spaceport Iridium/Reorganized/04_World_Meta_and_Progression.md",
@@ -343,8 +345,6 @@
     "Spaceport Iridium/Planning/Work Items/WI-37_Difficulty_Levels.md",
     "Spaceport Iridium/Planning/Work Items/WI-32_Combat_v1.md",
     "Spaceport Iridium/Planning/Work Items/WI-31_Health_and_Disease.md",
-    "Spaceport Iridium/Planning/Work Items/WI-30_Module_Adjacency.md",
-    "Spaceport Iridium/Planning/Work Items/WI-29_Food_Quality.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-23_Work_Improvements.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-22_Pawn_Identity.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-12_Storage_QoL.md",

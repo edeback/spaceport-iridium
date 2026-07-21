@@ -16,4 +16,5 @@ ExtResource("3_318q4"): 1
 outputs = Dictionary[ExtResource("1_1gitk"), int]({
 ExtResource("4_lpjme"): 3
 })
+output_quality_base = 0.55
 metadata/_custom_type_script = "uid://by2n6rwcttgyx"

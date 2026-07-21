@@ -405,6 +405,11 @@ func get_save_data() -> Dictionary:
 		var generator_save: Dictionary = o2_generator.get_save_data()
 		if not generator_save.is_empty():
 			data["o2_generator"] = generator_save
+	# Sustenance pool amount + quality (WI-29). Only mess-hall-style modules have
+	# this; the key is absent otherwise and on pre-WI-29 saves.
+	var sustenance: SustenanceComponent = get_component_by_type(SustenanceComponent) as SustenanceComponent
+	if sustenance != null:
+		data["sustenance"] = sustenance.get_save_data()
 	# Conveyor config + buffer (WI-27). Endpoints save as component refs resolved
 	# after every module is placed (world load is two-phase).
 	var conveyor: ConveyorComponent = get_component_by_type(ConveyorComponent) as ConveyorComponent
@@ -456,6 +461,11 @@ func load_save_data(data: Dictionary) -> void:
 	var o2_generator: OxygenGeneratorComponent = get_component_by_type(OxygenGeneratorComponent) as OxygenGeneratorComponent
 	if o2_generator != null and data.has("o2_generator"):
 		o2_generator.load_save_data(data["o2_generator"])
+	# Sustenance pool (WI-29). After storage so a re-placed mess hall has its
+	# Kitchen bay restored first; the pool is independent of it either way.
+	var sustenance: SustenanceComponent = get_component_by_type(SustenanceComponent) as SustenanceComponent
+	if sustenance != null and data.has("sustenance"):
+		sustenance.load_save_data(data["sustenance"])
 	# Conveyor (WI-27): endpoints resolve against modules already placed in the
 	# world load's first phase, so restoring here (second phase) is safe.
 	var conveyor: ConveyorComponent = get_component_by_type(ConveyorComponent) as ConveyorComponent

@@ -2,10 +2,11 @@
 
 [ext_resource type="Script" uid="uid://c2os8tpljbjm8" path="res://ui/windows/ui_sustenance_component.gd" id="1_j1b23"]
 
-[node name="UiSustenanceComponent" type="PanelContainer" unique_id=701076566 node_paths=PackedStringArray("meals_available_label", "meals_max_label")]
+[node name="UiSustenanceComponent" type="PanelContainer" unique_id=701076566 node_paths=PackedStringArray("meals_available_label", "meals_max_label", "quality_label")]
 script = ExtResource("1_j1b23")
 meals_available_label = NodePath("MarginContainer/ContentsBox/MealsAvailableLabel")
 meals_max_label = NodePath("MarginContainer/ContentsBox/MealsMaxLabel")
+quality_label = NodePath("MarginContainer/ContentsBox/QualityLabel")
 metadata/_custom_type_script = "uid://c2os8tpljbjm8"
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=96124917]
@@ -37,3 +38,13 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "4"
+
+[node name="QualityCaption" type="Label" parent="MarginContainer/ContentsBox" unique_id=1500000001]
+layout_mode = 2
+text = "   Quality: "
+
+[node name="QualityLabel" type="Label" parent="MarginContainer/ContentsBox" unique_id=1500000002]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "50%"

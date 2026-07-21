@@ -16,6 +16,8 @@
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="13_u5ltp"]
 [ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="14_8n0tu"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="14_oqo1h"]
+[ext_resource type="Script" uid="uid://c2qsvh4rhb1ta" path="res://scripts/pathing/anchor_def.gd" id="15_anchr"]
+[ext_resource type="Script" uid="uid://d4aeiirm7ox7s" path="res://modules/components/workspace_component.gd" id="16_wksp"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_pljme"]
 shader = ExtResource("2_tsctt")
@@ -41,6 +43,13 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 script = ExtResource("10_vp40g")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
+[sub_resource type="Resource" id="Resource_wkstn"]
+script = ExtResource("15_anchr")
+type = 0
+path_index = 0
+animation = &"interact"
+metadata/_custom_type_script = "uid://c2qsvh4rhb1ta"
+
 [node name="Module" unique_id=1164815278 instance=ExtResource("1_vpngb")]
 size = Vector2i(3, 1)
 
@@ -62,6 +71,7 @@ scale = Vector2(3, 1)
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 visible = false
 path_points = Array[Vector2i]([Vector2i(50, 58)])
+anchors = Array[ExtResource("15_anchr")]([SubResource("Resource_wkstn")])
 
 [node name="StructureComponent" parent="." index="2" unique_id=2060859123]
 connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(1, -1), Vector2i(2, -1), Vector2i(-1, 0), Vector2i(3, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)])
@@ -74,6 +84,8 @@ input_storage = NodePath("../Input")
 output_storage = NodePath("../Output")
 time_to_process = 30.0
 power_consumer = NodePath("../PowerConsumptionComponent")
+requires_worker = true
+worker_skill = &"growing"
 
 [node name="PowerConsumptionComponent" parent="." index="4" unique_id=593982705 instance=ExtResource("7_utgk8")]
 power_consumption = 150.0
@@ -92,3 +104,6 @@ position = Vector2(133, -3)
 storage_data = Dictionary[ExtResource("9_vk0fi"), ExtResource("10_vp40g")]({
 ExtResource("14_8n0tu"): SubResource("Resource_txiy8")
 })
+
+[node name="WorkspaceComponent" type="Node2D" parent="." index="8" unique_id=771230003]
+script = ExtResource("16_wksp")

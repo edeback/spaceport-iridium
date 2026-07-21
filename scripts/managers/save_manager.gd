@@ -94,6 +94,11 @@ static func instance_from_dict(data: Dictionary) -> ItemInstanceData:
 			var ore := OreInstanceData.new()
 			ore.richness = float(data.get("richness", 0.5))
 			return ore
+		"food":
+			var food := FoodInstanceData.new()
+			food.quality = float(data.get("quality", FoodInstanceData.DEFAULT_QUALITY))
+			food.food_type = StringName(data.get("food_type", ""))
+			return food
 	return null
 
 static func stacks_to_dicts(stacks: Array[ResourceStack]) -> Array:

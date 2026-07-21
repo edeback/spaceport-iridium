@@ -20,6 +20,12 @@ extends ComponentBase
 ## consulted when requires_worker.
 @export var worker_skill: StringName = &"crafting"
 
+## Food quality (WI-29): how much a max-level worker adds to a food recipe's
+## output_quality_base. The operator's worker_skill level scales linearly from 0
+## (unskilled: base unchanged) to this at MAX_LEVEL. Ignored for unmanned
+## producers (no worker -> no shift) and non-food recipes (output_quality_base < 0).
+@export var worker_quality_shift_at_max: float = 0.35
+
 ## Stat key routed through the owner module's stat-modifier layer. A MULT < 1
 ## from a "faster processing" upgrade shortens the effective processing time.
 const STAT_PROCESS_TIME := &"process_time"
@@ -58,6 +64,12 @@ var _work_job: Job_WorkProcessor = null
 ## _manned_processing() once per frame to tell "actively worked" (progress bar
 ## live) from "waiting for a worker" (stalled, distinct from unpowered).
 var _worked_this_frame: bool = false
+
+## The pawn currently operating this processor (WI-29 food quality). Set by the
+## driving Job_WorkProcessor each Working tick and read at batch completion to
+## shift food output quality by the worker's skill. Null for unmanned producers
+## and between shifts - then food outputs deposit at the recipe's base quality.
+var current_worker: PawnBase = null
 
 signal processor_progress_changed(new_progress: float)
 signal batch_richness_changed(new_richness: float)
@@ -211,6 +223,36 @@ func _scaled_output(base_amount: int) -> float:
 		return float(base_amount)
 	return base_amount * lerpf(recipe.min_yield_mult, recipe.max_yield_mult, current_batch_richness)
 
+## Quality (0..1) to stamp on this recipe's food outputs (WI-29): the recipe's
+## base plus the operating worker's skill-scaled shift. Unmanned or between
+## shifts (current_worker null) -> just the base. A future inherit_input_quality
+## flag could fold current_batch_richness in here for process-food recipes.
+func _compute_output_quality() -> float:
+	var shift: float = 0.0
+	if current_worker != null and is_instance_valid(current_worker):
+		var skills: PawnSkillsComponent = current_worker.get_skills_component()
+		if skills != null:
+			var t: float = clampf(float(skills.get_level(worker_skill)) / float(SkillData.MAX_LEVEL), 0.0, 1.0)
+			shift = worker_quality_shift_at_max * t
+	return clampf(recipe.output_quality_base + shift, 0.0, 1.0)
+
+## Deposits `whole` units of `output`, attaching FoodInstanceData when the recipe
+## is a food recipe (output_quality_base >= 0) and the resource carries variance -
+## so quality flows through storage/hauling/save exactly like ore richness.
+## Non-food outputs take the plain path unchanged. Room is pre-checked by the
+## caller, so this never fails on space (asserts if it somehow does).
+func _deposit_output(output: ResourceData, whole: int) -> bool:
+	if recipe.output_quality_base >= 0.0 and output.has_variance:
+		var stack := ResourceStack.new()
+		stack.resource_data = output
+		stack.amount = whole
+		var food := FoodInstanceData.new()
+		food.quality = _compute_output_quality()
+		stack.instance_data = food
+		var batch: Array[ResourceStack] = [stack]
+		return output_storage.deposit_stacks(output, batch, false)
+	return output_storage.deposit(output, whole)
+
 ## Deposits the batch's outputs, scaled by batch richness. Whole units only;
 ## the fractional remainder per output carries in _yield_residue toward the
 ## next batch (so a scaled 0.7 yields nothing now but 1 extra soon). Returns
@@ -237,7 +279,7 @@ func _try_deposit_outputs() -> bool:
 		var whole: int = whole_amounts[output]
 		_yield_residue[output] = with_residue - whole
 		if whole > 0:
-			var doublecheck: bool = output_storage.deposit(output, whole)
+			var doublecheck: bool = _deposit_output(output, whole)
 			assert(doublecheck, "Somehow couldn't output items when there was room!")
 	return true
 

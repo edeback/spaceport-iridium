@@ -86,11 +86,37 @@ func eat(prev_success: bool) -> void:
 	# Eat from the component we chose and walked to, not whatever module we
 	# happen to be standing in - re-validated since the walk took time.
 	if is_instance_valid(target_component) and target_component.sustenance_available > 0:
-		var amount_consumed: int = target_component.consume_sustenance(desired_sustenance)
-		(pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent).hunger_value += amount_consumed
+		# consume_sustenance returns the amount AND the quality of the portion eaten
+		# (captured before any empty-pool reset), so we don't re-read pool_quality.
+		var meal: Dictionary = target_component.consume_sustenance(desired_sustenance)
+		var amount_consumed: int = int(meal["amount"])
+		var meal_quality: float = float(meal["quality"])
+		var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
+		if needs != null:
+			# Nourishment scales with quality (WI-29): a good meal fills hunger
+			# further per unit eaten, a poor one less.
+			var mult: float = FoodInstanceData.nourishment_mult(meal_quality, target_component.min_nourish_mult, target_component.max_nourish_mult)
+			needs.hunger_value += amount_consumed * mult
+			_apply_meal_mood(needs, meal_quality)
 		job_state = JobBase.JobState.Finished
 	else:
 		cancel(true)
+
+## Timed happiness nudge from the meal's quality band (WI-29). good_meal and
+## bad_meal are mutually exclusive: the latest meal clears the other id so "last
+## meal wins" (a good meal after a bad one lifts you, not both at once); a
+## neutral meal clears both.
+func _apply_meal_mood(needs: PawnNeedsComponent, meal_quality: float) -> void:
+	var band: int = FoodInstanceData.meal_mood_band(meal_quality, target_component.bad_meal_band, target_component.good_meal_band)
+	if band > 0:
+		needs.remove_modifier(&"bad_meal")
+		needs.add_modifier(&"good_meal", target_component.good_meal_mood, target_component.meal_mood_duration_hours)
+	elif band < 0:
+		needs.remove_modifier(&"good_meal")
+		needs.add_modifier(&"bad_meal", target_component.bad_meal_mood, target_component.meal_mood_duration_hours)
+	else:
+		needs.remove_modifier(&"good_meal")
+		needs.remove_modifier(&"bad_meal")
 
 # --- persistence (WI-21) ------------------------------------------------------
 

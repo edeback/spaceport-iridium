@@ -108,6 +108,10 @@ func process_job(_delta: float) -> void:
 	if not is_valid():
 		cancel(true)
 		return
+	# WI-29: expose the operator so advance_work()'s completion deposit can shift
+	# food output quality by this pawn's skill. Set every tick (cheap) so it's
+	# always current when the batch happens to finish this frame.
+	processor.current_worker = pawn
 	# Rate folds worker happiness x crafting skill, floored (WI-22). advance_work
 	# returns true only on the tick the batch completes.
 	if processor.advance_work(_delta * pawn.work_rate(get_skill())):
@@ -165,6 +169,11 @@ func _on_end() -> void:
 	# unless we already handed off to a followup (then _work_job points elsewhere).
 	if is_instance_valid(processor):
 		processor.notify_work_job_ended(self)
+		# WI-29: drop our operator link so a stale (but still-valid) pawn isn't
+		# credited to a later deposit. A chained followup re-sets it on its first
+		# working tick before any batch of its own can complete.
+		if processor.current_worker == pawn:
+			processor.current_worker = null
 	# Stop the workstation animation; a chained followup replays it on arrival.
 	if pawn != null and is_instance_valid(pawn):
 		pawn.end_anchor_animation()

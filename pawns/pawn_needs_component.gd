@@ -269,7 +269,7 @@ func _recompute_happiness() -> void:
 # --- persistence -------------------------------------------------------------
 
 func get_save_data() -> Dictionary:
-	return {
+	var data: Dictionary = {
 		"hunger": hunger_value,
 		"sleep": sleep_value,
 		"recreation": recreation_value,
@@ -278,6 +278,17 @@ func get_save_data() -> Dictionary:
 		"grace_remaining": _grace_remaining,
 		"resigned": resigned,
 	}
+	# Persist only finite-duration modifiers (good_meal/bad_meal, WI-29). INF ones
+	# are re-derived every tick (exhausted from sleep; event modifiers re-applied
+	# by their source), and INF doesn't round-trip through JSON anyway.
+	var mods: Dictionary = {}
+	for id: StringName in _modifiers:
+		var m: Vector2 = _modifiers[id]
+		if m.y != INF:
+			mods[String(id)] = [m.x, m.y]
+	if not mods.is_empty():
+		data["modifiers"] = mods
+	return data
 
 func load_save_data(data: Dictionary) -> void:
 	hunger_value = float(data.get("hunger", hunger_value))
@@ -288,6 +299,13 @@ func load_save_data(data: Dictionary) -> void:
 	resignation_pending = bool(data.get("resignation_pending", false))
 	_grace_remaining = float(data.get("grace_remaining", 0.0))
 	resigned = bool(data.get("resigned", false))
+	# Timed modifiers (WI-29 good_meal/bad_meal). Missing key on older saves =
+	# none restored, same as before this persisted.
+	var mods: Dictionary = data.get("modifiers", {})
+	for id_str: String in mods:
+		var arr: Array = mods[id_str]
+		if arr.size() >= 2:
+			_modifiers[StringName(id_str)] = Vector2(float(arr[0]), float(arr[1]))
 	if resigned:
 		# The decision was already final when saved - resume the walkout once
 		# the tree settles (CrewManager reacts by issuing Job_LeaveStation).
