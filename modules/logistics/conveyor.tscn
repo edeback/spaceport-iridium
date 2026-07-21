@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://d4cv4rm0d0l42"]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1"]
+[ext_resource type="PackedScene" uid="uid://d2cv4rc0mp0n2" path="res://modules/components/conveyor_component.tscn" id="2"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="3"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_b0i26"]
+resource_local_to_scene = true
+size = Vector2(62, 62)
+
+[node name="Module" unique_id=1583115542 instance=ExtResource("1")]
+
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
+shape = SubResource("RectangleShape2D_b0i26")
+
+[node name="PathComponent" parent="." index="1" unique_id=1088376714]
+door_required = false
+
+[node name="PowerConsumptionComponent" parent="." index="4" unique_id=1390035168 instance=ExtResource("3")]
+power_consumption = 3.0
+
+[node name="ConveyorComponent" parent="." index="5" unique_id=752977149 node_paths=PackedStringArray("power_consumer") instance=ExtResource("2")]
+power_consumer = NodePath("../PowerConsumptionComponent")

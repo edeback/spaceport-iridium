@@ -321,12 +321,14 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "471944f5475eac00",
+  "active": "cf9c918be843db58",
   "lastOpenFiles": [
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-27_Logistics_Automation.md",
+    "Spaceport Iridium/Planning/Work Items/WI-28_Robotic_Needs.md",
+    "Spaceport Iridium/TODO notes.md",
     "Spaceport Iridium/Reorganized/Future Work.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-26_Station_Tiers.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-25_Economic_Sinks.md",
-    "Spaceport Iridium/Planning/Work Items/WI-27_Logistics_Automation.md",
     "Spaceport Iridium/Planning/02_Roadmap.md",
     "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-24_Combat_Setup.md",
@@ -339,9 +341,7 @@
     "Spaceport Iridium/Planning/Work Items/WI-31_Health_and_Disease.md",
     "Spaceport Iridium/Planning/Work Items/WI-30_Module_Adjacency.md",
     "Spaceport Iridium/Planning/Work Items/WI-29_Food_Quality.md",
-    "Spaceport Iridium/Planning/Work Items/WI-28_Robotic_Needs.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-23_Work_Improvements.md",
-    "Spaceport Iridium/TODO notes.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-22_Pawn_Identity.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-12_Storage_QoL.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-20_Movement_and_Animation.md",

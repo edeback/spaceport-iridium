@@ -318,6 +318,9 @@ func _get_pawns_save() -> Array:
 		# Mining Drones need their parent
 		if pawn is MiningDronePawn and (pawn as MiningDronePawn).parent_mining_component != null:
 			entry["mining_comp"] = component_ref((pawn as MiningDronePawn).parent_mining_component)
+		# Hauler robots (WI-27) ride the same way, referencing their Logistics Bay.
+		if pawn is HaulerRobotPawn and (pawn as HaulerRobotPawn).parent_bay != null:
+			entry["logistics_bay"] = component_ref((pawn as HaulerRobotPawn).parent_bay)
 		# In-flight jobs (WI-21): type + target refs, restarting their current
 		# stage on load. Only saveable jobs serialize (board/idle/store-inventory
 		# jobs return {}); omit the keys entirely when there's nothing to save.
@@ -530,6 +533,9 @@ func _load_pawns(data: Array) -> void:
 			pawn.inventory_component.add_stacks(resource, stacks)
 		if pawn is MiningDronePawn:
 			(pawn as MiningDronePawn).set_owner_component(resolve_component_ref(entry.get("mining_comp", {})) as MiningComponent)
+		# Hauler robots (WI-27) re-register with their bay so it re-owns/powers them.
+		if pawn is HaulerRobotPawn:
+			(pawn as HaulerRobotPawn).set_owner_component(resolve_component_ref(entry.get("logistics_bay", {})) as LogisticsBayComponent)
 		# Jobs last (WI-21): module/needs/inventory are all in place, so the
 		# restored job's claim gauntlet - run on the pawn's first start_job()
 		# tick, not here - sees the true world. Queue in saved order, then push

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="StatModifierSpec" format=3 uid="uid://brbtcap0spec2"]
+
+[ext_resource type="Script" uid="uid://icaptocm87ny" path="res://modules/templates/stat_modifier_spec.gd" id="1_spec"]
+
+[resource]
+script = ExtResource("1_spec")
+stat = &"robot_capacity"
+op = 0
+value = 5.0
+metadata/_custom_type_script = "uid://icaptocm87ny"

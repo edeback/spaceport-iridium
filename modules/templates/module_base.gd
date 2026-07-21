@@ -405,6 +405,11 @@ func get_save_data() -> Dictionary:
 		var generator_save: Dictionary = o2_generator.get_save_data()
 		if not generator_save.is_empty():
 			data["o2_generator"] = generator_save
+	# Conveyor config + buffer (WI-27). Endpoints save as component refs resolved
+	# after every module is placed (world load is two-phase).
+	var conveyor: ConveyorComponent = get_component_by_type(ConveyorComponent) as ConveyorComponent
+	if conveyor != null:
+		data["conveyor"] = conveyor.get_save_data()
 	var upgrades: Dictionary = get_upgrade_save_data()
 	if not upgrades.is_empty():
 		data["upgrades"] = upgrades
@@ -451,6 +456,11 @@ func load_save_data(data: Dictionary) -> void:
 	var o2_generator: OxygenGeneratorComponent = get_component_by_type(OxygenGeneratorComponent) as OxygenGeneratorComponent
 	if o2_generator != null and data.has("o2_generator"):
 		o2_generator.load_save_data(data["o2_generator"])
+	# Conveyor (WI-27): endpoints resolve against modules already placed in the
+	# world load's first phase, so restoring here (second phase) is safe.
+	var conveyor: ConveyorComponent = get_component_by_type(ConveyorComponent) as ConveyorComponent
+	if conveyor != null and data.has("conveyor"):
+		conveyor.load_save_data(data["conveyor"])
 	load_upgrade_save_data(data.get("upgrades", {}))
 	# Durability (WI-24). Restore HP and any lingering breakdown, then re-derive
 	# the damage modifier + visual from the loaded HP. Missing keys = pristine.

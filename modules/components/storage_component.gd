@@ -403,6 +403,28 @@ func deposit_stacks(resource: ResourceData, stacks: Array[ResourceStack], only_i
 	resource.needs_recalc = true
 	return true
 
+## Stack-aware partial withdraw (WI-27): pulls up to `quantity` units, preserving
+## instance_data, and returns however much was actually available - the stack-aware
+## sibling of withdraw_up_to(), used by conveyors that move "up to rate" per tick.
+func withdraw_stacks_up_to(resource: ResourceData, quantity: int, use_reserve: bool = false) -> Array[ResourceStack]:
+	var data: StorageData = storage_data.get(resource)
+	if data == null or quantity <= 0:
+		return []
+	var available: int = data.stored
+	if not use_reserve:
+		available -= data.reserved_withdraw
+	var take: int = mini(quantity, available)
+	if take <= 0:
+		return []
+	var withdrawn: Array[ResourceStack] = data.withdraw_stacks(take)
+	if use_reserve:
+		data.reserved_withdraw = maxi(data.reserved_withdraw - take, 0)
+	if not withdrawn.is_empty():
+		storage_value_changed = true
+		storage_changed.emit(resource, data.stored)
+		resource.needs_recalc = true
+	return withdrawn
+
 ## Stack-aware withdraw that preserves instance_data. use_reserve mirrors
 ## withdraw()/withdraw_up_to(). Returns [] if there isn't enough available.
 func withdraw_stacks(resource: ResourceData, quantity: int, use_reserve: bool = false) -> Array[ResourceStack]:

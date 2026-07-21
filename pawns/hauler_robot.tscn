@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://c8h1rbt0r0b0t"]
+
+[ext_resource type="PackedScene" uid="uid://ddoebv5qw5lfm" path="res://pawns/pawn_base.tscn" id="1"]
+[ext_resource type="Script" uid="uid://d1urtg8crrgns" path="res://pawns/hauler_robot.gd" id="2"]
+
+[node name="HaulerRobot" node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1")]
+script = ExtResource("2")
+carrying_capacity = 10
+powered = true
+animated_sprite = NodePath("Offset/Robot")
+
+[node name="Crew" parent="Offset" index="1"]
+visible = false
+
+[node name="Robot" parent="Offset" index="2"]
+visible = true
+scale = Vector2(0.25, 0.25)

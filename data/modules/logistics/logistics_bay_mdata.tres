@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://c2lg7bqk8w1oa"]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/module_generic_blue.png" id="1_lgba"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_res"]
+[ext_resource type="PackedScene" path="res://modules/logistics/logistics_bay.tscn" id="3_scn"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="4_steel"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="5_mdata"]
+
+[resource]
+script = ExtResource("5_mdata")
+id = &"logistics_bay_mdata"
+name = "Logistics Bay"
+description = "Builds hauler robots that take only hauling jobs. Buy more with credits, upgrade their speed and cargo."
+scene = ExtResource("3_scn")
+icon = ExtResource("1_lgba")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_res"), int]({
+ExtResource("4_steel"): 15
+})
+tags = Array[String](["Logistics"])
+unlocked_by_default = false
+max_hp = 100.0
+upkeep_per_cycle = 2

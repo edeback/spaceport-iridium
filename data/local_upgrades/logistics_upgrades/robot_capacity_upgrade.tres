@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="LocalUpgradeData" format=3 uid="uid://brbtcap0upgr2"]
+
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_res"]
+[ext_resource type="Script" uid="uid://icaptocm87ny" path="res://modules/templates/stat_modifier_spec.gd" id="2_spec"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="3_cred"]
+[ext_resource type="Script" uid="uid://esnvspsqth7k" path="res://data/local_upgrades/local_upgrade_data.gd" id="4_upg"]
+[ext_resource type="Resource" uid="uid://brbtcap0spec2" path="res://data/local_upgrades/logistics_upgrades/robot_capacity_spec.tres" id="5_mod"]
+
+[resource]
+script = ExtResource("4_upg")
+id = &"robot_capacity_upgrade"
+name = "Cargo Racks"
+description = "Each hauler robot carries more per trip."
+applies_to = Array[String](["Logistics"])
+max_tiers = 3
+cost = Dictionary[ExtResource("1_res"), int]({
+ExtResource("3_cred"): 300
+})
+cost_growth = 1.5
+modifiers = Array[ExtResource("2_spec")]([ExtResource("5_mod")])
+metadata/_custom_type_script = "uid://esnvspsqth7k"

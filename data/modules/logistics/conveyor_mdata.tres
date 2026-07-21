@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://d1cvyk3n8h2rb"]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/module_generic_yellow.png" id="1_cvic"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_res"]
+[ext_resource type="PackedScene" path="res://modules/logistics/conveyor.tscn" id="3_scn"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="4_steel"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="5_mdata"]
+
+[resource]
+script = ExtResource("5_mdata")
+id = &"conveyor_mdata"
+name = "Conveyor"
+description = "Moves one resource between two adjacent storages on a rate-limited buffer. Chain conveyors to bridge gaps."
+scene = ExtResource("3_scn")
+icon = ExtResource("1_cvic")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_res"), int]({
+ExtResource("4_steel"): 3
+})
+tags = Array[String](["Transport"])
+unlocked_by_default = false
+max_hp = 60.0
