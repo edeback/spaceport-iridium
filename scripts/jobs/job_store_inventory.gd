@@ -121,20 +121,35 @@ func _find_storage_target(_pawn: PawnBase) -> Dictionary:
 	for resource: ResourceData in _pawn.inventory_component.get_carried_resources():
 		if _pawn.inventory_component.get_carried_amount(resource) <= 0:
 			continue
-		var storage: StorageComponent = _find_closest_import_storage(_pawn, resource)
+		var storage: StorageComponent = _find_import_storage(_pawn, resource)
 		if storage != null:
 			return {"resource": resource, "storage": storage}
 	return {}
 
-func _find_closest_import_storage(_pawn: PawnBase, resource: ResourceData) -> StorageComponent:
+## Picks the reachable sink that will take `resource`, highest priority first and
+## nearest among equals - the same ordering as Job_GetResource._find_deposit_storage,
+## because storage priority is the routing language: dumping a sweep into whatever
+## bin is merely *closest* can drop it in a deconstruction site's -99 export bin,
+## which then has to haul it straight back out.
+##
+## Unlike the haul job this deliberately has NO `priority >` floor. A haul needs one
+## so a push can't flip-flop between two equal bins; a sweep has no source bin to
+## compare against and must accept *any* bin that will take the cargo rather than
+## strand a loaded pawn (PawnBase relies on {} meaning "nowhere will take this").
+func _find_import_storage(_pawn: PawnBase, resource: ResourceData) -> StorageComponent:
 	var storage_nodes: Array[Node] = _pawn.get_tree().get_nodes_in_group("resource_storage")
 	var best_storage: StorageComponent = null
-	var min_distance: int = 0
+	var best_priority: int = 0
+	var best_distance: int = 0
 	for node in storage_nodes:
 		var storage: StorageComponent = node as StorageComponent
-		if storage.accepts_imports and storage.can_deposit(resource, 1) and Global.path_manager.is_reachable(_pawn, storage.owner_module):
-			var new_distance: int = storage.owner_module.module_cell.distance_squared_to(Global.world_to_cell(_pawn.global_position))
-			if best_storage == null or new_distance < min_distance:
-				best_storage = storage
-				min_distance = new_distance
+		if storage == null or not storage.accepts_imports:
+			continue
+		if not storage.can_deposit(resource, 1) or not Global.path_manager.is_reachable(_pawn, storage.owner_module):
+			continue
+		var distance: int = storage.owner_module.module_cell.distance_squared_to(Global.world_to_cell(_pawn.global_position))
+		if best_storage == null or storage.priority > best_priority or (storage.priority == best_priority and distance < best_distance):
+			best_storage = storage
+			best_priority = storage.priority
+			best_distance = distance
 	return best_storage

@@ -2,7 +2,7 @@
 
 *How the game is built today and the remaining large-scale technical goals. Companion to [[00_Design_Document]]. File paths are relative to the project root. Engine: Godot 4.7, GDScript, typed-declaration warnings enabled.*
 
-*Updated 2026-07-22 to reflect completed work through **WI-37** (all of Phase 3). The previous revision described the game through WI-16; everything from life support (WI-17) onward — testing/tooling, the CONVEYED state, job serialization, pawn identity, workspaces, damage & combat, the economy, station tiers, automation, robotic needs, food quality, adjacency, disease, visitors, and the whole UI shell — is new here.
+*Updated 2026-07-22 to reflect completed work through **WI-38** (all of Phase 3, plus the second bug-fix pass). The previous revision described the game through WI-16; everything from life support (WI-17) onward — testing/tooling, the CONVEYED state, job serialization, pawn identity, workspaces, damage & combat, the economy, station tiers, automation, robotic needs, food quality, adjacency, disease, visitors, and the whole UI shell — is new here.
 
 ---
 
@@ -27,7 +27,7 @@ Current order in `main.tscn`: TimeManager → WorldManager → PathManager → A
 
 | Manager | Responsibility |
 |---|---|
-| `TimeManager` | Game calendar (cycles/hours), pause, speed presets; `sim_tick`/`slow_tick`/`hour_changed`/`cycle_changed`/`speed_changed` signals; `sim_seconds()` await helper and `animation_speed()`/`sync_animation()` (§1.3) |
+| `TimeManager` | Game calendar (cycles/hours), pause, speed presets; `sim_tick`/`slow_tick`/`hour_changed`/`cycle_changed`/`calendar_restored`/`speed_changed` signals; `sim_seconds()` await helper and `animation_speed()`/`sync_animation()` (§1.3) |
 | `WorldManager` | Grid occupancy per layer (`cell_to_module` dicts), module add/remove/purchase, truss replacement, layer canvases, starting-station spawn; world save section |
 | `PathManager` | Pawn-traversal `ModuleGraph`; reachability, pathfinding entry points, vertex groups |
 | `AtmosphereManager` | Life support (WI-17): runtime-attaches `AtmosphereComponent` to eligible modules, diffuses gas over path-graph door edges and turboshaft plenums on `slow_tick`, owns low-O2 alerting |
@@ -61,7 +61,7 @@ Cross-system events go through `SignalBus` typed signals — now ~45 of them, in
 
 - Per-frame gameplay `_process` handlers multiply delta by `Global.time_manager.scale(delta)` and early-return on 0.
 - Periodic scans subscribe to `slow_tick` (every 0.25 sim-seconds; the passed interval is elapsed sim-time): power balancing, atmosphere diffusion, storage job posting, conveyor lanes, resource total recalc, job aging, trader fulfillment, contract re-sync, medical/doctor posting, workspace id re-resolution after load.
-- Calendar behavior uses `hour_changed`/`cycle_changed`: market drift, event rolls, contract deadlines, wages/upkeep/levy charges, disease progression, module durability, visitor pacing, inspection offers.
+- Calendar behavior uses `hour_changed`/`cycle_changed`: market drift, event rolls, contract deadlines, wages/upkeep/levy charges, disease progression, module durability, visitor pacing, inspection offers. Those two mean *a boundary was just crossed* and are never replayed by a load (WI-38): `TimeManager.load_save_data` announces the rewritten calendar with `calendar_restored(cycle, hour)`, which only display listeners (the clock readout) subscribe to. The cheat `advance_hours()` is a genuine skip and still fires both.
 - One-shot waits: `await Global.time_manager.sim_seconds(x)`, never `get_tree().create_timer()`.
 - **Animations follow sim time (WI-20):** `TimeManager.animation_speed()` (0 while paused, else the speed multiplier) drives a `sim_animation` node group resynced on `speed_changed`/`pause_state_changed`; doors register via `sync_animation()`. Pawn sprites re-apply per-frame in `PawnBase._process` instead, because pawns reparent constantly (canvas layers, cab boarding) and a group resync can't reach out-of-tree nodes.
 
@@ -169,6 +169,7 @@ Current sections: `difficulty` (a bare id, not a manager section — chosen once
 - **In-flight jobs are saved as type + targets** and restarted at their current stage (§1.7). Board jobs are still re-derived, by design.
 - Modules/resources are identified by `id: StringName`; `SaveManager` builds id→definition lookups via `ResourceScanner` and warns on missing/duplicate ids. A `_migrations` version-step table exists, still empty — every Phase-3 section was added backward-compatibly (a pre-WI-37 save resolves to Normal, a pre-WI-27 save simply has no logistics keys).
 - Reservations are never saved; storage counts are truth, and restored jobs re-claim through the normal path — which keeps the reconcile-to-zero invariant trivially intact.
+- **Global resource totals reset on entry to the game scene** (WI-38): `ResourceData` is a shared `.tres` held in Godot's resource cache *across* a scene swap, so `SaveManager._ready` unconditionally reseeds `global_total` from the authored `starting_global_total`, zeroes the derived cache, and clears `registered_storage`, before anything spawns. On the load path `_load_resources` overwrites it one deferred tick later, so a load still shows the saved balance.
 - Happiness modifiers persist **only** if finite-duration (the food-quality meal modifiers); INF-duration ones (exhaustion, traits, difficulty, event effects) are re-derived every tick from their sources.
 - **Known persistence gaps:** `MiningComponent.priority_ore` isn't saved; `InspectionRunner` state isn't saved (deliberate — the offer re-rolls); nothing else material remains.
 
@@ -179,7 +180,7 @@ Current sections: `difficulty` (a bare id, not a manager section — chosen once
 - **Overlays (WI-35):** a single shader tint — `OVERLAY_COLOR` on `previewable.gdshader`, alongside the existing `PREVIEW`/`PLACEABLE`/`SELECTED`/`PROGRESS`/`DAMAGE` params, held as a plain var on `ModuleBase` (not a property) so an unrelated `_update_shader()` pass re-writes the active overlay instead of clobbering it. `OverlayPalette` is pure value→color mapping (unit-tested); `OverlayController` owns the toolbar strip, `1`–`5`/Esc hotkeys, the legend, and per-mode refresh over `WorldManager`'s id→module map, including an O2 breach pulse. `OverlayFlowLayer` (a Node2D on the pawn layer) draws haul and conveyor arrows plus storage-priority labels, backed by `JobManager.get_waiting_haul_jobs()`. Five modes: Power, O2, Integrity, Vibration, Logistics — the last one finally makes the priority-as-routing language visible.
 
 ### 1.19 Testing & tooling (WI-19)
-- **GUT** is vendored at `addons/gut/`; **29 suites / 342 test functions** live in `tests/unit/`, covering the pure classes only — `ModuleGraph`, `StorageData`, `StatModifiers`, `LocalUpgradeData` cost scaling, `MarketManager` pricing, contract/event rules, skill curves, hire pricing, damage→efficiency, economy, station tiers, workspaces, robot energy/integrity, food quality, adjacency, disease, raid targeting, shield math, shops, visitors, minimap transform, overlay palette, save slots, game settings, difficulty, and job serialization. Construct them directly; never touch `Global`/`SignalBus`. Run headless:
+- **GUT** is vendored at `addons/gut/`; **30 suites / 351 test functions** live in `tests/unit/`, covering the pure classes only — `ModuleGraph`, `StorageData` (incl. the WI-38 autodump clamp), `ShieldComponent` charge/online persistence, `StatModifiers`, `LocalUpgradeData` cost scaling, `MarketManager` pricing, contract/event rules, skill curves, hire pricing, damage→efficiency, economy, station tiers, workspaces, robot energy/integrity, food quality, adjacency, disease, raid targeting, shield math, shops, visitors, minimap transform, overlay palette, save slots, game settings, difficulty, and job serialization. Construct them directly; never touch `Global`/`SignalBus`. Run headless:
 
 ```bash
 godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/unit -gexit
@@ -213,7 +214,7 @@ Scale is still modest (tens of modules, dozens of pawns, a handful of ships), so
 - `StructureManager.can_remove_module` is still commented out in `WorldManager.remove_module` (under-construction modules aren't structure-connected), so a module can still be deleted out from under the station. `ModuleBase.structure_check_before_delete` exists to gate it per-module once the check is re-enabled.
 - `AudioManager` is still a scriptless placeholder — one looping stream on the `Music` bus. WI-36 created the Music/Effects buses; the audio pass (module emitters, sim-time awareness, an effects mixer) is the Phase-4 item that consumes them.
 - Extract magic group strings (`"resource_storage"`, `"power_consumer"`, `"shop"`, `"sim_animation"`, `"minimap_tracked"`, `"resource_debris"`, …) into a constants file. The list has roughly doubled since this was first noted.
-- `ResourceData.cached_total`/`global_total` are still `@export`ed runtime state on shared resources — harmless, but confusing in the inspector.
+- ~~`ResourceData.cached_total`/`global_total` are still `@export`ed runtime state on shared resources.~~ Fixed by WI-38: only the authored seed `starting_global_total` is exported now.
 - The editor's global class cache goes stale often enough to be a standing hazard: after adding a `class_name` file, run `filesystem_manage(op="scan")` or `godot --headless --import` before trusting a run.
 
 ### 2.5 Rendering/UX debt

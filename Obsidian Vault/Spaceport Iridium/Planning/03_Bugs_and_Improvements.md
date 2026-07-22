@@ -2,11 +2,11 @@
 
 *Re-audited 2026-07-22 against the post-WI-37 codebase (~30k lines of GDScript across 243 scripts, 58 GUT suites / 342 tests). The previous pass was 2026-07-13, before WI-01; almost everything in it has since been fixed, so this is a rewrite rather than an edit. Section E records what closed.*
 
-*Findings below come from reading the code; only A8 has been reproduced in-game so far. Severity ordering is my judgement of player impact. Fixes for the section A list are bundled as [[WI-38_Bug_Fix_Pass_2]].*
+*Findings below come from reading the code; only A8 had been reproduced in-game. Severity ordering is my judgement of player impact. Fixes for the section A list were bundled as [[WI-38_Bug_Fix_Pass_2]], **completed 2026-07-22** — the whole of section A is now closed and recorded in section E. The entries are kept below for the reasoning trail.*
 
 ---
 
-## A. Confirmed Bugs
+## A. Confirmed Bugs — ALL FIXED by [[WI-38_Bug_Fix_Pass_2]]
 
 ### A1. Blueprint turrets fire (and draw full power)
 
@@ -89,9 +89,11 @@ Note the scope has shrunk: WI-32's `ModuleBase._on_hp_zero` calls `remove_module
 
 The per-frame scan is gone; `PowerManager` runs on `slow_tick` now (`power_manager.gd:17`) with the sim-seconds interval threaded through correctly. What's left is cleanup: three `get_nodes_in_group` scans per tick (see C4), plus dead `power_generators`/`power_consumers` array fields and a block of commented-out `node_grouped`/`node_ungrouped` hooks (`power_manager.gd:4-32`) that describe a caching design that was never built.
 
-### B3. Runtime state `@export`ed on shared resources
+### B3. Runtime state `@export`ed on shared resources — *fixed by WI-38*
 
-Still true, and now load-bearing: `ResourceData.global_total` (line 19) is where the player's credit balance lives, and `cached_total` (line 21) is a derived cache. Both are `@export`ed on `@tool` resources shared engine-wide. Confusing in the inspector, a save/load foot-gun, and the direct cause of A8. `@export_storage` or plain vars plus explicit reset-on-new-game would fix both symptoms.
+~~`ResourceData.global_total` is where the player's credit balance lives, and `cached_total` is a derived cache. Both are `@export`ed on `@tool` resources shared engine-wide — confusing in the inspector, a save/load foot-gun, and the direct cause of A8.~~
+
+Closed alongside A8: the authored seed is now `starting_global_total` (the only exported one), `global_total` and `cached_total` are plain vars, and `SaveManager._ready` reseeds them on entry to the game scene.
 
 ### B4. `SAVE_VERSION` has never left 1
 
@@ -153,7 +155,8 @@ Worth bumping at the next actually-breaking change and writing the first migrati
 
 Recorded so the history isn't lost:
 
-- **All of section A** (the original nine confirmed bugs) — fixed by WI-01.
+- **All of the 2026-07-22 section A** (A1–A8) — fixed by [[WI-38_Bug_Fix_Pass_2]], 2026-07-22. In short: blueprint turrets gated on `is_complete()`; shield capacitor charge/online now saved (module `shield` key, clamped to the upgraded capacity on load); `TimeManager.load_save_data` announces `calendar_restored` instead of replaying `cycle_changed`/`hour_changed`, so no manager does calendar work on load (the `is_loading()` guards in `EconomyManager`/`UnlockManager` came back out); autodump clamps to `stored - desired - reserved_withdraw` via the pure `StorageData.autodump_amount()`; `Job_StoreInventory` sweeps priority-then-distance and null-guards its cast; `game_loaded` reports the staged slot; and `ResourceData` split its authored seed (`starting_global_total`) from runtime `global_total`, reset in `SaveManager._ready` — which also closed **B3**. 351 GUT tests green.
+- **All of the original 2026-07-13 section A** (the first nine confirmed bugs) — fixed by WI-01.
 - **C1 — one resource-scan helper.** `ResourceScanner` (`scripts/utility/resource_scanner.gd`) now handles exported-build `.remap` suffixes and is used by the build menu, unlock trees, local upgrades and `SaveManager._build_lookups`.
 - **C2 — `ModuleGraphVertex` → `RefCounted`.** Done; no manual `free()` remains in `module_graph.gd`.
 - **C3 — event-driven storage job posting.** `StorageComponent`'s deficit/surplus scan moved to `_on_slow_tick` (`storage_component.gd:156`); its `_process` is now UI-only and documented as such. The posting scan also gained a shared `import_budget` so several under-desired resources in one bin can't jointly overcommit its free space.

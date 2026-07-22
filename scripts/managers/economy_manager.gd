@@ -190,12 +190,10 @@ func record_event_delta(amount: int) -> void:
 
 ## Ends the just-completed cycle: charges the fixed cost streams in the
 ## documented order (loan -> wages -> upkeep -> levy fee), rolls the ledger, then
-## re-evaluates insolvency against the resulting balance. Suppressed while a save
-## loads - TimeManager.load_save_data replays cycle_changed, which must not
-## re-charge a cycle that already settled before the save.
+## re-evaluates insolvency against the resulting balance. No is_loading() guard is
+## needed: TimeManager.load_save_data no longer replays cycle_changed (WI-38 A3),
+## so a load can't re-charge a cycle that already settled before the save.
 func _on_cycle_changed(new_cycle: int) -> void:
-	if SaveManager.is_loading():
-		return
 	var before: int = _balance()
 	_charge_loan_payment()
 	_charge_wages()

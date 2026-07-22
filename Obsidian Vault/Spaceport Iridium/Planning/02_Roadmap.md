@@ -103,12 +103,12 @@
 
 **UI shell & final texture**
 
-| # | Work item | Why this order |
-|---|---|---|
-| WI-34 | [[WI-34_Minimap\|Minimap]] | Symbolic overview + click-to-jump; needed once stations outgrow a few screens |
-| WI-35 | [[WI-35_UI_Overlays\|UI overlays: O2, power, integrity, vibration, logistics]] | One shader-tint overlay system reading WI-17/24/30 data; logistics mode shows priorities and flows |
-| WI-36 | [[WI-36_Main_UI_Flow\|Main UI flow: menus, settings, pause]] | Main menu, save slots, keybind remap, pause menu; leans on WI-18's clean bootstrap for scene transitions |
-| WI-37 | [[WI-37_Difficulty_Levels\|Difficulty levels]] | Thin data layer over knobs installed by WI-25 (costs), WI-32 (raids), WI-05 (mood); selected in WI-36's New Game flow. Last on purpose |
+| #     | Work item                                                                      | Why this order                                                                                                                         |
+| ----- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| WI-34 | [[WI-34_Minimap\|Minimap]]                                                     | Symbolic overview + click-to-jump; needed once stations outgrow a few screens                                                          |
+| WI-35 | [[WI-35_UI_Overlays\|UI overlays: O2, power, integrity, vibration, logistics]] | One shader-tint overlay system reading WI-17/24/30 data; logistics mode shows priorities and flows                                     |
+| WI-36 | [[WI-36_Main_UI_Flow\|Main UI flow: menus, settings, pause]]                   | Main menu, save slots, keybind remap, pause menu; leans on WI-18's clean bootstrap for scene transitions                               |
+| WI-37 | [[WI-37_Difficulty_Levels\|Difficulty levels]]                                 | Thin data layer over knobs installed by WI-25 (costs), WI-32 (raids), WI-05 (mood); selected in WI-36's New Game flow. Last on purpose |
 
 ## Phase 3.5 — Stabilization
 
@@ -116,7 +116,7 @@
 
 | # | Work item | Why now |
 |---|---|---|
-| WI-38 | [[WI-38_Bug_Fix_Pass_2\|Bug-fix pass 2]] | Eight confirmed bugs from the post-WI-37 audit. Two are integrity bugs that corrupt play-tests the way WI-01's did: shield charge isn't saved (a mid-raid reload is a free recharge), and a New Game after Quit to Menu inherits the previous run's credits (verified). Cheap now, and Phase 4 shouldn't be built on top of them |
+| WI-38 | [[WI-38_Bug_Fix_Pass_2\|Bug-fix pass 2]] | **Done 2026-07-22.** Eight confirmed bugs from the post-WI-37 audit. Two are integrity bugs that corrupt play-tests the way WI-01's did: shield charge isn't saved (a mid-raid reload is a free recharge), and a New Game after Quit to Menu inherits the previous run's credits (verified). Cheap now, and Phase 4 shouldn't be built on top of them |
 
 *Also open from the audit, deliberately not in WI-38: the section C refactors (one storage-query helper, power group caching, a `Groups` constants file) and the section B design debt — chiefly the `can_remove_module` structure check, disabled since Phase 0. Slot them in as convenient; none block Phase 4.*
 

@@ -26,6 +26,10 @@ func _ready() -> void:
 		_preset_buttons.append(button)
 	tm.hour_changed.connect(_on_time_changed)
 	tm.cycle_changed.connect(_on_time_changed)
+	# A load rewrites the calendar without crossing a boundary, so it announces
+	# itself separately (WI-38 A3). The clock is a display-only listener - exactly
+	# what calendar_restored is for.
+	tm.calendar_restored.connect(_on_calendar_restored)
 	tm.pause_state_changed.connect(_on_pause_state_changed)
 	tm.speed_changed.connect(_on_speed_changed)
 	_refresh_clock()
@@ -48,6 +52,9 @@ func _on_speed_selected(new_speed: float) -> void:
 	Global.time_manager.speed = new_speed
 
 func _on_time_changed(_value: int) -> void:
+	_refresh_clock()
+
+func _on_calendar_restored(_cycle: int, _hour: int) -> void:
 	_refresh_clock()
 
 func _refresh_clock() -> void:

@@ -163,8 +163,10 @@ func _on_slow_tick(_interval: float) -> void:
 	# Autodump destroys extra resources (in case you are just overwhelmed with them)
 	for resource: ResourceData in storage_data.keys():
 		var data: StorageData = storage_data[resource]
-		if data.autodump and data.desired < data.stored:
-			destroy_resource(resource, data.stored - data.desired)
+		if data.autodump:
+			var dump_amount: int = data.autodump_amount()
+			if dump_amount > 0:
+				destroy_resource(resource, dump_amount)
 	if accepts_imports:
 		# Shared budget across resources so several under-desired resources in
 		# the same bin don't each request up to the bin's full free space and

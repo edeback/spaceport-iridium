@@ -463,6 +463,11 @@ func get_save_data() -> Dictionary:
 	var conveyor: ConveyorComponent = get_component_by_type(ConveyorComponent) as ConveyorComponent
 	if conveyor != null:
 		data["conveyor"] = conveyor.get_save_data()
+	# Shield capacitor + hysteresis (WI-38 A2). Without this a mid-raid save/load
+	# restores the pirates faithfully but hands every bubble back at full charge.
+	var shield: ShieldComponent = get_component_by_type(ShieldComponent) as ShieldComponent
+	if shield != null:
+		data["shield"] = shield.get_save_data()
 	var upgrades: Dictionary = get_upgrade_save_data()
 	if not upgrades.is_empty():
 		data["upgrades"] = upgrades
@@ -525,6 +530,11 @@ func load_save_data(data: Dictionary) -> void:
 	if conveyor != null and data.has("conveyor"):
 		conveyor.load_save_data(data["conveyor"])
 	load_upgrade_save_data(data.get("upgrades", {}))
+	# Shield (WI-38 A2) AFTER upgrades: effective_capacity() reads the upgrade-modified
+	# stat, and the restored charge has to be clamped against the upgraded capacity.
+	var shield: ShieldComponent = get_component_by_type(ShieldComponent) as ShieldComponent
+	if shield != null and data.has("shield"):
+		shield.load_save_data(data["shield"])
 	# Durability (WI-24). Restore HP and any lingering breakdown, then re-derive
 	# the damage modifier + visual from the loaded HP. Missing keys = pristine.
 	if data.has("hp"):

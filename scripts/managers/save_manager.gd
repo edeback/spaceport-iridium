@@ -22,6 +22,10 @@ signal game_loaded(slot: String)
 ## Parsed save waiting to be applied after the scene reload. Static so it
 ## survives reload_current_scene() (statics live on the script, not the node).
 static var _pending_load: Dictionary = {}
+## Slot name the pending load came from, so game_loaded reports the slot that was
+## actually loaded rather than always "quicksave" (WI-38 A6). Same static-survives-
+## the-scene-swap reasoning as _pending_load, and cleared alongside it.
+static var _pending_slot: String = ""
 ## True only while sections are being applied - spawn-on-ready code
 ## (CrewManager's starting crew) checks this so saved pawns aren't duplicated.
 static var _loading: bool = false
@@ -44,10 +48,12 @@ static func is_loading() -> bool:
 ## main.tscn, and a leftover pending load would silently restore the old run.
 static func clear_pending_load() -> void:
 	_pending_load = {}
+	_pending_slot = ""
 
 func _ready() -> void:
 	Global.save_manager = self
 	_build_lookups()
+	_reset_resource_runtime_state()
 	if has_pending_load():
 		# Deferred so the entire new scene tree (managers AND UI) is ready
 		# before sections start mutating state.
@@ -83,6 +89,29 @@ func _register_id(table: Dictionary, id: StringName, res: Resource, path: String
 		push_warning("Duplicate save id '" + String(id) + "' (" + path + ") - keeping the first")
 		return
 	table[id] = res
+
+## ResourceData is a shared .tres and its runtime fields (global_total, the
+## derived cache, the registered-storage list) are mutated all run long. Godot's
+## resource cache holds those objects across a scene swap, so WI-36's Quit to Menu
+## -> New Game used to start the new run holding the old run's credits (WI-38 A8).
+##
+## Runs unconditionally: this is the first thing that touches resources in the new
+## scene (Managers/ ready before Main._ready calls spawn_starting_station), and on
+## the load path _load_resources overwrites these one deferred tick later. Doing it
+## unconditionally also means a has_global_store resource added *since* a save was
+## written gets its authored seed rather than a stale carried-over value.
+##
+## registered_storage.clear() is defensive rather than known-broken: registration
+## is symmetric today, but that array holds StorageComponent node references and a
+## single missed _exit_tree across a scene swap would leave freed objects for
+## _recalc_resource to walk.
+func _reset_resource_runtime_state() -> void:
+	for id: StringName in _resource_data_by_id:
+		var resource: ResourceData = _resource_data_by_id[id]
+		resource.global_total = resource.starting_global_total
+		resource.cached_total = 0
+		resource.needs_recalc = true
+		resource.registered_storage.clear()
 
 func get_module_data_by_id(id: StringName) -> ModuleData:
 	return _module_data_by_id.get(id)
@@ -433,6 +462,7 @@ static func stage_load(slot: String) -> bool:
 		push_warning("Save version %s can't be migrated to %d, load aborted" % [str(data.get("version")), SAVE_VERSION])
 		return false
 	_pending_load = data
+	_pending_slot = slot
 	# Difficulty (WI-37) is staged HERE, not in _apply_pending_load: managers read
 	# it from _ready onward (RaidManager's gate, every needs component's mood
 	# modifier), and _ready runs a deferred tick before the sections apply. Staging
@@ -575,16 +605,18 @@ static func _migrate(data: Dictionary) -> Dictionary:
 ## targets - modules, asteroids, piles - so all three must exist first).
 func _apply_pending_load() -> void:
 	var data: Dictionary = _pending_load
+	var slot: String = _pending_slot
 	_pending_load = {}
+	_pending_slot = ""
 	_loading = true
 	var sections: Dictionary = data.get("sections", {})
 	Global.time_manager.load_save_data(sections.get("time", {}))
 	Global.unlock_manager.load_save_data(sections.get("unlocks", {}))
 	_load_resources(sections.get("resources", {}))
 	Global.market_manager.load_save_data(sections.get("market", {}))
-	# After resources: the economy ledger/loan/insolvency counters restore. The
-	# cycle_changed replay from time.load_save_data above is suppressed inside
-	# EconomyManager while is_loading(), so no phantom settlement fires.
+	# After resources: the economy ledger/loan/insolvency counters restore. No
+	# phantom settlement fires - time.load_save_data above announces the restored
+	# calendar with calendar_restored rather than replaying cycle_changed (WI-38 A3).
 	Global.economy_manager.load_save_data(sections.get("economy", {}))
 	Global.world_manager.load_save_data(sections.get("world", {}))
 	# After world, before pawns: mining jobs resolve their asteroid by id.
@@ -615,7 +647,7 @@ func _apply_pending_load() -> void:
 	Global.visitor_manager.load_save_data(sections.get("visitors", {}))
 	_loading = false
 	print("Loaded save from %s" % Global.time_manager.format_time())
-	game_loaded.emit(QUICK_SLOT)
+	game_loaded.emit(slot)
 	# Load-path counterpart to Main's new-game emission (WI-18): the world is now
 	# fully restored and playable. Fires after all sections apply, mirroring the
 	# new-game path where it fires after spawn_starting_station.

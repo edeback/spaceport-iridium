@@ -52,6 +52,10 @@ func ready_constructed() -> void:
 	# double ready pass (matches the durability-tick idiom).
 	if not SignalBus.raid_started.is_connected(_on_raid_started):
 		SignalBus.raid_started.connect(_on_raid_started)
+	# A turret finishing construction mid-raid missed the raid_started emission
+	# that normally invalidates aim, so re-derive it against the station shape as
+	# it is now.
+	_outward_valid = false
 	_engaging = false
 	_apply_power()
 
@@ -75,6 +79,12 @@ func _set_engaging(engaging: bool) -> void:
 
 func _process(delta: float) -> void:
 	_tick_beam(delta)
+	# Build-state gate (WI-38 A1). Deliberately *after* the beam tick, so a turret
+	# that finishes construction mid-flash doesn't leave a frozen beam on screen.
+	# Without this a blueprint turret targets, fires and draws active_power, which
+	# lets a player drop turret blueprints mid-raid for free defense.
+	if owner_module == null or not owner_module.is_complete():
+		return
 	var sim_delta: float = Global.time_manager.scale(delta)
 	if sim_delta <= 0.0:
 		return

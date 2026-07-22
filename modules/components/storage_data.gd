@@ -39,6 +39,15 @@ func set_job_priority(new_priority: int) -> void:
 	if export_job != null:
 		export_job.priority = new_priority
 
+## How much autodump is allowed to destroy: surplus over `desired`, minus
+## anything a hauler has already reserved a withdrawal against. Without the
+## reserved term a pawn walking to this bin arrives to find its stock deleted
+## and the trip is wasted (WI-38 A4). Kept here, and out of
+## StorageComponent.destroy_resource, because that is also the module-destruction
+## and eject path, where ignoring reservations is the correct behavior.
+func autodump_amount() -> int:
+	return maxi(stored - desired - reserved_withdraw, 0)
+
 func can_withdraw(quantity: int, use_reserve: bool) -> bool:
 	var available: int = stored
 	if not use_reserve:

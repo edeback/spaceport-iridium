@@ -1,5 +1,16 @@
 # WI-38 — Bug-Fix Pass 2
 
+> **Status: COMPLETE (2026-07-22).** All eight fixed as designed. 351 GUT tests green (342 baseline + 4 autodump-clamp + 5 shield-persistence). Save format: `resources` section unchanged (A8 moved only the *authored* field); modules gained a `shield` key, absent-key-means-pristine, so pre-WI-38 saves load fine.
+>
+> Deviations and notes:
+> - **A2**: `ShieldComponent` already had `get_save_data()`/`load_save_data()` — the missing half was the `ModuleBase` key. Load now also clamps charge to `effective_capacity()` and floors it at 0.
+> - **A3**: `calendar_restored(cycle, hour)` landed on `TimeManager`, not `SignalBus` (it sits with the calendar signals it qualifies). `load_save_data` emits it always and additionally replays `cycle_changed`/`hour_changed` only when `SaveManager.is_loading()` is false — today that branch is unreachable, kept so a future non-load caller still gets correct semantics. `EventManager.load_save_data` already restored `_midcycle_roll_hour`, so a load ends with exactly one scheduled roll (the one from `_ready`, overwritten by the section).
+> - **A5**: implemented as the design specifies — priority-**descending**, then distance, matching `Job_GetResource._find_deposit_storage`. Note this makes a construction site's +99 bin the *preferred* sink when it will accept the cargo (which is the routing language working correctly), and steers sweeps away from the −99 deconstruction bins that would immediately haul the material back out. Verification step 5's "deposits into a general store, not the construction bin" therefore only holds when the construction bin doesn't accept that resource; the section-A framing of the symptom was slightly off, the fix is not.
+> - **A1**: `ready_constructed` now also resets `_outward_valid`, so a turret finishing construction mid-raid re-derives aim despite having missed `raid_started`.
+> - **A4**: the clamp is a pure `StorageData.autodump_amount()` so it could carry unit tests; the call site in `StorageComponent._on_slow_tick` uses it. `destroy_resource` and `dump_all_to_pile` are untouched.
+> - Verified in-game headlessly via a temporary 16-check autoload probe (MCP unreliable, per CLAUDE.md), including the real A8 repro across two scene swaps: new game → bank credits → re-enter `main.tscn` → seed restored; then stage a load → saved balance restored, not the seed. Probe deleted afterward.
+> - Not done here (out of scope, still open): **C5** the unified `StorageQuery` helper, and starting credits as a `DifficultyData` knob (WI-37 didn't make them one; noted, not actioned).
+
 ## Goal
 Fix the eight confirmed bugs in [[03_Bugs_and_Improvements]] section A (found in the 2026-07-22 post-WI-37 audit). No behavior redesign — smallest correct fix per bug, in the spirit of [[WI-01_Bug_Fix_Pass]]. Two of them (A2, A8) are save/session-integrity bugs and are the reason this is a work item rather than a scattering of drive-by commits.
 
