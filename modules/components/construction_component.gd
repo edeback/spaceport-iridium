@@ -57,6 +57,10 @@ func start_deconstruction() -> void:
 		Global.job_manager.add_job(construction_job)
 		current_state = ConstructionState.Deconstructing
 		work_seconds_done = work_seconds_to_complete * deconstruction_time_multiplier
+		# A module coming apart stops being a live part of the station - it was
+		# only ever still drawing/generating power because construction predates
+		# the lifecycle hook (WI-39).
+		owner_module.ready_deconstructing()
 
 func _process(delta: float) -> void:
 	# State polling only (work progress arrives via the construction job, which
@@ -239,6 +243,10 @@ func _setup_deconstructed_for_load() -> void:
 	work_seconds_done = 0
 	current_state = ConstructionState.Deconstructed
 	set_process(true) # keeps polling until the export bin empties, then removes the module
+	# The load's ready pass ran ready_constructed on this module (a teardown site
+	# still saves as "built" - see ModuleBase.ready_deconstructing), so its
+	# components signed up for everything a standing module does. Undo that.
+	owner_module.ready_deconstructing()
 
 func has_ui() -> bool:
 	return (not owner_module.module_data.instant_build) if owner_module and owner_module.module_data else false

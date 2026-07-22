@@ -185,6 +185,19 @@ func ready_constructed() -> void:
 			Global.adjacency_manager.fields_changed.connect(_on_adjacency_fields_changed)
 		_refresh_maintenance_modifier()
 
+## Teardown has started: let every component drop out of the systems a standing
+## module takes part in. Driven by ConstructionComponent, both when the player
+## orders a deconstruction and when a save restores one already in progress.
+##
+## Deliberately does NOT move build_state off Built. is_complete() is what the
+## save writes as "built", and a deconstruction site has to come back as built or
+## the load's ready pass would run ready_blueprint and turn it into a
+## construction site instead. Deconstruction state lives in ConstructionComponent
+## and is restored from there.
+func ready_deconstructing() -> void:
+	for component: ComponentBase in components:
+		component.ready_deconstructing()
+
 func is_complete() -> bool:
 	return build_state == BuildState.Built
 
@@ -466,6 +479,11 @@ func get_save_data() -> Dictionary:
 	var shield: ShieldComponent = get_component_by_type(ShieldComponent) as ShieldComponent
 	if shield != null:
 		data["shield"] = shield.get_save_data()
+	# Battery charge (WI-39). Same class of bug as the shield above: without it a
+	# station that banked power overnight reloads with an empty reserve.
+	var battery: BatteryComponent = get_component_by_type(BatteryComponent) as BatteryComponent
+	if battery != null:
+		data["battery"] = battery.get_save_data()
 	var upgrades: Dictionary = get_upgrade_save_data()
 	if not upgrades.is_empty():
 		data["upgrades"] = upgrades
@@ -533,6 +551,13 @@ func load_save_data(data: Dictionary) -> void:
 	var shield: ShieldComponent = get_component_by_type(ShieldComponent) as ShieldComponent
 	if shield != null and data.has("shield"):
 		shield.load_save_data(data["shield"])
+	# Battery (WI-39). Sits beside the shield for symmetry, but unlike the shield it
+	# has no ordering requirement against upgrades - max_power_stored is a plain
+	# export, so the clamp is against a constant. Nothing in ready_constructed
+	# re-seeds the charge, so this restore is the last word.
+	var battery: BatteryComponent = get_component_by_type(BatteryComponent) as BatteryComponent
+	if battery != null and data.has("battery"):
+		battery.load_save_data(data["battery"])
 	# Durability (WI-24). Restore HP and any lingering breakdown, then re-derive
 	# the damage modifier + visual from the loaded HP. Missing keys = pristine.
 	if data.has("hp"):

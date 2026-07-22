@@ -131,16 +131,3 @@ signal visitor_arrived(pawn: PawnBase)
 signal visitor_departed(pawn: PawnBase, happy: bool)
 @warning_ignore("unused_signal")
 signal visitors_changed
-
-
-
-#signal node_grouped(node, new_group: String)
-#signal node_ungrouped(node, old_group: String)
-#
-#func add_node_to_group(node: Node, group: String, persistent: bool = false) -> void:
-	#node.add_to_group(group, persistent)
-	#node_grouped.emit(node, group)
-	#
-#func remove_node_from_group(node: Node, group: String) -> void:
-	#node.remove_from_group(group)
-	#node_ungrouped.emit(node, group)
