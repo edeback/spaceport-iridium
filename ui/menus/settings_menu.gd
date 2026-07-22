@@ -1,14 +1,15 @@
 class_name SettingsMenu
 extends Control
 
-## The options screen (WI-36), shared by the main menu and the pause menu. Three
-## tabs: Audio, Display, Controls. Every change writes through Global (which owns
-## the live GameSettings and is the only thing that touches AudioServer / the
+## The options screen (WI-36), shared by the main menu and the pause menu. Four
+## tabs: Game, Audio, Display, Controls. Every change writes through Global (which
+## owns the live GameSettings and is the only thing that touches AudioServer / the
 ## window / the InputMap), so a change made from the pause menu is already in
 ## effect when the player returns to the main menu, and vice versa.
 ##
 ## Audio applies live as the slider moves; display waits for Apply, because a
-## half-dragged resolution has no meaning.
+## half-dragged resolution has no meaning. The Game tab is read-only: difficulty
+## (WI-37) is fixed at New Game, so this screen reports it rather than offers it.
 
 signal closed
 
@@ -16,6 +17,8 @@ var _tabs: TabContainer
 var _keybind_rows: Array[KeybindRow] = []
 var _resolution_option: OptionButton
 var _window_option: OptionButton
+var _difficulty_value: Label
+var _difficulty_detail: Label
 
 ## Capture state: the row waiting for a key, plus the overlay that eats input
 ## while it waits.
@@ -93,6 +96,7 @@ func _build_shell() -> void:
 	_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vbox.add_child(_tabs)
+	_tabs.add_child(_build_game_tab())
 	_tabs.add_child(_build_audio_tab())
 	_tabs.add_child(_build_display_tab())
 	_tabs.add_child(_build_controls_tab())
@@ -104,6 +108,51 @@ func _build_shell() -> void:
 	_conflict_dialog.confirmed.connect(_on_conflict_swap)
 	_conflict_dialog.canceled.connect(_on_conflict_cancel)
 	add_child(_conflict_dialog)
+
+# --- game ---------------------------------------------------------------------
+
+## Read-only by design (WI-37): difficulty is chosen at New Game and holds for the
+## life of the run, so offering a control here would be a lie. Opened from the
+## pause menu this is the running game's level; opened from the main menu the
+## staged level has been cleared, so it reads as the Normal default.
+func _build_game_tab() -> Control:
+	var box := VBoxContainer.new()
+	box.name = "Game"
+	box.add_theme_constant_override("separation", 8)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	var label := Label.new()
+	label.text = "Difficulty"
+	label.custom_minimum_size = Vector2(90, 0)
+	row.add_child(label)
+	_difficulty_value = Label.new()
+	_difficulty_value.add_theme_font_size_override("font_size", 18)
+	row.add_child(_difficulty_value)
+	box.add_child(row)
+
+	_difficulty_detail = Label.new()
+	_difficulty_detail.self_modulate = Color(1, 1, 1, 0.7)
+	_difficulty_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(_difficulty_detail)
+
+	var hint := Label.new()
+	hint.text = "Difficulty is chosen when you start a new game and cannot be changed afterwards."
+	hint.self_modulate = Color(1, 1, 1, 0.55)
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(hint)
+	return box
+
+func _refresh_game_tab() -> void:
+	if _difficulty_value == null:
+		return
+	var difficulty: DifficultyData = Global.get_difficulty()
+	if difficulty == null:
+		_difficulty_value.text = "Normal"
+		_difficulty_detail.text = ""
+		return
+	_difficulty_value.text = difficulty.display_name
+	_difficulty_detail.text = difficulty.effect_summary()
 
 # --- audio --------------------------------------------------------------------
 
@@ -370,6 +419,7 @@ func _clear_pending_conflict() -> void:
 # --- refresh ------------------------------------------------------------------
 
 func _refresh_all() -> void:
+	_refresh_game_tab()
 	_window_option.select(_window_option.get_item_index(int(Global.settings.window_mode)))
 	_refresh_display_controls()
 	_refresh_keybind_rows()

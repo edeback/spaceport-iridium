@@ -35,6 +35,16 @@ var cheats: Cheats
 ## so settings survive every scene swap between the menus and main.tscn.
 var settings: GameSettings
 
+## The difficulty this run is being played at (WI-37). Staged here before
+## main.tscn loads - by the New Game picker, or by SaveManager.stage_load from the
+## save - because managers read it from _ready onward and there is no manager to
+## hang it on before the scene exists. Never changes mid-run.
+##
+## Null only until something stages a value; every read goes through the helpers
+## below, which fall back to Normal (and then to neutral values) so a game booted
+## straight into main.tscn from the editor still runs.
+var difficulty: DifficultyData
+
 ## Action -> the project's own bindings, snapshotted before any override is
 ## applied. Reset-to-defaults and the "what would this be unbound to" checks read
 ## from here rather than re-parsing project.godot.
@@ -214,6 +224,48 @@ func save_settings() -> void:
 	var error: Error = settings.save_to_file()
 	if error != OK:
 		push_warning("Could not write settings to %s (error %d)" % [GameSettings.SETTINGS_PATH, error])
+
+# --- difficulty (WI-37) -------------------------------------------------------
+
+## Stages `difficulty_id` for the run that is about to start. Called by the New
+## Game picker and by SaveManager.stage_load; an unknown id resolves to Normal.
+## Always call this before entering main.tscn, never during a run - difficulty is
+## fixed for the life of a game.
+func set_difficulty(difficulty_id: StringName) -> void:
+	difficulty = DifficultyData.resolve(difficulty_id)
+
+## Drops the staged level when a run ends. The main menu calls this alongside
+## SaveManager.clear_pending_load() for the same reason: nothing about the run the
+## player just left should linger into the next one, and the settings readout
+## would otherwise still be reporting a game that is over.
+func clear_difficulty() -> void:
+	difficulty = null
+
+## The current level, resolving a never-staged run (booting main.tscn directly
+## from the editor) to Normal on first read rather than leaving it null.
+func get_difficulty() -> DifficultyData:
+	if difficulty == null:
+		difficulty = DifficultyData.resolve(DifficultyData.DEFAULT_ID)
+	return difficulty
+
+func difficulty_id() -> StringName:
+	var current: DifficultyData = get_difficulty()
+	return current.id if current != null else DifficultyData.DEFAULT_ID
+
+## The three consumption points read through these rather than poking at the
+## resource, so a missing data/difficulty/ directory degrades to a Normal game
+## instead of a crash.
+func difficulty_upkeep_multiplier() -> float:
+	var current: DifficultyData = get_difficulty()
+	return current.upkeep_multiplier if current != null else 1.0
+
+func difficulty_raids_enabled() -> bool:
+	var current: DifficultyData = get_difficulty()
+	return current.raids_enabled if current != null else true
+
+func difficulty_mood_offset() -> float:
+	var current: DifficultyData = get_difficulty()
+	return current.mood_offset if current != null else 0.0
 
 func world_to_cell(position: Vector2) -> Vector2i:
 	return Vector2i(floor((position.x) / CELL_SIZE.x), floor((position.y) / CELL_SIZE.y))

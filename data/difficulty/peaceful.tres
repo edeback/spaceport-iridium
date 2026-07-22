@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DifficultyData" format=3]
+
+[ext_resource type="Script" path="res://data/difficulty/difficulty_data.gd" id="1_diffdata"]
+
+[resource]
+script = ExtResource("1_diffdata")
+id = &"peaceful"
+display_name = "Peaceful"
+description = "Build without pirates. ARC still bills you, but gently, and your crew are glad to be somewhere quiet."
+sort_order = 0
+upkeep_multiplier = 0.6
+raids_enabled = false
+mood_offset = 0.1

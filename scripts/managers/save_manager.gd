@@ -206,6 +206,11 @@ func save_slot(slot: String) -> Error:
 		# to parse the (large) sections just to render a row.
 		"meta": _get_meta(),
 		"sections": {
+			# Difficulty (WI-37) is a single id rather than a manager section: it's
+			# chosen once before the run and never mutates, so there's no state to
+			# collect. Written here as well as in meta because meta is a display
+			# summary - this is the authoritative field the load path restores from.
+			"difficulty": String(Global.difficulty_id()),
 			"time": Global.time_manager.get_save_data(),
 			"unlocks": Global.unlock_manager.get_save_data(),
 			"resources": _get_resources_save(),
@@ -251,6 +256,8 @@ func _get_meta() -> Dictionary:
 		"credits": credits.global_total if credits != null else 0,
 		"crew": Global.crew_manager.crew_count() if Global.crew_manager != null else 0,
 		"tier": Global.unlock_manager.current_tier if Global.unlock_manager != null else 1,
+		# WI-37: the slot list labels each save with the difficulty it was played at.
+		"difficulty": String(Global.difficulty_id()),
 	}
 
 ## Global (non-storage) resource totals - currently just credits and anything
@@ -426,7 +433,24 @@ static func stage_load(slot: String) -> bool:
 		push_warning("Save version %s can't be migrated to %d, load aborted" % [str(data.get("version")), SAVE_VERSION])
 		return false
 	_pending_load = data
+	# Difficulty (WI-37) is staged HERE, not in _apply_pending_load: managers read
+	# it from _ready onward (RaidManager's gate, every needs component's mood
+	# modifier), and _ready runs a deferred tick before the sections apply. Staging
+	# at read time also overwrites whatever the main menu's picker left behind, so
+	# loading a Hard save after a Peaceful run can't inherit the menu leftover.
+	Global.set_difficulty(read_difficulty(data))
 	return true
+
+## The difficulty a parsed envelope was played at. Prefers the authoritative
+## sections field, falls back to the meta summary, then to Normal - which is what
+## every pre-WI-37 save (neither key present) resolves to.
+static func read_difficulty(data: Dictionary) -> StringName:
+	var sections: Dictionary = data.get("sections", {})
+	var from_section: String = String(sections.get("difficulty", ""))
+	if from_section != "":
+		return StringName(from_section)
+	var meta: Dictionary = data.get("meta", {})
+	return StringName(String(meta.get("difficulty", String(DifficultyData.DEFAULT_ID))))
 
 ## Parses a slot file into its envelope dictionary. Returns {} for anything
 ## missing, unopenable or malformed - callers treat that as "no such save".
@@ -491,13 +515,23 @@ static func summarize(data: Dictionary, slot: String) -> Dictionary:
 		"credits": int(meta.get("credits", resources.get("credits", 0))),
 		"crew": int(meta.get("crew", pawns.size())),
 		"tier": int(meta.get("tier", 1)),
+		# WI-37. Pre-WI-37 saves carry neither key and read back as Normal, which is
+		# also the difficulty they will actually load at.
+		"difficulty": String(read_difficulty(data)),
 	}
 
 ## "Cycle 4, 14:00 · 12340 cr · 6 crew" - the one-line subtitle for a slot row.
 static func describe_slot(info: Dictionary) -> String:
-	return "Cycle %d, %02d:00 · %d cr · %d crew · Tier %d" % [
+	return "Cycle %d, %02d:00 · %d cr · %d crew · Tier %d · %s" % [
 		int(info.get("cycle", 0)), int(info.get("hour", 0)),
-		int(info.get("credits", 0)), int(info.get("crew", 0)), int(info.get("tier", 1))]
+		int(info.get("credits", 0)), int(info.get("crew", 0)), int(info.get("tier", 1)),
+		difficulty_label(StringName(String(info.get("difficulty", DifficultyData.DEFAULT_ID))))]
+
+## Display name for a saved difficulty id, falling back to the id itself if the
+## .tres it names has since been renamed or removed.
+static func difficulty_label(difficulty_id: StringName) -> String:
+	var data: DifficultyData = DifficultyData.by_id(difficulty_id)
+	return data.display_name if data != null else String(difficulty_id).capitalize()
 
 ## Player-typed slot names become file names, so anything that could walk out of
 ## user://saves/ (separators, dots, colons) is folded to underscores. Returns ""

@@ -101,6 +101,15 @@ static func net_income(gross: int, levy_fraction_: float) -> int:
 static func wage_for(hire_price: int, wage_fraction_: float) -> int:
 	return int(round(float(hire_price) * wage_fraction_))
 
+## A recurring charge scaled by the difficulty's upkeep multiplier (WI-37).
+## Rounds, then floors at 1 credit so a merely-cheap multiplier (0.6x on a 1-credit
+## upkeep) can't round a real cost away to nothing. A multiplier of exactly 0 is
+## read as the deliberate "this stream is free here" and does return 0.
+static func scaled_cost(amount: int, multiplier: float) -> int:
+	if amount <= 0 or multiplier <= 0.0:
+		return 0
+	return maxi(int(round(float(amount) * multiplier)), 1)
+
 ## Total a loan repays: principal plus flat interest.
 static func loan_total(principal: int, interest_fraction: float) -> int:
 	return int(round(float(principal) * (1.0 + interest_fraction)))
@@ -207,6 +216,12 @@ func _charge_loan_payment() -> void:
 	if loan_remaining <= 0 or loan_payments_left <= 0:
 		_clear_loan()
 
+## The difficulty's cost dial (WI-37), read lazily at charge time rather than
+## cached in _ready: Global.difficulty is staged before the scene either way, but
+## reading it here keeps this manager independent of Managers/ ready order.
+func upkeep_multiplier() -> float:
+	return Global.difficulty_upkeep_multiplier()
+
 func _charge_wages() -> void:
 	if not wages_enabled:
 		return
@@ -214,7 +229,7 @@ func _charge_wages() -> void:
 	# include_leaving = false: a fired/resigned pawn walking to the bay stops
 	# costing from the next cycle tick (WI-25 fire flow).
 	for pawn: PawnBase in Global.crew_manager.get_crew(false):
-		var wage: int = wage_for(pawn.hire_price, wage_fraction)
+		var wage: int = wage_for_pawn(pawn)
 		if wage > 0:
 			# WI-33: the wage no longer vanishes - it lands in the pawn's wallet, to
 			# be spent at shops (returning to income, taxed once at the register).
@@ -223,6 +238,14 @@ func _charge_wages() -> void:
 			total += wage
 	if total > 0:
 		_charge(&"wages", total)
+
+## One pawn's per-cycle wage at the current difficulty (WI-37). The single place
+## the scaled figure is computed, so the charge, the pawn's wallet credit, and the
+## economy page's breakdown can never disagree.
+func wage_for_pawn(pawn: PawnBase) -> int:
+	if pawn == null:
+		return 0
+	return scaled_cost(wage_for(pawn.hire_price, wage_fraction), upkeep_multiplier())
 
 func _charge_upkeep() -> void:
 	if not upkeep_enabled:
@@ -234,6 +257,9 @@ func _charge_upkeep() -> void:
 		if module == null or module.module_data == null or not module.is_complete():
 			continue
 		total += module.module_data.upkeep_per_cycle
+	# Scaled once on the total, not per module: rounding each module separately
+	# would drift the station-wide bill away from the advertised multiplier.
+	total = scaled_cost(total, upkeep_multiplier())
 	if total > 0:
 		_charge(&"upkeep", total)
 
@@ -242,8 +268,9 @@ func _charge_levy_fee(cycle: int) -> void:
 		return
 	if cycle % levy_fee_cycles != 0:
 		return
-	if levy_fee_amount > 0:
-		_charge(&"levy_fee", levy_fee_amount)
+	var fee: int = scaled_cost(levy_fee_amount, upkeep_multiplier())
+	if fee > 0:
+		_charge(&"levy_fee", fee)
 
 ## Withdraws `amount` credits (driving the balance negative if need be - charges
 ## always apply in full) and records the cost against the current cycle.
@@ -383,13 +410,17 @@ func balance() -> int:
 	return _balance()
 
 ## Wages the current roster would draw next cycle: {pawn: wage} for display.
+## Difficulty-scaled, matching what _charge_wages will actually take.
 func wage_breakdown() -> Dictionary:
 	var out: Dictionary = {}
 	for pawn: PawnBase in Global.crew_manager.get_crew(false):
-		out[pawn] = wage_for(pawn.hire_price, wage_fraction)
+		out[pawn] = wage_for_pawn(pawn)
 	return out
 
 ## Upkeep the built station would draw next cycle: {module: upkeep} for display.
+## Per-module rows stay at their base cost - the difficulty multiplier applies to
+## the bill as a whole (see _charge_upkeep), so it belongs on the total rather
+## than smeared across rows that would no longer sum to it.
 func upkeep_breakdown() -> Dictionary:
 	var out: Dictionary = {}
 	for node: Node in get_tree().get_nodes_in_group("module"):
@@ -399,6 +430,15 @@ func upkeep_breakdown() -> Dictionary:
 		if module.module_data.upkeep_per_cycle > 0:
 			out[module] = module.module_data.upkeep_per_cycle
 	return out
+
+## What the whole upkeep bill comes to next cycle at the current difficulty - the
+## figure the economy page should show as the row total for upkeep_breakdown().
+func upkeep_total() -> int:
+	var base: int = 0
+	var rows: Dictionary = upkeep_breakdown()
+	for module: Variant in rows:
+		base += int(rows[module])
+	return scaled_cost(base, upkeep_multiplier())
 
 # --- internals ----------------------------------------------------------------
 

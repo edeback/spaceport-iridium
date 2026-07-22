@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DifficultyData" format=3]
+
+[ext_resource type="Script" path="res://data/difficulty/difficulty_data.gd" id="1_diffdata"]
+
+[resource]
+script = ExtResource("1_diffdata")
+id = &"easy"
+display_name = "Easy"
+description = "The full game with room to make mistakes: lighter running costs and a crew that grumbles less."
+sort_order = 1
+upkeep_multiplier = 0.8
+raids_enabled = true
+mood_offset = 0.05

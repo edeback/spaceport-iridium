@@ -10,8 +10,9 @@ extends Node
 ## Raids arrive via the event system (WI-24's pirate_extortion "refuse", or the
 ## defenses-gated pirate_raid event) calling start_raid(). A save mid-raid
 ## restores the whole fight from the "raid" section so you can't save-scum out of
-## the threat. Difficulty (WI-37) will gate raids entirely on Peaceful by
-## flipping raids_enabled.
+## the threat. Difficulty (WI-37) gates raids entirely on Peaceful: raids_enabled
+## is seeded from Global.difficulty at ready, and the raid event family carries an
+## EventConditionDifficultyAllowsRaids so those cards are never even drawn.
 
 @export var pirate_ship_scene: PackedScene
 ## Salvage dropped by each destroyed ship (a pile in space, EVA-collectable).
@@ -41,7 +42,9 @@ extends Node
 ## The price falls by up to this fraction as you grind the wave's HP down.
 @export var payoff_max_discount: float = 0.85
 
-## WI-37 hook: Peaceful difficulty flips this off and no raid ever spawns.
+## Peaceful difficulty (WI-37) flips this off and no raid ever spawns. Seeded from
+## the staged difficulty in _ready and never saved - it is re-derived from
+## Global.difficulty on every load, which is itself restored from the save.
 var raids_enabled: bool = true
 
 var active: bool = false
@@ -60,6 +63,7 @@ var _orbit_radius: float = 600.0
 
 func _ready() -> void:
 	Global.raid_manager = self
+	raids_enabled = Global.difficulty_raids_enabled()
 
 # --- lifecycle ----------------------------------------------------------------
 
@@ -76,7 +80,14 @@ func compute_strength() -> float:
 ## Begin a raid of `strength` (pass < 0 to auto-size). No-op if a raid is already
 ## running, raids are disabled, or there's nothing to attack.
 func start_raid(strength: float = -1.0) -> bool:
-	if active or not raids_enabled or pirate_ship_scene == null:
+	if not raids_enabled:
+		# Logged, not silent: the event conditions mean nothing should reach here on
+		# Peaceful, so a hit is either the debug cheat or a raid path that forgot its
+		# condition - both worth seeing in the log.
+		print("RaidManager: raid suppressed - %s difficulty has raids disabled" %
+			SaveManager.difficulty_label(Global.difficulty_id()))
+		return false
+	if active or pirate_ship_scene == null:
 		return false
 	if strength < 0.0:
 		strength = compute_strength()

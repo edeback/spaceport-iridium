@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DifficultyData" format=3]
+
+[ext_resource type="Script" path="res://data/difficulty/difficulty_data.gd" id="1_diffdata"]
+
+[resource]
+script = ExtResource("1_diffdata")
+id = &"hard"
+display_name = "Hard"
+description = "ARC squeezes harder and your crew know it. Wages, upkeep and fees all bite, and morale starts a notch down."
+sort_order = 3
+upkeep_multiplier = 1.35
+raids_enabled = true
+mood_offset = -0.05

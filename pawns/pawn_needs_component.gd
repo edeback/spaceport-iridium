@@ -116,6 +116,28 @@ func _ready() -> void:
 			func() -> float: return recreation_max,
 			recreation_duration_hours,
 			_make_recreation_job))
+	_apply_difficulty_modifier()
+
+## The permanent, station-wide happiness offset the chosen difficulty carries
+## (WI-37). Applied here rather than through EventManager's station-effect
+## machinery because that machinery is duration-based - it would tick this one
+## away - whereas difficulty holds for the life of the run.
+##
+## Doing it in _ready means it needs no re-application hooks at all: a new hire, a
+## pawn restored from a save, and a starting crew member all run this exactly
+## once. The modifier is INF-duration, so add_modifier is idempotent under the
+## single &"difficulty" id (no stacking across loads) and get_save_data skips it -
+## it is re-derived from Global.difficulty every time, never persisted.
+##
+## Visitors are excluded: difficulty tunes how hard the STATION is to run, and a
+## guest's mood is the reputation loop's own signal (WI-33).
+func _apply_difficulty_modifier() -> void:
+	if owner_pawn != null and owner_pawn.is_visitor:
+		return
+	var offset: float = Global.difficulty_mood_offset()
+	if is_zero_approx(offset):
+		return
+	add_modifier(&"difficulty", offset)
 
 ## Recreation can be satisfied at a shop (paid, WI-33) or a free provider. Prefer
 ## a shop when the pawn can afford a reachable one - that's the money loop crew and
