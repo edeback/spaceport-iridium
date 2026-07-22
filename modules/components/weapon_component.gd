@@ -8,12 +8,13 @@ extends ComponentBase
 ## with no per-placement authoring (the design's "exterior-facing, derived from
 ## orientation").
 ##
-## Power: the turret only draws (and can only fire) during a raid - its
-## PowerConsumptionComponent is force_off between raids, so idle defenses cost
-## nothing, and an active battery of turrets is a heavy load that drains reserves
-## and can brown itself out (the "power death spiral" edge case - holds fire when
-## unpowered). Per-shot energy is modelled as that continuous operating draw,
-## matching WI-28's "keep the power model simple" precedent.
+## Power: the turret idles at a low draw and jumps to a heavy draw only while it
+## actually has a ship to shoot ("actively used"). It never touches the
+## PowerConsumptionComponent's force_off flag - that's the player's manual
+## on/off. A battery of engaged turrets is a heavy load that drains reserves and
+## can brown itself out (the "power death spiral" - firing needs the module
+## powered). Per-shot energy is modelled as that active draw (WI-28's "keep the
+## power model simple" precedent).
 
 @export var damage: float = 34.0
 @export var range_px: float = 820.0
@@ -22,6 +23,10 @@ extends ComponentBase
 ## Half-angle of the firing arc, in degrees. >= 180 = omnidirectional.
 @export var arc_half_width_deg: float = 105.0
 @export var power_consumption_component: PowerConsumptionComponent
+## Standby draw with nothing to shoot (low, but not zero - the guns are warm).
+@export var idle_power_consumption: float = 8.0
+## Draw while actively engaging a target (the heavy load).
+@export var active_power_consumption: float = 60.0
 
 ## Stretch (WI-23 manned bonus), shipped OFF for v1: a gunner assigned to a
 ## WorkspaceComponent here would scale damage/rate by their Accuracy skill. Left
@@ -33,6 +38,8 @@ extends ComponentBase
 var _outward_dir := Vector2.RIGHT
 var _outward_valid: bool = false
 var _fire_cooldown: float = 0.0
+## True while a target sits in range + arc - the "actively used" power state.
+var _engaging: bool = false
 
 ## Cosmetic beam flash, faded on wall-clock delta (ignores pause), like the ship.
 var _beam_time: float = 0.0
@@ -40,27 +47,31 @@ var _beam_to := Vector2.ZERO
 const BEAM_FLASH_SECONDS: float = 0.12
 
 func ready_constructed() -> void:
-	# Guarded against a double ready pass (matches the durability-tick idiom).
+	# Only need the raid signal to re-derive aim against the current station
+	# shape; power is driven per-frame off engagement below. Guarded against a
+	# double ready pass (matches the durability-tick idiom).
 	if not SignalBus.raid_started.is_connected(_on_raid_started):
 		SignalBus.raid_started.connect(_on_raid_started)
-	if not SignalBus.raid_ended.is_connected(_on_raid_ended):
-		SignalBus.raid_ended.connect(_on_raid_ended)
-	_apply_power_gate()
+	_engaging = false
+	_apply_power()
 
 func _on_raid_started(_strength: float) -> void:
 	_outward_valid = false # re-derive aim against the current station shape
-	_apply_power_gate()
-
-func _on_raid_ended(_outcome: StringName) -> void:
-	_apply_power_gate()
-
-## Idle turrets draw no power; only an active raid turns the guns on.
-func _apply_power_gate() -> void:
-	if power_consumption_component != null:
-		power_consumption_component.force_off = not _raid_active()
 
 func _raid_active() -> bool:
 	return Global.raid_manager != null and Global.raid_manager.active
+
+## Push the idle/active draw onto the power component. Never touches force_off -
+## that stays the player's manual kill switch.
+func _apply_power() -> void:
+	if power_consumption_component != null:
+		power_consumption_component.power_consumption = active_power_consumption if _engaging else idle_power_consumption
+
+func _set_engaging(engaging: bool) -> void:
+	if engaging == _engaging:
+		return
+	_engaging = engaging
+	_apply_power()
 
 func _process(delta: float) -> void:
 	_tick_beam(delta)
@@ -69,21 +80,29 @@ func _process(delta: float) -> void:
 		return
 	if _fire_cooldown > 0.0:
 		_fire_cooldown -= sim_delta
-	if not _raid_active() or not is_powered():
+	var target: PirateShip = _pick_target() if _raid_active() else null
+	_set_engaging(target != null)
+	if target == null or not is_powered() or _fire_cooldown > 0.0:
 		return
-	if _fire_cooldown > 0.0:
-		return
-	var target: PirateShip = _pick_target()
-	if target == null:
-		return
-	_fire_cooldown = _stat(&"weapon_fire_interval", fire_interval)
+	_fire_cooldown = effective_fire_interval()
 	_fire_at(target)
 
 func is_powered() -> bool:
 	return power_consumption_component == null or power_consumption_component.powered
 
+# --- computed stats (also read by the info-panel UI) --------------------------
+
+func effective_damage() -> float:
+	return _stat(&"weapon_damage", damage)
+
+func effective_fire_interval() -> float:
+	return _stat(&"weapon_fire_interval", fire_interval)
+
+func effective_range() -> float:
+	return _stat(&"weapon_range", range_px)
+
 func _fire_at(target: PirateShip) -> void:
-	target.apply_damage(_stat(&"weapon_damage", damage))
+	target.apply_damage(effective_damage())
 	_beam_time = BEAM_FLASH_SECONDS
 	_beam_to = target.global_position
 	queue_redraw()
@@ -91,7 +110,7 @@ func _fire_at(target: PirateShip) -> void:
 ## Nearest live ship within range AND inside the firing arc, or null.
 func _pick_target() -> PirateShip:
 	var origin: Vector2 = _muzzle()
-	var reach: float = _stat(&"weapon_range", range_px)
+	var reach: float = effective_range()
 	var reach2: float = reach * reach
 	var best: PirateShip = null
 	var best_d2: float = INF
@@ -139,6 +158,17 @@ func _ensure_outward() -> void:
 
 func _stat(stat: StringName, base: float) -> float:
 	return owner_module.get_effective_stat(stat, base) if owner_module != null else base
+
+# --- info-panel UI ------------------------------------------------------------
+
+func has_ui() -> bool:
+	return true
+
+func get_ui() -> ModuleComponentUI:
+	var ui := WeaponComponentUI.new()
+	ui.set_module(owner_module)
+	ui.setup(self)
+	return ui
 
 # --- VFX ----------------------------------------------------------------------
 

@@ -51,6 +51,21 @@ func test_charge_tie_resolves_to_earliest() -> void:
 	]
 	assert_eq(ShieldMath.select_absorber(bubbles, Vector2(10, 0)), 0, "ties pick the earliest index")
 
+# --- segment_circle_entry (beam terminates on the bubble) ---------------------
+
+func test_beam_enters_bubble_at_surface() -> void:
+	# From (-200,0) to the centre (0,0), radius 100: crosses the surface at x=-100,
+	# i.e. halfway along the 200px segment.
+	var t: float = ShieldMath.segment_circle_entry(Vector2(-200, 0), Vector2.ZERO, Vector2.ZERO, 100.0)
+	assert_almost_eq(t, 0.5, 0.001, "entry crossing is the bubble surface")
+	var hit: Vector2 = Vector2(-200, 0).lerp(Vector2.ZERO, t)
+	assert_almost_eq(hit.x, -100.0, 0.001, "beam ends on the near edge of the bubble")
+
+func test_beam_missing_bubble_returns_negative() -> void:
+	# A segment that never comes within the radius.
+	var t: float = ShieldMath.segment_circle_entry(Vector2(-200, -200), Vector2(200, -200), Vector2.ZERO, 100.0)
+	assert_eq(t, -1.0, "a segment that misses the bubble has no entry")
+
 # --- next_online (hysteresis) -------------------------------------------------
 
 func test_empty_capacitor_goes_offline() -> void:

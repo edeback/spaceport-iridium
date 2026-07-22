@@ -46,13 +46,8 @@ var _fleeing: bool = false
 ## Distance from the orbit centre past which a fleeing ship is gone for good.
 var _despawn_radius: float = 2600.0
 
-## Cosmetic beam flash (WI-32): seconds of wall-clock life left on the last
-## laser draw. Purely visual, so it fades on real delta and ignores pause.
-var _beam_time: float = 0.0
-var _beam_from := Vector2.ZERO
-var _beam_to := Vector2.ZERO
-var _beam_absorbed: bool = false
-const BEAM_FLASH_SECONDS: float = 0.14
+## Untinted overlay child that draws the beam flash + HP bar (WI-32).
+@onready var _hud: PirateShipHud = $Hud
 
 func _ready() -> void:
 	add_to_group("pirate_ship")
@@ -74,7 +69,6 @@ func setup(manager: RaidManager, orbit_center: Vector2, orbit_radius: float, spa
 	_waypoint = _orbit_center + Vector2.from_angle(_angle) * _orbit_radius
 
 func _process(delta: float) -> void:
-	_tick_beam(delta)
 	var sim_delta: float = Global.time_manager.scale(delta)
 	if sim_delta <= 0.0:
 		return
@@ -164,11 +158,17 @@ func _tick_fire(sim_delta: float) -> void:
 
 func _fire_at(target: ModuleBase, impact: Vector2) -> void:
 	# Shields get first refusal: an absorbed hit flashes on the bubble and never
-	# touches the module.
-	var absorbed: bool = _manager != null and _manager.try_shield_absorb(impact, laser_damage)
-	_flash_beam(impact, absorbed)
-	if absorbed:
+	# touches the module. The beam visibly terminates where it crosses the bubble
+	# surface, not at the module behind it.
+	var shield: ShieldComponent = _manager.try_shield_absorb(impact, laser_damage) if _manager != null else null
+	if shield != null:
+		var t: float = ShieldMath.segment_circle_entry(global_position, impact, shield.center(), shield.radius())
+		var bubble_hit: Vector2 = global_position.lerp(impact, t) if t >= 0.0 else impact
+		if _hud != null:
+			_hud.flash_beam(global_position, bubble_hit, true)
 		return
+	if _hud != null:
+		_hud.flash_beam(global_position, impact, false)
 	var atmo: AtmosphereComponent = target.get_atmosphere()
 	# Roll the breach BEFORE apply_damage: a killing shot frees the module, after
 	# which the atmosphere component is gone (matches the WI-24 raid effect order).
@@ -186,7 +186,8 @@ func apply_damage(amount: float) -> void:
 	hp = maxf(hp - amount, 0.0)
 	if _manager != null:
 		_manager.note_pirate_damage(amount)
-	queue_redraw()
+	if _hud != null:
+		_hud.queue_redraw()
 	if hp <= 0.0:
 		_destroyed()
 		return
@@ -229,33 +230,5 @@ func load_save_data(data: Dictionary) -> void:
 		flee()
 	else:
 		_waypoint = _orbit_center + Vector2.from_angle(_angle) * _orbit_radius
-
-# --- VFX ----------------------------------------------------------------------
-
-func _flash_beam(impact: Vector2, absorbed: bool) -> void:
-	_beam_time = BEAM_FLASH_SECONDS
-	_beam_from = global_position
-	_beam_to = impact
-	_beam_absorbed = absorbed
-	queue_redraw()
-
-func _tick_beam(real_delta: float) -> void:
-	if _beam_time <= 0.0:
-		return
-	_beam_time = maxf(_beam_time - real_delta, 0.0)
-	queue_redraw()
-
-func _draw() -> void:
-	if _beam_time > 0.0:
-		var alpha: float = _beam_time / BEAM_FLASH_SECONDS
-		var beam_color: Color = Color(0.5, 0.9, 1.0, alpha) if _beam_absorbed else Color(1.0, 0.3, 0.25, alpha)
-		# Drawn in local space; flip_h flips only the texture, not coordinates.
-		draw_line(to_local(_beam_from), to_local(_beam_to), beam_color, 3.0, true)
-		draw_circle(to_local(_beam_to), 7.0 * alpha, beam_color)
-	# Damage pip: a small bar above the hull once hurt, so kills read at a glance.
-	if hp >= 0.0 and hp < max_hp:
-		var frac: float = clampf(hp / max_hp, 0.0, 1.0)
-		var width: float = 40.0
-		var origin := Vector2(-width * 0.5, -46.0)
-		draw_rect(Rect2(origin, Vector2(width, 5.0)), Color(0, 0, 0, 0.6))
-		draw_rect(Rect2(origin, Vector2(width * frac, 5.0)), Color(0.9, 0.3, 0.25, 0.9))
+	if _hud != null:
+		_hud.queue_redraw()

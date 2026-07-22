@@ -11,7 +11,7 @@
 texture = ExtResource("2_tex")
 
 [node name="PowerConsumptionComponent" parent="." instance=ExtResource("3_pwr")]
-power_consumption = 60.0
+power_consumption = 8.0
 
 [node name="WeaponComponent" type="Node2D" parent="." node_paths=PackedStringArray("power_consumption_component")]
 z_index = 5
@@ -21,3 +21,5 @@ range_px = 820.0
 fire_interval = 1.6
 arc_half_width_deg = 105.0
 power_consumption_component = NodePath("../PowerConsumptionComponent")
+idle_power_consumption = 8.0
+active_power_consumption = 60.0

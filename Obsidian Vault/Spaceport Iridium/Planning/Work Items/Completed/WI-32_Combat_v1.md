@@ -31,7 +31,7 @@ First real space battles on top of WI-24's damage framework: pirate ships with H
 5. Raid event integration (extortion → raid), warning lead time, save section.
 
 ## Edge cases
-- Module destroyed while a ship targets it: re-pick next nearest (truss replacement may now be the nearest — trusses are valid targets but low-value; pirates skip full-dead truss? v1: they can hit truss, it just soaks — simple and punishes hull gaps less).
+- Module destroyed while a ship targets it: re-pick next nearest (truss replacement may now be the nearest — trusses are valid targets but low-value; pirates skip full-dead truss
 - Pawn inside a module when a laser destroys it: WI-24's destruction-with-pawn path — this WI is why that test existed; EVA crew are never directly targeted v1 (no anti-personnel fire).
 - All weapons unpowered mid-raid (power death spiral): holds fire — the brown-out is the player's emergency; verify batteries drain per shot correctly.
 - Shield covering the shield generator itself: yes — the bubble protects its own emitter (else shields are useless).

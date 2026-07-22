@@ -115,6 +115,17 @@ func _draw() -> void:
 	draw_arc(here, r, 0.0, TAU, 48, tint, 2.0 + 3.0 * flash, true)
 	draw_circle(here, r, Color(0.4, 0.7, 1.0, alpha * 0.18))
 
+# --- info-panel UI ------------------------------------------------------------
+
+func has_ui() -> bool:
+	return true
+
+func get_ui() -> ModuleComponentUI:
+	var ui := ShieldComponentUI.new()
+	ui.set_module(owner_module)
+	ui.setup(self)
+	return ui
+
 # --- persistence --------------------------------------------------------------
 
 func get_save_data() -> Dictionary:

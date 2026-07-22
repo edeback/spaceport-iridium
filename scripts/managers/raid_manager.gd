@@ -197,8 +197,9 @@ func _check_end() -> void:
 
 ## First refusal for shields on an incoming pirate hit. Among online bubbles
 ## covering the impact, the most-charged absorbs it (ShieldMath's overlap rule).
-## Returns true when a shield ate the hit, so the ship skips module damage.
-func try_shield_absorb(impact: Vector2, damage: float) -> bool:
+## Returns the absorbing ShieldComponent (so the beam can terminate on its
+## bubble), or null when the hit leaks through to the module.
+func try_shield_absorb(impact: Vector2, damage: float) -> ShieldComponent:
 	var comps: Array[ShieldComponent] = []
 	var bubbles: Array = []
 	for node: Node in get_tree().get_nodes_in_group("shield"):
@@ -209,10 +210,10 @@ func try_shield_absorb(impact: Vector2, damage: float) -> bool:
 		bubbles.append(shield.bubble())
 	var idx: int = ShieldMath.select_absorber(bubbles, impact)
 	if idx < 0:
-		return false
+		return null
 	comps[idx].absorb(damage)
 	SignalBus.raid_state_changed.emit()
-	return true
+	return comps[idx]
 
 # --- pay-off hail -------------------------------------------------------------
 
