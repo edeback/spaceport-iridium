@@ -32,8 +32,26 @@ func ready_preview() -> void:
 func ready_blueprint() -> void:
 	pass
 	
+## See PowerGenerationComponent: registration is idempotent because
+## ready_constructed can run more than once (instant build, load ready pass).
 func ready_constructed() -> void:
-	add_to_group("power_consumer")
+	if Global.power_manager != null:
+		Global.power_manager.register_consumer(self)
+
+## A module being torn down stops drawing from the grid. `powered` has to go
+## false with it: everything that gates work on this flag (processors, mining
+## bays, conveyors, logistics bays) would otherwise keep running on a module that
+## no longer pays for the privilege.
+func ready_deconstructing() -> void:
+	powered = false
+	if is_instance_valid(Global.power_manager):
+		Global.power_manager.unregister_consumer(self)
+
+## Arrays don't drop freed nodes the way the old group did (WI-39), so leaving
+## the tree has to unregister explicitly.
+func _exit_tree() -> void:
+	if is_instance_valid(Global.power_manager):
+		Global.power_manager.unregister_consumer(self)
 	
 func desired_power(delta: float) -> float:
 	if force_off:

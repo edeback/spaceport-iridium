@@ -52,6 +52,13 @@ func ready_blueprint() -> void:
 func ready_constructed() -> void:
 	pass
 
+## The module has started coming apart. Override to stop participating in
+## anything a standing module participates in - a teardown site is not a live
+## part of the station. One-way: nothing takes a module back out of
+## deconstruction, so there is no matching "resumed" hook.
+func ready_deconstructing() -> void:
+	pass
+
 func has_ui() -> bool:
 	return false
 

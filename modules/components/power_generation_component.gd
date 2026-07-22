@@ -25,8 +25,28 @@ func ready_preview() -> void:
 func ready_blueprint() -> void:
 	pass
 	
+## Registration is idempotent, which matters because ready_constructed is not
+## guaranteed to run exactly once: the instant-build path routes ready_blueprint
+## straight into it, and the load path runs its own ready pass.
 func ready_constructed() -> void:
-	add_to_group("power_generator")
+	if Global.power_manager != null:
+		Global.power_manager.register_generator(self)
+
+## A module being torn down stops feeding the grid, rather than generating right
+## up until the last plate comes off. `powered` goes with it so the info panel
+## doesn't keep claiming an output nothing is collecting.
+func ready_deconstructing() -> void:
+	powered = false
+	if is_instance_valid(Global.power_manager):
+		Global.power_manager.unregister_generator(self)
+
+## The registry is a plain array, so unlike the group it replaced it does not
+## drop freed nodes on its own (WI-39). WorldManager.remove_module reparents the
+## module out before queue_free, so this fires on both the deletion and the
+## scene-teardown path.
+func _exit_tree() -> void:
+	if is_instance_valid(Global.power_manager):
+		Global.power_manager.unregister_generator(self)
 
 ## Stat key routed through the owner module's modifier layer so damage (WI-24)
 ## and future upgrades scale generation without touching the base export.

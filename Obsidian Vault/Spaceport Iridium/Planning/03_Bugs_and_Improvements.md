@@ -85,9 +85,11 @@ Godot's resource cache holds `credits.tres` across the scene swap, so the mutate
 
 Note the scope has shrunk: WI-32's `ModuleBase._on_hp_zero` calls `remove_module(module, false)`, which bypasses the check anyway. Re-enabling it would only affect player-initiated deletes. Either fix the connectivity accounting for blueprints or delete `can_remove_module` and the `structure_check_before_delete` flag, so the codebase stops implying a feature that doesn't exist.
 
-### B2. Power scans — mostly resolved, remnants left
+### B2. Power scans — *fixed by WI-39*
 
-The per-frame scan is gone; `PowerManager` runs on `slow_tick` now (`power_manager.gd:17`) with the sim-seconds interval threaded through correctly. What's left is cleanup: three `get_nodes_in_group` scans per tick (see C4), plus dead `power_generators`/`power_consumers` array fields and a block of commented-out `node_grouped`/`node_ungrouped` hooks (`power_manager.gd:4-32`) that describe a caching design that was never built.
+~~The per-frame scan is gone; `PowerManager` runs on `slow_tick` now with the sim-seconds interval threaded through correctly. What's left is cleanup: three `get_nodes_in_group` scans per tick (see C4), plus dead `power_generators`/`power_consumers` array fields and a block of commented-out `node_grouped`/`node_ungrouped` hooks that describe a caching design that was never built.~~
+
+Closed by WI-39: the three arrays are now real and populated by explicit registration, the group scans are gone, and both halves of the `node_grouped`/`node_ungrouped` sketch (in `power_manager.gd` and `signal_bus.gd`) are deleted.
 
 ### B3. Runtime state `@export`ed on shared resources — *fixed by WI-38*
 
@@ -107,7 +109,7 @@ Worth bumping at the next actually-breaking change and writing the first migrati
 
 ### B6. Commented-out code accumulating in hot files
 
-`storage_component.gd:130-146` and `:250-259`; `power_manager.gd:18-32`; `world_manager.gd:294-302`; `module_base.gd:578-586`. Also empty-but-defined `_process` handlers that still cost an engine call per frame: `world_manager.gd:65-66`. Git has the history — delete these.
+`storage_component.gd:130-146` and `:250-259`; `world_manager.gd:294-302`; `module_base.gd:578-586`. Also empty-but-defined `_process` handlers that still cost an engine call per frame: `world_manager.gd:65-66`. Git has the history — delete these. (The `power_manager.gd` block and its `signal_bus.gd` counterpart are gone — WI-39.)
 
 ---
 
@@ -115,13 +117,13 @@ Worth bumping at the next actually-breaking change and writing the first migrati
 
 *Numbering continues the original list; items 1, 2, 3, 6(part), 7 are done and moved to section E.*
 
-**C4. Cache power group membership.** *(scheduled: [[WI-39_Power_Registry]])* Three `get_nodes_in_group` calls per slow tick (`power_manager.gd:37,44,54`). The commented-out `node_grouped` hooks show the intended design. Maintaining arrays on `ready_constructed`/`_exit_tree` also gives a natural home for per-module power priorities later (life support browns out last). Scoping this also turned up an **unsaved-state bug**: `BatteryComponent.total_power_stored` has no save key, so every battery reloads empty — same class as A2, missed because that pass audited combat components. Folded into the same WI.
+**C4. Cache power group membership.** — *done by [[WI-39_Power_Registry]], 2026-07-22.* ~~Three `get_nodes_in_group` calls per slow tick. The commented-out `node_grouped` hooks show the intended design. Maintaining arrays on `ready_constructed`/`_exit_tree` also gives a natural home for per-module power priorities later (life support browns out last). Scoping this also turned up an **unsaved-state bug**: `BatteryComponent.total_power_stored` has no save key, so every battery reloads empty — same class as A2, missed because that pass audited combat components. Folded into the same WI.~~ See section E.
 
 **C5. One storage-query helper.** *(scheduled: [[WI-40_Storage_Query_Helper]])* Still the highest-value refactor here, and now with a live symptom (A5). Four scanners — `job_get_resource.gd:118` and `:148`, `job_store_inventory.gd:129`, `job_collect_pile.gd:124` — each walking `"resource_storage"` with `is_reachable` and their own subtly different scoring. A `StorageQuery.find_source(pawn, resource, opts)` / `find_sink(pawn, resource, opts)` pair with an explicit `require_priority_above` parameter would collapse all four, make the priority semantics one decision instead of four, and give per-resource indexing (`ResourceData.registered_storage`, which already exists and is unused for this) exactly one place to land when storage counts grow.
 
 **C8. Naming.** `sort_priority_decending` is gone. `capacitator` → `capacitor` remains (`power_consumption_component.gd:5`).
 
-**C9. A `Groups` constants file.** *(scheduled: [[WI-41_Group_Constants]])* Promoted from old D6 because the surface has grown a lot: `pirate_ship`, `shield`, `minimap_tracked`, `medical_bay`, `robot_repair`, `recharger`, `shop`, `crew_recruitment`, `sim_animation`, `sleep_component`, `sustenance_component`, `recreation_provider`, `resource_storage`, `resource_debris`, `airlock`, `asteroid`, `module`, `pawn`, `power_consumer`, `power_generator`, `battery` — ~21 magic strings across 53 call sites, all typo-vulnerable and none discoverable.
+**C9. A `Groups` constants file.** *(scheduled: [[WI-41_Group_Constants]])* Promoted from old D6 because the surface has grown a lot: `pirate_ship`, `shield`, `minimap_tracked`, `medical_bay`, `robot_repair`, `recharger`, `shop`, `crew_recruitment`, `sim_animation`, `sleep_component`, `sustenance_component`, `recreation_provider`, `resource_storage`, `resource_debris`, `airlock`, `asteroid`, `module`, `pawn` — ~18 magic strings, all typo-vulnerable and none discoverable. (`power_consumer`, `power_generator` and `battery` came off this list when WI-39 deleted the groups outright.)
 
 **C10. Turrets should read `RaidManager._ships`, not scan the tree.** `WeaponComponent._pick_target` does `get_nodes_in_group("pirate_ship")` per turret per frame during a raid (`weapon_component.gd:117`), and `_ensure_outward` walks every module in the station (`weapon_component.gd:148`, cached per raid so this one's fine). `RaidManager` already maintains the authoritative live array. A late-game station with a dozen turrets is doing a dozen redundant tree scans a frame.
 
@@ -156,6 +158,7 @@ Worth bumping at the next actually-breaking change and writing the first migrati
 Recorded so the history isn't lost:
 
 - **All of the 2026-07-22 section A** (A1–A8) — fixed by [[WI-38_Bug_Fix_Pass_2]], 2026-07-22. In short: blueprint turrets gated on `is_complete()`; shield capacitor charge/online now saved (module `shield` key, clamped to the upgraded capacity on load); `TimeManager.load_save_data` announces `calendar_restored` instead of replaying `cycle_changed`/`hour_changed`, so no manager does calendar work on load (the `is_loading()` guards in `EconomyManager`/`UnlockManager` came back out); autodump clamps to `stored - desired - reserved_withdraw` via the pure `StorageData.autodump_amount()`; `Job_StoreInventory` sweeps priority-then-distance and null-guards its cast; `game_loaded` reports the staged slot; and `ResourceData` split its authored seed (`starting_global_total`) from runtime `global_total`, reset in `SaveManager._ready` — which also closed **B3**. 351 GUT tests green.
+- **C4 — power participant registry, and the battery-charge save bug** — done by [[WI-39_Power_Registry]], 2026-07-22. `PowerManager` now keeps three registration arrays (`power_generators`, `power_consumers`, `batteries`) fed by `register_*`/`unregister_*` calls from the components themselves; the `power_generator`/`power_consumer`/`battery` groups are deleted, as is the `node_grouped`/`node_ungrouped` sketch in both `power_manager.gd` and `signal_bus.gd` — closing **B2** as well. A fourth component lifecycle hook, `ready_deconstructing()`, came with it: a module that has started coming apart now leaves the registries instead of generating and drawing right up until the last plate comes off (never intended — missed when construction was implemented). A deconstructing consumer also goes `powered = false`, so processors/mining bays/conveyors on a teardown site stop rather than running for free. Balance arithmetic is otherwise untouched; iteration order (and so brownout victim order) is still incidental, now registration order instead of tree order, and is documented as such pending the power-priority feature the registry exists to enable. Alongside it, `BatteryComponent.total_power_stored` gained a `battery` save block (clamped to `max_power_stored` on load, absent key = pristine), so banks no longer reload empty. 359 GUT tests green; verified in-engine by a 34-check headless probe.
 - **All of the original 2026-07-13 section A** (the first nine confirmed bugs) — fixed by WI-01.
 - **C1 — one resource-scan helper.** `ResourceScanner` (`scripts/utility/resource_scanner.gd`) now handles exported-build `.remap` suffixes and is used by the build menu, unlock trees, local upgrades and `SaveManager._build_lookups`.
 - **C2 — `ModuleGraphVertex` → `RefCounted`.** Done; no manual `free()` remains in `module_graph.gd`.
