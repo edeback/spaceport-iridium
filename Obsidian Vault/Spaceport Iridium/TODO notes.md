@@ -12,15 +12,35 @@ Hunger/Eat should take time. (~1 hr) Allows lingering in the mess hall for a bit
 
 Pawn issues should be promoted to the alerts section of the pawn screen too
 
+Transient visitors SHOULD save - both ARC inspection as well as tourists
+
+ctrl should also show pawn names, and should probably be cleaned up for modules as well (currently messy/confusing)
+
+Starting main UI flow - select 2 (or more?) pawns from a pool of candidates to start with (instead of starting completely randomly)
+
+Traits - something more general, like "quality" plus condition (flat/mult, attribute)?
+
+visitor_pawn looks for recruitment component instead of docking bay to leave
+
 There's Module.size and StructureComponent.size and they need to be aligned but why are they in two different spots?
 
+Conveyor module needs door
+
+Get capacitators on power_consumption_components working and move shields/weapons to use that.
+
 Trade order screen - show current supplies for validation
+
+"Vent" checkbox on storage not persisted - need to save
+Force power off not persisted - need to save
 
 Ice should get quality and that should matter for ice purifier
 Introduce comets which are asteroids except mostly ice and some carbon
 
-Forge
-- Needs carbon input storage or else won't run!
+Spread slow ticks around? Make even slower ticks? Ideally don't do heavy lifting all in one frame, even if "slow". Option: Global.time_manager.register_slow_tick(self).connect(...) and then time manager can batch those that connect to different frames? Probably won't break things?
+
+Processor_component: in try_deposit_outputs() any excess should get dumped into a pile in the room. Full storage should stop a new job from starting, however.
+
+Minimap doesn't get big enough to see pirates
 
 Room info at a glance
 - For example, show that it is iron ore being processed and how much time

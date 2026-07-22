@@ -11,12 +11,8 @@ all fixed
 ## B. Design-Debt / Known-Disabled Code (already on your radar, confirming)
 
 - `StructureManager.can_remove_module` check is disabled in `remove_module` because under-construction modules aren't structure-connected → you can currently delete a module out from under the station.
-- `Global.gd` lines 54-85: dead scene-introspection experiments; `market_manager.gd` lives at project root instead of `scripts/managers/`.
-- `JobManager.find_job` `end_job()`s invalid jobs without `cancel()` — the exact lifecycle question from your notes; resolve as "cancel always, cancel implies end."
 - Power system per-frame group scans (`main.gd` → `PowerManager.power_modules`) — your "shouldn't run every frame" TODO stands.
-- `DockingBay` class is empty; docking is entirely the TradeComponent UI — fine until traders become entities.
 - `ResourceData.cached_total`/`global_total` are `@export`ed runtime state on shared resources — they get written into memory-shared .tres instances; harmless at runtime but confusing in the inspector and a save/load foot-gun. Consider stripping `@export` from runtime fields.
-- **WI-09 punted persistence**: asteroid state (ore mix, richness range, `designated` flag) and `MiningComponent.priority_ore` are not saved — asteroids aren't in save files at all, so designations and per-bay ore priority reset on load. Selected refinery recipe *is* saved (`ProcessorComponent.get_save_data`). Revisit if/when asteroids get persisted.
 
 ## C. Improvement Suggestions (code)
 
@@ -42,7 +38,5 @@ all fixed
 
 1. Truss: real layer vs. visual placeholder? (Design doc leans placeholder.)
 	1. Lets maintain as a placeholder. Truss "modules" are already used when other modules in the Module layer are removed and maintain design intent.
-2. Save/load scope for in-flight jobs: serialize descriptors vs. cancel-on-save? (Spec recommends cancel-on-save v1.)
-	1. Cancel-on-save for now but serialization will eventually be necessary as the gameplay impacts for cancelling all jobs is very painful.
-3. How aggressively should unpowered modules fail? (Currently: freeze. Options: decay stored goods, hurt happiness, life-support pressure later.)
+2. How aggressively should unpowered modules fail? (Currently: freeze. Options: decay stored goods, hurt happiness, life-support pressure later.)
 	1. Yes, unpowered modules will have negative affects on the pawns and items stored in them.
