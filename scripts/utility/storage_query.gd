@@ -26,8 +26,6 @@ class_name StorageQuery
 ## numerically, because the two filters point in opposite directions.
 const ANY_PRIORITY: int = -0x7FFFFFFF
 
-const STORAGE_GROUP: StringName = &"resource_storage"
-
 # --- queries ------------------------------------------------------------------
 
 ## Picks a reachable source of `resource` to withdraw from. Prefers a single
@@ -47,7 +45,7 @@ static func find_source(pawn: PawnBase, resource: ResourceData, trip_cap: int,
 	var pawn_cell: Vector2i = Global.world_to_cell(pawn.global_position)
 	var scorer := SourceScorer.new(trip_cap)
 	var best: StorageComponent = null
-	for node: Node in pawn.get_tree().get_nodes_in_group(STORAGE_GROUP):
+	for node: Node in pawn.get_tree().get_nodes_in_group(Groups.RESOURCE_STORAGE):
 		var storage: StorageComponent = node as StorageComponent
 		# Null check: anything ever added to the group that isn't a
 		# StorageComponent would otherwise be a nil-access crash here.
@@ -86,7 +84,7 @@ static func find_sink(pawn: PawnBase, resource: ResourceData,
 	var pawn_cell: Vector2i = Global.world_to_cell(pawn.global_position)
 	var scorer := SinkScorer.new()
 	var best: StorageComponent = null
-	for node: Node in pawn.get_tree().get_nodes_in_group(STORAGE_GROUP):
+	for node: Node in pawn.get_tree().get_nodes_in_group(Groups.RESOURCE_STORAGE):
 		var storage: StorageComponent = node as StorageComponent
 		if storage == null or not storage.accepts_imports:
 			continue

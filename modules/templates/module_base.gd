@@ -129,7 +129,7 @@ func _ready() -> void:
 		nameplate.text = module_data.name
 	elif nameplate != null:
 		nameplate.text = ""
-	add_to_group("module")
+	add_to_group(Groups.MODULE)
 	for group_name: StringName in add_to_groups:
 		add_to_group(group_name)
 	if SignalBus.is_node_ready():

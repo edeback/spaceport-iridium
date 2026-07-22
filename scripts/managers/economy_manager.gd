@@ -249,7 +249,7 @@ func _charge_upkeep() -> void:
 	if not upkeep_enabled:
 		return
 	var total: int = 0
-	for node: Node in get_tree().get_nodes_in_group("module"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.MODULE):
 		var module: ModuleBase = node as ModuleBase
 		# Built modules only - blueprints and truss placeholders are free.
 		if module == null or module.module_data == null or not module.is_complete():
@@ -421,7 +421,7 @@ func wage_breakdown() -> Dictionary:
 ## than smeared across rows that would no longer sum to it.
 func upkeep_breakdown() -> Dictionary:
 	var out: Dictionary = {}
-	for node: Node in get_tree().get_nodes_in_group("module"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.MODULE):
 		var module: ModuleBase = node as ModuleBase
 		if module == null or module.module_data == null or not module.is_complete():
 			continue

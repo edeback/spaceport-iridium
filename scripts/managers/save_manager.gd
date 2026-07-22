@@ -219,7 +219,7 @@ static func resolve_pile_ref(ref: Dictionary) -> ResourcePile:
 	var target_id: int = int(ref.get("id", -1))
 	if target_id < 0:
 		return null
-	for node: Node in Global.world_manager.get_tree().get_nodes_in_group("resource_debris"):
+	for node: Node in Global.world_manager.get_tree().get_nodes_in_group(Groups.RESOURCE_DEBRIS):
 		var pile: ResourcePile = node as ResourcePile
 		if pile != null and pile.pile_id == target_id:
 			return pile
@@ -301,7 +301,7 @@ func _get_resources_save() -> Dictionary:
 
 func _get_piles_save() -> Array:
 	var out: Array = []
-	for node: Node in get_tree().get_nodes_in_group("resource_debris"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.RESOURCE_DEBRIS):
 		var pile: ResourcePile = node as ResourcePile
 		if pile == null or pile.is_empty():
 			continue
@@ -323,7 +323,7 @@ func _get_piles_save() -> Array:
 
 func _get_pawns_save() -> Array:
 	var out: Array = []
-	for node: Node in get_tree().get_nodes_in_group("pawn"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.PAWN):
 		var pawn: PawnBase = node as PawnBase
 		# All pawns are saved and loaded - except the ARC inspector (WI-26): it's
 		# driven by a runtime-only InspectionRunner that a load doesn't restore, so a

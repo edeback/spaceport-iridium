@@ -139,7 +139,7 @@ func _snapshot_prices() -> void:
 ## deliberately future work (WI-08 edge case). Public: ContractManager syncs
 ## its demand registration against this too.
 func find_trade_bay() -> ModuleBase:
-	for node: Node in get_tree().get_nodes_in_group("module"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.MODULE):
 		var module: ModuleBase = node as ModuleBase
 		if module == null or not module is DockingBay or not module.is_complete():
 			continue

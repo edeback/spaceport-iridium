@@ -16,7 +16,7 @@ extends ComponentBase
 var _claims: Array[JobBase] = []
 
 func ready_constructed() -> void:
-	add_to_group("recreation_provider")
+	add_to_group(Groups.RECREATION_PROVIDER)
 
 func has_free_slot() -> bool:
 	return _claims.size() < capacity

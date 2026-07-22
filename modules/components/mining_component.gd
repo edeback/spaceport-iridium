@@ -44,7 +44,7 @@ func ready_blueprint() -> void:
 
 func ready_constructed() -> void:
 	set_process(true)
-	add_to_group("processor")
+	add_to_group(Groups.PROCESSOR)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:

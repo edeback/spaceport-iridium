@@ -51,7 +51,7 @@ func setup(component: MiningComponent) -> void:
 func can_do_job(_pawn: PawnBase) -> bool:
 	if _pawn.inventory_component != null and _pawn.inventory_component.space_available() <= 0:
 		return false
-	var asteroids: Array[Node] = _pawn.get_tree().get_nodes_in_group("asteroid")
+	var asteroids: Array[Node] = _pawn.get_tree().get_nodes_in_group(Groups.ASTEROID)
 	var has_resources: bool = false
 	for node in asteroids:
 		if (node as AsteroidBase).cur_resources > 0:
@@ -107,7 +107,7 @@ func cancel_asteroid() -> void:
 func get_asteroid() -> void:
 	# If an asteroid is still set (and valid), it came from a save - honor it, otherwise find a new one
 	if asteroid == null or not is_instance_valid(asteroid):
-		var asteroids: Array[Node] = pawn.get_tree().get_nodes_in_group("asteroid")
+		var asteroids: Array[Node] = pawn.get_tree().get_nodes_in_group(Groups.ASTEROID)
 		asteroids.shuffle()
 		# Priority order: player-designated asteroids first, then ones carrying
 		# this mining bay's priority ore, then whatever the shuffle found first.

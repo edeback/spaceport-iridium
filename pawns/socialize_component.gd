@@ -75,7 +75,7 @@ func _on_slow_tick(interval: float) -> void:
 ## (i.e. have a SocializeComponent of their own - drones don't).
 func _count_company() -> int:
 	var company: int = 0
-	for node: Node in get_tree().get_nodes_in_group("pawn"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.PAWN):
 		var other: PawnBase = node as PawnBase
 		if other == null or other == owner_pawn or other.current_module != owner_pawn.current_module:
 			continue

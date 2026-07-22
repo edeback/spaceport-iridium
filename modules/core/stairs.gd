@@ -7,7 +7,7 @@ var truss: ModuleData = preload("res://data/modules/core/truss_mdata.tres")
 @export var collision_upper: CollisionShape2D
 
 func _ready() -> void:
-	add_to_group("stairs")
+	add_to_group(Groups.STAIRS)
 	super()
 	SignalBus.module_added.connect(set_sprite)
 	SignalBus.module_removed.connect(set_sprite)

@@ -99,7 +99,7 @@ func ready_blueprint() -> void:
 	set_process(false)
 
 func ready_constructed() -> void:
-	add_to_group("processor")
+	add_to_group(Groups.PROCESSOR)
 	set_process(true)
 	# Changing this to always sync storage
 	_sync_storages()

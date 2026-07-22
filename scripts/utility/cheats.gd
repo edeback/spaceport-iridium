@@ -300,7 +300,7 @@ func set_reputation(value: float) -> String:
 	return _report("set visitor reputation to %.2f" % Global.visitor_manager.reputation)
 
 func _find_docking_bay() -> ModuleBase:
-	for node: Node in Global.world_manager.get_tree().get_nodes_in_group("crew_recruitment"):
+	for node: Node in Global.world_manager.get_tree().get_nodes_in_group(Groups.CREW_RECRUITMENT):
 		var bay: CrewRecruitmentComponent = node as CrewRecruitmentComponent
 		if bay != null and bay.owner_module != null and bay.owner_module.is_complete():
 			return bay.owner_module
@@ -373,7 +373,7 @@ func _module_at_or_near(cell: Vector2i) -> ModuleBase:
 		return exact
 	var best: ModuleBase = null
 	var best_dist: int = -1
-	for node: Node in world.get_tree().get_nodes_in_group("module"):
+	for node: Node in world.get_tree().get_nodes_in_group(Groups.MODULE):
 		var module: ModuleBase = node as ModuleBase
 		if module == null:
 			continue

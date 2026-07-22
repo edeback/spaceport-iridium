@@ -130,7 +130,7 @@ func _hotel_capacity() -> int:
 ## Count of built, open shops (somewhere to spend). Reads the "shop" group.
 func _open_shop_count() -> int:
 	var count: int = 0
-	for node: Node in get_tree().get_nodes_in_group("shop"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.SHOP):
 		var shop: ShopComponent = node as ShopComponent
 		if shop != null and shop.is_open():
 			count += 1
@@ -138,7 +138,7 @@ func _open_shop_count() -> int:
 
 ## Nearest built docking bay to dock the passenger shuttle at (the crew gateway).
 func _find_arrival_bay() -> ModuleBase:
-	for node: Node in get_tree().get_nodes_in_group("crew_recruitment"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.CREW_RECRUITMENT):
 		var bay: CrewRecruitmentComponent = node as CrewRecruitmentComponent
 		if bay != null and bay.owner_module != null and bay.owner_module.is_complete():
 			return bay.owner_module
@@ -231,7 +231,7 @@ func on_visitor_departed(pawn: VisitorPawn, happy: bool) -> void:
 ## the counter can drift if a guest is freed without a clean departure.
 func visitor_count() -> int:
 	var count: int = 0
-	for node: Node in get_tree().get_nodes_in_group("pawn"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.PAWN):
 		if node is VisitorPawn and not (node as VisitorPawn).is_queued_for_deletion():
 			count += 1
 	return count

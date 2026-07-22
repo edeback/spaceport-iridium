@@ -124,7 +124,7 @@ func _pick_target() -> PirateShip:
 	var reach2: float = reach * reach
 	var best: PirateShip = null
 	var best_d2: float = INF
-	for node: Node in get_tree().get_nodes_in_group("pirate_ship"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.PIRATE_SHIP):
 		var ship: PirateShip = node as PirateShip
 		if ship == null or not is_instance_valid(ship):
 			continue
@@ -155,7 +155,7 @@ func _ensure_outward() -> void:
 	_outward_valid = true
 	var centroid := Vector2.ZERO
 	var count: int = 0
-	for node: Node in get_tree().get_nodes_in_group("module"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.MODULE):
 		var module: ModuleBase = node as ModuleBase
 		if module == null:
 			continue

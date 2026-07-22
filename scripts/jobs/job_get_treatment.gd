@@ -137,7 +137,7 @@ func _find_bay(_pawn: PawnBase) -> MedicalComponent:
 	var best: MedicalComponent = null
 	var best_dist: int = 0
 	var pawn_cell: Vector2i = Global.world_to_cell(_pawn.global_position)
-	for node: Node in _pawn.get_tree().get_nodes_in_group("medical_bay"):
+	for node: Node in _pawn.get_tree().get_nodes_in_group(Groups.MEDICAL_BAY):
 		var candidate: MedicalComponent = node as MedicalComponent
 		if candidate == null or not candidate.is_available():
 			continue

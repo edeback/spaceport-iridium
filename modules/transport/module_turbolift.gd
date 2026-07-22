@@ -31,7 +31,7 @@ func set_floor_enabled(new_enabled: bool) -> void:
 		shaft.on_floor_toggled(self)
 
 func _ready() -> void:
-	add_to_group("turbolifts")
+	add_to_group(Groups.TURBOLIFTS)
 	super()
 	SignalBus.module_added.connect(set_sprite)
 	SignalBus.module_removed.connect(set_sprite)

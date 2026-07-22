@@ -80,7 +80,7 @@ func ready_preview() -> void:
 func ready_blueprint() -> void:
 	if construction_storage:
 		display_info_panel_ui = true
-		add_to_group("resource_storage")
+		add_to_group(Groups.RESOURCE_STORAGE)
 		set_process(true)
 		_posting_active = true
 	else:
@@ -91,12 +91,12 @@ func ready_blueprint() -> void:
 func ready_constructed() -> void:
 	if construction_storage:
 		display_info_panel_ui = false
-		remove_from_group("resource_storage")
+		remove_from_group(Groups.RESOURCE_STORAGE)
 		set_process(false)
 		_posting_active = false
 	else:
 		display_info_panel_ui = true
-		add_to_group("resource_storage")
+		add_to_group(Groups.RESOURCE_STORAGE)
 		set_process(true)
 		_posting_active = true
 		if include_in_stats:

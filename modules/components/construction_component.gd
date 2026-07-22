@@ -186,7 +186,7 @@ func _on_deconstruction_job_end(finished_job: Job_ConstructModule) -> void:
 func setup_storage_post_deconstruction() -> void:
 	Global.path_manager.set_exterior(owner_module, true)
 	material_storage.empty_all()
-	material_storage.add_to_group("resource_storage")
+	material_storage.add_to_group(Groups.RESOURCE_STORAGE)
 	material_storage.accepts_imports = false
 	if owner_module.module_data.resource_costs.is_empty():
 		material_storage.display_storage_ui = false
@@ -229,7 +229,7 @@ func load_save_data(data: Dictionary) -> void:
 func _setup_deconstructed_for_load() -> void:
 	Global.path_manager.set_exterior(owner_module, true)
 	material_storage.empty_all()
-	material_storage.add_to_group("resource_storage")
+	material_storage.add_to_group(Groups.RESOURCE_STORAGE)
 	material_storage.accepts_imports = false
 	material_storage.accepts_exports = true
 	material_storage.display_storage_ui = true

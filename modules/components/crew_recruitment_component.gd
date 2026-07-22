@@ -16,7 +16,7 @@ func ready_blueprint() -> void:
 
 func ready_constructed() -> void:
 	override_ui = true
-	add_to_group("crew_recruitment")
+	add_to_group(Groups.CREW_RECRUITMENT)
 
 func request_hire(candidate: HireCandidate) -> bool:
 	return Global.crew_manager.request_hire(owner_module, candidate)

@@ -34,7 +34,7 @@ var _flash_time: float = 0.0
 const FLASH_SECONDS: float = 0.18
 
 func ready_constructed() -> void:
-	add_to_group("shield")
+	add_to_group(Groups.SHIELD)
 	_charge = capacity * clampf(initial_charge_fraction, 0.0, 1.0)
 	_online = _charge > 0.0
 	# Capacitor integrates on the sim slow tick (interval = elapsed sim-seconds),

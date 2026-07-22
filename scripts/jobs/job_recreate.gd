@@ -134,7 +134,7 @@ static func restore(_data: Dictionary) -> JobBase:
 ## Pure query - safe from can_do_job.
 func _gather_candidates(_pawn: PawnBase) -> Array[RecreationProviderComponent]:
 	var out: Array[RecreationProviderComponent] = []
-	for node: Node in _pawn.get_tree().get_nodes_in_group("recreation_provider"):
+	for node: Node in _pawn.get_tree().get_nodes_in_group(Groups.RECREATION_PROVIDER):
 		var candidate: RecreationProviderComponent = node as RecreationProviderComponent
 		if candidate == null or not candidate.has_free_slot():
 			continue

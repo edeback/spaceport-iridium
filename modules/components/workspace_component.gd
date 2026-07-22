@@ -53,7 +53,7 @@ func _maybe_resolve() -> void:
 	if _pending_ids.is_empty() or not is_inside_tree():
 		return
 	var changed: bool = false
-	for node: Node in get_tree().get_nodes_in_group("pawn"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.PAWN):
 		var pawn: PawnBase = node as PawnBase
 		if pawn == null or pawn is MiningDronePawn:
 			continue

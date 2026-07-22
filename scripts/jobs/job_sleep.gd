@@ -137,7 +137,7 @@ func _find_pod(_pawn: PawnBase) -> SleepComponent:
 	var pods: Array[SleepComponent] = []
 	var dists: PackedFloat32Array = []
 	var nearest: float = -1.0
-	for node: Node in _pawn.get_tree().get_nodes_in_group("sleep_component"):
+	for node: Node in _pawn.get_tree().get_nodes_in_group(Groups.SLEEP_COMPONENT):
 		var pod: SleepComponent = node as SleepComponent
 		if pod == null or not pod.has_free_slot():
 			continue

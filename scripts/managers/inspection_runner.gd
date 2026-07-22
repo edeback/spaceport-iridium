@@ -206,7 +206,7 @@ func _nearest_built_with_tag(tag: String) -> ModuleBase:
 	var origin: Vector2 = _inspector.global_position if is_instance_valid(_inspector) else Vector2.ZERO
 	var best: ModuleBase = null
 	var best_dist: float = -1.0
-	for node: Node in get_tree().get_nodes_in_group("module"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.MODULE):
 		var module: ModuleBase = node as ModuleBase
 		if module == null or not module.is_complete() or module.module_data == null:
 			continue

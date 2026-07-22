@@ -169,7 +169,7 @@ func _gather_candidates(_pawn: PawnBase) -> Array[ShopComponent]:
 
 static func gather_affordable_shops(_pawn: PawnBase) -> Array[ShopComponent]:
 	var out: Array[ShopComponent] = []
-	for node: Node in _pawn.get_tree().get_nodes_in_group("shop"):
+	for node: Node in _pawn.get_tree().get_nodes_in_group(Groups.SHOP):
 		var candidate: ShopComponent = node as ShopComponent
 		if candidate == null or not candidate.is_open() or not candidate.has_free_slot():
 			continue

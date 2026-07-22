@@ -124,7 +124,7 @@ func _recompute_geometry() -> void:
 	var centre := Vector2.ZERO
 	var count: int = 0
 	var max_extent: float = 0.0
-	var modules: Array[Node] = get_tree().get_nodes_in_group("module")
+	var modules: Array[Node] = get_tree().get_nodes_in_group(Groups.MODULE)
 	for node: Node in modules:
 		var module: ModuleBase = node as ModuleBase
 		if module == null:
@@ -213,7 +213,7 @@ func _check_end() -> void:
 func try_shield_absorb(impact: Vector2, damage: float) -> ShieldComponent:
 	var comps: Array[ShieldComponent] = []
 	var bubbles: Array = []
-	for node: Node in get_tree().get_nodes_in_group("shield"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.SHIELD):
 		var shield: ShieldComponent = node as ShieldComponent
 		if shield == null or not is_instance_valid(shield):
 			continue

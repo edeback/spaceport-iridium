@@ -93,7 +93,7 @@ func _go_to_exit() -> void:
 		SignalBus.station_alert.emit("%s cannot find a way to leave the station." % _label())
 
 func _exit_reachable() -> bool:
-	for node: Node in get_tree().get_nodes_in_group("crew_recruitment"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.CREW_RECRUITMENT):
 		var bay: CrewRecruitmentComponent = node as CrewRecruitmentComponent
 		if bay != null and bay.owner_module != null and Global.path_manager.is_reachable(self, bay.owner_module):
 			return true

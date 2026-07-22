@@ -54,7 +54,7 @@ func ready_blueprint() -> void:
 
 func ready_constructed() -> void:
 	override_ui = true
-	add_to_group("sustenance_component")
+	add_to_group(Groups.SUSTENANCE_COMPONENT)
 	set_process(true)
 
 func _process(delta: float) -> void:

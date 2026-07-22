@@ -34,7 +34,7 @@ func describe() -> String:
 func _station_bounds() -> Rect2:
 	var bounds := Rect2()
 	var first: bool = true
-	for node: Node in Global.world_manager.get_tree().get_nodes_in_group("module"):
+	for node: Node in Global.world_manager.get_tree().get_nodes_in_group(Groups.MODULE):
 		var module: ModuleBase = node as ModuleBase
 		if module == null:
 			continue

@@ -225,12 +225,12 @@ func _draw_asteroids() -> void:
 		draw_circle(p, 1.6, asteroid_designated_color if asteroid.designated else asteroid_color)
 
 func _draw_ships() -> void:
-	for node: Node in get_tree().get_nodes_in_group("minimap_tracked"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.MINIMAP_TRACKED):
 		var ship: Node2D = node as Node2D
 		if ship == null or not is_instance_valid(ship):
 			continue
 		var p: Vector2 = _transform.world_to_map(ship.global_position)
-		var col: Color = pirate_ship_color if ship.is_in_group("pirate_ship") else friendly_ship_color
+		var col: Color = pirate_ship_color if ship.is_in_group(Groups.PIRATE_SHIP) else friendly_ship_color
 		_draw_triangle(p, 4.0, col)
 
 func _draw_triangle(center: Vector2, radius: float, color: Color) -> void:

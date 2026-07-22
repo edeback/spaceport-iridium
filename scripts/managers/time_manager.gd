@@ -23,9 +23,6 @@ const START_HOUR: int = 6
 ## the tick fires proportionally more often in real time).
 const SLOW_TICK_INTERVAL: float = 0.25
 const SPEED_PRESETS: Array[float] = [0.5, 1.0, 2.0, 4.0]
-## Gameplay AnimatedSprite2Ds registered via sync_animation (WI-20); resynced
-## on every speed/pause change. UI animation must never join this group.
-const SIM_ANIMATION_GROUP: StringName = &"sim_animation"
 
 ## Fires once per frame with that frame's scaled delta. Not emitted while
 ## paused (no zero-delta spam) - awaiting sim_seconds() simply stretches.
@@ -122,13 +119,13 @@ func animation_speed() -> float:
 ## at runtime (pawns) must instead re-apply animation_speed() per-frame -
 ## group resyncs can't reach a node that's momentarily out of the tree.
 func sync_animation(sprite: AnimatedSprite2D) -> void:
-	sprite.add_to_group(SIM_ANIMATION_GROUP)
+	sprite.add_to_group(Groups.SIM_ANIMATION)
 	sprite.speed_scale = animation_speed()
 
 ## Single Variant-typed handler so both speed_changed(float) and
 ## pause_state_changed(bool) can share it.
 func _resync_sim_animations(_changed: Variant) -> void:
-	for node: Node in get_tree().get_nodes_in_group(SIM_ANIMATION_GROUP):
+	for node: Node in get_tree().get_nodes_in_group(Groups.SIM_ANIMATION):
 		var sprite: AnimatedSprite2D = node as AnimatedSprite2D
 		if sprite != null:
 			sprite.speed_scale = animation_speed()

@@ -84,9 +84,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			# rather than waiting for the mouse to move to a new cell.
 			update_module_placement(true)
 		if event.is_action_pressed("show_details"):
-			get_tree().call_group("module", "show_label")
+			get_tree().call_group(Groups.MODULE, "show_label")
 		if event.is_action_released("show_details"):
-			get_tree().call_group("module", "hide_label")
+			get_tree().call_group(Groups.MODULE, "hide_label")
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta: float) -> void:

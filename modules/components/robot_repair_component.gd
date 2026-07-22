@@ -23,7 +23,7 @@ extends ComponentBase
 var _claims: Array[JobBase] = []
 
 func ready_constructed() -> void:
-	add_to_group("robot_repair")
+	add_to_group(Groups.ROBOT_REPAIR)
 
 func powered() -> bool:
 	return power_consumption_component == null or power_consumption_component.powered

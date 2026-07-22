@@ -37,7 +37,7 @@ signal asteroid_clicked(asteroid: AsteroidBase)
 signal contents_changed
 
 func _ready() -> void:
-	add_to_group("asteroid")
+	add_to_group(Groups.ASTEROID)
 	cur_resources = max_resources
 	for weight: float in resource_weighted_values.values():
 		resource_total_weights += weight

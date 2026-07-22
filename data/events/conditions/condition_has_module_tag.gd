@@ -9,7 +9,7 @@ extends EventCondition
 func is_met() -> bool:
 	if tag.is_empty():
 		return true
-	for node: Node in Global.world_manager.get_tree().get_nodes_in_group("module"):
+	for node: Node in Global.world_manager.get_tree().get_nodes_in_group(Groups.MODULE):
 		var module: ModuleBase = node as ModuleBase
 		if module != null and module.is_complete() and module.module_data != null \
 				and module.module_data.tags.has(tag):

@@ -105,7 +105,7 @@ func _spawn_starting_crew(home: ModuleBase) -> void:
 ## have already resigned and are walking to the bay.
 func get_crew(include_leaving: bool = true) -> Array[PawnBase]:
 	var crew: Array[PawnBase] = []
-	for node: Node in get_tree().get_nodes_in_group("pawn"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.PAWN):
 		var pawn: PawnBase = node as PawnBase
 		# Robots (mining drones + hauler robots, WI-28) and visitors (WI-26
 		# inspector) aren't crew: no wage, no roster.
@@ -126,7 +126,7 @@ func crew_count(include_leaving: bool = true) -> int:
 ## station of hotels-and-no-bunks can't hire.
 func sleep_capacity() -> int:
 	var total: int = 0
-	for node: Node in get_tree().get_nodes_in_group("sleep_component"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.SLEEP_COMPONENT):
 		var pod: SleepComponent = node as SleepComponent
 		if pod != null and not pod.visitor_only:
 			total += pod.capacity
@@ -136,7 +136,7 @@ func sleep_capacity() -> int:
 ## visitor-capacity gate: guests only arrive if a free hotel bunk exists.
 func visitor_sleep_capacity() -> int:
 	var total: int = 0
-	for node: Node in get_tree().get_nodes_in_group("sleep_component"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.SLEEP_COMPONENT):
 		var pod: SleepComponent = node as SleepComponent
 		if pod != null and pod.visitor_only:
 			total += pod.capacity
@@ -145,7 +145,7 @@ func visitor_sleep_capacity() -> int:
 ## Count of currently-free visitor (hotel) bunks - the at-arrival capacity check.
 func free_visitor_bunks() -> int:
 	var free: int = 0
-	for node: Node in get_tree().get_nodes_in_group("sleep_component"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.SLEEP_COMPONENT):
 		var pod: SleepComponent = node as SleepComponent
 		if pod != null and pod.visitor_only and pod.owner_module != null and pod.owner_module.is_complete():
 			free += maxi(pod.capacity - pod.claimed_count(), 0)

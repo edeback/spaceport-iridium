@@ -21,7 +21,7 @@ func can_do_job(_pawn: PawnBase) -> bool:
 	if _pawn.current_module:
 		return _pawn.current_module.get_path_component().module_connections.size() > 0
 	else:
-		var airlocks: Array[Node] = _pawn.get_tree().get_nodes_in_group("airlock")
+		var airlocks: Array[Node] = _pawn.get_tree().get_nodes_in_group(Groups.AIRLOCK)
 		return airlocks.size() > 0
 	
 func start_job(_pawn: PawnBase) -> void:
@@ -46,7 +46,7 @@ func start_job(_pawn: PawnBase) -> void:
 					destination = node as ModuleBase
 					break
 	else:
-		var airlocks: Array[Node] = _pawn.get_tree().get_nodes_in_group("airlock")
+		var airlocks: Array[Node] = _pawn.get_tree().get_nodes_in_group(Groups.AIRLOCK)
 		var distance: float = -1
 		for node in airlocks:
 			if node is ModuleBase:
@@ -86,7 +86,7 @@ func _spread_done(_as_success: bool) -> void:
 	cancel(false)
 
 func _module_has_other_idlers() -> bool:
-	for node: Node in pawn.get_tree().get_nodes_in_group("pawn"):
+	for node: Node in pawn.get_tree().get_nodes_in_group(Groups.PAWN):
 		var other: PawnBase = node as PawnBase
 		if other == null or other == pawn:
 			continue

@@ -125,7 +125,7 @@ func _find_charger(_pawn: PawnBase) -> RechargeComponent:
 	var best: RechargeComponent = null
 	var best_dist: int = 0
 	var pawn_cell: Vector2i = Global.world_to_cell(_pawn.global_position)
-	for node: Node in _pawn.get_tree().get_nodes_in_group("recharger"):
+	for node: Node in _pawn.get_tree().get_nodes_in_group(Groups.RECHARGER):
 		var candidate: RechargeComponent = node as RechargeComponent
 		if candidate == null or not candidate.is_available():
 			continue

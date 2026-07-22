@@ -118,7 +118,7 @@ func _find_bay(_pawn: PawnBase) -> RobotRepairComponent:
 	var best: RobotRepairComponent = null
 	var best_dist: int = 0
 	var pawn_cell: Vector2i = Global.world_to_cell(_pawn.global_position)
-	for node: Node in _pawn.get_tree().get_nodes_in_group("robot_repair"):
+	for node: Node in _pawn.get_tree().get_nodes_in_group(Groups.ROBOT_REPAIR):
 		var candidate: RobotRepairComponent = node as RobotRepairComponent
 		if candidate == null or not candidate.is_available():
 			continue

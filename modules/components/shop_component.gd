@@ -34,7 +34,7 @@ func ready_blueprint() -> void:
 	_apply_visuals()
 
 func ready_constructed() -> void:
-	add_to_group("shop")
+	add_to_group(Groups.SHOP)
 	_ensure_type()
 	_apply_visuals()
 

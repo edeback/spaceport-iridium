@@ -101,7 +101,7 @@ func is_finished() -> bool:
 func _find_bay(_pawn: PawnBase) -> CrewRecruitmentComponent:
 	var best: CrewRecruitmentComponent = null
 	var best_dist: int = 0
-	for node: Node in _pawn.get_tree().get_nodes_in_group("crew_recruitment"):
+	for node: Node in _pawn.get_tree().get_nodes_in_group(Groups.CREW_RECRUITMENT):
 		var bay: CrewRecruitmentComponent = node as CrewRecruitmentComponent
 		if bay == null or not Global.path_manager.is_reachable(_pawn, bay.owner_module):
 			continue

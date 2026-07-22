@@ -233,7 +233,7 @@ func _spread() -> void:
 		var chance: float = disease.contagious_rate * air_scale
 		if chance <= 0.0:
 			continue
-		for node: Node in owner_pawn.get_tree().get_nodes_in_group("pawn"):
+		for node: Node in owner_pawn.get_tree().get_nodes_in_group(Groups.PAWN):
 			var other: PawnBase = node as PawnBase
 			if other == null or other == owner_pawn or other.current_module != module:
 				continue

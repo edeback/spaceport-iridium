@@ -120,7 +120,7 @@ func get_component_by_type(type: Variant) -> PawnComponentBase:
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	add_to_group("pawn")
+	add_to_group(Groups.PAWN)
 	# Stable save id (WI-23): fresh pawns take the next counter value; loaded
 	# pawns arrive with pawn_id already set (before add_child) and just push the
 	# counter past themselves so a later fresh pawn can't collide.

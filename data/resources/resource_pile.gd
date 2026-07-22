@@ -56,7 +56,7 @@ signal pile_changed(resource: ResourceData, new_amount: int)
 signal resource_pile_clicked(resource_pile: ResourcePile)
 
 func _ready() -> void:
-	add_to_group("resource_debris")
+	add_to_group(Groups.RESOURCE_DEBRIS)
 	$ClickArea.input_event.connect(_on_click_area_input_event)
 
 func _on_click_area_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
@@ -158,7 +158,7 @@ func _despawn() -> void:
 	despawning.emit()
 	if is_instance_valid(parent_module) and parent_module.overflow_pile == self:
 		parent_module.overflow_pile = null
-	remove_from_group("resource_debris")
+	remove_from_group(Groups.RESOURCE_DEBRIS)
 	queue_free()
 
 ## Convenience constructor: builds a pile, adds it under parent_node, and

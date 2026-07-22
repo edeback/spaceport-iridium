@@ -36,7 +36,7 @@ var _claims: Array[JobBase] = []
 var _doctor_job: Job_Doctor = null
 
 func ready_constructed() -> void:
-	add_to_group("medical_bay")
+	add_to_group(Groups.MEDICAL_BAY)
 	# Doctor-job posting rides slow_tick (rare, coarse) - a patient occupying a bunk
 	# is a slow-changing condition, no need for a per-frame poll.
 	Global.time_manager.slow_tick.connect(_on_slow_tick)

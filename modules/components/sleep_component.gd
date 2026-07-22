@@ -42,7 +42,7 @@ extends ComponentBase
 var _claims: Array[JobBase] = []
 
 func ready_constructed() -> void:
-	add_to_group("sleep_component")
+	add_to_group(Groups.SLEEP_COMPONENT)
 
 func has_free_slot() -> bool:
 	return _claims.size() < capacity

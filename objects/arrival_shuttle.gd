@@ -21,7 +21,7 @@ var _docked_fired: bool = false
 ## inspector ship all reuse this script) joins minimap_tracked so the minimap
 ## renders it as a triangle without hard-coding any manager (WI-34).
 func _ready() -> void:
-	add_to_group("minimap_tracked")
+	add_to_group(Groups.MINIMAP_TRACKED)
 
 func setup(dock_position: Vector2, approach_from: Vector2) -> void:
 	global_position = approach_from

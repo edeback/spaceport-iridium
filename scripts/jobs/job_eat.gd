@@ -21,7 +21,7 @@ func get_subtask_description() -> String:
 	return ""
 
 func can_do_job(_pawn: PawnBase) -> bool:
-	var sus_components := _pawn.get_tree().get_nodes_in_group("sustenance_component")
+	var sus_components := _pawn.get_tree().get_nodes_in_group(Groups.SUSTENANCE_COMPONENT)
 	for component in sus_components:
 		# can_serve gates visitors behind the crew-priority reserve (WI-33); crew
 		# are served whenever there's any food.
@@ -59,7 +59,7 @@ func find_best_sustenance() -> SustenanceComponent:
 	var best_partial: SustenanceComponent = null
 	var best_partial_amount: float = -1
 	var best_partial_dist: int = 0
-	for node in pawn.get_tree().get_nodes_in_group("sustenance_component"):
+	for node in pawn.get_tree().get_nodes_in_group(Groups.SUSTENANCE_COMPONENT):
 		var sustenance: SustenanceComponent = node as SustenanceComponent
 		if sustenance == null or not sustenance.can_serve(pawn) or not Global.path_manager.is_reachable(pawn, sustenance.owner_module):
 			continue

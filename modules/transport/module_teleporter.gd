@@ -6,7 +6,7 @@ extends ModuleBase
 @export var lightning_sprite: AnimatedSprite2D
 
 func _ready() -> void:
-	add_to_group("teleporters")
+	add_to_group(Groups.TELEPORTERS)
 	Global.path_manager.graph.set_group_multiple("teleporters", 0.1)
 	super()
 

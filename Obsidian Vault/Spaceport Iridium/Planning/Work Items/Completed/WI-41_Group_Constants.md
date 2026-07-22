@@ -1,5 +1,15 @@
 # WI-41 — Group Constants
 
+> **STATUS: COMPLETE (2026-07-22).** Shipped as designed. `scripts/utility/groups.gd` holds 22 `StringName` constants; 75 group-API call sites across 52 files converted, plus the two local consts that predated it (`StorageQuery.STORAGE_GROUP`, `TimeManager.SIM_ANIMATION_GROUP`) folded in and deleted. Zero bare group literals remain in `.gd` outside `addons/`. Constant names mirror their string values so a grep for either finds both. 377 GUT tests green (unchanged — the suite is pure-class only, as expected). Verified by a 57-check headless autoload probe.
+>
+> **Deviations from the design, all from the implementation-time grep the doc asked for:**
+> - **`container_required` got no constant.** It isn't in 12 of *our* scenes — it's entirely inside `addons/collapsible_container/`, joined and read by that addon's own `folding_presets.gd`. Not our surface; nothing to enshrine and nothing to delete.
+> - **The joined-but-never-scanned list is four, not one:** `processor` (joined by `ProcessorComponent` and `MiningComponent`), `turbolifts`, `teleporters`, `stairs`. All four kept constants, each with a comment saying nothing reads it. Deleting the joins is a separate call — see below.
+> - **`teleporters` is two different things.** `ModuleTeleporter` joins the SceneTree group *and* uses the same word as a `ModuleGraph` vertex-group key (`set_group_multiple`, `change_vertex_group`, an edge `_meta`). Only the SceneTree join was converted; the graph-side strings are a different namespace and were left alone, with the collision noted on the constant.
+> - **Three `.tscn`-side literals, not three names.** Only `airlock` is actually authored scene-side (both airlock scenes, via `ModuleBase.add_to_groups`). `sim_animation` is joined purely through `TimeManager.sync_animation`; the doc's worry about it being hand-added later is recorded as a comment rather than a live duplication.
+>
+> **Open question for the player/designer, deliberately not decided here:** delete the four write-only joins, or leave them? They cost nothing and a "which transport modules exist?" scan is a plausible future reader, so they were left in.
+
 ## Goal
 Replace the bare group-name string literals with a `Groups` constants file, so the group API surface is discoverable and typo-proof. Closes **C9** (promoted from the original design-suggestion list once the surface quadrupled).
 

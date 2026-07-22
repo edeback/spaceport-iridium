@@ -13,7 +13,7 @@ extends RecreationProviderComponent
 
 func _raw_recreation_per_hour(_pawn: PawnBase) -> float:
 	var present: int = 0
-	for node: Node in get_tree().get_nodes_in_group("pawn"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.PAWN):
 		var pawn: PawnBase = node as PawnBase
 		if pawn != null and pawn.current_module == owner_module:
 			present += 1

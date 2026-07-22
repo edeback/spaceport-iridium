@@ -35,7 +35,7 @@ func _draw() -> void:
 ## (both endpoints known) live on the board. Either way we only draw a job whose
 ## source and destination modules are both still alive.
 func _draw_haul_arrows() -> void:
-	for node: Node in get_tree().get_nodes_in_group("pawn"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.PAWN):
 		var pawn: PawnBase = node as PawnBase
 		if pawn == null:
 			continue
@@ -90,7 +90,7 @@ func _draw_priority_labels() -> void:
 	if font == null:
 		return
 	var seen: Dictionary[ModuleBase, int] = {}
-	for node: Node in get_tree().get_nodes_in_group("resource_storage"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.RESOURCE_STORAGE):
 		var storage: StorageComponent = node as StorageComponent
 		if storage == null or not is_instance_valid(storage.owner_module):
 			continue

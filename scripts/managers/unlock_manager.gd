@@ -399,7 +399,7 @@ func apply_global_modifiers(module: ModuleBase) -> void:
 
 func _constructed_modules() -> Array[ModuleBase]:
 	var out: Array[ModuleBase] = []
-	for node: Node in get_tree().get_nodes_in_group("module"):
+	for node: Node in get_tree().get_nodes_in_group(Groups.MODULE):
 		if node is ModuleBase and (node as ModuleBase).is_complete():
 			out.append(node)
 	return out
