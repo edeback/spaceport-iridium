@@ -9,6 +9,59 @@ const SHADER_PARAM_PLACEABLE = "PLACEABLE"
 const CELL_CLEAR_COLOR: Color = Color(0.25, 1.0, 0.35, 0.22)
 const CELL_BLOCKED_COLOR: Color = Color(1.0, 0.12, 0.12, 0.4)
 
+## Static per-scene metadata the preview needs, read off one instantiation of a
+## module scene (WI-42). Every field is authored in the .tscn and never varies
+## at runtime — nothing in the codebase assigns ModuleData.scene, and unlocks
+## flip unlocked_by_default rather than swapping scenes — so an entry can't go
+## stale once built.
+class ModulePreviewData extends RefCounted:
+	var module_size: Vector2i
+	var connection_points: Array[Vector2i]
+	var internal_points: Array[Vector2i]
+	var must_be_clear_points: Array[Vector2i]
+	## ModuleBase.offset node position, not the sprite's.
+	var module_offset: Vector2
+	var texture: Texture2D
+	var sprite_offset: Vector2
+	var region_enabled: bool
+	var region_rect: Rect2
+	var sprite_transform: Transform2D
+	var flip_h: bool
+	var flip_v: bool
+
+	static func from_scene(scene: PackedScene) -> ModulePreviewData:
+		var data := ModulePreviewData.new()
+		var temp_module: ModuleBase = scene.instantiate() as ModuleBase
+		var structure: StructureComponent = temp_module.get_structure_component()
+		var temp_sprite: Sprite2D = temp_module.get_sprite()
+		# Every buildable module is expected to carry all three; the pre-cache
+		# code read them unguarded, so this only makes the assumption loud.
+		assert(structure != null, "Module scene has no StructureComponent: " + scene.resource_path)
+		assert(temp_module.offset != null, "Module scene has no offset node wired: " + scene.resource_path)
+		assert(temp_sprite != null, "Module scene has no sprite wired: " + scene.resource_path)
+		data.module_size = temp_module.size
+		data.connection_points = structure.connection_points
+		data.internal_points = structure.internal_points
+		data.must_be_clear_points = structure.must_be_clear_points
+		data.module_offset = temp_module.offset.position
+		data.texture = temp_sprite.texture
+		data.sprite_offset = temp_sprite.offset
+		data.region_enabled = temp_sprite.region_enabled
+		data.region_rect = temp_sprite.region_rect
+		data.sprite_transform = temp_sprite.transform
+		data.flip_h = temp_sprite.flip_h
+		data.flip_v = temp_sprite.flip_v
+		temp_module.queue_free()
+		return data
+
+## Lazily populated preview metadata, keyed by PackedScene rather than by
+## ModuleData: a flippable module's flipped_scene has genuinely different
+## geometry, and keying on the scene distinguishes the two for free. Owned by
+## the node (not a static) so it dies with the scene instead of holding every
+## previewed PackedScene alive across a Quit-to-Menu boundary. Multiplacement
+## duplicates share this dictionary by reference, which is exactly what we want.
+var _preview_cache: Dictionary[PackedScene, ModulePreviewData] = {}
+
 ## Per-cell validity from the last update_placeable(): local footprint cell
 ## (including must_be_clear points) -> clear. Drawn by _cell_overlay, which
 ## sits after the sprite in tree order so the tint renders on top of it.
@@ -51,30 +104,37 @@ var can_place: bool = true:
 			_update_shader()
 
 func update_from_module_data() -> void:
+	# The flipped setter reaches here too, and flip_module is bindable with no
+	# module selected - nothing to preview in that case.
+	if module_data == null:
+		return
 	var temp_scene: PackedScene =  module_data.scene
 	if flipped and module_data.flippable:
 		temp_scene = module_data.flipped_scene
-	var temp_module: ModuleBase = temp_scene.instantiate() as ModuleBase
-	module_size = temp_module.size
-	connection_points = temp_module.get_structure_component().connection_points
-	internal_points = temp_module.get_structure_component().internal_points
-	must_be_clear_points = temp_module.get_structure_component().must_be_clear_points
+	var preview_data: ModulePreviewData = _preview_cache.get(temp_scene)
+	if preview_data == null:
+		preview_data = ModulePreviewData.from_scene(temp_scene)
+		_preview_cache[temp_scene] = preview_data
+	module_size = preview_data.module_size
+	# The point arrays are shared with every other preview of this scene; they
+	# are only ever read, never mutated.
+	connection_points = preview_data.connection_points
+	internal_points = preview_data.internal_points
+	must_be_clear_points = preview_data.must_be_clear_points
 	module_layer = module_data.interaction_layer
 	module_connection_layer = module_data.connection_layer
-	var temp_sprite: Sprite2D = temp_module.get_sprite()
-	sprite.texture = temp_sprite.texture
-	sprite.offset = temp_sprite.offset
-	sprite.region_enabled = temp_sprite.region_enabled
-	sprite.region_rect = temp_sprite.region_rect
-	sprite.transform = temp_sprite.transform
+	sprite.texture = preview_data.texture
+	sprite.offset = preview_data.sprite_offset
+	sprite.region_enabled = preview_data.region_enabled
+	sprite.region_rect = preview_data.region_rect
+	sprite.transform = preview_data.sprite_transform
 	sprite.centered = true
 	sprite.visible = true
-	sprite.flip_h = temp_sprite.flip_h
-	sprite.flip_v = temp_sprite.flip_v
-	offset = temp_module.offset.position
+	sprite.flip_h = preview_data.flip_h
+	sprite.flip_v = preview_data.flip_v
+	offset = preview_data.module_offset
 	%ErrorLabel.position.x = -offset.x
 	%ErrorLabel.position.y = -offset.y - 32
-	temp_module.queue_free()
 
 func _update_shader() -> void:
 	if (sprite && sprite.material != null):

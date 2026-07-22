@@ -1,5 +1,15 @@
 # WI-42 — Preview Metadata Cache
 
+> **STATUS: COMPLETE (2026-07-22).** Shipped as designed. `PreviewModule.ModulePreviewData` (inner class, as the doc preferred) holds the twelve values; `_preview_cache: Dictionary[PackedScene, ModulePreviewData]` is an instance member on the node, so it dies with the scene. One instantiate per distinct scene per session instead of one per preview change — 47 distinct scenes across the 45 buildable `ModuleData` resources (45 base + 2 flipped variants: airlock, docking bay). Single file touched: `ui/preview_module.gd`. 377 GUT tests green (unchanged — no extractable rule, as the doc predicted). Verified by an old-vs-new differential probe: 1605 checks over every ModuleData × flip state × two sweeps, zero divergence.
+>
+> **Edge cases, all resolved as the doc guessed:**
+> - **Material is not shared.** The preview copies only texture/offset/region/transform/flip off the module's sprite, never its material; `PreviewModule._ready` duplicates its own. Asserted per-check in the probe.
+> - **Nothing assigns `ModuleData.scene` at runtime** (`grep '\.scene\s*='` → zero hits outside reads), so cached entries can't go stale. Confirmed, not inherited.
+> - **Missing `StructureComponent` / `offset` / `sprite`** are now `assert`s in `ModulePreviewData.from_scene` — the assumption made loud, matching how `StorageData` states its invariants. All 45 modules satisfy all three.
+> - **Point arrays are shared** between every preview of a scene rather than copied. Verified by grep that nothing anywhere mutates `connection_points`/`internal_points`/`must_be_clear_points`; noted in a comment at the assignment.
+>
+> **One pre-existing bug fixed in passing** (found by the probe, not caused by this WI): `update_from_module_data` had no null guard on `module_data`, while the `module_data` setter did. Pressing `flip_module` with no module selected reached it through the `flipped` setter and threw "Invalid access to property 'scene' on a base object of type 'Nil'" — a live crash on `main`, one keypress away. Guarded at the top of the function, which covers both setters.
+
 ## Goal
 Stop `PreviewModule` from instantiating an entire module scene every time the build preview changes. Closes **C12**.
 
