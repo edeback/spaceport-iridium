@@ -33,10 +33,3 @@ all fixed
 4. **Module removal refunds**: deconstruction returns 100% of materials; consider a configurable refund fraction later for balance.
 5. **Teleporter**: exists as a module with behaviors but the design question "does it need its own storage buffer for resource transfer" is unresolved; suggest treating teleporters as a pawn-only shortcut group first (cheap, already supported by graph groups) and resource teleportation as a separate late-game unlock.
 6. **Consider extracting magic groups** (`"resource_storage"`, `"power_consumer"`, `"sustenance_component"`, …) into a `Groups` constants file — typo-proofing for the group-string API surface.
-
-## E. Open Questions (need your call, none block Phase 0)
-
-1. Truss: real layer vs. visual placeholder? (Design doc leans placeholder.)
-	1. Lets maintain as a placeholder. Truss "modules" are already used when other modules in the Module layer are removed and maintain design intent.
-2. How aggressively should unpowered modules fail? (Currently: freeze. Options: decay stored goods, hurt happiness, life-support pressure later.)
-	1. Yes, unpowered modules will have negative affects on the pawns and items stored in them.
