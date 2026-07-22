@@ -57,6 +57,12 @@ const SHADER_PARAM_PLACEABLE = "PLACEABLE"
 const SHADER_PARAM_SELECTED = "SELECTED"
 const SHADER_PARAM_PROGRESS = "PROGRESS"
 const SHADER_PARAM_DAMAGE = "DAMAGE"
+## WI-35: station-overlay tint. The OverlayController writes this per visible
+## module while a mode is active; alpha 0 = off (normal rendering). Kept as a
+## plain var (not a property) so an unrelated _update_shader() pass - a select,
+## a damage tick - re-writes the current overlay instead of clobbering it.
+const SHADER_PARAM_OVERLAY = "OVERLAY_COLOR"
+var overlay_color: Color = Color(0.0, 0.0, 0.0, 0.0)
 
 ## Reserved StatModifiers source ids (WI-24). Damage efficiency and breakdowns
 ## each own one source so they update/clear independently of upgrades and of
@@ -586,6 +592,15 @@ func _update_shader() -> void:
 		get_sprite().material.set_shader_parameter(SHADER_PARAM_SELECTED, selected)
 		get_sprite().material.set_shader_parameter(SHADER_PARAM_PROGRESS, progress)
 		get_sprite().material.set_shader_parameter(SHADER_PARAM_DAMAGE, 1.0 - hp_fraction())
+		get_sprite().material.set_shader_parameter(SHADER_PARAM_OVERLAY, overlay_color)
+
+## WI-35 station overlays: set (or clear, with alpha 0) this module's overlay
+## tint. Called by the UI-side OverlayController for every visible module while
+## a mode is active. Cheap - a single param write, guarded like _update_shader.
+func set_overlay_color(color: Color) -> void:
+	overlay_color = color
+	if get_sprite() != null and get_sprite().material != null:
+		get_sprite().material.set_shader_parameter(SHADER_PARAM_OVERLAY, color)
 		
 func get_path_component() -> PathComponent:
 	if _cached_path_component:

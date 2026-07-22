@@ -87,6 +87,18 @@ func re_sort_jobs() -> void:
 	for category: JobBase.Category in _board:
 		_board[category].sort_custom(_sort_effective_ascending)
 
+## WI-35 logistics overlay: the waiting HAUL jobs still on the board, as
+## Job_GetResource (the only haul type today). Claimed jobs aren't here - they've
+## been pulled off the board into their pawn's current_job - so the flow layer
+## unions this with a sweep over pawns. Returns a fresh array; safe to iterate.
+func get_waiting_haul_jobs() -> Array[Job_GetResource]:
+	var out: Array[Job_GetResource] = []
+	for job: JobBase in _board.get(JobBase.Category.HAUL, []):
+		var haul: Job_GetResource = job as Job_GetResource
+		if haul != null:
+			out.append(haul)
+	return out
+
 ## Total jobs waiting on the board (debug/UI).
 func board_size() -> int:
 	var total: int = 0

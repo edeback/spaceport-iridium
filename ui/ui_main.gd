@@ -46,6 +46,7 @@ func _ready() -> void:
 	_setup_contracts_ui()
 	_setup_economy_ui()
 	_setup_minimap_ui()
+	_setup_overlay_ui()
 
 ## Minimal save/load controls next to the Research button: slot name field +
 ## Save/Load buttons. F5/F9 quick-slot shortcuts live on SaveManager.
@@ -276,6 +277,16 @@ const MINIMAP_SCENE: PackedScene = preload("res://ui/minimap.tscn")
 
 func _setup_minimap_ui() -> void:
 	add_child(MINIMAP_SCENE.instantiate())
+
+## Station overlays (WI-35): a self-contained UI-side controller that owns its
+## own toolbar strip (top bar), hotkeys (1-5, Esc), legend, and the logistics
+## flow layer. Pure view - it only writes each module's OVERLAY_COLOR shader
+## param while a mode is active, and is session-only (nothing saved).
+var overlay_controller: OverlayController
+
+func _setup_overlay_ui() -> void:
+	overlay_controller = OverlayController.new()
+	add_child(overlay_controller)
 
 func _setup_unlock_ui() -> void:
 	unlock_panel = UnlockPanel.new()
