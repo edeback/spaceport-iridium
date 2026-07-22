@@ -46,6 +46,98 @@ func _ready() -> void:
 	_setup_economy_ui()
 	_setup_minimap_ui()
 	_setup_overlay_ui()
+	_setup_pause_menu()
+
+## Pause menu (WI-36). Added last so it sits on top of every other HUD panel;
+## it claims Esc only when esc_claimed() says nothing else wants it.
+var pause_menu: PauseMenu
+
+func _setup_pause_menu() -> void:
+	pause_menu = PauseMenu.new()
+	add_child(pause_menu)
+
+## Single arbitration point for the Escape key (WI-36). Everything that cancels or
+## closes on Esc is ranked here, most-transient first, and Esc always resolves the
+## topmost one. The pause menu asks esc_claimed() before opening, so it only ever
+## gets the press once nothing else wants it - and because both sides consult the
+## same ordering, the outcome doesn't depend on input-propagation order between
+## sibling HUD controls.
+##
+## Some panels (Research, Contracts, Economy) still close themselves on Esc. Their
+## handler and this one do the same thing, so whichever runs first wins and the
+## result is identical.
+func esc_claimed() -> bool:
+	return _topmost_esc_claim() != &""
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not event.is_action_pressed("ui_cancel"):
+		return
+	var claim: StringName = _topmost_esc_claim()
+	if claim == &"":
+		return # nothing open: the press belongs to the pause menu
+	get_viewport().set_input_as_handled()
+	_close_esc_claim(claim)
+
+func _topmost_esc_claim() -> StringName:
+	# The run is over - the game-over screen owns the frame, and Esc must not
+	# reopen anything behind it.
+	if _game_over_shown:
+		return &"game_over"
+	# A held preview is the most transient thing on screen: cancel it first.
+	if Global.ui_in_game != null and Global.ui_in_game.cur_input_mode != UIInGame.InputMode.None:
+		return &"preview"
+	# Modal-ish windows next, then the passive info panels.
+	if _trader_screen != null and _trader_screen.visible:
+		return &"trader"
+	if unlock_panel != null and unlock_panel.visible:
+		return &"unlocks"
+	if _contracts_screen != null and _contracts_screen.visible:
+		return &"contracts"
+	if _economy_screen != null and _economy_screen.visible:
+		return &"economy"
+	if overlay_controller != null and overlay_controller.has_active_mode():
+		return &"overlay"
+	if cur_pawn_info != null and is_instance_valid(cur_pawn_info):
+		return &"pawn_info"
+	if cur_asteroid_info_screen != null and is_instance_valid(cur_asteroid_info_screen):
+		return &"asteroid_info"
+	if cur_resource_pile_screen != null and is_instance_valid(cur_resource_pile_screen):
+		return &"pile_info"
+	if %TurboshaftPanel.visible:
+		return &"turboshaft"
+	if %ModuleInfoPanel.visible:
+		return &"module_info"
+	return &""
+
+func _close_esc_claim(claim: StringName) -> void:
+	match claim:
+		&"game_over":
+			pass # nothing to close; the press is simply absorbed
+		&"preview":
+			Global.ui_in_game.change_input_mode(UIInGame.InputMode.None)
+		&"trader":
+			_trader_screen.close()
+		&"unlocks":
+			unlock_panel.visible = false
+		&"contracts":
+			_contracts_screen.visible = false
+		&"economy":
+			_economy_screen.visible = false
+		&"overlay":
+			overlay_controller.set_mode(OverlayController.Mode.NONE)
+		&"pawn_info":
+			cur_pawn_info.queue_free()
+			cur_pawn_info = null
+		&"asteroid_info":
+			cur_asteroid_info_screen.queue_free()
+			cur_asteroid_info_screen = null
+		&"pile_info":
+			cur_resource_pile_screen.queue_free()
+			cur_resource_pile_screen = null
+		&"turboshaft":
+			%TurboshaftPanel.close()
+		&"module_info":
+			close_info_panel()
 
 ## Minimal alerts strip (WI-05): critical pawn needs surface as brief
 ## top-center messages. Informational only - no forced job interrupts, the
