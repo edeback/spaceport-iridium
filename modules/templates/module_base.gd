@@ -28,7 +28,6 @@ extends ObjectBase
 var module_id: int = -1
 var module_cell: Vector2i
 var module_data: ModuleData
-var is_horizontal: bool = true
 ## Whether this instance was placed flipped (the flipped_scene variant).
 ## Set by WorldManager.add_module; needed so save/load can re-place it.
 var flipped: bool = false
@@ -408,7 +407,6 @@ func get_save_data() -> Dictionary:
 	var data: Dictionary = {
 		"id": String(module_data.id),
 		"cell": [module_cell.x, module_cell.y],
-		"horizontal": is_horizontal,
 		"flipped": flipped,
 		"built": is_complete(),
 	}
@@ -650,7 +648,7 @@ func get_sprite() -> Sprite2D:
 	return sprite
 
 ## True if this overlap requires us to cancel a build
-func overlap_module(_new_module: ModuleData, _is_horizontal: bool) -> bool:
+func overlap_module(_new_module: ModuleData) -> bool:
 	return true
 	
 func has_custom_pathing() -> bool:

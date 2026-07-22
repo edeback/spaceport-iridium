@@ -50,9 +50,9 @@ func spawn_starting_station() -> void:
 	if SaveManager.has_pending_load():
 		return # the save's world section places everything instead
 	add_module(start_module, Vector2i(15,8))
-	add_module(docking_bay, Vector2i(18,8), true, true, false, true)
+	add_module(docking_bay, Vector2i(18,8), true, false, true)
 	add_module(hallway_module, Vector2i(17, 9))
-	add_module(module_airlock, Vector2i(19, 9), true, true)
+	add_module(module_airlock, Vector2i(19, 9), true)
 	# New game only (load never reaches here): the starting station begins
 	# fully O2-pressurized so the player has slack while expanding (WI-17).
 	# Every starter module (and the corridors/truss they auto-place) registers
@@ -88,13 +88,13 @@ func get_nearest_module_by_type(position: Vector2, module_data: ModuleData) -> M
 			closest_module = module
 	return closest_module
 	
-func purchase_and_add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false, allow_cost_overrun: bool = false) -> void:
+func purchase_and_add_module(module_data: ModuleData, cell: Vector2i, flipped: bool = false, allow_cost_overrun: bool = false) -> void:
 	if not debug_build_anything and not allow_cost_overrun and !module_data.can_afford():
 		return
 	# Place first, pay after: add_module can refuse (blocked cell, overlap
 	# veto), and a failed placement must not cost anything. Can't pre-validate
 	# instead - overlap_module() has side effects (truss removes itself).
-	var new_module: ModuleBase = add_module(module_data, cell, is_horizontal, flipped)
+	var new_module: ModuleBase = add_module(module_data, cell, flipped)
 	if new_module == null:
 		return
 	if module_data.instant_build:
@@ -102,7 +102,7 @@ func purchase_and_add_module(module_data: ModuleData, cell: Vector2i, is_horizon
 	else:
 		module_data.withdraw_credit_cost()
 
-func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false, defer_ready: bool = false, force_complete: bool = false) -> ModuleBase:
+func add_module(module_data: ModuleData, cell: Vector2i, flipped: bool = false, defer_ready: bool = false, force_complete: bool = false) -> ModuleBase:
 	var module_scene: PackedScene = module_data.scene
 	if flipped and module_data.flippable:
 		module_scene = module_data.flipped_scene
@@ -116,7 +116,7 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 	var cancel_add: bool = false
 	for existing_module: ModuleBase in get_overlaps(module_data.interaction_layer, cell, new_module.size):
 		if existing_module != null:
-			cancel_add = cancel_add or existing_module.overlap_module(module_data, is_horizontal)
+			cancel_add = cancel_add or existing_module.overlap_module(module_data)
 	if cancel_add:
 		new_module.free()
 		return null
@@ -125,7 +125,6 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 	new_module.module_id = module_id
 	new_module.module_cell = cell
 	new_module.module_data = module_data
-	new_module.is_horizontal = is_horizontal
 	new_module.flipped = flipped and module_data.flippable
 	for x in new_module.size.x:
 		for y in new_module.size.y:
@@ -200,7 +199,7 @@ func load_save_data(data: Dictionary) -> void:
 			push_warning("Saved module has no cell, skipping: " + str(entry.get("id")))
 			continue
 		var cell := Vector2i(int(cell_arr[0]), int(cell_arr[1]))
-		var module: ModuleBase = add_module(module_data, cell, bool(entry.get("horizontal", true)), bool(entry.get("flipped", false)), true)
+		var module: ModuleBase = add_module(module_data, cell, bool(entry.get("flipped", false)), true)
 		if module == null:
 			# Usually an auto-placed companion (e.g. a turbolift's truss) beat
 			# the saved copy to the cell - equivalent state, safe to skip.

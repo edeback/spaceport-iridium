@@ -70,7 +70,7 @@ func _unhandled_input(event: InputEvent) -> void:
 					cur_input_mode = InputMode.Multiplace
 					multiplace_start = hovered_cell
 				else:
-					Global.world_manager.purchase_and_add_module(cur_module, preview_module.last_cell, true, preview_module.flipped)
+					Global.world_manager.purchase_and_add_module(cur_module, preview_module.last_cell, preview_module.flipped)
 					update_module_placement(true)
 				get_viewport().set_input_as_handled()
 		if event.is_action_pressed("remove"):
@@ -133,7 +133,6 @@ func update_multiplacement() -> void:
 			var cell: Vector2i = Vector2i(multiplace_start.x + x * xdirection, multiplace_start.y + y * ydirection)
 			var previewmod: PreviewModule = preview_multimodules.get(y * (xrange + 1) + x)
 			previewmod.visible = true
-			previewmod.is_horizontal = yrange == 0
 			var snapped_position: Vector2 = Global.cell_to_world(cell) + preview_module.offset
 			previewmod.position = snapped_position
 			previewmod.module_data = preview_module.module_data
@@ -144,7 +143,7 @@ func finalize_multiplacement() -> void:
 	for mod: PreviewModule in preview_multimodules:
 		if mod:
 			if mod.can_place:
-				Global.world_manager.purchase_and_add_module(cur_module, mod.last_cell, mod.is_horizontal)
+				Global.world_manager.purchase_and_add_module(cur_module, mod.last_cell)
 			mod.queue_free()
 	preview_multimodules.clear()
 	cur_input_mode = InputMode.Module

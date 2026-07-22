@@ -32,7 +32,7 @@ func set_build_anything(value: bool) -> String:
 func build_module(id: StringName, cell: Vector2i, flipped: bool) -> String:
 	var module_data := Global.save_manager.get_module_data_by_id(id)
 	if module_data != null:
-		Global.world_manager.add_module(module_data, cell, true, false, flipped, true)
+		Global.world_manager.add_module(module_data, cell, false, flipped, true)
 		return _report("built module %s at %s" % [id, cell])
 	return _report("Could not find module with id: %" % id)
 
