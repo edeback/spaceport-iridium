@@ -110,6 +110,16 @@
 | WI-36 | [[WI-36_Main_UI_Flow\|Main UI flow: menus, settings, pause]] | Main menu, save slots, keybind remap, pause menu; leans on WI-18's clean bootstrap for scene transitions |
 | WI-37 | [[WI-37_Difficulty_Levels\|Difficulty levels]] | Thin data layer over knobs installed by WI-25 (costs), WI-32 (raids), WI-05 (mood); selected in WI-36's New Game flow. Last on purpose |
 
+## Phase 3.5 — Stabilization
+
+*Goal: the same thing Phase 0 wanted — current features stop lying to you — before Phase 4 builds on them. Phase 3 shipped twenty work items without a bug-fix pass between them; the 2026-07-22 audit of [[03_Bugs_and_Improvements]] is the first read of the whole thing as one codebase.*
+
+| # | Work item | Why now |
+|---|---|---|
+| WI-38 | [[WI-38_Bug_Fix_Pass_2\|Bug-fix pass 2]] | Eight confirmed bugs from the post-WI-37 audit. Two are integrity bugs that corrupt play-tests the way WI-01's did: shield charge isn't saved (a mid-raid reload is a free recharge), and a New Game after Quit to Menu inherits the previous run's credits (verified). Cheap now, and Phase 4 shouldn't be built on top of them |
+
+*Also open from the audit, deliberately not in WI-38: the section C refactors (one storage-query helper, power group caching, a `Groups` constants file) and the section B design debt — chiefly the `can_remove_module` structure check, disabled since Phase 0. Slot them in as convenient; none block Phase 4.*
+
 ## Phase 4 — Horizon (design only, no commitments)
 
 ARC relationship arc & independence (turns the WI-25 levy off); expeditions; observatory and research; foreign relations/other stations; pawn factions (faction-styled name generation — WI-22's generator is wrapped for this); module quality tiers (unlocks the deferred Conceited trait); per-pawn sprite variants (asset work); pawn death done properly; crises framework; station warp travel; New Game+ corporations; exotic elements; tutorial (SAI); audio pass (WI-36 creates the Music/Effects buses).

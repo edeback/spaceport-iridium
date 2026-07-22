@@ -2,7 +2,7 @@
 
 *Re-audited 2026-07-22 against the post-WI-37 codebase (~30k lines of GDScript across 243 scripts, 58 GUT suites / 342 tests). The previous pass was 2026-07-13, before WI-01; almost everything in it has since been fixed, so this is a rewrite rather than an edit. Section E records what closed.*
 
-*Findings below come from reading the code, not from running it — nothing here has been reproduced in-game. Severity ordering is my judgement of player impact.*
+*Findings below come from reading the code; only A8 has been reproduced in-game so far. Severity ordering is my judgement of player impact. Fixes for the section A list are bundled as [[WI-38_Bug_Fix_Pass_2]].*
 
 ---
 
@@ -71,9 +71,9 @@ Since storage priority *is* the routing language, a pawn sweeping leftover cargo
 
 `ResourceData.global_total` is mutable runtime state living on a shared `.tres` (`resource_data.gd:19`; see B3). Nothing zeroes it on a new game — `Main._ready` only calls `spawn_starting_station()`, and `SaveManager._load_resources` only writes it on the *load* path.
 
-Whether this actually leaks depends on whether Godot's resource cache drops `credits.tres` when `main.tscn` is freed. WI-36 made this reachable for the first time by adding Quit to Menu → New Game inside one process.
+Godot's resource cache holds `credits.tres` across the scene swap, so the mutated total survives. **Reproduced 2026-07-22:** new game → `Global.cheats.add_credits(50000)` → Quit to Menu → New Game → the new run starts with the old run's credits. Applies to every `has_global_store` resource. WI-36 made this reachable for the first time by adding Quit to Menu → New Game inside one process.
 
-**60-second test:** new game → cheat in credits (`Global.cheats.add_credits(50000)`) → Quit to Menu → New Game → read the credit HUD. If it isn't the difficulty's starting figure, this is real and applies to every `has_global_store` resource.
+**Fix:** separate the authored seed (`starting_global_total`, exported) from the runtime value (`global_total`, plain var — which also closes B3), and reset every resource in `SaveManager._ready()` before the station spawns. See [[WI-38_Bug_Fix_Pass_2]].
 
 ---
 
