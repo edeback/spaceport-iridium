@@ -243,8 +243,17 @@ func _upkeep_detail(economy: EconomyManager) -> Control:
 	var breakdown: Dictionary = economy.upkeep_breakdown()
 	if breakdown.is_empty():
 		box.add_child(_muted("    (no upkeep modules)"))
+	var base: int = 0
 	for module: ModuleBase in breakdown:
+		base += int(breakdown[module])
 		box.add_child(_line("    %s" % module.module_data.name, "-%d" % int(breakdown[module]), Color(1, 1, 1, 0.7)))
+	# Difficulty scales the bill as a whole (WI-37), so the per-module rows are base
+	# costs. Show the adjustment explicitly rather than let the rows fail to sum to
+	# the charged total above them.
+	var scaled: int = economy.upkeep_total()
+	if scaled != base:
+		var difficulty_name: String = SaveManager.difficulty_label(Global.difficulty_id())
+		box.add_child(_line("    %s rate" % difficulty_name, "%+d" % (base - scaled), Color(1, 1, 1, 0.7)))
 	return box
 
 # --- widgets ------------------------------------------------------------------

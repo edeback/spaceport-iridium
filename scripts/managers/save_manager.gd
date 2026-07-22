@@ -22,6 +22,10 @@ signal game_loaded(slot: String)
 ## Parsed save waiting to be applied after the scene reload. Static so it
 ## survives reload_current_scene() (statics live on the script, not the node).
 static var _pending_load: Dictionary = {}
+## Slot name the pending load came from, so game_loaded reports the slot that was
+## actually loaded rather than always "quicksave" (WI-38 A6). Same static-survives-
+## the-scene-swap reasoning as _pending_load, and cleared alongside it.
+static var _pending_slot: String = ""
 ## True only while sections are being applied - spawn-on-ready code
 ## (CrewManager's starting crew) checks this so saved pawns aren't duplicated.
 static var _loading: bool = false
@@ -30,8 +34,9 @@ var _module_data_by_id: Dictionary[StringName, ModuleData] = {}
 var _resource_data_by_id: Dictionary[StringName, ResourceData] = {}
 
 ## version -> Callable(data: Dictionary) -> Dictionary, upgrading one version
-## step. Empty until the format actually changes.
-var _migrations: Dictionary[int, Callable] = {}
+## step. Empty until the format actually changes. Static because the menus load
+## saves before any SaveManager node exists (WI-36).
+static var _migrations: Dictionary[int, Callable] = {}
 
 static func has_pending_load() -> bool:
 	return not _pending_load.is_empty()
@@ -39,9 +44,16 @@ static func has_pending_load() -> bool:
 static func is_loading() -> bool:
 	return _loading
 
+## Drops a staged load. New Game from the pause menu goes straight into
+## main.tscn, and a leftover pending load would silently restore the old run.
+static func clear_pending_load() -> void:
+	_pending_load = {}
+	_pending_slot = ""
+
 func _ready() -> void:
 	Global.save_manager = self
 	_build_lookups()
+	_reset_resource_runtime_state()
 	if has_pending_load():
 		# Deferred so the entire new scene tree (managers AND UI) is ready
 		# before sections start mutating state.
@@ -77,6 +89,29 @@ func _register_id(table: Dictionary, id: StringName, res: Resource, path: String
 		push_warning("Duplicate save id '" + String(id) + "' (" + path + ") - keeping the first")
 		return
 	table[id] = res
+
+## ResourceData is a shared .tres and its runtime fields (global_total, the
+## derived cache, the registered-storage list) are mutated all run long. Godot's
+## resource cache holds those objects across a scene swap, so WI-36's Quit to Menu
+## -> New Game used to start the new run holding the old run's credits (WI-38 A8).
+##
+## Runs unconditionally: this is the first thing that touches resources in the new
+## scene (Managers/ ready before Main._ready calls spawn_starting_station), and on
+## the load path _load_resources overwrites these one deferred tick later. Doing it
+## unconditionally also means a has_global_store resource added *since* a save was
+## written gets its authored seed rather than a stale carried-over value.
+##
+## registered_storage.clear() is defensive rather than known-broken: registration
+## is symmetric today, but that array holds StorageComponent node references and a
+## single missed _exit_tree across a scene swap would leave freed objects for
+## _recalc_resource to walk.
+func _reset_resource_runtime_state() -> void:
+	for id: StringName in _resource_data_by_id:
+		var resource: ResourceData = _resource_data_by_id[id]
+		resource.global_total = resource.starting_global_total
+		resource.cached_total = 0
+		resource.needs_recalc = true
+		resource.registered_storage.clear()
 
 func get_module_data_by_id(id: StringName) -> ModuleData:
 	return _module_data_by_id.get(id)
@@ -196,7 +231,15 @@ func save_slot(slot: String) -> Error:
 	var data: Dictionary = {
 		"version": SAVE_VERSION,
 		"timestamp": Time.get_datetime_string_from_system(),
+		# Cheap headline stats for the slot list (WI-36), so the menus never have
+		# to parse the (large) sections just to render a row.
+		"meta": _get_meta(),
 		"sections": {
+			# Difficulty (WI-37) is a single id rather than a manager section: it's
+			# chosen once before the run and never mutates, so there's no state to
+			# collect. Written here as well as in meta because meta is a display
+			# summary - this is the authoritative field the load path restores from.
+			"difficulty": String(Global.difficulty_id()),
 			"time": Global.time_manager.get_save_data(),
 			"unlocks": Global.unlock_manager.get_save_data(),
 			"resources": _get_resources_save(),
@@ -227,7 +270,24 @@ func save_slot(slot: String) -> Error:
 	return OK
 
 func _slot_path(slot: String) -> String:
+	return slot_path(slot)
+
+static func slot_path(slot: String) -> String:
 	return SAVE_DIR + slot + ".json"
+
+## Headline stats written into the envelope. Kept to values the slot list shows -
+## anything richer belongs in a section, not here.
+func _get_meta() -> Dictionary:
+	var credits: ResourceData = get_resource_by_id(&"credits")
+	return {
+		"cycle": Global.time_manager.cycle,
+		"hour": Global.time_manager.hour,
+		"credits": credits.global_total if credits != null else 0,
+		"crew": Global.crew_manager.crew_count() if Global.crew_manager != null else 0,
+		"tier": Global.unlock_manager.current_tier if Global.unlock_manager != null else 1,
+		# WI-37: the slot list labels each save with the difficulty it was played at.
+		"difficulty": String(Global.difficulty_id()),
+	}
 
 ## Global (non-storage) resource totals - currently just credits and anything
 ## else with has_global_store. Storage-held amounts live in the world section.
@@ -384,28 +444,149 @@ func _serialize_job_queue(queue: Array[JobBase]) -> Array:
 ## Returns false if the slot is missing or unreadable; the current game keeps
 ## running untouched in that case.
 func load_slot(slot: String) -> bool:
-	if not FileAccess.file_exists(_slot_path(slot)):
-		push_warning("No save file: " + _slot_path(slot))
+	if not stage_load(slot):
 		return false
-	var file := FileAccess.open(_slot_path(slot), FileAccess.READ)
-	if file == null:
-		push_warning("Could not open save file: " + _slot_path(slot))
-		return false
-	var text: String = file.get_as_text()
-	file.close()
-	var parsed: Variant = JSON.parse_string(text)
-	if not parsed is Dictionary or not (parsed as Dictionary).has("sections"):
-		push_warning("Save file is malformed, load aborted: " + _slot_path(slot))
+	get_tree().reload_current_scene()
+	return true
+
+## Reads, migrates and stages a slot WITHOUT touching the scene tree. Loading
+## from the main menu (WI-36) stages here and then enters main.tscn, where the
+## fresh SaveManager applies the pending sections exactly as it does after a
+## reload. Returns false (and stages nothing) on a missing or unreadable slot.
+static func stage_load(slot: String) -> bool:
+	var parsed: Dictionary = read_slot(slot)
+	if parsed.is_empty():
 		return false
 	var data: Dictionary = _migrate(parsed)
 	if int(data.get("version", 0)) != SAVE_VERSION:
 		push_warning("Save version %s can't be migrated to %d, load aborted" % [str(data.get("version")), SAVE_VERSION])
 		return false
 	_pending_load = data
-	get_tree().reload_current_scene()
+	_pending_slot = slot
+	# Difficulty (WI-37) is staged HERE, not in _apply_pending_load: managers read
+	# it from _ready onward (RaidManager's gate, every needs component's mood
+	# modifier), and _ready runs a deferred tick before the sections apply. Staging
+	# at read time also overwrites whatever the main menu's picker left behind, so
+	# loading a Hard save after a Peaceful run can't inherit the menu leftover.
+	Global.set_difficulty(read_difficulty(data))
 	return true
 
-func _migrate(data: Dictionary) -> Dictionary:
+## The difficulty a parsed envelope was played at. Prefers the authoritative
+## sections field, falls back to the meta summary, then to Normal - which is what
+## every pre-WI-37 save (neither key present) resolves to.
+static func read_difficulty(data: Dictionary) -> StringName:
+	var sections: Dictionary = data.get("sections", {})
+	var from_section: String = String(sections.get("difficulty", ""))
+	if from_section != "":
+		return StringName(from_section)
+	var meta: Dictionary = data.get("meta", {})
+	return StringName(String(meta.get("difficulty", String(DifficultyData.DEFAULT_ID))))
+
+## Parses a slot file into its envelope dictionary. Returns {} for anything
+## missing, unopenable or malformed - callers treat that as "no such save".
+static func read_slot(slot: String) -> Dictionary:
+	var path: String = slot_path(slot)
+	if not FileAccess.file_exists(path):
+		push_warning("No save file: " + path)
+		return {}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		push_warning("Could not open save file: " + path)
+		return {}
+	var text: String = file.get_as_text()
+	file.close()
+	var parsed: Variant = JSON.parse_string(text)
+	if not parsed is Dictionary or not (parsed as Dictionary).has("sections"):
+		push_warning("Save file is malformed: " + path)
+		return {}
+	return parsed as Dictionary
+
+## Every slot in user://saves/, newest first. One row per file, each already
+## summarized for display - see summarize().
+static func list_slots() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var dir := DirAccess.open(SAVE_DIR)
+	if dir == null:
+		return out
+	for file_name: String in dir.get_files():
+		if not file_name.ends_with(".json"):
+			continue
+		var slot: String = file_name.get_basename()
+		var data: Dictionary = read_slot(slot)
+		if data.is_empty():
+			continue
+		out.append(summarize(data, slot))
+	# Newest first. Timestamps are Time.get_datetime_string_from_system(), which
+	# is ISO-8601, so lexical order is chronological order.
+	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return String(a.get("timestamp", "")) > String(b.get("timestamp", "")))
+	return out
+
+## Pure: parsed envelope -> the row the slot list renders. Pre-WI-36 saves have
+## no meta block, so the values are recovered from the sections instead (cheap:
+## time and resources are tiny, and the pawn list only needs its size). The
+## legacy crew figure is approximate - the saved pawn list also holds robots and
+## visitors, which crew_count() excludes - but it's a slot subtitle, not a stat.
+static func summarize(data: Dictionary, slot: String) -> Dictionary:
+	var sections: Dictionary = data.get("sections", {})
+	var meta: Dictionary = data.get("meta", {})
+	var time_section: Dictionary = sections.get("time", {})
+	var resources: Dictionary = sections.get("resources", {})
+	var pawns: Array = sections.get("pawns", [])
+	return {
+		"slot": slot,
+		"timestamp": String(data.get("timestamp", "")),
+		"version": int(data.get("version", 0)),
+		# A version this build can't migrate still lists (so the player can see and
+		# delete it), but the menu greys out its Load button.
+		"loadable": int(data.get("version", 0)) == SAVE_VERSION or _migrations.has(int(data.get("version", 0))),
+		"cycle": int(meta.get("cycle", time_section.get("cycle", 0))),
+		"hour": int(meta.get("hour", time_section.get("hour", 0))),
+		"credits": int(meta.get("credits", resources.get("credits", 0))),
+		"crew": int(meta.get("crew", pawns.size())),
+		"tier": int(meta.get("tier", 1)),
+		# WI-37. Pre-WI-37 saves carry neither key and read back as Normal, which is
+		# also the difficulty they will actually load at.
+		"difficulty": String(read_difficulty(data)),
+	}
+
+## "Cycle 4, 14:00 · 12340 cr · 6 crew" - the one-line subtitle for a slot row.
+static func describe_slot(info: Dictionary) -> String:
+	return "Cycle %d, %02d:00 · %d cr · %d crew · Tier %d · %s" % [
+		int(info.get("cycle", 0)), int(info.get("hour", 0)),
+		int(info.get("credits", 0)), int(info.get("crew", 0)), int(info.get("tier", 1)),
+		difficulty_label(StringName(String(info.get("difficulty", DifficultyData.DEFAULT_ID))))]
+
+## Display name for a saved difficulty id, falling back to the id itself if the
+## .tres it names has since been renamed or removed.
+static func difficulty_label(difficulty_id: StringName) -> String:
+	var data: DifficultyData = DifficultyData.by_id(difficulty_id)
+	return data.display_name if data != null else String(difficulty_id).capitalize()
+
+## Player-typed slot names become file names, so anything that could walk out of
+## user://saves/ (separators, dots, colons) is folded to underscores. Returns ""
+## for a name with nothing usable left, which callers reject.
+static func sanitize_slot_name(name: String) -> String:
+	const ALLOWED: String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -_"
+	var out: String = ""
+	for character: String in name.strip_edges():
+		out += character if ALLOWED.contains(character) else "_"
+	out = out.strip_edges()
+	# A name made entirely of separators would produce an unreachable file.
+	for character: String in out:
+		if character != "_" and character != "-" and character != " ":
+			return out
+	return ""
+
+static func slot_exists(slot: String) -> bool:
+	return FileAccess.file_exists(slot_path(slot))
+
+static func delete_slot(slot: String) -> bool:
+	if not slot_exists(slot):
+		return false
+	return DirAccess.remove_absolute(slot_path(slot)) == OK
+
+static func _migrate(data: Dictionary) -> Dictionary:
 	var version: int = int(data.get("version", 0))
 	while version < SAVE_VERSION:
 		if not _migrations.has(version):
@@ -424,16 +605,18 @@ func _migrate(data: Dictionary) -> Dictionary:
 ## targets - modules, asteroids, piles - so all three must exist first).
 func _apply_pending_load() -> void:
 	var data: Dictionary = _pending_load
+	var slot: String = _pending_slot
 	_pending_load = {}
+	_pending_slot = ""
 	_loading = true
 	var sections: Dictionary = data.get("sections", {})
 	Global.time_manager.load_save_data(sections.get("time", {}))
 	Global.unlock_manager.load_save_data(sections.get("unlocks", {}))
 	_load_resources(sections.get("resources", {}))
 	Global.market_manager.load_save_data(sections.get("market", {}))
-	# After resources: the economy ledger/loan/insolvency counters restore. The
-	# cycle_changed replay from time.load_save_data above is suppressed inside
-	# EconomyManager while is_loading(), so no phantom settlement fires.
+	# After resources: the economy ledger/loan/insolvency counters restore. No
+	# phantom settlement fires - time.load_save_data above announces the restored
+	# calendar with calendar_restored rather than replaying cycle_changed (WI-38 A3).
 	Global.economy_manager.load_save_data(sections.get("economy", {}))
 	Global.world_manager.load_save_data(sections.get("world", {}))
 	# After world, before pawns: mining jobs resolve their asteroid by id.
@@ -464,7 +647,7 @@ func _apply_pending_load() -> void:
 	Global.visitor_manager.load_save_data(sections.get("visitors", {}))
 	_loading = false
 	print("Loaded save from %s" % Global.time_manager.format_time())
-	game_loaded.emit(QUICK_SLOT)
+	game_loaded.emit(slot)
 	# Load-path counterpart to Main's new-game emission (WI-18): the world is now
 	# fully restored and playable. Fires after all sections apply, mirroring the
 	# new-game path where it fires after spawn_starting_station.

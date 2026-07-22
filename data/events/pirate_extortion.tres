@@ -9,6 +9,10 @@
 [ext_resource type="Script" path="res://data/events/effects/effect_pirate_raid.gd" id="7_raid"]
 [ext_resource type="Script" uid="uid://bgky26a16q1sw" path="res://data/events/conditions/condition_min_credits.gd" id="8_mincred"]
 [ext_resource type="Script" uid="uid://dfisauhtobwoj" path="res://data/events/conditions/condition_min_crew.gd" id="9_mincrew"]
+[ext_resource type="Script" path="res://data/events/conditions/condition_difficulty_allows_raids.gd" id="10_diffraids"]
+
+[sub_resource type="Resource" id="Resource_cond_diffraids"]
+script = ExtResource("10_diffraids")
 
 [sub_resource type="Resource" id="Resource_raid"]
 script = ExtResource("7_raid")
@@ -45,5 +49,5 @@ body = "A raider corvette drifts into weapons range and hails you on an open cha
 weight = 0.6
 min_cycle = 6
 cooldown_cycles = 10
-conditions = Array[ExtResource("4_cond")]([SubResource("Resource_cond_cred"), SubResource("Resource_cond_crew")])
+conditions = Array[ExtResource("4_cond")]([SubResource("Resource_cond_cred"), SubResource("Resource_cond_crew"), SubResource("Resource_cond_diffraids")])
 choices = Array[ExtResource("2_choice")]([SubResource("Resource_pay"), SubResource("Resource_refuse")])

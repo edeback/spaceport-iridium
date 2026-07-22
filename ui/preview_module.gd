@@ -23,12 +23,6 @@ var module_layer: WorldManager.StructureLayer
 var module_connection_layer: WorldManager.StructureLayer
 var last_cell: Vector2i
 var offset: Vector2 = Vector2(0, 0)
-var is_horizontal: bool = true:
-	set(new_value):
-		if new_value != is_horizontal:
-			is_horizontal = new_value
-			if module_data != null:
-				update_from_module_data()
 
 var module_data: ModuleData:
 	get:
@@ -62,7 +56,6 @@ func update_from_module_data() -> void:
 		temp_scene = module_data.flipped_scene
 	var temp_module: ModuleBase = temp_scene.instantiate() as ModuleBase
 	module_size = temp_module.size
-	temp_module.is_horizontal = is_horizontal
 	connection_points = temp_module.get_structure_component().connection_points
 	internal_points = temp_module.get_structure_component().internal_points
 	must_be_clear_points = temp_module.get_structure_component().must_be_clear_points

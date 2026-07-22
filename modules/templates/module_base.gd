@@ -28,7 +28,6 @@ extends ObjectBase
 var module_id: int = -1
 var module_cell: Vector2i
 var module_data: ModuleData
-var is_horizontal: bool = true
 ## Whether this instance was placed flipped (the flipped_scene variant).
 ## Set by WorldManager.add_module; needed so save/load can re-place it.
 var flipped: bool = false
@@ -57,6 +56,12 @@ const SHADER_PARAM_PLACEABLE = "PLACEABLE"
 const SHADER_PARAM_SELECTED = "SELECTED"
 const SHADER_PARAM_PROGRESS = "PROGRESS"
 const SHADER_PARAM_DAMAGE = "DAMAGE"
+## WI-35: station-overlay tint. The OverlayController writes this per visible
+## module while a mode is active; alpha 0 = off (normal rendering). Kept as a
+## plain var (not a property) so an unrelated _update_shader() pass - a select,
+## a damage tick - re-writes the current overlay instead of clobbering it.
+const SHADER_PARAM_OVERLAY = "OVERLAY_COLOR"
+var overlay_color: Color = Color(0.0, 0.0, 0.0, 0.0)
 
 ## Reserved StatModifiers source ids (WI-24). Damage efficiency and breakdowns
 ## each own one source so they update/clear independently of upgrades and of
@@ -402,7 +407,6 @@ func get_save_data() -> Dictionary:
 	var data: Dictionary = {
 		"id": String(module_data.id),
 		"cell": [module_cell.x, module_cell.y],
-		"horizontal": is_horizontal,
 		"flipped": flipped,
 		"built": is_complete(),
 	}
@@ -457,6 +461,11 @@ func get_save_data() -> Dictionary:
 	var conveyor: ConveyorComponent = get_component_by_type(ConveyorComponent) as ConveyorComponent
 	if conveyor != null:
 		data["conveyor"] = conveyor.get_save_data()
+	# Shield capacitor + hysteresis (WI-38 A2). Without this a mid-raid save/load
+	# restores the pirates faithfully but hands every bubble back at full charge.
+	var shield: ShieldComponent = get_component_by_type(ShieldComponent) as ShieldComponent
+	if shield != null:
+		data["shield"] = shield.get_save_data()
 	var upgrades: Dictionary = get_upgrade_save_data()
 	if not upgrades.is_empty():
 		data["upgrades"] = upgrades
@@ -519,6 +528,11 @@ func load_save_data(data: Dictionary) -> void:
 	if conveyor != null and data.has("conveyor"):
 		conveyor.load_save_data(data["conveyor"])
 	load_upgrade_save_data(data.get("upgrades", {}))
+	# Shield (WI-38 A2) AFTER upgrades: effective_capacity() reads the upgrade-modified
+	# stat, and the restored charge has to be clamped against the upgraded capacity.
+	var shield: ShieldComponent = get_component_by_type(ShieldComponent) as ShieldComponent
+	if shield != null and data.has("shield"):
+		shield.load_save_data(data["shield"])
 	# Durability (WI-24). Restore HP and any lingering breakdown, then re-derive
 	# the damage modifier + visual from the loaded HP. Missing keys = pristine.
 	if data.has("hp"):
@@ -586,6 +600,15 @@ func _update_shader() -> void:
 		get_sprite().material.set_shader_parameter(SHADER_PARAM_SELECTED, selected)
 		get_sprite().material.set_shader_parameter(SHADER_PARAM_PROGRESS, progress)
 		get_sprite().material.set_shader_parameter(SHADER_PARAM_DAMAGE, 1.0 - hp_fraction())
+		get_sprite().material.set_shader_parameter(SHADER_PARAM_OVERLAY, overlay_color)
+
+## WI-35 station overlays: set (or clear, with alpha 0) this module's overlay
+## tint. Called by the UI-side OverlayController for every visible module while
+## a mode is active. Cheap - a single param write, guarded like _update_shader.
+func set_overlay_color(color: Color) -> void:
+	overlay_color = color
+	if get_sprite() != null and get_sprite().material != null:
+		get_sprite().material.set_shader_parameter(SHADER_PARAM_OVERLAY, color)
 		
 func get_path_component() -> PathComponent:
 	if _cached_path_component:
@@ -625,7 +648,7 @@ func get_sprite() -> Sprite2D:
 	return sprite
 
 ## True if this overlap requires us to cancel a build
-func overlap_module(_new_module: ModuleData, _is_horizontal: bool) -> bool:
+func overlap_module(_new_module: ModuleData) -> bool:
 	return true
 	
 func has_custom_pathing() -> bool:

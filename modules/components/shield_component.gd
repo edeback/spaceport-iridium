@@ -131,6 +131,16 @@ func get_ui() -> ModuleComponentUI:
 func get_save_data() -> Dictionary:
 	return {"charge": _charge, "online": _online}
 
+## Absent key = pristine, i.e. whatever ready_constructed's initial_charge_fraction
+## left behind (the sustenance/shop convention).
 func load_save_data(data: Dictionary) -> void:
-	_charge = float(data.get("charge", _charge))
+	# Clamp to the *upgraded* capacity. ModuleBase restores this after the upgrades
+	# block for exactly that reason: a save written with a capacity upgrade whose id
+	# no longer resolves (load_upgrade_save_data warns and skips it) would otherwise
+	# restore more charge than the bank it now has.
+	_charge = clampf(float(data.get("charge", _charge)), 0.0, effective_capacity())
+	# Restore the saved hysteresis state rather than re-deriving it - a bubble that
+	# was knocked offline has to stay offline until it recharges past
+	# reengage_fraction, or a mid-raid save/load hands the player a free shield.
 	_online = bool(data.get("online", _charge > 0.0))
+	queue_redraw()

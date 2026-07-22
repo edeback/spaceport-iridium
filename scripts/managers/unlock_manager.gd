@@ -294,9 +294,8 @@ func advance_tier() -> void:
 ## met (and a docking bay exists to receive the ARC ship), roll a chance to offer
 ## an inspection. The offer is fired explicitly through EventManager so it ignores
 ## natural-event pacing; declining or failing sets a cooldown before the next roll.
+## (No is_loading() guard: cycle_changed isn't replayed on load any more - WI-38 A3.)
 func _on_cycle_changed(_cycle: int) -> void:
-	if SaveManager.is_loading():
-		return
 	if _inspection_cooldown_cycles > 0:
 		_inspection_cooldown_cycles -= 1
 	if _inspection_offer_pending or _inspection_in_progress:

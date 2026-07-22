@@ -115,6 +115,30 @@ func test_mixed_completion_and_cancel_reconciles_both_sides() -> void:
 	assert_eq(storage.reserved_withdraw, 0, "both withdraw reservations reconciled to zero")
 	assert_eq(storage.reserved_deposit, 0, "the deposit reservation reconciled to zero")
 
+# --- autodump clamp (WI-38 A4) -----------------------------------------------
+
+func test_autodump_dumps_only_the_surplus_over_desired() -> void:
+	storage.deposit(10, false)
+	storage.desired = 4
+	assert_eq(storage.autodump_amount(), 6, "everything above desired is surplus")
+
+func test_autodump_never_touches_reserved_stock() -> void:
+	storage.deposit(10, false)
+	storage.desired = 4
+	storage.add_withdraw_job(_job(3)) # a hauler is already walking here for 3
+	assert_eq(storage.autodump_amount(), 3, "the reserved 3 are spoken for and stay put")
+
+func test_autodump_is_zero_when_reservations_cover_the_surplus() -> void:
+	storage.deposit(10, false)
+	storage.desired = 4
+	storage.add_withdraw_job(_job(8))
+	assert_eq(storage.autodump_amount(), 0, "no destruction when haulers claim the whole surplus")
+
+func test_autodump_is_zero_below_desired() -> void:
+	storage.deposit(2, false)
+	storage.desired = 10
+	assert_eq(storage.autodump_amount(), 0, "under-stocked bins never dump")
+
 # --- teardown without a board ------------------------------------------------
 
 func test_end_all_jobs_does_not_crash_without_a_job_manager() -> void:

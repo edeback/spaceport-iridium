@@ -32,7 +32,7 @@ func set_build_anything(value: bool) -> String:
 func build_module(id: StringName, cell: Vector2i, flipped: bool) -> String:
 	var module_data := Global.save_manager.get_module_data_by_id(id)
 	if module_data != null:
-		Global.world_manager.add_module(module_data, cell, true, false, flipped, true)
+		Global.world_manager.add_module(module_data, cell, false, flipped, true)
 		return _report("built module %s at %s" % [id, cell])
 	return _report("Could not find module with id: %" % id)
 
@@ -305,6 +305,34 @@ func _find_docking_bay() -> ModuleBase:
 		if bay != null and bay.owner_module != null and bay.owner_module.is_complete():
 			return bay.owner_module
 	return null
+
+# --- difficulty (WI-37) -------------------------------------------------------
+
+## Reports the difficulty this run is being played at and what it changes.
+func show_difficulty() -> String:
+	var difficulty: DifficultyData = Global.get_difficulty()
+	if difficulty == null:
+		return _report("no difficulty data loaded - running at neutral settings")
+	return _report("difficulty %s (%s)" % [difficulty.display_name, difficulty.effect_summary()])
+
+## Switches the run's difficulty mid-game, e.g. set_difficulty("peaceful").
+## DEV ONLY: the design fixes difficulty at New Game, and this deliberately breaks
+## that so the four levels can be exercised without four playthroughs. The raid
+## gate and every cost multiplier pick the change up immediately (both read
+## lazily); the crew mood offset does NOT - that is applied once per pawn at
+## _ready - so re-check morale on a fresh save/load rather than in place.
+func set_difficulty(id: StringName) -> String:
+	if DifficultyData.by_id(id) == null:
+		var known: Array[String] = []
+		for difficulty: DifficultyData in DifficultyData.all():
+			known.append(String(difficulty.id))
+		return _report("no such difficulty id: %s (known: %s)" % [id, ", ".join(known)])
+	Global.set_difficulty(id)
+	if Global.raid_manager != null:
+		Global.raid_manager.raids_enabled = Global.difficulty_raids_enabled()
+	SignalBus.economy_changed.emit()
+	return _report("difficulty set to %s (mood offset applies to pawns readied from now on)" %
+		Global.get_difficulty().display_name)
 
 # --- events & contracts -------------------------------------------------------
 

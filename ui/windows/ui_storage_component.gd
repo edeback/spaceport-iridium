@@ -48,6 +48,7 @@ func refresh_display() -> void:
 		# Desired amounts are always configurable
 		storage_line.desired_resources_spinbox.value = storage_component.storage_data[resource].desired
 		storage_line.desired_resources_spinbox.value_changed.connect(_on_desired_resources_changed.bind(resource))
+		storage_line.autodump_indicator.visible = storage_component.storage_data[resource].autodump
 		storage_lines[resource] = storage_line
 		resource_container.add_child(storage_line)
 	%FreeSpaceAvailableLabel.text = _format_resouce_value(storage_component.space_available())
@@ -164,7 +165,9 @@ func _on_dump_button_pressed(resource: ResourceData) -> void:
 func _on_confirm_dump_button_pressed() -> void:
 	# Gone forever!
 	storage_component.withdraw_stacks(current_dumped_resource, %ResourceToDumpAmount.value, true)
-	storage_component.storage_data[current_dumped_resource].autodump = (%AutodumpButton as Button).button_pressed
+	var autodump: bool = (%AutodumpButton as Button).button_pressed
+	storage_component.storage_data[current_dumped_resource].autodump = autodump
+	storage_lines[current_dumped_resource].autodump_indicator.visible = autodump
 	%DumpResourcePanel.visible = false
 	
 func _on_cancel_dump_button_pressed() -> void:

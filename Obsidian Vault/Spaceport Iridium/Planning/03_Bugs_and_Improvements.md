@@ -1,48 +1,168 @@
 # Bugs, Code Issues & Improvement Suggestions
 
-*Found while reading the full codebase (2026-07-13). Bugs are ordered by severity. Fixes for the Confirmed list are bundled as [[WI-01_Bug_Fix_Pass]].*
+*Re-audited 2026-07-22 against the post-WI-37 codebase (~30k lines of GDScript across 243 scripts, 58 GUT suites / 342 tests). The previous pass was 2026-07-13, before WI-01; almost everything in it has since been fixed, so this is a rewrite rather than an edit. Section E records what closed.*
+
+*Findings below come from reading the code; only A8 had been reproduced in-game. Severity ordering is my judgement of player impact. Fixes for the section A list were bundled as [[WI-38_Bug_Fix_Pass_2]], **completed 2026-07-22** — the whole of section A is now closed and recorded in section E. The entries are kept below for the reasoning trail.*
 
 ---
 
-## A. Confirmed Bugs
+## A. Confirmed Bugs — ALL FIXED by [[WI-38_Bug_Fix_Pass_2]]
 
-all fixed
+### A1. Blueprint turrets fire (and draw full power)
 
-## B. Design-Debt / Known-Disabled Code (already on your radar, confirming)
+`WeaponComponent._process` ([`weapon_component.gd:76`](../../../modules/components/weapon_component.gd)) has no build-state gate. Every sibling combat component gates on `ready_constructed` — `ShieldComponent` only joins the `"shield"` group there (`shield_component.gd:36`), which is what keeps unbuilt bubbles out of `RaidManager.try_shield_absorb`. The turret has no equivalent.
 
-- `StructureManager.can_remove_module` check is disabled in `remove_module` because under-construction modules aren't structure-connected → you can currently delete a module out from under the station.
-- `Global.gd` lines 54-85: dead scene-introspection experiments; `market_manager.gd` lives at project root instead of `scripts/managers/`.
-- `JobManager.find_job` `end_job()`s invalid jobs without `cancel()` — the exact lifecycle question from your notes; resolve as "cancel always, cancel implies end."
-- Power system per-frame group scans (`main.gd` → `PowerManager.power_modules`) — your "shouldn't run every frame" TODO stands.
-- `DockingBay` class is empty; docking is entirely the TradeComponent UI — fine until traders become entities.
-- `ResourceData.cached_total`/`global_total` are `@export`ed runtime state on shared resources — they get written into memory-shared .tres instances; harmless at runtime but confusing in the inspector and a save/load foot-gun. Consider stripping `@export` from runtime fields.
-- **WI-09 punted persistence**: asteroid state (ore mix, richness range, `designated` flag) and `MiningComponent.priority_ore` are not saved — asteroids aren't in save files at all, so designations and per-bay ore priority reset on load. Selected refinery recipe *is* saved (`ProcessorComponent.get_save_data`). Revisit if/when asteroids get persisted.
+`laser_turret_mdata.tres` sets `instant_build = false`, so a turret spends real construction time as a blueprint. During that window it targets, deals `effective_damage()`, and flips its power draw to `active_power_consumption`. A player under raid can drop turret blueprints and get free defense.
+
+**Fix:** early-return in `_process` unless `owner_module != null and owner_module.is_complete()`.
+
+### A2. Shield capacitors are not saved
+
+`ShieldComponent` has no `get_save_data()`, and `ModuleBase.get_save_data()` ([`module_base.gd:407`](../../../modules/templates/module_base.gd)) has no shield key. `_charge` and `_online` are pure runtime state, so `ready_constructed` re-seeds every bubble to `initial_charge_fraction` (1.0 by default) on load.
+
+This defeats the stated WI-32 design goal: `RaidManager`'s header says a mid-raid save "restores the whole fight so you can't save-scum out of the threat" (`raid_manager.gd:12-14`) — and it does restore the ships, their HP, and the payoff discount. But the *defenses* come back better than they were. Quick-save/quick-load during a raid is a full shield recharge.
+
+**Fix:** a `shield` block in the module save data, same shape as `sustenance`/`shop`. `WeaponComponent._fire_cooldown` has the same gap but is a sub-2-second effect, not worth a key.
+
+### A3. Calendar signals replay on load without an `is_loading()` guard
+
+`TimeManager.load_save_data` deliberately emits `cycle_changed` + `hour_changed` after writing the fields directly, to re-sync listeners (`time_manager.gd:168-171`). Two managers know this and guard:
+
+- `EconomyManager._on_cycle_changed` — `if SaveManager.is_loading(): return` (`economy_manager.gd:197`)
+- `UnlockManager._on_cycle_changed` — same (`unlock_manager.gd:298`)
+
+Three do not:
+
+- **`EventManager._on_cycle_changed`** (`event_manager.gd:69`) calls `_roll_midcycle_hour()` and `_natural_roll()`. **Loading a save can immediately fire a random event** — and it fires *before* `EventManager.load_save_data` restores the manager's own state, since events are section 14 of 17.
+- `MarketManager._on_hour_changed` (`market_manager.gd:27`) ages every supply modifier by an hour and drifts all prices. Harmless *today* only because the market section loads afterward and overwrites it.
+- `ContractManager._on_cycle_changed` (`contract_manager.gd:197`) walks `active` for expiries. Harmless *today* only because `active` is still empty at that point in the section order.
+
+Two of the three are load-bearing on section ordering that isn't documented as load-bearing.
+
+**Fix:** guard once at the source rather than N times at the listeners — either skip the emissions in `TimeManager.load_save_data` while `SaveManager.is_loading()`, or emit a distinct `calendar_restored` signal that only genuine re-sync listeners (clock UI) subscribe to.
+
+### A4. Autodump destroys reserved stock
+
+`StorageComponent._on_slow_tick` dumps `stored - desired` when `autodump` is on (`storage_component.gd:164-167`), and `destroy_resource` goes straight to `data.withdraw_stacks(...)` (`storage_component.gd:238`) without consulting `reserved_withdraw` — unlike every other withdraw path, which routes through `StorageData.can_withdraw`.
+
+So a hauler already walking to that bin with a live withdraw reservation arrives, gets `[]` back from `complete_withdraw_job`, and cancels (`job_get_resource.gd:187`). Reservations *do* reconcile correctly (the cancel path is clean, so the invariant holds), but the trip is wasted and the player sees haul jobs silently fail near an autodump bin.
+
+**Fix:** dump `stored - desired - reserved_withdraw`.
+
+### A5. `Job_StoreInventory` ignores storage priority
+
+`_find_closest_import_storage` (`job_store_inventory.gd:129`) selects purely by squared distance. Its sibling `Job_GetResource._find_deposit_storage` (`job_get_resource.gd:148`) selects by priority-then-distance.
+
+Since storage priority *is* the routing language, a pawn sweeping leftover cargo can dump it into whatever bin happens to be nearest — including a construction site's +99 import bin or a deconstruction site's −99 export bin — after which the material has to be hauled straight back out. This is exactly the drift the 2026-07-13 pass predicted when it flagged the four near-identical query loops (old C6); the loops have now genuinely diverged.
+
+**Fix:** fold both into one query helper (see C5) and give the sweep the same priority preference.
+
+### A6. `game_loaded` always reports the wrong slot
+
+`SaveManager._apply_pending_load` ends with `game_loaded.emit(QUICK_SLOT)` (`save_manager.gd:618`) — hardcoded to `"quicksave"` regardless of which slot was actually staged. `stage_load` never records the slot name anywhere it survives the scene swap. Any listener keying off the slot argument is wrong for every menu load.
+
+**Fix:** stash the slot alongside `_pending_load` in the static, emit that.
+
+### A7. Unguarded cast in the storage sweep
+
+`job_store_inventory.gd:135` reads `storage.accepts_imports` directly off `node as StorageComponent` with no null check. Its three siblings all check (`job_get_resource.gd:126`, `:152`, `job_collect_pile.gd:125`). Anything ever added to the `"resource_storage"` group that isn't a `StorageComponent` is an immediate nil-access crash here and nowhere else. Low likelihood, trivial fix, worth the consistency.
+
+### A8. Verified: New Game after Quit to Menu inherits the previous run's global totals
+
+`ResourceData.global_total` is mutable runtime state living on a shared `.tres` (`resource_data.gd:19`; see B3). Nothing zeroes it on a new game — `Main._ready` only calls `spawn_starting_station()`, and `SaveManager._load_resources` only writes it on the *load* path.
+
+Godot's resource cache holds `credits.tres` across the scene swap, so the mutated total survives. **Reproduced 2026-07-22:** new game → `Global.cheats.add_credits(50000)` → Quit to Menu → New Game → the new run starts with the old run's credits. Applies to every `has_global_store` resource. WI-36 made this reachable for the first time by adding Quit to Menu → New Game inside one process.
+
+**Fix:** separate the authored seed (`starting_global_total`, exported) from the runtime value (`global_total`, plain var — which also closes B3), and reset every resource in `SaveManager._ready()` before the station spawns. See [[WI-38_Bug_Fix_Pass_2]].
+
+---
+
+## B. Design-Debt / Known-Disabled Code
+
+### B1. `can_remove_module` still disabled
+
+`WorldManager.remove_module` still has the structure check commented out with the same TODO (`world_manager.gd:152-155`): under-construction modules aren't structure-connected, so the check fires constantly. Unchanged since the first audit — this has now been off for the project's entire life.
+
+Note the scope has shrunk: WI-32's `ModuleBase._on_hp_zero` calls `remove_module(module, false)`, which bypasses the check anyway. Re-enabling it would only affect player-initiated deletes. Either fix the connectivity accounting for blueprints or delete `can_remove_module` and the `structure_check_before_delete` flag, so the codebase stops implying a feature that doesn't exist.
+
+### B2. Power scans — mostly resolved, remnants left
+
+The per-frame scan is gone; `PowerManager` runs on `slow_tick` now (`power_manager.gd:17`) with the sim-seconds interval threaded through correctly. What's left is cleanup: three `get_nodes_in_group` scans per tick (see C4), plus dead `power_generators`/`power_consumers` array fields and a block of commented-out `node_grouped`/`node_ungrouped` hooks (`power_manager.gd:4-32`) that describe a caching design that was never built.
+
+### B3. Runtime state `@export`ed on shared resources — *fixed by WI-38*
+
+~~`ResourceData.global_total` is where the player's credit balance lives, and `cached_total` is a derived cache. Both are `@export`ed on `@tool` resources shared engine-wide — confusing in the inspector, a save/load foot-gun, and the direct cause of A8.~~
+
+Closed alongside A8: the authored seed is now `starting_global_total` (the only exported one), `global_total` and `cached_total` are plain vars, and `SaveManager._ready` reseeds them on entry to the game scene.
+
+### B4. `SAVE_VERSION` has never left 1
+
+`save_manager.gd:15` has read `1` through WI-22, -24, -25, -26, -27, -28, -29, -31, -32, -33, -36 and -37, every one of which changed the format. The "missing keys default sensibly" convention has genuinely held — but the consequence is there's no way to *reject* a save that's too old to be sane, `_migrations` is empty, and the migration path has never been exercised even once.
+
+Worth bumping at the next actually-breaking change and writing the first migration, if only to prove the machinery works before it's needed under pressure.
+
+### B5. Use-after-`queue_free` ordering in `remove_module`
+
+`world_manager.gd:170-173` calls `module.queue_free()` and then reads `module.module_data` and `module.module_cell` to decide on truss replacement. This works — `queue_free` defers to end of frame — but it's the kind of ordering that breaks silently if anyone ever swaps it for `free()`. Capture what's needed before the free (as the function already does for `replacement_location` and `replacement_points`) and move the call to the end.
+
+### B6. Commented-out code accumulating in hot files
+
+`storage_component.gd:130-146` and `:250-259`; `power_manager.gd:18-32`; `world_manager.gd:294-302`; `module_base.gd:578-586`. Also empty-but-defined `_process` handlers that still cost an engine call per frame: `world_manager.gd:65-66`. Git has the history — delete these.
+
+---
 
 ## C. Improvement Suggestions (code)
 
-1. **One resource-scan helper** (fixes A5, dedupes `UIMain`/`UnlockManager` scanning, and future data types get it free).
-2. **`ModuleGraphVertex` → RefCounted** (A9) and stop manual `free()`.
-3. **Event-driven storage job posting**: `StorageComponent._process` runs the deficit/surplus scan every frame per storage; trigger it from `storage_changed` + a slow tick instead.
-4. **Cache group membership** in `PowerManager` (listen to a `component_registered` signal or maintain arrays on ready_constructed/exit_tree) — also gives you a natural place for per-module power priorities later (life support last to brown-out).
-5. **`Job_GetResource._find_export_storage`/`_find_deposit_storage`** and `Job_StoreInventory/_CollectPile` equivalents scan every storage node with `is_reachable` each — fine now; when storage counts grow, maintain per-resource indices on `ResourceData.registered_storage` (already exists!) instead of `get_nodes_in_group`.
-6. **Unify the four near-identical "find best storage/sustenance" loops** (Job_GetResource ×2, Job_StoreInventory, Job_CollectPile, Job_Eat) into one parameterized query helper — they've already drifted subtly (priority comparisons differ).
-7. **`ModuleBase.get_path_component()`** uses `get_node("PathComponent")` which errors on modules lacking one; use `get_node_or_null`.
-8. **Naming**: `sort_priority_decending` (sp), `capacitator` → `capacitor`, `Poylmer` in design docs.
+*Numbering continues the original list; items 1, 2, 3, 6(part), 7 are done and moved to section E.*
+
+**C4. Cache power group membership.** *(scheduled: [[WI-39_Power_Registry]])* Three `get_nodes_in_group` calls per slow tick (`power_manager.gd:37,44,54`). The commented-out `node_grouped` hooks show the intended design. Maintaining arrays on `ready_constructed`/`_exit_tree` also gives a natural home for per-module power priorities later (life support browns out last). Scoping this also turned up an **unsaved-state bug**: `BatteryComponent.total_power_stored` has no save key, so every battery reloads empty — same class as A2, missed because that pass audited combat components. Folded into the same WI.
+
+**C5. One storage-query helper.** *(scheduled: [[WI-40_Storage_Query_Helper]])* Still the highest-value refactor here, and now with a live symptom (A5). Four scanners — `job_get_resource.gd:118` and `:148`, `job_store_inventory.gd:129`, `job_collect_pile.gd:124` — each walking `"resource_storage"` with `is_reachable` and their own subtly different scoring. A `StorageQuery.find_source(pawn, resource, opts)` / `find_sink(pawn, resource, opts)` pair with an explicit `require_priority_above` parameter would collapse all four, make the priority semantics one decision instead of four, and give per-resource indexing (`ResourceData.registered_storage`, which already exists and is unused for this) exactly one place to land when storage counts grow.
+
+**C8. Naming.** `sort_priority_decending` is gone. `capacitator` → `capacitor` remains (`power_consumption_component.gd:5`).
+
+**C9. A `Groups` constants file.** *(scheduled: [[WI-41_Group_Constants]])* Promoted from old D6 because the surface has grown a lot: `pirate_ship`, `shield`, `minimap_tracked`, `medical_bay`, `robot_repair`, `recharger`, `shop`, `crew_recruitment`, `sim_animation`, `sleep_component`, `sustenance_component`, `recreation_provider`, `resource_storage`, `resource_debris`, `airlock`, `asteroid`, `module`, `pawn`, `power_consumer`, `power_generator`, `battery` — ~21 magic strings across 53 call sites, all typo-vulnerable and none discoverable.
+
+**C10. Turrets should read `RaidManager._ships`, not scan the tree.** `WeaponComponent._pick_target` does `get_nodes_in_group("pirate_ship")` per turret per frame during a raid (`weapon_component.gd:117`), and `_ensure_outward` walks every module in the station (`weapon_component.gd:148`, cached per raid so this one's fine). `RaidManager` already maintains the authoritative live array. A late-game station with a dozen turrets is doing a dozen redundant tree scans a frame.
+
+**C11. `get_built_modules` is O(cells²).** `world_manager.gd:265-274` dedupes with `result.has(module)` while iterating every cell entry. Called from `RaidManager.compute_strength()`. Irrelevant at current station sizes; swap the linear `has` for a seen-dictionary when it isn't.
+
+**C12. `PreviewModule` instantiates a whole module scene per preview update.** *(scheduled: [[WI-42_Preview_Metadata_Cache]])* `preview_module.gd:58-83` instantiates `module_data.scene` just to read `size`, the structure component's three point arrays, and the sprite's transform — then frees it. This runs on every rotate, flip, and build-menu selection. Cache the derived values on `ModuleData` (or a lazy per-scene cache keyed by `PackedScene`).
+
+**C13. `force_withdraw` and `change_global_total` aren't symmetric.** `change_global_total` recalcs and emits `total_changed`; `force_withdraw` only sets `needs_recalc` (`resource_data.gd:61-64` vs `:88-97`). So hiring a crew member, paying off a raid, buying a module, or purchasing an upgrade doesn't move the credit HUD until `ResourceManager`'s next slow tick fires. Self-healing within 0.25 sim-seconds, so it reads as UI lag rather than a bug — but the two paths should behave the same.
+
+**C14. Severance ignores the difficulty dial.** `EconomyManager.wage_for_pawn` runs through `scaled_cost(..., upkeep_multiplier())` (`economy_manager.gd:245-248`); `severance_for` does not (`:382-385`). Possibly deliberate, but it makes severance the only recurring-crew cost the WI-37 multiplier doesn't touch, and nothing says so.
+
+**C15. Raid outcome messaging is wrong for mixed outcomes.** `RaidManager._check_end` (`raid_manager.gd:190-203`) only reports `repelled` when `_destroyed_count == 0`. Kill three ships, let two flee, and the player is told "every hostile destroyed." Cheap fix, and it's the last thing the player reads about a fight they just spent five minutes on.
+
+---
 
 ## D. Design Suggestions & Elaborations
 
-1. **Priority-as-routing needs a UI**: the ±99 construction/deconstruction priorities work, but players will eventually need to see/set storage priorities; a single "logistics" overlay showing storage priorities and current flows would expose the whole hauling system's mental model.
-2. **Needs decay tuning**: hunger at 600s wall-clock will interact badly with time-scale changes; convert all need durations to game-hours when TimeManager lands.
-3. **Job board spam guard**: storage posts one import job per resource at a time (good), but a fully-empty new storeroom posts for every allowed resource simultaneously; consider a per-module concurrent-notice cap (your design note about not spamming the board).
-4. **Module removal refunds**: deconstruction returns 100% of materials; consider a configurable refund fraction later for balance.
-5. **Teleporter**: exists as a module with behaviors but the design question "does it need its own storage buffer for resource transfer" is unresolved; suggest treating teleporters as a pawn-only shortcut group first (cheap, already supported by graph groups) and resource teleportation as a separate late-game unlock.
-6. **Consider extracting magic groups** (`"resource_storage"`, `"power_consumer"`, `"sustenance_component"`, …) into a `Groups` constants file — typo-proofing for the group-string API surface.
+**D4. Module removal refunds.** *(carried forward, still open)* Deconstruction returns 100% of materials. More interesting now that WI-25's economy is live and there's a real reason to want a lossy build/rebuild loop.
 
-## E. Open Questions (need your call, none block Phase 0)
+**D5. Teleporter.** *(carried forward, still open)* The module and its behaviors exist; the "does it need its own storage buffer for resource transfer" question is still unanswered. Suggestion stands: pawn-only shortcut group first (already supported by `ModuleGraph` vertex groups), resource teleportation as a separate late-game unlock.
 
-1. Truss: real layer vs. visual placeholder? (Design doc leans placeholder.)
-	1. Lets maintain as a placeholder. Truss "modules" are already used when other modules in the Module layer are removed and maintain design intent.
-2. Save/load scope for in-flight jobs: serialize descriptors vs. cancel-on-save? (Spec recommends cancel-on-save v1.)
-	1. Cancel-on-save for now but serialization will eventually be necessary as the gameplay impacts for cancelling all jobs is very painful.
-3. How aggressively should unpowered modules fail? (Currently: freeze. Options: decay stored goods, hurt happiness, life-support pressure later.)
-	1. Yes, unpowered modules will have negative affects on the pawns and items stored in them.
+**D7. Finish WI-12 (Storage QoL) deliberately.** It's the one Phase-2 leftover, and the autodump feature (most recent commits) is effectively its first slice landing ad hoc — which is how it shipped without the reservation check in A4. Worth doing the rest as a designed pass rather than accreting it.
+
+**D8. Audit for unsaved stateful systems.** A2 found shields; there are now 17 save sections and the "derived state is re-derived, never saved" rule makes it genuinely hard to eyeball which side of the line a given field is on. A one-time sweep — every component with a mutable non-derived field, check it has a save key or a comment saying why not — would be cheap insurance before the section count grows again.
+
+**D9. Decide on `structure_check_before_delete`.** See B1. Either the connectivity accounting gets fixed for under-construction modules, or the flag, `can_remove_module`, and the commented block all get deleted. Leaving a disabled safety check in place for three phases is worse than either.
+
+---
+
+## E. Resolved Since the 2026-07-13 Pass
+
+Recorded so the history isn't lost:
+
+- **All of the 2026-07-22 section A** (A1–A8) — fixed by [[WI-38_Bug_Fix_Pass_2]], 2026-07-22. In short: blueprint turrets gated on `is_complete()`; shield capacitor charge/online now saved (module `shield` key, clamped to the upgraded capacity on load); `TimeManager.load_save_data` announces `calendar_restored` instead of replaying `cycle_changed`/`hour_changed`, so no manager does calendar work on load (the `is_loading()` guards in `EconomyManager`/`UnlockManager` came back out); autodump clamps to `stored - desired - reserved_withdraw` via the pure `StorageData.autodump_amount()`; `Job_StoreInventory` sweeps priority-then-distance and null-guards its cast; `game_loaded` reports the staged slot; and `ResourceData` split its authored seed (`starting_global_total`) from runtime `global_total`, reset in `SaveManager._ready` — which also closed **B3**. 351 GUT tests green.
+- **All of the original 2026-07-13 section A** (the first nine confirmed bugs) — fixed by WI-01.
+- **C1 — one resource-scan helper.** `ResourceScanner` (`scripts/utility/resource_scanner.gd`) now handles exported-build `.remap` suffixes and is used by the build menu, unlock trees, local upgrades and `SaveManager._build_lookups`.
+- **C2 — `ModuleGraphVertex` → `RefCounted`.** Done; no manual `free()` remains in `module_graph.gd`.
+- **C3 — event-driven storage job posting.** `StorageComponent`'s deficit/surplus scan moved to `_on_slow_tick` (`storage_component.gd:156`); its `_process` is now UI-only and documented as such. The posting scan also gained a shared `import_budget` so several under-desired resources in one bin can't jointly overcommit its free space.
+- **C7 — `get_path_component()` null-safety.** Now `get_node_or_null` with a cached result (`module_base.gd:605`).
+- **C8 (part) — `sort_priority_decending`.** Gone.
+- **D1 — priority-as-routing needs a UI.** Delivered by WI-35: the Logistics overlay mode tints storage modules by routing priority and `OverlayFlowLayer` draws live haul arrows and numeric priority labels.
+- **D2 — needs decay in game-hours.** Delivered by `TimeManager`; needs, disease, power, shields and market drift all consume sim-time via `slow_tick`/`hour_changed`.
+- **D3 — job board spam guard.** Effectively addressed by the shared `import_budget` (a better mechanism than the per-module concurrent-notice cap originally suggested) plus one-import-job-per-resource slots.
+- **D6 — extract magic group strings.** Not done; promoted to C9 as a code item since the surface quadrupled.

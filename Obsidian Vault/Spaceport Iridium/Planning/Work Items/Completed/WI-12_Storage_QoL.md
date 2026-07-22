@@ -1,4 +1,4 @@
-# WI-12 — Storage QoL: Venting, Configuration, Mass-Sell
+# WI-12 — Storage QoL: Venting, Configuration
 
 STATUS: Done, 7/19. Most by hand, some tasks removed.
 ## Goal
@@ -24,7 +24,6 @@ Player control over storage: configure which resources a storeroom accepts (the 
 2. Add/remove resource options.
 3. Vent (floor-dump + destroy variant).
 4. Auto-dump.
-5. Mass-sell.
 
 ## Edge cases
 - Removing a resource that has an in-flight import job → cancel the import job (StorageData.end_all_jobs covers per-resource? it's all-jobs; add per-resource variant), let carried cargo divert via Job_StoreInventory.

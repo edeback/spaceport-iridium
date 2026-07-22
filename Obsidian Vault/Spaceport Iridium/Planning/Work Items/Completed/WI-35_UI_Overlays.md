@@ -29,7 +29,7 @@ Toggleable station overlays that give a clear read of one system at a time: **O2
 5. Legend/hotkeys polish.
 
 ## Edge cases
-- Overlay + selection/damage shader params simultaneously: overlay multiplies/lerps on top — verify selected-and-overlaid modules still readable, and DAMAGE visuals don't fight the integrity gradient (integrity mode may suppress the damage overlay while active).
+- Overlay + selection/damage shader params simultaneously: overlay **replaces** selection/damage while active, to prevent confusion by combining tints. (Station overlays are for data gathering and are not expected to be on all the time.)
 - Stacked layers (corridor + turbolift + module on one cell): each layer's sprite tints from its own module's data — O2 on the corridor, power on the module is correct and informative.
 - Logistics arrows for jobs whose endpoint died this frame: guard with `is_instance_valid`; arrows are redrawn per refresh, never retained.
 - Paused game: overlays keep refreshing (UI real-time) — values static while paused is correct.

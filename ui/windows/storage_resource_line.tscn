@@ -6,8 +6,9 @@
 [ext_resource type="Texture2D" uid="uid://dtddmta7qm6au" path="res://assets/external/kenney_ui/PNG/Grey/Default/icon_outline_cross.png" id="3_ovn6y"]
 [ext_resource type="Texture2D" uid="uid://cbjmsmhra0t83" path="res://assets/sprites/trash-can.png" id="5_nlufw"]
 [ext_resource type="Texture2D" uid="uid://baq1qvi3o8jpm" path="res://assets/external/kenney_ui/Vector/Red/button_square_flat.svg" id="5_ovn6y"]
+[ext_resource type="Texture2D" uid="uid://cnmw40urhhtm1" path="res://assets/external/kenney_ui/Vector/Extra/icon_repeat_light.svg" id="7_jh508"]
 
-[node name="HBoxContainer" type="HBoxContainer" unique_id=229822206 node_paths=PackedStringArray("stored_resource_name", "stored_resource_value", "remove_resource_button", "desired_resources_spinbox", "debug_add_button", "dump_button")]
+[node name="HBoxContainer" type="HBoxContainer" unique_id=229822206 node_paths=PackedStringArray("stored_resource_name", "stored_resource_value", "remove_resource_button", "desired_resources_spinbox", "debug_add_button", "dump_button", "autodump_indicator")]
 script = ExtResource("1_b4rr0")
 stored_resource_name = NodePath("NameBox/StoredName")
 stored_resource_value = NodePath("ContentsBox/StoredValue")
@@ -15,6 +16,7 @@ remove_resource_button = NodePath("NameBox/RemoveResourceButton")
 desired_resources_spinbox = NodePath("ContentsBox/DesiredResourcesSpinbox")
 debug_add_button = NodePath("DebugAddButton")
 dump_button = NodePath("ContentsBox/CenterContainer/DumpButton")
+autodump_indicator = NodePath("AutodumpIndicator")
 
 [node name="NameBox" type="HBoxContainer" parent="." unique_id=1590424296]
 layout_mode = 2
@@ -77,3 +79,11 @@ layout_mode = 2
 texture_normal = ExtResource("5_nlufw")
 ignore_texture_size = true
 stretch_mode = 5
+
+[node name="AutodumpIndicator" type="TextureRect" parent="." unique_id=1842600417]
+visible = false
+self_modulate = Color(0.7363442, 0, 0.12181855, 1)
+layout_mode = 2
+tooltip_text = "Autodump is ON: any resource above the desired amount is automatically vented to space (destroyed)"
+texture = ExtResource("7_jh508")
+expand_mode = 3

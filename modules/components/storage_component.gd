@@ -163,8 +163,10 @@ func _on_slow_tick(_interval: float) -> void:
 	# Autodump destroys extra resources (in case you are just overwhelmed with them)
 	for resource: ResourceData in storage_data.keys():
 		var data: StorageData = storage_data[resource]
-		if data.autodump and data.desired < data.stored:
-			destroy_resource(resource, data.stored - data.desired)
+		if data.autodump:
+			var dump_amount: int = data.autodump_amount()
+			if dump_amount > 0:
+				destroy_resource(resource, dump_amount)
 	if accepts_imports:
 		# Shared budget across resources so several under-desired resources in
 		# the same bin don't each request up to the bin's full free space and
@@ -249,7 +251,7 @@ func update_priority(new_priority: int) -> void:
 			data.set_job_priority(new_priority)
 		#for job: Job_GetResource in default_import_jobs.values():
 			#job.priority = priority
-		
+	
 	
 func can_store_resource(resource: ResourceData) -> bool:
 	if allow_any_resource:
@@ -484,6 +486,7 @@ func get_save_data() -> Dictionary:
 		out[String(resource.id)] = {
 			"desired": data.desired,
 			"stacks": SaveManager.stacks_to_dicts(data.stacks),
+			"autodump": data.autodump,
 		}
 	return out
 
@@ -509,6 +512,7 @@ func load_save_data(data: Dictionary) -> void:
 			var stack: ResourceStack = SaveManager.stack_from_dict(resource, stack_dict)
 			if stack.amount > 0:
 				slot.add_stack(stack)
+		slot.autodump = entry.get("autodump", false)
 		storage_value_changed = true
 		storage_changed.emit(resource, slot.stored)
 		resource.needs_recalc = true

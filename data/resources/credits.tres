@@ -10,4 +10,4 @@ name = "Credits"
 icon = ExtResource("1_bjdx1")
 default_cost = 1
 has_global_store = true
-global_total = 1000
+starting_global_total = 1000

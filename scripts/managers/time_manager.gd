@@ -34,6 +34,11 @@ signal sim_tick(sim_delta: float)
 signal slow_tick(interval: float)
 signal hour_changed(hour: int)
 signal cycle_changed(cycle: int)
+## The calendar was rewritten wholesale by a load - NOT a boundary being crossed.
+## Display-only listeners (the clock readout) subscribe to this; anything that does
+## calendar *work* must stay on hour_changed/cycle_changed, which a load no longer
+## replays (WI-38 A3).
+signal calendar_restored(cycle: int, hour: int)
 signal pause_state_changed(paused: bool)
 signal speed_changed(new_speed: float)
 
@@ -165,7 +170,14 @@ func load_save_data(data: Dictionary) -> void:
 	total_sim_seconds = float(data.get("total_sim_seconds", 0.0))
 	speed = float(data.get("speed", 1.0))
 	paused = bool(data.get("paused", false))
-	# Direct field writes above don't pass through the tick loop, so tell
-	# listeners (clock UI, shift logic later) where the calendar now stands.
-	cycle_changed.emit(cycle)
-	hour_changed.emit(hour)
+	# Direct field writes above don't pass through the tick loop, so listeners have
+	# to be told where the calendar now stands. Deliberately NOT via cycle_changed/
+	# hour_changed while a save is being applied (WI-38 A3): those mean "a calendar
+	# boundary was just crossed" and three managers do real work on them - the replay
+	# let EventManager fire a random event on load, *before* its own section had
+	# restored, and left MarketManager/ContractManager correct only by accident of
+	# section ordering. advance_hours() still emits both; that path is a real skip.
+	calendar_restored.emit(cycle, hour)
+	if not SaveManager.is_loading():
+		cycle_changed.emit(cycle)
+		hour_changed.emit(hour)

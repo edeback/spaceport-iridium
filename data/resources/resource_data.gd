@@ -15,10 +15,17 @@ extends Resource
 @export var default_market_supply: int = 100
 
 @export var has_global_store: bool = false
-## Only used if has_global_store is true
-@export var global_total: int = 0
+## Authored seed for global_total, only used if has_global_store is true. This is
+## the *only* global-store field that belongs in the .tres: everything below is
+## runtime state on an engine-wide shared resource, and Godot's resource cache
+## keeps it alive across a scene swap (WI-38 A8 / B3). SaveManager._ready() resets
+## the runtime fields from this seed on entry to the game scene.
+@export var starting_global_total: int = 0
 
-@export var cached_total: int = 0
+## Runtime credit/global balance. Deliberately NOT exported - see above.
+var global_total: int = 0
+## Derived cache of global_total + everything in registered_storage.
+var cached_total: int = 0
 var needs_recalc: bool = true
 
 ## Does this resource carry per-stack variance (ore richness, food quality,
