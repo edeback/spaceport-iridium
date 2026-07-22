@@ -65,7 +65,7 @@ func can_do_job(_pawn: PawnBase) -> bool:
 			return false
 	elif not Global.path_manager.is_space_reachable(_pawn):
 		return false
-	return _find_deposit_storage(_pawn) != null
+	return StorageQuery.find_sink(_pawn, resource_data) != null
 
 func start_job(_pawn: PawnBase) -> void:
 	pawn = _pawn
@@ -92,7 +92,8 @@ func job_start() -> void:
 	if not is_instance_valid(pile):
 		cancel(true)
 		return
-	deposit_storage = _find_deposit_storage(pawn)
+	# No priority floor: a pile has no priority of its own to compare against.
+	deposit_storage = StorageQuery.find_sink(pawn, resource_data)
 	if deposit_storage == null:
 		cancel(true)
 		return
@@ -112,27 +113,6 @@ func job_start() -> void:
 		cancel(true)
 		return
 	move_to_pile()
-
-## Nearest reachable storage that accepts this resource and has room.
-## Pure query - safe to call from can_do_job() without side effects. Same
-## shape as Job_GetResource._find_deposit_storage(), minus the priority
-## comparison (a pile has no priority of its own to compare against).
-func _find_deposit_storage(_pawn: PawnBase) -> StorageComponent:
-	var best: StorageComponent = null
-	var best_priority: int = 0
-	var best_dist: int = 0
-	for node in _pawn.get_tree().get_nodes_in_group("resource_storage"):
-		var storage: StorageComponent = node as StorageComponent
-		if storage == null or not storage.accepts_imports:
-			continue
-		if not storage.can_deposit(resource_data, 1) or not Global.path_manager.is_reachable(_pawn, storage.owner_module):
-			continue
-		var dist: int = storage.owner_module.module_cell.distance_squared_to(Global.world_to_cell(_pawn.global_position))
-		if best == null or storage.priority > best_priority or (storage.priority == best_priority and dist < best_dist):
-			best = storage
-			best_priority = storage.priority
-			best_dist = dist
-	return best
 
 func _pile_despawned() -> void:
 	if state < CollectPileState.GatherFromPile:

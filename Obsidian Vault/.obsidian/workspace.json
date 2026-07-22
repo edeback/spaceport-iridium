@@ -151,12 +151,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/TODO notes.md",
+                "file": "Spaceport Iridium/Planning/Work Items/WI-41_Group_Constants.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "TODO notes"
+              "title": "WI-41_Group_Constants"
             }
           },
           {
@@ -247,7 +247,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Spaceport Iridium/TODO notes.md",
+                "file": "Spaceport Iridium/Planning/Work Items/WI-41_Group_Constants.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -257,7 +257,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for TODO notes"
+              "title": "Backlinks for WI-41_Group_Constants"
             }
           },
           {
@@ -293,13 +293,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Spaceport Iridium/TODO notes.md",
+                "file": "Spaceport Iridium/Planning/Work Items/WI-41_Group_Constants.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of TODO notes"
+              "title": "Outline of WI-41_Group_Constants"
             }
           }
         ],
@@ -323,24 +323,26 @@
   },
   "active": "471944f5475eac00",
   "lastOpenFiles": [
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.133200.2b1f63342cbd",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.133200.f0cd5dea763c",
+    "Spaceport Iridium/Planning/02_Roadmap.md.tmp.133200.c1bb0d10c85f",
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-40_Storage_Query_Helper.md",
+    "Spaceport Iridium/Planning/Work Items/WI-40_Storage_Query_Helper.md.tmp.133200.33bae89a4edf",
+    "Spaceport Iridium/Planning/Work Items/WI-40_Storage_Query_Helper.md",
+    "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md.tmp.133200.8911d76952cc",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.133200.b073bce07d12",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.133200.ebc06dc6ecb5",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.133200.9287a4a0b7b4",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.133200.d82bcdd38b77",
+    "Spaceport Iridium/TODO notes.md",
     "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md.tmp.139864.25b073c9a70d",
     "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.139864.6494fba4de36",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.139864.e9879cb69731",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.139864.5e16f7318b17",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-39_Power_Registry.md.tmp.139864.fafb33d5427f",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-39_Power_Registry.md.tmp.139864.0e85a67162e7",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-39_Power_Registry.md.tmp.139864.dea6edc27f9c",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-39_Power_Registry.md.tmp.139864.5369d0d0f98f",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-39_Power_Registry.md.tmp.139864.3e6e6fd22dbc",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-39_Power_Registry.md",
-    "Spaceport Iridium/Planning/Work Items/WI-39_Power_Registry.md.tmp.139864.75ab1093e646",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.139864.bc963bc43e71",
     "Spaceport Iridium/Planning/Work Items/WI-39_Power_Registry.md",
     "Spaceport Iridium/Planning/02_Roadmap.md",
     "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md",
     "Spaceport Iridium/Planning/Work Items/WI-42_Preview_Metadata_Cache.md",
     "Spaceport Iridium/Planning/Work Items/WI-41_Group_Constants.md",
-    "Spaceport Iridium/Planning/Work Items/WI-40_Storage_Query_Helper.md",
     "Spaceport Iridium/Planning/New Work For Phase 3.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-38_Bug_Fix_Pass_2.md",
     "Spaceport Iridium/Planning/Work Items/WI-38_Bug_Fix_Pass_2.md",
@@ -350,7 +352,6 @@
     "Spaceport Iridium/Planning/Work Items/Completed/WI-13_Events_v1.md",
     "Spaceport Iridium/Planning/01_Technical_Specification.md",
     "Spaceport Iridium/Planning/00_Design_Document.md",
-    "Spaceport Iridium/TODO notes.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-37_Difficulty_Levels.md",
     "Spaceport Iridium/Reorganized/05_Engineering_and_Technical_TODO.md",
     "Spaceport Iridium/Reorganized/04_World_Meta_and_Progression.md",
@@ -358,7 +359,6 @@
     "Spaceport Iridium/Reorganized/02_Resources_and_Economy.md",
     "Spaceport Iridium/Reorganized/01_Modules_and_Station_Structure.md",
     "Spaceport Iridium/Reorganized/00_Overview.md",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-36_Main_UI_Flow.md",
     "Pasted image 20251208125343.png",
     "Pasted image 20260712204434.png",
     "Pasted image 20251208125118.png",
