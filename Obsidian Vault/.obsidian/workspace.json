@@ -151,12 +151,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-38_Bug_Fix_Pass_2.md",
+                "file": "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "WI-38_Bug_Fix_Pass_2"
+              "title": "03_Bugs_and_Improvements"
             }
           },
           {
@@ -247,7 +247,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-38_Bug_Fix_Pass_2.md",
+                "file": "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -257,7 +257,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for WI-38_Bug_Fix_Pass_2"
+              "title": "Backlinks for 03_Bugs_and_Improvements"
             }
           },
           {
@@ -293,13 +293,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-38_Bug_Fix_Pass_2.md",
+                "file": "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of WI-38_Bug_Fix_Pass_2"
+              "title": "Outline of 03_Bugs_and_Improvements"
             }
           }
         ],
@@ -323,27 +323,32 @@
   },
   "active": "471944f5475eac00",
   "lastOpenFiles": [
-    "Spaceport Iridium/Planning/02_Roadmap.md",
-    "Spaceport Iridium/Planning/02_Roadmap.md.tmp.68300.8d89ebafe913",
-    "Spaceport Iridium/Planning/02_Roadmap.md.tmp.68300.9823c910232c",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.68300.b09a355442d9",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.68300.310ce9dce1a2",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.68300.1643a4424191",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.68300.e8bf40f64666",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.68300.5048afff99a8",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.68300.a6d4ab1a0c76",
-    "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md.tmp.68300.34965824aeb1",
-    "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md.tmp.68300.eb8d7ffbd269",
-    "Spaceport Iridium/Planning/Work Items/WI-38_Bug_Fix_Pass_2.md",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-38_Bug_Fix_Pass_2.md",
+    "Spaceport Iridium/Planning/02_Roadmap.md.tmp.129888.7018b8a644ad",
+    "Spaceport Iridium/Planning/Work Items/WI-42_Preview_Metadata_Cache.md.tmp.129888.2b068514e5dd",
+    "Spaceport Iridium/Planning/Work Items/WI-42_Preview_Metadata_Cache.md.tmp.129888.e7448150b15d",
+    "Spaceport Iridium/Planning/Work Items/WI-42_Preview_Metadata_Cache.md.tmp.129888.85af0bd717de",
+    "Spaceport Iridium/Planning/Work Items/WI-39_Power_Registry.md.tmp.129888.b3fe7d3a05a6",
+    "Spaceport Iridium/Planning/Work Items/WI-39_Power_Registry.md.tmp.129888.2746d22b1d80",
+    "Spaceport Iridium/Planning/Work Items/WI-39_Power_Registry.md.tmp.129888.4b0cac7ac83f",
+    "Spaceport Iridium/Planning/Work Items/WI-39_Power_Registry.md.tmp.129888.4858f0898fcb",
+    "Spaceport Iridium/Planning/02_Roadmap.md.tmp.129888.04a0e31fdf63",
+    "Spaceport Iridium/Planning/Work Items/WI-42_Preview_Metadata_Cache.md",
+    "Spaceport Iridium/Planning/Work Items/WI-42_Preview_Metadata_Cache.md.tmp.129888.52d569ea2102",
+    "Spaceport Iridium/Planning/Work Items/WI-41_Group_Constants.md",
+    "Spaceport Iridium/Planning/Work Items/WI-41_Group_Constants.md.tmp.129888.23eb9135b686",
+    "Spaceport Iridium/Planning/Work Items/WI-40_Storage_Query_Helper.md",
+    "Spaceport Iridium/Planning/Work Items/WI-39_Power_Registry.md",
+    "Spaceport Iridium/Planning/New Work For Phase 3.md",
     "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md",
+    "Spaceport Iridium/Planning/02_Roadmap.md",
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-38_Bug_Fix_Pass_2.md",
+    "Spaceport Iridium/Planning/Work Items/WI-38_Bug_Fix_Pass_2.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-01_Bug_Fix_Pass.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-03_Save_Load.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-12_Storage_QoL.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-13_Events_v1.md",
     "Spaceport Iridium/Planning/01_Technical_Specification.md",
     "Spaceport Iridium/Planning/00_Design_Document.md",
-    "Spaceport Iridium/Planning/New Work For Phase 3.md",
     "Spaceport Iridium/TODO notes.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-37_Difficulty_Levels.md",
     "Spaceport Iridium/Reorganized/05_Engineering_and_Technical_TODO.md",
@@ -354,10 +359,6 @@
     "Spaceport Iridium/Reorganized/00_Overview.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-36_Main_UI_Flow.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-35_UI_Overlays.md",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-34_Minimap.md",
-    "Spaceport Iridium/Game Mechanics/Modules/Transportation.md",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-33_Visitors_and_Commerce.md",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-32_Combat_v1.md",
     "Pasted image 20251208125343.png",
     "Pasted image 20260712204434.png",
     "Pasted image 20251208125118.png",

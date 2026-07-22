@@ -114,11 +114,17 @@
 
 *Goal: the same thing Phase 0 wanted — current features stop lying to you — before Phase 4 builds on them. Phase 3 shipped twenty work items without a bug-fix pass between them; the 2026-07-22 audit of [[03_Bugs_and_Improvements]] is the first read of the whole thing as one codebase.*
 
-| # | Work item | Why now |
+| # | Work item | Why this order |
 |---|---|---|
-| WI-38 | [[WI-38_Bug_Fix_Pass_2\|Bug-fix pass 2]] | **Done 2026-07-22.** Eight confirmed bugs from the post-WI-37 audit. Two are integrity bugs that corrupt play-tests the way WI-01's did: shield charge isn't saved (a mid-raid reload is a free recharge), and a New Game after Quit to Menu inherits the previous run's credits (verified). Cheap now, and Phase 4 shouldn't be built on top of them |
+| WI-38 | [[WI-38_Bug_Fix_Pass_2\|Bug-fix pass 2]] | **Done 2026-07-22.** Eight confirmed bugs from the post-WI-37 audit. Two are integrity bugs that corrupt play-tests the way WI-01's did: shield charge isn't saved (a mid-raid reload is a free recharge), and a New Game after Quit to Menu inherits the previous run's credits (verified). Bugs before refactors — and WI-40 needs its A5 fix |
+| WI-39 | [[WI-39_Power_Registry\|Power registry]] | Retires `PowerManager`'s per-tick group scans for explicit registration, finishing the caching its dead fields and commented-out hooks have been promising since Phase 0 (closes the B2 remnant). The registry is where per-module power priority lands later, so life support can brown out last. Also deletes three groups before WI-41 has to convert them. Carries one bug WI-38 missed: battery charge isn't saved — same unsaved-field class as A2, found while scoping this |
+| WI-40 | [[WI-40_Storage_Query_Helper\|Storage query helper]] | Four near-identical "find best storage" loops become one — the duplication that let A5 drift unnoticed. Cheap now that WI-38 fixed the one that diverged: two of the four are byte-identical and the collapse is mechanical. Gives per-resource storage indexing exactly one place to land when station sizes demand it |
+| WI-41 | [[WI-41_Group_Constants\|Group constants]] | 24 group names as bare literals across ~53 call sites — undiscoverable, and silent when misspelled. Mechanical, so it goes after WI-39 and WI-40 delete the call sites it would otherwise have to convert |
+| WI-42 | [[WI-42_Preview_Metadata_Cache\|Preview metadata cache]] | Build preview instantiates a whole module scene on every rotate, flip and menu selection. Smallest of the four and independent of all of them — slot it in wherever |
 
-*Also open from the audit, deliberately not in WI-38: the section C refactors (one storage-query helper, power group caching, a `Groups` constants file) and the section B design debt — chiefly the `can_remove_module` structure check, disabled since Phase 0. Slot them in as convenient; none block Phase 4.*
+*Ordering logic: bugs first, then the two structural duplications (power, storage), then the mechanical rename over the smaller surface that leaves. WI-42 sits off to the side.*
+
+*Also open from the audit, deliberately unscheduled: the section B design debt — chiefly the `can_remove_module` structure check, disabled since Phase 0, which needs a decision rather than a work item (fix the blueprint connectivity accounting, or delete the flag and stop implying a feature that isn't there). None of it blocks Phase 4.*
 
 ## Phase 4 — Horizon (design only, no commitments)
 
