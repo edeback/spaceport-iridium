@@ -1,2 +1,5 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Force text files to use LF (Linux/macOS) endings on check-in
+*.import text eol=lf
+*.godot text eol=lf
+*.tscn text eol=lf
+*.tres text eol=lf
