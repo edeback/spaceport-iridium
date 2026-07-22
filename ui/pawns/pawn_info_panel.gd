@@ -28,12 +28,15 @@ func set_pawn(_pawn: PawnBase) -> void:
 		pawn.schedule.this_shift_changed.connect(_refresh_title)
 	_setup_crew_controls()
 	_setup_robot_controls()
+	_setup_visitor_controls()
 
 ## Wage readout + fire button (WI-25) for organic crew only - drones and robots
 ## draw no wage and can't be fired. Built in code and inserted just under the
 ## name row; the panel is instantiated fresh per pawn, so nothing to tear down.
 func _setup_crew_controls() -> void:
-	if pawn is RobotPawnBase or pawn.get_component_by_type(PawnNeedsComponent) == null:
+	# Visitors have needs but aren't crew (WI-33): no wage, can't be fired - their
+	# own readout is _setup_visitor_controls instead.
+	if pawn is RobotPawnBase or pawn.is_visitor or pawn.get_component_by_type(PawnNeedsComponent) == null:
 		return
 	var header_hbox: Node = %PawnNameLabel.get_parent()
 	var vbox: Node = header_hbox.get_parent()
@@ -97,6 +100,37 @@ func _setup_robot_controls() -> void:
 	pawn.job_changed.connect(_refresh_robot_state)
 	_refresh_robot_state()
 
+## Guest readout (WI-33): wallet + visit time remaining, inserted under the name
+## row like the crew/robot controls. VisitorPawn only; refreshed live in _process.
+var _visitor_wallet_label: Label = null
+var _visitor_time_label: Label = null
+
+func _setup_visitor_controls() -> void:
+	if not pawn is VisitorPawn:
+		return
+	var header_hbox: Node = %PawnNameLabel.get_parent()
+	var vbox: Node = header_hbox.get_parent()
+	var section := VBoxContainer.new()
+	section.add_theme_constant_override("separation", 2)
+	_visitor_wallet_label = Label.new()
+	_visitor_wallet_label.self_modulate = Color(1, 1, 1, 0.8)
+	section.add_child(_visitor_wallet_label)
+	_visitor_time_label = Label.new()
+	_visitor_time_label.self_modulate = Color(1, 1, 1, 0.8)
+	section.add_child(_visitor_time_label)
+	vbox.add_child(section)
+	vbox.move_child(section, header_hbox.get_index() + 1)
+	_refresh_visitor_readout()
+
+func _refresh_visitor_readout() -> void:
+	if not is_instance_valid(pawn) or not pawn is VisitorPawn:
+		return
+	var visitor := pawn as VisitorPawn
+	if is_instance_valid(_visitor_wallet_label):
+		_visitor_wallet_label.text = "Wallet: %d cr" % visitor.personal_credits
+	if is_instance_valid(_visitor_time_label):
+		_visitor_time_label.text = "Visit: %.0f h left" % maxf(visitor.stay_hours_remaining, 0.0)
+
 ## A "<label> [====]" row appended to `parent`; returns the ProgressBar.
 func _make_stat_row(parent: VBoxContainer, label_text: String, max_value: float, value: float) -> ProgressBar:
 	var row := HBoxContainer.new()
@@ -148,6 +182,8 @@ func _robot_state_text() -> String:
 func _process(_delta: float) -> void:
 	if is_instance_valid(pawn):
 		set_position(pawn.get_global_transform_with_canvas().get_origin())
+		if pawn is VisitorPawn:
+			_refresh_visitor_readout()
 	else:
 		pawn = null
 		_on_exit_button_pressed()
@@ -163,7 +199,10 @@ func _on_hour_changed(_hour: int) -> void:
 ## indicator rather than a meaningless "On shift".
 func _refresh_title() -> void:
 	var display_name: String = pawn.pawn_name if not pawn.pawn_name.is_empty() else "Crew member"
-	if pawn.schedule == null:
+	if pawn.is_visitor:
+		# Guests (WI-33) read as outsiders, no shift indicator.
+		%PawnNameLabel.text = "%s — Guest" % (pawn.pawn_name if not pawn.pawn_name.is_empty() else "Visitor")
+	elif pawn.schedule == null:
 		%PawnNameLabel.text = display_name
 	else:
 		%PawnNameLabel.text = "%s — %s" % [display_name, "On shift" if pawn.is_on_shift() else "Off shift"]

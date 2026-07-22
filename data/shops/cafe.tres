@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ShopTypeData" format=3]
+
+[ext_resource type="Script" path="res://data/shops/shop_type_data.gd" id="1_shop"]
+
+[resource]
+script = ExtResource("1_shop")
+id = &"cafe"
+display_name = "Café"
+flavor = "Synthbrew and pastries. Cheap, cheerful, and always busy between shifts."
+price_min = 8
+price_max = 18
+recreation_per_hour = 30.0
+visit_mood_bonus = 0.04
+visit_mood_duration_hours = 6.0
+modulate = Color(0.86, 0.72, 0.55, 1.0)

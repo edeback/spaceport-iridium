@@ -121,12 +121,35 @@ func get_crew(include_leaving: bool = true) -> Array[PawnBase]:
 func crew_count(include_leaving: bool = true) -> int:
 	return get_crew(include_leaving).size()
 
-## Total sleeping slots across constructed pods - the housing capacity gate.
+## Total CREW sleeping slots across constructed pods - the hiring housing gate.
+## Excludes visitor-only hotel rooms (WI-33): a hotel is not crew housing, so a
+## station of hotels-and-no-bunks can't hire.
 func sleep_capacity() -> int:
 	var total: int = 0
 	for node: Node in get_tree().get_nodes_in_group("sleep_component"):
-		total += (node as SleepComponent).capacity
+		var pod: SleepComponent = node as SleepComponent
+		if pod != null and not pod.visitor_only:
+			total += pod.capacity
 	return total
+
+## Total VISITOR sleeping slots across constructed hotel rooms (WI-33). The
+## visitor-capacity gate: guests only arrive if a free hotel bunk exists.
+func visitor_sleep_capacity() -> int:
+	var total: int = 0
+	for node: Node in get_tree().get_nodes_in_group("sleep_component"):
+		var pod: SleepComponent = node as SleepComponent
+		if pod != null and pod.visitor_only:
+			total += pod.capacity
+	return total
+
+## Count of currently-free visitor (hotel) bunks - the at-arrival capacity check.
+func free_visitor_bunks() -> int:
+	var free: int = 0
+	for node: Node in get_tree().get_nodes_in_group("sleep_component"):
+		var pod: SleepComponent = node as SleepComponent
+		if pod != null and pod.visitor_only and pod.owner_module != null and pod.owner_module.is_complete():
+			free += maxi(pod.capacity - pod.claimed_count(), 0)
+	return free
 
 func pending_hire_count() -> int:
 	return _pending_hires.size()

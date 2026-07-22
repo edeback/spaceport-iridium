@@ -1,0 +1,43 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="PackedScene" uid="uid://drvd8opv6enr8" path="res://modules/templates/module_2x1.tscn" id="1_shop"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_shop"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_noise"]
+[ext_resource type="Texture2D" uid="uid://chbnmymdoy0o7" path="res://assets/sprites/module_generic.png" id="4_generic"]
+[ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="5_light"]
+[ext_resource type="PackedScene" path="res://modules/components/shop_component.tscn" id="6_shop"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="7_power"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_shop"]
+shader = ExtResource("2_shop")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
+shader_parameter/gradient_texture = ExtResource("3_noise")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_shop"]
+resource_local_to_scene = true
+size = Vector2(126, 62)
+
+[node name="Module" instance=ExtResource("1_shop")]
+
+[node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0"]
+material = SubResource("ShaderMaterial_shop")
+texture = ExtResource("4_generic")
+region_rect = Rect2(128, 0, 128, 64)
+
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0"]
+shape = SubResource("RectangleShape2D_shop")
+
+[node name="LightingComponent" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="2" node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("5_light")]
+scale = Vector2(2, 1)
+power_consumption_component = NodePath("../../PowerConsumptionComponent")
+
+[node name="ConstructionComponent" parent="." index="3"]
+position = Vector2(-32, 0)
+
+[node name="ShopComponent" parent="." node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("6_shop")]
+power_consumption_component = NodePath("../PowerConsumptionComponent")
+
+[node name="PowerConsumptionComponent" parent="." instance=ExtResource("7_power")]

@@ -1,5 +1,7 @@
 # WI-33 — Visitors, Tourists, Shops & Hotels
 
+Completion notes:
+- Teleporter arrival/departure not included
 ## Goal
 New revenue: shop modules where crew (paid since WI-25) and visitors spend money, hotel rooms where visitors sleep, and a visitor system — pawns who arrive with a wallet, enjoy the station, and leave when broke or unhappy. Happy departures attract more visitors; unhappy ones fewer.
 
@@ -35,7 +37,7 @@ New revenue: shop modules where crew (paid since WI-25) and visitors spend money
 5. Disease hook, UI, save.
 
 ## Edge cases
-- Visitor goes broke mid-stay far from the bay: leaves unhappy (broke = unhappy departure for reputation) — walking out is free.
+- Visitor goes broke mid-stay far from the bay: leaves with current happiness (going broke is not a negative, but they won't continue to stay if they can't afford anything) — walking out is free.
 - Visitor stranded (bay deconstructed, teleporter gone): they wander needs-driven for free, unhappy, reputation sinks — alert "visitors cannot depart"; despawn via any rebuilt exit.
 - Visitor caught in a raid or vented module: harmed visitors leave unhappy (or die — pawn death still doesn't exist; they leave at critical health), heavy reputation hit.
 - Crew wages accumulate with no shops: fine v1; note a future "savings tax"/remittance sink.

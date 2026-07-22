@@ -23,7 +23,9 @@ func get_subtask_description() -> String:
 func can_do_job(_pawn: PawnBase) -> bool:
 	var sus_components := _pawn.get_tree().get_nodes_in_group("sustenance_component")
 	for component in sus_components:
-		if Global.path_manager.is_reachable(_pawn, (component as SustenanceComponent).owner_module) and (component as SustenanceComponent).sustenance_available > 0:
+		# can_serve gates visitors behind the crew-priority reserve (WI-33); crew
+		# are served whenever there's any food.
+		if (component as SustenanceComponent).can_serve(_pawn) and Global.path_manager.is_reachable(_pawn, (component as SustenanceComponent).owner_module):
 			return true
 	return false
 
@@ -59,7 +61,7 @@ func find_best_sustenance() -> SustenanceComponent:
 	var best_partial_dist: int = 0
 	for node in pawn.get_tree().get_nodes_in_group("sustenance_component"):
 		var sustenance: SustenanceComponent = node as SustenanceComponent
-		if sustenance == null or sustenance.sustenance_available <= 0 or not Global.path_manager.is_reachable(pawn, sustenance.owner_module):
+		if sustenance == null or not sustenance.can_serve(pawn) or not Global.path_manager.is_reachable(pawn, sustenance.owner_module):
 			continue
 		var dist: int = sustenance.owner_module.module_cell.distance_squared_to(Global.world_to_cell(pawn.global_position))
 		if sustenance.sustenance_available >= desired_sustenance:
@@ -98,6 +100,9 @@ func eat(prev_success: bool) -> void:
 			var mult: float = FoodInstanceData.nourishment_mult(meal_quality, target_component.min_nourish_mult, target_component.max_nourish_mult)
 			needs.hunger_value += amount_consumed * mult
 			_apply_meal_mood(needs, meal_quality)
+		# Visitors pay for the meal (WI-33); crew eat free (no-op). Booked income
+		# "dining". Charged after serving so a paid guest always gets what they ate.
+		target_component.charge_meal(pawn)
 		job_state = JobBase.JobState.Finished
 	else:
 		cancel(true)

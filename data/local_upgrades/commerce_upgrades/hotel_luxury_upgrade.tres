@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="LocalUpgradeData" format=3]
+
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_res"]
+[ext_resource type="Script" uid="uid://icaptocm87ny" path="res://modules/templates/stat_modifier_spec.gd" id="2_spec"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="3_credits"]
+[ext_resource type="Script" uid="uid://esnvspsqth7k" path="res://data/local_upgrades/local_upgrade_data.gd" id="4_upgrade"]
+[ext_resource type="Texture2D" uid="uid://kk5flkkimb6u" path="res://assets/sprites/sleeping_pod.png" id="5_icon"]
+[ext_resource type="Resource" path="res://data/unlocks/commerce_tree/hotel_unlock.tres" id="6_unlock"]
+
+[sub_resource type="Resource" id="Spec_luxury_quality"]
+script = ExtResource("2_spec")
+stat = &"sleep_quality"
+op = 1
+value = 1.3
+metadata/_custom_type_script = "uid://icaptocm87ny"
+
+[sub_resource type="Resource" id="Spec_luxury_rate"]
+script = ExtResource("2_spec")
+stat = &"hotel_rate"
+op = 1
+value = 2.0
+metadata/_custom_type_script = "uid://icaptocm87ny"
+
+[sub_resource type="Resource" id="Spec_luxury_mood"]
+script = ExtResource("2_spec")
+stat = &"hotel_mood"
+op = 0
+value = 0.05
+metadata/_custom_type_script = "uid://icaptocm87ny"
+
+[resource]
+script = ExtResource("4_upgrade")
+id = &"hotel_luxury_upgrade"
+name = "Luxury Suite"
+description = "Refit this room with finer fittings: guests rest better and leave happier, and pay a premium rate for the night."
+icon = ExtResource("5_icon")
+applies_to = Array[String](["Lodging"])
+required_global_unlock = ExtResource("6_unlock")
+max_tiers = 1
+cost = Dictionary[ExtResource("1_res"), int]({
+ExtResource("3_credits"): 500
+})
+modifiers = Array[ExtResource("2_spec")]([SubResource("Spec_luxury_quality"), SubResource("Spec_luxury_rate"), SubResource("Spec_luxury_mood")])
+metadata/_custom_type_script = "uid://esnvspsqth7k"

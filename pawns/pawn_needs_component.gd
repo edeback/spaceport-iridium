@@ -115,7 +115,16 @@ func _ready() -> void:
 			func(v: float) -> void: recreation_value = v,
 			func() -> float: return recreation_max,
 			recreation_duration_hours,
-			func() -> JobBase: return Job_Recreate.new()))
+			_make_recreation_job))
+
+## Recreation can be satisfied at a shop (paid, WI-33) or a free provider. Prefer
+## a shop when the pawn can afford a reachable one - that's the money loop crew and
+## visitors both feed. Both jobs map to the "recreation" need (see
+## _need_name_for_job) so only one is ever pending at a time.
+func _make_recreation_job() -> JobBase:
+	if Job_Shop.has_affordable_shop(owner_pawn):
+		return Job_Shop.new()
+	return Job_Recreate.new()
 
 func _make_def(need_name: StringName, get_value: Callable, set_value: Callable, get_max: Callable, duration_hours: float, make_job: Callable) -> NeedDef:
 	var def := NeedDef.new()
@@ -181,7 +190,7 @@ func _need_name_for_job(job: JobBase) -> StringName:
 		return &"hunger"
 	if job is Job_Sleep:
 		return &"sleep"
-	if job is Job_Recreate:
+	if job is Job_Recreate or job is Job_Shop:
 		return &"recreation"
 	return &""
 

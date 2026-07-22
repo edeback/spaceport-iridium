@@ -33,6 +33,9 @@ static func _ensure_registry() -> void:
 	_factories[&"eat"] = Job_Eat.restore
 	_factories[&"sleep"] = Job_Sleep.restore
 	_factories[&"recreate"] = Job_Recreate.restore
+	# Shopping (WI-33) is paid recreation; it resumes above the need threshold like
+	# the free recreation job and re-links to the recreation need on load.
+	_factories[&"shop"] = Job_Shop.restore
 	# Robot needs (WI-28): recharge/repair resume above their seek threshold, so
 	# they persist like the organic need jobs and re-link to their robot component.
 	_factories[&"recharge"] = Job_Recharge.restore

@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/windows/shop_component_ui.gd" id="1_shop"]
+
+[node name="Shop Stats" type="PanelContainer" node_paths=PackedStringArray("type_selector", "type_label", "stats_label", "flavor_label")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_shop")
+type_selector = NodePath("MarginContainer/VBoxContainer/TypeSelector")
+type_label = NodePath("MarginContainer/VBoxContainer/TypeLabel")
+stats_label = NodePath("MarginContainer/VBoxContainer/StatsLabel")
+flavor_label = NodePath("MarginContainer/VBoxContainer/FlavorLabel")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="TypeLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Café"
+horizontal_alignment = 1
+
+[node name="TypeSelector" type="OptionButton" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="StatsLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Visit: 8–18 cr    Fun: 30/hr"
+horizontal_alignment = 1
+
+[node name="FlavorLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+text = "Synthbrew and pastries."
+horizontal_alignment = 1
+autowrap_mode = 2

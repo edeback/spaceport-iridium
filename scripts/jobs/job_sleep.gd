@@ -95,6 +95,10 @@ func _on_end() -> void:
 	if SignalBus.module_removed.is_connected(_module_removed):
 		SignalBus.module_removed.disconnect(_module_removed)
 	if is_instance_valid(sleep_component):
+		# Bill a visitor's completed hotel night (WI-33) before releasing the room -
+		# only on a full night (is_finished), never an early cancel. No-op for crew.
+		if is_finished() and pawn != null and is_instance_valid(pawn):
+			sleep_component.complete_stay(pawn)
 		sleep_component.release_slot(self)
 	# Anchor claims release on EVERY termination path, like the slot above.
 	if _bunk_path != null and is_instance_valid(_bunk_path):
@@ -136,6 +140,10 @@ func _find_pod(_pawn: PawnBase) -> SleepComponent:
 	for node: Node in _pawn.get_tree().get_nodes_in_group("sleep_component"):
 		var pod: SleepComponent = node as SleepComponent
 		if pod == null or not pod.has_free_slot():
+			continue
+		# Hotel rooms take visitors only; crew pods take crew only (WI-33). This is
+		# what keeps crew out of paid rooms and guests out of the bunkhouse.
+		if not pod.accepts(_pawn):
 			continue
 		if not Global.path_manager.is_reachable(_pawn, pod.owner_module):
 			continue

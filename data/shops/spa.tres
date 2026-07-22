@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ShopTypeData" format=3]
+
+[ext_resource type="Script" path="res://data/shops/shop_type_data.gd" id="1_shop"]
+
+[resource]
+script = ExtResource("1_shop")
+id = &"spa"
+display_name = "Day Spa"
+flavor = "Warm water, low gravity, and quiet. Guests leave glowing - and lighter in the wallet."
+price_min = 40
+price_max = 80
+recreation_per_hour = 55.0
+visit_mood_bonus = 0.1
+visit_mood_duration_hours = 10.0
+modulate = Color(0.7, 0.9, 0.78, 1.0)

@@ -11,6 +11,10 @@ var pawn: PawnBase
 var bay_component: CrewRecruitmentComponent
 ## Sim-hours to wait for the "escape pod" when no bay is reachable.
 @export var escape_pod_wait_hours: float = 1.0
+## Crew get an escape pod when no bay is reachable; visitors (WI-33) do NOT - a
+## guest needs a real exit, so with this false the job fails instead of despawning
+## in place, and the visitor stays (stranded, alerted) until an exit is rebuilt.
+@export var allow_escape_pod: bool = true
 var _waited_hours: float = 0.0
 
 enum LeaveState { Starting, Walking, WaitingForPod, Finished, Failed }
@@ -41,7 +45,12 @@ func start_job(_pawn: PawnBase) -> void:
 	pawn = _pawn
 	bay_component = _find_bay(pawn)
 	if bay_component == null:
-		state = LeaveState.WaitingForPod
+		if allow_escape_pod:
+			state = LeaveState.WaitingForPod
+		else:
+			# No exit and no escape pod (a visitor): fail so the pawn returns to
+			# normal behavior and re-tries leaving later once an exit exists.
+			cancel(true)
 		return
 	state = LeaveState.Walking
 	pawn.movement_component.movement_ended.connect(_arrived, CONNECT_ONE_SHOT)
@@ -53,8 +62,12 @@ func _arrived(prev_success: bool) -> void:
 	if _ended:
 		return
 	if not prev_success:
-		# Path broke mid-walk - take the pod from where they stand.
-		state = LeaveState.WaitingForPod
+		# Path broke mid-walk - take the pod from where they stand (crew), or fail
+		# so a visitor re-tries for a real exit (WI-33).
+		if allow_escape_pod:
+			state = LeaveState.WaitingForPod
+		else:
+			cancel(true)
 		return
 	_depart()
 

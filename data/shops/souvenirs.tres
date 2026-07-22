@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ShopTypeData" format=3]
+
+[ext_resource type="Script" path="res://data/shops/shop_type_data.gd" id="1_shop"]
+
+[resource]
+script = ExtResource("1_shop")
+id = &"souvenirs"
+display_name = "Souvenir Stand"
+flavor = "Holo-postcards and station-logo mugs. A quick, cheap browse for passing visitors."
+price_min = 6
+price_max = 16
+recreation_per_hour = 25.0
+visit_mood_bonus = 0.03
+visit_mood_duration_hours = 5.0
+modulate = Color(0.92, 0.85, 0.55, 1.0)

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ShopTypeData" format=3]
+
+[ext_resource type="Script" path="res://data/shops/shop_type_data.gd" id="1_shop"]
+
+[resource]
+script = ExtResource("1_shop")
+id = &"cantina"
+display_name = "Cantina"
+flavor = "A dim bar with strong drinks and stronger opinions. The heart of any station's night cycle."
+price_min = 18
+price_max = 40
+recreation_per_hour = 45.0
+visit_mood_bonus = 0.06
+visit_mood_duration_hours = 6.0
+modulate = Color(0.72, 0.6, 0.85, 1.0)

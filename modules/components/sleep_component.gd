@@ -8,12 +8,29 @@ extends ComponentBase
 
 @export var capacity: int = 1
 ## Restore-rate multiplier; 1.0 = an empty sleep bar refills (gross, before
-## the pawn's own decay) in base_hours_to_full.
+## the pawn's own decay) in base_hours_to_full. Routed through the module's
+## stat layer as &"sleep_quality" so a hotel's quality-tier upgrade can raise it.
 @export var sleep_quality: float = 1.0
 ## Game-hours a quality-1 pod takes to gross-restore an empty sleep bar. Set
 ## below the intended night length: the pawn's sleep decay keeps ticking
 ## while asleep, so net restore is slower than this.
 @export var base_hours_to_full: float = 6.0
+
+## --- hotel (visitor lodging, WI-33) -----------------------------------------
+## True on a hotel room: visitors ONLY sleep here, and crew never claim it (the
+## mutual exclusion is enforced by accepts()). Crew quarters leave this false, so
+## a visitor can't take a crew bunk either. This is the WI-07 housing pattern
+## split by pawn kind.
+@export var visitor_only: bool = false
+## Credits a visitor pays on waking from a full night here (wallet -> station
+## income "hotels", clamped to the wallet). 0 = free lodging / crew quarters.
+## Routed through the stat layer as &"hotel_rate" so a pricier suite upgrade can
+## raise it alongside the extra comfort.
+@export var nightly_rate: int = 0
+## Timed happiness lift a visitor takes from a comfortable night (a nicer room is
+## more of a treat). Routed as &"hotel_mood". 0 = none (crew quarters).
+@export var visitor_mood_bonus: float = 0.0
+@export var visitor_mood_duration_hours: float = 8.0
 
 ## Adjacency tuning (WI-30). Nearby industrial vibration divides rest
 ## effectiveness by (1 + vibration * k); nearby greenery adds a small rest bonus
@@ -30,6 +47,10 @@ func ready_constructed() -> void:
 func has_free_slot() -> bool:
 	return _claims.size() < capacity
 
+## How many slots are currently claimed (WI-33 visitor-capacity gate reads this).
+func claimed_count() -> int:
+	return _claims.size()
+
 func claim_slot(job: JobBase) -> bool:
 	if not has_free_slot() or _claims.has(job):
 		return false
@@ -39,8 +60,55 @@ func claim_slot(job: JobBase) -> bool:
 func release_slot(job: JobBase) -> void:
 	_claims.erase(job)
 
+## Whether `pawn` is allowed to sleep here (WI-33): a hotel room takes visitors
+## only, a crew pod takes crew only. The mutual exclusion that keeps crew out of
+## paid rooms and guests out of the bunkhouse - Job_Sleep filters on this.
+func accepts(pawn: PawnBase) -> bool:
+	if pawn == null:
+		return false
+	if visitor_only:
+		return pawn.is_visitor
+	return not pawn.is_visitor
+
+## Effective quality after any local upgrade (WI-33 hotel tiers). Falls back to the
+## raw export before the component is attached to a module.
+func effective_sleep_quality() -> float:
+	if owner_module != null:
+		return owner_module.get_effective_stat(&"sleep_quality", sleep_quality)
+	return sleep_quality
+
 func sleep_restored_per_hour(sleep_max: float) -> float:
-	return sleep_max / base_hours_to_full * sleep_quality * environment_rest_multiplier()
+	return sleep_max / base_hours_to_full * effective_sleep_quality() * environment_rest_multiplier()
+
+## Effective nightly charge after any suite upgrade.
+func effective_nightly_rate() -> int:
+	if owner_module != null:
+		return int(round(owner_module.get_effective_stat(&"hotel_rate", float(nightly_rate))))
+	return nightly_rate
+
+## Called by Job_Sleep when a pawn wakes from a FULL night (never on an early
+## cancel). For a visitor in a hotel room: bills the nightly rate to their wallet
+## (clamped, income "hotels") and applies the room's comfort mood lift. No-op for
+## crew and for a crew pod. Returns the amount actually billed (for alerts/tests).
+func complete_stay(pawn: PawnBase) -> int:
+	if pawn == null or not visitor_only or not pawn.is_visitor:
+		return 0
+	var mood: float = owner_module.get_effective_stat(&"hotel_mood", visitor_mood_bonus) if owner_module != null else visitor_mood_bonus
+	if mood != 0.0:
+		var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
+		if needs != null:
+			needs.add_modifier(&"good_lodging", mood, visitor_mood_duration_hours)
+	var rate: int = effective_nightly_rate()
+	if rate <= 0:
+		return 0
+	var charge: int = mini(rate, pawn.personal_credits)
+	if charge <= 0:
+		return 0
+	pawn.spend_credits(charge)
+	if Global.economy_manager != null:
+		# The station banks the net after the levy (WI-25 call-site contract).
+		Global.resource_manager.credit_resource.change_global_total(Global.economy_manager.record_income(charge, &"hotels"))
+	return charge
 
 ## Adjacency modifier on rest effectiveness (WI-30): vibration divides it,
 ## greenery gives a small bonus. 1.0 when nothing is nearby (or the manager

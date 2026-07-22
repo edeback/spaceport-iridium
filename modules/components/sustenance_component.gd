@@ -7,6 +7,15 @@ extends ComponentBase
 @export var sustenance_per_food: int = 100
 @export var sustenance_resource: ResourceData
 
+## --- visitor dining (WI-33) --------------------------------------------------
+## Credits a visitor pays for a meal here (wallet -> station income "dining",
+## clamped to the wallet). Crew eat free; only visitors are billed.
+@export var visitor_meal_price: int = 6
+## Crew get served first when stock is low: a visitor may only eat while the pool
+## is ABOVE this reserve, so paying guests can't starve the crew (the paid meal is
+## a surplus product). Crew ignore the reserve entirely.
+@export var crew_priority_reserve: int = 120
+
 ## Food quality (WI-29). Withdrawn food melts into the sustenance pool, so its
 ## quality melts in too: pool_quality is the amount-weighted average of the food
 ## currently pooled here. Job_Eat reads it as the quality of the meal it serves.
@@ -80,6 +89,30 @@ func _stacks_quality(stacks: Array[ResourceStack]) -> float:
 ## re-reading pool_quality) so this stays correct if the pool ever stops being a
 ## uniform average - e.g. FIFO by stack rather than a blended pool. Today the pool
 ## is uniform, so consuming leaves the average unchanged except when it empties.
+## Whether this module will serve `pawn` right now (WI-33). Crew are served
+## whenever there's any food; a visitor is served only while the pool sits above
+## the crew-priority reserve, so guests never eat the crew's last rations.
+func can_serve(pawn: PawnBase) -> bool:
+	if sustenance_available <= 0:
+		return false
+	if pawn != null and pawn.is_visitor:
+		return sustenance_available > crew_priority_reserve
+	return true
+
+## Bills a visitor for their meal (WI-33): clamped to the wallet, booked as income
+## "dining". No-op for crew. Returns the amount actually charged.
+func charge_meal(pawn: PawnBase) -> int:
+	if pawn == null or not pawn.is_visitor or visitor_meal_price <= 0:
+		return 0
+	var charge: int = mini(visitor_meal_price, pawn.personal_credits)
+	if charge <= 0:
+		return 0
+	pawn.spend_credits(charge)
+	if Global.economy_manager != null:
+		# The station banks the net after the levy (WI-25 call-site contract).
+		Global.resource_manager.credit_resource.change_global_total(Global.economy_manager.record_income(charge, &"dining"))
+	return charge
+
 func consume_sustenance(amount: int) -> Dictionary:
 	var amount_to_consume := maxi(mini(amount, sustenance_available), 0)
 	var consumed_quality: float = pool_quality

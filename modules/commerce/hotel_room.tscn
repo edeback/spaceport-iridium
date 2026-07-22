@@ -1,0 +1,47 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_hotel"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_hotel"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_noise"]
+[ext_resource type="Texture2D" uid="uid://kk5flkkimb6u" path="res://assets/sprites/sleeping_pod.png" id="4_bed"]
+[ext_resource type="PackedScene" path="res://modules/components/sleep_component.tscn" id="5_sleep"]
+[ext_resource type="Script" uid="uid://c2qsvh4rhb1ta" path="res://scripts/pathing/anchor_def.gd" id="6_anchor"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hotel"]
+shader = ExtResource("2_hotel")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
+shader_parameter/gradient_texture = ExtResource("3_noise")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hotel"]
+resource_local_to_scene = true
+size = Vector2(62, 62)
+
+[sub_resource type="Resource" id="Resource_hotel_bunk"]
+script = ExtResource("6_anchor")
+type = 1
+offset = Vector2(-8, -9)
+
+[node name="Module" instance=ExtResource("1_hotel")]
+
+[node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0"]
+material = SubResource("ShaderMaterial_hotel")
+texture = ExtResource("4_bed")
+self_modulate = Color(1, 0.9, 0.68, 1)
+
+[node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0"]
+shape = SubResource("RectangleShape2D_hotel")
+
+[node name="PathComponent" parent="." index="1"]
+path_points = Array[Vector2i]([Vector2i(50, 58)])
+anchors = Array[ExtResource("6_anchor")]([SubResource("Resource_hotel_bunk")])
+
+[node name="SleepComponent" parent="." index="4" instance=ExtResource("5_sleep")]
+sleep_quality = 1.2
+base_hours_to_full = 5.0
+visitor_only = true
+nightly_rate = 25
+visitor_mood_bonus = 0.05
+visitor_mood_duration_hours = 8.0

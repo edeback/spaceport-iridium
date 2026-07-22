@@ -31,7 +31,19 @@ extends Node2D
 ## Visitor pawns (WI-26 ARC inspector; WI-33 guests reuse this) are transient:
 ## not crew, never saved, never draw a wage. CrewManager.get_crew and the
 ## SaveManager pawn section both skip them, the same way both skip drones.
+## WI-33 does save GUEST visitors (see SaveManager); the inspector stays unsaved.
 @export var is_visitor: bool = false
+## Personal wallet (WI-33). Crew accumulate this as WI-25 wages route to the pawn
+## instead of vanishing, and spend it at shops/hotels/dining (money returns to
+## station income, levy applies once at the register). Visitors arrive with a
+## rolled balance and leave when it runs dry. Saved on both crew and guests.
+@export var personal_credits: int = 0:
+	set(value):
+		var clamped: int = maxi(value, 0)
+		if personal_credits != clamped:
+			personal_credits = clamped
+			personal_credits_changed.emit(personal_credits)
+signal personal_credits_changed(new_total: int)
 @export var collision: Area2D
 ## 24-hour WORK/REST schedule (WI-06). Null (drones, anything unscheduled)
 ## means always on duty. Duplicated per pawn in _ready so the schedule tab
@@ -315,6 +327,22 @@ func skill_mult(skill: StringName) -> float:
 ## than effectively stalling. Unskilled jobs (skill &"") get work_speed() alone.
 func work_rate(skill: StringName) -> float:
 	return maxf(0.3, work_speed() * skill_mult(skill))
+
+## Personal wallet spend (WI-33): deducts `amount` if affordable and returns true,
+## else leaves the wallet untouched and returns false. Shops/hotels/dining call
+## this at the register; the deducted amount is then booked as station income.
+func spend_credits(amount: int) -> bool:
+	if amount <= 0:
+		return true
+	if personal_credits < amount:
+		return false
+	personal_credits -= amount
+	return true
+
+## Adds `amount` to the wallet (WI-33 wage routing / visitor arrival funding).
+func earn_credits(amount: int) -> void:
+	if amount > 0:
+		personal_credits += amount
 
 ## Routes an xp grant to the skills component if present (WI-22). No-op for
 ## drones or an empty skill, so jobs can call it unconditionally.

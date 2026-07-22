@@ -10,7 +10,7 @@ extends Control
 const COST_ORDER: Array[StringName] = [
 	&"loan_payment", &"wages", &"upkeep", &"levy_fee", &"levy_skim", &"severance", &"penalty", &"event",
 ]
-const INCOME_ORDER: Array[StringName] = [&"trade", &"contract", &"event"]
+const INCOME_ORDER: Array[StringName] = [&"trade", &"contract", &"shops", &"hotels", &"dining", &"event"]
 
 var _content: VBoxContainer
 
@@ -20,6 +20,9 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build_shell()
 	SignalBus.economy_changed.connect(_on_economy_changed)
+	# Visitor count/reputation move independently of the ledger (WI-33), so refresh
+	# the open page on those too.
+	SignalBus.visitors_changed.connect(_on_economy_changed)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and event.is_action_pressed("ui_cancel"):
@@ -86,6 +89,7 @@ func refresh() -> void:
 		return
 	_build_balance(economy)
 	_build_toggles(economy)
+	_build_visitors_section()
 	_build_cycle_section("This cycle", economy.current_record(), economy)
 	_build_cycle_section("Last cycle", economy.last_record(), economy)
 	_build_levy_summary(economy)
@@ -162,6 +166,22 @@ func _build_cycle_section(heading: String, record: Dictionary, economy: EconomyM
 	var net: int = gross_income - total_cost
 	section.add_child(_line("  Net", "%+d" % net, Color(0.6, 1.0, 0.6) if net >= 0 else Color(1.0, 0.6, 0.55)))
 	_content.add_child(section)
+
+## Visitor economy summary (WI-33): live guest count + station reputation. The
+## per-category income (shops/hotels/dining) shows in the cycle ledger above.
+func _build_visitors_section() -> void:
+	var visitors: VisitorManager = Global.visitor_manager
+	if visitors == null:
+		return
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 2)
+	var header := Label.new()
+	header.text = "Visitors"
+	header.add_theme_font_size_override("font_size", 16)
+	box.add_child(header)
+	box.add_child(_line("  On station", str(visitors.visitor_count()), Color(1, 1, 1, 0.8)))
+	box.add_child(_line("  Reputation", "%d%%" % roundi(visitors.reputation * 100.0), Color(1, 1, 1, 0.8)))
+	_content.add_child(box)
 
 func _build_levy_summary(economy: EconomyManager) -> void:
 	var box := VBoxContainer.new()

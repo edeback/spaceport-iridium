@@ -212,6 +212,7 @@ func save_slot(slot: String) -> Error:
 			"events": Global.event_manager.get_save_data(),
 			"contracts": Global.contract_manager.get_save_data(),
 			"raid": Global.raid_manager.get_save_data(),
+			"visitors": Global.visitor_manager.get_save_data(),
 		},
 	}
 	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
@@ -264,11 +265,12 @@ func _get_pawns_save() -> Array:
 	var out: Array = []
 	for node: Node in get_tree().get_nodes_in_group("pawn"):
 		var pawn: PawnBase = node as PawnBase
-		# All pawns must be saved and loaded - except transient visitors (WI-26
-		# inspector): they're driven by a runtime-only InspectionRunner that a load
-		# doesn't restore, so a saved inspector would dangle. The in-progress
-		# inspection cancels cleanly on load and the offer re-rolls.
-		if pawn == null or pawn.is_visitor:
+		# All pawns are saved and loaded - except the ARC inspector (WI-26): it's
+		# driven by a runtime-only InspectionRunner that a load doesn't restore, so a
+		# saved inspector would dangle (the in-progress inspection cancels cleanly on
+		# load and the offer re-rolls). Guest visitors (WI-33) ARE saved: their
+		# behavior is self-contained (need-driven), so they resume fine.
+		if pawn == null or pawn is InspectorPawn:
 			continue
 		var carried: Array = []
 		if pawn.inventory_component != null:
@@ -312,6 +314,9 @@ func _get_pawns_save() -> Array:
 			"tint": [pawn.tint.r, pawn.tint.g, pawn.tint.b, pawn.tint.a],
 			# What the pawn cost to hire (WI-22); WI-25 wages read it.
 			"hire_price": pawn.hire_price,
+			# Personal wallet (WI-33): routed wages / visitor funds. Restored as 0
+			# on pre-WI-33 saves (missing key), same as a pawn that never earned.
+			"personal_credits": pawn.personal_credits,
 			"position": [save_position.x, save_position.y],
 			"module": module_ref(save_module),
 			"needs": needs.get_save_data() if needs != null else {},
@@ -349,6 +354,9 @@ func _get_pawns_save() -> Array:
 		var robot_integrity: RobotIntegrityComponent = pawn.get_component_by_type(RobotIntegrityComponent) as RobotIntegrityComponent
 		if robot_integrity != null:
 			entry["robot_integrity"] = robot_integrity.get_save_data()
+		# Guest visit state (WI-33): stay timer + leaving latch. Only on visitors.
+		if pawn is VisitorPawn:
+			entry["visitor"] = (pawn as VisitorPawn).get_visitor_save_data()
 		# In-flight jobs (WI-21): type + target refs, restarting their current
 		# stage on load. Only saveable jobs serialize (board/idle/store-inventory
 		# jobs return {}); omit the keys entirely when there's nothing to save.
@@ -450,6 +458,10 @@ func _apply_pending_load() -> void:
 	# station geometry. Events don't re-fire effects on load, so there's no risk
 	# of a second raid spawning alongside the restored one (WI-32 edge case).
 	Global.raid_manager.load_save_data(sections.get("raid", {}))
+	# Visitor economy (WI-33): reputation + arrival pacing. The guest pawns
+	# themselves ride in the pawns section (typed like robots); this restores only
+	# the manager's standing/accumulator. Independent of other sections' order.
+	Global.visitor_manager.load_save_data(sections.get("visitors", {}))
 	_loading = false
 	print("Loaded save from %s" % Global.time_manager.format_time())
 	game_loaded.emit(QUICK_SLOT)
@@ -522,6 +534,9 @@ func _load_pawns(data: Array) -> void:
 			var alpha: float = float(tint_arr[3]) if tint_arr.size() >= 4 else 1.0
 			pawn.tint = Color(float(tint_arr[0]), float(tint_arr[1]), float(tint_arr[2]), alpha)
 		pawn.hire_price = int(entry.get("hire_price", 0))
+		# Personal wallet (WI-33). Missing on pre-WI-33 saves -> 0, same as a pawn
+		# that never earned. Set before add_child, like the other scalar identity.
+		pawn.personal_credits = int(entry.get("personal_credits", 0))
 		# Add to tree first: current_module's setter reparents, which needs a
 		# parent to exist (CrewManager.spawn_crew follows the same order).
 		Global.world_manager.pawn_layer.add_child(pawn)
@@ -586,6 +601,10 @@ func _load_pawns(data: Array) -> void:
 		var robot_integrity: RobotIntegrityComponent = pawn.get_component_by_type(RobotIntegrityComponent) as RobotIntegrityComponent
 		if robot_integrity != null:
 			robot_integrity.load_save_data(entry.get("robot_integrity", {}))
+		# Guest visit state (WI-33): stay timer + leaving latch. A guest saved
+		# mid-walk-out resumes leaving; the reported latch prevents a double count.
+		if pawn is VisitorPawn and entry.has("visitor"):
+			(pawn as VisitorPawn).load_visitor_save_data(entry["visitor"])
 		# Jobs last (WI-21): module/needs/inventory are all in place, so the
 		# restored job's claim gauntlet - run on the pawn's first start_job()
 		# tick, not here - sees the true world. Queue in saved order, then push
@@ -614,7 +633,7 @@ func _load_pawn_jobs(pawn: PawnBase, entry: Dictionary, needs: PawnNeedsComponen
 ## needs (WI-28: recharge -> RobotPowerComponent, repair -> RobotIntegrityComponent).
 ## No-op for anything else.
 func _adopt_if_need_job(pawn: PawnBase, needs: PawnNeedsComponent, job: JobBase) -> void:
-	if needs != null and (job is Job_Eat or job is Job_Sleep or job is Job_Recreate):
+	if needs != null and (job is Job_Eat or job is Job_Sleep or job is Job_Recreate or job is Job_Shop):
 		needs.adopt_restored_need_job(job)
 	elif job is Job_Recharge:
 		var power: RobotPowerComponent = pawn.get_component_by_type(RobotPowerComponent) as RobotPowerComponent

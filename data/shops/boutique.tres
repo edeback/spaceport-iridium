@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ShopTypeData" format=3]
+
+[ext_resource type="Script" path="res://data/shops/shop_type_data.gd" id="1_shop"]
+
+[resource]
+script = ExtResource("1_shop")
+id = &"boutique"
+display_name = "Boutique"
+flavor = "Imported fashion at imported prices. The station's status symbol - and its priciest browse."
+price_min = 35
+price_max = 70
+recreation_per_hour = 35.0
+visit_mood_bonus = 0.07
+visit_mood_duration_hours = 8.0
+modulate = Color(0.9, 0.62, 0.72, 1.0)

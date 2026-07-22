@@ -58,6 +58,8 @@
 [ext_resource type="PackedScene" uid="uid://2pp7va28ybgl" path="res://pawns/crew_pawn.tscn" id="33_crewpawn"]
 [ext_resource type="Resource" uid="uid://bj04ftawqiwko" path="res://data/resources/iridium_ore.tres" id="34_6iyjs"]
 [ext_resource type="PackedScene" path="res://objects/arrival_shuttle.tscn" id="34_shuttle"]
+[ext_resource type="Script" path="res://scripts/managers/visitor_manager.gd" id="34_vismgr"]
+[ext_resource type="PackedScene" path="res://pawns/visitor_pawn.tscn" id="34_vispawn"]
 [ext_resource type="Resource" uid="uid://cns3lrfd8jekj" path="res://data/resources/silicon_ore.tres" id="35_4w656"]
 [ext_resource type="Script" uid="uid://d0bklsxrd4qvm" path="res://scripts/managers/trader_manager.gd" id="35_tradermgr"]
 [ext_resource type="Resource" path="res://data/traders/first_caravan.tres" id="36_caravan"]
@@ -7696,6 +7698,11 @@ script = ExtResource("12_contractmgr")
 script = ExtResource("12_raidmgr")
 pirate_ship_scene = ExtResource("12_pirateship")
 salvage_resource = ExtResource("12_salvage")
+
+[node name="VisitorManager" type="Node" parent="Managers" unique_id=1526834904]
+script = ExtResource("34_vismgr")
+visitor_pawn_scene = ExtResource("34_vispawn")
+shuttle_scene = ExtResource("34_shuttle")
 
 [node name="SaveManager" type="Node" parent="Managers" unique_id=118411891]
 script = ExtResource("1_savemgr")

@@ -214,7 +214,13 @@ func _charge_wages() -> void:
 	# include_leaving = false: a fired/resigned pawn walking to the bay stops
 	# costing from the next cycle tick (WI-25 fire flow).
 	for pawn: PawnBase in Global.crew_manager.get_crew(false):
-		total += wage_for(pawn.hire_price, wage_fraction)
+		var wage: int = wage_for(pawn.hire_price, wage_fraction)
+		if wage > 0:
+			# WI-33: the wage no longer vanishes - it lands in the pawn's wallet, to
+			# be spent at shops (returning to income, taxed once at the register).
+			# The station still pays it in full, so wages stay a real sink.
+			pawn.earn_credits(wage)
+			total += wage
 	if total > 0:
 		_charge(&"wages", total)
 
@@ -425,6 +431,10 @@ static func category_label(category: StringName) -> String:
 		&"event": return "Event"
 		&"trade": return "Trade"
 		&"contract": return "Contracts"
+		# Visitor economy (WI-33): shop sales, hotel nights, and paid meals.
+		&"shops": return "Shops"
+		&"hotels": return "Hotels"
+		&"dining": return "Dining"
 		_: return String(category).capitalize()
 
 func _category_label(category: StringName) -> String:

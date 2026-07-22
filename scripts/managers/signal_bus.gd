@@ -121,6 +121,16 @@ signal station_tier_changed(new_tier: int)
 ## the unlock screen refreshes off this without a full tier-up.
 @warning_ignore("unused_signal")
 signal station_tier_progress_changed
+## Visitors (WI-33). arrived fires when a guest disembarks; departed when one
+## walks out, carrying whether it left happy (reputation moved). visitors_changed
+## is the coarse "something about the visitor economy moved" nudge the UI reads
+## (count, reputation, arrival/departure) without caring which.
+@warning_ignore("unused_signal")
+signal visitor_arrived(pawn: PawnBase)
+@warning_ignore("unused_signal")
+signal visitor_departed(pawn: PawnBase, happy: bool)
+@warning_ignore("unused_signal")
+signal visitors_changed
 
 
 

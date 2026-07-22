@@ -276,6 +276,36 @@ func pay_raid() -> String:
 		return _report("paid off the raiders for %d credits" % price)
 	return _report("could not afford the %d-credit payoff" % price)
 
+# --- visitors (WI-33) ---------------------------------------------------------
+
+## Spawns one paying guest at a docking bay now (WI-33), bypassing arrival pacing
+## and the tier/capacity gates. Needs a built docking bay for them to arrive at.
+func spawn_visitor() -> String:
+	if Global.visitor_manager == null:
+		return _report("visitor manager unavailable")
+	var bay: ModuleBase = _find_docking_bay()
+	if bay == null:
+		return _report("spawn_visitor found no built docking bay")
+	var visitor: VisitorPawn = Global.visitor_manager.spawn_visitor_at(bay)
+	if visitor == null:
+		return _report("could not spawn a visitor")
+	return _report("spawned visitor %s with %d cr" % [visitor.pawn_name, visitor.personal_credits])
+
+## Sets station reputation (WI-33), which drives the visitor arrival rate. 0..1.
+func set_reputation(value: float) -> String:
+	if Global.visitor_manager == null:
+		return _report("visitor manager unavailable")
+	Global.visitor_manager.reputation = clampf(value, 0.0, 1.0)
+	SignalBus.visitors_changed.emit()
+	return _report("set visitor reputation to %.2f" % Global.visitor_manager.reputation)
+
+func _find_docking_bay() -> ModuleBase:
+	for node: Node in Global.world_manager.get_tree().get_nodes_in_group("crew_recruitment"):
+		var bay: CrewRecruitmentComponent = node as CrewRecruitmentComponent
+		if bay != null and bay.owner_module != null and bay.owner_module.is_complete():
+			return bay.owner_module
+	return null
+
 # --- events & contracts -------------------------------------------------------
 
 ## Fires the event with the given id now, ignoring pacing/cooldowns/conditions.

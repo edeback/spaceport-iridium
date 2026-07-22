@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://modules/components/shop_component.gd" id="1_shop"]
+[ext_resource type="PackedScene" path="res://ui/windows/shop_component_ui.tscn" id="2_shopui"]
+
+[node name="ShopComponent" type="Node2D"]
+script = ExtResource("1_shop")
+capacity = 4
+ui_info_panel_element = ExtResource("2_shopui")

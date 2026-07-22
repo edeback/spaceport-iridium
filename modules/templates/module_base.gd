@@ -445,6 +445,13 @@ func get_save_data() -> Dictionary:
 	var sustenance: SustenanceComponent = get_component_by_type(SustenanceComponent) as SustenanceComponent
 	if sustenance != null:
 		data["sustenance"] = sustenance.get_save_data()
+	# Storefront type (WI-33): only the selected ShopTypeData id. Absent on
+	# non-shop modules and on pre-WI-33 saves.
+	var shop: ShopComponent = get_component_by_type(ShopComponent) as ShopComponent
+	if shop != null:
+		var shop_save: Dictionary = shop.get_save_data()
+		if not shop_save.is_empty():
+			data["shop"] = shop_save
 	# Conveyor config + buffer (WI-27). Endpoints save as component refs resolved
 	# after every module is placed (world load is two-phase).
 	var conveyor: ConveyorComponent = get_component_by_type(ConveyorComponent) as ConveyorComponent
@@ -501,6 +508,11 @@ func load_save_data(data: Dictionary) -> void:
 	var sustenance: SustenanceComponent = get_component_by_type(SustenanceComponent) as SustenanceComponent
 	if sustenance != null and data.has("sustenance"):
 		sustenance.load_save_data(data["sustenance"])
+	# Storefront type (WI-33): re-select the saved ShopTypeData id. Missing key
+	# (non-shop / pre-WI-33) leaves the scene's default type in place.
+	var shop: ShopComponent = get_component_by_type(ShopComponent) as ShopComponent
+	if shop != null and data.has("shop"):
+		shop.load_save_data(data["shop"])
 	# Conveyor (WI-27): endpoints resolve against modules already placed in the
 	# world load's first phase, so restoring here (second phase) is safe.
 	var conveyor: ConveyorComponent = get_component_by_type(ConveyorComponent) as ConveyorComponent

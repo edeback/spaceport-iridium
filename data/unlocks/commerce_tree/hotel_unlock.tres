@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="UnlockData" format=3]
+
+[ext_resource type="Script" uid="uid://co6152j7b38nw" path="res://data/unlocks/unlock_data.gd" id="1_unlock"]
+[ext_resource type="Script" uid="uid://c6vwp01mtmoyt" path="res://data/unlocks/effects/unlock_effect.gd" id="2_effect"]
+[ext_resource type="Script" uid="uid://byjsbe8qb3i7t" path="res://data/unlocks/effects/grant_module_effect.gd" id="3_grant"]
+[ext_resource type="Resource" path="res://data/modules/commerce/hotel_room_mdata.tres" id="4_module"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="5_res"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="6_credits"]
+[ext_resource type="Texture2D" uid="uid://kk5flkkimb6u" path="res://assets/sprites/sleeping_pod.png" id="7_icon"]
+
+[sub_resource type="Resource" id="Resource_grant_hotel"]
+script = ExtResource("3_grant")
+module = ExtResource("4_module")
+metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
+
+[resource]
+script = ExtResource("1_unlock")
+id = &"hotel_unlock"
+min_tier = 2
+name = "Hotel Rooms"
+description = "Unlocks the Hotel Room: paying visitors sleep here and are billed on waking. Needed before guests will book a stay."
+icon = ExtResource("7_icon")
+tree_id = &"crew"
+cost = Dictionary[ExtResource("5_res"), int]({
+ExtResource("6_credits"): 700
+})
+effects = Array[ExtResource("2_effect")]([SubResource("Resource_grant_hotel")])
+metadata/_custom_type_script = "uid://co6152j7b38nw"
