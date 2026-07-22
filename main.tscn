@@ -28,6 +28,9 @@
 [ext_resource type="Texture2D" uid="uid://byf3wu6nq1gun" path="res://assets/sprites/star_spritesheet.png" id="11_2cqfq"]
 [ext_resource type="PackedScene" uid="uid://cvrcrbshj8cre" path="res://objects/asteroid_base.tscn" id="11_82xsv"]
 [ext_resource type="Script" uid="uid://ba8m624mbacj2" path="res://scripts/managers/contract_manager.gd" id="12_contractmgr"]
+[ext_resource type="Script" path="res://scripts/managers/raid_manager.gd" id="12_raidmgr"]
+[ext_resource type="PackedScene" path="res://objects/pirate_ship.tscn" id="12_pirateship"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="12_salvage"]
 [ext_resource type="Script" uid="uid://6xb1ct163od4" path="res://scripts/managers/market_manager.gd" id="12_d13ii"]
 [ext_resource type="Script" path="res://scripts/managers/economy_manager.gd" id="12_economymgr"]
 [ext_resource type="Script" uid="uid://7aklpgmttgh7" path="res://scripts/managers/event_manager.gd" id="12_eventmgr"]
@@ -7688,6 +7691,11 @@ script = ExtResource("12_eventmgr")
 
 [node name="ContractManager" type="Node" parent="Managers" unique_id=1526834902]
 script = ExtResource("12_contractmgr")
+
+[node name="RaidManager" type="Node" parent="Managers" unique_id=1526834903]
+script = ExtResource("12_raidmgr")
+pirate_ship_scene = ExtResource("12_pirateship")
+salvage_resource = ExtResource("12_salvage")
 
 [node name="SaveManager" type="Node" parent="Managers" unique_id=118411891]
 script = ExtResource("1_savemgr")

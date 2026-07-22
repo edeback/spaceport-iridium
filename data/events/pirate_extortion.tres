@@ -12,12 +12,7 @@
 
 [sub_resource type="Resource" id="Resource_raid"]
 script = ExtResource("7_raid")
-min_targets = 2
-max_targets = 4
-damage_fraction_min = 0.35
-damage_fraction_max = 0.7
-breach_chance = 0.6
-breach_duration_hours = 2.0
+strength_override = -1.0
 
 [sub_resource type="Resource" id="Resource_pay"]
 script = ExtResource("2_choice")

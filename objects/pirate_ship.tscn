@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://objects/pirate_ship.gd" id="1_ship"]
+[ext_resource type="Texture2D" uid="uid://duk5temjwjx44" path="res://assets/sprites/kenny_spaceship_small.png" id="2_tex"]
+
+[node name="PirateShip" type="Sprite2D"]
+scale = Vector2(0.6, 0.6)
+texture = ExtResource("2_tex")
+script = ExtResource("1_ship")

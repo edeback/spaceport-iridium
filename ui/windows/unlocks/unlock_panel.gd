@@ -8,7 +8,7 @@ extends Control
 ## re-evaluates its dependents.
 
 ## Preferred top-to-bottom ordering of trees; any others follow alphabetically.
-const TREE_ORDER: Array[StringName] = [&"power", &"food", &"industrial"]
+const TREE_ORDER: Array[StringName] = [&"power", &"food", &"industrial", &"defense"]
 
 var _trees_container: VBoxContainer
 var _cards: Array[UnlockNodeCard] = []

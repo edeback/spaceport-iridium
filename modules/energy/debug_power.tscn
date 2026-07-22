@@ -11,8 +11,9 @@ shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/DAMAGE = 0.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_lf8xj"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1bqgj"]
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
@@ -22,7 +23,7 @@ size = Vector2(62, 62)
 material = SubResource("ShaderMaterial_1bqgj")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_lf8xj")
+shape = SubResource("RectangleShape2D_1bqgj")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([])

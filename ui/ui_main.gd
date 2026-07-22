@@ -38,6 +38,7 @@ func _ready() -> void:
 	_setup_unlock_ui()
 	_setup_save_ui()
 	_setup_alerts_strip()
+	_setup_raid_ui()
 	_setup_crew_ui()
 	SignalBus.game_over.connect(_on_game_over)
 	_setup_trader_ui()
@@ -128,6 +129,50 @@ func _spawn_alert(key: String, text: String) -> void:
 		if is_instance_valid(label):
 			label.queue_free()
 	)
+
+# --- raid banner (WI-32) ------------------------------------------------------
+
+## Top-strip banner shown while a pirate raid is on: ship count + a "Hail" button
+## that pays the shrinking ransom to end the raid. Code-built like the rest of
+## the top-bar UI. It refreshes off raid_state_changed (ships lost, price moved).
+var _raid_banner: PanelContainer
+var _raid_label: Label
+var _raid_pay_btn: Button
+
+func _setup_raid_ui() -> void:
+	_raid_banner = PanelContainer.new()
+	_raid_banner.visible = false
+	_raid_banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_raid_banner.offset_top = 40
+	_raid_banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	_raid_banner.add_child(row)
+	_raid_label = Label.new()
+	_raid_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.35))
+	row.add_child(_raid_label)
+	_raid_pay_btn = Button.new()
+	_raid_pay_btn.pressed.connect(_on_raid_hail_pressed)
+	row.add_child(_raid_pay_btn)
+	add_child(_raid_banner)
+	SignalBus.raid_started.connect(func(_strength: float) -> void: _refresh_raid_banner())
+	SignalBus.raid_ended.connect(func(_outcome: StringName) -> void: _refresh_raid_banner())
+	SignalBus.raid_state_changed.connect(_refresh_raid_banner)
+
+func _on_raid_hail_pressed() -> void:
+	if Global.raid_manager != null:
+		Global.raid_manager.pay_off()
+
+func _refresh_raid_banner() -> void:
+	var mgr: RaidManager = Global.raid_manager
+	if mgr == null or not mgr.active:
+		_raid_banner.visible = false
+		return
+	_raid_banner.visible = true
+	_raid_label.text = "⚠ RAID — %d hostile ship(s)" % mgr.ship_count()
+	var price: int = mgr.current_payoff()
+	_raid_pay_btn.text = "Hail: pay off (%d cr)" % price
+	_raid_pay_btn.disabled = not mgr.can_pay_off()
 
 # --- crew count & game over (WI-07) -------------------------------------------
 

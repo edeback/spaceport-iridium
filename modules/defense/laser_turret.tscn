@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_base"]
+[ext_resource type="Texture2D" uid="uid://d03kc4wy6jtd3" path="res://assets/sprites/module_generic_red.png" id="2_tex"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="3_pwr"]
+[ext_resource type="Script" path="res://modules/components/weapon_component.gd" id="4_weapon"]
+
+[node name="Module" instance=ExtResource("1_base")]
+
+[node name="Sprite" parent="Offset" index="0"]
+texture = ExtResource("2_tex")
+
+[node name="PowerConsumptionComponent" parent="." instance=ExtResource("3_pwr")]
+power_consumption = 60.0
+
+[node name="WeaponComponent" type="Node2D" parent="." node_paths=PackedStringArray("power_consumption_component")]
+z_index = 5
+script = ExtResource("4_weapon")
+damage = 34.0
+range_px = 820.0
+fire_interval = 1.6
+arc_half_width_deg = 105.0
+power_consumption_component = NodePath("../PowerConsumptionComponent")

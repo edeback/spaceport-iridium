@@ -30,6 +30,8 @@ var id_to_module: Dictionary[int, ModuleBase] = {}
 			
 var modules_by_type: Dictionary = {}
 
+var debug_build_anything: bool = false
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	Global.world_manager = self
@@ -87,7 +89,7 @@ func get_nearest_module_by_type(position: Vector2, module_data: ModuleData) -> M
 	return closest_module
 	
 func purchase_and_add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = true, flipped: bool = false, allow_cost_overrun: bool = false) -> void:
-	if not allow_cost_overrun and !module_data.can_afford():
+	if not debug_build_anything and not allow_cost_overrun and !module_data.can_afford():
 		return
 	# Place first, pay after: add_module can refuse (blocked cell, overlap
 	# veto), and a failed placement must not cost anything. Can't pre-validate
@@ -138,7 +140,7 @@ func add_module(module_data: ModuleData, cell: Vector2i, is_horizontal: bool = t
 	if not defer_ready:
 		# TODO: Hacky, find better way
 		var construction_component: ConstructionComponent = new_module.get_node_or_null("ConstructionComponent") as ConstructionComponent
-		if construction_component != null and not force_complete and not module_data.instant_build:
+		if construction_component != null and not force_complete and not module_data.instant_build and not debug_build_anything:
 			new_module.call_deferred("ready_blueprint")
 		else:
 			new_module.ready_constructed()

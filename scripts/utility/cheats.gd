@@ -21,6 +21,12 @@ func _report(message: String) -> String:
 
 # --- modules ------------------------------------------------------------------
 
+## Set "build anything" debug setting - true allows skipping placement checks
+## and insta-building the module
+func set_build_anything(value: bool) -> String:
+	Global.world_manager.debug_build_anything = value
+	return _report("Set build_anything: %s" % str(value))
+
 ## Force-build a module 'id' at 'cell' without cost and without needing construction
 ## 'flipped' only matters for modules that can be placed multiple ways (docking bay and airlock)
 func build_module(id: StringName, cell: Vector2i, flipped: bool) -> String:
@@ -249,6 +255,26 @@ func set_time_speed(speed: float) -> String:
 func advance_hours(hours: int) -> String:
 	Global.time_manager.advance_hours(hours)
 	return _report("advanced %d hour(s) -> %s" % [hours, Global.time_manager.format_time()])
+
+# --- combat / raids (WI-32) ---------------------------------------------------
+
+## Starts a pirate raid now (WI-32). Pass a positive `strength` to force a wave
+## size, or -1 to auto-scale from station value. Ships spawn far and fly in.
+func start_raid(strength: float = -1.0) -> String:
+	if Global.raid_manager == null:
+		return _report("raid manager unavailable")
+	if not Global.raid_manager.start_raid(strength):
+		return _report("could not start a raid (one already active, or disabled?)")
+	return _report("raid started with %d ship(s)" % Global.raid_manager.ship_count())
+
+## Pays off the active raid (WI-32) at the current hail price, ending it.
+func pay_raid() -> String:
+	if Global.raid_manager == null or not Global.raid_manager.active:
+		return _report("no active raid to pay off")
+	var price: int = Global.raid_manager.current_payoff()
+	if Global.raid_manager.pay_off():
+		return _report("paid off the raiders for %d credits" % price)
+	return _report("could not afford the %d-credit payoff" % price)
 
 # --- events & contracts -------------------------------------------------------
 

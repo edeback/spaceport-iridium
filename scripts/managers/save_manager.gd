@@ -211,6 +211,7 @@ func save_slot(slot: String) -> Error:
 			"traders": Global.trader_manager.get_save_data(),
 			"events": Global.event_manager.get_save_data(),
 			"contracts": Global.contract_manager.get_save_data(),
+			"raid": Global.raid_manager.get_save_data(),
 		},
 	}
 	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
@@ -445,6 +446,10 @@ func _apply_pending_load() -> void:
 	# After world: contract demand re-registers on the restored bay via the
 	# first slow_tick; staged goods are already back in the bin.
 	Global.contract_manager.load_save_data(sections.get("contracts", {}))
+	# After world: an in-progress raid respawns its ships against the restored
+	# station geometry. Events don't re-fire effects on load, so there's no risk
+	# of a second raid spawning alongside the restored one (WI-32 edge case).
+	Global.raid_manager.load_save_data(sections.get("raid", {}))
 	_loading = false
 	print("Loaded save from %s" % Global.time_manager.format_time())
 	game_loaded.emit(QUICK_SLOT)

@@ -37,6 +37,21 @@ signal module_damaged(module: ModuleBase, amount: float)
 signal module_repaired(module: ModuleBase, amount: float)
 @warning_ignore("unused_signal")
 signal module_destroyed(module: ModuleBase)
+## Pirate raids (WI-32). raid_started fires when a wave spawns (carries its
+## strength); raid_ended when the last ship leaves - by payoff, flight, or
+## destruction - carrying how the raid resolved so the banner/alerts can react.
+## ship_destroyed fires the instant a pirate ship hits 0 HP (before it frees), so
+## salvage drops and kill alerts hang off one place.
+@warning_ignore("unused_signal")
+signal raid_started(strength: float)
+@warning_ignore("unused_signal")
+signal raid_ended(outcome: StringName)
+@warning_ignore("unused_signal")
+signal ship_destroyed(ship: Node2D)
+## Raid banner state changed (WI-32): ship count, payoff price, or warning phase
+## moved. The raid banner refreshes off this without a full start/end cycle.
+@warning_ignore("unused_signal")
+signal raid_state_changed
 @warning_ignore("unused_signal")
 signal pawn_critical_need(pawn: PawnBase, need: StringName)
 @warning_ignore("unused_signal")
