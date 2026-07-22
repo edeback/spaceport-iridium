@@ -249,7 +249,7 @@ func update_priority(new_priority: int) -> void:
 			data.set_job_priority(new_priority)
 		#for job: Job_GetResource in default_import_jobs.values():
 			#job.priority = priority
-		
+	
 	
 func can_store_resource(resource: ResourceData) -> bool:
 	if allow_any_resource:
@@ -484,6 +484,7 @@ func get_save_data() -> Dictionary:
 		out[String(resource.id)] = {
 			"desired": data.desired,
 			"stacks": SaveManager.stacks_to_dicts(data.stacks),
+			"autodump": data.autodump,
 		}
 	return out
 
@@ -509,6 +510,7 @@ func load_save_data(data: Dictionary) -> void:
 			var stack: ResourceStack = SaveManager.stack_from_dict(resource, stack_dict)
 			if stack.amount > 0:
 				slot.add_stack(stack)
+		slot.autodump = entry.get("autodump", false)
 		storage_value_changed = true
 		storage_changed.emit(resource, slot.stored)
 		resource.needs_recalc = true
