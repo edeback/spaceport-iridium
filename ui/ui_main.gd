@@ -45,6 +45,7 @@ func _ready() -> void:
 	_setup_event_ui()
 	_setup_contracts_ui()
 	_setup_economy_ui()
+	_setup_minimap_ui()
 
 ## Minimal save/load controls next to the Research button: slot name field +
 ## Save/Load buttons. F5/F9 quick-slot shortcuts live on SaveManager.
@@ -267,6 +268,14 @@ func _setup_economy_ui() -> void:
 		else:
 			_economy_screen.open()
 	)
+
+## Minimap (WI-34): a self-contained upper-right overview panel. It anchors
+## itself to the top-right and manages its own redraw/collapse, so mounting is
+## just an add_child on this full-rect HUD control.
+const MINIMAP_SCENE: PackedScene = preload("res://ui/minimap.tscn")
+
+func _setup_minimap_ui() -> void:
+	add_child(MINIMAP_SCENE.instantiate())
 
 func _setup_unlock_ui() -> void:
 	unlock_panel = UnlockPanel.new()

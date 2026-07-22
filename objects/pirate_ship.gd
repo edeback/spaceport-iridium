@@ -51,6 +51,9 @@ var _despawn_radius: float = 2600.0
 
 func _ready() -> void:
 	add_to_group("pirate_ship")
+	# minimap_tracked renders it as a triangle; pirate_ship membership colors it
+	# red on the minimap (WI-34).
+	add_to_group("minimap_tracked")
 	self_modulate = hostile_tint
 	if hp < 0.0:
 		hp = max_hp

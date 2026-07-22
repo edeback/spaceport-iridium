@@ -17,6 +17,12 @@ var _exit_point: Vector2
 var _departing: bool = false
 var _docked_fired: bool = false
 
+## Every ship-like node (crew/visitor arrivals, the trader shuttle, and the ARC
+## inspector ship all reuse this script) joins minimap_tracked so the minimap
+## renders it as a triangle without hard-coding any manager (WI-34).
+func _ready() -> void:
+	add_to_group("minimap_tracked")
+
 func setup(dock_position: Vector2, approach_from: Vector2) -> void:
 	global_position = approach_from
 	_target = dock_position

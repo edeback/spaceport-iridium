@@ -1,3 +1,4 @@
+class_name GameCamera
 extends Camera2D
 
 var zoom_speed: float = 0.05
@@ -33,3 +34,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif Input.is_action_pressed("camera_zoom_out"):
 			zoom -= Vector2(zoom_speed, zoom_speed)
 		zoom = clamp(zoom, Vector2(zoom_min, zoom_min), Vector2(zoom_max, zoom_max))
+
+## Recenter the camera on a world point (WI-34 minimap click-to-jump). Clamped to
+## the configured limits, which default to ±10000000 so this is a no-op until
+## limits are actually set.
+func jump_to(world_pos: Vector2) -> void:
+	global_position = Vector2(
+		clampf(world_pos.x, float(limit_left), float(limit_right)),
+		clampf(world_pos.y, float(limit_top), float(limit_bottom)))
