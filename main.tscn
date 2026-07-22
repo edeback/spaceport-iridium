@@ -7671,6 +7671,7 @@ asteroid_layer = NodePath("../../BackgroundLayers/AsteroidLayer")
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="Managers/AudioManager" unique_id=1373621118]
 stream = ExtResource("26_0rl1p")
 volume_db = -10.0
+bus = &"Music"
 autoplay = true
 parameters/looping = true
 

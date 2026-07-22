@@ -25,7 +25,18 @@ func _ready() -> void:
 
 func _on_restart_pressed() -> void:
 	Global.time_manager.paused = false
+	# Clear any staged load first (WI-36): a restart must start fresh, not
+	# silently reapply a save that was queued but never consumed.
+	SaveManager.clear_pending_load()
 	get_tree().reload_current_scene()
+
+## Back to the main menu (WI-36). Same exit the pause menu uses, so the managers
+## are rebuilt from scratch on the next New Game rather than carrying residue
+## from the ended run (the WI-18 bootstrap).
+func _on_quit_to_menu_pressed() -> void:
+	Global.time_manager.paused = false
+	SaveManager.clear_pending_load()
+	get_tree().change_scene_to_file(PauseMenu.MAIN_MENU_SCENE)
 
 func _on_load_pressed() -> void:
 	Global.time_manager.paused = false

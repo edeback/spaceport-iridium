@@ -96,15 +96,12 @@ func _make_shortcut(keycode: Key) -> Shortcut:
 	sc.events = [ev]
 	return sc
 
-## Esc clears an active overlay. Handled in _shortcut_input so a focused text
-## field (the save-slot LineEdit) still eats Esc/keys first, and only consumed
-## when a mode is actually on, so it never steals Esc from anything else.
-func _shortcut_input(event: InputEvent) -> void:
-	if _mode == Mode.NONE:
-		return
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
-		set_mode(Mode.NONE)
-		accept_event()
+## Esc clears an active overlay, but the decision isn't made here: UIMain ranks
+## every Esc claimant in one place (WI-36) and calls set_mode(NONE) when the
+## overlay is the topmost one. Handling it locally would have let an active
+## overlay outrank a held build preview purely by input-propagation order.
+func has_active_mode() -> bool:
+	return _mode != Mode.NONE
 
 func _reconcile_mode() -> void:
 	var pressed: BaseButton = _button_group.get_pressed_button()

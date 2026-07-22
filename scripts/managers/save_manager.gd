@@ -30,14 +30,20 @@ var _module_data_by_id: Dictionary[StringName, ModuleData] = {}
 var _resource_data_by_id: Dictionary[StringName, ResourceData] = {}
 
 ## version -> Callable(data: Dictionary) -> Dictionary, upgrading one version
-## step. Empty until the format actually changes.
-var _migrations: Dictionary[int, Callable] = {}
+## step. Empty until the format actually changes. Static because the menus load
+## saves before any SaveManager node exists (WI-36).
+static var _migrations: Dictionary[int, Callable] = {}
 
 static func has_pending_load() -> bool:
 	return not _pending_load.is_empty()
 
 static func is_loading() -> bool:
 	return _loading
+
+## Drops a staged load. New Game from the pause menu goes straight into
+## main.tscn, and a leftover pending load would silently restore the old run.
+static func clear_pending_load() -> void:
+	_pending_load = {}
 
 func _ready() -> void:
 	Global.save_manager = self
@@ -196,6 +202,9 @@ func save_slot(slot: String) -> Error:
 	var data: Dictionary = {
 		"version": SAVE_VERSION,
 		"timestamp": Time.get_datetime_string_from_system(),
+		# Cheap headline stats for the slot list (WI-36), so the menus never have
+		# to parse the (large) sections just to render a row.
+		"meta": _get_meta(),
 		"sections": {
 			"time": Global.time_manager.get_save_data(),
 			"unlocks": Global.unlock_manager.get_save_data(),
@@ -227,7 +236,22 @@ func save_slot(slot: String) -> Error:
 	return OK
 
 func _slot_path(slot: String) -> String:
+	return slot_path(slot)
+
+static func slot_path(slot: String) -> String:
 	return SAVE_DIR + slot + ".json"
+
+## Headline stats written into the envelope. Kept to values the slot list shows -
+## anything richer belongs in a section, not here.
+func _get_meta() -> Dictionary:
+	var credits: ResourceData = get_resource_by_id(&"credits")
+	return {
+		"cycle": Global.time_manager.cycle,
+		"hour": Global.time_manager.hour,
+		"credits": credits.global_total if credits != null else 0,
+		"crew": Global.crew_manager.crew_count() if Global.crew_manager != null else 0,
+		"tier": Global.unlock_manager.current_tier if Global.unlock_manager != null else 1,
+	}
 
 ## Global (non-storage) resource totals - currently just credits and anything
 ## else with has_global_store. Storage-held amounts live in the world section.
@@ -384,28 +408,121 @@ func _serialize_job_queue(queue: Array[JobBase]) -> Array:
 ## Returns false if the slot is missing or unreadable; the current game keeps
 ## running untouched in that case.
 func load_slot(slot: String) -> bool:
-	if not FileAccess.file_exists(_slot_path(slot)):
-		push_warning("No save file: " + _slot_path(slot))
+	if not stage_load(slot):
 		return false
-	var file := FileAccess.open(_slot_path(slot), FileAccess.READ)
-	if file == null:
-		push_warning("Could not open save file: " + _slot_path(slot))
-		return false
-	var text: String = file.get_as_text()
-	file.close()
-	var parsed: Variant = JSON.parse_string(text)
-	if not parsed is Dictionary or not (parsed as Dictionary).has("sections"):
-		push_warning("Save file is malformed, load aborted: " + _slot_path(slot))
+	get_tree().reload_current_scene()
+	return true
+
+## Reads, migrates and stages a slot WITHOUT touching the scene tree. Loading
+## from the main menu (WI-36) stages here and then enters main.tscn, where the
+## fresh SaveManager applies the pending sections exactly as it does after a
+## reload. Returns false (and stages nothing) on a missing or unreadable slot.
+static func stage_load(slot: String) -> bool:
+	var parsed: Dictionary = read_slot(slot)
+	if parsed.is_empty():
 		return false
 	var data: Dictionary = _migrate(parsed)
 	if int(data.get("version", 0)) != SAVE_VERSION:
 		push_warning("Save version %s can't be migrated to %d, load aborted" % [str(data.get("version")), SAVE_VERSION])
 		return false
 	_pending_load = data
-	get_tree().reload_current_scene()
 	return true
 
-func _migrate(data: Dictionary) -> Dictionary:
+## Parses a slot file into its envelope dictionary. Returns {} for anything
+## missing, unopenable or malformed - callers treat that as "no such save".
+static func read_slot(slot: String) -> Dictionary:
+	var path: String = slot_path(slot)
+	if not FileAccess.file_exists(path):
+		push_warning("No save file: " + path)
+		return {}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		push_warning("Could not open save file: " + path)
+		return {}
+	var text: String = file.get_as_text()
+	file.close()
+	var parsed: Variant = JSON.parse_string(text)
+	if not parsed is Dictionary or not (parsed as Dictionary).has("sections"):
+		push_warning("Save file is malformed: " + path)
+		return {}
+	return parsed as Dictionary
+
+## Every slot in user://saves/, newest first. One row per file, each already
+## summarized for display - see summarize().
+static func list_slots() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var dir := DirAccess.open(SAVE_DIR)
+	if dir == null:
+		return out
+	for file_name: String in dir.get_files():
+		if not file_name.ends_with(".json"):
+			continue
+		var slot: String = file_name.get_basename()
+		var data: Dictionary = read_slot(slot)
+		if data.is_empty():
+			continue
+		out.append(summarize(data, slot))
+	# Newest first. Timestamps are Time.get_datetime_string_from_system(), which
+	# is ISO-8601, so lexical order is chronological order.
+	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return String(a.get("timestamp", "")) > String(b.get("timestamp", "")))
+	return out
+
+## Pure: parsed envelope -> the row the slot list renders. Pre-WI-36 saves have
+## no meta block, so the values are recovered from the sections instead (cheap:
+## time and resources are tiny, and the pawn list only needs its size). The
+## legacy crew figure is approximate - the saved pawn list also holds robots and
+## visitors, which crew_count() excludes - but it's a slot subtitle, not a stat.
+static func summarize(data: Dictionary, slot: String) -> Dictionary:
+	var sections: Dictionary = data.get("sections", {})
+	var meta: Dictionary = data.get("meta", {})
+	var time_section: Dictionary = sections.get("time", {})
+	var resources: Dictionary = sections.get("resources", {})
+	var pawns: Array = sections.get("pawns", [])
+	return {
+		"slot": slot,
+		"timestamp": String(data.get("timestamp", "")),
+		"version": int(data.get("version", 0)),
+		# A version this build can't migrate still lists (so the player can see and
+		# delete it), but the menu greys out its Load button.
+		"loadable": int(data.get("version", 0)) == SAVE_VERSION or _migrations.has(int(data.get("version", 0))),
+		"cycle": int(meta.get("cycle", time_section.get("cycle", 0))),
+		"hour": int(meta.get("hour", time_section.get("hour", 0))),
+		"credits": int(meta.get("credits", resources.get("credits", 0))),
+		"crew": int(meta.get("crew", pawns.size())),
+		"tier": int(meta.get("tier", 1)),
+	}
+
+## "Cycle 4, 14:00 · 12340 cr · 6 crew" - the one-line subtitle for a slot row.
+static func describe_slot(info: Dictionary) -> String:
+	return "Cycle %d, %02d:00 · %d cr · %d crew · Tier %d" % [
+		int(info.get("cycle", 0)), int(info.get("hour", 0)),
+		int(info.get("credits", 0)), int(info.get("crew", 0)), int(info.get("tier", 1))]
+
+## Player-typed slot names become file names, so anything that could walk out of
+## user://saves/ (separators, dots, colons) is folded to underscores. Returns ""
+## for a name with nothing usable left, which callers reject.
+static func sanitize_slot_name(name: String) -> String:
+	const ALLOWED: String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -_"
+	var out: String = ""
+	for character: String in name.strip_edges():
+		out += character if ALLOWED.contains(character) else "_"
+	out = out.strip_edges()
+	# A name made entirely of separators would produce an unreachable file.
+	for character: String in out:
+		if character != "_" and character != "-" and character != " ":
+			return out
+	return ""
+
+static func slot_exists(slot: String) -> bool:
+	return FileAccess.file_exists(slot_path(slot))
+
+static func delete_slot(slot: String) -> bool:
+	if not slot_exists(slot):
+		return false
+	return DirAccess.remove_absolute(slot_path(slot)) == OK
+
+static func _migrate(data: Dictionary) -> Dictionary:
 	var version: int = int(data.get("version", 0))
 	while version < SAVE_VERSION:
 		if not _migrations.has(version):

@@ -66,5 +66,10 @@ text = "Restart"
 layout_mode = 2
 text = "Load quicksave"
 
+[node name="QuitToMenuButton" type="Button" parent="CenterContainer/Panel/MarginContainer/VBoxContainer/Buttons"]
+layout_mode = 2
+text = "Quit to Menu"
+
 [connection signal="pressed" from="CenterContainer/Panel/MarginContainer/VBoxContainer/Buttons/RestartButton" to="." method="_on_restart_pressed"]
 [connection signal="pressed" from="CenterContainer/Panel/MarginContainer/VBoxContainer/Buttons/LoadButton" to="." method="_on_load_pressed"]
+[connection signal="pressed" from="CenterContainer/Panel/MarginContainer/VBoxContainer/Buttons/QuitToMenuButton" to="." method="_on_quit_to_menu_pressed"]
