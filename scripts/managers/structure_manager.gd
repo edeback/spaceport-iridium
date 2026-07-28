@@ -45,15 +45,11 @@ func _on_module_connection_removed(from: ModuleBase, to: ModuleBase) -> void:
 #func get_closest_module_by_position(start_position: Vector2) -> ModuleBase:
 	#return graph.get_closest_module_to_position(start_position)
 
-## Can we remove this module without "breaking" the structure?
+## Can we remove this module without splitting the station into disconnected
+## pieces? Delegates to the graph's cut-vertex test. Because blueprints now form
+## their structural edges the moment they're placed (ModuleBase.ready_blueprint),
+## the graph reflects the real physical structure during construction too, so
+## this answer is honest for in-progress modules - which is what let the delete
+## guard be re-enabled.
 func can_remove_module(module: ModuleBase) -> bool:
-	if graph.is_blocked(module):
-		return true
-	var can_remove: bool = false
-	graph.block_vertex(module)
-	graph._flush_subgraphs()
-	if graph.last_subgraph == 1:
-		can_remove = true
-	graph.unblock_vertex(module)
-	graph._flush_subgraphs()
-	return can_remove
+	return not graph.would_removal_split(module)

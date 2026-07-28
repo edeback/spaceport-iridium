@@ -149,6 +149,14 @@ func ready_blueprint() -> void:
 		return
 	for component: ComponentBase in components:
 		component.ready_blueprint()
+	# Structural attachment is physical - it exists the moment the construction
+	# site is placed, not when the module finishes. Forming the structure edges
+	# here keeps the StructureManager graph honest during construction, which is
+	# what lets the delete guard (WorldManager.remove_module) tell a real bridging
+	# module from a redundant one while a line of blueprints is still going up.
+	# ready_constructed re-calls make_connections(); the StructureComponent guard
+	# makes that a no-op. Path (pawn-traversal) connections still wait for built.
+	make_structure_connections()
 	
 func ready_constructed() -> void:
 	build_state = BuildState.Built
@@ -650,6 +658,13 @@ func get_structure_component() -> StructureComponent:
 func make_connections() -> void:
 	if get_path_component() != null:
 		get_path_component().make_connections()
+	make_structure_connections()
+
+## The structural (physical attachment) half of make_connections, split out so a
+## blueprint can join the structure graph without also becoming pawn-traversable.
+## Idempotent via the StructureComponent's own guard, so calling it at blueprint
+## time and again from ready_constructed is safe.
+func make_structure_connections() -> void:
 	if get_structure_component() != null:
 		get_structure_component().make_connections()
 

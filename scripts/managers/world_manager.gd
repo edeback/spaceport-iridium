@@ -148,10 +148,19 @@ func add_module(module_data: ModuleData, cell: Vector2i, flipped: bool = false, 
 func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 	if module.can_delete == false:
 		return false
-	# TODO Re-enable this sometime. Right now construction means modules are not counted as connected so this fails often
-	#if structure_check and module.structure_check_before_delete:
-		#if not Global.structure_manager.can_remove_module(module):
-			#return false
+	# Don't let a player-initiated delete split the station into disconnected
+	# pieces. Blueprints now form their structural edges when placed (see
+	# ModuleBase.ready_blueprint), so this no longer false-positives on
+	# in-progress modules the way it used to. Gated per-module by
+	# structure_check_before_delete: only modules that leave no truss backfill
+	# behind (corridors, truss, the starting module) need it - a MODULE-layer
+	# delete auto-places truss at the vacated cells and stays connected. Combat
+	# destruction and finished deconstruction pass structure_check = false.
+	if structure_check and module.structure_check_before_delete:
+		if not Global.structure_manager.can_remove_module(module):
+			var module_name: String = module.module_data.name if module.module_data != null else module.name
+			SignalBus.station_alert.emit("Can't remove %s: it would split the station into disconnected pieces." % module_name)
+			return false
 	var replacement_location: Vector2i = module.module_cell
 	var replacement_points: Array[Vector2i] = []
 	if module.get_structure_component() != null:

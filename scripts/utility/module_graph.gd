@@ -272,6 +272,43 @@ func _rebuild_partial_subgraphs(changed_nodes: Array[ModuleGraphVertex]) -> void
 			last_subgraph += 1
 			_assign_subgraph_from(node, last_subgraph)
 
+## True when removing `node` would break the graph into more pieces than it sits
+## in now - i.e. two of its neighbours can only reach each other THROUGH it, so
+## `node` is a cut vertex. This is the test the structure layer uses to stop a
+## deletion from splitting the station in two.
+##
+## It compares only `node`'s own neighbours' subgraphs, never the global
+## component count. That matters: a plain "is the whole graph one component?"
+## test vetoes every deletion the instant a single unrelated island exists
+## anywhere (a not-yet-connected module, an isolated fixture) - which is exactly
+## why the old check had to be disabled. The local comparison is immune to that.
+func would_removal_split(node: Node2D) -> bool:
+	var vertex: ModuleGraphVertex = _vertices.get(node)
+	if vertex == null:
+		return false
+	# A leaf (or fully isolated) vertex can only ever detach itself; every other
+	# vertex's connectivity is untouched, so removal is always safe.
+	if vertex.edges.size() <= 1:
+		return false
+	# Temporarily drop the vertex, re-flood, and see whether its neighbours landed
+	# in the same component. block/unblock both mark dirty, so the two flushes
+	# rebuild honestly and the graph is left exactly as it was found.
+	block_vertex(node)
+	_flush_subgraphs()
+	var reference_subgraph: int = -1
+	var splits: bool = false
+	for neighbor: ModuleGraphVertex in vertex.edges.keys():
+		if neighbor.blocked:
+			continue
+		if reference_subgraph == -1:
+			reference_subgraph = neighbor.subgraph
+		elif neighbor.subgraph != reference_subgraph:
+			splits = true
+			break
+	unblock_vertex(node)
+	_flush_subgraphs()
+	return splits
+
 func get_closest_module_to_position(vector: Vector2, vertices: Array[ModuleGraphVertex]) -> ModuleBase:
 	var dist: float = -1
 	var module: ModuleBase = null

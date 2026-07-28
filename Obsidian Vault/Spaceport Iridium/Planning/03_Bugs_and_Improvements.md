@@ -79,11 +79,11 @@ Godot's resource cache holds `credits.tres` across the scene swap, so the mutate
 
 ## B. Design-Debt / Known-Disabled Code
 
-### B1. `can_remove_module` still disabled
+### B1. `can_remove_module` still disabled - FIXED
 
-`WorldManager.remove_module` still has the structure check commented out with the same TODO (`world_manager.gd:152-155`): under-construction modules aren't structure-connected, so the check fires constantly. Unchanged since the first audit — this has now been off for the project's entire life.
+~~`WorldManager.remove_module` still has the structure check commented out with the same TODO (`world_manager.gd:152-155`): under-construction modules aren't structure-connected, so the check fires constantly. Unchanged since the first audit — this has now been off for the project's entire life.~~
 
-Note the scope has shrunk: WI-32's `ModuleBase._on_hp_zero` calls `remove_module(module, false)`, which bypasses the check anyway. Re-enabling it would only affect player-initiated deletes. Either fix the connectivity accounting for blueprints or delete `can_remove_module` and the `structure_check_before_delete` flag, so the codebase stops implying a feature that doesn't exist.
+~~Note the scope has shrunk: WI-32's `ModuleBase._on_hp_zero` calls `remove_module(module, false)`, which bypasses the check anyway. Re-enabling it would only affect player-initiated deletes. Either fix the connectivity accounting for blueprints or delete `can_remove_module` and the `structure_check_before_delete` flag, so the codebase stops implying a feature that doesn't exist.~~
 
 ### B2. Power scans — *fixed by WI-39*
 
@@ -133,9 +133,10 @@ Worth bumping at the next actually-breaking change and writing the first migrati
 
 **C13. `force_withdraw` and `change_global_total` aren't symmetric.** `change_global_total` recalcs and emits `total_changed`; `force_withdraw` only sets `needs_recalc` (`resource_data.gd:61-64` vs `:88-97`). So hiring a crew member, paying off a raid, buying a module, or purchasing an upgrade doesn't move the credit HUD until `ResourceManager`'s next slow tick fires. Self-healing within 0.25 sim-seconds, so it reads as UI lag rather than a bug — but the two paths should behave the same.
 
-**C14. Severance ignores the difficulty dial.** `EconomyManager.wage_for_pawn` runs through `scaled_cost(..., upkeep_multiplier())` (`economy_manager.gd:245-248`); `severance_for` does not (`:382-385`). Possibly deliberate, but it makes severance the only recurring-crew cost the WI-37 multiplier doesn't touch, and nothing says so.
+~~**C14. Severance ignores the difficulty dial.** `EconomyManager.wage_for_pawn` runs through `scaled_cost(..., upkeep_multiplier())` (`economy_manager.gd:245-248`); `severance_for` does not (`:382-385`). Possibly deliberate, but it makes severance the only recurring-crew cost the WI-37 multiplier doesn't touch, and nothing says so.~~ Note: Severance is not recurring.
 
-**C15. Raid outcome messaging is wrong for mixed outcomes.** `RaidManager._check_end` (`raid_manager.gd:190-203`) only reports `repelled` when `_destroyed_count == 0`. Kill three ships, let two flee, and the player is told "every hostile destroyed." Cheap fix, and it's the last thing the player reads about a fight they just spent five minutes on.
+Fixed:
+~~**C15. Raid outcome messaging is wrong for mixed outcomes.** `RaidManager._check_end` (`raid_manager.gd:190-203`) only reports `repelled` when `_destroyed_count == 0`. Kill three ships, let two flee, and the player is told "every hostile destroyed." Cheap fix, and it's the last thing the player reads about a fight they just spent five minutes on.~~
 
 ---
 
@@ -149,7 +150,7 @@ Worth bumping at the next actually-breaking change and writing the first migrati
 
 **D8. Audit for unsaved stateful systems.** A2 found shields; there are now 17 save sections and the "derived state is re-derived, never saved" rule makes it genuinely hard to eyeball which side of the line a given field is on. A one-time sweep — every component with a mutable non-derived field, check it has a save key or a comment saying why not — would be cheap insurance before the section count grows again.
 
-**D9. Decide on `structure_check_before_delete`.** See B1. Either the connectivity accounting gets fixed for under-construction modules, or the flag, `can_remove_module`, and the commented block all get deleted. Leaving a disabled safety check in place for three phases is worse than either.
+~~**D9. Decide on `structure_check_before_delete`.** See B1. Either the connectivity accounting gets fixed for under-construction modules, or the flag, `can_remove_module`, and the commented block all get deleted. Leaving a disabled safety check in place for three phases is worse than either.~~ Fixed
 
 ---
 

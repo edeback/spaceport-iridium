@@ -164,6 +164,86 @@ func test_set_vertex_exterior_joins_and_leaves_the_clique() -> void:
 	assert_true(graph.set_vertex_exterior(b, false), "flag flips back")
 	assert_false(graph.is_space_reachable(b), "and it leaves the clique again")
 
+# --- cut-vertex / would_removal_split ----------------------------------------
+
+func test_isolated_vertex_removal_never_splits() -> void:
+	var a := _vertex("a")
+	graph.add_vertex(a)
+	assert_false(graph.would_removal_split(a), "a vertex with no edges only detaches itself")
+
+func test_leaf_removal_never_splits() -> void:
+	# a--b--c: removing the leaf c leaves a and b connected.
+	var a := _vertex("a")
+	var b := _vertex("b")
+	var c := _vertex("c")
+	graph.add_vertex(a)
+	graph.add_vertex(b)
+	graph.add_vertex(c)
+	graph.add_edge(a, b, 1.0)
+	graph.add_edge(b, c, 1.0)
+	assert_false(graph.would_removal_split(c), "a leaf's removal can't disconnect anything")
+
+func test_bridge_vertex_removal_splits() -> void:
+	# a--b--c: b is the only link between a and c, so removing it splits them.
+	var a := _vertex("a")
+	var b := _vertex("b")
+	var c := _vertex("c")
+	graph.add_vertex(a)
+	graph.add_vertex(b)
+	graph.add_vertex(c)
+	graph.add_edge(a, b, 1.0)
+	graph.add_edge(b, c, 1.0)
+	assert_true(graph.would_removal_split(b), "removing the middle of a chain splits the ends apart")
+
+func test_redundant_vertex_in_a_cycle_does_not_split() -> void:
+	# Triangle a-b-c: every vertex has a bypass, so none is a cut vertex.
+	var a := _vertex("a")
+	var b := _vertex("b")
+	var c := _vertex("c")
+	graph.add_vertex(a)
+	graph.add_vertex(b)
+	graph.add_vertex(c)
+	graph.add_edge(a, b, 1.0)
+	graph.add_edge(b, c, 1.0)
+	graph.add_edge(c, a, 1.0)
+	assert_false(graph.would_removal_split(b), "b's neighbours stay joined through the a-c edge")
+
+func test_removal_split_ignores_unrelated_islands() -> void:
+	# The robustness guarantee: a separate disconnected island (island2) must not
+	# make every deletion look unsafe. a--b--c is one chain; d--e is another. b is
+	# still correctly a cut vertex; the leaf c is still safe - independent of d/e.
+	var a := _vertex("a")
+	var b := _vertex("b")
+	var c := _vertex("c")
+	var d := _vertex("d")
+	var e := _vertex("e")
+	for v: Node2D in [a, b, c, d, e]:
+		graph.add_vertex(v)
+	graph.add_edge(a, b, 1.0)
+	graph.add_edge(b, c, 1.0)
+	graph.add_edge(d, e, 1.0)
+	assert_true(graph.would_removal_split(b), "a pre-existing separate island doesn't hide a real bridge")
+	assert_false(graph.would_removal_split(c), "nor does it wrongly veto a safe leaf removal")
+
+func test_would_removal_split_leaves_the_graph_intact() -> void:
+	# The check blocks/unblocks internally; afterwards reachability must be
+	# exactly what it was, with nothing left blocked.
+	var a := _vertex("a")
+	var b := _vertex("b")
+	var c := _vertex("c")
+	graph.add_vertex(a)
+	graph.add_vertex(b)
+	graph.add_vertex(c)
+	graph.add_edge(a, b, 1.0)
+	graph.add_edge(b, c, 1.0)
+	graph.would_removal_split(b)
+	assert_true(graph.is_reachable(a, c), "the whole chain is still connected after the probe")
+	assert_false(graph.is_blocked(b), "the probed vertex is unblocked again")
+
+func test_missing_vertex_removal_never_splits() -> void:
+	var ghost := _vertex("ghost")
+	assert_false(graph.would_removal_split(ghost), "an unregistered node can't split anything")
+
 # --- pathfinding smoke -------------------------------------------------------
 
 func test_pathfind_returns_endpoints_in_order() -> void:

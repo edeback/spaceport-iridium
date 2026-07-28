@@ -25,6 +25,14 @@ extends ComponentBase
 ## Module // Is Door
 var module_connections: Dictionary[ModuleBase, bool] = {}
 
+## Guard so the structural attachment pass runs exactly once per placement. A
+## module readies twice on the normal build path - ready_blueprint forms the
+## structure so the connectivity graph is honest while it's a construction site,
+## and ready_constructed re-calls make_connections for the built path. Without
+## this, that second pass would re-emit every edge (harmless but wasteful signal
+## spam through StructureManager + AdjacencyManager). Cleared on teardown.
+var _connections_made: bool = false
+
 @export var size: Vector2i = Vector2i(2, 2)
 
 signal module_connections_changed(new_connections: Dictionary[ModuleBase, bool])
@@ -93,6 +101,9 @@ func try_connect(other_module: ModuleBase) -> bool:
 	return false
 
 func make_connections() -> void:
+	if _connections_made:
+		return
+	_connections_made = true
 	var connected_modules: Dictionary[ModuleBase, bool] = _find_connections()
 	for module in connected_modules:
 		if module.get_structure_component().try_connect(owner_module):
@@ -105,6 +116,7 @@ func manual_connection(other_module: ModuleBase, connection_index: int) -> void:
 	module_connections_changed.emit(module_connections)
 			
 func remove_connections() -> void:
+	_connections_made = false
 	for module in module_connections:
 		module.get_structure_component().disconnect_from(owner_module)
 		SignalBus.module_structure_connection_removed.emit(owner_module, module)
