@@ -188,6 +188,41 @@ class ClaimableObject:
 	func release_claim(_kind: int, _amount: int, _payload: Variant) -> void:
 		pass
 
+# --- consuming ----------------------------------------------------------------
+
+func test_consume_drops_the_record_without_giving_anything_back() -> void:
+	# A spent reservation: the units are physically on the pawn now. Releasing
+	# would credit the same stock back to the bin a second time.
+	var bin := FakeClaimable.new()
+	registry.claim(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW, 8)
+	registry.consume(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW)
+	assert_eq(bin.release_log.size(), 0, "nothing was handed back")
+	assert_eq(bin.held, 8, "the owner still counts it as gone, which is correct - it is")
+	assert_false(registry.holds_claim(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW), "record dropped")
+
+func test_consumed_claims_are_not_released_again_on_job_end() -> void:
+	var bin := FakeClaimable.new()
+	registry.claim(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW, 8)
+	registry.consume(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW)
+	registry.release_all(job_a)
+	assert_eq(bin.release_log.size(), 0, "release_all has nothing left to give back")
+
+func test_consume_leaves_the_jobs_other_claims_alone() -> void:
+	var source := FakeClaimable.new()
+	var sink := FakeClaimable.new()
+	registry.claim(job_a, source, ClaimSpec.Kind.STORAGE_WITHDRAW, 5)
+	registry.claim(job_a, sink, ClaimSpec.Kind.STORAGE_DEPOSIT, 5)
+	registry.consume(job_a, source, ClaimSpec.Kind.STORAGE_WITHDRAW)
+	assert_true(registry.holds_claim(job_a, sink, ClaimSpec.Kind.STORAGE_DEPOSIT),
+		"the deposit reservation is still outstanding - the goods aren't delivered yet")
+	registry.release_all(job_a)
+	assert_eq(sink.held, 0, "and it is given back when the job ends")
+
+func test_consume_of_something_not_held_is_a_no_op() -> void:
+	var bin := FakeClaimable.new()
+	registry.consume(job_a, bin, ClaimSpec.Kind.SLOT)
+	assert_eq(registry.claiming_job_count(), 0, "nothing to do, nothing done")
+
 # --- queries ------------------------------------------------------------------
 
 func test_claims_of_returns_a_copy() -> void:

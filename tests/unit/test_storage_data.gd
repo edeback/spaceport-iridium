@@ -156,3 +156,79 @@ func _make_stack(amount: int) -> ResourceStack:
 	stack.resource_data = resource
 	stack.amount = amount
 	return stack
+
+# --- WI-44 claimable contract -------------------------------------------------
+#
+# StorageData is the claim TARGET (not StorageComponent): reservations are
+# per-resource and the duck-typed contract has no room for a resource argument.
+# Keeping the contract here is also what keeps this class Global-free, which is
+# what lets this whole suite construct it directly.
+#
+# Same headline invariant as above: after any mix of consume/release, both
+# reserved counters must reconcile to zero.
+
+func test_claim_contract_is_implemented() -> void:
+	for method: String in ["can_take_claim", "take_claim", "release_claim"]:
+		assert_true(storage.has_method(method), "StorageData implements " + method)
+
+func test_withdraw_claim_is_refused_beyond_unreserved_stock() -> void:
+	storage.add_amount(10)
+	assert_true(storage.can_take_claim(ClaimSpec.Kind.STORAGE_WITHDRAW, 10), "all of it is claimable")
+	storage.take_claim(ClaimSpec.Kind.STORAGE_WITHDRAW, 7)
+	assert_eq(storage.reserved_withdraw, 7, "the reservation landed")
+	assert_true(storage.can_take_claim(ClaimSpec.Kind.STORAGE_WITHDRAW, 3), "the remainder is still free")
+	assert_false(storage.can_take_claim(ClaimSpec.Kind.STORAGE_WITHDRAW, 4),
+		"but stock another job already spoke for is not")
+
+func test_refused_withdraw_claim_reserves_nothing() -> void:
+	storage.add_amount(2)
+	assert_null(storage.take_claim(ClaimSpec.Kind.STORAGE_WITHDRAW, 5), "over-claim refused")
+	assert_eq(storage.reserved_withdraw, 0, "and left no trace")
+
+func test_deposit_claim_is_bookkeeping_only() -> void:
+	# Space is a component-level question (max_stored spans every resource), so
+	# the per-resource reservation cannot validate it - exactly as the old
+	# add_deposit_job() never did either. Whatever picked the bin checked the room.
+	assert_true(storage.can_take_claim(ClaimSpec.Kind.STORAGE_DEPOSIT, 9999), "always accepted")
+	storage.take_claim(ClaimSpec.Kind.STORAGE_DEPOSIT, 4)
+	assert_eq(storage.reserved_deposit, 4, "recorded")
+
+func test_release_returns_the_reservation() -> void:
+	storage.add_amount(10)
+	storage.take_claim(ClaimSpec.Kind.STORAGE_WITHDRAW, 6)
+	storage.release_claim(ClaimSpec.Kind.STORAGE_WITHDRAW, 6, null)
+	assert_eq(storage.reserved_withdraw, 0, "reconciles to zero")
+
+func test_release_never_drives_a_counter_negative() -> void:
+	storage.release_claim(ClaimSpec.Kind.STORAGE_WITHDRAW, 5, null)
+	storage.release_claim(ClaimSpec.Kind.STORAGE_DEPOSIT, 5, null)
+	assert_eq(storage.reserved_withdraw, 0, "withdraw floors at zero")
+	assert_eq(storage.reserved_deposit, 0, "so does deposit")
+
+func test_withdraw_reserved_spends_the_reservation() -> void:
+	# The action that calls this must CONSUME its claim record afterwards, not
+	# release it - the units are gone from the bin either way.
+	storage.add_amount(10)
+	storage.take_claim(ClaimSpec.Kind.STORAGE_WITHDRAW, 6)
+	var taken: Array[ResourceStack] = storage.withdraw_reserved(6)
+	assert_eq(_stack_total(taken), 6, "got the goods")
+	assert_eq(storage.stored, 4, "stock dropped")
+	assert_eq(storage.reserved_withdraw, 0, "and the reservation went with them")
+
+func test_deposit_reserved_spends_the_reservation() -> void:
+	storage.take_claim(ClaimSpec.Kind.STORAGE_DEPOSIT, 3)
+	var stack := ResourceStack.new()
+	stack.resource_data = resource
+	stack.amount = 3
+	storage.deposit_reserved([stack], 3)
+	assert_eq(storage.stored, 3, "goods landed")
+	assert_eq(storage.reserved_deposit, 0, "and the space reservation was spent")
+
+func test_amount_based_claims_are_not_tied_to_one_job_type() -> void:
+	# The point of the migration: add_withdraw_job(job: Job_GetResource) read the
+	# amount off a hard-typed job, which is why Job_CollectPile could never
+	# reserve deposit space. A claim carries its own amount.
+	storage.add_amount(10)
+	storage.take_claim(ClaimSpec.Kind.STORAGE_WITHDRAW, 3)
+	storage.take_claim(ClaimSpec.Kind.STORAGE_WITHDRAW, 4)
+	assert_eq(storage.reserved_withdraw, 7, "two independent claimants, no job object anywhere")

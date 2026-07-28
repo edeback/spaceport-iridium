@@ -92,13 +92,18 @@ func load_state(_data: Dictionary) -> void:
 
 # --- runner hints -------------------------------------------------------------
 
+## Set on any action that runs while the pawn is carrying goods the job still
+## needs - the take/deposit steps set it themselves, and a driver sets it on the
+## walk BETWEEN them. See expects_cargo().
+@export var carries_cargo: bool = false
+
 ## True when this action needs whatever the pawn is already carrying. A restored
 ## job sitting on such an action suppresses PawnBase's "sweep your inventory into
 ## storage first" preemption, which would otherwise walk the cargo to a random
 ## bin and force the job to redo its trip - the exact reload behaviour WI-44
 ## exists to remove.
 func expects_cargo() -> bool:
-	return false
+	return carries_cargo
 
 ## Debug name for the board inspector and the make_actions() signature check.
 func action_name() -> String:

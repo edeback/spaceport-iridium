@@ -88,6 +88,56 @@ func deposit(quantity: int, use_reserve: bool) -> int:
 		assert(reserved_deposit >= 0)
 	return stored
 
+# --- claimable contract (WI-44) -----------------------------------------------
+#
+# StorageData is the claim target, NOT StorageComponent: reservations are
+# per-resource and the duck-typed contract has no room for a resource argument.
+# It also keeps the claim path free of Global, which is what preserves this
+# class's pure GUT suite.
+#
+# These are the amount-based replacement for add_withdraw_job(job: Job_GetResource),
+# whose hard type is the reason Job_CollectPile could never reserve deposit space.
+# The claim carries its own amount, so any job can now reserve either direction.
+
+func can_take_claim(kind: int, amount: int) -> bool:
+	if kind == ClaimSpec.Kind.STORAGE_WITHDRAW:
+		# use_reserve = false: must be stock nobody else has already spoken for.
+		return can_withdraw(amount, false)
+	# Deposit space is a component-level question (max_stored spans every
+	# resource), so the reservation itself is pure bookkeeping - exactly as
+	# add_deposit_job() has always been. Whatever picked this bin is what checked
+	# there was room.
+	return kind == ClaimSpec.Kind.STORAGE_DEPOSIT
+
+func take_claim(kind: int, amount: int) -> Variant:
+	if not can_take_claim(kind, amount):
+		return null
+	if kind == ClaimSpec.Kind.STORAGE_WITHDRAW:
+		reserved_withdraw += amount
+	else:
+		reserved_deposit += amount
+	return true
+
+func release_claim(kind: int, amount: int, _payload: Variant) -> void:
+	if kind == ClaimSpec.Kind.STORAGE_WITHDRAW:
+		reserved_withdraw = maxi(reserved_withdraw - amount, 0)
+	else:
+		reserved_deposit = maxi(reserved_deposit - amount, 0)
+
+## Takes `amount` out against a reservation this job already holds, as real
+## stacks. The reservation is spent by the withdraw itself, so the caller must
+## CONSUME its claim record rather than releasing it - releasing would credit the
+## same units back a second time. See ClaimRegistry.consume().
+func withdraw_reserved(amount: int) -> Array[ResourceStack]:
+	return _do_withdraw(amount, true)
+
+## Mirror of the above for the deposit side: the stacks are added and the
+## reservation they were holding is spent.
+func deposit_reserved(stacks: Array[ResourceStack], amount: int) -> void:
+	for stack: ResourceStack in stacks:
+		add_stack(stack)
+	reserved_deposit = maxi(reserved_deposit - amount, 0)
+
 func add_withdraw_job(job: Job_GetResource) -> void:
 	withdraw_jobs.append(job)
 	reserved_withdraw += job.amount

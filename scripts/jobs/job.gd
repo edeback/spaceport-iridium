@@ -415,6 +415,14 @@ func release_claim(target_object: Object, kind: ClaimSpec.Kind) -> void:
 	if ledger != null:
 		ledger.release(self, target_object, kind)
 
+## Forgets a claim the job has SPENT (reserved stock now on the pawn, reserved
+## space now filled). Releasing it instead would credit the reservation back a
+## second time - see ClaimRegistry.consume().
+func consume_claim(target_object: Object, kind: ClaimSpec.Kind) -> void:
+	var ledger: ClaimRegistry = _claims()
+	if ledger != null:
+		ledger.consume(self, target_object, kind)
+
 func holds_claim(target_object: Object, kind: ClaimSpec.Kind) -> bool:
 	var ledger: ClaimRegistry = _claims()
 	return ledger != null and ledger.holds_claim(self, target_object, kind)

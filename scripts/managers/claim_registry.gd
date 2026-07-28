@@ -90,6 +90,24 @@ func release(job: Job, target: Object, kind: ClaimSpec.Kind) -> void:
 	if claims.is_empty():
 		_by_job.erase(job)
 
+## Drops a claim record WITHOUT giving anything back, because the job has now
+## SPENT it: the reserved units are physically on the pawn, or the reserved space
+## is physically full.
+##
+## This is the counterpart the pre-WI-44 code expressed by having
+## complete_withdraw_job() erase the job from withdraw_jobs, making the later
+## cancel_withdraw_job() a no-op. Miss it and the reservation is credited back a
+## second time on job end, which quietly inflates available stock.
+func consume(job: Job, target: Object, kind: ClaimSpec.Kind) -> void:
+	if job == null or not _by_job.has(job):
+		return
+	var claims: Array = _by_job[job]
+	for index: int in range(claims.size() - 1, -1, -1):
+		if (claims[index] as ClaimSpec).matches(target, kind):
+			claims.remove_at(index)
+	if claims.is_empty():
+		_by_job.erase(job)
+
 ## Gives back everything `job` holds. Job.end() calls this unconditionally, which
 ## is what makes the "reservations reconcile to zero" invariant structural rather
 ## than a per-job discipline.

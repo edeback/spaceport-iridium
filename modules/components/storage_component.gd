@@ -317,6 +317,39 @@ func withdraw_up_to(resource: ResourceData, quantity: int, use_reserve: bool = f
 		#return withdrawn
 	#return 0
 	
+# --- WI-44 claim plumbing -----------------------------------------------------
+#
+# The claim TARGET is the per-resource StorageData (see its claimable contract),
+# so these are just the lookups and the change notifications the component owns.
+
+## The per-resource bin a claim should be taken against, or null when this
+## storage doesn't handle `resource` at all.
+func claim_target_for(resource: ResourceData) -> StorageData:
+	return storage_data.get(resource)
+
+## Withdraws against a reservation the caller already holds, emitting the same
+## change notifications complete_withdraw_job() does.
+func withdraw_reserved(resource: ResourceData, amount: int) -> Array[ResourceStack]:
+	var data: StorageData = storage_data.get(resource)
+	if data == null:
+		return []
+	var withdrawn: Array[ResourceStack] = data.withdraw_reserved(amount)
+	if not withdrawn.is_empty():
+		storage_value_changed = true
+		storage_changed.emit(resource, data.stored)
+	return withdrawn
+
+## Deposits against a reservation the caller already holds.
+func deposit_reserved(resource: ResourceData, stacks: Array[ResourceStack], amount: int) -> bool:
+	var data: StorageData = storage_data.get(resource)
+	if data == null or stacks.is_empty():
+		return false
+	data.deposit_reserved(stacks, amount)
+	storage_value_changed = true
+	storage_changed.emit(resource, data.stored)
+	resource.needs_recalc = true
+	return true
+
 func add_withdraw_job(job: Job_GetResource) -> bool:
 	if (can_withdraw(job.resource_data, job.amount)):
 		storage_data[job.resource_data].add_withdraw_job(job)
