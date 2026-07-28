@@ -27,10 +27,10 @@ var levy_enabled: bool = false
 # --- wages --------------------------------------------------------------------
 ## Per-cycle wage for a crew pawn = its hire_price * this. Drones/robots (no
 ## needs, excluded by CrewManager.get_crew) never draw a wage.
-@export var wage_fraction: float = 0.1
+@export var wage_fraction: float = 0.05
 ## One-time severance when firing a pawn = its hire_price * this. Only charged
 ## while wages are active (no economy yet = firing is free).
-@export var severance_fraction: float = 0.5
+@export var severance_fraction: float = 0.2
 
 # --- ARC levy -----------------------------------------------------------------
 ## Fraction of every recorded income ARC skims immediately (0.1 = 10% off the
