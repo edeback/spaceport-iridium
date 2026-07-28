@@ -1,8 +1,30 @@
 # WI-44 — Job System Refactor (Actions / Toils)
 
-> **Status: PLANNED (2026-07-27).** Not started. Design doc only.
+> **Status: IN PROGRESS (started 2026-07-28).** Stage 1 of 7 complete.
 >
 > Scope decisions taken up front (see [[#Decisions taken]]): execution layer + a unified claim registry; toil-level save/resume *with* per-action progress; typed `Action_*` classes (no lambdas); `JobData` `.tres` per job type; auto-generated report text + a station-wide board inspector; **big-bang** conversion of all job types in one work item.
+>
+> **Progress** — baseline at start was 400 GUT tests; now **470 green**, plus a **31/31 in-game probe**.
+> - **Stage 1 — runtime + registry + pure test suite: DONE.** `JobData`, `JobTarget`, `ActionBase`, `JobDriver`, `ClaimSpec`, `Job` (the runner), `ClaimRegistry`. +36 `test_job_runner`, +14 `test_claim_registry`.
+> - **Stage 2 — `JobTarget` + persistence round-trip: DONE.** `Job.to_dict()/from_dict()/restore_into()`, the signature guard, per-action state, DURATION elapsed, claim re-acquisition on resume; `JobDataRegistry` scanning `data/jobs/`; `SaveManager.pawn_ref`/`resolve_pawn_ref`. +20 `test_job_persistence`.
+> - **Stage 3 — action library: STARTED.** `Action_GotoTarget`, `Action_Wait`. The remaining ~18 actions are still to write.
+> - **Stage 4 — first drivers in a real station: PARTIAL.** `JobDriver_Move` + `JobDriver_Wait` with `data/jobs/move_to_location.tres` and `wait.tres`. A temporary headless autoload probe ran **31/31** against a live station: the `.tres` loads, the driver instantiates, a real pawn walks a real path, the job ends successfully, claims are released, the movement signal is disconnected, and an encoded job restores to the *same* module. The `haul` driver is not done — it needs the storage-claimable work in stage 5.
+>   - Probe stashed outside the repo (session scratchpad, `wi44_probe.gd`) rather than deleted, since stages 5–7 will want it. It registers as an autoload and calls `get_tree().quit()`, so it must never be left wired into `project.godot`.
+>
+> **Not yet started:** stage 5 (the remaining ~17 drivers + migrating the 5 slot-owning components, `StorageData`, and `PathComponent` to the claimable contract), stage 6 (delete the legacy path; convert `PawnBase`/`JobManager`/`SaveManager`; the `SAVE_VERSION 1→2` migration), stage 7 (UI).
+>
+> **Deviations from the design above, so far**
+> - **`JobDriver` is stateless: every hook takes `job` as its first parameter** (`is_valid(job)`, `can_do(job, pawn)`, `make_actions(job)`, `next_index_after(job, i)`, `required_claims(job, i)`). The doc gave the driver a `var job` field and proposed breaking the resulting `Job → driver → job` cycle in `end()`. That defence doesn't hold: `JobManager` calls `is_valid()` on *unclaimed* board jobs, which builds a driver for jobs that may never run and therefore may never call `end()`. Measured as a real leak (GUT's leaked-instance count rose 121 → 196 with the field, back to 141 without it). The same no-back-reference rule that `ActionBase` already had now covers drivers too, which also makes the two consistent.
+> - **`ClaimSpec.Kind`, not `ClaimRegistry.Kind`.** Keeps the dependency one-way (the registry knows about specs; specs know nothing about the registry) and lets `ClaimSpec` be used in pure tests with no registry present.
+> - **`Job.install_driver()` added** as an explicit seam. The load path needs a driver before the action list exists, and the runner tests inject a stub rather than routing through a `.tres` on disk.
+> - **The runner ticks the action *before* checking completion.** Not specified either way in the design; doing it in this order means progress accumulated on a frame counts toward finishing on that same frame instead of the next one. Pinned by a test.
+> - **`subtask_changed` fires only when the runner settles on a non-instant action.** Chained `INSTANT` steps complete within one frame, and emitting per step would strobe the UI through text nobody can read. Pinned by a test.
+> - **DURATION progress needed its own save key (`elapsed`).** The design says per-action progress goes in `ActionBase.save_state()`, but a `DURATION` action's remaining time lives on the *runner*, not the action — so without an explicit carry, a job saved four seconds into a six-second wait silently restarted the wait. `Job._resume_elapsed` applies it on the first `_enter()` of a resume. Pinned by a test.
+> - **`Job.restore_into(job, encoded)` split out of `restore()`.** A driver can legitimately be installed before the decode, and `restore()` must not clobber it.
+> - **`JobTarget.Slot` (A/B/C) is a separate enum from `JobTarget.Kind`.** Actions take a *slot*, not a target, so an action can be constructed before the thing it will operate on is known — which is what lets `Action_FindBestTarget` write into a slot that a later action then reads.
+> - **`Action_Wait` replaces `Job_Wait`'s `await`.** The old job did `await Global.time_manager.sim_seconds(duration)`, which could outlive an early cancel and leaned on the `_ended` latch to make the resulting second cancel harmless. A `DURATION` action can't outlive its job, and it gains resumable elapsed time for free.
+> - **`ClaimRegistry` is a `Managers/` node in `main.tscn`, placed immediately after `JobManager`.** Nothing in its `_ready()` depends on another manager; it only has to exist before any job claims.
+> - **Two probe findings worth keeping:** `PawnMovementComponent` does not begin moving on the frame `move_to()` is called (it stages a pending target and starts it in its own `_process`), so anything asserting "is travelling" must poll. And `Action_GotoTarget`'s "already there, skip the walk" early-out needs an explicit null-module guard — an exterior target has no module and a pawn outside has a null `current_module`, so the two nulls compare equal and every EVA trip would be skipped.
 
 ## Goal
 

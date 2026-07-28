@@ -10,6 +10,7 @@ var structure_manager: StructureManager
 var adjacency_manager: AdjacencyManager
 var power_manager: PowerManager
 var job_manager: JobManager
+var claim_registry: ClaimRegistry
 var turbolift_manager: TurboliftManager
 var resource_manager: ResourceManager
 var market_manager: MarketManager

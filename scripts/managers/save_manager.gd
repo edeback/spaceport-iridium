@@ -206,6 +206,26 @@ static func resolve_asteroid_ref(ref: Dictionary) -> AsteroidBase:
 		return null
 	return Global.asteroid_manager.get_asteroid_by_id(int(ref.get("id", -1)))
 
+## Reference to a pawn by its stable pawn_id (WI-23 ids, WI-44 job targets).
+## Pawns are restored before their jobs are rebuilt (_load_pawn_jobs runs at the
+## end of the pawn section), so a resolve during job restore always sees them.
+static func pawn_ref(pawn: PawnBase) -> Dictionary:
+	if pawn == null or not is_instance_valid(pawn) or pawn.pawn_id == 0:
+		return {}
+	return {"pawn": pawn.pawn_id}
+
+static func resolve_pawn_ref(ref: Dictionary) -> PawnBase:
+	if ref.is_empty() or Global.world_manager == null:
+		return null
+	var target_id: int = int(ref.get("pawn", 0))
+	if target_id == 0:
+		return null
+	for node: Node in Global.world_manager.get_tree().get_nodes_in_group(Groups.PAWN):
+		var pawn: PawnBase = node as PawnBase
+		if pawn != null and pawn.pawn_id == target_id:
+			return pawn
+	return null
+
 ## Reference to a resource pile by its stable id (WI-21). Piles are saved in the
 ## piles section with their ids, so resolve scans the live resource_debris group.
 static func pile_ref(pile: ResourcePile) -> Dictionary:
