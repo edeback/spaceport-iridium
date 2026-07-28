@@ -18,5 +18,6 @@ resource_costs = Dictionary[ExtResource("2_kc8va"), int]({
 ExtResource("3_whr4g"): 6
 })
 tags = Array[String](["Crew"])
+ui_category = 7
 upkeep_per_cycle = 5
 metadata/_custom_type_script = "uid://vwmofdckg7hu"

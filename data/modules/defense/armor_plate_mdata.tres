@@ -20,6 +20,7 @@ ExtResource("5_steel"): 18,
 ExtResource("6_credits"): 120
 })
 tags = Array[String](["Defense"])
+ui_category = 9
 unlocked_by_default = false
 max_hp = 900.0
 min_damaged_efficiency = 1.0

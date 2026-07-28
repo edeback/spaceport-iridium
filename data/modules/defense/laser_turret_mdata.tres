@@ -22,6 +22,7 @@ ExtResource("6_silicon"): 8,
 ExtResource("7_credits"): 450
 })
 tags = Array[String](["Defense"])
+ui_category = 9
 upkeep_per_cycle = 4
 unlocked_by_default = false
 max_hp = 130.0

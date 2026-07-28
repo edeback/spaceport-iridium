@@ -21,6 +21,7 @@ resource_costs = Dictionary[ExtResource("2_waae6"), int]({
 ExtResource("3_rns6g"): 50
 })
 tags = Array[String](["Core"])
+ui_category = 0
 multiplacement = 2
 ignore_multiplacement_connection_check = true
 interaction_layer = 2

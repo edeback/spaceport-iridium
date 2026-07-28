@@ -1,9 +1,6 @@
 class_name UIMain
 extends Control
 
-@export var button_group: PackedScene
-@export var button_container: VBoxContainer
-
 @export var resource_display_container: HBoxContainer
 @export var resource_display_ui: PackedScene
 @export var resources_to_display: Array[ResourceData]
@@ -17,21 +14,15 @@ var cur_resource_pile_screen: ResourcePileInventoryTab
 @export var asteroid_info_screen: PackedScene
 var cur_asteroid_info_screen: AsteroidInfoPanel
 
-@export var temp_modules: Array[ModuleData] = []
-
-# Dictionary[String, Array[ModuleData]]
-var module_data_groups: Dictionary = {}
 var preview_model : ModuleBase
 var skip_emit: bool = false
-
-const MODULE_PATH: String = "res://data/modules/"
 
 # Called when the node enters the scene tree for the first time.
 var unlock_panel: UnlockPanel
 
 func _ready() -> void:
-	load_moduledatas()
-	create_module_button_groups()
+	# The build menu (rail + flyout) is a self-contained scene mounted in ui_main.tscn;
+	# it scans and groups modules by ui_category on its own _ready (WI-43).
 	create_resource_display()
 	Global.ui_main = self
 	Global.ui_in_game.input_mode_changed.connect(_on_input_mode_changed)
@@ -86,6 +77,8 @@ func _topmost_esc_claim() -> StringName:
 	# A held preview is the most transient thing on screen: cancel it first.
 	if Global.ui_in_game != null and Global.ui_in_game.cur_input_mode != UIInGame.InputMode.None:
 		return &"preview"
+	if %BuildMenu.flyout_open():
+		return &"flyout"
 	# Modal-ish windows next, then the passive info panels.
 	if _trader_screen != null and _trader_screen.visible:
 		return &"trader"
@@ -115,6 +108,8 @@ func _close_esc_claim(claim: StringName) -> void:
 			pass # nothing to close; the press is simply absorbed
 		&"preview":
 			Global.ui_in_game.change_input_mode(UIInGame.InputMode.None)
+		&"flyout":
+			%BuildMenu.close_flyout()
 		&"trader":
 			_trader_screen.close()
 		&"unlocks":
@@ -378,31 +373,6 @@ func toggle_unlock_panel() -> void:
 	if unlock_panel.visible:
 		unlock_panel.refresh()
 
-func load_moduledatas() -> void:
-	var current_buttons = button_container.get_children()
-	for node in current_buttons:
-		button_container.remove_child(node)
-		node.queue_free()
-	module_data_groups.clear()
-	var file_paths: Array[String] = ResourceScanner.scan_paths(MODULE_PATH)
-	for file_path: String in file_paths:
-		var module_data: ModuleData = ResourceLoader.load(file_path, "ModuleData")
-	#for module_data: ModuleData in temp_modules:
-		if module_data.hidden:
-			continue
-		if module_data.tags.size() == 0:
-			module_data_groups.get_or_add("", [] as Array[ModuleData]).append(module_data)
-		for tag: String in module_data.tags:
-			module_data_groups.get_or_add(tag, [] as Array[ModuleData]).append(module_data)
-			
-			
-
-func create_module_button_groups() -> void:
-	for module_data_group: String in module_data_groups:
-		var new_button_group = button_group.instantiate() as ModuleButtonGroup
-		new_button_group.setup_group(module_data_group, module_data_groups[module_data_group])
-		button_container.add_child(new_button_group)
-		
 func create_resource_display() -> void:
 	for node: Node in resource_display_container.get_children():
 		node.queue_free()

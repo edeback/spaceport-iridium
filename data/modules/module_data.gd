@@ -10,7 +10,31 @@ extends Resource
 @export var icon: Texture2D
 @export var instant_build: bool = true
 @export var resource_costs: Dictionary[ResourceData, int]
+## Gameplay tags (upgrade eligibility, global stat-modifier targeting, inspection
+## checklist, event conditions, minimap color). NOT the build-menu grouping - that is
+## ui_category. A module carries as many tags as those systems need.
 @export var tags: Array[String]
+## Build-menu categories. Declared in rail-display order - BuildMenuModel sorts the
+## rail by these enum values, so OTHER (the catch-all default) always lands last.
+## Adding a category means adding it here and giving BuildMenuModel.category_name a
+## label. Not a gameplay concept - purely how the build menu groups modules.
+enum UICategory {
+	CORE,
+	POWER,
+	LIFE_SUPPORT,
+	INDUSTRY,
+	FOOD,
+	MINING,
+	STORAGE,
+	CREW,
+	COMMERCE,
+	DEFENSE,
+	LOGISTICS,
+	OTHER,
+}
+## Single build-menu bucket this module lives in. One category per module - the rail
+## groups on this, never on tags. Display-only metadata; not saved (saves key on id).
+@export var ui_category: UICategory = UICategory.OTHER
 ## Can you click-drag to place multiples?
 @export var multiplacement := WorldManager.Multiplacement.NONE
 @export var ignore_multiplacement_connection_check: bool = false

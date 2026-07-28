@@ -22,4 +22,5 @@ resource_costs = Dictionary[ExtResource("2_6dlf4"), int]({
 ExtResource("3_gc65i"): 2
 })
 tags = Array[String](["Power"])
+ui_category = 1
 max_hp = 40.0

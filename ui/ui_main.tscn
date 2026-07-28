@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://ce6npnqw8s3mu"]
 
 [ext_resource type="Script" uid="uid://de484prd4xlyv" path="res://ui/ui_main.gd" id="1_2bqpn"]
-[ext_resource type="PackedScene" uid="uid://c7x5q4maw36vx" path="res://ui/buttons/module_button_group.tscn" id="3_ka3re"]
+[ext_resource type="PackedScene" uid="uid://db7eeol2eexb" path="res://ui/buttons/build_menu.tscn" id="3_ka3re"]
 [ext_resource type="Texture2D" uid="uid://lfuwsqm704un" path="res://ui/icons/energy.svg" id="3_wyidc"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="4_pqeum"]
 [ext_resource type="PackedScene" uid="uid://dbm37hjpuku3k" path="res://ui/resource_display_ui.tscn" id="4_wyidc"]
@@ -20,31 +20,13 @@
 [ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicon.tres" id="13_0sakr"]
 [ext_resource type="Resource" uid="uid://cnje5k2redpx0" path="res://data/resources/gold_ore.tres" id="13_s5567"]
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="14_p3y7p"]
-[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="15_47oex"]
 [ext_resource type="Resource" uid="uid://bj04ftawqiwko" path="res://data/resources/iridium_ore.tres" id="15_qnfs5"]
 [ext_resource type="Script" uid="uid://c6excany0u70v" path="res://ui/energy_display_ui.gd" id="15_rtsem"]
 [ext_resource type="PackedScene" uid="uid://dtipd1rwqes7u" path="res://ui/pawns/pawn_info_panel.tscn" id="15_x3wcs"]
-[ext_resource type="Resource" uid="uid://boadffwat0kpp" path="res://data/modules/docking_bays/docking_bay.tres" id="16_x3wcs"]
-[ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/core/hallway_mdata.tres" id="17_848xd"]
 [ext_resource type="PackedScene" uid="uid://1cce1a2cba56" path="res://ui/windows/component_ui_panels/resource_pile_inventory_tab.tscn" id="17_w7nyr"]
 [ext_resource type="PackedScene" uid="uid://wjvf1i75pf0u" path="res://ui/windows/component_ui_panels/asteroid_info_panel.tscn" id="18_astinfo"]
-[ext_resource type="Resource" uid="uid://b0cfkopyrq5xk" path="res://data/modules/industrial_processors/electrolysis_processor_mdata.tres" id="18_w7nyr"]
-[ext_resource type="Resource" uid="uid://0iqtgbc2dqvn" path="res://data/modules/industrial_processors/ice_processor_mdata.tres" id="19_0lj05"]
 [ext_resource type="PackedScene" uid="uid://mroynql4rcbs" path="res://ui/windows/trade/trade_screen.tscn" id="19_xyc40"]
-[ext_resource type="Resource" uid="uid://c7ecu8kiaopc7" path="res://data/modules/industrial_processors/ore_processor_mdata.tres" id="20_qj0xk"]
 [ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="21_bgs1r"]
-[ext_resource type="Resource" uid="uid://crhsnxhuro0k" path="res://data/modules/crew/sleeping_pod_mdata.tres" id="21_qj7ft"]
-[ext_resource type="Resource" uid="uid://753weg0dtsl7" path="res://data/modules/power/battery.tres" id="22_vt8g8"]
-[ext_resource type="Resource" uid="uid://bcv5sug5sammf" path="res://data/modules/power/debug_power.tres" id="23_tmpp0"]
-[ext_resource type="Resource" uid="uid://ddwo8htifu16c" path="res://data/modules/power/fusion_reactor.tres" id="24_wt573"]
-[ext_resource type="Resource" uid="uid://b8vvj4s2ms0s8" path="res://data/modules/power/solar_panel_mdata.tres" id="25_u34n7"]
-[ext_resource type="Resource" uid="uid://c1126wf8hgb4f" path="res://data/modules/resource_gathering/mining_bay_mdata.tres" id="26_bgs1r"]
-[ext_resource type="Resource" uid="uid://cu4vq33kxfwb8" path="res://data/modules/storage/large_storage.tres" id="27_6porg"]
-[ext_resource type="Resource" uid="uid://c0o6agquw83kw" path="res://data/modules/storage/medium_storage.tres" id="28_s5567"]
-[ext_resource type="Resource" uid="uid://ibkvk5lxr6ut" path="res://data/modules/storage/small_storage.tres" id="29_qnfs5"]
-[ext_resource type="Resource" uid="uid://detljhx2721g" path="res://data/modules/teleporter_mdata.tres" id="30_4mt1o"]
-[ext_resource type="Resource" uid="uid://p3ja7r43eh6c" path="res://data/modules/core/truss_mdata.tres" id="31_wy7eg"]
-[ext_resource type="Resource" uid="uid://ch5rdw0jfhvft" path="res://data/modules/module_airlock.tres" id="32_k34tn"]
 [ext_resource type="PackedScene" uid="uid://cmkeqkbs2pdr1" path="res://ui/ui_time_scale_select.tscn" id="37_848xd"]
 [ext_resource type="PackedScene" uid="uid://byip82db78f7" path="res://ui/windows/module_info_ingame_panel.tscn" id="38_x3wcs"]
 [ext_resource type="PackedScene" path="res://ui/windows/turboshaft_panel.tscn" id="39_tshft"]
@@ -77,8 +59,6 @@ corner_radius_bottom_left = 16
 shadow_size = 6
 shadow_offset = Vector2(-3, -3)
 
-[sub_resource type="FoldableGroup" id="FoldableGroup_bgs1r"]
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1h8lm"]
 content_margin_left = 4.0
 content_margin_top = 4.0
@@ -103,7 +83,7 @@ keycode = 4194305
 [sub_resource type="Shortcut" id="Shortcut_xyc40"]
 events = [SubResource("InputEventKey_1h8lm")]
 
-[node name="UiMain" type="Control" unique_id=2019768832 node_paths=PackedStringArray("button_container", "resource_display_container")]
+[node name="UiMain" type="Control" unique_id=2019768832 node_paths=PackedStringArray("resource_display_container")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -112,15 +92,12 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_2bqpn")
-button_group = ExtResource("3_ka3re")
-button_container = NodePath("VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer")
 resource_display_container = NodePath("ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer")
 resource_display_ui = ExtResource("4_wyidc")
 resources_to_display = Array[ExtResource("4_pqeum")]([ExtResource("5_47oex"), ExtResource("9_pset1"), ExtResource("6_b5r2u"), ExtResource("8_u34n7"), ExtResource("9_bgs1r"), ExtResource("5_rtsem"), ExtResource("11_6porg"), ExtResource("13_0sakr"), ExtResource("13_s5567"), ExtResource("12_6re3r"), ExtResource("15_qnfs5"), ExtResource("10_j1br4"), ExtResource("8_xyc40"), ExtResource("14_p3y7p"), ExtResource("7_1h8lm"), ExtResource("11_lnfpq"), ExtResource("21_bgs1r")])
 pawn_info_screen = ExtResource("15_x3wcs")
 resource_pile_screen = ExtResource("17_w7nyr")
 asteroid_info_screen = ExtResource("18_astinfo")
-temp_modules = Array[ExtResource("15_47oex")]([ExtResource("16_x3wcs"), ExtResource("17_848xd"), ExtResource("18_w7nyr"), ExtResource("19_0lj05"), ExtResource("20_qj0xk"), ExtResource("21_qj7ft"), ExtResource("22_vt8g8"), ExtResource("23_tmpp0"), ExtResource("24_wt573"), ExtResource("25_u34n7"), ExtResource("26_bgs1r"), ExtResource("27_6porg"), ExtResource("28_s5567"), ExtResource("29_qnfs5"), ExtResource("30_4mt1o"), ExtResource("31_wy7eg"), ExtResource("32_k34tn")])
 
 [node name="ResourceDisplayPanel" type="PanelContainer" parent="." unique_id=1186352041]
 layout_mode = 1
@@ -209,7 +186,7 @@ layout_mode = 2
 layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
-offset_right = 176.0
+offset_right = 190.0
 grow_vertical = 2
 
 [node name="PanelContainer" type="PanelContainer" parent="VBoxContainer" unique_id=828912190]
@@ -243,12 +220,9 @@ theme_override_constants/margin_bottom = 8
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/Modules/MarginContainer" unique_id=792435669]
 layout_mode = 2
 
-[node name="ButtonContainer" type="VBoxContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer" unique_id=2038703158]
+[node name="BuildMenu" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer" unique_id=2038703158 instance=ExtResource("3_ka3re")]
+unique_name_in_owner = true
 layout_mode = 2
-
-[node name="FoldableContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer/ButtonContainer" unique_id=1698963565 instance=ExtResource("3_ka3re")]
-layout_mode = 2
-foldable_group = SubResource("FoldableGroup_bgs1r")
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer" unique_id=39982694]
 layout_mode = 2
@@ -266,8 +240,14 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_1h8lm")
 shortcut = SubResource("Shortcut_xyc40")
 text = "Module Info"
 
-[node name="UiTimeScaleSelect" parent="VBoxContainer" unique_id=1319912742 instance=ExtResource("37_848xd")]
-layout_mode = 2
+[node name="UiTimeScaleSelect" parent="." unique_id=1319912742 instance=ExtResource("37_848xd")]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -31.0
+offset_right = 215.0
+grow_vertical = 0
 
 [node name="TradeScreen" parent="." unique_id=1329679237 instance=ExtResource("19_xyc40")]
 visible = false
