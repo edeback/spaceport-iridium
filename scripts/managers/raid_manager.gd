@@ -190,7 +190,7 @@ func _check_end() -> void:
 	var outcome: StringName = &"victory"
 	if _paid:
 		outcome = &"paid"
-	elif _destroyed_count == 0 and _departed_count > 0:
+	elif _departed_count > 0:
 		outcome = &"repelled"
 	active = false
 	_strength = 0.0
