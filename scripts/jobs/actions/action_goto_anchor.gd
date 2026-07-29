@@ -40,7 +40,11 @@ func on_start(job: Job) -> Status:
 	# Already standing in the right module with nothing better to aim at.
 	if anchor == null and job.pawn != null and job.pawn.current_module == module:
 		return Status.DONE
-	if not job.begin_movement(module, speed, false, anchor):
+	# Ask the graph rather than assuming interior: exterior wreckage (truss, an
+	# ex-module cell) is reached by EVA, the same way construction reaches a site.
+	# Interior modules answer false, so ordinary walks are unchanged.
+	var outside: bool = Global.path_manager.is_exterior(module)
+	if not job.begin_movement(module, speed, outside, anchor):
 		return Status.FAILED
 	return Status.ONGOING
 
