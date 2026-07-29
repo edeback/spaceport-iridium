@@ -12,21 +12,14 @@ extends ActionBase
 ## wait interrupted by a save resumes with the remaining seconds rather than
 ## starting over.
 
-## Played on entry. The pose matters for the ARC inspector (WI-26): a dwelling
-## inspector must NOT read as one of the idle job types PawnBreathingComponent
-## treats as fleeable, or it wanders off to breathable air instead of taking the
-## O2 damage that fails the inspection.
-@export var animation: StringName = &"idle"
-
+## The pose matters for the ARC inspector (WI-26): a dwelling inspector must NOT
+## read as one of the idle job types PawnBreathingComponent treats as fleeable, or
+## it wanders off to breathable air instead of taking the O2 damage that fails the
+## inspection. `animation` itself lives on ActionBase - the runner plays it.
 func _init(seconds: float = 10.0, idle_animation: StringName = &"idle") -> void:
 	duration = seconds
 	animation = idle_animation
 	complete_mode = CompleteMode.DURATION
-
-func on_start(job: Job) -> Status:
-	if job.pawn != null and job.pawn.animated_sprite != null and animation != &"":
-		job.pawn.animated_sprite.play(String(animation))
-	return Status.ONGOING
 
 func report(_job: Job) -> String:
 	return "Waiting"

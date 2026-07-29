@@ -91,6 +91,17 @@ func effective_sleep_quality() -> float:
 		return owner_module.get_effective_stat(&"sleep_quality", sleep_quality)
 	return sleep_quality
 
+## WI-44 adapter: the uniform name Action_RestoreNeed calls on every provider.
+## Sleep's own rate function takes the pawn's sleep_max rather than the pawn, so
+## this bridges the two.
+func restore_rate_per_hour(pawn: PawnBase) -> float:
+	if pawn == null:
+		return 0.0
+	var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
+	if needs == null:
+		return 0.0
+	return sleep_restored_per_hour(needs.sleep_max)
+
 func sleep_restored_per_hour(sleep_max: float) -> float:
 	return sleep_max / base_hours_to_full * effective_sleep_quality() * environment_rest_multiplier()
 

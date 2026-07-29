@@ -27,10 +27,13 @@ extends ActionBase
 var _stay_hours: float = 0.0
 
 func _init(need_id: StringName = &"", target_slot: JobTarget.Slot = JobTarget.Slot.A,
-		stay_cap_hours: float = 0.0) -> void:
+		stay_cap_hours: float = 0.0, pose: StringName = &"") -> void:
 	need = need_id
 	slot = target_slot
 	max_stay_hours = stay_cap_hours
+	# Held for the whole session and restored by the runner on any exit - which is
+	# what stands a sleeper back up however the job ended.
+	animation = pose
 	complete_mode = CompleteMode.CONDITION
 
 func tick(job: Job, delta: float) -> Status:

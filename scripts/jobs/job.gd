@@ -251,6 +251,7 @@ func _apply_status(status: ActionBase.Status) -> void:
 		return
 	var action: ActionBase = current_action()
 	if action != null:
+		_restore_action_animation(action)
 		action.on_finish(self, Outcome.SUCCEEDED)
 	if _ended:
 		return
@@ -313,6 +314,7 @@ func _enter(index: int, resuming: bool) -> void:
 			# it is being entered for the first time.
 			resuming = false
 			continue
+		_play_action_animation(action)
 		subtask_changed.emit()
 		return
 
@@ -326,6 +328,7 @@ func end(outcome: Outcome) -> void:
 	_outcome = outcome
 	var action: ActionBase = current_action()
 	if action != null:
+		_restore_action_animation(action)
 		action.on_finish(self, outcome)
 	if _driver != null:
 		_driver.on_job_end(self, outcome)
@@ -383,6 +386,24 @@ func begin_movement(node: Node2D, speed: float = 1.0, in_space: bool = false, an
 	pawn.movement_component.move_to(node, speed, in_space, anchor)
 	return true
 
+## Pose handling for CompleteMode-agnostic "hold this animation while the action
+## runs". Only ever touches the sprite when the action asked for a pose.
+func _play_action_animation(action: ActionBase) -> void:
+	if action.animation == &"" or pawn == null or not is_instance_valid(pawn):
+		return
+	if pawn.animated_sprite != null:
+		pawn.animated_sprite.play(String(action.animation))
+
+func _restore_action_animation(action: ActionBase) -> void:
+	if action.animation == &"" or action.restore_animation == &"":
+		return
+	if pawn == null or not is_instance_valid(pawn) or pawn.animated_sprite == null:
+		return
+	# Only undo OUR pose - if something else has taken the sprite over since,
+	# stomping it would be worse than leaving it be.
+	if pawn.animated_sprite.animation == action.animation:
+		pawn.animated_sprite.play(String(action.restore_animation))
+
 func _on_movement_ended(as_success: bool) -> void:
 	# The latch, once, centrally. Every job used to re-derive this guard, and the
 	# eight-line warning above JobBase._ended existed to explain why.
@@ -422,6 +443,12 @@ func consume_claim(target_object: Object, kind: ClaimSpec.Kind) -> void:
 	var ledger: ClaimRegistry = _claims()
 	if ledger != null:
 		ledger.consume(self, target_object, kind)
+
+## The claim record this job holds against `target_object`, or null. Actions that
+## need the claim's PAYLOAD back (which anchor was handed out) go through here.
+func find_claim(target_object: Object, kind: ClaimSpec.Kind) -> ClaimSpec:
+	var ledger: ClaimRegistry = _claims()
+	return ledger.find_claim(self, target_object, kind) if ledger != null else null
 
 func holds_claim(target_object: Object, kind: ClaimSpec.Kind) -> bool:
 	var ledger: ClaimRegistry = _claims()

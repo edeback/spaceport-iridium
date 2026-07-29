@@ -97,6 +97,18 @@ func load_state(_data: Dictionary) -> void:
 ## walk BETWEEN them. See expects_cargo().
 @export var carries_cargo: bool = false
 
+## Pose held for as long as this action runs (lay_down in a bunk, an authored
+## workstation animation). The RUNNER plays it when it settles on the action and
+## restores `restore_animation` when it leaves, so "the pose while doing this
+## step" is declarative rather than something each action hand-rolls.
+##
+## It has to be the runner's job rather than an on_start/on_finish pair, because
+## for an INSTANT action those two fire in the same frame - which is exactly how
+## the first attempt at this (a standalone Action_PlayAnimation) played lay_down
+## and restored idle without a single frame in between.
+@export var animation: StringName = &""
+@export var restore_animation: StringName = &"idle"
+
 ## True when this action needs whatever the pawn is already carrying. A restored
 ## job sitting on such an action suppresses PawnBase's "sweep your inventory into
 ## storage first" preemption, which would otherwise walk the cargo to a random
