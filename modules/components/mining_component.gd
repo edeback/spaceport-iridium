@@ -76,9 +76,9 @@ func _process(delta: float) -> void:
 func build_drone() -> void:
 	var new_drone: MiningDronePawn = mining_drone_scene.instantiate() as MiningDronePawn
 	new_drone.global_position = Global.cell_to_world(owner_module.module_cell, true)
-	new_drone.current_module = owner_module
 	new_drone.parent_mining_component = self
 	Global.world_manager.pawn_layer.add_child(new_drone)
+	new_drone.current_module = owner_module
 	drones.append(new_drone)
 
 ## Add a drone to tracked drones externally, used for save/load

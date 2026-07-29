@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="JobData" format=3]
+
+[ext_resource type="Script" path="res://scripts/jobs/job_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/jobs/drivers/job_driver_collect_pile.gd" id="2_driver"]
+
+[resource]
+script = ExtResource("1_data")
+id = &"collect_pile"
+display_name = "Collect Resource Pile"
+report_template = "Collecting {resource} from a pile"
+category = 0
+skill = &""
+xp_reward = 0.0
+player_cancelable = true
+saveable = true
+driver = ExtResource("2_driver")

@@ -38,6 +38,10 @@ var reserved: Dictionary[ResourceData, int] = {}
 ## add_stacks() doesn't spam the job board with a fresh job every time more
 ## material lands on an already-being-collected pile.
 var active_jobs: Dictionary[ResourceData, Job_CollectPile] = {}
+## ResourceData -> its claimable face (WI-44). Memoised because the ClaimRegistry
+## matches claims by object identity, so a fresh PileStock per call would make
+## every release miss.
+var _claim_targets: Dictionary[ResourceData, PileStock] = {}
 
 ## Null = free-floating in space. Set = sitting inside this module (e.g. a
 ## corridor overflow pile); collection jobs path to the module itself, not
@@ -103,6 +107,18 @@ func add_amount(resource: ResourceData, amount: int) -> void:
 	stack.resource_data = resource
 	stack.amount = amount
 	add_stacks(resource, [stack])
+
+## The object a WI-44 job claims against for this resource. Both reservation
+## paths land on the same `reserved` counter below, so a legacy Job_CollectPile
+## and a WI-44 collect job cannot double-book the same units.
+func claim_target_for(for_resource: ResourceData) -> PileStock:
+	if for_resource == null:
+		return null
+	var stock: PileStock = _claim_targets.get(for_resource)
+	if stock == null:
+		stock = PileStock.of(self, for_resource)
+		_claim_targets[for_resource] = stock
+	return stock
 
 ## Claims `amount` against a future withdrawal. Returns false (claiming
 ## nothing) if that much isn't actually available right now.

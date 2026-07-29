@@ -29,7 +29,13 @@ func on_start(job: Job) -> Status:
 	var stacks: Array[ResourceStack] = job.pawn.inventory_component.withdraw_stacks(job.resource, amount)
 	if stacks.is_empty():
 		return Status.FAILED
-	if not storage.deposit_reserved(job.resource, stacks, amount):
+	# Spend the WHOLE reservation, not just what actually landed. The trip is over
+	# either way, so any space we booked and did not use has to come back here -
+	# consume_claim below drops the record without giving anything back, so a
+	# short deposit would otherwise strand the difference as reserved forever.
+	var spec: ClaimSpec = job.find_claim(bin, ClaimSpec.Kind.STORAGE_DEPOSIT)
+	var booked: int = spec.amount if spec != null else amount
+	if not storage.deposit_reserved(job.resource, stacks, booked):
 		# Give it back to the pawn rather than losing it; the sweep retries later.
 		job.pawn.inventory_component.add_stacks(job.resource, stacks)
 		return Status.FAILED
