@@ -36,6 +36,10 @@ func claim_pool() -> SlotPool:
 func ready_constructed() -> void:
 	add_to_group(Groups.ROBOT_REPAIR)
 
+## WI-44 adapter: the uniform name Action_RestoreNeed calls on every provider.
+func restore_rate_per_hour(_pawn: PawnBase) -> float:
+	return repair_rate_per_hour if powered() else 0.0
+
 func powered() -> bool:
 	return power_consumption_component == null or power_consumption_component.powered
 

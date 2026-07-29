@@ -59,5 +59,9 @@ func release_slot(job: JobBase) -> void:
 
 ## Energy per game-hour this charger delivers right now; 0 when unpowered so a
 ## robot mid-charge leaves gracefully on a power cut.
+## WI-44 adapter: the uniform name Action_RestoreNeed calls on every provider.
+func restore_rate_per_hour(_pawn: PawnBase) -> float:
+	return charge_per_hour() if powered() else 0.0
+
 func charge_per_hour() -> float:
 	return charge_rate_per_hour if powered() else 0.0

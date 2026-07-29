@@ -15,8 +15,14 @@ extends ActionBase
 ## one small method instead of each job knowing a different signature.
 
 @export var slot: JobTarget.Slot = JobTarget.Slot.A
-## Need channel: reads <need>_value and <need>_max off the needs component.
+## Display/identity name for the channel, e.g. &"sleep" or &"energy".
 @export var need: StringName = &""
+## The properties holding the current and maximum value. Default to the
+## <need>_value / <need>_max convention PawnNeedsComponent follows; the robot
+## components don't (energy / energy_max, integrity / integrity_max), so they set
+## these explicitly.
+@export var value_property: StringName = &""
+@export var max_property: StringName = &""
 ## Leave once this many game-hours have passed even if the need isn't full -
 ## stops pawns parking in the holodeck all cycle when the restore rate barely
 ## beats decay. Zero = stay until full.
@@ -27,17 +33,20 @@ extends ActionBase
 var _stay_hours: float = 0.0
 
 func _init(need_id: StringName = &"", target_slot: JobTarget.Slot = JobTarget.Slot.A,
-		stay_cap_hours: float = 0.0, pose: StringName = &"") -> void:
+		stay_cap_hours: float = 0.0, pose: StringName = &"",
+		value_prop: StringName = &"", max_prop: StringName = &"") -> void:
 	need = need_id
 	slot = target_slot
 	max_stay_hours = stay_cap_hours
+	value_property = value_prop if value_prop != &"" else StringName("%s_value" % need_id)
+	max_property = max_prop if max_prop != &"" else StringName("%s_max" % need_id)
 	# Held for the whole session and restored by the runner on any exit - which is
 	# what stands a sleeper back up however the job ended.
 	animation = pose
 	complete_mode = CompleteMode.CONDITION
 
 func tick(job: Job, delta: float) -> Status:
-	var needs: PawnNeedsComponent = _needs(job)
+	var needs: Object = _needs(job)
 	var provider: ComponentBase = _provider(job)
 	if needs == null or provider == null:
 		return Status.FAILED
@@ -50,14 +59,14 @@ func tick(job: Job, delta: float) -> Status:
 	# delta arrives already sim-scaled from the runner.
 	var sim_hours: float = delta / TimeManager.SECONDS_PER_HOUR
 	_stay_hours += sim_hours
-	needs.set(_value_property(), float(needs.get(_value_property())) + rate * sim_hours)
+	needs.set(value_property, float(needs.get(value_property)) + rate * sim_hours)
 	return Status.ONGOING
 
 func check(job: Job) -> Status:
-	var needs: PawnNeedsComponent = _needs(job)
+	var needs: Object = _needs(job)
 	if needs == null:
 		return Status.FAILED
-	if float(needs.get(_value_property())) >= float(needs.get(_max_property())):
+	if float(needs.get(value_property)) >= float(needs.get(max_property)):
 		return Status.DONE
 	if max_stay_hours > 0.0 and _stay_hours >= max_stay_hours:
 		return Status.DONE
@@ -72,10 +81,17 @@ func load_state(data: Dictionary) -> void:
 func report(_job: Job) -> String:
 	return "Resting" if need == &"sleep" else "Recovering"
 
-func _needs(job: Job) -> PawnNeedsComponent:
+## Whichever of the pawn's components actually owns this need. Organic needs live
+## on PawnNeedsComponent; a drone's energy and integrity live on their own
+## components with their own property names. Found by property presence rather
+## than by type, so a new need channel needs no change here.
+func _needs(job: Job) -> Object:
 	if job.pawn == null:
 		return null
-	return job.pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
+	for component: PawnComponentBase in job.pawn.components:
+		if component.get(value_property) != null:
+			return component
+	return null
 
 func _provider(job: Job) -> ComponentBase:
 	var slot_target: JobTarget = job.target(slot)
@@ -90,8 +106,3 @@ func _rate(provider: ComponentBase, pawn: PawnBase) -> float:
 		return 0.0
 	return float(provider.call(&"restore_rate_per_hour", pawn))
 
-func _value_property() -> StringName:
-	return StringName("%s_value" % need)
-
-func _max_property() -> StringName:
-	return StringName("%s_max" % need)
