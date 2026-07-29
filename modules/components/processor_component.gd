@@ -354,6 +354,17 @@ func _ensure_work_job() -> void:
 ## slot only if this job is still the one we're tracking - a job that chained
 ## into a followup already re-pointed _work_job at that followup, so its own end
 ## must not null it (which would double-post).
+## WI-44 operator slot: exactly one pawn works a machine at a time. A SlotPool of
+## capacity 1 rather than a bespoke flag, so Action_ClaimSlot works unchanged and
+## the claim is released by the runner on every exit path like any other.
+var _operator_slot: SlotPool = null
+
+func claim_pool() -> SlotPool:
+	if _operator_slot == null:
+		_operator_slot = SlotPool.new()
+	_operator_slot.capacity = 1
+	return _operator_slot
+
 func notify_work_job_ended(job: Job_WorkProcessor) -> void:
 	if _work_job == job:
 		_work_job = null

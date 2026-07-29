@@ -72,6 +72,13 @@ func required_claims(_job: Job, _action_index: int) -> Array[ClaimSpec]:
 func next_index_after(_job: Job, finished: int) -> int:
 	return finished + 1
 
+## The skill this job's work is gated by and grants xp to. Defaults to the type's
+## JobData.skill; overridden where the skill is a property of the TARGET rather
+## than the job type - each processor names its own worker_skill, so a bakery and
+## a smelter running the same job type train different things.
+func skill(job: Job) -> StringName:
+	return job.data.skill if job.data != null else &""
+
 ## Last chance to react to the job ending, after the current action's on_finish
 ## but before claims are released. Rarely needed - most teardown belongs to the
 ## action that set the thing up.

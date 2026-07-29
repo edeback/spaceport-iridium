@@ -153,7 +153,12 @@ func index_of_label(action_label: StringName) -> int:
 func get_category() -> JobData.Category:
 	return data.category if data != null else JobData.Category.MISC
 
+## Delegates to the driver, which may resolve the skill from the target rather
+## than the type (see JobDriver.skill). Falls back to the type's own skill for a
+## board job whose driver hasn't been built yet.
 func get_skill() -> StringName:
+	if _driver != null:
+		return _driver.skill(self)
 	return data.skill if data != null else &""
 
 func xp_reward() -> float:
