@@ -8,7 +8,7 @@ extends PawnComponentBase
 ## (current_module null) never ticks.
 ##
 ## Balance guard (mandatory - see WI-05): passive restore stops hard at
-## passive_cap_percent, so active recreation (Job_Recreate) stays the only
+## passive_cap_percent, so active recreation (the recreation job) stays the only
 ## way to fill the bar - and the only lever above half happiness from this
 ## need. The rate must modestly EXCEED the decay rate (~6.7/hr at the
 ## default 15h duration) or socializing would never visibly restore

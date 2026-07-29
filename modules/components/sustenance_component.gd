@@ -18,12 +18,12 @@ extends ComponentBase
 
 ## Food quality (WI-29). Withdrawn food melts into the sustenance pool, so its
 ## quality melts in too: pool_quality is the amount-weighted average of the food
-## currently pooled here. Job_Eat reads it as the quality of the meal it serves.
+## currently pooled here. the eat job reads it as the quality of the meal it serves.
 ## Only meaningful while sustenance_available > 0 (reset to DEFAULT on empty).
 const DEFAULT_QUALITY: float = FoodInstanceData.DEFAULT_QUALITY
 var pool_quality: float = DEFAULT_QUALITY
 
-## Eating balance (WI-29), read by Job_Eat off the component it ate from. Kept
+## Eating balance (WI-29), read by the eat job off the component it ate from. Kept
 ## here (data-tunable) rather than as code constants. Nourishment scales
 ## lerp(min..max) with quality; a meal at/above good_meal_band grants a timed
 ## happiness bonus, at/below bad_meal_band a malus, between = neutral.

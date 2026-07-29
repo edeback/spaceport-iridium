@@ -5,14 +5,14 @@ extends TargetFinder
 ## take this pawn" (WI-44).
 ##
 ## This is the one that earns its keep. Before WI-44, seven job classes each
-## carried their own copy of this walk - Job_Sleep._find_pod,
-## Job_Recharge._find_charger, Job_GetRepaired._find_bay,
-## Job_GetTreatment._find_bay, Job_Eat.find_best_sustenance, and
-## _gather_candidates in both Job_Recreate and Job_Shop - all differing only in
-## which group they scanned and how they broke ties. Subclasses override the two
+## carried their own copy of this walk - the old sleep job's _find_pod,
+## the old recharge job's _find_charger, the old robot-repair job's _find_bay,
+## the old treatment job's _find_bay, the old eat job's find_best_sustenance, and
+## _gather_candidates in both the recreation and shopping jobs - all differing
+## only in which group they scanned and how they broke ties. Subclasses override the two
 ## hooks; everything else is shared.
 ##
-## Only Job_Sleep had the desirability tolerance band (adjacency-driven bunk
+## Only the sleep job had the desirability tolerance band (adjacency-driven bunk
 ## quality, WI-30); putting it here hands it to all seven.
 
 ## Which group to scan. Set by the subclass or at construction.
@@ -22,7 +22,7 @@ extends TargetFinder
 ## Zero = strictly nearest.
 @export var distance_tolerance: float = 0.0
 ## Pick at random among the acceptable candidates instead of scoring them. What
-## Job_Recreate did deliberately, so pawns spread across the available options.
+## the recreation job did deliberately, so pawns spread across the available options.
 @export var pick_randomly: bool = false
 
 func _init(scan_group: StringName = &"", tolerance: float = 0.0, random: bool = false) -> void:

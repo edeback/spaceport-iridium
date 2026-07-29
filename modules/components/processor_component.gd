@@ -12,7 +12,7 @@ extends ComponentBase
 
 ## When true (WI-23), a batch still readies automatically (inputs withdrawn, held
 ## at partial progress) but progress only advances while a pawn is working at the
-## module - a Job_WorkProcessor drives current_process_time via advance_work().
+## module - the work job drives current_process_time via advance_work().
 ## Existing scenes default false = fully-automated, byte-for-byte the pre-WI-23
 ## behavior; refinery/forge opt in, solar/scrubber stay unmanned.
 @export var requires_worker: bool = false
@@ -53,20 +53,20 @@ var _yield_residue: Dictionary[ResourceData, float] = {}
 ## finish at the recipe they were withdrawn for.
 var pending_recipe: RecipeData = null
 
-## Manned processing (WI-23). The outstanding Job_WorkProcessor for this module -
+## Manned processing (WI-23). The outstanding work job for this module -
 ## either sitting on the board unclaimed, being walked to, or actively advancing
 ## a batch. Non-null (and not ended) means "a worker is already accounted for",
 ## so _manned_processing won't post a second. Handed straight to a followup on
 ## batch completion so the operating pawn stays at the machine across batches
 ## with no board round-trip and no window for another pawn to be double-posted.
-var _work_job: Job_WorkProcessor = null
+var _work_job: Job = null
 ## Set by advance_work() each time a worker drives a batch; read and cleared by
 ## _manned_processing() once per frame to tell "actively worked" (progress bar
 ## live) from "waiting for a worker" (stalled, distinct from unpowered).
 var _worked_this_frame: bool = false
 
 ## The pawn currently operating this processor (WI-29 food quality). Set by the
-## driving Job_WorkProcessor each Working tick and read at batch completion to
+## driven by the work job each Working tick and read at batch completion to
 ## shift food output quality by the worker's skill. Null for unmanned producers
 ## and between shifts - then food outputs deposit at the recipe's base quality.
 var current_worker: PawnBase = null
@@ -175,7 +175,7 @@ func _sync_storages() -> void:
 func _clear_input_slot(resource: ResourceData) -> void:
 	var data: StorageData = input_storage.storage_data[resource]
 	# Cancel incoming hauls first: the pawns keep their cargo and
-	# Job_StoreInventory re-homes it, and cancellation reconciles the slot's
+	# the cargo sweep re-homes it, and cancellation reconciles the slot's
 	# reservations to zero so the drain below sees the true stored count.
 	data.end_all_jobs()
 	if data.stored > 0 and input_storage.owner_module != null:
@@ -311,7 +311,7 @@ func _stepwise_processing(delta: float) -> void:
 
 ## Powered per-frame step for requires_worker processors. Readies a batch when
 ## inputs are available (withdrawing them, then holding at partial progress) and
-## keeps a Job_WorkProcessor posted, but never advances progress itself - that's
+## keeps a work job posted, but never advances progress itself - that's
 ## advance_work(), called by the operating pawn. _worked_this_frame tells a live
 ## worker from a stall so the alert reads "Waiting for worker" (not "No power!").
 func _manned_processing(_delta: float) -> void:
@@ -330,7 +330,7 @@ func _manned_processing(_delta: float) -> void:
 			last_error = "Waiting for worker"
 
 ## True when a fresh batch could be readied right now (inputs present, output
-## room). Used by a finishing Job_WorkProcessor to decide whether to chain.
+## room). Used by the work driver's batch loop to decide whether to keep going.
 func can_ready_batch() -> bool:
 	return not processing and _satisfies_recipe()
 
@@ -338,22 +338,30 @@ func can_ready_batch() -> bool:
 func has_active_batch() -> bool:
 	return processing
 
-## Ensures exactly one Job_WorkProcessor is outstanding for this module. No-op
-## while one is still live (on the board, being walked to, or working, or handed
-## to a followup); posts a fresh board job otherwise.
+## Ensures exactly one work job is outstanding for this module. No-op while one
+## is still live (on the board, being walked to, or working); posts a fresh board
+## job otherwise.
 func _ensure_work_job() -> void:
 	if _work_job != null and not _work_job.is_ended():
 		return
 	if owner_module == null or not owner_module.is_complete():
 		return
-	_work_job = Job_WorkProcessor.new()
-	_work_job.setup(self)
+	_work_job = Job.of(&"work_processor").with_target_a(JobTarget.of_component(self))
+	# The gate itself is re-read off the module by the driver; this copy is what
+	# gives an assignee the priority bonus on the board (WI-23).
+	_work_job.workspace = owner_module.get_component_by_type(WorkspaceComponent) as WorkspaceComponent
+	_work_job.job_end.connect(_on_work_job_end.bind(_work_job), CONNECT_ONE_SHOT)
 	Global.job_manager.add_job(_work_job)
 
-## Called by a Job_WorkProcessor when it terminates. Clears the outstanding-job
-## slot only if this job is still the one we're tracking - a job that chained
-## into a followup already re-pointed _work_job at that followup, so its own end
-## must not null it (which would double-post).
+## Frees the outstanding-job slot when the job ends, whatever ended it. The
+## batch loop lives inside the driver now (next_index_after re-enters the work
+## action while work remains), so there is no followup to hand the slot to and no
+## adopt_* counterpart - the pair this replaced existed only to keep the handoff
+## from double-posting.
+func _on_work_job_end(job: Job) -> void:
+	if _work_job == job:
+		_work_job = null
+
 ## WI-44 operator slot: exactly one pawn works a machine at a time. A SlotPool of
 ## capacity 1 rather than a bespoke flag, so Action_ClaimSlot works unchanged and
 ## the claim is released by the runner on every exit path like any other.
@@ -365,14 +373,6 @@ func claim_pool() -> SlotPool:
 	_operator_slot.capacity = 1
 	return _operator_slot
 
-func notify_work_job_ended(job: Job_WorkProcessor) -> void:
-	if _work_job == job:
-		_work_job = null
-
-## Transfers the outstanding-job slot to a followup so the operating pawn keeps
-## the machine across batches without a board round-trip (no double-post window).
-func adopt_followup_work_job(job: Job_WorkProcessor) -> void:
-	_work_job = job
 
 ## Advances the current batch by `amount` sim-seconds (already folded with the
 ## worker's happiness x skill rate). Returns true when the batch completes this

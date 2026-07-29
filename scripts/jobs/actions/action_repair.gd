@@ -1,7 +1,7 @@
 class_name Action_Repair
 extends Action_Work
 
-## Patching up a damaged module (WI-44) - the work half of Job_Repair.
+## Patching up a damaged module (WI-44) - the work half of the repair job.
 ##
 ## Subclasses Action_Work for the anchor animation and the shift-spot shuffle,
 ## but replaces the tick: repair is the one work loop that genuinely isn't a

@@ -1,7 +1,7 @@
 class_name JobDriver_Sleep
 extends JobDriver
 
-## Get some sleep (WI-44) - the replacement for Job_Sleep.
+## Get some sleep (WI-44) - the replacement for the sleep job.
 ##
 ## Four shared actions. Notably this is the first driver that needs an ANCHOR as
 ## well as a slot: the pawn sleeps on the bunk, not at the module centre.

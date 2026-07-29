@@ -11,7 +11,7 @@ func set_pawn(_pawn: PawnBase) -> void:
 
 func job_changed() -> void:
 	if pawn and pawn.current_job:
-		%CurrentTask.text = "%s  [%s]" % [pawn.current_job.get_job_description(), pawn.current_job.get_category_name()]
+		%CurrentTask.text = "%s  [%s]" % [pawn.current_job.report(), pawn.current_job.get_category_name()]
 		pawn.current_job.subtask_changed.connect(subtask_changed)
 		subtask_changed()
 		cancel_button.visible = pawn.current_job.player_cancelable()
@@ -21,7 +21,7 @@ func job_changed() -> void:
 
 func subtask_changed() -> void:
 	if pawn and pawn.current_job:
-		%CurrentSubTask.text = pawn.current_job.get_subtask_description()
+		%CurrentSubTask.text = pawn.current_job.subtask_report()
 	else:
 		%CurrentSubTask.text = ""
 	%SubTaskContainer.visible = not %CurrentSubTask.text.is_empty()

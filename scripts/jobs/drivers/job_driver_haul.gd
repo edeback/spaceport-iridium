@@ -2,7 +2,7 @@ class_name JobDriver_Haul
 extends JobDriver
 
 ## Move a resource from one storage to another (WI-44) - the replacement for
-## Job_GetResource, which was 207 lines of which roughly 150 were movement
+## the haul job, which was 207 lines of which roughly 150 were movement
 ## plumbing, reservation bookkeeping, a five-state enum, and a hand-written
 ## save/restore pair. All of that is shared now.
 ##
@@ -24,6 +24,7 @@ const GOTO_SOURCE: int = 4
 const TAKE: int = 5
 const GOTO_SINK: int = 6
 const DEPOSIT: int = 7
+const FOLLOWUP: int = 8
 
 func make_actions(_job: Job) -> Array[ActionBase]:
 	var to_sink := Action_GotoTarget.new(JobTarget.Slot.B)
@@ -40,6 +41,10 @@ func make_actions(_job: Job) -> Array[ActionBase]:
 		Action_TakeFromStorage.new(JobTarget.Slot.A),
 		to_sink,
 		Action_DepositToStorage.new(JobTarget.Slot.B),
+		# Delivering the last material a construction site needed hands the pawn
+		# straight into building it, rather than posting to the board and letting
+		# whoever is nearest next frame take it.
+		Action_QueueFollowup.new(JobTarget.Slot.B),
 	] as Array[ActionBase]
 
 ## A haul is alive while it has a resource and at least ONE end - the other side

@@ -12,7 +12,6 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="9_vk0fi"]
 [ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="10_vp40g"]
 [ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="11_du6w5"]
-[ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="12_t5iom"]
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="13_u5ltp"]
 [ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="14_8n0tu"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="14_oqo1h"]

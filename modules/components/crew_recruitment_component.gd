@@ -3,7 +3,7 @@ extends ComponentBase
 
 ## Marks a constructed docking bay as the station's crew gateway (WI-07):
 ## the recruitment UI lives here, arriving shuttles target the owning
-## module, and resigning crew walk here to leave (Job_LeaveStation finds
+## module, and resigning crew walk here to leave (the departure job finds
 ## bays through the "crew_recruitment" group).
 
 var override_ui: bool = false

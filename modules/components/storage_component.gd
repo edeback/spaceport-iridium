@@ -14,12 +14,6 @@ extends ComponentBase
 @export var allow_any_resource: bool = false
 @export var storage_data: Dictionary[ResourceData, StorageData] = {}
 
-#@export var stored_resources: Array[ResourceData]
-#@export var cur_stored: Dictionary[ResourceData, float] = {}
-#@export var cur_reserved_withdraw: Dictionary[ResourceData, float] = {}
-#@export var cur_reserved_deposit: Dictionary[ResourceData, float] = {}
-#@export var default_import_jobs: Dictionary[ResourceData, Job_GetResource] = {}
-
 @export var display_info_panel_ui: bool = true
 @export var storage_ui: ProgressBar
 @export var display_storage_ui: bool = true:
@@ -30,11 +24,8 @@ extends ComponentBase
 @export var player_configurable: bool = false
 @export var construction_storage: bool = false
 
-#var stock_reserved: Dictionary[ResourceData, float] = {}
-#var space_reserved: Dictionary[ResourceData, float] = {}
-
-var export_jobs: Array[Job_GetResource] = []
-var import_jobs: Array[Job_GetResource] = []
+var export_jobs: Array[Job] = []
+var import_jobs: Array[Job] = []
 
 const SMALL_FLOAT: float = 0.000001
 
@@ -119,32 +110,6 @@ func remove_stored_resource(resource: ResourceData) -> void:
 		storage_data.erase(resource)
 		if include_in_stats:
 			resource.unregister_component(self)
-		
-	#if stored_resources.has(resource):
-		#stored_resources.erase(resource)
-		#cur_stored.erase(resource)
-		#cur_reserved_deposit.erase(resource)
-		#cur_reserved_withdraw.erase(resource)
-		#if include_in_stats:
-			#Global.resource_manager.unregister_component(resource, self)
-		#if default_import_jobs.has(resource):
-			#default_import_jobs[resource].cancel(true)
-			#default_import_jobs.erase(resource)
-		#var jobs_to_keep: Array[Job_GetResource] = []
-		#for job: Job_GetResource in export_jobs:
-			#if job.resource_data == resource:
-				#job.cancel(true)
-			#else:
-				#jobs_to_keep.append(job)
-		#export_jobs = jobs_to_keep
-		#jobs_to_keep = []
-		#for job: Job_GetResource in import_jobs:
-			#if job.resource_data == resource:
-				#job.cancel(true)
-			#else:
-				#jobs_to_keep.append(job)
-		#import_jobs = jobs_to_keep
-			
 
 # UI-only per-frame work; the posting scan lives in _on_slow_tick.
 func _process(_delta: float) -> void:
@@ -185,13 +150,15 @@ func _on_slow_tick(_interval: float) -> void:
 			if deficit <= 0:
 				continue
 			var request_amount: int = mini(deficit, import_budget)
-			var new_job: Job_GetResource = Job_GetResource.new()
-			new_job.requester = self
-			new_job.resource_data = resource
-			new_job.deposit_storage = self
+			# A pull: the destination is known (this bin), the source is hunted for
+			# by the driver's first action.
+			var new_job: Job = Job.of(&"haul_resource")
+			new_job.target_b = JobTarget.of_component(self)
+			new_job.resource = resource
+			new_job.count = request_amount
 			new_job.priority = priority
-			new_job.amount = request_amount
 			data.import_job = new_job
+			new_job.job_end.connect(_on_posted_job_end.bind(data, true), CONNECT_ONE_SHOT)
 			Global.job_manager.add_job(new_job)
 			import_budget -= request_amount
 	if accepts_exports:
@@ -202,14 +169,27 @@ func _on_slow_tick(_interval: float) -> void:
 			var surplus: int = data.stored - data.reserved_withdraw - data.desired
 			if surplus <= 0:
 				continue
-			var new_job: Job_GetResource = Job_GetResource.new()
-			new_job.requester = self
-			new_job.resource_data = resource
-			new_job.export_storage = self
+			# A push: the source is known (this bin), the destination is hunted for.
+			var new_job: Job = Job.of(&"haul_resource")
+			new_job.target_a = JobTarget.of_component(self)
+			new_job.resource = resource
+			new_job.count = surplus
 			new_job.priority = priority
-			new_job.amount = surplus
 			data.export_job = new_job
+			new_job.job_end.connect(_on_posted_job_end.bind(data, false), CONNECT_ONE_SHOT)
 			Global.job_manager.add_job(new_job)
+
+## Clears the posted-job pointer when a board job this bin posted ends, so the
+## next scan can post a replacement. The pointer used to be cleared by the job
+## reaching back into its requester; a WI-44 job does not know who posted it, so
+## the poster listens instead - which also means a job ending for ANY reason
+## (cancelled, failed, pawn deleted) frees the slot, where the old path only
+## cleared it on the routes that remembered to.
+func _on_posted_job_end(data: StorageData, was_import: bool) -> void:
+	if was_import:
+		data.import_job = null
+	else:
+		data.export_job = null
 
 func update_storage_ui() -> void:
 	var filled_space := max_stored - space_available()
@@ -249,7 +229,7 @@ func update_priority(new_priority: int) -> void:
 		priority = new_priority
 		for data: StorageData in storage_data.values():
 			data.set_job_priority(new_priority)
-		#for job: Job_GetResource in default_import_jobs.values():
+		#for job: the haul job in default_import_jobs.values():
 			#job.priority = priority
 	
 	
@@ -350,26 +330,8 @@ func deposit_reserved(resource: ResourceData, stacks: Array[ResourceStack], amou
 	resource.needs_recalc = true
 	return true
 
-func add_withdraw_job(job: Job_GetResource) -> bool:
-	if (can_withdraw(job.resource_data, job.amount)):
-		storage_data[job.resource_data].add_withdraw_job(job)
-		return true
-	return false
 	
-func cancel_withdraw_job(job: Job_GetResource) -> void:
-	var data: StorageData = storage_data.get(job.resource_data)
-	if data:
-		data.cancel_withdraw_job(job)
 	
-func complete_withdraw_job(job: Job_GetResource) -> Array[ResourceStack]:
-	var data: StorageData = storage_data.get(job.resource_data)
-	if data:
-		var withdrawn: Array[ResourceStack] = data.complete_withdraw_job(job)
-		if not withdrawn.is_empty():
-			storage_value_changed = true
-			storage_changed.emit(job.resource_data, data.stored)
-		return withdrawn
-	return []
 	
 func total_stored_by_resource(resource: ResourceData) -> int:
 	var data: StorageData = storage_data.get(resource)
@@ -414,7 +376,7 @@ func deposit(resource: ResourceData, quantity: int, only_if_room: bool = false, 
 
 ## Stack-aware deposit that preserves instance_data (richness/quality/etc),
 ## for callers that are handing over real ResourceStacks rather than a plain
-## count - e.g. Job_StoreInventory returning carried resources to storage.
+## count - e.g. the cargo sweep returning carried resources to storage.
 ## Same only_if_room semantics as deposit(). All-or-nothing: on failure,
 ## nothing in `stacks` is touched, so the caller still owns it.
 func deposit_stacks(resource: ResourceData, stacks: Array[ResourceStack], only_if_room: bool = true) -> bool:
@@ -475,35 +437,8 @@ func withdraw_stacks(resource: ResourceData, quantity: int, use_reserve: bool = 
 		resource.needs_recalc = true
 	return withdrawn
 	
-func add_deposit_job(job: Job_GetResource) -> bool:
-	var data: StorageData = storage_data.get(job.resource_data)
-	if data:
-		data.add_deposit_job(job)
-		return true
-	return false
 	
-func cancel_deposit_job(job: Job_GetResource) -> void:
-	var data: StorageData = storage_data.get(job.resource_data)
-	if data:
-		data.cancel_deposit_job(job)
 	
-func complete_deposit_job(job: Job_GetResource, incoming_stacks: Array[ResourceStack] = []) -> bool:
-	var data: StorageData = storage_data.get(job.resource_data)
-	if data:
-		var did_deposit: bool = data.complete_deposit_job(job, incoming_stacks)
-		if did_deposit:
-			storage_value_changed = true
-			storage_changed.emit(job.resource_data, data.stored)
-		return did_deposit
-	return false
-	#if import_jobs.has(job):
-		#if deposit(job.resource_data, job.amount, false, true):
-			#import_jobs.erase(job)
-			#default_import_jobs.erase(job.resource_data)
-			#if job.resource_data.base_resource != null:
-				#default_import_jobs.erase(job.resource_data.base_resource)
-			#return true
-	#return false
 	
 # --- persistence ------------------------------------------------------------
 # Reservations and import/export jobs are deliberately NOT saved: jobs aren't

@@ -39,16 +39,19 @@ func _draw_haul_arrows() -> void:
 		var pawn: PawnBase = node as PawnBase
 		if pawn == null:
 			continue
-		_try_draw_haul(pawn.current_job as Job_GetResource)
+		_try_draw_haul(pawn.current_job)
 	if Global.job_manager != null:
-		for job: Job_GetResource in Global.job_manager.get_waiting_haul_jobs():
+		for job: Job in Global.job_manager.get_waiting_haul_jobs():
 			_try_draw_haul(job)
 
-func _try_draw_haul(job: Job_GetResource) -> void:
-	if job == null or job.is_ended():
+func _try_draw_haul(job: Job) -> void:
+	if job == null or job.is_ended() or not job.is_type(&"haul_resource"):
 		return
-	var from_module: ModuleBase = _storage_module(job.export_storage)
-	var to_module: ModuleBase = _storage_module(job.deposit_storage)
+	# Slot A is the source, slot B the destination - the driver's convention. A
+	# half-specified job (one end still being hunted for) has a null module on one
+	# side and is skipped below, same as before.
+	var from_module: ModuleBase = job.target_a.module() if job.target_a != null else null
+	var to_module: ModuleBase = job.target_b.module() if job.target_b != null else null
 	if from_module == null or to_module == null or from_module == to_module:
 		return
 	_draw_arrow(_center(from_module), _center(to_module), haul_color)
@@ -110,11 +113,6 @@ func _draw_label(font: Font, world_center: Vector2, text: String) -> void:
 	draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, label_font_size, label_color)
 
 # --- helpers ------------------------------------------------------------------
-
-func _storage_module(storage: StorageComponent) -> ModuleBase:
-	if storage == null or not is_instance_valid(storage) or not is_instance_valid(storage.owner_module):
-		return null
-	return storage.owner_module
 
 func _endpoint_module(endpoint: ComponentBase) -> ModuleBase:
 	if endpoint == null or not is_instance_valid(endpoint) or not is_instance_valid(endpoint.owner_module):

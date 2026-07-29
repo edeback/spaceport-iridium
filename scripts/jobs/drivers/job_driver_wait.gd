@@ -1,7 +1,7 @@
 class_name JobDriver_Wait
 extends JobDriver
 
-## "Stay put and look busy" (WI-44) - the replacement for Job_Wait. Used by the
+## "Stay put and look busy" (WI-44) - the replacement for the wait job. Used by the
 ## ARC inspector while dwelling at a checklist module (WI-26).
 ##
 ## The wait length rides on job.count (whole sim-seconds) rather than a field on

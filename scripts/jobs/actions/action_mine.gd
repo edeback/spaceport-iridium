@@ -3,7 +3,7 @@ extends ActionBase
 
 ## Chip ore off the asteroid in a slot until the hold is full (WI-44).
 ##
-## The per-unit timing is unchanged from Job_MineAsteroid: drone efficiency x the
+## The per-unit timing is unchanged from the mining job: drone efficiency x the
 ## bay's mining_rate stat (so a damaged bay measurably slows) x the miner's
 ## work_rate for the mining skill. Drones have neither happiness nor skills, so
 ## that last term resolves to 1.0 for them and their timing is exactly as before.

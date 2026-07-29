@@ -1,7 +1,7 @@
 class_name JobDriver_Recharge
 extends JobDriver
 
-## A drone topping up its batteries (WI-44) - the replacement for Job_Recharge.
+## A drone topping up its batteries (WI-44) - the replacement for the recharge job.
 ##
 ## Structurally identical to the organic need jobs (find, claim, walk, restore).
 ## The only difference is where the need lives: a drone has no PawnNeedsComponent,

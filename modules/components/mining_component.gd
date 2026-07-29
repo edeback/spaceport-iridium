@@ -14,12 +14,12 @@ var drones: Array[MiningDronePawn] = []
 var _respawn_time_left: float = -1.0
 
 ## Player-selected ore this bay's drones seek out once no designated
-## asteroids remain (see Job_MineAsteroid.get_asteroid). Null = no
+## asteroids remain (see the old mining job's get_asteroid). Null = no
 ## preference, random asteroid. Per-bay, not persisted (see 03_Bugs).
 var priority_ore: ResourceData = null
 
 ## Stat key for the bay's extraction rate (WI-24): damage/upgrades scale this
-## and Job_MineAsteroid folds it into its per-unit timing. 1.0 base = no-op.
+## and the mining job folds it into its per-unit timing. 1.0 base = no-op.
 const STAT_MINING_RATE := &"mining_rate"
 
 ## Effective extraction-rate multiplier for this bay's drones. Reads the module's
@@ -98,19 +98,20 @@ func _can_output(amount: int) -> bool:
 	return output_storage.space_available(true) >= amount
 
 ## Intentionally not offer_followup_job or else construction workers end up picking this up
-func get_next_job(_pawn: PawnBase) -> JobBase:
+func get_next_job(_pawn: PawnBase) -> Job:
 	if power_consumer.powered:
 		if _can_output(1):
-			var mining_job: Job_MineAsteroid = Job_MineAsteroid.new()
-			mining_job.setup(self)
-			mining_job.output_storage = output_storage
+			var mining_job: Job = Job.of(&"mine_asteroid")
+			mining_job.target_b = JobTarget.of_component(self)
+			# One trip's quota: the drone's own hold. Action_Mine counts it down.
+			mining_job.count = _pawn.carrying_capacity
 			return mining_job
 		elif _pawn.current_module != owner_module:
-			var move_job: Job_MoveToLocation = Job_MoveToLocation.new()
-			move_job.destination_module = owner_module
+			var move_job: Job = Job.of(&"move_to_location")
+			move_job.target_a = JobTarget.of_module(owner_module)
 			return move_job
 	# Unpowered or unneeded, just idle for a bit
-	return Job_Idle.new()
+	return Job.of(&"idle")
 
 func has_ui() -> bool:
 	return true

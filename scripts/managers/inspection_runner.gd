@@ -29,8 +29,8 @@ var _inspector: InspectorPawn
 var _checklist: Array[String] = []
 var _index: int = 0
 var _current_target: ModuleBase
-var _leg_job: Job_MoveToLocation
-var _wait_job: Job_Wait
+var _leg_job: Job
+var _wait_job: Job
 
 var _dwell_hours: float = 1.0
 var _health_fail_threshold: float = 70.0
@@ -107,8 +107,8 @@ func _start_next_leg() -> void:
 		return
 	_current_target = target
 	_state = State.TOURING
-	_leg_job = Job_MoveToLocation.new()
-	_leg_job.destination_module = target
+	_leg_job = Job.of(&"move_to_location")
+	_leg_job.target_a = JobTarget.of_module(target)
 	_inspector.interrupt_with_job(_leg_job)
 
 func _tick_touring() -> void:
@@ -125,8 +125,10 @@ func _begin_dwell() -> void:
 	_state = State.DWELLING
 	# A wait job keeps the inspector non-idle so the breathing component damages
 	# (but never flees) it in a vented section - the low-O2 fail path (WI-26).
-	_wait_job = Job_Wait.new()
-	_wait_job.duration = _dwell_hours * TimeManager.SECONDS_PER_HOUR
+	# The dwell length rides on the job rather than the action: Action_Wait reads
+	# its duration at construction, so the driver builds it from job.count.
+	_wait_job = Job.of(&"wait")
+	_wait_job.count = int(_dwell_hours * TimeManager.SECONDS_PER_HOUR)
 	_inspector.interrupt_with_job(_wait_job)
 
 func _tick_dwelling() -> void:
@@ -183,8 +185,8 @@ func _send_inspector_home() -> void:
 		return
 	if is_instance_valid(_bay) and _inspector.current_module != null \
 			and Global.path_manager.is_reachable(_inspector, _bay):
-		var go_home: Job_MoveToLocation = Job_MoveToLocation.new()
-		go_home.destination_module = _bay
+		var go_home: Job = Job.of(&"move_to_location")
+		go_home.target_a = JobTarget.of_module(_bay)
 		go_home.job_end.connect(_finish_departure, CONNECT_ONE_SHOT)
 		_inspector.interrupt_with_job(go_home)
 	else:

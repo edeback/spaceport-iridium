@@ -12,10 +12,8 @@ const RESOURCE_PILE = preload("uid://vw2q5so630yo")
 ##   budget accounting - piles are pure "stuff sitting here", posted to the
 ##   job board once when they're created or topped up, not polled every
 ##   frame the way StorageComponent's import/export search is.
-## - StorageData's job-tracking fields (import_job, deposit_jobs, etc) are
-##   hard-typed to Job_GetResource, which a pile-collection job isn't, so
-##   reservation here is a small bit of pile-local bookkeeping instead of
-##   reusing that machinery.
+## - reservation here is a small bit of pile-local bookkeeping rather than
+##   StorageData's; PileStock is the claimable face over it (WI-44).
 ##
 ## If parent_module is null, the pile is free-floating and is only ever
 ## spliced into the pathing graph for the duration of a single pathfind
@@ -31,13 +29,13 @@ const RESOURCE_PILE = preload("uid://vw2q5so630yo")
 ## PawnInventoryComponent.carried, deliberately - same instance_data
 ## (ore richness etc) preservation semantics apply.
 var contents: Dictionary[ResourceData, ResourceStackContainer] = {}
-## ResourceData -> amount currently claimed by an in-flight Job_CollectPile,
+## ResourceData -> amount currently claimed by an in-flight the pile-collection job,
 ## so two pawns can't both walk over to collect the same last few units.
 var reserved: Dictionary[ResourceData, int] = {}
-## ResourceData -> the Job_CollectPile currently responsible for it, so
+## ResourceData -> the collection job currently responsible for it, so
 ## add_stacks() doesn't spam the job board with a fresh job every time more
 ## material lands on an already-being-collected pile.
-var active_jobs: Dictionary[ResourceData, Job_CollectPile] = {}
+var active_jobs: Dictionary[ResourceData, Job] = {}
 ## ResourceData -> its claimable face (WI-44). Memoised because the ClaimRegistry
 ## matches claims by object identity, so a fresh PileStock per call would make
 ## every release miss.
@@ -48,7 +46,7 @@ var _claim_targets: Dictionary[ResourceData, PileStock] = {}
 ## to this node's exact position.
 var parent_module: ModuleBase = null
 
-## Stable save id (WI-21), assigned by spawn(). Lets a Job_CollectPile persist
+## Stable save id (WI-21), assigned by spawn(). Lets a the pile-collection job persist
 ## the pile it targets and re-resolve it on load. Static counter because spawn()
 ## is static (no instance to hang it on); SaveManager bumps it past every
 ## restored id on load so post-load piles never collide with saved ones.
@@ -109,7 +107,7 @@ func add_amount(resource: ResourceData, amount: int) -> void:
 	add_stacks(resource, [stack])
 
 ## The object a WI-44 job claims against for this resource. Both reservation
-## paths land on the same `reserved` counter below, so a legacy Job_CollectPile
+## paths land on the same `reserved` counter below, so a legacy the pile-collection job
 ## and a WI-44 collect job cannot double-book the same units.
 func claim_target_for(for_resource: ResourceData) -> PileStock:
 	if for_resource == null:
@@ -152,21 +150,22 @@ func withdraw_stacks(resource: ResourceData, amount: int) -> Array[ResourceStack
 	return withdrawn
 
 func _ensure_collection_job(resource: ResourceData) -> void:
-	var existing: Job_CollectPile = active_jobs.get(resource)
-	if existing != null and existing.is_valid():
+	var existing: Job = active_jobs.get(resource)
+	if existing != null and not existing.is_ended() and existing.is_valid():
 		return
-	var job := Job_CollectPile.new()
-	job.setup(self, resource)
+	var job: Job = Job.of(&"collect_pile")
+	job.target_a = JobTarget.of_pile(self)
+	job.resource = resource
 	active_jobs[resource] = job
-	job.job_end.connect(_on_job_end.bind(resource, job))
+	job.job_end.connect(_on_job_end.bind(resource, job), CONNECT_ONE_SHOT)
 	Global.job_manager.add_job(job)
 
-func _on_job_end(resource: ResourceData, job: Job_CollectPile) -> void:
+func _on_job_end(resource: ResourceData, job: Job) -> void:
 	if active_jobs.get(resource) == job:
 		active_jobs.erase(resource)
 	# Job may have only cleared a partial trip (carrying capacity, or the
 	# storage it found only had room for some) - re-post for the remainder,
-	# same "next trip picks up the rest" pattern Job_GetResource uses.
+	# same "next trip picks up the rest" pattern the haul job uses.
 	if get_available(resource) > 0:
 		_ensure_collection_job(resource)
 

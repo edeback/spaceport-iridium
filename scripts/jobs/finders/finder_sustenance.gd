@@ -8,7 +8,7 @@ extends TargetFinder
 ## break is about how much food is left, not how close it is. A place holding a
 ## whole meal always beats one holding a mouthful, however far away - and only
 ## among places that cannot serve a full portion does the fullest win. That is
-## Job_Eat.find_best_sustenance's rule, kept exactly.
+## the old eat job's find_best_sustenance's rule, kept exactly.
 
 ## Portion size the search is trying to satisfy; matches Action_Eat's default.
 @export var desired: int = 70

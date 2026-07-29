@@ -12,7 +12,6 @@
 [ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="8_k607o"]
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="9_mgbfp"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="10_64yxw"]
-[ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="10_esxo4"]
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="10_mgbfp"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="13_sgees"]
 

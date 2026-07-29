@@ -4,7 +4,7 @@ extends ActionBase
 ## Work out how much of a pile this trip can actually move, write it to
 ## job.count, and reserve it (WI-44). Instant.
 ##
-## The sizing is the same three-way cap Job_CollectPile.job_start() did by hand -
+## The sizing is the same three-way cap the old pile-collection job's job_start() did by hand -
 ## what the pile has spare, what the pawn can carry, what the destination has
 ## room for - but the reservation itself is now a claim, so it comes back on
 ## every termination path instead of only through _on_cancel.

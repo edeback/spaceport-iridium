@@ -5,8 +5,8 @@ extends RecreationProviderComponent
 ## per-hour-recreation machinery, but is customized by a ShopTypeData the player
 ## picks (like a processor's recipe) and charges a per-visit fee that returns to
 ## station income. Crucially it joins the "shop" group, NOT "recreation_provider":
-## Job_Recreate must not treat a paid storefront as free entertainment, so
-## Job_Shop is the only job that visits shops and it pays at the register.
+## the recreation job must not treat a paid storefront as free entertainment, so
+## the shopping job is the only job that visits shops and it pays at the register.
 ##
 ## One shop scene + this component covers every storefront; the picked type drives
 ## price, recreation rate, mood lift, and the sprite tint. The selection is the
@@ -77,13 +77,13 @@ func is_open() -> bool:
 	return true
 
 ## Provider rate (before the base's vibration multiplier). 0 when closed, so
-## Job_Shop leaves and the recreation need re-queues on its own.
+## the shopping job leaves and the recreation need re-queues on its own.
 func _raw_recreation_per_hour(_pawn: PawnBase) -> float:
 	if not is_open() or shop_type == null:
 		return 0.0
 	return shop_type.recreation_per_hour
 
-## The cheapest this shop can charge - the gate Job_Shop checks before walking a
+## The cheapest this shop can charge - the gate the shopping job checks before walking a
 ## customer over (so a visit can't fail on price after the trip).
 func min_visit_price() -> int:
 	return shop_type.min_visit_price() if shop_type != null else 0
@@ -95,7 +95,7 @@ func roll_visit_price() -> int:
 ## Books a completed sale of `amount` credits as station income under "shops"
 ## (levy applies once here - crew are spending station-paid wages back, taxed once
 ## at the register, never double-taxed through the wallet). The customer's wallet
-## was already debited by Job_Shop. No-op with no economy manager (headless tests).
+## was already debited by the shopping job. No-op with no economy manager (headless tests).
 func record_sale(amount: int) -> void:
 	if amount <= 0:
 		return

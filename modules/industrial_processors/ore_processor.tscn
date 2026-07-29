@@ -11,7 +11,6 @@
 [ext_resource type="PackedScene" uid="uid://c63swhm7yiir" path="res://modules/components/processor_component.tscn" id="6_av0o4"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="6_ucso1"]
 [ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="7_ymsq2"]
-[ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="9_pj0q4"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="12_8w55x"]
 [ext_resource type="Resource" uid="uid://bdtv1cjftf2g1" path="res://data/resources/iron.tres" id="13_iron"]
 [ext_resource type="Script" uid="uid://by2n6rwcttgyx" path="res://data/recipes/recipe_data.gd" id="14_rcpd"]

@@ -87,7 +87,7 @@ var current_layer: WorldManager.StructureLayer = WorldManager.StructureLayer.SPA
 var path_position_override: Node2D = null
 var traveling: bool = false
 var next_point: int = 0
-var current_job: JobBase = null:
+var current_job: Job = null:
 	set(new_job):
 		if new_job != current_job:
 			current_job = new_job
@@ -95,10 +95,10 @@ var current_job: JobBase = null:
 			
 
 ## Jobs waiting for this specific pawn - chained followups (see
-## JobBase.get_followup_job) and queued needs (see queue_job()) alike.
+## a driver's next_index_after loop) and queued needs (see queue_job()) alike.
 ## Always checked before the shared board in start_job(), and never touched
 ## by other pawns or JobManager.
-var job_queue: Array[JobBase] = []
+var job_queue: Array[Job] = []
 
 ## Start the very first job immediately
 var job_length: float = 1
@@ -157,7 +157,7 @@ func _on_module_removed(module: ModuleBase) -> void:
 	if current_module == module:
 		current_module = null
 
-func try_start_job(new_job: JobBase) -> bool:
+func try_start_job(new_job: Job) -> bool:
 	if current_job == null and new_job.can_do_job(self):
 		current_job = new_job
 		current_job.start_job(self)
@@ -177,11 +177,11 @@ func _process(delta: float) -> void:
 		return
 	job_length += sim_delta
 	if current_job != null:
-		# is_ended() backstop: if a stale callback overwrote the terminal state
-		# after cancel() (the _ended latch blocks re-cancelling, so the subclass
-		# state can never be corrected), the latch itself is still authoritative -
-		# drop the job instead of processing it forever.
-		if current_job.is_ended() or current_job.is_failed() or current_job.is_finished():
+		# One check, not three: a WI-44 job's outcome is only ever set by end(),
+		# so is_ended() covers what the old is_failed()/is_finished() pair had to
+		# guard against (a subclass state machine that a stale callback could
+		# leave disagreeing with the lifecycle latch).
+		if current_job.is_ended():
 			_end_current_job()
 		else:
 			current_job.process_job(sim_delta)
@@ -193,23 +193,23 @@ func _process(delta: float) -> void:
 		start_job()
 
 func _end_current_job() -> void:
-	var finished_job: JobBase = current_job
+	var finished_job: Job = current_job
 	current_job = null
 	# Skill xp on SUCCESSFUL completion only (WI-22) - cancelled/failed jobs
 	# grant nothing (a job abandoned at 99% teaches nothing). Trickle-xp jobs
 	# like mining keep whatever they earned mid-trip; those return 0 here.
 	if finished_job.is_finished():
 		grant_skill_xp(finished_job.get_skill(), finished_job.xp_reward())
-	# Finalizer for jobs that reached Finished without going through cancel();
-	# idempotent, so it's a no-op when cancel() already ended the job.
-	finished_job.end_job()
+	# No finalizer call: a WI-44 job ends itself through Job.end(), which is the
+	# single termination entry point and releases the job's claims. The pawn's
+	# part is only to notice and let go.
 	# Intentionally don't start the next job immediately
 		
 
 func start_job() -> void:
 	# If we have an inventory, try to store it ASAP
 	if inventory_component != null and not inventory_component.is_empty():
-		var return_job: Job_StoreInventory = Job_StoreInventory.new()
+		var return_job: Job = _make_store_inventory_job()
 		if return_job.can_do_job(self):
 			_begin_job(return_job)
 			return
@@ -218,7 +218,7 @@ func start_job() -> void:
 	# Personal queue next - chained followups and queued needs. Checked once
 	# here rather than polled every frame by whatever queued them.
 	while not job_queue.is_empty():
-		var queued_job: JobBase = job_queue.pop_front()
+		var queued_job: Job = job_queue.pop_front()
 		if queued_job.is_valid() and queued_job.can_do_job(self):
 			_begin_job(queued_job)
 			return
@@ -230,13 +230,13 @@ func start_job() -> void:
 		# which rarely sit on the shared board, so this usually falls through
 		# to wandering. A running job is never interrupted by shift end; this
 		# gate only applies when picking the NEXT job.
-		var off_shift: Array[JobBase.Category] = [JobBase.Category.NEEDS, JobBase.Category.MOVE, JobBase.Category.MISC]
+		var off_shift: Array[JobData.Category] = [JobData.Category.NEEDS, JobData.Category.MOVE, JobData.Category.MISC]
 		current_job = Global.job_manager.find_job(self, off_shift)
 	if current_job:
 		current_job.start_job(self)
 	else:
 		# Wander!
-		var idle_job: Job_IdleWander = Job_IdleWander.new()
+		var idle_job: Job = Job.of(&"idle_wander")
 		if idle_job.can_do_job(self):
 			_begin_job(idle_job)
 		else:
@@ -244,7 +244,12 @@ func start_job() -> void:
 			if animated_sprite != null:
 				animated_sprite.play("idle")
 
-func _begin_job(job: JobBase) -> void:
+## Store-inventory sweep target, overridable (a mining drone restricts deposits
+## to its own bay). Base: an open sweep to any storage that will take the cargo.
+func _make_store_inventory_job() -> Job:
+	return Job.of(&"store_inventory")
+
+func _begin_job(job: Job) -> void:
 	current_job = job
 	current_job.start_job(self)
 
@@ -254,7 +259,7 @@ func _begin_job(job: JobBase) -> void:
 ## ahead of anything already queued (what chained followup jobs use) but
 ## still waits for the current job to finish - see interrupt_with_job() to
 ## preempt immediately instead.
-func queue_job(job: JobBase, to_front: bool = false) -> void:
+func queue_job(job: Job, to_front: bool = false) -> void:
 	if to_front:
 		job_queue.push_front(job)
 	else:
@@ -263,14 +268,14 @@ func queue_job(job: JobBase, to_front: bool = false) -> void:
 ## Removes a job from the personal queue if present (WI-28): used when a queued
 ## job is about to be promoted to current via interrupt_with_job, so it isn't
 ## also left sitting in the queue to be re-popped after it ends. No-op if absent.
-func dequeue_job(job: JobBase) -> void:
+func dequeue_job(job: Job) -> void:
 	job_queue.erase(job)
 
 ## Moves an already-queued job to the queue front (critical-need promotion,
 ## WI-05). Deliberately does NOT interrupt the current job - see the
 ## starvation-lock comment in PawnNeedsComponent. No-op if the job isn't
 ## queued (it may already be running or ended).
-func promote_queued_job(job: JobBase) -> void:
+func promote_queued_job(job: Job) -> void:
 	var index: int = job_queue.find(job)
 	if index > 0:
 		job_queue.remove_at(index)
@@ -354,16 +359,16 @@ func grant_skill_xp(skill: StringName, amount: float) -> void:
 		skills.add_xp(skill, amount)
 
 ## Ends the current job right now - gracefully, not as a failure, so
-## anything the pawn is carrying is left for Job_StoreInventory to sweep up
+## anything the pawn is carrying is left for the cargo sweep to pick up
 ## afterward instead of lost - and starts new_job immediately. For needs
 ## that can't wait, e.g. a pawn about to collapse from hunger.
 ## While the pawn is Conveyed (riding a turbolift cab, WI-20) the job swap
 ## still happens immediately, but the new job's first movement only starts
 ## once the carrier releases the pawn at its next floor stop - carriers never
 ## dump a pawn between floors.
-func interrupt_with_job(new_job: JobBase) -> void:
+func interrupt_with_job(new_job: Job) -> void:
 	if current_job != null:
-		var interrupted: JobBase = current_job
+		var interrupted: Job = current_job
 		current_job = null
 		interrupted.cancel(false) # cancel implies end_job (lifecycle contract)
 	job_length = 0
@@ -386,9 +391,9 @@ func _notification(what: int) -> void:
 			current_job = null
 		# Cancel queued jobs too (WI-23): a queued job that never runs otherwise
 		# never reaches _on_end, leaking its reservations/claims - e.g. a chained
-		# Job_WorkProcessor would pin its processor's outstanding-job slot forever
+		# a queued processor job would pin its operator slot forever
 		# and deadlock the machine. cancel() is idempotent and releases cleanly.
-		for queued_job: JobBase in job_queue:
+		for queued_job: Job in job_queue:
 			queued_job.cancel(true)
 		job_queue.clear()
 		# TODO: We don't have pawn death in any meaningful way yet, so just conclude

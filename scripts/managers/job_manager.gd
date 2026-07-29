@@ -1,18 +1,18 @@
 class_name JobManager
 extends Node
 
-## The shared job board: one priority-sorted queue per JobBase.Category.
+## The shared job board: one priority-sorted queue per JobData.Category.
 ## Queues are sorted ascending by effective priority (high priority at the
 ## back, where find_job scans from). Selection across categories is a merge
 ## by effective priority, so categories act as an index/filter, not a
 ## ranking - a high-priority MISC job still beats a low-priority HAUL job.
 
-var _board: Dictionary[JobBase.Category, Array] = {}
-var _all_categories: Array[JobBase.Category] = []
+var _board: Dictionary[JobData.Category, Array] = {}
+var _all_categories: Array[JobData.Category] = []
 
 func _ready() -> void:
 	Global.job_manager = self
-	for category: int in JobBase.Category.values():
+	for category: int in JobData.Category.values():
 		_board[category] = []
 		_all_categories.append(category)
 	# Aging: bump every waiting job's age, then re-sort. Ages grow uniformly
@@ -23,30 +23,30 @@ func _ready() -> void:
 	Global.time_manager.slow_tick.connect(_on_slow_tick)
 
 func _on_slow_tick(interval: float) -> void:
-	for category: JobBase.Category in _board:
+	for category: JobData.Category in _board:
 		var queue: Array = _board[category]
 		if queue.is_empty():
 			continue
-		for job: JobBase in queue:
+		for job: Job in queue:
 			job.age += interval
 		queue.sort_custom(_sort_effective_ascending)
 
-func add_job(job: JobBase) -> void:
+func add_job(job: Job) -> void:
 	var queue: Array = _board[job.get_category()]
 	queue.insert(queue.bsearch_custom(job, _sort_effective_ascending), job)
 
-func remove_job(job: JobBase) -> void:
+func remove_job(job: Job) -> void:
 	_board[job.get_category()].erase(job)
 
 ## Best claimable job for this pawn across allowed_categories (empty = all).
 ## Walks each queue from its high-priority end, always considering the
 ## highest effective priority remaining in any queue; invalid jobs found
 ## along the way are cancelled and removed.
-func find_job(pawn: PawnBase, allowed_categories: Array[JobBase.Category] = []) -> JobBase:
-	var categories: Array[JobBase.Category] = allowed_categories if not allowed_categories.is_empty() else _all_categories
+func find_job(pawn: PawnBase, allowed_categories: Array[JobData.Category] = []) -> Job:
+	var categories: Array[JobData.Category] = allowed_categories if not allowed_categories.is_empty() else _all_categories
 	var queues: Array[Array] = []
 	var cursors: Array[int] = []
-	for category: JobBase.Category in categories:
+	for category: JobData.Category in categories:
 		var queue: Array = _board[category]
 		if not queue.is_empty():
 			queues.append(queue)
@@ -57,7 +57,7 @@ func find_job(pawn: PawnBase, allowed_categories: Array[JobBase.Category] = []) 
 		for index: int in queues.size():
 			if cursors[index] < 0:
 				continue
-			var candidate: JobBase = queues[index][cursors[index]]
+			var candidate: Job = queues[index][cursors[index]]
 			# Per-pawn key (WI-23): folds in the workspace affinity bonus so an
 			# assignee prefers their own workspace's job. The queues stay sorted by
 			# the pawn-agnostic effective_priority(); the affinity bump is modest
@@ -69,7 +69,7 @@ func find_job(pawn: PawnBase, allowed_categories: Array[JobBase.Category] = []) 
 				best_priority = effective
 		if best_index == -1:
 			return null
-		var job_to_do: JobBase = queues[best_index][cursors[best_index]]
+		var job_to_do: Job = queues[best_index][cursors[best_index]]
 		# Check that the job is still possible. Cancel (not just end) so the
 		# requester releases its reservations / import-export slots.
 		if !job_to_do.is_valid():
@@ -84,27 +84,25 @@ func find_job(pawn: PawnBase, allowed_categories: Array[JobBase.Category] = []) 
 	return null
 
 func re_sort_jobs() -> void:
-	for category: JobBase.Category in _board:
+	for category: JobData.Category in _board:
 		_board[category].sort_custom(_sort_effective_ascending)
 
-## WI-35 logistics overlay: the waiting HAUL jobs still on the board, as
-## Job_GetResource (the only haul type today). Claimed jobs aren't here - they've
-## been pulled off the board into their pawn's current_job - so the flow layer
-## unions this with a sweep over pawns. Returns a fresh array; safe to iterate.
-func get_waiting_haul_jobs() -> Array[Job_GetResource]:
-	var out: Array[Job_GetResource] = []
-	for job: JobBase in _board.get(JobBase.Category.HAUL, []):
-		var haul: Job_GetResource = job as Job_GetResource
-		if haul != null:
-			out.append(haul)
+## WI-35 logistics overlay: the waiting HAUL jobs still on the board. Claimed
+## jobs aren't here - they've been pulled off the board into their pawn's
+## current_job - so the flow layer unions this with a sweep over pawns. Returns a
+## fresh array; safe to iterate.
+func get_waiting_haul_jobs() -> Array[Job]:
+	var out: Array[Job] = []
+	for job: Job in _board.get(JobData.Category.HAUL, []):
+		out.append(job)
 	return out
 
 ## Total jobs waiting on the board (debug/UI).
 func board_size() -> int:
 	var total: int = 0
-	for category: JobBase.Category in _board:
+	for category: JobData.Category in _board:
 		total += _board[category].size()
 	return total
 
-func _sort_effective_ascending(a: JobBase, b: JobBase) -> bool:
+func _sort_effective_ascending(a: Job, b: Job) -> bool:
 	return a.effective_priority() < b.effective_priority()

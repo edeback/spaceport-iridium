@@ -3,7 +3,7 @@ extends TargetFinder
 
 ## The next rock to fly out to (WI-44).
 ##
-## Same three-tier preference Job_MineAsteroid.get_asteroid() applied: a rock the
+## Same three-tier preference the old mining job's get_asteroid() applied: a rock the
 ## player has designated wins outright, otherwise one carrying the bay's priority
 ## ore, otherwise whatever the shuffle turned up first. The shuffle is what stops
 ## every drone from a bay converging on the same asteroid.

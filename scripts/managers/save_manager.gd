@@ -12,7 +12,7 @@ extends Node
 ## In-flight jobs are deliberately NOT saved - the board repopulates from
 ## storage deficits / construction states within a tick of loading.
 
-const SAVE_VERSION: int = 1
+const SAVE_VERSION: int = 2
 const SAVE_DIR: String = "user://saves/"
 const QUICK_SLOT: String = "quicksave"
 
@@ -34,9 +34,35 @@ var _module_data_by_id: Dictionary[StringName, ModuleData] = {}
 var _resource_data_by_id: Dictionary[StringName, ResourceData] = {}
 
 ## version -> Callable(data: Dictionary) -> Dictionary, upgrading one version
-## step. Empty until the format actually changes. Static because the menus load
-## saves before any SaveManager node exists (WI-36).
-static var _migrations: Dictionary[int, Callable] = {}
+## step. Static because the menus load saves before any SaveManager node exists
+## (WI-36).
+static var _migrations: Dictionary[int, Callable] = {
+	1: _migrate_1_to_2,
+}
+
+## v1 -> v2 (WI-44): in-flight jobs changed shape completely. A v1 job entry is
+## {"type": "<job class id>", ...} written by the old per-class serializers; a v2
+## entry is {"def": "<JobData id>", "index": <action>, ...} written by
+## Job.to_dict(). There is no honest mapping between them - the v1 form records a
+## job's STATE ENUM, and the action a resumed job should re-enter has to be
+## derived from a driver that did not exist when the save was written.
+##
+## So they are dropped rather than translated. Everything a dropped job would
+## have done gets re-derived on load anyway: board jobs are re-posted by their
+## components, needs re-queue from the decay loop, and a pawn left holding cargo
+## sweeps it into storage. The cost is one interrupted trip per pawn, once, on
+## the first load of an old save - which is exactly the behaviour WI-44 replaced
+## for every load, so nothing is lost that the old system guaranteed.
+static func _migrate_1_to_2(data: Dictionary) -> Dictionary:
+	var pawns: Array = data.get("pawns", [])
+	for entry: Variant in pawns:
+		var pawn_entry: Dictionary = entry as Dictionary
+		if pawn_entry == null:
+			continue
+		pawn_entry.erase("current_job")
+		pawn_entry.erase("job_queue")
+	data["version"] = 2
+	return data
 
 static func has_pending_load() -> bool:
 	return not _pending_load.is_empty()
@@ -437,10 +463,12 @@ func _get_pawns_save() -> Array:
 		# Guest visit state (WI-33): stay timer + leaving latch. Only on visitors.
 		if pawn is VisitorPawn:
 			entry["visitor"] = (pawn as VisitorPawn).get_visitor_save_data()
-		# In-flight jobs (WI-21): type + target refs, restarting their current
-		# stage on load. Only saveable jobs serialize (board/idle/store-inventory
-		# jobs return {}); omit the keys entirely when there's nothing to save.
-		var current_job_data: Dictionary = JobSerializer.serialize(pawn.current_job)
+		# In-flight jobs (WI-21, generalised by WI-44): definition id + target refs
+		# + WHICH ACTION is current, so a job resumes on the step it was on rather
+		# than restarting. Only saveable jobs serialize (idle, wander, the cargo
+		# sweep and the departure job are flagged saveable = false on their .tres
+		# and return {}); omit the keys entirely when there's nothing to save.
+		var current_job_data: Dictionary = pawn.current_job.to_dict() if pawn.current_job != null else {}
 		if not current_job_data.is_empty():
 			entry["current_job"] = current_job_data
 		var queue_data: Array = _serialize_job_queue(pawn.job_queue)
@@ -450,11 +478,11 @@ func _get_pawns_save() -> Array:
 	return out
 
 ## Serializes a pawn's personal queue, preserving order and dropping any jobs
-## that aren't saveable (get_save_data() == {}).
-func _serialize_job_queue(queue: Array[JobBase]) -> Array:
+## that aren't saveable (to_dict() == {}).
+func _serialize_job_queue(queue: Array[Job]) -> Array:
 	var out: Array = []
-	for job: JobBase in queue:
-		var job_data: Dictionary = JobSerializer.serialize(job)
+	for job: Job in queue:
+		var job_data: Dictionary = job.to_dict()
 		if not job_data.is_empty():
 			out.append(job_data)
 	return out
@@ -643,7 +671,7 @@ func _apply_pending_load() -> void:
 	Global.asteroid_manager.load_save_data(sections.get("asteroids", {}))
 	# After world: shafts have re-merged from module adjacency by now.
 	Global.turbolift_manager.load_save_data(sections.get("turbolifts", {}))
-	# Before pawns: Job_CollectPile resolves its pile by id.
+	# Before pawns: a restored collect-pile job resolves its pile by id.
 	_load_piles(sections.get("piles", []))
 	_load_pawns(sections.get("pawns", []))
 	# After world: pending hires resolve their bay by layer+cell at arrival.
@@ -690,7 +718,7 @@ func _load_piles(data: Array) -> void:
 		var module: ModuleBase = resolve_module_ref(entry.get("module", {}))
 		var parent_node: Node = module.get_parent() if module != null else Global.world_manager.pawn_layer
 		var pile: ResourcePile = ResourcePile.spawn(parent_node, pos, module)
-		# Restore the saved id (spawn() assigned a fresh one) so Job_CollectPile
+		# Restore the saved id (spawn() assigned a fresh one) so a collect job
 		# refs resolve to this exact pile.
 		pile.pile_id = int(entry.get("id", pile.pile_id))
 		max_saved_id = maxi(max_saved_id, pile.pile_id)
@@ -813,7 +841,7 @@ func _load_pawns(data: Array) -> void:
 		# tick, not here - sees the true world. Queue in saved order, then push
 		# the current job to the front so it runs first; queue_job (not direct
 		# assignment) routes it through start_job()'s normal validity/claim path,
-		# and a pawn carrying cargo sweeps it via Job_StoreInventory before the
+		# and a pawn carrying cargo sweeps it before the
 		# restored haul re-runs (no double-withdraw). Jobs whose targets are gone
 		# deserialize to null and are silently dropped.
 		_load_pawn_jobs(pawn, entry, needs)
@@ -821,11 +849,11 @@ func _load_pawns(data: Array) -> void:
 ## Rebuilds current_job + job_queue onto a freshly restored pawn.
 func _load_pawn_jobs(pawn: PawnBase, entry: Dictionary, needs: PawnNeedsComponent) -> void:
 	for job_data: Dictionary in entry.get("job_queue", []):
-		var job: JobBase = JobSerializer.deserialize(job_data)
+		var job: Job = Job.from_dict(job_data)
 		if job != null:
 			pawn.queue_job(job)
 			_adopt_if_need_job(pawn, needs, job)
-	var current_job: JobBase = JobSerializer.deserialize(entry.get("current_job", {}))
+	var current_job: Job = Job.from_dict(entry.get("current_job", {}))
 	if current_job != null:
 		pawn.queue_job(current_job, true) # to front: runs before the restored queue
 		_adopt_if_need_job(pawn, needs, current_job)
@@ -835,20 +863,21 @@ func _load_pawn_jobs(pawn: PawnBase, entry: Dictionary, needs: PawnNeedsComponen
 ## job for the same need. Covers organic needs (Eat/Sleep/Recreate) and the robot
 ## needs (WI-28: recharge -> RobotPowerComponent, repair -> RobotIntegrityComponent).
 ## No-op for anything else.
-func _adopt_if_need_job(pawn: PawnBase, needs: PawnNeedsComponent, job: JobBase) -> void:
-	if needs != null and (job is Job_Eat or job is Job_Sleep or job is Job_Recreate or job is Job_Shop):
+func _adopt_if_need_job(pawn: PawnBase, needs: PawnNeedsComponent, job: Job) -> void:
+	if needs != null and (job.is_type(&"eat") or job.is_type(&"sleep")
+			or job.is_type(&"recreate") or job.is_type(&"shop")):
 		needs.adopt_restored_need_job(job)
-	elif job is Job_Recharge:
+	elif job.is_type(&"recharge"):
 		var power: RobotPowerComponent = pawn.get_component_by_type(RobotPowerComponent) as RobotPowerComponent
 		if power != null:
-			power.adopt_restored_recharge_job(job as Job_Recharge)
-	elif job is Job_GetRepaired:
+			power.adopt_restored_recharge_job(job)
+	elif job.is_type(&"get_repaired"):
 		var integrity: RobotIntegrityComponent = pawn.get_component_by_type(RobotIntegrityComponent) as RobotIntegrityComponent
 		if integrity != null:
-			integrity.adopt_restored_repair_job(job as Job_GetRepaired)
-	elif job is Job_GetTreatment:
+			integrity.adopt_restored_repair_job(job)
+	elif job.is_type(&"get_treatment"):
 		# Health & disease (WI-31): re-link so the disease component's seek loop
 		# treats it as the already-pending job instead of queuing a second.
 		var disease: PawnDiseaseComponent = pawn.get_component_by_type(PawnDiseaseComponent) as PawnDiseaseComponent
 		if disease != null:
-			disease.adopt_restored_treatment_job(job as Job_GetTreatment)
+			disease.adopt_restored_treatment_job(job)

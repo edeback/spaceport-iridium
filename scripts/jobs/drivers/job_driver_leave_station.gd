@@ -1,7 +1,7 @@
 class_name JobDriver_LeaveStation
 extends JobDriver
 
-## Walk out (WI-44) - the replacement for Job_LeaveStation. Terminal: every path
+## Walk out (WI-44) - the replacement for the departure job. Terminal: every path
 ## through it ends in the pawn despawning.
 ##
 ## Target A is the docking bay, and it is the one target in the system that is
@@ -11,7 +11,7 @@ extends JobDriver
 ## next_index_after(), where the driver can see whether the finder found anything.
 ##
 ## The crew/visitor split is read off the pawn rather than carried as a job flag.
-## Job_LeaveStation had an exported allow_escape_pod that VisitorManager set to
+## the departure job had an exported allow_escape_pod that VisitorManager set to
 ## false; `is_visitor` is what it was always derived from, so there is one fewer
 ## knob to set correctly at the post site.
 
@@ -54,7 +54,7 @@ func explain_block(_job: Job, _pawn: PawnBase) -> String:
 	return "no reachable docking bay to leave from"
 
 ## The branch: a bay was found, walk to it; nothing was found, wait for the pod.
-## A walk that breaks mid-route falls back to the pod too - Job_LeaveStation did
+## A walk that breaks mid-route falls back to the pod too - the departure job did
 ## the same, and without it a resigned crew member whose path is cut is stranded
 ## on the station forever with no job source. That is what the tolerant goto
 ## buys: the runner would otherwise fail the whole job on a failed move.

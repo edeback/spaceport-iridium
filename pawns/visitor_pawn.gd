@@ -4,7 +4,7 @@ extends PawnBase
 ## A paying guest (WI-33). Reuses the crew scene's needs / health / breathing /
 ## disease, but has no schedule, skills, or traits, and is excluded from the crew
 ## roster (is_visitor). Its needs drive it through the same job system crew use -
-## Job_Shop (paid recreation), Job_Sleep (a hotel room, billed on wake), Job_Eat
+## shopping (paid recreation), sleeping (a hotel room, billed on wake), eating
 ## (a paid meal) - so the whole behavior loop is need-driven with money gates.
 ##
 ## It never pulls station work off the board (start_job below, like the inspector /
@@ -76,7 +76,10 @@ func _should_leave() -> bool:
 ## True when there's no active walk-out job to ride (it failed, ended, or the guest
 ## is idling), so another exit attempt is due.
 func _needs_exit_attempt() -> bool:
-	return current_job == null or current_job is Job_IdleWander or (current_job is Job_LeaveStation and current_job.is_ended())
+	if current_job == null:
+		return true
+	return current_job.is_type(&"idle_wander") \
+		or (current_job.is_type(&"leave_station") and current_job.is_ended())
 
 ## Sends the guest to the nearest reachable exit and books its departure mood for
 ## reputation. If nothing is reachable, alerts once and leaves the guest to wander
@@ -84,9 +87,9 @@ func _needs_exit_attempt() -> bool:
 func _go_to_exit() -> void:
 	if _exit_reachable():
 		_report_departure()
-		var leave := Job_LeaveStation.new()
-		leave.allow_escape_pod = false  # a guest needs a real exit, never a pod
-		interrupt_with_job(leave)
+		# No escape-pod flag to set any more: the driver reads is_visitor off the
+		# pawn, which is what that flag was always derived from.
+		interrupt_with_job(Job.of(&"leave_station"))
 		_stranded_alerted = false
 	elif not _stranded_alerted:
 		_stranded_alerted = true
@@ -137,17 +140,17 @@ func load_visitor_save_data(data: Dictionary) -> void:
 ## by _process, not the board.
 func start_job() -> void:
 	if inventory_component != null and not inventory_component.is_empty():
-		var return_job: Job_StoreInventory = Job_StoreInventory.new()
+		var return_job: Job = _make_store_inventory_job()
 		if return_job.can_do_job(self):
 			_begin_job(return_job)
 			return
 	while not job_queue.is_empty():
-		var queued_job: JobBase = job_queue.pop_front()
+		var queued_job: Job = job_queue.pop_front()
 		if queued_job.is_valid() and queued_job.can_do_job(self):
 			_begin_job(queued_job)
 			return
 		queued_job.cancel(true)
-	var idle_job: Job_IdleWander = Job_IdleWander.new()
+	var idle_job: Job = Job.of(&"idle_wander")
 	if idle_job.can_do_job(self):
 		_begin_job(idle_job)
 	elif animated_sprite != null:

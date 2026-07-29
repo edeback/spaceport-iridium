@@ -1,7 +1,7 @@
 class_name JobDriver_Recreate
 extends JobDriver
 
-## Take a break (WI-44) - the replacement for Job_Recreate, and the template for
+## Take a break (WI-44) - the replacement for the recreation job, and the template for
 ## the other six need jobs.
 ##
 ## Target A is the recreation provider. The driver is four shared actions and a
@@ -21,8 +21,9 @@ const CLAIM: int = 1
 const GOTO: int = 2
 const RESTORE: int = 3
 
-## Matches Job_Recreate.max_stay_hours - leave even if not fully restored, so
-## pawns don't park in the holodeck all cycle when the rate barely beats decay.
+## Matches the old recreation job's max_stay_hours - leave even if not fully
+## restored, so pawns don't park in the holodeck all cycle when the rate barely
+## beats decay.
 const MAX_STAY_HOURS: float = 3.0
 
 func make_actions(_job: Job) -> Array[ActionBase]:

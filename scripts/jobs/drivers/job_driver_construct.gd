@@ -1,7 +1,7 @@
 class_name JobDriver_Construct
 extends JobDriver
 
-## Build a module (WI-44) - the replacement for Job_ConstructModule's build half.
+## Build a module (WI-44) - the replacement for the construction job's build half.
 ## `JobDriver_Deconstruct` is the same two steps with the work running backwards.
 ##
 ## Target A is the site's ConstructionComponent. Construction is EVA work: the
@@ -13,7 +13,8 @@ extends JobDriver
 ## through advance_work(), and a target that stops existing fails the job through
 ## JobTarget.fail_on_lost.
 
-## Matches Job_ConstructModule.shift_spot_interval - builders visibly move around
+## Matches the old construction job's shift_spot_interval - builders visibly
+## move around
 ## the site instead of standing in one spot.
 const SHIFT_SPOT_INTERVAL: float = 3.0
 

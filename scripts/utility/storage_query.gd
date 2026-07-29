@@ -5,8 +5,8 @@ class_name StorageQuery
 ## Every job that needs to pick a storage - pull a resource, push a resource,
 ## collect a pile, sweep carried cargo - goes through find_source() or
 ## find_sink() here. They used to be four near-identical walks in three files,
-## which is exactly how Job_StoreInventory's scoring silently drifted away
-## from Job_GetResource's (WI-38 A5). Two queries, one set of rules.
+## which is exactly how the cargo sweep's scoring silently drifted away
+## from the haul job's (WI-38 A5). Two queries, one set of rules.
 ##
 ## Both queries are pure - no reservations, no mutation - so can_do_job() can
 ## call them freely.

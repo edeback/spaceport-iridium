@@ -12,7 +12,6 @@
 [ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="7_2l5du"]
 [ext_resource type="Resource" uid="uid://cnje5k2redpx0" path="res://data/resources/gold_ore.tres" id="7_krpv1"]
 [ext_resource type="Resource" uid="uid://c8o0o81ej48mp" path="res://data/resources/carbon_ore.tres" id="8_0tx88"]
-[ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="9_krpv1"]
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="9_wt5jo"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="11_0tx88"]
 [ext_resource type="Resource" uid="uid://cns3lrfd8jekj" path="res://data/resources/silicon_ore.tres" id="11_avr65"]

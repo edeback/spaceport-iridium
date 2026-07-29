@@ -11,7 +11,7 @@ extends RefCounted
 ##
 ## Deliberately a thin face over the pile's own `reserved` dictionary rather than
 ## a second counter. The pile stays authoritative - which is what lets the legacy
-## Job_CollectPile and a WI-44 collect job run side by side without either
+## the pile-collection job and a WI-44 collect job run side by side without either
 ## oversubscribing the other's reservations, the same coexistence property
 ## SlotPool gives the five slot components.
 

@@ -3,7 +3,7 @@ extends ActionBase
 
 ## Stand still for a fixed stretch of sim-time (WI-44).
 ##
-## Replaces Job_Wait's `await Global.time_manager.sim_seconds(duration)`, which
+## Replaces the wait job's `await Global.time_manager.sim_seconds(duration)`, which
 ## could outlive an early cancel and relied on the _ended latch to make the
 ## resulting second cancel harmless. A DURATION action can't outlive its job: the
 ## runner owns the clock, so cancelling stops the wait rather than racing it.

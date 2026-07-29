@@ -4,7 +4,7 @@ extends ComponentBase
 ## Base for anything that restores the recreation need. Socializing is NOT
 ## its own need - it's one way of restoring recreation (WI-05) - so both
 ## EntertainmentComponent (holodeck) and SocialComponent (mess hall) are
-## providers behind this one interface, and Job_Recreate picks randomly from
+## providers behind this one interface, and the recreation job picks randomly from
 ## the combined reachable pool. Slot claims mirror SleepComponent's: claimed
 ## by the job up front, released in its _on_end so they can't leak.
 
@@ -13,10 +13,8 @@ extends ComponentBase
 ## gain by (1 + vibration * k), the same shape sleep uses.
 @export var vibration_penalty_k: float = 1.0
 
-var _claims: Array[JobBase] = []
-## WI-44 claim target. Occupancy for BOTH job systems is booked here while they
-## coexist, so neither can oversubscribe the other's occupants. Reach it through
-## claim_pool(), which syncs capacity first.
+## Occupancy for this component, and the object a job takes its SLOT claim
+## against. Reach it through claim_pool(), which syncs capacity first.
 var _slots := SlotPool.new()
 
 ## The object a WI-44 job takes its SLOT claim against. Capacity is re-synced on
@@ -32,20 +30,10 @@ func ready_constructed() -> void:
 func has_free_slot() -> bool:
 	return claim_pool().has_free()
 
-func claim_slot(job: JobBase) -> bool:
-	if _claims.has(job) or claim_pool().take_claim(ClaimSpec.Kind.SLOT, 1) == null:
-		return false
-	_claims.append(job)
-	return true
-
-func release_slot(job: JobBase) -> void:
-	if _claims.has(job):
-		_claims.erase(job)
-		claim_pool().release_claim(ClaimSpec.Kind.SLOT, 1, null)
 
 ## Recreation points per game-hour for this pawn right now, after the adjacency
 ## vibration penalty. 0 means "currently unavailable" (e.g. unpowered) -
-## Job_Recreate skips or leaves. Subclasses override _raw_recreation_per_hour,
+## the recreation job skips or leaves. Subclasses override _raw_recreation_per_hour,
 ## not this, so every provider gets the penalty uniformly.
 func recreation_per_hour(_pawn: PawnBase) -> float:
 	var raw: float = _raw_recreation_per_hour(_pawn)

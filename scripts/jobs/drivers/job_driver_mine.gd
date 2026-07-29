@@ -2,7 +2,7 @@ class_name JobDriver_Mine
 extends JobDriver
 
 ## Fly out, fill the hold, bring it home (WI-44) - the replacement for
-## Job_MineAsteroid.
+## the mining job.
 ##
 ## Target A is the asteroid (found, and re-found when one runs dry), target B the
 ## MiningComponent that wants the ore, target C its output storage. job.count is

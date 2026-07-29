@@ -41,7 +41,7 @@ func to_dict() -> Dictionary:
 	return {"type": "food", "quality": quality, "food_type": String(food_type)}
 
 # --- pure quality -> effect mappings (WI-29) ----------------------------------
-# Static so Job_Eat and the GUT suite share one implementation without needing a
+# Static so the eat job and the GUT suite share one implementation without needing a
 # live SustenanceComponent or Global. Band edges / mult range are passed in by
 # the caller (exported on SustenanceComponent) to keep balance numbers in data.
 

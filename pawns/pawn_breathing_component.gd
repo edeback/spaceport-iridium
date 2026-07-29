@@ -76,7 +76,7 @@ func _current_atmosphere() -> AtmosphereComponent:
 
 ## Is `module` breathable enough for `pawn` to idle in? Modules without
 ## atmosphere count as safe (suit assumption). Also consulted by
-## Job_IdleWander so idle crew don't wander INTO a module they'd flee.
+## idle wandering so idle crew don't wander INTO a module they'd flee.
 static func is_module_safe_for(pawn: PawnBase, module: ModuleBase) -> bool:
 	var breathing: PawnBreathingComponent = pawn.get_component_by_type(PawnBreathingComponent) as PawnBreathingComponent
 	if breathing == null or module == null:
@@ -87,9 +87,7 @@ static func is_module_safe_for(pawn: PawnBase, module: ModuleBase) -> bool:
 	return atmosphere.o2_partial() >= breathing.flee_o2_partial
 
 func _is_idle() -> bool:
-	return owner_pawn.current_job == null \
-		or owner_pawn.current_job is Job_IdleWander \
-		or owner_pawn.current_job is Job_Idle
+	return owner_pawn.current_job == null or owner_pawn.current_job.is_idle_type()
 
 ## Idle crew walk to the nearest breathable module. Pathfinding only runs
 ## from here (throttled by _flee_timer_hours), never per frame; when nothing
@@ -113,8 +111,8 @@ func _try_flee() -> void:
 	if destination == null or destination == owner_pawn.current_module:
 		_flee_timer_hours = flee_retry_hours
 		return
-	var flee_job: Job_MoveToLocation = Job_MoveToLocation.new()
-	flee_job.destination_module = destination
+	var flee_job: Job = Job.of(&"move_to_location")
+	flee_job.target_a = JobTarget.of_module(destination)
 	owner_pawn.interrupt_with_job(flee_job)
 
 # --- Void Sickness roll (WI-31) ----------------------------------------------

@@ -2,15 +2,15 @@ class_name MedicalComponent
 extends ComponentBase
 
 ## The Medical Bay's business end (WI-31): treatment slots where sick/injured crew
-## lie down to heal, plus a doctor's workstation. A patient's Job_GetTreatment
+## lie down to heal, plus a doctor's workstation. A patient's treatment job
 ## claims a slot (a BUNK anchor), lies down, and drives its own disease treatment
-## and HP regen forward each tick; a doctor's Job_Doctor mans the workstation and,
+## and HP regen forward each tick; a doctor job mans the workstation and,
 ## while present, multiplies the treatment rate by their medical work-rate.
 ## Untended patients still treat at a slow auto-med baseline, so a solo-crew
 ## station still recovers - just slowly.
 ##
 ## Slot discipline mirrors SleepComponent/RobotRepairComponent (claim up front,
-## release in the job's _on_end, rebuilt empty on load). Doctor-job posting mirrors
+## released by the runner on any exit, rebuilt empty on load). Doctor-job posting mirrors
 ## ProcessorComponent (one outstanding job, re-posted on slow_tick while patients
 ## wait); an unclaimed doctor job simply goes unworked when no eligible pawn exists.
 
@@ -27,14 +27,12 @@ extends ComponentBase
 ## directly by the treatment job, so it heals even while a disease drains.
 @export var heal_per_hour: float = 12.0
 
-## The doctor currently manning the workstation (set by Job_Doctor each working
+## The doctor currently manning the workstation (set by the doctor job each working
 ## tick, cleared when it ends), or null when untended.
 var current_doctor: PawnBase = null
 
-var _claims: Array[JobBase] = []
-## WI-44 claim target. Occupancy for BOTH job systems is booked here while they
-## coexist, so neither can oversubscribe the other's occupants. Reach it through
-## claim_pool(), which syncs capacity first.
+## Occupancy for this component, and the object a job takes its SLOT claim
+## against. Reach it through claim_pool(), which syncs capacity first.
 var _slots := SlotPool.new()
 
 ## The object a WI-44 job takes its SLOT claim against. Capacity is re-synced on
@@ -43,8 +41,8 @@ var _slots := SlotPool.new()
 func claim_pool() -> SlotPool:
 	_slots.capacity = capacity
 	return _slots
-## The outstanding Job_Doctor, so slow_tick doesn't post a duplicate.
-var _doctor_job: Job_Doctor = null
+## The outstanding doctor job, so slow_tick doesn't post a duplicate.
+var _doctor_job: Job = null
 
 func ready_constructed() -> void:
 	add_to_group(Groups.MEDICAL_BAY)
@@ -62,32 +60,17 @@ func is_available() -> bool:
 func has_free_slot() -> bool:
 	return claim_pool().has_free()
 
-func claim_slot(job: JobBase) -> bool:
-	if _claims.has(job) or claim_pool().take_claim(ClaimSpec.Kind.SLOT, 1) == null:
-		return false
-	_claims.append(job)
-	return true
-
-func release_slot(job: JobBase) -> void:
-	if _claims.has(job):
-		_claims.erase(job)
-		claim_pool().release_claim(ClaimSpec.Kind.SLOT, 1, null)
 
 func has_patients() -> bool:
 	return claim_pool().occupied > 0
 
-## Is `pawn` currently occupying a treatment bunk here? Job_Doctor consults this so
-## the sole doctor can't also be one of the patients (WI-31 edge case).
+## Is `pawn` currently occupying a treatment bunk here? The doctor job consults
+## this so the sole doctor can't also be one of the patients (WI-31 edge case).
 ##
-## Both systems are consulted while they coexist. A SLOT claim records the amount
-## but not the claimant, so the WI-44 side asks the registry which JOBS hold a
-## slot here and reads the pawn off those - the reverse lookup exists for exactly
-## this question.
+## A SLOT claim records the amount but not the claimant, so this asks the registry
+## which JOBS hold a slot here and reads the pawn off those - the reverse lookup
+## exists for exactly this question.
 func is_patient(pawn: PawnBase) -> bool:
-	for job: JobBase in _claims:
-		var treatment: Job_GetTreatment = job as Job_GetTreatment
-		if treatment != null and treatment.pawn == pawn:
-			return true
 	if Global.claim_registry != null:
 		for job: Job in Global.claim_registry.jobs_holding(claim_pool(), ClaimSpec.Kind.SLOT):
 			if job.pawn == pawn:
@@ -117,14 +100,15 @@ func _on_slow_tick(_interval: float) -> void:
 		return
 	if Global.job_manager == null:
 		return
-	_doctor_job = Job_Doctor.new()
-	_doctor_job.setup(self)
+	_doctor_job = Job.of(&"doctor").with_target_a(JobTarget.of_component(self))
+	_doctor_job.job_end.connect(_on_doctor_job_end.bind(_doctor_job), CONNECT_ONE_SHOT)
 	Global.job_manager.add_job(_doctor_job)
 
-## Called by Job_Doctor when it ends: drop the outstanding-job slot and clear our
-## operator link (if it was this doctor) so the slow-tick poll re-posts while
-## patients still wait.
-func notify_doctor_job_ended(job: Job_Doctor) -> void:
+## Drops the outstanding-job slot when the doctor job ends and clears our operator
+## link (if it was this doctor), so the slow-tick poll re-posts while patients
+## still wait. Connected at post time rather than called by the job: a WI-44 job
+## does not know who posted it.
+func _on_doctor_job_end(job: Job) -> void:
 	if _doctor_job == job:
 		_doctor_job = null
 	if current_doctor != null and job.pawn == current_doctor:
@@ -132,5 +116,5 @@ func notify_doctor_job_ended(job: Job_Doctor) -> void:
 
 ## Claim the outstanding-doctor-job slot for a restored job (WI-21), so slow_tick
 ## doesn't post a duplicate before the loaded pawn runs it.
-func adopt_doctor_job(job: Job_Doctor) -> void:
+func adopt_doctor_job(job: Job) -> void:
 	_doctor_job = job

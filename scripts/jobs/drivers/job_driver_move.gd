@@ -1,7 +1,7 @@
 class_name JobDriver_Move
 extends JobDriver
 
-## "Walk over there" (WI-44) - the replacement for Job_MoveToLocation.
+## "Walk over there" (WI-44) - the replacement for the move job.
 ##
 ## Target A is the destination module. The whole job is one action, which is the
 ## point: the seventy-two-line class this replaces was two thirds movement

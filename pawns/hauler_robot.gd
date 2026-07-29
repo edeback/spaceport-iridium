@@ -19,7 +19,7 @@ var parent_bay: LogisticsBayComponent = null
 ## bands are untouched because robots claim from the same board crew do. No shift
 ## gate or idle-wander fallback (robots just hold an idle pose when the board is empty).
 func _claim_work_job() -> void:
-	current_job = Global.job_manager.find_job(self, [JobBase.Category.HAUL])
+	current_job = Global.job_manager.find_job(self, [JobData.Category.HAUL])
 	if current_job != null:
 		current_job.start_job(self)
 	elif animated_sprite != null:

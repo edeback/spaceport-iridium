@@ -13,7 +13,7 @@ var current_state : ConstructionState = ConstructionState.NotStarted:
 		if new_state != current_state:
 			current_state = new_state
 			state_changed.emit(new_state)
-var construction_job: Job_ConstructModule = null
+var construction_job: Job = null
 
 signal construction_finished
 signal deconstruction_finished
@@ -48,10 +48,9 @@ func ready_constructed() -> void:
 func start_deconstruction() -> void:
 	if current_state == ConstructionState.Built:
 		set_process(true)
-		construction_job = Job_ConstructModule.new()
-		construction_job.setup(owner_module)
-		construction_job.deconstruct = true
 		# Tearing down something already standing is "finish what's started".
+		construction_job = Job.of(&"deconstruct_module")
+		construction_job.target_a = JobTarget.of_component(self)
 		construction_job.priority = JobPriorities.COMPLETION_BOOST
 		construction_job.job_end.connect(_on_deconstruction_job_end.bind(construction_job), CONNECT_ONE_SHOT)
 		Global.job_manager.add_job(construction_job)
@@ -124,15 +123,15 @@ func ready_for_construction() -> bool:
 ## done - whether that's because a direct handoff got declined (can_do_job()
 ## failed at the last second) or a board-claimed job failed some other way
 ## after being picked up (unreachable, module removed mid-route, etc).
-func _start_construction_job(add_to_board: bool) -> Job_ConstructModule:
+func _start_construction_job(add_to_board: bool) -> Job:
 	material_storage.accepts_exports = false
 	material_storage.accepts_imports = false
 	material_storage.display_storage_ui = false
 	material_storage.display_info_panel_ui = false
-	construction_job = Job_ConstructModule.new()
-	construction_job.setup(owner_module)
 	# Only created once the site is fully resourced, so this is always a
 	# finish-what's-started job: boost it over starting fresh hauls.
+	construction_job = Job.of(&"construct_module")
+	construction_job.target_a = JobTarget.of_component(self)
 	construction_job.priority = JobPriorities.COMPLETION_BOOST
 	construction_job.job_end.connect(_on_construction_job_end.bind(construction_job), CONNECT_ONE_SHOT)
 	current_state = ConstructionState.Constructing
@@ -144,14 +143,14 @@ func _start_construction_job(add_to_board: bool) -> Job_ConstructModule:
 ## handing them straight into the construction job instead of waiting for
 ## _process() to notice next frame and post it on the shared board for
 ## whoever happens to be free.
-func offer_followup_job(_pawn: PawnBase) -> JobBase:
+func offer_followup_job(_pawn: PawnBase) -> Job:
 	if current_state != ConstructionState.NotStarted or construction_job != null:
 		return null
 	if not ready_for_construction():
 		return null
 	return _start_construction_job(false)
 
-func _on_construction_job_end(finished_job: Job_ConstructModule) -> void:
+func _on_construction_job_end(finished_job: Job) -> void:
 	if finished_job.is_failed() and construction_job == finished_job:
 		construction_job = null
 		current_state = ConstructionState.NotStarted
@@ -187,11 +186,10 @@ func setup_storage_for_construction() -> void:
 				material_storage.storage_data[resource] = new_data
 				material_storage.max_stored += new_data.desired
 
-func _on_deconstruction_job_end(finished_job: Job_ConstructModule) -> void:
+func _on_deconstruction_job_end(finished_job: Job) -> void:
 	if finished_job.is_failed() and construction_job == finished_job:
-		construction_job = Job_ConstructModule.new()
-		construction_job.setup(owner_module)
-		construction_job.deconstruct = true
+		construction_job = Job.of(&"deconstruct_module")
+		construction_job.target_a = JobTarget.of_component(self)
 		construction_job.priority = JobPriorities.COMPLETION_BOOST
 		construction_job.job_end.connect(_on_deconstruction_job_end.bind(construction_job), CONNECT_ONE_SHOT)
 		Global.job_manager.add_job(construction_job)

@@ -2,7 +2,7 @@ extends GutTest
 
 ## Unit tests for WI-29 food quality: the pure FoodInstanceData class (quality
 ## primary value, weighted merge, display, dict round-trip, and the static
-## nourishment/mood mappings Job_Eat uses) plus the ResourceStackContainer blend
+## nourishment/mood mappings Action_Eat uses) plus the ResourceStackContainer blend
 ## that pools mixed-quality food. All constructed directly - no Global/SignalBus.
 
 func _food(quality: float, type: StringName = &"") -> FoodInstanceData:
@@ -53,7 +53,7 @@ func test_to_dict_round_trips_through_save_manager() -> void:
 	assert_almost_eq(restored.quality, 0.63, 0.0001, "quality survives the round-trip")
 	assert_eq(restored.food_type, &"meat", "food_type survives the round-trip")
 
-# --- static effect mappings (Job_Eat) ----------------------------------------
+# --- static effect mappings (Action_Eat) --------------------------------------
 
 func test_nourishment_mult_endpoints_and_midpoint() -> void:
 	assert_almost_eq(FoodInstanceData.nourishment_mult(0.0, 0.7, 1.3), 0.7, 0.0001, "quality 0 -> min mult")

@@ -12,7 +12,6 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="9_nrkwy"]
 [ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="10_t70i4"]
 [ext_resource type="Resource" uid="uid://bdtv1cjftf2g1" path="res://data/resources/iron.tres" id="11_160wt"]
-[ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="12_rsq1u"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="13_30eyd"]
 [ext_resource type="Script" uid="uid://c2qsvh4rhb1ta" path="res://scripts/pathing/anchor_def.gd" id="14_anchor"]
 [ext_resource type="Script" uid="uid://d4aeiirm7ox7s" path="res://modules/components/workspace_component.gd" id="15_wksp"]

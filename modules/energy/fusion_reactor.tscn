@@ -10,7 +10,6 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="6_f8t3n"]
 [ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="7_ghcwy"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="7_yku0m"]
-[ext_resource type="Script" uid="uid://me5tjtoupnlk" path="res://scripts/jobs/job_get_resource.gd" id="8_3i5gt"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="11_wjy4w"]
 [ext_resource type="PackedScene" path="res://modules/components/adjacency_emitter_component.tscn" id="12_adjem"]
 [ext_resource type="Script" uid="uid://b2cqiums4fmk0" path="res://modules/components/adjacency_effect_spec.gd" id="13_adjsp"]

@@ -5,7 +5,7 @@ extends PawnComponentBase
 ## regenerates on its own - it only drops (combat in WI-32, and the small hourly
 ## "malfunction" roll here) and is only restored at a dedicated Repair Bay. At
 ## zero the robot is destroyed. Below the repair threshold it queues a
-## Job_GetRepaired non-disruptively (damage isn't the emergency zero-energy is -
+## a repair job non-disruptively (damage isn't the emergency zero-energy is -
 ## the robot finishes its current job, then goes to get patched up).
 ##
 ## Created in code by RobotPawnBase, which forwards the per-robot tuning from its
@@ -32,7 +32,7 @@ var integrity: float = integrity_max:
 			integrity_changed.emit(integrity)
 signal integrity_changed(new_integrity: float)
 
-var _repair_job: Job_GetRepaired = null
+var _repair_job: Job = null
 var _retry_cooldown: float = 0.0
 var _stranded_alerted: bool = false
 ## Guards the destruction path against re-entry (a second apply_damage during
@@ -95,13 +95,13 @@ func _maybe_seek_repair() -> void:
 		return
 	if _retry_cooldown > 0.0:
 		return
-	_repair_job = Job_GetRepaired.new()
+	_repair_job = Job.of(&"get_repaired")
 	_repair_job.job_end.connect(_on_repair_end.bind(_repair_job), CONNECT_ONE_SHOT)
 	# Non-disruptive: repair runs after the current job finishes (unlike the
 	# zero-energy preempt) - damage doesn't stop the robot working.
 	owner_pawn.queue_job(_repair_job)
 
-func _on_repair_end(job: Job_GetRepaired) -> void:
+func _on_repair_end(job: Job) -> void:
 	if job == _repair_job:
 		_repair_job = null
 	# Still damaged after the attempt (no reachable Repair Bay, or it was deconstructed
@@ -141,7 +141,7 @@ func load_save_data(data: Dictionary) -> void:
 
 ## Re-link a repair job restored from a save so the seek loop treats it as the
 ## already-pending job (mirrors RobotPowerComponent.adopt_restored_recharge_job).
-func adopt_restored_repair_job(job: Job_GetRepaired) -> void:
+func adopt_restored_repair_job(job: Job) -> void:
 	if _repair_job == null:
 		_repair_job = job
 		job.job_end.connect(_on_repair_end.bind(job), CONNECT_ONE_SHOT)

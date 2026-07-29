@@ -4,7 +4,7 @@ extends ComponentBase
 ## A charger robots dock at to refill energy (WI-28). Lives on the robots' home
 ## bays as an implicit charger (a Mining Bay / Logistics Bay gains one) and as the
 ## whole point of a standalone Recharge Station. Powered: an unpowered charger
-## serves nobody. Slots are claimed by Job_Recharge up front and released in its
+## serves nobody. Slots are claimed by the recharge job up front and released in its
 ## _on_end - the same non-leaking discipline SleepComponent/RecreationProvider use,
 ## so "all chargers occupied" naturally makes waiting robots queue on other work
 ## or idle rather than piling onto one pad.
@@ -20,10 +20,8 @@ extends ComponentBase
 ## How many robots can charge here at once.
 @export var capacity: int = 2
 
-var _claims: Array[JobBase] = []
-## WI-44 claim target. Occupancy for BOTH job systems is booked here while they
-## coexist, so neither can oversubscribe the other's occupants. Reach it through
-## claim_pool(), which syncs capacity first.
+## Occupancy for this component, and the object a job takes its SLOT claim
+## against. Reach it through claim_pool(), which syncs capacity first.
 var _slots := SlotPool.new()
 
 ## The object a WI-44 job takes its SLOT claim against. Capacity is re-synced on
@@ -46,16 +44,6 @@ func is_available() -> bool:
 func has_free_slot() -> bool:
 	return claim_pool().has_free()
 
-func claim_slot(job: JobBase) -> bool:
-	if _claims.has(job) or claim_pool().take_claim(ClaimSpec.Kind.SLOT, 1) == null:
-		return false
-	_claims.append(job)
-	return true
-
-func release_slot(job: JobBase) -> void:
-	if _claims.has(job):
-		_claims.erase(job)
-		claim_pool().release_claim(ClaimSpec.Kind.SLOT, 1, null)
 
 ## Energy per game-hour this charger delivers right now; 0 when unpowered so a
 ## robot mid-charge leaves gracefully on a power cut.

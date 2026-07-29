@@ -81,7 +81,7 @@ const BREAKDOWN_EFFICIENCY := 0.5
 var hp: float = -1.0
 ## Set while a repair job for this module is live on the board / being worked, so
 ## the slow-tick poll doesn't post a duplicate (mirrors ProcessorComponent._work_job).
-var _repair_job: Job_Repair = null
+var _repair_job: Job = null
 ## True while a rolled breakdown's efficiency modifier is active (WI-24). Cleared
 ## when a repair job completes; persisted so a broken machine stays broken across
 ## a save. Direct-damage breakdowns don't set this - HP repair fixes those.
@@ -366,13 +366,12 @@ func _on_durability_slow_tick(_interval: float) -> void:
 		return
 	if Global.job_manager == null:
 		return
-	_repair_job = Job_Repair.new()
-	_repair_job.setup(self)
+	_repair_job = Job.of(&"repair_module").with_target_a(JobTarget.of_module(self))
 	Global.job_manager.add_job(_repair_job)
 
 ## Claim the outstanding-repair-job slot for a restored job (WI-24), so the
 ## slow-tick poll doesn't post a duplicate before the loaded pawn runs it.
-func adopt_repair_job(job: Job_Repair) -> void:
+func adopt_repair_job(job: Job) -> void:
 	_repair_job = job
 
 func _display_name() -> String:

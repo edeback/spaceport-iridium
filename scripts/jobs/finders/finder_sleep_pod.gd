@@ -8,7 +8,7 @@ extends Finder_FreeSlotComponent
 ## adjacency quality (quiet, greenery - WI-30) can pick between them without
 ## sending a tired pawn on a station-crossing trek for a marginally nicer bed.
 
-## Matches Job_Sleep.desirability_distance_tolerance.
+## Matches the old sleep job's desirability_distance_tolerance.
 const TOLERANCE: float = 3.0
 
 func _init(_unused_group: StringName = &"", _tolerance: float = 0.0, _random: bool = false) -> void:

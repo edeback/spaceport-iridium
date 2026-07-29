@@ -83,7 +83,7 @@ class NeedDef:
 	var get_max: Callable
 	var duration_hours: float
 	var make_job: Callable
-	var pending_job: JobBase = null
+	var pending_job: Job = null
 	var was_critical: bool = false
 
 	func percent() -> float:
@@ -101,14 +101,14 @@ func _ready() -> void:
 			func(v: float) -> void: hunger_value = v,
 			func() -> float: return hunger_max,
 			hunger_duration_hours,
-			func() -> JobBase: return Job_Eat.new()))
+			func() -> Job: return Job.of(&"eat")))
 	if has_sleep_need and sleep_duration_hours > 0:
 		_needs.append(_make_def(&"sleep",
 			func() -> float: return sleep_value,
 			func(v: float) -> void: sleep_value = v,
 			func() -> float: return sleep_max,
 			sleep_duration_hours,
-			func() -> JobBase: return Job_Sleep.new()))
+			func() -> Job: return Job.of(&"sleep")))
 	if has_recreation_need and recreation_duration_hours > 0:
 		_needs.append(_make_def(&"recreation",
 			func() -> float: return recreation_value,
@@ -141,12 +141,15 @@ func _apply_difficulty_modifier() -> void:
 
 ## Recreation can be satisfied at a shop (paid, WI-33) or a free provider. Prefer
 ## a shop when the pawn can afford a reachable one - that's the money loop crew and
-## visitors both feed. Both jobs map to the "recreation" need (see
+## visitors both feed. Both map to the "recreation" need (see
 ## _need_name_for_job) so only one is ever pending at a time.
-func _make_recreation_job() -> JobBase:
-	if Job_Shop.has_affordable_shop(owner_pawn):
-		return Job_Shop.new()
-	return Job_Recreate.new()
+func _make_recreation_job() -> Job:
+	# The finder is the affordability gate now, so "can they shop?" and "where do
+	# they shop?" can no longer answer differently - which is what the static
+	# has_affordable_shop() helper on the old job existed to keep in sync by hand.
+	if Finder_Shop.new().find(null, owner_pawn) != null:
+		return Job.of(&"shop")
+	return Job.of(&"recreate")
 
 func _make_def(need_name: StringName, get_value: Callable, set_value: Callable, get_max: Callable, duration_hours: float, make_job: Callable) -> NeedDef:
 	var def := NeedDef.new()
@@ -166,7 +169,7 @@ func _process(delta: float) -> void:
 		need.set_value.call(float(need.get_value.call()) - sim_hours / need.duration_hours * float(need.get_max.call()))
 		var percent: float = need.percent()
 		if percent < percent_to_look_for_needs and need.pending_job == null:
-			var job: JobBase = need.make_job.call()
+			var job: Job = need.make_job.call()
 			need.pending_job = job
 			job.job_end.connect(_on_need_job_end.bind(need))
 			owner_pawn.queue_job(job) # start when free
@@ -194,9 +197,9 @@ func _on_need_job_end(need: NeedDef) -> void:
 ## WI-21: adopt a needs job restored from a save so the decay loop treats it as
 ## the already-pending job for its need instead of queuing a second one. On load
 ## the component is fresh (pending_job is null), so without this a persisted
-## Job_Eat/Sleep/Recreate in the pawn's queue would be doubled by the first
-## _process tick. Matched to its need by job class; no-op for anything else.
-func adopt_restored_need_job(job: JobBase) -> void:
+## eat/sleep/recreate job in the pawn's queue would be doubled by the first
+## _process tick. Matched to its need by job id; no-op for anything else.
+func adopt_restored_need_job(job: Job) -> void:
 	var target_name: StringName = _need_name_for_job(job)
 	if target_name == &"":
 		return
@@ -207,12 +210,12 @@ func adopt_restored_need_job(job: JobBase) -> void:
 				job.job_end.connect(_on_need_job_end.bind(need))
 			return
 
-func _need_name_for_job(job: JobBase) -> StringName:
-	if job is Job_Eat:
+func _need_name_for_job(job: Job) -> StringName:
+	if job.is_type(&"eat"):
 		return &"hunger"
-	if job is Job_Sleep:
+	if job.is_type(&"sleep"):
 		return &"sleep"
-	if job is Job_Recreate or job is Job_Shop:
+	if job.is_type(&"recreate") or job.is_type(&"shop"):
 		return &"recreation"
 	return &""
 
@@ -339,5 +342,5 @@ func load_save_data(data: Dictionary) -> void:
 			_modifiers[StringName(id_str)] = Vector2(float(arr[0]), float(arr[1]))
 	if resigned:
 		# The decision was already final when saved - resume the walkout once
-		# the tree settles (CrewManager reacts by issuing Job_LeaveStation).
+		# the tree settles (CrewManager reacts by issuing the leave job).
 		(func() -> void: SignalBus.crew_resigned.emit(owner_pawn)).call_deferred()

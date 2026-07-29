@@ -168,14 +168,14 @@ func _robot_state_text() -> String:
 	var robot := pawn as RobotPawnBase
 	if robot.power_component != null and robot.power_component.must_recharge():
 		return "Out of power — crawling"
-	var job: JobBase = pawn.current_job
-	if job is Job_Recharge:
+	var job: Job = pawn.current_job
+	if job != null and job.is_type(&"recharge"):
 		return "Recharging"
-	if job is Job_GetRepaired:
+	if job != null and job.is_type(&"get_repaired"):
 		return "Getting repaired"
 	if robot.power_component != null and robot.power_component.wants_recharge():
 		return "Seeking a charger"
-	if job == null or job is Job_Idle or job is Job_IdleWander:
+	if job == null or job.is_idle_type():
 		return "Idle"
 	return "Working"
 

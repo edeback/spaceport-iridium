@@ -1,7 +1,7 @@
 class_name JobDriver_StoreInventory
 extends JobDriver
 
-## The cargo sweep (WI-44) - the replacement for Job_StoreInventory.
+## The cargo sweep (WI-44) - the replacement for the cargo sweep.
 ##
 ## Not saveable: PawnBase re-creates it from whatever the pawn is actually
 ## carrying, so persisting it would only duplicate what the inventory already

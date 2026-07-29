@@ -1,7 +1,7 @@
 class_name JobDriver_WorkProcessor
 extends JobDriver
 
-## Operating a manned processor (WI-44) - the replacement for Job_WorkProcessor.
+## Operating a manned processor (WI-44) - the replacement for the processor work job.
 ##
 ## Target A is the ProcessorComponent.
 ##

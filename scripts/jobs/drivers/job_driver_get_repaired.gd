@@ -2,7 +2,7 @@ class_name JobDriver_GetRepaired
 extends JobDriver
 
 ## A damaged drone getting patched up (WI-44) - the replacement for
-## Job_GetRepaired. Same four steps as recharging, pointed at the integrity
+## the robot-repair job. Same four steps as recharging, pointed at the integrity
 ## channel on RobotIntegrityComponent.
 ##
 ## Note this is the drone being WORKED ON, not doing the work: no skill, no xp.

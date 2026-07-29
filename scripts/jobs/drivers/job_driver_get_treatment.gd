@@ -1,7 +1,7 @@
 class_name JobDriver_GetTreatment
 extends JobDriver
 
-## Check into the medical bay (WI-44) - the replacement for Job_GetTreatment.
+## Check into the medical bay (WI-44) - the replacement for the treatment job.
 ##
 ## Target A is the MedicalComponent. Same four-step shape as sleeping - find,
 ## claim the bunk, walk to the BUNK anchor, then hold - because it is the same

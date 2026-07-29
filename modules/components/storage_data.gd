@@ -4,34 +4,28 @@ extends ResourceStackContainer
 @export var desired: int = 0
 @export var reserved_withdraw: int = 0
 @export var reserved_deposit: int = 0
-@export var import_job: Job_GetResource
-@export var export_job: Job_GetResource
-@export var withdraw_jobs: Array[Job_GetResource] = []
-@export var deposit_jobs: Array[Job_GetResource] = []
+## The outstanding board jobs this bin has posted, so it doesn't post a second
+## one for the same deficit/surplus. Reservations are NOT tracked here any more -
+## they are claims, and reserved_withdraw/reserved_deposit above are maintained
+## by the claimable contract below (WI-44).
+var import_job: Job = null
+var export_job: Job = null
 @export var autodump: bool = false
 
 func end_all_jobs() -> void:
-	# Null/erase our references BEFORE cancelling: cancel() re-enters this
-	# storage via cancel_withdraw_job/cancel_deposit_job, and the erase-first
-	# ordering is what keeps that re-entrancy safe. cancel() implies end_job
-	# (lifecycle contract) - no separate end call needed.
+	# Null our reference BEFORE cancelling: ending a job releases its claims,
+	# which re-enters this storage, and clearing first is what keeps that
+	# re-entrancy safe.
 	if import_job != null:
-		var job: Job_GetResource = import_job
+		var job: Job = import_job
 		import_job = null
 		job.cancel(true)
 		Global.job_manager.remove_job(job)
 	if export_job != null:
-		var job: Job_GetResource = export_job
+		var job: Job = export_job
 		export_job = null
 		job.cancel(true)
 		Global.job_manager.remove_job(job)
-	# Iterate copies: each cancel() re-enters and erases from the live array.
-	for job in withdraw_jobs.duplicate():
-		job.cancel(true)
-	withdraw_jobs.clear()
-	for job in deposit_jobs.duplicate():
-		job.cancel(true)
-	deposit_jobs.clear()
 
 func set_job_priority(new_priority: int) -> void:
 	if import_job != null:
@@ -95,9 +89,10 @@ func deposit(quantity: int, use_reserve: bool) -> int:
 # It also keeps the claim path free of Global, which is what preserves this
 # class's pure GUT suite.
 #
-# These are the amount-based replacement for add_withdraw_job(job: Job_GetResource),
-# whose hard type is the reason Job_CollectPile could never reserve deposit space.
-# The claim carries its own amount, so any job can now reserve either direction.
+# The amount-based replacement for the add/cancel/complete_*_job pairs this class
+# used to carry, whose hard the haul job type was the reason pile collection
+# could never reserve deposit space. A claim carries its own amount and does not
+# care who is asking, so any job can now reserve either direction.
 
 func can_take_claim(kind: int, amount: int) -> bool:
 	if kind == ClaimSpec.Kind.STORAGE_WITHDRAW:
@@ -138,58 +133,3 @@ func deposit_reserved(stacks: Array[ResourceStack], amount: int) -> void:
 		add_stack(stack)
 	reserved_deposit = maxi(reserved_deposit - amount, 0)
 
-func add_withdraw_job(job: Job_GetResource) -> void:
-	withdraw_jobs.append(job)
-	reserved_withdraw += job.amount
-
-func cancel_withdraw_job(job: Job_GetResource) -> void:
-	if job == export_job:
-		export_job = null
-	if withdraw_jobs.has(job):
-		withdraw_jobs.erase(job)
-		reserved_withdraw -= job.amount
-		assert(reserved_withdraw >= 0)
-
-## Withdraws the amount reserved for `job` as real stacks (preserving any
-## instance_data) instead of just flipping a bool. Returns [] on failure -
-## same "nothing happened" meaning the old bool-false used to carry.
-func complete_withdraw_job(job: Job_GetResource) -> Array[ResourceStack]:
-	if not withdraw_jobs.has(job):
-		return []
-	var withdrawn: Array[ResourceStack] = _do_withdraw(job.amount, true)
-	if not withdrawn.is_empty():
-		if job == export_job:
-			export_job = null
-		withdraw_jobs.erase(job)
-	return withdrawn
-
-func add_deposit_job(job: Job_GetResource) -> void:
-	deposit_jobs.append(job)
-	reserved_deposit += job.amount
-
-func cancel_deposit_job(job: Job_GetResource) -> void:
-	if job == import_job:
-		import_job = null
-	if deposit_jobs.has(job):
-		deposit_jobs.erase(job)
-		reserved_deposit -= job.amount
-		assert(reserved_deposit >= 0)
-
-## Deposits the actual stacks a job is carrying (preserving instance_data)
-## instead of just job.amount worth of generic units. incoming_stacks empty
-## falls back to a plain generic deposit, for callers that never touched a
-## pawn's inventory (shouldn't normally happen via Job_GetResource anymore,
-## but keeps this safe to call the old way too).
-func complete_deposit_job(job: Job_GetResource, incoming_stacks: Array[ResourceStack] = []) -> bool:
-	if not deposit_jobs.has(job):
-		return false
-	if job == import_job:
-		import_job = null
-	if incoming_stacks.is_empty():
-		deposit(job.amount, true)
-	else:
-		for stack: ResourceStack in incoming_stacks:
-			add_stack(stack)
-		reserved_deposit = maxi(reserved_deposit - job.amount, 0)
-	deposit_jobs.erase(job)
-	return true

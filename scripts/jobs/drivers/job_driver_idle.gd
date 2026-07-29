@@ -1,7 +1,7 @@
 class_name JobDriver_Idle
 extends JobDriver
 
-## Standing around (WI-44) - the replacement for Job_Idle. The last-resort
+## Standing around (WI-44) - the replacement for the idle job. The last-resort
 ## fallback for a pawn that cannot even wander (nowhere reachable, or boxed in).
 ##
 ## One waiting step in the idle pose. Not saveable, for the same reason as

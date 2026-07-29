@@ -1,14 +1,14 @@
 class_name JobDriver_CollectPile
 extends JobDriver
 
-## Sweep up a ResourcePile (WI-44) - the replacement for Job_CollectPile.
+## Sweep up a ResourcePile (WI-44) - the replacement for the pile-collection job.
 ##
 ## Target A is the pile, target B the storage to carry it to, job.resource which
 ## of the pile's resources this trip is about.
 ##
 ## One behavioural upgrade over the job it replaces, which documented at length
 ## that it "deliberately does NOT reserve space in deposit_storage" because
-## StorageData's job-tracking arrays were hard-typed to Job_GetResource. Claims
+## StorageData's job-tracking arrays were hard-typed to the haul job. Claims
 ## carry their own amount and care nothing about who is asking, so this now
 ## reserves both ends like any other haul - a pawn no longer walks a load across
 ## the station to a bin that filled up while it was travelling.

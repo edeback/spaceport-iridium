@@ -11,7 +11,7 @@ extends ActionBase
 ##
 ## Going broke is not a failure: the charge is clamped to the wallet, so a
 ## customer that dipped below the rolled price still gets served for what they
-## have. That is Job_Shop's rule, kept.
+## have. That is the shopping job's rule, kept.
 
 @export var slot: JobTarget.Slot = JobTarget.Slot.A
 
@@ -35,7 +35,7 @@ func on_start(job: Job) -> Status:
 	job.count = charge
 	return Status.DONE
 
-## Already paid. Job_Shop documented the opposite behaviour as an accepted v1
+## Already paid. the shopping job documented the opposite behaviour as an accepted v1
 ## edge - it did not persist its paid flag, so a visit saved mid-session and
 ## reloaded charged the customer a second time. The bill lives in job.count now,
 ## so the resume is free.

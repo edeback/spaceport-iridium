@@ -340,7 +340,7 @@ func roll_tint() -> Color:
 func _on_crew_resigned(pawn: PawnBase) -> void:
 	# Graceful interrupt (WI-04): whatever they were doing cancels cleanly,
 	# carried cargo stays with them and piles up at despawn.
-	pawn.interrupt_with_job(Job_LeaveStation.new())
+	pawn.interrupt_with_job(Job.of(&"leave_station"))
 
 ## Player-initiated firing (WI-25): reuses the resignation departure but is NOT
 ## morale-driven. Latching `resigned` before emitting stops the pawn drawing a

@@ -1,7 +1,7 @@
 class_name SleepComponent
 extends ComponentBase
 
-## Sleep slots on a pod module. Job_Sleep claims a slot at claim time (not on
+## Sleep slots on a pod module. the sleep job claims a slot at claim time (not on
 ## arrival) so two pawns never race for the same pod, and releases it in its
 ## _on_end - which runs on every termination path (WI-04 contract), so slots
 ## can't leak. Slots are runtime-only state: rebuilt empty on save/load.
@@ -39,10 +39,8 @@ extends ComponentBase
 @export var greenery_rest_bonus_k: float = 0.15
 @export var greenery_desirability_k: float = 1.0
 
-var _claims: Array[JobBase] = []
-## WI-44 claim target. Occupancy for BOTH job systems is booked here while they
-## coexist, so neither can oversubscribe the other's occupants. Reach it through
-## claim_pool(), which syncs capacity first.
+## Occupancy for this component, and the object a job takes its SLOT claim
+## against. Reach it through claim_pool(), which syncs capacity first.
 var _slots := SlotPool.new()
 
 ## The object a WI-44 job takes its SLOT claim against. Capacity is re-synced on
@@ -63,20 +61,10 @@ func has_free_slot() -> bool:
 func claimed_count() -> int:
 	return claim_pool().occupied
 
-func claim_slot(job: JobBase) -> bool:
-	if _claims.has(job) or claim_pool().take_claim(ClaimSpec.Kind.SLOT, 1) == null:
-		return false
-	_claims.append(job)
-	return true
-
-func release_slot(job: JobBase) -> void:
-	if _claims.has(job):
-		_claims.erase(job)
-		claim_pool().release_claim(ClaimSpec.Kind.SLOT, 1, null)
 
 ## Whether `pawn` is allowed to sleep here (WI-33): a hotel room takes visitors
 ## only, a crew pod takes crew only. The mutual exclusion that keeps crew out of
-## paid rooms and guests out of the bunkhouse - Job_Sleep filters on this.
+## paid rooms and guests out of the bunkhouse - the sleep job filters on this.
 func accepts(pawn: PawnBase) -> bool:
 	if pawn == null:
 		return false
@@ -111,7 +99,7 @@ func effective_nightly_rate() -> int:
 		return int(round(owner_module.get_effective_stat(&"hotel_rate", float(nightly_rate))))
 	return nightly_rate
 
-## Called by Job_Sleep when a pawn wakes from a FULL night (never on an early
+## Called by the sleep job when a pawn wakes from a FULL night (never on an early
 ## cancel). For a visitor in a hotel room: bills the nightly rate to their wallet
 ## (clamped, income "hotels") and applies the room's comfort mood lift. No-op for
 ## crew and for a crew pod. Returns the amount actually billed (for alerts/tests).
@@ -147,7 +135,7 @@ func environment_rest_multiplier() -> float:
 
 ## Desirability score for choosing among free bunks (WI-30): greener is nicer,
 ## noisier is worse. Only a tie-break between comparably-close pods - see
-## Job_Sleep._find_pod.
+## the old sleep job's _find_pod.
 func desirability() -> float:
 	if Global.adjacency_manager == null or owner_module == null:
 		return 0.0

@@ -117,10 +117,10 @@ func test_load_round_trip_preserves_ids() -> void:
 	assert_eq(ids.size(), 2, "both pending ids survive a save->load->save round trip")
 	assert_true(ids.has(3) and ids.has(5), "the exact ids round-trip")
 
-# --- JobBase.effective_priority_for affinity ---------------------------------
+# --- Job.effective_priority_for affinity --------------------------------------
 
 func test_no_workspace_matches_plain_priority() -> void:
-	var job := JobBase.new()
+	var job := Job.new()
 	job.priority = 5
 	var a := _pawn(1)
 	assert_eq(job.effective_priority_for(a), job.effective_priority(),
@@ -131,7 +131,7 @@ func test_assignee_gets_affinity_bonus() -> void:
 	var a := _pawn(1)
 	var b := _pawn(2)
 	ws.assign(a)
-	var job := JobBase.new()
+	var job := Job.new()
 	job.workspace = ws
 	assert_almost_eq(job.effective_priority_for(a),
 		job.effective_priority() + JobPriorities.WORKSPACE_AFFINITY_BONUS, 0.001,
@@ -141,7 +141,7 @@ func test_assignee_gets_affinity_bonus() -> void:
 
 func test_open_workspace_gives_no_affinity() -> void:
 	# An empty (open) workspace lists nobody, so no pawn gets the bonus.
-	var job := JobBase.new()
+	var job := Job.new()
 	job.workspace = _workspace()
 	var a := _pawn(1)
 	assert_almost_eq(job.effective_priority_for(a), job.effective_priority(), 0.001,

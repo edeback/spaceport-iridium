@@ -17,7 +17,7 @@ extends PawnComponentBase
 ## Transmission is one roll site here (on hour_changed): a carrier rolls each
 ## co-located, uninfected organic pawn, scaled down by the module's purified_air
 ## adjacency field. Treatment seeking mirrors RobotIntegrityComponent - a single
-## queued Job_GetTreatment, promoted when critical, retried on a throttle.
+## queued treatment job, promoted when critical, retried on a throttle.
 
 ## Fired when the set of diseases or their stages change (infect / cure / worsen /
 ## load) so the pawn panel's health tab can refresh without polling. Treatment
@@ -38,7 +38,7 @@ signal diseases_changed
 ## disease_id -> {"stage": int, "stage_hours": float, "treat_progress": float}.
 var _active: Dictionary[StringName, Dictionary] = {}
 
-var _treatment_job: Job_GetTreatment = null
+var _treatment_job: Job = null
 var _retry_cooldown: float = 0.0
 var _stranded_alerted: bool = false
 ## Cached sibling - component _ready order isn't guaranteed, resolve lazily.
@@ -267,7 +267,7 @@ func worst_active_disease() -> StringName:
 
 ## Add `progress_hours` of treatment to the worst active disease. Crossing its
 ## treat_hours_base cures it (or regresses one stage when cure_at_stage_reset).
-## Called by Job_GetTreatment each tick while the pawn lies in a Medical Bay bunk.
+## Called by Action_Treat each tick while the pawn lies in a Medical Bay bunk.
 func apply_treatment(progress_hours: float) -> void:
 	if progress_hours <= 0.0:
 		return
@@ -318,7 +318,7 @@ func _maybe_seek_treatment() -> void:
 		return
 	if _retry_cooldown > 0.0:
 		return
-	_treatment_job = Job_GetTreatment.new()
+	_treatment_job = Job.of(&"get_treatment")
 	_treatment_job.job_end.connect(_on_treatment_end.bind(_treatment_job), CONNECT_ONE_SHOT)
 	# Non-disruptive: treatment runs after the current job finishes (the WI-05
 	# needs pattern), unless critical, in which case it jumps the queue front.
@@ -326,7 +326,7 @@ func _maybe_seek_treatment() -> void:
 	if _is_critical():
 		owner_pawn.promote_queued_job(_treatment_job)
 
-func _on_treatment_end(job: Job_GetTreatment) -> void:
+func _on_treatment_end(job: Job) -> void:
 	if job == _treatment_job:
 		_treatment_job = null
 	# Still wanting treatment after the attempt (no reachable bay / all bunks full):
@@ -341,7 +341,7 @@ func _on_treatment_end(job: Job_GetTreatment) -> void:
 
 ## Re-link a treatment job restored from a save so the seek loop treats it as the
 ## already-pending job (mirrors adopt_restored_repair_job).
-func adopt_restored_treatment_job(job: Job_GetTreatment) -> void:
+func adopt_restored_treatment_job(job: Job) -> void:
 	if _treatment_job == null:
 		_treatment_job = job
 		job.job_end.connect(_on_treatment_end.bind(job), CONNECT_ONE_SHOT)

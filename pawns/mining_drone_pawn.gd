@@ -17,11 +17,15 @@ func _claim_work_job() -> void:
 		# No job, idle pose
 		animated_sprite.play("idle")
 
-## Drones deposit only in their own bay's output storage.
-func _make_store_inventory_job() -> Job_StoreInventory:
-	var return_job := Job_StoreInventory.new()
-	if parent_mining_component != null:
-		return_job.deposit_storage = parent_mining_component.output_storage
+## Drones head for their own bay's output storage first. Pre-setting the target
+## is enough: the sweep's finder skips a slot that is already resolved. If the bay
+## will not take everything, the sweep's loop then finds somewhere that will,
+## rather than the drone stalling with cargo it cannot put down - a small
+## relaxation of the old "own bay only" rule, in the direction of not deadlocking.
+func _make_store_inventory_job() -> Job:
+	var return_job: Job = Job.of(&"store_inventory")
+	if parent_mining_component != null and parent_mining_component.output_storage != null:
+		return_job.target_a = JobTarget.of_component(parent_mining_component.output_storage)
 	return return_job
 
 ## Destroyed (WI-28): drop off the bay's roster so its respawn timer builds a

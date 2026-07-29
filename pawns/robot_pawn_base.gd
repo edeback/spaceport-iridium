@@ -101,14 +101,14 @@ func start_job() -> void:
 		return
 	# Return carried cargo first so a robot never sits on stock it could deposit.
 	if inventory_component != null and not inventory_component.is_empty():
-		var return_job: Job_StoreInventory = _make_store_inventory_job()
+		var return_job: Job = _make_store_inventory_job()
 		if return_job.can_do_job(self):
 			_begin_job(return_job)
 			return
 		# Nowhere takes it right now - fall through rather than stalling the robot.
 	# Personal queue next: chained followups, queued needs (recharge/repair).
 	while not job_queue.is_empty():
-		var queued_job: JobBase = job_queue.pop_front()
+		var queued_job: Job = job_queue.pop_front()
 		if queued_job.is_valid() and queued_job.can_do_job(self):
 			_begin_job(queued_job)
 			return
@@ -126,8 +126,8 @@ func start_job() -> void:
 ## so if none is runnable here we just hold an idle pose and let it retry (throttled).
 func _start_recharge_only() -> void:
 	for i: int in range(job_queue.size()):
-		if job_queue[i] is Job_Recharge:
-			var job: JobBase = job_queue[i]
+		if job_queue[i].data != null and job_queue[i].data.id == &"recharge":
+			var job: Job = job_queue[i]
 			job_queue.remove_at(i)
 			if job.is_valid() and job.can_do_job(self):
 				_begin_job(job)
@@ -142,8 +142,3 @@ func _start_recharge_only() -> void:
 func _claim_work_job() -> void:
 	if animated_sprite != null:
 		animated_sprite.play("idle")
-
-## Store-inventory sweep target, overridable (the drone restricts deposits to its
-## own bay). Base: an open sweep to any storage that will take the cargo.
-func _make_store_inventory_job() -> Job_StoreInventory:
-	return Job_StoreInventory.new()

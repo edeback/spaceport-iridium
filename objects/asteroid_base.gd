@@ -21,7 +21,7 @@ var rotation_speed_deg_per_sec: float = 30
 ## samples its richness inside this range.
 var richness_range: Vector2 = Vector2(0.3, 0.7)
 
-## Player-flagged for priority mining: Job_MineAsteroid targets designated
+## Player-flagged for priority mining: the mining job targets designated
 ## asteroids before ore-priority or random picks. Persisted with the asteroid
 ## (WI-21) so a designation survives save/load like the rest of the field.
 var designated: bool = false:

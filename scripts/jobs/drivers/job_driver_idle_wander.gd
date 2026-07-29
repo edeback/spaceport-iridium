@@ -2,7 +2,7 @@ class_name JobDriver_IdleWander
 extends JobDriver
 
 ## Drifting about with nothing to do (WI-44) - the replacement for
-## Job_IdleWander. Not saveable: idle is the fallback a pawn lands in anyway, so
+## the wander job. Not saveable: idle is the fallback a pawn lands in anyway, so
 ## there is nothing worth persisting.
 ##
 ## Ambles at 0.4 speed rather than marching, then claims a STAND anchor in the

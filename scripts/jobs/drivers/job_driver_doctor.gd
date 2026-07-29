@@ -1,7 +1,7 @@
 class_name JobDriver_Doctor
 extends JobDriver
 
-## Staffing a medical bay (WI-44) - the replacement for Job_Doctor.
+## Staffing a medical bay (WI-44) - the replacement for the doctor job.
 ##
 ## Target A is the MedicalComponent. The doctor occupies a WORKSTATION, not a
 ## treatment bunk, so this claims an anchor but no slot - the beds belong to the
@@ -27,7 +27,7 @@ func can_do(job: Job, pawn: PawnBase) -> bool:
 	var medical: MedicalComponent = _medical(job)
 	# The sole doctor can't also be one of the patients (WI-31 edge case).
 	# NOTE: is_patient() still walks the LEGACY claims array - see the coexistence
-	# gaps in the WI - so this under-reports until Job_GetTreatment converts.
+	# gaps in the WI - so this under-reports until the treatment job converts.
 	if medical.is_patient(pawn):
 		return false
 	var workspace: WorkspaceComponent = _workspace(job)

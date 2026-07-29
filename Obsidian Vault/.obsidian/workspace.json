@@ -151,12 +151,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/WI-44_Job_System_Refactor.md",
+                "file": "Spaceport Iridium/Reorganized/Future Work.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "WI-44_Job_System_Refactor"
+              "title": "Future Work"
             }
           }
         ],
@@ -307,6 +307,7 @@
   },
   "active": "8caa9f37fed1693c",
   "lastOpenFiles": [
+    "Spaceport Iridium/Planning/Work Items/WI-44_Job_System_Refactor.md",
     "Spaceport Iridium/Planning/Work Items/WI-44_Job_System_Refactor.md.tmp.40080.fb8d97ceff86",
     "Spaceport Iridium/Planning/Work Items/WI-44_Job_System_Refactor.md.tmp.40080.256815d8821f",
     "Spaceport Iridium/Planning/Work Items/WI-44_Job_System_Refactor.md.tmp.40080.4f1135ca2da8",
@@ -317,9 +318,7 @@
     "Spaceport Iridium/Planning/Work Items/WI-44_Job_System_Refactor.md.tmp.141716.bac97624b74d",
     "Spaceport Iridium/Planning/Work Items/WI-44_Job_System_Refactor.md.tmp.141716.97b5520830f6",
     "Spaceport Iridium/Planning/Work Items/WI-44_Job_System_Refactor.md.tmp.141716.723de6d5b6b2",
-    "Spaceport Iridium/Planning/Work Items/WI-44_Job_System_Refactor.md.tmp.141716.611419f6e073",
     "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md",
-    "Spaceport Iridium/Planning/Work Items/WI-44_Job_System_Refactor.md",
     "Spaceport Iridium/Reorganized/Future Work.md",
     "Spaceport Iridium/Planning/New Work For Phase 3.md",
     "Spaceport Iridium/Reorganized/Spaceport Iridium Plan.md",

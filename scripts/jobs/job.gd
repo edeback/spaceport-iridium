@@ -79,6 +79,16 @@ static func create(job_data: JobData) -> Job:
 	job.data = job_data
 	return job
 
+## The posting-site constructor: `Job.of(&"haul_resource").with_resource(r)`.
+## Every job in the game is now built this way, so an unknown id is a typo in a
+## posting site rather than a recoverable condition - it pushes an error and
+## returns a job with no definition, which fails on its first frame.
+static func of(id: StringName) -> Job:
+	var job_data: JobData = JobDataRegistry.get_data(id)
+	if job_data == null:
+		push_error("No JobData registered for id '%s'" % id)
+	return create(job_data)
+
 func with_target_a(target: JobTarget) -> Job:
 	target_a = target
 	return self
@@ -149,6 +159,17 @@ func index_of_label(action_label: StringName) -> int:
 	return -1
 
 # --- lifecycle ----------------------------------------------------------------
+
+## Type test for the handful of places that genuinely care WHICH job this is -
+## "is this pawn merely idling", "is this the recharge job". Replaces `job is
+## the idle job` now that every job shares one class and differs by its definition.
+func is_type(type_id: StringName) -> bool:
+	return data != null and data.id == type_id
+
+## True while the pawn is doing nothing that matters: idling in place or drifting.
+## Several systems (breathing, robot power) treat both the same way.
+func is_idle_type() -> bool:
+	return is_type(&"idle") or is_type(&"idle_wander")
 
 func get_category() -> JobData.Category:
 	return data.category if data != null else JobData.Category.MISC

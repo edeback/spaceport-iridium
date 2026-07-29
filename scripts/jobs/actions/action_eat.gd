@@ -10,7 +10,7 @@ extends ActionBase
 ## the portion together, captured before an emptied pool resets, and re-reading
 ## pool_quality afterwards would grade the meal against whatever came next.
 
-## Portion size to ask for. Matches Job_Eat's desired_sustenance.
+## Portion size to ask for. Matches the eat job's desired_sustenance.
 @export var slot: JobTarget.Slot = JobTarget.Slot.A
 @export var desired: int = 70
 

@@ -1,11 +1,11 @@
 class_name JobDriver_Eat
 extends JobDriver
 
-## Go and eat something (WI-44) - the replacement for Job_Eat.
+## Go and eat something (WI-44) - the replacement for the eat job.
 ##
 ## Target A is the sustenance pool. Three actions, no claim: a pool has no slots,
 ## so nothing is booked and nothing needs releasing. The re-validation that
-## Job_Eat did by hand on arrival ("eat from the component we chose and walked
+## the eat job did by hand on arrival ("eat from the component we chose and walked
 ## to, not whatever module we happen to be standing in") is structural now - the
 ## action reads the slot, and a pool that died on the way fails the job through
 ## the target's own liveness check.

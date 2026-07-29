@@ -1,7 +1,7 @@
 class_name JobDriver_Repair
 extends JobDriver
 
-## Repairing a damaged module (WI-44) - the replacement for Job_Repair.
+## Repairing a damaged module (WI-44) - the replacement for the repair job.
 ##
 ## Target A is the module itself (not a component - repair is module-level work).
 ## Two steps: walk to the WORKSTATION anchor if the module authors one, then

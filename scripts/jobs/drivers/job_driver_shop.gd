@@ -1,7 +1,7 @@
 class_name JobDriver_Shop
 extends JobDriver
 
-## Go shopping (WI-44) - the replacement for Job_Shop.
+## Go shopping (WI-44) - the replacement for the shopping job.
 ##
 ## Structurally the recreation driver with one extra step: pay on arrival. Target
 ## A is the shop, and everything the old job hand-rolled around that - the
@@ -20,8 +20,8 @@ const GOTO: int = 2
 const PAY: int = 3
 const BROWSE: int = 4
 
-## Matches Job_Shop.max_stay_hours - leave even if not fully restored, so a
-## customer doesn't camp the store all cycle.
+## Matches the old shopping job's max_stay_hours - leave even if not fully
+## restored, so a customer doesn't camp the store all cycle.
 const MAX_STAY_HOURS: float = 3.0
 
 func make_actions(_job: Job) -> Array[ActionBase]:

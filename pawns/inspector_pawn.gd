@@ -21,7 +21,7 @@ func _ready() -> void:
 ## MiningDronePawn's narrowed start_job.
 func start_job() -> void:
 	while not job_queue.is_empty():
-		var queued_job: JobBase = job_queue.pop_front()
+		var queued_job: Job = job_queue.pop_front()
 		if queued_job.is_valid() and queued_job.can_do_job(self):
 			_begin_job(queued_job)
 			return
