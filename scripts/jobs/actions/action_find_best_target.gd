@@ -15,6 +15,12 @@ extends ActionBase
 @export var slot: JobTarget.Slot = JobTarget.Slot.A
 ## Leave an already-resolved slot alone. False = always re-run the finder.
 @export var skip_if_set: bool = true
+## Finding nothing is a legitimate outcome rather than a failure - the driver
+## branches on whether the slot came back set. Only one job needs this (leaving
+## the station falls back to an escape pod when no docking bay is reachable), and
+## it is a flag rather than a second action because the alternative is a
+## near-duplicate class differing in one return value.
+@export var optional: bool = false
 
 func _init(target_finder: TargetFinder = null, into_slot: JobTarget.Slot = JobTarget.Slot.A) -> void:
 	finder = target_finder
@@ -31,7 +37,9 @@ func on_start(job: Job) -> Status:
 		return Status.FAILED
 	var found: JobTarget = finder.find(job, job.pawn)
 	if found == null or not found.is_alive():
-		return Status.FAILED
+		# Leave the slot untouched so the driver's next_index_after() can tell the
+		# difference between "found nothing" and "found something".
+		return Status.DONE if optional else Status.FAILED
 	job.set_target(slot, found)
 	return Status.DONE
 

@@ -104,6 +104,21 @@ func record_sale(amount: int) -> void:
 		# station banks that net (the WI-25 call-site contract - never re-read gross).
 		Global.resource_manager.credit_resource.change_global_total(Global.economy_manager.record_income(amount, &"shops"))
 
+## WI-44 adapter: the uniform name Action_Pay calls once the customer has actually
+## handed over `amount`. Books the sale and applies whatever else the vendor does
+## on a completed visit, so the action stays a generic "charge the register" step
+## and the shop-specific consequences live here.
+func complete_sale(pawn: PawnBase, amount: int) -> void:
+	record_sale(amount)
+	# A satisfying visit lifts mood a little (WI-33), nudging reputation for
+	# visitors and just cheering crew. Timed, so it fades like a good meal.
+	if shop_type == null or is_zero_approx(shop_type.visit_mood_bonus) or pawn == null:
+		return
+	var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
+	if needs != null:
+		needs.add_modifier(&"good_shopping", shop_type.visit_mood_bonus,
+			shop_type.visit_mood_duration_hours)
+
 # --- persistence --------------------------------------------------------------
 # Only the selected type id round-trips; capacity/claims are runtime-only.
 

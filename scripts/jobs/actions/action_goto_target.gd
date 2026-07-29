@@ -19,6 +19,16 @@ extends ActionBase
 ## exterior repair are EVA jobs - the pawn goes OUTSIDE to work on the module,
 ## even though a module target is normally an interior destination.
 @export var force_exterior: bool = false
+## Report a broken route as DONE rather than failing the job, leaving the driver
+## to read job.movement_state() in next_index_after() and branch. Only the
+## departure job wants this (a walk that breaks mid-route falls back to the escape
+## pod); for everything else a failed walk genuinely is a failed job.
+@export var tolerate_failure: bool = false:
+	set(value):
+		tolerate_failure = value
+		# CONDITION hands the arrival test to check(); MOVEMENT keeps it in the
+		# runner, where a broken route is unconditionally fatal.
+		complete_mode = CompleteMode.CONDITION if value else CompleteMode.MOVEMENT
 
 func _init(target_slot: JobTarget.Slot = JobTarget.Slot.A, move_speed: float = 1.0) -> void:
 	slot = target_slot
@@ -46,6 +56,15 @@ func on_start(job: Job) -> Status:
 ## a path index. Full path persistence was considered and rejected in the WI.
 func on_resume(job: Job) -> Status:
 	return on_start(job)
+
+## Only consulted when tolerate_failure put this action in CONDITION mode; it
+## mirrors the runner's MOVEMENT handling except that a broken route reads as
+## finished rather than failed.
+func check(job: Job) -> Status:
+	match job.movement_state():
+		Job.MoveState.ARRIVED, Job.MoveState.FAILED:
+			return Status.DONE
+	return Status.ONGOING
 
 func report(job: Job) -> String:
 	var destination: JobTarget = job.target(slot)

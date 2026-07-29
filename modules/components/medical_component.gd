@@ -78,14 +78,20 @@ func has_patients() -> bool:
 
 ## Is `pawn` currently occupying a treatment bunk here? Job_Doctor consults this so
 ## the sole doctor can't also be one of the patients (WI-31 edge case).
-## NOTE (WI-44): still walks the LEGACY _claims array, so it will not see a
-## patient held by the new job system. Must be revisited when Job_GetTreatment
-## is converted - a SLOT claim alone doesn't record WHICH pawn holds it.
+##
+## Both systems are consulted while they coexist. A SLOT claim records the amount
+## but not the claimant, so the WI-44 side asks the registry which JOBS hold a
+## slot here and reads the pawn off those - the reverse lookup exists for exactly
+## this question.
 func is_patient(pawn: PawnBase) -> bool:
 	for job: JobBase in _claims:
 		var treatment: Job_GetTreatment = job as Job_GetTreatment
 		if treatment != null and treatment.pawn == pawn:
 			return true
+	if Global.claim_registry != null:
+		for job: Job in Global.claim_registry.jobs_holding(claim_pool(), ClaimSpec.Kind.SLOT):
+			if job.pawn == pawn:
+				return true
 	return false
 
 ## Treatment progress-hours per game-hour right now: 0 unpowered, else the auto-med

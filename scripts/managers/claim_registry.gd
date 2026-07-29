@@ -161,6 +161,20 @@ func claimed_amount(target: Object, kind: ClaimSpec.Kind) -> int:
 				total += spec.amount
 	return total
 
+## Every job currently holding a claim of `kind` against `target`. The reverse of
+## claims_of(), and the answer to "who is occupying this?" - a SLOT claim records
+## the amount but not the claimant, so a component that needs to know WHICH pawn
+## is in one of its slots (a medical bay checking whether its only doctor is also
+## one of its patients) has to come through here.
+func jobs_holding(target: Object, kind: ClaimSpec.Kind) -> Array[Job]:
+	var out: Array[Job] = []
+	for job: Job in _by_job:
+		for spec: ClaimSpec in _by_job[job]:
+			if spec.matches(target, kind):
+				out.append(job)
+				break
+	return out
+
 ## Number of jobs currently holding at least one claim (debug / probe output).
 func claiming_job_count() -> int:
 	return _by_job.size()
