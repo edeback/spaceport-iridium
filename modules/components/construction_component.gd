@@ -92,6 +92,19 @@ func _process(delta: float) -> void:
 			if material_storage.is_empty():
 				Global.world_manager.remove_module(owner_module, false)
 
+## WI-44 adapter - the uniform name Action_Work calls on anything a pawn can put
+## work seconds into (ProcessorComponent already had exactly this signature).
+## Positive seconds build, negative deconstruct; returns whether the work is done.
+##
+## Deliberately only moves the counter and answers "are we there yet". The STATE
+## transition, the finished signals and ready_constructed() all still happen in
+## _process, so the existing lifecycle ordering is untouched.
+func advance_work(seconds: float) -> bool:
+	work_seconds_done += seconds
+	if seconds < 0.0:
+		return work_seconds_done <= 0.0
+	return work_seconds_done >= work_seconds_to_complete
+
 func ready_for_construction() -> bool:
 	if owner_module.module_data.resource_costs.is_empty():
 		return true

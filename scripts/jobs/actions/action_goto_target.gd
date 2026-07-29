@@ -15,6 +15,10 @@ extends ActionBase
 ## This is what makes a restored job cheap: a pawn saved standing at the
 ## workstation resumes without re-pathing to where it already is.
 @export var skip_if_present: bool = true
+## Route through space regardless of what the target says. Construction and
+## exterior repair are EVA jobs - the pawn goes OUTSIDE to work on the module,
+## even though a module target is normally an interior destination.
+@export var force_exterior: bool = false
 
 func _init(target_slot: JobTarget.Slot = JobTarget.Slot.A, move_speed: float = 1.0) -> void:
 	slot = target_slot
@@ -25,12 +29,14 @@ func on_start(job: Job) -> Status:
 	var destination: JobTarget = job.target(slot)
 	if destination == null or not destination.is_alive():
 		return Status.FAILED
-	if skip_if_present and _pawn_is_already_there(job, destination):
+	# An exterior job means going outside to the module, so "already inside it"
+	# is not the same place and must not short-circuit the walk.
+	if skip_if_present and not force_exterior and _pawn_is_already_there(job, destination):
 		return Status.DONE
 	var node: Node2D = destination.move_node()
 	if node == null:
 		return Status.FAILED
-	if not job.begin_movement(node, speed, destination.is_exterior()):
+	if not job.begin_movement(node, speed, force_exterior or destination.is_exterior()):
 		return Status.FAILED
 	return Status.ONGOING
 
