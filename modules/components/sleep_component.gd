@@ -40,25 +40,39 @@ extends ComponentBase
 @export var greenery_desirability_k: float = 1.0
 
 var _claims: Array[JobBase] = []
+## WI-44 claim target. Occupancy for BOTH job systems is booked here while they
+## coexist, so neither can oversubscribe the other's occupants. Reach it through
+## claim_pool(), which syncs capacity first.
+var _slots := SlotPool.new()
+
+## The object a WI-44 job takes its SLOT claim against. Capacity is re-synced on
+## every call so a local upgrade that widens the component is picked up without
+## anything having to notify this.
+func claim_pool() -> SlotPool:
+	_slots.capacity = capacity
+	return _slots
 
 func ready_constructed() -> void:
 	add_to_group(Groups.SLEEP_COMPONENT)
 
 func has_free_slot() -> bool:
-	return _claims.size() < capacity
+	return claim_pool().has_free()
 
 ## How many slots are currently claimed (WI-33 visitor-capacity gate reads this).
+## Reads the pool, not _claims, so occupants from EITHER job system are counted.
 func claimed_count() -> int:
-	return _claims.size()
+	return claim_pool().occupied
 
 func claim_slot(job: JobBase) -> bool:
-	if not has_free_slot() or _claims.has(job):
+	if _claims.has(job) or claim_pool().take_claim(ClaimSpec.Kind.SLOT, 1) == null:
 		return false
 	_claims.append(job)
 	return true
 
 func release_slot(job: JobBase) -> void:
-	_claims.erase(job)
+	if _claims.has(job):
+		_claims.erase(job)
+		claim_pool().release_claim(ClaimSpec.Kind.SLOT, 1, null)
 
 ## Whether `pawn` is allowed to sleep here (WI-33): a hotel room takes visitors
 ## only, a crew pod takes crew only. The mutual exclusion that keeps crew out of

@@ -29,12 +29,25 @@ func set_build_anything(value: bool) -> String:
 
 ## Force-build a module 'id' at 'cell' without cost and without needing construction
 ## 'flipped' only matters for modules that can be placed multiple ways (docking bay and airlock)
+##
+## Reports failure rather than success when the cell won't take the module -
+## add_module returns null on a blocked or overlap-cancelled placement, and this
+## used to claim success regardless. Three WI-41 probe builds silently no-op'd
+## onto occupied starting-station cells and looked like conversion bugs.
 func build_module(id: StringName, cell: Vector2i, flipped: bool) -> String:
 	var module_data := Global.save_manager.get_module_data_by_id(id)
-	if module_data != null:
-		Global.world_manager.add_module(module_data, cell, false, flipped, true)
-		return _report("built module %s at %s" % [id, cell])
-	return _report("Could not find module with id: %" % id)
+	if module_data == null:
+		return _report("Could not find module with id: %s" % id)
+	# Argument order matters: add_module(data, cell, flipped, defer_ready,
+	# force_complete). `flipped` used to land in the defer_ready slot, which both
+	# lost the flip AND skipped the module's entire ready pass, leaving it in the
+	# tree joined to no groups and connected to nothing.
+	var built: ModuleBase = Global.world_manager.add_module(module_data, cell, flipped, false, true)
+	if built == null:
+		return _report("could not build %s at %s - cell is blocked" % [id, cell])
+	if flipped and not module_data.flippable:
+		return _report("built module %s at %s (not flippable - placed unflipped)" % [id, cell])
+	return _report("built module %s at %s%s" % [id, cell, " flipped" if flipped else ""])
 
 ## Deals `amount` HP of damage to the built module at `cell` (WI-24). At 0 HP a
 ## normal module is destroyed (truss replaces it); a truss becomes wreckage.

@@ -32,6 +32,17 @@ extends ComponentBase
 var current_doctor: PawnBase = null
 
 var _claims: Array[JobBase] = []
+## WI-44 claim target. Occupancy for BOTH job systems is booked here while they
+## coexist, so neither can oversubscribe the other's occupants. Reach it through
+## claim_pool(), which syncs capacity first.
+var _slots := SlotPool.new()
+
+## The object a WI-44 job takes its SLOT claim against. Capacity is re-synced on
+## every call so a local upgrade that widens the component is picked up without
+## anything having to notify this.
+func claim_pool() -> SlotPool:
+	_slots.capacity = capacity
+	return _slots
 ## The outstanding Job_Doctor, so slow_tick doesn't post a duplicate.
 var _doctor_job: Job_Doctor = null
 
@@ -49,22 +60,27 @@ func is_available() -> bool:
 	return powered() and has_free_slot()
 
 func has_free_slot() -> bool:
-	return _claims.size() < capacity
+	return claim_pool().has_free()
 
 func claim_slot(job: JobBase) -> bool:
-	if not has_free_slot() or _claims.has(job):
+	if _claims.has(job) or claim_pool().take_claim(ClaimSpec.Kind.SLOT, 1) == null:
 		return false
 	_claims.append(job)
 	return true
 
 func release_slot(job: JobBase) -> void:
-	_claims.erase(job)
+	if _claims.has(job):
+		_claims.erase(job)
+		claim_pool().release_claim(ClaimSpec.Kind.SLOT, 1, null)
 
 func has_patients() -> bool:
-	return not _claims.is_empty()
+	return claim_pool().occupied > 0
 
 ## Is `pawn` currently occupying a treatment bunk here? Job_Doctor consults this so
 ## the sole doctor can't also be one of the patients (WI-31 edge case).
+## NOTE (WI-44): still walks the LEGACY _claims array, so it will not see a
+## patient held by the new job system. Must be revisited when Job_GetTreatment
+## is converted - a SLOT claim alone doesn't record WHICH pawn holds it.
 func is_patient(pawn: PawnBase) -> bool:
 	for job: JobBase in _claims:
 		var treatment: Job_GetTreatment = job as Job_GetTreatment

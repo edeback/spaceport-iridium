@@ -14,21 +14,34 @@ extends ComponentBase
 @export var vibration_penalty_k: float = 1.0
 
 var _claims: Array[JobBase] = []
+## WI-44 claim target. Occupancy for BOTH job systems is booked here while they
+## coexist, so neither can oversubscribe the other's occupants. Reach it through
+## claim_pool(), which syncs capacity first.
+var _slots := SlotPool.new()
+
+## The object a WI-44 job takes its SLOT claim against. Capacity is re-synced on
+## every call so a local upgrade that widens the component is picked up without
+## anything having to notify this.
+func claim_pool() -> SlotPool:
+	_slots.capacity = capacity
+	return _slots
 
 func ready_constructed() -> void:
 	add_to_group(Groups.RECREATION_PROVIDER)
 
 func has_free_slot() -> bool:
-	return _claims.size() < capacity
+	return claim_pool().has_free()
 
 func claim_slot(job: JobBase) -> bool:
-	if not has_free_slot() or _claims.has(job):
+	if _claims.has(job) or claim_pool().take_claim(ClaimSpec.Kind.SLOT, 1) == null:
 		return false
 	_claims.append(job)
 	return true
 
 func release_slot(job: JobBase) -> void:
-	_claims.erase(job)
+	if _claims.has(job):
+		_claims.erase(job)
+		claim_pool().release_claim(ClaimSpec.Kind.SLOT, 1, null)
 
 ## Recreation points per game-hour for this pawn right now, after the adjacency
 ## vibration penalty. 0 means "currently unavailable" (e.g. unpowered) -
@@ -39,6 +52,12 @@ func recreation_per_hour(_pawn: PawnBase) -> float:
 	if raw <= 0.0:
 		return 0.0
 	return raw * vibration_multiplier()
+
+## WI-44 adapter: the uniform name Action_RestoreNeed calls on every provider,
+## whatever need it serves. One small method per provider replaces each need job
+## knowing its own provider's differently-named rate function.
+func restore_rate_per_hour(pawn: PawnBase) -> float:
+	return recreation_per_hour(pawn)
 
 ## Provider-specific base rate before adjacency. Override this in subclasses.
 func _raw_recreation_per_hour(_pawn: PawnBase) -> float:
