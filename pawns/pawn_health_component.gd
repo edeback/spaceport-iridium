@@ -31,6 +31,9 @@ signal health_changed(new_health: float)
 ## warning while there is still time to fix the cause.
 @export var percent_critical: float = 25.0
 
+## Edge-detect latch for the critical-health alert; not saved (WI-45 A7). It
+## re-derives from the restored health_value on the first tick after a load -
+## which costs one repeat alert for a crew member who is genuinely still critical.
 var _was_critical: bool = false
 ## Sibling lookups cached lazily - component _ready order isn't guaranteed.
 var _needs: PawnNeedsComponent = null

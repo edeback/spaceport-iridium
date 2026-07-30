@@ -45,6 +45,8 @@ var _next_id: int = 1
 ## The TradeComponent contract demand is currently registered on (null if no
 ## bay). Compared against the live bay each slow_tick.
 var _demand_component: TradeComponent = null
+## Alert-suppression latch only; not saved (WI-45 A7). A load re-warns once that
+## the contracts have no bay, which is true at that moment anyway.
 var _bay_lost_alerted: bool = false
 
 ## Anything about the lists changed - the contracts screen refreshes off this.

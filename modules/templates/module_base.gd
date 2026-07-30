@@ -491,6 +491,26 @@ func get_save_data() -> Dictionary:
 	var battery: BatteryComponent = get_component_by_type(BatteryComponent) as BatteryComponent
 	if battery != null:
 		data["battery"] = battery.get_save_data()
+	# Manual force-shutdown, and a fuel generator's partial burn (WI-45 A3). No
+	# module scene carries two of either component, so the single-lookup form the
+	# other component keys use is correct - storage's path-keyed dict is only
+	# needed because processors genuinely have an Input and an Output bin.
+	var power_consumer: PowerConsumptionComponent = get_component_by_type(PowerConsumptionComponent) as PowerConsumptionComponent
+	if power_consumer != null:
+		var consumer_save: Dictionary = power_consumer.get_save_data()
+		if not consumer_save.is_empty():
+			data["power_consumption"] = consumer_save
+	var power_generator: PowerGenerationComponent = get_component_by_type(PowerGenerationComponent) as PowerGenerationComponent
+	if power_generator != null:
+		var generator_save: Dictionary = power_generator.get_save_data()
+		if not generator_save.is_empty():
+			data["power_generation"] = generator_save
+	# Mining bay's player-selected priority ore (WI-45 A6).
+	var mining: MiningComponent = get_component_by_type(MiningComponent) as MiningComponent
+	if mining != null:
+		var mining_save: Dictionary = mining.get_save_data()
+		if not mining_save.is_empty():
+			data["mining"] = mining_save
 	var upgrades: Dictionary = get_upgrade_save_data()
 	if not upgrades.is_empty():
 		data["upgrades"] = upgrades
@@ -552,6 +572,21 @@ func load_save_data(data: Dictionary) -> void:
 	var conveyor: ConveyorComponent = get_component_by_type(ConveyorComponent) as ConveyorComponent
 	if conveyor != null and data.has("conveyor"):
 		conveyor.load_save_data(data["conveyor"])
+	# Power (WI-45 A3). Order-independent of everything above: neither block
+	# touches storage or the grid, and PowerManager re-runs distribution on its
+	# own next tick. A turboshaft's own force_shutdown re-applies over these in
+	# the turbolifts section, which runs after the world - correct, since a
+	# shut-down shaft's floors must not come back powered.
+	var power_consumer: PowerConsumptionComponent = get_component_by_type(PowerConsumptionComponent) as PowerConsumptionComponent
+	if power_consumer != null and data.has("power_consumption"):
+		power_consumer.load_save_data(data["power_consumption"])
+	var power_generator: PowerGenerationComponent = get_component_by_type(PowerGenerationComponent) as PowerGenerationComponent
+	if power_generator != null and data.has("power_generation"):
+		power_generator.load_save_data(data["power_generation"])
+	# Mining priority ore (WI-45 A6). Drones restore separately as pawns.
+	var mining: MiningComponent = get_component_by_type(MiningComponent) as MiningComponent
+	if mining != null and data.has("mining"):
+		mining.load_save_data(data["mining"])
 	load_upgrade_save_data(data.get("upgrades", {}))
 	# Shield (WI-38 A2) AFTER upgrades: effective_capacity() reads the upgrade-modified
 	# stat, and the restored charge has to be clamped against the upgraded capacity.

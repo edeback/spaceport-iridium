@@ -444,25 +444,40 @@ func withdraw_stacks(resource: ResourceData, quantity: int, use_reserve: bool = 
 # Reservations and import/export jobs are deliberately NOT saved: jobs aren't
 # persisted, so on load the posting scan re-derives them from stored/desired.
 
+## Shape (WI-45 A4): {"priority": int, "resources": {<id>: {...}}}. The pre-WI-45
+## shape was the bare resource map with no room for a component-level field;
+## load_save_data still reads it, keyed off the absence of "resources" (no
+## ResourceData id is "resources", so the discriminator can't collide).
 func get_save_data() -> Dictionary:
-	var out: Dictionary = {}
+	var resources: Dictionary = {}
 	for resource: ResourceData in storage_data:
 		if resource.id == &"":
 			push_warning("Resource without save id in storage not saved: " + resource.name)
 			continue
 		var data: StorageData = storage_data[resource]
-		out[String(resource.id)] = {
+		resources[String(resource.id)] = {
 			"desired": data.desired,
 			"stacks": SaveManager.stacks_to_dicts(data.stacks),
 			"autodump": data.autodump,
 		}
-	return out
+	# Priority is a player setting (the panel's spinbox is live on every bin, not
+	# just player_configurable ones) and it IS the routing language - a hand-tuned
+	# station that reloads at scene defaults silently re-routes every haul.
+	return {"priority": priority, "resources": resources}
 
 ## Restores contents on top of whatever the ready pass configured. Adds
 ## resource slots as needed; deposits bypass room/reserve checks (the state
 ## was legal when it was saved).
 func load_save_data(data: Dictionary) -> void:
-	for id_str: String in data:
+	# Legacy (pre-WI-45) blocks are the resource map itself; new ones nest it.
+	var resources: Dictionary = data["resources"] if data.has("resources") else data
+	if data.has("priority"):
+		# update_priority, not a field write: it re-prices jobs this bin already
+		# posted during the ready pass. Runs first so restored contents post at the
+		# right priority. Overwrites TradeComponent's ready_constructed default by
+		# design - the save is the later authority on a bay the player re-tuned.
+		update_priority(int(data["priority"]))
+	for id_str: String in resources:
 		var resource: ResourceData = Global.save_manager.get_resource_by_id(StringName(id_str))
 		if resource == null:
 			push_warning("Unknown resource id in saved storage, skipping: " + id_str)
@@ -474,7 +489,7 @@ func load_save_data(data: Dictionary) -> void:
 		# or loading would add the two together.
 		slot.stacks.clear()
 		slot.stored = 0
-		var entry: Dictionary = data[id_str]
+		var entry: Dictionary = resources[id_str]
 		slot.desired = int(entry.get("desired", slot.desired))
 		for stack_dict: Dictionary in entry.get("stacks", []):
 			var stack: ResourceStack = SaveManager.stack_from_dict(resource, stack_dict)

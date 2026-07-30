@@ -89,9 +89,37 @@ func generate_power(delta: float) -> float:
 		return get_power_output()
 	return 0
 
+# --- persistence -------------------------------------------------------------
+# Same reasoning as PowerConsumptionComponent (WI-45 A3): `force_off` is the
+# player's manual shutdown switch. `_fuel_seconds_left` rides along because a
+# generator restored mid-burn would otherwise withdraw a whole fresh unit on its
+# first tick - the partial burn it already paid for is real state, not a cache.
+# `powered` is derived and re-decided below from the two restored values.
+
+func get_save_data() -> Dictionary:
+	var data: Dictionary = {}
+	if force_off:
+		data["force_off"] = true
+	if _fuel_seconds_left > 0.0:
+		data["fuel_seconds"] = _fuel_seconds_left
+	return data
+
+func load_save_data(data: Dictionary) -> void:
+	# Fuel first: both branches below judge `powered` against it.
+	_fuel_seconds_left = maxf(float(data.get("fuel_seconds", 0.0)), 0.0)
+	if bool(data.get("force_off", false)):
+		disable_generation(true)
+	elif _fuel_seconds_left > 0.0:
+		# Mirrors disable_generation's resume branch, and is load-bearing rather
+		# than cosmetic: restart_generation() only powers up on the tick it has to
+		# withdraw a FRESH unit, and generate_power() only burns fuel while
+		# powered - so a restored half-burnt generator with powered still false
+		# would sit dark forever, never burning and never re-withdrawing.
+		powered = true
+
 func has_ui() -> bool:
 	return true
-	
+
 func get_ui() -> ModuleComponentUI:
 	var ui: PowerGenerationComponentUI = ui_info_panel_element.instantiate() as PowerGenerationComponentUI
 	ui.set_power_generation_component(self)

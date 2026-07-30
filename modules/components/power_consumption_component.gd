@@ -69,9 +69,26 @@ func consume_power(delta: float, input_power: float) -> float:
 	powered = false
 	return input_power
 
+# --- persistence -------------------------------------------------------------
+# `force_off` is the player's manual shutdown switch (the info panel's Force
+# Shutdown button), not derived state - without a key every module deliberately
+# browned out comes back online on load (WI-45 A3). `powered` is NOT saved: the
+# next distribution pass re-decides it, and writing it here would fight the
+# setter's animation side effects during the load.
+#
+# Empty dict = pristine, so an untouched station adds nothing to its save.
+
+func get_save_data() -> Dictionary:
+	if not force_off:
+		return {}
+	return {"force_off": true}
+
+func load_save_data(data: Dictionary) -> void:
+	force_off = bool(data.get("force_off", false))
+
 func has_ui() -> bool:
 	return true
-	
+
 func get_ui() -> ModuleComponentUI:
 	var ui: PowerConsumptionComponentUI = ui_info_panel_element.instantiate() as PowerConsumptionComponentUI
 	ui.set_power_consumption_component(self)

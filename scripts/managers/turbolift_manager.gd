@@ -97,8 +97,11 @@ func load_save_data(data: Dictionary) -> void:
 			continue
 		if bool(entry.get("force_shutdown", false)):
 			shaft.set_force_shutdown(true)
-		var cab_count: int = int(entry.get("cabs", 0))
-		shaft.max_cabs = cab_cost
+		# Assign, never accumulate: the shaft arrived here rebuilt from module
+		# adjacency, and TurboliftShaft.merge sums max_cabs, so it already carries
+		# one cab per floor. The save is the authority. Floored at 1 because a
+		# shaft with no cab budget serves nobody, and a pre-WI-45 save has no key.
+		shaft.max_cabs = maxi(int(entry.get("cabs", 1)), 1)
 
 func _merge_shafts(primary_shaft: TurboliftShaft, secondary_shaft: TurboliftShaft) -> TurboliftShaft:
 	if primary_shaft == secondary_shaft:

@@ -46,6 +46,10 @@ var current_batch_richness: float = -1.0
 ## long-run yield matches the richness curve exactly - no rounding drift, and
 ## a poor batch whose output rounds to zero still credits its fraction
 ## forward instead of leaking it.
+## Saved (WI-45 A2): every entry is under one unit by construction, but it is
+## still output the player's inputs paid for, and a save/load is not something
+## they did to discard it. A recipe switch dropping the entries the new recipe
+## can't use stays as-is - that one is an explicit choice.
 var _yield_residue: Dictionary[ResourceData, float] = {}
 
 ## Non-null while a batch is mid-process and the player picked a different
@@ -426,30 +430,79 @@ func get_save_data() -> Dictionary:
 	var data: Dictionary = {}
 	if can_select_recipes() and recipe != null:
 		data["recipe"] = recipe.resource_path
-	if requires_worker and processing:
+		# A switch queued mid-batch is a player choice that hasn't taken effect
+		# yet; without this it's silently dropped and the machine keeps running
+		# the old recipe forever (WI-45 A2).
+		if pending_recipe != null:
+			data["pending_recipe"] = pending_recipe.resource_path
+	# Both paths withdraw the batch's inputs up front, so both have to save the
+	# batch or those inputs are destroyed by a save/load. WI-23 added this for
+	# the manned path only; the unmanned one (most processors) went unnoticed
+	# until the WI-45 sweep.
+	if processing:
 		data["processing"] = true
 		data["process_time"] = current_process_time
 		data["batch_richness"] = current_batch_richness
+	# Fractional yield carried toward the next batch. Sub-1-unit per output, but
+	# it IS output the player's inputs already paid for, and nothing they did
+	# discarded it - so it survives a save. (A recipe switch still drops the
+	# entries the new recipe can't use; that one is an explicit player action.)
+	var residue: Dictionary = {}
+	for output: ResourceData in _yield_residue:
+		if output.id != &"" and _yield_residue[output] > 0.0:
+			residue[String(output.id)] = _yield_residue[output]
+	if not residue.is_empty():
+		data["yield_residue"] = residue
 	return data
 
 func load_save_data(data: Dictionary) -> void:
-	var path: String = data.get("recipe", "")
-	if path != "" and can_select_recipes():
-		# load() returns the cached instance, so equality against
-		# available_recipes entries holds.
-		var loaded: RecipeData = load(path) as RecipeData
-		if loaded == null or not available_recipes.has(loaded):
-			push_warning("Saved processor recipe not available, keeping default: " + path)
-		else:
-			select_recipe(loaded)
-	# Manned mid-batch resume (WI-23). Set after the recipe so the batch's inputs
-	# were already withdrawn against the right recipe before the save.
-	if requires_worker and bool(data.get("processing", false)):
+	# Residue before the recipe: when the restored recipe differs from what the
+	# scene authored, _apply_recipe prunes the entries it can't use - the same
+	# drop a live switch does, which is the one loss that IS intended.
+	_load_yield_residue(data.get("yield_residue", {}))
+	if can_select_recipes():
+		_load_recipe(String(data.get("recipe", "")), false)
+	# Mid-batch resume. Set after the recipe so the batch's inputs were already
+	# withdrawn against the right recipe before the save.
+	if bool(data.get("processing", false)):
 		processing = true
 		current_process_time = float(data.get("process_time", 0.0))
 		current_batch_richness = float(data.get("batch_richness", -1.0))
 		batch_richness_changed.emit(current_batch_richness)
 		processor_progress_changed.emit(current_process_time / get_process_time())
+	# After `processing` is restored: select_recipe() re-queues rather than
+	# applies while a batch is live, which is exactly what a saved pending
+	# switch means. A batch that is no longer running applies it outright.
+	if can_select_recipes():
+		_load_recipe(String(data.get("pending_recipe", "")), true)
+
+## Restores the fractional carry-over, resolving output ids the same way storage
+## and conveyors do. An id that no longer exists is dropped with a warning - the
+## resource it accrued toward is gone, so there is nothing to carry it to.
+func _load_yield_residue(data: Dictionary) -> void:
+	if data.is_empty():
+		return
+	_yield_residue.clear()
+	for id_str: String in data:
+		var output: ResourceData = Global.save_manager.get_resource_by_id(StringName(id_str))
+		if output == null:
+			push_warning("Unknown resource id in saved yield residue, skipping: " + id_str)
+			continue
+		_yield_residue[output] = float(data[id_str])
+
+## Shared recipe restore. Warns and keeps whatever is in place when the saved
+## path no longer resolves or has left available_recipes (a renamed/removed
+## .tres), rather than clearing the machine's recipe out from under it.
+func _load_recipe(path: String, queued: bool) -> void:
+	if path == "":
+		return
+	# load() returns the cached instance, so equality against
+	# available_recipes entries holds.
+	var loaded: RecipeData = load(path) as RecipeData
+	if loaded == null or not available_recipes.has(loaded):
+		push_warning("Saved processor %s not available, ignoring: %s" % ["pending recipe" if queued else "recipe", path])
+		return
+	select_recipe(loaded)
 
 func has_ui() -> bool:
 	return true

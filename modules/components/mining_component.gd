@@ -11,11 +11,13 @@ var drones: Array[MiningDronePawn] = []
 
 ## Sim-seconds until the next drone builds; < 0 = not currently counting.
 ## Only ticks while powered, so it pauses and fast-forwards with the game.
+## Deliberately unsaved (WI-45 A6): a load restarts at most one <=5s respawn.
 var _respawn_time_left: float = -1.0
 
 ## Player-selected ore this bay's drones seek out once no designated
-## asteroids remain (see the old mining job's get_asteroid). Null = no
-## preference, random asteroid. Per-bay, not persisted (see 03_Bugs).
+## asteroids remain (see FinderAsteroid). Null = no preference, random asteroid.
+## Per-bay, and persisted since WI-45 A6 - it's a player setting like the
+## processor's recipe or a storefront's shop type, both of which have keys.
 var priority_ore: ResourceData = null
 
 ## Stat key for the bay's extraction rate (WI-24): damage/upgrades scale this
@@ -112,6 +114,27 @@ func get_next_job(_pawn: PawnBase) -> Job:
 			return move_job
 	# Unpowered or unneeded, just idle for a bit
 	return Job.of(&"idle")
+
+# --- persistence -------------------------------------------------------------
+# Only the player's ore preference. Drones save themselves (they're pawns) and
+# re-register with this bay by component ref; the respawn timer is deliberately
+# dropped. Empty dict = no preference, so the common case costs nothing.
+
+func get_save_data() -> Dictionary:
+	if priority_ore == null or priority_ore.id == &"":
+		return {}
+	return {"priority_ore": String(priority_ore.id)}
+
+func load_save_data(data: Dictionary) -> void:
+	var id_str: String = String(data.get("priority_ore", ""))
+	if id_str == "":
+		return
+	var resource: ResourceData = Global.save_manager.get_resource_by_id(StringName(id_str))
+	if resource == null:
+		# Falls back to null (no preference) rather than an arbitrary ore.
+		push_warning("Unknown priority ore in saved mining bay, ignoring: " + id_str)
+		return
+	priority_ore = resource
 
 func has_ui() -> bool:
 	return true

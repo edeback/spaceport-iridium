@@ -79,8 +79,11 @@ func _on_storage_changed(resource: ResourceData, new_value: int) -> void:
 		storage_line.stored_resource_value.text = _format_slot_value(resource)
 	%FreeSpaceAvailableLabel.text = _format_resouce_value(storage_component.space_available())
 
+## update_priority(), not a direct field write: assigning `priority` alone leaves
+## any already-posted import/export job at its old priority, and JobManager's
+## re-sort can't repair an ordering nothing told it had changed (WI-45 A5).
 func _on_priority_value_changed(new_value: float) -> void:
-	storage_component.priority = roundi(new_value)
+	storage_component.update_priority(roundi(new_value))
 
 # Builds one checkbox per storable resource, pre-checked for whatever the
 # component currently stores, then shows the overlay. Rebuilt each open so the

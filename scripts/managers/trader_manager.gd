@@ -40,6 +40,9 @@ var committed_sells: Dictionary[ResourceData, int] = {}
 var _net_market_delta: Dictionary[ResourceData, int] = {}
 var _bay_ref: Dictionary = {}
 var _departure_warned: bool = false
+## Alert-suppression latch only; not saved (WI-45 A7), unlike _departure_warned
+## just above, which gates a real one-shot consequence. Worst case a load
+## re-warns once that the import bay is full.
 var _import_full_alerted: bool = false
 var _shuttle: ArrivalShuttle = null
 ## True from _begin_visit until the shuttle docks - the schedule timer must

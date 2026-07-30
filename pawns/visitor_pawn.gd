@@ -32,6 +32,9 @@ var _leaving: bool = false
 ## Reputation is reported to VisitorManager exactly once, when a real walk-out
 ## starts (a reachable exit) - never on teardown/load, and never twice.
 var _departure_reported: bool = false
+## Alert-suppression latch only; not saved (WI-45 A7), unlike _departure_reported
+## above, which prevents a double reputation count. A guest still stranded on
+## load re-alerts once.
 var _stranded_alerted: bool = false
 var _retry_cooldown: float = 0.0
 

@@ -25,7 +25,9 @@ extends Node
 @export var atmosphere_ui_scene: PackedScene
 
 var _components: Dictionary[ModuleBase, AtmosphereComponent] = {}
-## Modules currently latched in the low-O2 alert state.
+## Modules currently latched in the low-O2 alert state. Not saved (WI-45 A7):
+## the latch only suppresses a repeat alert, so a load costs one duplicate
+## warning about a room that is genuinely still low on O2.
 var _low_o2_alerted: Dictionary[ModuleBase, bool] = {}
 
 func _ready() -> void:
