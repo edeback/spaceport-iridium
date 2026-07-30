@@ -97,6 +97,24 @@ func get_waiting_haul_jobs() -> Array[Job]:
 		out.append(job)
 	return out
 
+## Every job waiting on the board, highest effective priority first (WI-44 board
+## inspector). Read-only: a fresh array, so the caller cannot reorder the real
+## queues by sorting it.
+##
+## CLAIMED jobs are deliberately absent - find_job() removes a job from the board
+## when a pawn takes it, so "what is the station doing" needs the union of this
+## and a sweep over pawns. The inspector does that union; get_waiting_haul_jobs()
+## has always done the same dance for the logistics overlay.
+func get_board_snapshot() -> Array[Job]:
+	var out: Array[Job] = []
+	for category: JobData.Category in _board:
+		out.append_array(_board[category])
+	out.sort_custom(_sort_effective_descending)
+	return out
+
+func _sort_effective_descending(a: Job, b: Job) -> bool:
+	return a.effective_priority() > b.effective_priority()
+
 ## Total jobs waiting on the board (debug/UI).
 func board_size() -> int:
 	var total: int = 0

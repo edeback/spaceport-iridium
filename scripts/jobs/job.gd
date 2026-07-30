@@ -504,8 +504,15 @@ func subtask_report() -> String:
 func get_category_name() -> String:
 	return data.category_name() if data != null else ""
 
+## Two different unknowns, and the player can act on the difference: a slot that
+## was never filled means the job has not chosen yet (its finder runs as the first
+## action), while "?" from describe() means the thing it HAD picked has since been
+## destroyed. A half-specified haul is the common case - a bin posts a pull with
+## only its own end known - so this text is on screen constantly.
 func _describe_slot(slot: JobTarget) -> String:
-	return slot.describe() if slot != null else "?"
+	if slot == null or not slot.is_set():
+		return "somewhere"
+	return slot.describe()
 
 func _id_string() -> String:
 	return String(data.id) if data != null else "<no data>"

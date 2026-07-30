@@ -35,6 +35,7 @@ func _ready() -> void:
 	_setup_event_ui()
 	_setup_contracts_ui()
 	_setup_economy_ui()
+	_setup_jobs_ui()
 	_setup_minimap_ui()
 	_setup_overlay_ui()
 	_setup_pause_menu()
@@ -88,6 +89,8 @@ func _topmost_esc_claim() -> StringName:
 		return &"contracts"
 	if _economy_screen != null and _economy_screen.visible:
 		return &"economy"
+	if _jobs_screen != null and _jobs_screen.visible:
+		return &"jobs"
 	if overlay_controller != null and overlay_controller.has_active_mode():
 		return &"overlay"
 	if cur_pawn_info != null and is_instance_valid(cur_pawn_info):
@@ -118,6 +121,8 @@ func _close_esc_claim(claim: StringName) -> void:
 			_contracts_screen.visible = false
 		&"economy":
 			_economy_screen.visible = false
+		&"jobs":
+			_jobs_screen.visible = false
 		&"overlay":
 			overlay_controller.set_mode(OverlayController.Mode.NONE)
 		&"pawn_info":
@@ -326,6 +331,20 @@ func _setup_economy_ui() -> void:
 			_economy_screen.visible = false
 		else:
 			_economy_screen.open()
+	)
+
+## Job board (WI-44): a top-bar toggle opening the station's work queue - what is
+## in progress, what is waiting, and why a chosen pawn will not take a given job.
+var _jobs_screen: JobsScreen
+
+func _setup_jobs_ui() -> void:
+	_jobs_screen = JobsScreen.new()
+	add_child(_jobs_screen)
+	_add_side_button("Jobs", func() -> void:
+		if _jobs_screen.visible:
+			_jobs_screen.visible = false
+		else:
+			_jobs_screen.open()
 	)
 
 ## Minimap (WI-34): a self-contained upper-right overview panel. It anchors
