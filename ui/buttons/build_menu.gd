@@ -200,6 +200,11 @@ func _fit_and_place_flyout() -> void:
 		return
 	var content_height: float = _flyout_grid.get_combined_minimum_size().y
 	_scroll.custom_minimum_size.y = clampf(content_height, 0.0, FLYOUT_MAX_HEIGHT)
+	# top_level means no parent container ever resizes the panel, and a Control's size
+	# only ever grows to meet its minimum - it never shrinks back. Without this, a tall
+	# category leaves the panel permanently stretched and later, shorter categories sit
+	# in a box of empty space.
+	_flyout.reset_size()
 	var anchor: Button = _rail_buttons.get(_open_category)
 	var y: float = anchor.global_position.y if anchor != null else _search.global_position.y
 	var viewport_height: float = get_viewport_rect().size.y
@@ -210,6 +215,7 @@ func _fit_and_place_flyout() -> void:
 ## full ModuleButton look (icon + name); only the rail and recent strip use bare icons.
 func _populate_grid(modules: Array[ModuleData]) -> void:
 	for child: Node in _flyout_grid.get_children():
+		_flyout_grid.remove_child(child)
 		child.queue_free()
 	for module_data: ModuleData in modules:
 		var button := MODULE_BUTTON.instantiate() as ModuleButton

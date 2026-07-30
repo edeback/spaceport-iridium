@@ -189,11 +189,12 @@ func _spawn_alert(key: String, text: String) -> void:
 	_active_alerts[key] = label
 	# UI runs on wall-clock by design (TimeManager rule: UI stays real-time),
 	# so a plain scene-tree timer is correct here, not sim_seconds().
-	get_tree().create_timer(15.0).timeout.connect(func() -> void:
-		_active_alerts.erase(key)
-		if is_instance_valid(label):
-			label.queue_free()
-	)
+	if get_tree():
+		get_tree().create_timer(15.0).timeout.connect(func() -> void:
+			_active_alerts.erase(key)
+			if is_instance_valid(label):
+				label.queue_free()
+		)
 
 # --- raid banner (WI-32) ------------------------------------------------------
 

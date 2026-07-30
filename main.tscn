@@ -14,13 +14,13 @@
 [ext_resource type="Resource" uid="uid://boadffwat0kpp" path="res://data/modules/docking_bays/docking_bay.tres" id="5_0n3wm"]
 [ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/core/hallway_mdata.tres" id="5_b1qrp"]
 [ext_resource type="PackedScene" uid="uid://ce6npnqw8s3mu" path="res://ui/ui_main.tscn" id="5_uwp6h"]
+[ext_resource type="Script" uid="uid://csa0pk5oc8wc8" path="res://scripts/managers/adjacency_manager.gd" id="6_adjmgr"]
 [ext_resource type="Script" uid="uid://6mx2qi4ecq8b" path="res://scripts/managers/turbolift_manager.gd" id="6_dg77c"]
 [ext_resource type="Script" uid="uid://bsy2db6ssn3vt" path="res://scripts/managers/world_manager.gd" id="6_i5kyc"]
 [ext_resource type="Script" uid="uid://cyou4qqxr66bq" path="res://scripts/managers/structure_manager.gd" id="6_ryguw"]
-[ext_resource type="Script" uid="uid://csa0pk5oc8wc8" path="res://scripts/managers/adjacency_manager.gd" id="6_adjmgr"]
 [ext_resource type="Resource" uid="uid://ch5rdw0jfhvft" path="res://data/modules/module_airlock.tres" id="8_e71vb"]
 [ext_resource type="Script" uid="uid://cx2dttwf32bok" path="res://scripts/managers/job_manager.gd" id="8_w48qg"]
-[ext_resource type="Script" path="res://scripts/managers/claim_registry.gd" id="8_wi44cr"]
+[ext_resource type="Script" uid="uid://dotphxa5wqf83" path="res://scripts/managers/claim_registry.gd" id="8_wi44cr"]
 [ext_resource type="Script" uid="uid://d1myskwk0m3o0" path="res://scripts/managers/resource_manager.gd" id="9_074og"]
 [ext_resource type="PackedScene" uid="uid://dbdc66ow44ldq" path="res://ui/ui_in_game.tscn" id="9_ipixf"]
 [ext_resource type="Script" uid="uid://hfw1t2fwgg17" path="res://scripts/managers/asteroid_manager.gd" id="10_cegan"]
@@ -29,12 +29,11 @@
 [ext_resource type="Texture2D" uid="uid://byf3wu6nq1gun" path="res://assets/sprites/star_spritesheet.png" id="11_2cqfq"]
 [ext_resource type="PackedScene" uid="uid://cvrcrbshj8cre" path="res://objects/asteroid_base.tscn" id="11_82xsv"]
 [ext_resource type="Script" uid="uid://ba8m624mbacj2" path="res://scripts/managers/contract_manager.gd" id="12_contractmgr"]
-[ext_resource type="Script" path="res://scripts/managers/raid_manager.gd" id="12_raidmgr"]
-[ext_resource type="PackedScene" path="res://objects/pirate_ship.tscn" id="12_pirateship"]
-[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="12_salvage"]
 [ext_resource type="Script" uid="uid://6xb1ct163od4" path="res://scripts/managers/market_manager.gd" id="12_d13ii"]
-[ext_resource type="Script" path="res://scripts/managers/economy_manager.gd" id="12_economymgr"]
+[ext_resource type="Script" uid="uid://dkq3jwt2amjql" path="res://scripts/managers/economy_manager.gd" id="12_economymgr"]
 [ext_resource type="Script" uid="uid://7aklpgmttgh7" path="res://scripts/managers/event_manager.gd" id="12_eventmgr"]
+[ext_resource type="PackedScene" path="res://objects/pirate_ship.tscn" id="12_pirateship"]
+[ext_resource type="Script" uid="uid://dmcs8civtaue8" path="res://scripts/managers/raid_manager.gd" id="12_raidmgr"]
 [ext_resource type="Texture2D" uid="uid://dmlscjahmhtu8" path="res://assets/sprites/planet_spritesheet.png" id="12_yaehf"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="13_4k2k6"]
 [ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="13_facbu"]
@@ -59,7 +58,7 @@
 [ext_resource type="PackedScene" uid="uid://2pp7va28ybgl" path="res://pawns/crew_pawn.tscn" id="33_crewpawn"]
 [ext_resource type="Resource" uid="uid://bj04ftawqiwko" path="res://data/resources/iridium_ore.tres" id="34_6iyjs"]
 [ext_resource type="PackedScene" path="res://objects/arrival_shuttle.tscn" id="34_shuttle"]
-[ext_resource type="Script" path="res://scripts/managers/visitor_manager.gd" id="34_vismgr"]
+[ext_resource type="Script" uid="uid://blce7i3myxm6o" path="res://scripts/managers/visitor_manager.gd" id="34_vismgr"]
 [ext_resource type="PackedScene" path="res://pawns/visitor_pawn.tscn" id="34_vispawn"]
 [ext_resource type="Resource" uid="uid://cns3lrfd8jekj" path="res://data/resources/silicon_ore.tres" id="35_4w656"]
 [ext_resource type="Script" uid="uid://d0bklsxrd4qvm" path="res://scripts/managers/trader_manager.gd" id="35_tradermgr"]
@@ -7675,7 +7674,6 @@ asteroid_layer = NodePath("../../BackgroundLayers/AsteroidLayer")
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="Managers/AudioManager" unique_id=1373621118]
 stream = ExtResource("26_0rl1p")
 volume_db = -10.0
-bus = &"Music"
 autoplay = true
 parameters/looping = true
 
@@ -7702,7 +7700,7 @@ script = ExtResource("12_contractmgr")
 [node name="RaidManager" type="Node" parent="Managers" unique_id=1526834903]
 script = ExtResource("12_raidmgr")
 pirate_ship_scene = ExtResource("12_pirateship")
-salvage_resource = ExtResource("12_salvage")
+salvage_resource = ExtResource("17_b1qrp")
 
 [node name="VisitorManager" type="Node" parent="Managers" unique_id=1526834904]
 script = ExtResource("34_vismgr")
