@@ -1,0 +1,108 @@
+
+Architect Menu
+- Orders
+	- Chopping, hauling, mining, planning, deconstructing
+	- Spaceport: Order mining of asteroids? (Maybe deconstructing too?)
+- Zone/Area
+	- Stockpiles, growing
+	- Spaceport: Nothing
+- Structure
+	- Walls, Doors, Autodoor, Vac Barrier, Bridge, Column
+	- Spaceport: "Core" buildings, advanced airlock like vac barrier?
+- Production
+	- Brewery, Butcher table, crafting/butcher spot, fermenting barrel, fueled/electric stove, art bench, research bench, fueled/electric smithy, hand/electric tailor, stonecutter, fabrication bench, deep drill, drug lab, crematorium, electric smelter, hi-tech research, hydroponics, machining table, biofuel refinery, nutrient paste dispenser, hopper
+	- Spaceport: "Industry" buildings
+- Furniture
+	- Beds (many), tables, chairs, lamps, storage, bookcase, pots, etc
+	- Spaceport: Decoration? Items that can be added to any (or types of) modules for benefits? (mini o2 generator, potted plants, tvs?)
+- Power
+	- Conduits, switch, wood generator, chem generator, wind turbine, battery, solar generator, geo generator, watermill generator, toxifier generator, bioferrite generator, gravcore power cell, ship reactor, unstable power cell (combat reward), vanometric power cell (quest reward), electroharvester
+	- Spaceport: "Power" category.
+- Security
+	- Sandbags/barricades, mortar, spites, mini-turret, uranium slug turret, autocannon turret, foam turret, rocketswarm launcher, traps
+	- Spaceport: "Defense" category. Traps maybe a type of "furniture" applied to modules?
+- Misc
+	- Caravan, comms, cryptosleep casket, scanners, moisture pump, trade beacon, pod launcher, steles, transport pod, tool cabinet, vitals monitor, shrines
+	- Spaceport: Most of these are intrinsic
+- Floors
+	- Carpet, tile, wood, stone, special/fancy
+	- Spaceport: Something that can be applied afterward to corridors for special purposes?
+- Recreation
+	- Horseshoes, chess, billiards, poker, tube/flat/mega tv, harp/harpsichord/piano, telescope, books
+	- Spaceport: Commerce-ish? Can definitely have gambling dens, libraries
+- Ship
+	- Beam, cryptosleep casket, computer core, reactor, engine, sensor cluster
+	- Spaceport: n/a
+- Temperature
+	- Campfire, heater, cooler, vent
+	- Spaceport: Not really using temperature yet?
+- Ideology
+	- Altars, autobong, biosculpter, christmas tree, drum, ideogram, kneel pillow/sheet, lecturn, lightball, loudspeaker, neural supercharger, sleep accelerator, styling station, skullspike
+	- Spaceport: Altar or religious building might be neat (dlc?). Sleep accelerator could be bedroom upgrade. Supercharger might be its own building (high energy!)
+- Biotech
+	- Band mode, deathrest casket, deathrest accelerator, glucosoid pump (+speed), hemogen amplifier, hemopump, gene stuff - assembler, bank, extractor, processor, mech stuff - booster, gestator, recharger, subcore scanners
+	- Spaceport: "Logistics" section - recharge/repair bay, logistics bay, something to boost mechs around it maybe? Nothing for genes or vampires (space vampires!) yet
+- Anomaly
+	- Healer, bioferrite harvester, bioferrite shaper, proximity detector, holding spot, serum lab, shard buildings, sleep suppressor
+	- Spaceport: Prison buildings? Shards are fun idea of something that must be harvested from exotic beings. Proximity detector is similar to Observatory
+- Odyssey
+	- Substructure, hull, vac barrier, pilot console, chemfuel tank, thrusters, signal jammer, grav anchor, orbital scanner, oxygen pump, passenger shuttle
+	- Spaceport: Various buildings, life support, core
+
+Quests
+- Events where you beat a challenge to get a reward
+- "Raid points" - larger the colony, larger the quest (in reward and difficulty)
+	- Spaceport: Some formula of resources, modules, pawns
+- 1-3 stars, multiplier on raid points
+- Rewards: Honor, goodwill, colonists, items
+
+Resources
+- Food
+	- Raw food (meat and plants of many types), meals (paste/basic/fine/lavish, veg/carni)
+- Plant matter
+	- not edible, like drug materials and seeds, dyes
+- Materials
+	- Wood, stone, leather, metal (steel, uranium, plasteel, gold, silver, bioferrite), fabric (cloth, synthread, hyperweave)
+- Medical
+	- herbal/regular/glitterworld medicine
+	- Body parts (replacement, prosthetics, improvements)
+- Crafted
+	- Components, advanced component, subcores (for mechs), chemfuel, chips (for mechs), neutroamine
+- Exotic
+	- Psytrainer, shield core, reinforced barrel, archite capsules, skilltrainer, subpersona core, techprint, healer/resurrect mech serum
+	- can't be made, either harvested or bought or quests
+
+Characters
+- Skills
+	- Animals, Artistic, Construction, Cooking, Crafting (smith, tailor, craft), Medical, Melee, Mining, Intellectual, Plants, Shooting, Social
+	- Can have passion in a skill (faster learning, higher mood)
+	- Cap of lvl 20, more exp needed per level, after 10 there is experience decay
+- Backstory
+	- Childhood and adult (if adult)
+		- characters have age!
+	- Description, skill modifications, work types disallowed, traits
+- Traits
+	- https://rimworldwiki.com/wiki/Traits
+	- 1-3 plus sexuality
+	- Lifestyle, living space, social views, combat, skills, relationships, drugs, industriousness, speed, mood, nerves (mental break), neurotic, beauty, psychic, immunity
+- Needs
+	- Food, rest, recreation, beauty, comfort, outdoors/indoors, chemical (druggies), learning/play (children), deathrest/hemogen (vampires), energy (mechanoid)
+- Mood
+	- Based on needs mostly
+	- Flat modifiers
+	- Low mood causes mental breaks
+	- Passion (higher mood when doing a skill they like)
+- Thoughts
+	- "moodlets" - random things that affect mood
+- Health
+	- Many specific body parts
+	- related strongly to capacities
+- Capacity
+	- Ability to do a certain thing
+	- Blood filtration/pumping, breathing, consciousness (affects everything), digestion, eating, hearing, manipulation, moving, pain, sight, talking
+	- Impact stats and other capacities
+- Stat
+	- Usually derived values of many types: https://rimworldwiki.com/wiki/Stat
+- Social
+	- Opinions of other characters
+	- Relationships

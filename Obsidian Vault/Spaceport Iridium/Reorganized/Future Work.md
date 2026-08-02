@@ -34,6 +34,7 @@ Tutorial/Onboarding
 ARC relationship arc & independence; expeditions; observatory and research, foreign relations/other stations; crises framework; station warp travel; New Game+ corporations; exotic elements; tutorial (SAI); audio pass.
 
 
+Atmosphere rates not directly set to module size? (so can have large modules that require little atmosphere)
 
 **Biowaste**
 - Goal: Provide another resource to manage
@@ -46,5 +47,5 @@ ARC relationship arc & independence; expeditions; observatory and research, fore
 	2. Add interesting eclipse events, solar storm that knocks out power, etc
 
 
-Refactor jobs again
-- More like Rimworld model, composable blocks, probably easier to save too
+
+"Skill" to enum from StringName

@@ -26,6 +26,8 @@ There's Module.size and StructureComponent.size and they need to be aligned but 
 
 Conveyor module needs door
 
+Asteroids should "pop" (with vfx) when fully mined
+
 Battery improvements (upgrades, actual usefulness)
 
 UI_main close_esc_claim - maybe have a stack system where each thing that needs esc registers it first, then it does it in opposite order?
