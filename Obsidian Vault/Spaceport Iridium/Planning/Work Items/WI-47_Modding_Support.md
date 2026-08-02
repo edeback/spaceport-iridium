@@ -1,4 +1,4 @@
-# WI-46 — Modding Support
+# WI-47 — Modding Support
 
 > **Status: PLANNED (2026-08-01).** Design only, nothing implemented. Sized as a multi-stage item in the WI-44 mould — stages 1–3 are pure refactors of existing behaviour and are the whole load-bearing part; stages 4–5 are additive and can be dropped or deferred without stranding anything.
 
@@ -59,7 +59,7 @@ A modded component is therefore *structurally incapable* of persisting. Not "awk
 Two things this must not break:
 
 - **Order is load-bearing and currently encoded in comments.** "Construction before storage: the deconstructed path reconfigures the material storage." "Processor before storage: restoring the recipe reconfigures the input/output slots." WI-45 added more of these (residue before recipe; A3's `powered` alongside `force_off`). A naïve `for component in components` loop silently reorders all of it. Add an exported `save_order: int = 0` on the component bases, sort by it, and port each existing ordering constraint to an explicit number with the comment moved onto the field. **Getting this wrong produces a bug class that only appears in modded saves**, which is the worst possible place for it.
-- **The on-disk shape must not change.** Keep the existing key names (`"construction"`, `"processor"`, `"storage"`, …) by giving each vanilla component a `save_key` that defaults to its node path but is overridden to the legacy string. Pre-WI-46 saves then load untouched, and no `SAVE_VERSION` bump is needed. Modded components get path keys, which is fine because no old save contains them.
+- **The on-disk shape must not change.** Keep the existing key names (`"construction"`, `"processor"`, `"storage"`, …) by giving each vanilla component a `save_key` that defaults to its node path but is overridden to the legacy string. Pre-WI-47 saves then load untouched, and no `SAVE_VERSION` bump is needed. Modded components get path keys, which is fine because no old save contains them.
 
 This stage is a pure refactor with a large blast radius and total test coverage available (`tests/unit/test_component_persistence.gd` from WI-45 exists precisely for this). Do it before anything additive.
 
@@ -220,7 +220,7 @@ Stages 2 and 3 change no save bytes and add no features. They will feel like no 
 - **A mod's `.tres` referencing a vanilla script whose uid changed.** This is M9's rule failing in practice. Detect and log clearly rather than surfacing as a generic load error.
 - **Recipe inversion (M8):** a vanilla processor whose scene array and the new tag index disagree during the transition. Assert-free migration — build from the index, log the diff once, delete the array in a follow-up.
 - **Save with mods, load in vanilla:** already works for modules; confirm for jobs (`JobDataRegistry` returns null → job dropped), resources, and pawn scenes.
-- **M11 on a pre-WI-46 save:** absent `meta.mods` must read as "no mods", not as "mods missing", or every legacy save warns.
+- **M11 on a pre-WI-47 save:** absent `meta.mods` must read as "no mods", not as "mods missing", or every legacy save warns.
 - **M11 with a mod present at a different version:** warns, and the player can still proceed. Confirm the warning names the mod and version rather than just counting.
 
 ## Verification

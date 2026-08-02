@@ -172,9 +172,21 @@
               "icon": "lucide-file",
               "title": "02_Roadmap"
             }
+          },
+          {
+            "id": "84aff4476ec664aa",
+            "type": "leaf",
+            "state": {
+              "type": "release-notes",
+              "state": {
+                "currentVersion": "1.13.4"
+              },
+              "icon": "lucide-book-up",
+              "title": "Release Notes 1.13.4"
+            }
           }
         ],
-        "currentTab": 11
+        "currentTab": 12
       }
     ],
     "direction": "vertical"
@@ -194,7 +206,9 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": false
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
               },
               "icon": "lucide-folder-closed",
               "title": "Files"
@@ -319,26 +333,29 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "7d061a3ac703e76c",
+  "active": "84aff4476ec664aa",
   "lastOpenFiles": [
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.127336.5f0082aad60d",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.127336.855c2ff890df",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.127336.59cf3b647a7b",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.127336.815b41360af6",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.127336.b09efdfc8dce",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.127336.988f0553b869",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.127336.65edc436330f",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.127336.9f615e3e17ab",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.127336.a0dc1b35d54d",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.127336.f3fae00a2a7d",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.127336.81844ce5df52",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.61436.405b1a173e99",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.61436.f93eb178f29c",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.61436.b1aa744e0847",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.61436.67fe4af5dddf",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.61436.ea8608b0d508",
+    "Spaceport Iridium/Planning/02_Roadmap.md.tmp.61436.d1a6378670cf",
+    "Spaceport Iridium/Planning/02_Roadmap.md.tmp.61436.075f2c740929",
+    "Spaceport Iridium/Planning/02_Roadmap.md.tmp.61436.11e25c731a9b",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.61436.d44901507f5d",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.61436.66b46c0afd61",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.61436.bf8a2b22dcc0",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md",
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-46_Structure_Connectivity.md",
+    "Spaceport Iridium/Planning/Work Items/WI-46_Modding_Support.md",
+    "Spaceport Iridium/Planning/02_Roadmap.md",
     "Spaceport Iridium/Planning/01_Technical_Specification.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-45_Save_System_Audit.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-44_Job_System_Refactor.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-41_Group_Constants.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-43_Build_Menu.md",
     "Spaceport Iridium/Planning/00_Design_Document.md",
-    "Spaceport Iridium/Planning/Work Items/WI-46_Modding_Support.md",
     "Spaceport Iridium/Notes from Rimworld.md",
     "Spaceport Iridium/TODO notes.md",
     "Spaceport Iridium/Notes from SimTower.md",
@@ -354,9 +371,6 @@
     "Spaceport Iridium/Reorganized/03_Pawns_Jobs_and_Life.md",
     "Spaceport Iridium/Planning/New Work For Phase 3.md",
     "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md",
-    "Spaceport Iridium/Planning/02_Roadmap.md",
-    "Spaceport Iridium/Planning/Work Items/WI-45_Save_System_Audit.md",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-42_Preview_Metadata_Cache.md",
     "Pasted image 20251208125343.png",
     "Pasted image 20260712204434.png",
     "Pasted image 20251208125118.png",

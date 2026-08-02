@@ -33,7 +33,7 @@ Current order in `main.tscn`: TimeManager → WorldManager → PathManager → A
 | `WorldManager` | Grid occupancy per layer (`cell_to_module` dicts), module add/remove/purchase, truss replacement, layer canvases, starting-station spawn; world save section |
 | `PathManager` | Pawn-traversal `ModuleGraph`; reachability, pathfinding entry points, vertex groups |
 | `AtmosphereManager` | Life support (WI-17): runtime-attaches `AtmosphereComponent` to eligible modules, diffuses gas over path-graph door edges and turboshaft plenums on `slow_tick`, owns low-O2 alerting |
-| `StructureManager` | Second `ModuleGraph` of physical attachment; feeds adjacency fields and can-remove checks (the check itself is still disabled — §2.4) |
+| `StructureManager` | Second `ModuleGraph` of physical attachment; feeds adjacency fields and the `can_remove_module` split guard (re-enabled by WI-46 — blueprints now form structural edges when placed) |
 | `AdjacencyManager` | Adjacency effect fields (WI-30): emitters radiate named effects over the structure graph with per-hop falloff; pure derived state, coalesced deferred rebuilds |
 | `PowerManager` | Power balancing across the generator/consumer/battery registration arrays on `slow_tick` (WI-39 — these are no longer node groups) |
 | `TurboliftManager` | Shaft registry; merge/split shafts as lift modules are added/removed; shaft save section |
@@ -226,7 +226,7 @@ The one Phase-2 item never done, and the only outstanding gap in the routing lan
 
 ### 2.2 Save/load completeness
 WI-45 closed this as a *coverage* question — every component and manager field is now either saved or commented as deliberately derived. What remains is structural rather than missing:
-- The per-component chains in `ModuleBase` and `SaveManager._load_pawns` are hand-enumerated by type (§1.17), so persistence is closed to anything defined outside the codebase. WI-46 stage 2 is the fix.
+- The per-component chains in `ModuleBase` and `SaveManager._load_pawns` are hand-enumerated by type (§1.17), so persistence is closed to anything defined outside the codebase. WI-47 stage 2 is the fix.
 - Save *sections* are likewise a literal dictionary with a hardcoded load order.
 - A decision on whether an in-progress ARC inspection should ever survive a load (today it re-rolls, deliberately).
 - The `_migrations` table is still empty — the first genuinely breaking format change should exercise it rather than bumping past it. WI-45 deliberately avoided needing it (the one shape change carries a legacy branch instead).
@@ -240,7 +240,7 @@ Scale is still modest (tens of modules, dozens of pawns, a handful of ships), so
 - Later job-selection evolution: utility score (priority + distance + pawn preference + age + workspace affinity) evaluated at claim time only, never per-frame.
 
 ### 2.4 Cleanups on the radar
-- `StructureManager.can_remove_module` is still commented out in `WorldManager.remove_module` (under-construction modules aren't structure-connected), so a module can still be deleted out from under the station. `ModuleBase.structure_check_before_delete` exists to gate it per-module once the check is re-enabled.
+- ~~`StructureManager.can_remove_module` is still commented out in `WorldManager.remove_module` (under-construction modules aren't structure-connected), so a module can still be deleted out from under the station.~~ Done by WI-46: blueprints form their structural edges when placed, so the graph is honest during construction; the split test is now a local cut-vertex check (`ModuleGraph.would_removal_split`) rather than a whole-graph one-component test; and the guard is re-enabled in `remove_module`, still gated per-module by `ModuleBase.structure_check_before_delete`.
 - `AudioManager` is still a scriptless placeholder — one looping stream on the `Music` bus. WI-36 created the Music/Effects buses; the audio pass (module emitters, sim-time awareness, an effects mixer) is the Phase-4 item that consumes them.
 - ~~Extract magic group strings into a constants file.~~ Done by WI-41: `Groups` (`scripts/utility/groups.gd`). What's left is the residue it exposed — four groups (`processor`, `turbolifts`, `teleporters`, `stairs`) that are joined and never scanned, and `airlock`, which is authored in two `.tscn`s where no constant can reach.
 - ~~`ResourceData.cached_total`/`global_total` are still `@export`ed runtime state on shared resources.~~ Fixed by WI-38: only the authored seed `starting_global_total` is exported now.
@@ -250,14 +250,14 @@ Scale is still modest (tens of modules, dozens of pawns, a handful of ships), so
 ### 2.5 Rendering/UX debt
 Truss hiding behind modules, solid/sparse tile rendering, module hover interiors.
 
-### 2.6 Modding readiness (WI-46, planned)
+### 2.6 Modding readiness (WI-47, planned)
 The last Phase-3.5 item, and the only one not yet started. The architecture is already most of the way to supporting third-party content — `.tres`-as-identity with stable ids, `ResourceScanner` discovery, resource-subclass polymorphism (`UnlockEffect`, `EventEffect`, `PathBehavior`), and WI-44's `JobData` + `driver: Script` split, which is the pattern the rest should converge on. Three things block it, all of them hand-maintained dispatch tables that silently exclude anything they were not written to know about:
 
 1. **Components cannot save state at all** — no hooks on `ComponentBase`/`PawnComponentBase`; `ModuleBase` enumerates every type by hand (§1.17). Pure refactor, largest blast radius, and the reason the item is staged.
 2. **Save sections are a literal** with a hardcoded order (§2.2).
 3. **No mod loader exists** — nothing calls `load_resource_pack`, and all 13 scan roots are `const` `res://` paths.
 
-Plus smaller ones: `ItemInstanceData` subtypes are a hardcoded `match` (so a modded resource with variance loses it), `ModuleData.UICategory` is an enum (not extensible from data), and `ProcessorComponent.available_recipes` lives on the module *scene*, which is what makes new ore *chains* impossible without replacing vanilla scenes. One hard external constraint gates the design: exported builds do not register `class_name` for scripts inside a mod `.pck`, so mod content must be referenced by uid/path — **never re-uid an existing script**. Full design in [[WI-46_Modding_Support]].
+Plus smaller ones: `ItemInstanceData` subtypes are a hardcoded `match` (so a modded resource with variance loses it), `ModuleData.UICategory` is an enum (not extensible from data), and `ProcessorComponent.available_recipes` lives on the module *scene*, which is what makes new ore *chains* impossible without replacing vanilla scenes. One hard external constraint gates the design: exported builds do not register `class_name` for scripts inside a mod `.pck`, so mod content must be referenced by uid/path — **never re-uid an existing script**. Full design in [[WI-47_Modding_Support]].
 
 ### 2.7 Phase 4 horizon (design only)
 ARC relationship arc & independence (turns the levy off); expeditions; observatory and research; foreign relations; pawn factions (the name generator is already wrapped for this); module quality tiers (unlocks the deferred Conceited trait); per-pawn sprite variants; pawn death done properly; crises framework; station warp travel; New Game+ corporations; exotic elements; tutorial; the audio pass.
