@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ModuleData" load_steps=6 format=3]
+
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="1_mdata"]
+[ext_resource type="PackedScene" path="res://mods/spikemod/scenes/shimmer_collector.tscn" id="2_scene"]
+[ext_resource type="Texture2D" uid="uid://chbnmymdoy0o7" path="res://assets/sprites/module_generic.png" id="3_icon"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="4_res"]
+[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="5_credits"]
+
+[resource]
+script = ExtResource("1_mdata")
+id = &"spikemod.shimmer_collector"
+name = "Shimmer Collector"
+description = "Skims glimmerite dust out of the ambient void. Sample-mod hardware: it exists to prove a modded module, carrying a modded component that saves its own state, needs no change to the base game."
+scene = ExtResource("2_scene")
+icon = ExtResource("3_icon")
+instant_build = false
+resource_costs = Dictionary[ExtResource("4_res"), int]({
+ExtResource("5_credits"): 150
+})
+tags = Array[String](["Industrial", "SpikemodGlimmer"])
+category_id = &"spikemod.glimmer"
+unlocked_by_default = false

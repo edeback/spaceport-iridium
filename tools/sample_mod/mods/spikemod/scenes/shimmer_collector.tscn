@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_base"]
+[ext_resource type="Script" path="res://mods/spikemod/scripts/shimmer_collector_component.gd" id="2_collector"]
+
+[node name="Module" instance=ExtResource("1_base")]
+
+[node name="ShimmerCollector" type="Node2D" parent="."]
+script = ExtResource("2_collector")
+shimmer_per_hour = 1.5

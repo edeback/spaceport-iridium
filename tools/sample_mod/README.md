@@ -35,9 +35,38 @@ editor support. That's a stage-1 deliverable, not something this fixture needs.
 | `scenes/spike_scene.tscn` | mod root script + vanilla component script + `ExtResource` to a mod `.tres` |
 | `/data/resources/test_resource.tres` | **negative control**: an attempt to shadow a vanilla file, which `replace_files = false` must defeat |
 
-Still missing before it is the *full* sample mod WI-47 stage 4 wants: a module, a
-component that saves state, a tech node, a build category, a ship variant, a pawn
-kind. The mod id is still `spikemod`; rename it when it grows into the real thing.
+Stage 4's extension points, added once all five landed:
+
+| File | Covers |
+| --- | --- |
+| `data/modules/shimmer_collector_mdata.tres` + `scenes/shimmer_collector.tscn` | a modded **module**: an inherited scene off `module_base.tscn` plus one added component. Inheritance is why this file is six lines — the base carries sprite, footprint, path, structure and construction |
+| `scripts/shimmer_collector_component.gd` | **M2**: a mod component that owns save state, via `save_key()` + `get_save_data()`/`load_save_data()` |
+| `data/build_categories/glimmer.tres` | **M5**: a mod **build-menu category**, slotted at `sort_order = 55` between vanilla Mining (50) and Storage (60) |
+| `data/recipes/polish_glimmerite_recipe.tres` | **M8**: a recipe that attaches itself to the **vanilla ore processor** by declaring `processor_tags = ["Refinery"]` — no replacement refinery scene, so it can't conflict with another mod doing the same |
+| `data/ships/glimmer_corsair.tres` | **M7**: a raider variant in the wave pool |
+| `data/pawns/glimmer_hand.tres` | **M10**: a crew kind in the hire pool, at a 1.4× price band |
+| `data/unlocks/glimmer_tech.tres` | a **tech node** on the vanilla `industry` tree granting the mod's module |
+| `data/resources/glimmerite.tres` | **M4**: `instance_data_script` pointing at the mod's own `ItemInstanceData` subclass, so its variance rebuilds on load |
+
+## The acceptance test
+
+WI-47's bar is not "these features exist" — it is that a mod exercising all of them
+needs **zero core edits**. Verified 2026-08-03 by a temporary probe, 22 checks
+across two halves:
+
+- **Build**: the mod loads with no problems; its resource, module, job type, ship
+  variant, pawn kind, build category and tech node all register; its recipe shows
+  up in the vanilla refinery's selector next to the five vanilla ones; the module
+  starts locked, unlocks by research, places, and its mod component writes its own
+  save block.
+- **Restore**: the save loads, the module comes back, and the mod component's
+  state (`collected = 41.5`) survives the round trip.
+
+`git status` after the run showed **no file changed outside this directory**.
+
+The mod id is still `spikemod`, from its origin as the M9 spike fixture. Renaming
+it would mean rewriting every `spikemod.*` content id and the mount path, so it is
+left alone unless there is a reason to churn them.
 
 ## Building it
 

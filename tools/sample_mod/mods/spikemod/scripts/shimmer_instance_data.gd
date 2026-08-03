@@ -40,5 +40,15 @@ func spawn_like_me() -> ItemInstanceData:
 func get_display_suffix() -> String:
 	return "%d%% shimmer" % roundi(shimmer * 100.0)
 
+## WI-47 M4: the save's `"type"` tag comes from here, and the factory checks it
+## against whatever instance_data_script the resource currently declares.
+func type_id() -> StringName:
+	return &"spikemod.shimmer"
+
 func to_dict() -> Dictionary:
-	return {"type": "spikemod.shimmer", "shimmer": shimmer}
+	return {"type": String(type_id()), "shimmer": shimmer}
+
+## The other half of M4 - reading the block back is the subclass's own job now,
+## rather than a hardcoded `match` on the type tag inside SaveManager.
+func from_dict(data: Dictionary) -> void:
+	shimmer = float(data.get("shimmer", 0.5))

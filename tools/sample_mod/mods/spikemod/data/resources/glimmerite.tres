@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="ResourceData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ResourceData" load_steps=3 format=3]
 
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_script"]
+[ext_resource type="Script" path="res://mods/spikemod/scripts/shimmer_instance_data.gd" id="2_instance"]
 
 [resource]
 script = ExtResource("1_script")
@@ -10,3 +11,4 @@ default_cost = 42
 default_market_supply = 17
 has_variance = true
 merge_tolerance = 0.1
+instance_data_script = ExtResource("2_instance")
