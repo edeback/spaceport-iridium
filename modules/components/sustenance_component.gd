@@ -37,6 +37,22 @@ var pool_quality: float = DEFAULT_QUALITY
 @export var meal_mood_duration_hours: float = 8.0
 @export_group("")
 
+## Sitting down to it. The portion leaves the pool (and is billed) in one go at
+## the first bite, then feeds the pawn over this many game-hours - so a mess hall
+## is somewhere crew linger rather than a vending machine they touch and leave.
+## Per-module rather than a constant, so a canteen can serve faster than a
+## restaurant. Zero means the old instant meal.
+@export_group("Dining Pace")
+@export var meal_duration_hours: float = 1.0
+## Mood hit for a meal cut short (a critical need, a player cancel, the module
+## going away). The uneaten remainder is already out of the pool and nothing puts
+## it back, so this is the wasted food showing up as a grumble. Deliberately
+## smaller than the bad-meal malus: being pulled off your lunch is an annoyance,
+## not food poisoning.
+@export var interrupted_meal_mood: float = -0.04
+@export var interrupted_meal_duration_hours: float = 4.0
+@export_group("")
+
 var override_ui: bool = false
 
 signal sustenance_stored_changed(new_amount: int)

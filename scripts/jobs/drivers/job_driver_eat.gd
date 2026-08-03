@@ -4,11 +4,17 @@ extends JobDriver
 ## Go and eat something (WI-44) - the replacement for the eat job.
 ##
 ## Target A is the sustenance pool. Three actions, no claim: a pool has no slots,
-## so nothing is booked and nothing needs releasing. The re-validation that
+## so nothing is booked and nothing needs releasing - which is also why the meal
+## can take an hour without anyone queueing behind it. The re-validation that
 ## the eat job did by hand on arrival ("eat from the component we chose and walked
 ## to, not whatever module we happen to be standing in") is structural now - the
 ## action reads the slot, and a pool that died on the way fails the job through
 ## the target's own liveness check.
+##
+## The last step is the long one: Action_Eat serves the whole portion at once and
+## then holds the pawn at the table for the serving module's meal_duration_hours.
+## Nothing else needs to know that - the runner owns the clock, and a meal cut
+## short is handled inside the action.
 
 const FIND: int = 0
 const GOTO: int = 1

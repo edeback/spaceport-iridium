@@ -86,6 +86,36 @@ func test_meal_mood_band_edges() -> void:
 	assert_eq(FoodInstanceData.meal_mood_band(0.3, 0.3, 0.7), -1, "exactly bad_band -> bad (inclusive)")
 	assert_eq(FoodInstanceData.meal_mood_band(0.1, 0.3, 0.7), -1, "well below bad_band -> bad")
 
+# --- eating over time (Action_Eat.nourishment_owed) ---------------------------
+# A meal is served whole and eaten across meal_duration_hours; the payout is the
+# eaten FRACTION of the total minus what's already been handed over, so the
+# arithmetic has to be exact at both ends and monotonic in between.
+
+func test_nourishment_is_paid_out_in_proportion_to_time_eaten() -> void:
+	# Quarter of the way through a 40-second meal worth 80 -> a quarter of 80.
+	assert_almost_eq(Action_Eat.nourishment_owed(80.0, 10.0, 40.0, 0.0), 20.0, 0.0001, "a quarter eaten owes a quarter")
+	assert_almost_eq(Action_Eat.nourishment_owed(80.0, 20.0, 40.0, 20.0), 20.0, 0.0001, "halfway, with a quarter already served, owes the second quarter")
+
+func test_the_frame_that_runs_past_the_end_tops_the_meal_up_exactly() -> void:
+	# The runner's last tick overshoots the duration; the clamp means the pawn
+	# gets the whole meal and not a sliver more.
+	assert_almost_eq(Action_Eat.nourishment_owed(80.0, 41.3, 40.0, 60.0), 20.0, 0.0001, "overshooting the meal length pays the remainder, not extra")
+	assert_almost_eq(Action_Eat.nourishment_owed(80.0, 99.0, 40.0, 80.0), 0.0, 0.0001, "a fully served meal owes nothing however long the pawn sits")
+
+func test_an_interrupted_meal_pays_only_the_fraction_eaten() -> void:
+	# The other 90% is wasted: it left the pool at the first bite and nothing
+	# puts it back. Nothing here hands it over retroactively.
+	assert_almost_eq(Action_Eat.nourishment_owed(80.0, 4.0, 40.0, 0.0), 8.0, 0.0001, "a tenth of the way in owes a tenth")
+
+func test_a_zero_length_meal_is_served_whole_on_the_first_tick() -> void:
+	# A module tuned back to the old instant meal must not divide by zero.
+	assert_almost_eq(Action_Eat.nourishment_owed(80.0, 0.0, 0.0, 0.0), 80.0, 0.0001, "no duration means the whole meal at once")
+
+func test_nourishment_owed_never_goes_negative() -> void:
+	# Over-service can't happen through the normal path, but a clawback would be
+	# hunger DRAIN at the table - never that.
+	assert_eq(Action_Eat.nourishment_owed(80.0, 10.0, 40.0, 50.0), 0.0, "already-over-served owes zero, not a negative bite")
+
 # --- container blend (mixed-quality storage/pool) ----------------------------
 
 func _food_container(tolerance: float) -> ResourceStackContainer:
