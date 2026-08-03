@@ -1,0 +1,101 @@
+extends GutTest
+
+## WI-47 M8: recipe eligibility inverted onto RecipeData.processor_tags, and the
+## reverse index a processor asks "which recipes claim my module's tags".
+##
+## The index is static and shared by every suite in a run, so each test rebuilds
+## it from scratch. Pure - no Global, no scene, no processor.
+
+func before_each() -> void:
+	RecipeData.clear_for_test()
+
+func after_each() -> void:
+	RecipeData.clear_for_test()
+
+func _recipe(recipe_name: String, tags: Array[String], sort_order: int = 0) -> RecipeData:
+	var recipe := RecipeData.new()
+	recipe.name = recipe_name
+	recipe.processor_tags = tags
+	recipe.sort_order = sort_order
+	RecipeData.register_for_test(recipe)
+	return recipe
+
+func _names(recipes: Array[RecipeData]) -> Array[String]:
+	var out: Array[String] = []
+	for recipe: RecipeData in recipes:
+		out.append(recipe.name)
+	return out
+
+# --- matching -------------------------------------------------------------------
+
+func test_a_recipe_reaches_every_processor_claiming_its_tag() -> void:
+	_recipe("Smelt Iron", ["Refinery"])
+	assert_eq(_names(RecipeData.for_tags(["Refinery"])), ["Smelt Iron"] as Array[String])
+
+func test_a_processor_sees_nothing_it_has_no_tag_for() -> void:
+	_recipe("Smelt Iron", ["Refinery"])
+	assert_eq(RecipeData.for_tags(["Forge"]).size(), 0)
+
+func test_a_module_with_no_tags_matches_nothing() -> void:
+	_recipe("Smelt Iron", ["Refinery"])
+	assert_eq(RecipeData.for_tags([] as Array[String]).size(), 0)
+
+func test_one_recipe_can_claim_several_processors() -> void:
+	# The reason eligibility is by tag and not by module id: one declaration
+	# reaches the vanilla refinery AND a mod's advanced refinery.
+	_recipe("Smelt Iron", ["Refinery", "AdvancedRefinery"])
+	assert_eq(_names(RecipeData.for_tags(["AdvancedRefinery"])), ["Smelt Iron"] as Array[String])
+
+func test_a_recipe_matching_two_of_a_modules_tags_appears_once() -> void:
+	_recipe("Smelt Iron", ["Refinery", "Industrial"])
+	assert_eq(RecipeData.for_tags(["Refinery", "Industrial"]).size(), 1, "no duplicate in the selector")
+
+func test_a_mod_recipe_joins_a_vanilla_processor() -> void:
+	# The whole point of M8: adding a recipe to an existing processor without
+	# shipping a replacement module scene.
+	_recipe("Smelt Iron", ["Refinery"], 10)
+	_recipe("Smelt Glimmerite", ["Refinery"], 15)
+	assert_eq(_names(RecipeData.for_tags(["Refinery"])),
+			["Smelt Iron", "Smelt Glimmerite"] as Array[String])
+
+# --- ordering -------------------------------------------------------------------
+
+func test_selector_order_follows_sort_order() -> void:
+	_recipe("Third", ["Refinery"], 30)
+	_recipe("First", ["Refinery"], 10)
+	_recipe("Second", ["Refinery"], 20)
+	assert_eq(_names(RecipeData.for_tags(["Refinery"])),
+			["First", "Second", "Third"] as Array[String])
+
+func test_equal_sort_orders_break_on_name() -> void:
+	# Reproducible run to run: scan order must never decide what the player sees.
+	_recipe("Zeta", ["Refinery"], 10)
+	_recipe("Alpha", ["Refinery"], 10)
+	assert_eq(_names(RecipeData.for_tags(["Refinery"])), ["Alpha", "Zeta"] as Array[String])
+
+func test_a_mod_can_slot_a_recipe_between_two_vanilla_ones() -> void:
+	# Vanilla leaves gaps of 10 precisely so this is possible.
+	_recipe("Iron", ["Refinery"], 10)
+	_recipe("Carbon", ["Refinery"], 20)
+	_recipe("Glimmerite", ["Refinery"], 15)
+	assert_eq(_names(RecipeData.for_tags(["Refinery"])),
+			["Iron", "Glimmerite", "Carbon"] as Array[String])
+
+# --- the shipped data -----------------------------------------------------------
+
+func test_every_vanilla_recipe_declares_a_processor() -> void:
+	# A recipe with no processor_tags is unreachable from the index and would only
+	# still work by being some scene's authored default.
+	RecipeData.clear_for_test()
+	var untagged: Array[String] = []
+	for path: String in ContentPaths.scan(ContentPaths.RECIPES):
+		var recipe: RecipeData = ResourceLoader.load(path) as RecipeData
+		if recipe != null and recipe.processor_tags.is_empty():
+			untagged.append(path.get_file())
+	assert_eq(untagged, [] as Array[String], "untagged recipes: %s" % str(untagged))
+
+func test_the_refinery_offers_its_five_ores_in_the_authored_order() -> void:
+	RecipeData.clear_for_test()
+	var names: Array[String] = _names(RecipeData.for_tags(["Industrial", "Refinery"]))
+	assert_eq(names.size(), 5, "five refining recipes: %s" % str(names))
+	assert_true(names[0].to_lower().contains("iron"), "iron still leads the selector: %s" % str(names))

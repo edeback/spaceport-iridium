@@ -13,3 +13,5 @@ ExtResource("1_tiwgf"): 1
 outputs = {
 ExtResource("2_ixn0u"): 1
 }
+processor_tags = Array[String](["IceProcessing"])
+sort_order = 10

@@ -17,3 +17,5 @@ outputs = Dictionary[ExtResource("1_vpk8h"), int]({
 ExtResource("4_uddw8"): 2
 })
 metadata/_custom_type_script = "uid://by2n6rwcttgyx"
+processor_tags = Array[String](["Forge"])
+sort_order = 10

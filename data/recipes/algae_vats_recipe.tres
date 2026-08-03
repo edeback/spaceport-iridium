@@ -18,3 +18,5 @@ ExtResource("4_5wh7t"): 2
 })
 output_quality_base = 0.35
 metadata/_custom_type_script = "uid://by2n6rwcttgyx"
+processor_tags = Array[String](["AlgaeCulture"])
+sort_order = 10

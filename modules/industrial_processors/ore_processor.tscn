@@ -98,7 +98,6 @@ ExtResource("13_iron"): SubResource("Resource_pj0q4")
 
 [node name="ProcessorComponent" parent="." index="7" unique_id=1865115011 node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("6_av0o4")]
 recipe = ExtResource("15_rfiron")
-available_recipes = Array[ExtResource("14_rcpd")]([ExtResource("15_rfiron"), ExtResource("16_rfcarbon"), ExtResource("17_rfsilicon"), ExtResource("18_rfgold"), ExtResource("19_rfiridium")])
 input_storage = NodePath("../Input Storage")
 output_storage = NodePath("../Output Storage")
 time_to_process = 15.0

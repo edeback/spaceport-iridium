@@ -17,7 +17,7 @@ instant_build = false
 resource_costs = Dictionary[ExtResource("2_x74ts"), int]({
 ExtResource("3_0roq3"): 6
 })
-tags = Array[String](["Industrial"])
+tags = Array[String](["Industrial", "Hydroponics"])
 category_id = &"food"
 upkeep_per_cycle = 8
 unlocked_by_default = false

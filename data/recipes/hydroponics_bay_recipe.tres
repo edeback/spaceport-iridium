@@ -18,3 +18,5 @@ ExtResource("4_lpjme"): 3
 })
 output_quality_base = 0.55
 metadata/_custom_type_script = "uid://by2n6rwcttgyx"
+processor_tags = Array[String](["Hydroponics"])
+sort_order = 10

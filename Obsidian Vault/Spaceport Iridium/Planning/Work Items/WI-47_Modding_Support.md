@@ -4,7 +4,7 @@
 >
 > **The M9 spike passed: 29 checks green in all four of {editor, exported build} × {text-script pack, binary-token pack}.** Mod scripts load, extend vanilla classes and dispatch through them; mod `.tres` resolve vanilla scripts by uid and by path; a vanilla `JobData` inside a mod pack resolves a mod `JobDriver`. Nothing in stages 1–5 needs redesigning. Two things the spike changed: M9's constraint is **sharper** than written (a mod script cannot name its own `class_name` either) and **less serious** than feared (`preload()`/`load()` by path substitutes completely), and M1 gains a hard requirement to mount with `replace_files = false`. Full results in M9 below.
 >
-> **Stage 4 PARTIAL — M5 and M6 shipped 2026-08-03; M8-recipes, M7-ships and M10 not started.** 579 GUT green plus a 10-check in-game run. The stage was always five independent items ("each can ship or slip alone"); these two are complete and verified, the other three are untouched. **Do M8-recipes next** — the WI's own "do this one regardless", and the difference between mods adding ores and mods adding ore *chains*. The "not yet audited" sweep is still outstanding.
+> **Stage 4 PARTIAL — M5, M6 and M8-recipes shipped 2026-08-03; M7-ships and M10 not started.** 590 GUT green plus two in-game runs (10 checks and 7). The stage was always five independent items ("each can ship or slip alone"); three are complete and verified. **M7-ships, M10 pawn kinds and the "not yet audited" sweep remain**, and none of them blocks anything — M8 was the load-bearing one.
 >
 > **Stage 3 (M3, M4, M11) shipped**: save sections are a registry, instance data resolves per-resource, and `meta.mods` records what wrote a save. 574 GUT green, plus a 9-check in-game round trip. **Next: stage 4 (M5, M6, M8-recipes, M7-ships, M10) — additive and independent, each can ship or slip alone.**
 >
@@ -184,6 +184,20 @@ Not many, but each one is a thing a mod can't reach:
 
 ### M8 — There is no way to patch existing content
 
+> **RECIPE INVERSION DONE 2026-08-03 (stage 4). The patch-op format below is still deferred.**
+>
+> `RecipeData` gained `processor_tags: Array[String]` + `sort_order`, and a static reverse index (`RecipeData.for_tags`) scanned through a new `ContentPaths.RECIPES` root. `ProcessorComponent.get_available_recipes()` assembles the eligible set from the owning module's tags instead of reading a scene array.
+>
+> - **The existing tags were far too coarse to use as-is.** Every processor module carried exactly one gameplay tag, `"Industrial"` — keying on it would have offered every refining recipe in the forge, the ice processor and the algae tank. Each processor gained a specific second tag (`Refinery`, `Forge`, `IceProcessing`, `Electrolysis`, `AlgaeCulture` on both algae modules, `Hydroponics`), and the ten vanilla recipes each declare one. Tags rather than module ids, as the finding prefers: one declaration reaches the vanilla refinery *and* any modded refinery claiming the same tag.
+> - **`sort_order` with gaps of 10** preserves the refinery's authored selector order (Iron, Carbon, Silicon, Gold, Iridium) exactly, and lets a mod slot a recipe *between* two vanilla ones rather than only at the end.
+> - **Resolved lazily and cached**, not in `_ready()`: `module_data` isn't reliably assigned by the time a component readies, and this is the only thing here that needs it.
+> - **Both asserts retired.** `assert(available_recipes.has(recipe))` is gone entirely; `select_recipe` now warns and refuses. The eligible set is assembled from scanned data, so a stale UI entry or a mod recipe whose tag stopped matching is a content problem, not a programming error, and must not take the game down.
+> - **The legacy array is deleted, with evidence.** The migration ran the two-step the finding asks for: a transitional union that warned whenever a scene array contributed anything the index didn't, then a probe comparing both across all seven processors. The index alone reproduced every authored list and every scene default, so `ore_processor.tscn`'s `available_recipes` (the only one ever set) was removed. `ProcessorComponent.available_recipes` remains as an export purely so an unmigrated third-party scene still works, and still warns if it contributes.
+>
+> Verified live: a placed refinery resolves five recipes in the authored order with a working selector, its default is among them, and an ineligible recipe is refused without crashing.
+
+### M8 — original finding
+
 Godot has no XPath-patch equivalent. A mod that wants to change a vanilla number must ship a replacing `.tres`, and two mods doing that conflict silently and order-dependently.
 
 The specific trap for the stated "new resources" use case: `ProcessorComponent.available_recipes` is an `@export Array[RecipeData]` on the component **in the module scene**. So a mod can add a new ore and a new `RecipeData` for smelting it, and there is no way to make the existing refinery accept the recipe short of shipping a replacement refinery scene — at which point it conflicts with every other mod that did the same.
@@ -322,7 +336,7 @@ Stated explicitly so the implementer doesn't assume this WI swept the whole code
 2. ~~**Stage 1 — M1.** Loader + `ContentPaths` + namespacing.~~ **DONE 2026-08-02** — see M1.
 3. ~~**Stage 2 — M2.** Component save hooks, both bases.~~ **DONE 2026-08-02** — see M2.
 4. ~~**Stage 3 — M3, M4, M11.** Save participants, instance-data registry, and the `meta.mods` list.~~ **DONE 2026-08-02** — see M3, M4, M11.
-5. **Stage 4 — M5, M6, M8-recipes, M7-ships, M10.** Additive and independent of each other; each can ship or slip alone. Sweep the "not yet audited" list here. **M5 and M6 DONE 2026-08-03; M8-recipes, M7-ships, M10 and the audit sweep remain.** M8-recipes first.
+5. **Stage 4 — M5, M6, M8-recipes, M7-ships, M10.** Additive and independent of each other; each can ship or slip alone. Sweep the "not yet audited" list here. **M5, M6 and M8-recipes DONE 2026-08-03; M7-ships, M10 and the audit sweep remain.**
 6. **Stage 5 — M8 patch ops.** Only if a real mod wants it.
 
 Stages 2 and 3 change no save bytes and add no features. They will feel like no progress and they are the entire item.
@@ -336,7 +350,7 @@ Stages 2 and 3 change no save bytes and add no features. They will feel like no 
 - **Two mods, same id:** hard error surfaced in the UI, not a `push_warning` into the log.
 - **Mod content referenced by an unlock:** a `GrantModuleEffect` pointing at a module from a *different* mod that isn't installed. Must degrade to a dead tech node, not a crash on `UnlockManager` scan.
 - **A mod's `.tres` referencing a vanilla script whose uid changed.** This is M9's rule failing in practice. Detect and log clearly rather than surfacing as a generic load error. (Spike: uid takes precedence over path, so a *moved* vanilla script is fine as long as its `.uid` moved with it. Only a *changed* uid breaks a mod — hence "never re-uid", not "never move".)
-- **Recipe inversion (M8):** a vanilla processor whose scene array and the new tag index disagree during the transition. Assert-free migration — build from the index, log the diff once, delete the array in a follow-up.
+- ~~**Recipe inversion (M8):** a vanilla processor whose scene array and the new tag index disagree during the transition. Assert-free migration — build from the index, log the diff once, delete the array in a follow-up.~~ **DONE 2026-08-03** exactly this way: a transitional union that warns on any scene-only entry, a probe diffing index against scene across all seven processors (the index was a superset everywhere, defaults included), then the one authored array deleted.
 - **Save with mods, load in vanilla:** already works for modules; confirm for jobs (`JobDataRegistry` returns null → job dropped), resources, and pawn scenes.
 - **M11 on a pre-WI-47 save:** absent `meta.mods` must read as "no mods", not as "mods missing", or every legacy save warns.
 - **M11 with a mod present at a different version:** warns, and the player can still proceed. Confirm the warning names the mod and version rather than just counting.

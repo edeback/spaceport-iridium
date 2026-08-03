@@ -17,7 +17,7 @@ instant_build = false
 resource_costs = Dictionary[ExtResource("2_fabqw"), int]({
 ExtResource("3_fwlkr"): 6
 })
-tags = Array[String](["Industrial"])
+tags = Array[String](["Industrial", "Refinery"])
 category_id = &"industry"
 upkeep_per_cycle = 8
 can_break_down = true

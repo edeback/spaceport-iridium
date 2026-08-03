@@ -2,9 +2,17 @@ class_name ProcessorComponent
 extends ComponentBase
 
 @export var recipe: RecipeData
-## When this holds 2+ recipes, the player can switch the processor between
-## them (ore refinery). Empty or single-entry = fixed-recipe processor
+## LEGACY (WI-47 M8): eligibility now lives on RecipeData.processor_tags, and
+## get_available_recipes() assembles the list from the scanned index. This array
+## is still unioned in so an unmigrated scene keeps working, and any entry that
+## reaches the union warns. Delete it once every scene is clean - a mod cannot
+## reach it, which is the whole reason eligibility moved.
 @export var available_recipes: Array[RecipeData] = []
+
+## Cache for get_available_recipes(). Not saved and never invalidated: a module's
+## tags and the recipe index are both fixed for the life of the run.
+var _resolved_recipes: Array[RecipeData] = []
+var _recipes_resolved: bool = false
 @export var input_storage: StorageComponent
 @export var output_storage: StorageComponent
 @export var time_to_process: float = 1
@@ -93,7 +101,6 @@ func _ready() -> void:
 	assert(output_storage != null, "Processor must have output_storage!")
 	assert(power_consumer != null, "Processor must have power_consumer!")
 	assert(time_to_process > 0, "Processor time_to_process must be > 0!")
-	assert(available_recipes.is_empty() or available_recipes.has(recipe), "Default recipe must be among available_recipes!")
 	super()
 
 func ready_preview() -> void:
@@ -122,8 +129,49 @@ func _process(delta: float) -> void:
 	else:
 		_stepwise_processing(sim_delta)
 
+## Every recipe this processor can run: the ones claiming one of the owning
+## module's tags (WI-47 M8), unioned with whatever the scene's legacy
+## available_recipes array still holds, plus the authored default so a
+## fixed-recipe processor always offers at least its own.
+##
+## Built lazily and cached rather than in _ready(): module_data isn't necessarily
+## assigned by the time a component readies, and this is the only thing here that
+## needs it.
+func get_available_recipes() -> Array[RecipeData]:
+	if not _recipes_resolved:
+		_recipes_resolved = true
+		_resolved_recipes = _resolve_available_recipes()
+	return _resolved_recipes
+
+func _resolve_available_recipes() -> Array[RecipeData]:
+	var tags: Array[String] = []
+	if owner_module != null and owner_module.module_data != null:
+		tags = owner_module.module_data.tags
+	var out: Array[RecipeData] = RecipeData.for_tags(tags)
+	# Transitional union (WI-47 M8): scenes that still author available_recipes
+	# keep working, and the difference is reported once so the arrays can be
+	# deleted with evidence rather than hope.
+	var only_in_scene: Array[String] = []
+	for legacy: RecipeData in available_recipes:
+		if legacy != null and not out.has(legacy):
+			out.append(legacy)
+			only_in_scene.append(legacy.name)
+	if not only_in_scene.is_empty():
+		push_warning("Processor '%s': recipe(s) %s come only from the scene array, not from any processor_tags"
+				% [_module_label(), ", ".join(PackedStringArray(only_in_scene))])
+	# The authored default is always runnable, whatever the index says - a
+	# processor whose recipe declares no tags must not end up with an empty list.
+	if recipe != null and not out.has(recipe):
+		out.append(recipe)
+	return out
+
 func can_select_recipes() -> bool:
-	return available_recipes.size() > 1
+	return get_available_recipes().size() > 1
+
+func _module_label() -> String:
+	if owner_module != null and owner_module.module_data != null:
+		return owner_module.module_data.name
+	return name
 
 ## Player-facing recipe switch. Mid-batch the switch is queued and applied
 ## when the current batch completes, so inputs already consumed aren't wasted.
@@ -131,7 +179,14 @@ func select_recipe(new_recipe: RecipeData) -> void:
 	if new_recipe == null or new_recipe == recipe:
 		pending_recipe = null
 		return
-	assert(available_recipes.has(new_recipe), "Selected recipe not in available_recipes!")
+	# Fail soft rather than assert (WI-47 M8): the eligible set is now assembled
+	# from scanned data, so a stale UI entry or a mod's recipe whose tag stopped
+	# matching is a content problem, not a programming error, and must not take
+	# the game down.
+	if not get_available_recipes().has(new_recipe):
+		push_warning("Processor '%s' can't run recipe '%s' - not eligible for this module's tags"
+				% [_module_label(), new_recipe.name])
+		return
 	if processing:
 		pending_recipe = new_recipe
 	else:
@@ -499,15 +554,16 @@ func _load_yield_residue(data: Dictionary) -> void:
 		_yield_residue[output] = float(data[id_str])
 
 ## Shared recipe restore. Warns and keeps whatever is in place when the saved
-## path no longer resolves or has left available_recipes (a renamed/removed
-## .tres), rather than clearing the machine's recipe out from under it.
+## path no longer resolves or is no longer eligible for this module (a renamed or
+## removed .tres, or a recipe whose mod is uninstalled), rather than clearing the
+## machine's recipe out from under it.
 func _load_recipe(path: String, queued: bool) -> void:
 	if path == "":
 		return
-	# load() returns the cached instance, so equality against
-	# available_recipes entries holds.
+	# load() returns the cached instance, so equality against the resolved
+	# eligible set holds.
 	var loaded: RecipeData = load(path) as RecipeData
-	if loaded == null or not available_recipes.has(loaded):
+	if loaded == null or not get_available_recipes().has(loaded):
 		push_warning("Saved processor %s not available, ignoring: %s" % ["pending recipe" if queued else "recipe", path])
 		return
 	select_recipe(loaded)

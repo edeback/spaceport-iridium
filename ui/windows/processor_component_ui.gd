@@ -30,9 +30,9 @@ func set_processor_component(component: ProcessorComponent) -> void:
 	_refresh_recipe_text()
 	_on_batch_richness_changed(component.current_batch_richness)
 	if component.can_select_recipes():
-		for recipe: RecipeData in component.available_recipes:
+		for recipe: RecipeData in component.get_available_recipes():
 			recipe_selector.add_item(recipe.name)
-		recipe_selector.select(component.available_recipes.find(component.recipe))
+		recipe_selector.select(component.get_available_recipes().find(component.recipe))
 		recipe_selector.item_selected.connect(_on_recipe_selected)
 	else:
 		recipe_selector.visible = false
@@ -47,14 +47,14 @@ func _refresh_recipe_text() -> void:
 	processor_recipe_label.text = recipe_string
 
 func _on_recipe_selected(index: int) -> void:
-	processor_component.select_recipe(processor_component.available_recipes[index])
+	processor_component.select_recipe(processor_component.get_available_recipes()[index])
 	# Mid-batch the switch is queued, not applied - reflect that immediately;
 	# recipe_changed fires later when it actually lands.
 	_refresh_recipe_text()
 
 func _on_recipe_changed(new_recipe: RecipeData) -> void:
 	_refresh_recipe_text()
-	var index: int = processor_component.available_recipes.find(new_recipe)
+	var index: int = processor_component.get_available_recipes().find(new_recipe)
 	if index >= 0 and recipe_selector.selected != index:
 		recipe_selector.select(index)
 

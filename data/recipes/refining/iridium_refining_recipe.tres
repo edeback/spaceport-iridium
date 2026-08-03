@@ -17,3 +17,5 @@ ExtResource("4_output"): 1
 min_yield_mult = 0.5
 max_yield_mult = 1.5
 metadata/_custom_type_script = "uid://by2n6rwcttgyx"
+processor_tags = Array[String](["Refinery"])
+sort_order = 50

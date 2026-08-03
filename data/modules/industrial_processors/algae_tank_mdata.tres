@@ -17,7 +17,7 @@ instant_build = false
 resource_costs = Dictionary[ExtResource("2_1vcgf"), int]({
 ExtResource("3_y48wj"): 2
 })
-tags = Array[String](["Industrial"])
+tags = Array[String](["Industrial", "AlgaeCulture"])
 category_id = &"food"
 can_break_down = true
 breakdown_chance_per_hour = 0.006

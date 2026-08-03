@@ -16,3 +16,5 @@ outputs = Dictionary[ExtResource("1_nkldc"), int]({
 ExtResource("3_0oe1p"): 1,
 ExtResource("4_s37rr"): 2
 })
+processor_tags = Array[String](["Electrolysis"])
+sort_order = 10
