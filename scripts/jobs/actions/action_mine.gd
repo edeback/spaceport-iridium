@@ -44,9 +44,12 @@ func on_resume(job: Job) -> Status:
 func _entry_status(job: Job) -> Status:
 	if job.pawn == null or job.pawn.inventory_component == null:
 		return Status.FAILED
-	var asteroid: AsteroidBase = _asteroid(job)
-	if asteroid == null:
-		return Status.FAILED
+	# The rock broke up before we got a swing in - another drone took the last
+	# unit while we were still flying out. DONE rather than FAILED for the same
+	# reason tick() uses DONE: the driver decides whether there is room left in
+	# the hold to go find another one.
+	if _asteroid(job) == null:
+		return Status.DONE
 	return Status.ONGOING
 
 func tick(job: Job, delta: float) -> Status:

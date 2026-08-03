@@ -52,6 +52,14 @@ func _process(delta: float) -> void:
 			if target == null or _pending_target != null:
 				state = State.Idle
 				return
+			# Freed under us (an asteroid mined dry, a pile emptied). The path's
+			# last point is dangling, so walking it would send the pawn to the
+			# origin via extract_position's freed-node guard. Checked AFTER the
+			# pending-target branch on purpose: a job that already retargeted us
+			# must not get a stale movement_ended(false) for the old destination.
+			if not is_instance_valid(target):
+				movement_fail()
+				return
 			state = State.Paused
 			await move(sim_delta)
 			if state == State.Paused:

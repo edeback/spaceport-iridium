@@ -38,7 +38,7 @@ func _init(target_slot: JobTarget.Slot = JobTarget.Slot.A, move_speed: float = 1
 func on_start(job: Job) -> Status:
 	var destination: JobTarget = job.target(slot)
 	if destination == null or not destination.is_alive():
-		return Status.FAILED
+		return Status.DONE if _lost_but_survivable(destination) else Status.FAILED
 	# An exterior job means going outside to the module, so "already inside it"
 	# is not the same place and must not short-circuit the walk.
 	if skip_if_present and not force_exterior and _pawn_is_already_there(job, destination):
@@ -56,6 +56,23 @@ func on_start(job: Job) -> Status:
 ## a path index. Full path persistence was considered and rejected in the WI.
 func on_resume(job: Job) -> Status:
 	return on_start(job)
+
+## A destination the job declared survivable can be freed mid-walk - an asteroid
+## another drone mined dry is the routine case. The walk is simply over at that
+## point: the driver reads the emptied slot in next_index_after() and picks the
+## next thing, exactly as it does when a rock runs out underfoot. Watched every
+## frame here rather than left to the movement watch, because that reports a
+## freed destination as a failed route, which for a hard target it genuinely is.
+func tick(job: Job, _delta: float) -> Status:
+	return Status.DONE if _lost_but_survivable(job.target(slot)) else Status.ONGOING
+
+## True for a target that was set, is flagged fail_on_lost = false, and has since
+## been freed. A target the job DOES depend on is left alone - Job's own
+## aliveness check fails the trip for those.
+func _lost_but_survivable(destination: JobTarget) -> bool:
+	if destination == null or not destination.is_set() or destination.fail_on_lost:
+		return false
+	return not destination.is_alive()
 
 ## Only consulted when tolerate_failure put this action in CONDITION mode; it
 ## mirrors the runner's MOVEMENT handling except that a broken route reads as

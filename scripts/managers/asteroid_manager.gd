@@ -53,11 +53,31 @@ func _process(delta: float) -> void:
 			spawn_asteroid()
 	var asteroids_to_remove: Array[AsteroidBase] = []
 	for asteroid: AsteroidBase in asteroids:
-		if asteroid.position.distance_squared_to(start_point.position) > 4000000:
+		# Mined dry: break it up, so a worked-out belt doesn't silently fill with
+		# spent rocks that every finder has to skip past. Swept here rather than
+		# fired from mine_resource() so that a rock restored empty from an older
+		# save is cleaned up the same way, and so an asteroid is only ever freed
+		# from this one place.
+		if asteroid.is_empty():
+			_disperse(asteroid)
 			asteroids_to_remove.append(asteroid)
+		elif asteroid.position.distance_squared_to(start_point.position) > 4000000:
+			# Drifted out of the belt entirely - gone off-screen unwatched, so no
+			# debris for it.
 			asteroid.queue_free()
+			asteroids_to_remove.append(asteroid)
 	for asteroid: AsteroidBase in asteroids_to_remove:
 		asteroids.erase(asteroid)
+
+## Replaces a spent asteroid with its debris puff. The rock leaves the field (and
+## therefore the save) immediately; the effect is transient, unsaved, and frees
+## itself once it has played out.
+func _disperse(asteroid: AsteroidBase) -> void:
+	var effect := AsteroidDispersal.new()
+	effect.position = asteroid.position
+	effect.setup(asteroid.sprite, asteroid.direction * asteroid.speed_pixels_per_sec)
+	asteroid_layer.add_child(effect)
+	asteroid.queue_free()
 
 
 func spawn_asteroid() -> void:
