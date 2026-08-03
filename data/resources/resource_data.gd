@@ -51,6 +51,22 @@ var needs_recalc: bool = true
 ## readability aid and a mismatch check; THIS is what decides the class.
 @export var instance_data_script: Script
 
+## --- world participation (WI-47 audit sweep) ---------------------------------
+## Both of these exist so a MOD's resource can opt into systems whose vanilla
+## membership is an authored list on a manager node in main.tscn - a list no mod
+## can reach. The manager unions its authored list with everything declaring
+## itself here, so vanilla behaviour is unchanged and a mod only has to say so.
+
+## Does this resource trade on the station market? Once true it is quotable,
+## sellable, carried by generic traders, and eligible for export contracts - the
+## last two read the market's list rather than keeping their own.
+@export var tradable: bool = false
+
+## Relative chance of this ore turning up in a spawned asteroid's mix. 0 (the
+## default, and correct for anything that isn't mined) = never spawns.
+## AsteroidManager's own ore_spawn_weights dictionary overrides this per ore.
+@export var asteroid_spawn_weight: float = 0.0
+
 var registered_storage: Array[StorageComponent] = []
 
 #@export var show_test: bool = false:

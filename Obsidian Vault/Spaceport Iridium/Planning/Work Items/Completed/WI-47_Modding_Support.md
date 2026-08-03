@@ -4,7 +4,9 @@
 >
 > **The M9 spike passed: 29 checks green in all four of {editor, exported build} × {text-script pack, binary-token pack}.** Mod scripts load, extend vanilla classes and dispatch through them; mod `.tres` resolve vanilla scripts by uid and by path; a vanilla `JobData` inside a mod pack resolves a mod `JobDriver`. Nothing in stages 1–5 needs redesigning. Two things the spike changed: M9's constraint is **sharper** than written (a mod script cannot name its own `class_name` either) and **less serious** than feared (`preload()`/`load()` by path substitutes completely), and M1 gains a hard requirement to mount with `replace_files = false`. Full results in M9 below.
 >
-> **Stage 4 — all five items shipped 2026-08-03 (M5, M6, M8-recipes, M7-ships, M10), and the sample mod now exercises every extension point.** 616 GUT green plus five in-game runs. The WI's own acceptance test passed with **zero core edits** (verification 6). **Only the "not yet audited" sweep remains** of the stage's stated scope, and stage 5 (M8 patch ops) is deferred by design until a real mod asks for it.
+> **Stage 4 COMPLETE 2026-08-03** — all five items (M5, M6, M8-recipes, M7-ships, M10), the sample mod exercising every extension point, and the "not yet audited" sweep. 616 GUT green plus six in-game runs. The WI's own acceptance test passed with **zero core edits** (verification 6).
+>
+> **Everything in this WI is now done except stage 5 (M8 patch ops), which was deferred by design** until a real mod asks for it. The one other open thread is `NameGenerator`'s word lists — a real but cosmetic gap the sweep chose not to invent an extension point for.
 >
 > **Stage 3 (M3, M4, M11) shipped**: save sections are a registry, instance data resolves per-resource, and `meta.mods` records what wrote a save. 574 GUT green, plus a 9-check in-game round trip. **Next: stage 4 (M5, M6, M8-recipes, M7-ships, M10) — additive and independent, each can ship or slip alone.**
 >
@@ -317,11 +319,22 @@ Version mismatch on a mod that *is* present is a warning too, with the same word
 
 This pairs with M3's unknown-section passthrough: the warning covers content the player can see is gone, and the passthrough makes sure the state behind it survives a round trip so re-installing the mod restores the run rather than half of it.
 
-## Not yet audited
+## ~~Not yet audited~~ — SWEPT 2026-08-03
 
-Stated explicitly so the implementer doesn't assume this WI swept the whole codebase. The following enumerate or assume specific resources and were **not** checked for hardcoding:
+All eight checked. Two were real gaps and are fixed; two more were downstream of one of those and fixed with it; four were false alarms. Verified by a 10-check in-game run with the sample mod installed, confirming both halves at once: every vanilla entry still present (16 market resources → 17, 6 ores → 7) and the mod's ore joined.
 
-`AsteroidManager` ore composition and spawn tables; `MarketManager` listing seeds; `TraderManager` stock generation; `ContractManager` demand generation; the tier export goals in `data/tiers/`; `NameGenerator`'s word lists; `OverlayPalette`'s per-mode value mapping; the minimap's tag→colour table. Each is a plausible place for a hand-written resource list that a mod's new ore would fall out of. Sweep them during stage 4 (M7/M10), which is when new resources first actually need to flow through them.
+| Area | Verdict |
+| --- | --- |
+| **`MarketManager` listing seeds** | **GAP, FIXED.** `market_resources` is an `@export` on a node in main.tscn, so a mod's resource could never be quoted, sold or bought. `ResourceData.tradable` now opts in, and the manager unions its authored list with everything declaring it. |
+| **`TraderManager` stock generation** | **No gap of its own** — it reads `market_manager.get_tradeable_resources()`. Fixed by the above. |
+| **`ContractManager` demand generation** | **No gap of its own** — same list. Fixed by the above. |
+| **`AsteroidManager` ore tables** | **GAP, FIXED.** `ore_types_available` is likewise an `@export`, so a modded ore could never appear in the belt — where a mining-chain mod has to start. `ResourceData.asteroid_spawn_weight` now opts in; the manager's `ore_spawn_weights` dictionary still wins where it has an entry, so vanilla weights are untouched. |
+| **minimap tag→colour table** | **Minor gap, FIXED.** The table is an `@export` keyed by tag; a modded module with a new tag drew in fallback hull grey with no way to say otherwise. `ModuleData.minimap_color` (alpha 0 = keep the tag lookup) is checked first. |
+| **tier export goals (`data/tiers/`)** | **No gap.** `export_goals` is `Dictionary[StringName, int]` keyed by resource *id*, and `data/tiers/` is already a scanned `ContentPaths` root — a mod ships its own tier resources naming its own ores. Adding a goal to a *vanilla* tier is the general patching problem (stage 5), not hardcoding. |
+| **`OverlayPalette`** | **No gap.** The suspicion doesn't hold: it is pure value→colour arithmetic (O2 partial, hp fraction, field level, priority). Nothing enumerates resources or modules, so there is nothing for mod content to fall out of. |
+| **`NameGenerator` word lists** | **Real but deferred.** Pools come from the vendored m12 addon with a hardcoded syllable fallback; a mod can't add name words. Cosmetic, addon-bound, and it is the reason M10 ships no `name_style` field. Worth a small item if anyone asks; not worth inventing an extension point nothing has requested. |
+
+The two fixes follow the same shape as M8's recipe inversion: the *content* declares its participation and the manager unions that with its authored list, so vanilla behaviour is byte-identical with no `.tres` edits and a mod only has to say so. `tools/sample_mod/`'s glimmerite now sets both flags, so the sample covers the sweep too.
 
 ## Files to touch
 

@@ -2,7 +2,12 @@ class_name AsteroidManager
 extends Node
 
 @export var asteroid_scene: PackedScene
+## The base game's mineable ores. A mod's ore joins by setting
+## ResourceData.asteroid_spawn_weight rather than by reaching into this - see
+## _spawnable_ores().
 @export var ore_types_available: Array[ResourceData]
+## Built once from ore_types_available + everything declaring a spawn weight.
+var _ore_pool_cache: Array[ResourceData] = []
 ## Relative chance for each ore in ore_types_available to appear on a spawned
 ## asteroid; ores missing from this dictionary count as 1.0. Small weights =
 ## rare ores.
@@ -79,26 +84,53 @@ func spawn_asteroid() -> void:
 ## Empty result (no ore types configured) leaves the scene's authored mix.
 func _roll_ore_mix() -> Dictionary[ResourceData, float]:
 	var mix: Dictionary[ResourceData, float] = {}
-	if ore_types_available.is_empty():
+	var candidates: Array[ResourceData] = _spawnable_ores()
+	if candidates.is_empty():
 		return mix
-	var candidates: Array[ResourceData] = ore_types_available.duplicate()
 	var type_count: int = randi_range(min_ore_types, maxi(min_ore_types, max_ore_types))
 	type_count = mini(type_count, candidates.size())
 	for i: int in type_count:
 		var total_weight: float = 0.0
 		for candidate: ResourceData in candidates:
-			total_weight += ore_spawn_weights.get(candidate, 1.0)
+			total_weight += _spawn_weight(candidate)
 		if total_weight <= 0.0:
 			break
 		var roll: float = randf() * total_weight
 		var cumulative: float = 0.0
 		for candidate: ResourceData in candidates:
-			cumulative += ore_spawn_weights.get(candidate, 1.0)
+			cumulative += _spawn_weight(candidate)
 			if roll <= cumulative:
 				mix[candidate] = randf_range(0.5, 1.5)
 				candidates.erase(candidate)
 				break
 	return mix
+
+## The authored ore list, plus every scanned resource declaring an
+## asteroid_spawn_weight (WI-47 audit sweep). ore_types_available is an @export on
+## a node in main.tscn, so without this a mod's ore could never appear in the belt
+## - which is where a mining-chain mod has to start.
+##
+## Cached and sorted by id: the pool feeds a weighted roll, so its order has to be
+## reproducible however the directory scanned.
+func _spawnable_ores() -> Array[ResourceData]:
+	if _ore_pool_cache.is_empty():
+		_ore_pool_cache = ore_types_available.duplicate()
+		var modded: Array[ResourceData] = []
+		for path: String in ContentPaths.scan(ContentPaths.RESOURCES):
+			var resource: ResourceData = ResourceLoader.load(path) as ResourceData
+			if resource != null and resource.asteroid_spawn_weight > 0.0 and not _ore_pool_cache.has(resource):
+				modded.append(resource)
+		modded.sort_custom(func(a: ResourceData, b: ResourceData) -> bool: return String(a.id) < String(b.id))
+		_ore_pool_cache.append_array(modded)
+	return _ore_pool_cache.duplicate()
+
+## The manager's authored dictionary wins where it has an entry, so vanilla
+## weights are untouched; otherwise the resource's own declared weight, and 1.0
+## for an ore that is in the authored list but weighted nowhere.
+func _spawn_weight(resource: ResourceData) -> float:
+	if ore_spawn_weights.has(resource):
+		return ore_spawn_weights[resource]
+	return resource.asteroid_spawn_weight if resource.asteroid_spawn_weight > 0.0 else 1.0
 
 func _roll_richness_range() -> Vector2:
 	var center: float = lerpf(richness_band.x, richness_band.y, pow(randf(), richness_skew))

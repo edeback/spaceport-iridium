@@ -1,7 +1,12 @@
 class_name MarketManager
 extends Node
 
+## The base game's tradable list. A mod's resource joins by setting
+## ResourceData.tradable rather than by reaching into this - see
+## _tradable_resources().
 @export var market_resources: Array[ResourceData]
+## Built once from market_resources + everything declaring itself tradable.
+var _tradable_cache: Array[ResourceData] = []
 @export var purchase_price_multiplier: float = 1.5
 @export var sell_price_multiplier: float = 0.5
 
@@ -20,7 +25,7 @@ signal market_updated
 func _ready() -> void:
 	Global.market_manager = self
 	SaveManager.register_section(&"market", 40, get_save_data, load_save_data)
-	for resource: ResourceData in market_resources:
+	for resource: ResourceData in _tradable_resources():
 		market_data[resource] = resource.default_market_supply
 	# Market supply drifts back toward default once per game-hour.
 	Global.time_manager.hour_changed.connect(_on_hour_changed)
@@ -77,7 +82,24 @@ func _expire_supply_modifiers(hours: float) -> void:
 			_supply_modifiers.remove_at(i)
 	
 func get_tradeable_resources() -> Array[ResourceData]:
-	return market_resources
+	return _tradable_resources()
+
+## The authored list, plus every scanned resource that declares itself tradable
+## (WI-47 audit sweep). market_resources is an @export on a node in main.tscn, so
+## a mod's ore could never join the market, and TraderManager's stock and
+## ContractManager's demand both read this list - all three were one gap.
+##
+## Cached: the answer can't change during a run, and this is called per trader
+## visit and per contract roll.
+func _tradable_resources() -> Array[ResourceData]:
+	if not _tradable_cache.is_empty():
+		return _tradable_cache
+	_tradable_cache = market_resources.duplicate()
+	for path: String in ContentPaths.scan(ContentPaths.RESOURCES):
+		var resource: ResourceData = ResourceLoader.load(path) as ResourceData
+		if resource != null and resource.tradable and not _tradable_cache.has(resource):
+			_tradable_cache.append(resource)
+	return _tradable_cache
 		
 func get_quantity_available(resource: ResourceData) -> int:
 	if market_data.has(resource):

@@ -179,7 +179,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md",
+                "file": "Spaceport Iridium/Planning/Work Items/Completed/WI-47_Modding_Support.md",
                 "mode": "source",
                 "source": false
               },
@@ -335,8 +335,10 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "84aff4476ec664aa",
+  "active": "cf9c918be843db58",
   "lastOpenFiles": [
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.37168.fa6f10164ea4",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.37168.6041d984f982",
     "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.30abeac1a514",
     "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.281fe8924026",
     "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.b873ffa05806",
@@ -346,9 +348,7 @@
     "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.f0645276dba2",
     "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.bfcbcb5ab257",
     "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.294583fdbbf6",
-    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.420668d15004",
-    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.585d66186df2",
-    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md",
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-47_Modding_Support.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-46_Structure_Connectivity.md",
     "Spaceport Iridium/Planning/Work Items/WI-46_Modding_Support.md",
     "Spaceport Iridium/Planning/02_Roadmap.md",

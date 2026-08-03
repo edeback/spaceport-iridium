@@ -210,6 +210,11 @@ func _module_color(module: ModuleBase, world: WorldManager) -> Color:
 		return hull_color
 	if module.module_data == world.replacement_module:
 		return structure_color
+	# A module may name its own colour (WI-47 audit sweep). Checked before the tag
+	# table because that table is authored on this node and a mod can't extend it,
+	# so a modded module's new tag would otherwise always fall through to grey.
+	if module.module_data.minimap_color.a > 0.0:
+		return module.module_data.minimap_color
 	for tag: String in module.module_data.tags:
 		if tag_colors.has(tag):
 			return tag_colors[tag]

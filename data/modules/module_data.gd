@@ -23,6 +23,12 @@ extends Resource
 ## resource can be added to. An id nothing declares still renders (under its own
 ## name, sorted last) rather than disappearing.
 @export var category_id: StringName = BuildCategoryData.DEFAULT_ID
+
+## Optional minimap fill (WI-47 audit sweep). The minimap otherwise colours a
+## module by looking its tags up in its own authored tag->colour table, which a
+## mod cannot add to - so a modded module with a new tag silently drew in the
+## fallback hull grey. Alpha 0 (the default) keeps the tag lookup.
+@export var minimap_color: Color = Color(0, 0, 0, 0)
 ## Can you click-drag to place multiples?
 @export var multiplacement := WorldManager.Multiplacement.NONE
 @export var ignore_multiplacement_connection_check: bool = false
