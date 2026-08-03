@@ -4,7 +4,7 @@
 >
 > **The M9 spike passed: 29 checks green in all four of {editor, exported build} × {text-script pack, binary-token pack}.** Mod scripts load, extend vanilla classes and dispatch through them; mod `.tres` resolve vanilla scripts by uid and by path; a vanilla `JobData` inside a mod pack resolves a mod `JobDriver`. Nothing in stages 1–5 needs redesigning. Two things the spike changed: M9's constraint is **sharper** than written (a mod script cannot name its own `class_name` either) and **less serious** than feared (`preload()`/`load()` by path substitutes completely), and M1 gains a hard requirement to mount with `replace_files = false`. Full results in M9 below.
 >
-> **Stage 4 PARTIAL — M5, M6, M8-recipes and M7-ships shipped 2026-08-03; M10 not started.** 601 GUT green plus three in-game runs. Four of the stage's five independent items are complete and verified. **M10 pawn kinds and the "not yet audited" sweep remain**, and neither blocks anything.
+> **Stage 4 — all five items shipped 2026-08-03 (M5, M6, M8-recipes, M7-ships, M10).** 616 GUT green plus four in-game runs. **Only the "not yet audited" sweep remains** of the stage's stated scope, and stage 5 (M8 patch ops) is deferred by design until a real mod asks for it.
 >
 > **Stage 3 (M3, M4, M11) shipped**: save sections are a registry, instance data resolves per-resource, and `meta.mods` records what wrote a save. 574 GUT green, plus a 9-check in-game round trip. **Next: stage 4 (M5, M6, M8-recipes, M7-ships, M10) — additive and independent, each can ship or slip alone.**
 >
@@ -278,6 +278,18 @@ The probe was a temporary `ModSpike` autoload gated on `OS.get_cmdline_user_args
 
 ### M10 — Pawn variations have no data resource
 
+> **DONE 2026-08-03 (stage 4).** `PawnData` (`data/pawns/`), scanned as a `ContentPaths` kind, with vanilla `crew.tres` and `visitor.tres`. `CrewManager.spawn_crew` and `VisitorManager._deliver_visitor` roll a kind for their role instead of instantiating one hardcoded scene; both keep their existing export as the fallback, so an empty `data/pawns/` still plays.
+>
+> - **`HireCandidate` gained `pawn_id`**, rolled when the candidate is generated and saved with it, so a hire queued on a shuttle arrives as the kind the player picked from the list. Omitted from the dict when unset, so pre-M10 saves and default-kind candidates are byte-identical.
+> - **`hire_price_mult` folds into the existing trait multiplier chain** rather than adding a parallel rule.
+> - **No `name_style` field**, contrary to the finding's list: `NameGenerator` has no notion of styles, and an export nothing reads is worse than none. It belongs with the name-word-list audit this WI already defers.
+> - **The weighted roll moved into `WeightedPick`** (`scripts/utility/`), shared with M7's ship variants. The subtle part is the boundaries — `randf()` returns exactly 0.0, and float accumulation can push a roll of 1.0 past the last bucket — so it is worth having once.
+> - An uninstalled kind (mod removed between queueing a hire and its shuttle landing) warns and spawns the fallback rather than losing the hire.
+>
+> Verified live: starting crew and a visitor both spawn through the kind roll, all four hire candidates carry their kind, the kind survives a candidate save round trip, and a candidate rewritten to name `absentmod.synthetic` still hires onto the fallback scene.
+
+### M10 — original finding
+
 Crew / visitor / robot differ by scene plus code (`RobotPawnBase` builds its energy and integrity components in `_ready`). There's no `PawnData`. Restore is already fine — the save stores `scene_file_path` — but *spawning* isn't: `CrewManager` has one `crew_pawn_scene`, `VisitorManager` one `visitor_pawn_scene`, and the hire-candidate generator has no notion of alternate kinds.
 
 **Fix.** A scanned `PawnData.tres` (scene, display name, which manager sources it, hire-price band, name-generator style, spawn weight) that `CrewManager` / `VisitorManager` / hire candidates select from. Smaller than it looks once M2 lands, because the per-component restore chain is the bulk of what makes pawn kinds special-cased today.
@@ -350,7 +362,7 @@ Stated explicitly so the implementer doesn't assume this WI swept the whole code
 2. ~~**Stage 1 — M1.** Loader + `ContentPaths` + namespacing.~~ **DONE 2026-08-02** — see M1.
 3. ~~**Stage 2 — M2.** Component save hooks, both bases.~~ **DONE 2026-08-02** — see M2.
 4. ~~**Stage 3 — M3, M4, M11.** Save participants, instance-data registry, and the `meta.mods` list.~~ **DONE 2026-08-02** — see M3, M4, M11.
-5. **Stage 4 — M5, M6, M8-recipes, M7-ships, M10.** Additive and independent of each other; each can ship or slip alone. Sweep the "not yet audited" list here. **M5, M6, M8-recipes and M7-ships DONE 2026-08-03; M10 and the audit sweep remain.**
+5. **Stage 4 — M5, M6, M8-recipes, M7-ships, M10.** Additive and independent of each other; each can ship or slip alone. Sweep the "not yet audited" list here. **ALL FIVE DONE 2026-08-03. Only the "not yet audited" sweep remains.**
 6. **Stage 5 — M8 patch ops.** Only if a real mod wants it.
 
 Stages 2 and 3 change no save bytes and add no features. They will feel like no progress and they are the entire item.

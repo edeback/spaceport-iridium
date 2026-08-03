@@ -13,6 +13,11 @@ var tint: Color = Color.WHITE
 var skills: Dictionary[StringName, int] = {}
 var trait_ids: Array[StringName] = []
 var price: int = 0
+## Which PawnData kind this candidate is (WI-47 M10). Rolled when the candidate
+## is generated and saved with it, so a hire queued on a shuttle still arrives as
+## the kind the player picked from the list. &"" = whatever CrewManager's fallback
+## scene is, which is also every pre-M10 save.
+var pawn_id: StringName = &""
 
 ## Stamps this candidate's rolled identity onto a freshly spawned pawn.
 func apply_to(pawn: PawnBase) -> void:
@@ -56,13 +61,18 @@ func to_dict() -> Dictionary:
 	var traits_out: Array = []
 	for tid: StringName in trait_ids:
 		traits_out.append(String(tid))
-	return {
+	var out: Dictionary = {
 		"name": pawn_name,
 		"tint": [tint.r, tint.g, tint.b, tint.a],
 		"skills": skills_out,
 		"traits": traits_out,
 		"price": price,
 	}
+	# Omitted when unset so pre-M10 saves and post-M10 saves of a default-kind
+	# candidate look identical.
+	if pawn_id != &"":
+		out["pawn"] = String(pawn_id)
+	return out
 
 static func from_dict(data: Dictionary) -> HireCandidate:
 	var candidate := HireCandidate.new()
@@ -77,4 +87,5 @@ static func from_dict(data: Dictionary) -> HireCandidate:
 	for tid: Variant in data.get("traits", []):
 		candidate.trait_ids.append(StringName(tid))
 	candidate.price = int(data.get("price", 0))
+	candidate.pawn_id = StringName(String(data.get("pawn", "")))
 	return candidate

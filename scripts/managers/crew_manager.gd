@@ -211,6 +211,11 @@ func _on_trader_arrived(_trader: TraderData) -> void:
 
 func _generate_candidate() -> HireCandidate:
 	var candidate := HireCandidate.new()
+	# Rolled up front so the price below can account for the kind's band, and so
+	# the offer the player sees is the one that actually turns up (WI-47 M10).
+	var kind: PawnData = PawnData.roll_for_role(PawnData.Role.CREW)
+	if kind != null:
+		candidate.pawn_id = kind.id
 	candidate.pawn_name = NameGenerator.random_name()
 	candidate.tint = roll_tint()
 	candidate.skills = _roll_candidate_skills()
@@ -241,6 +246,11 @@ func _compute_price(candidate: HireCandidate) -> int:
 		var trait_data: TraitData = TraitData.by_id(tid)
 		if trait_data != null:
 			trait_mod *= trait_data.price_modifier
+	# The pawn kind's band folds into the same multiplier chain as traits (WI-47
+	# M10), so a cheap contractor or a pricey specialist needs no separate rule.
+	var kind: PawnData = PawnData.by_id(candidate.pawn_id) if candidate.pawn_id != &"" else null
+	if kind != null:
+		trait_mod *= kind.hire_price_mult
 	return compute_price(hire_cost, candidate.total_skill_levels(), trait_mod, skill_premium_per_level)
 
 ## Pure pricing arithmetic (WI-22), extracted so it can be unit-tested without
@@ -302,7 +312,25 @@ func _deliver_crew(bay: ModuleBase, candidate: HireCandidate) -> void:
 ## pawn takes that rolled identity (name/tint/skills/traits/price); without one
 ## (starting crew) it rolls a fresh identity
 func spawn_crew(at_module: ModuleBase, candidate: HireCandidate = null) -> PawnBase:
-	var pawn: PawnBase = crew_pawn_scene.instantiate() as PawnBase
+	# Which KIND of crew (WI-47 M10). A hire arrives as the kind its candidate was
+	# rolled as; starting crew rolls fresh. An unknown id (the mod that declared it
+	# has been uninstalled between queueing the hire and its shuttle landing) and an
+	# empty data/pawns/ both fall through to the authored fallback scene.
+	var kind: PawnData = null
+	if candidate != null and candidate.pawn_id != &"":
+		kind = PawnData.by_id(candidate.pawn_id)
+		if kind == null:
+			push_warning("Hired pawn kind '%s' is not installed - spawning the default crew member" % candidate.pawn_id)
+	if kind == null:
+		kind = PawnData.roll_for_role(PawnData.Role.CREW)
+	var scene: PackedScene = kind.scene if kind != null and kind.scene != null else crew_pawn_scene
+	if scene == null:
+		push_warning("CrewManager has no crew scene to spawn")
+		return null
+	var pawn: PawnBase = scene.instantiate() as PawnBase
+	if pawn == null:
+		push_warning("Crew scene for '%s' is not a PawnBase" % (kind.id if kind != null else &"<fallback>"))
+		return null
 	# First two keep their always-on schedule
 	if pawn.schedule != null and crew_count() >= 2:
 		if crew_count() % 2 == 1:

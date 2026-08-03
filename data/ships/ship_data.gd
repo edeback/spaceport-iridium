@@ -83,24 +83,15 @@ static func eligible(strength: float) -> Array[ShipData]:
 	out.sort_custom(func(a: ShipData, b: ShipData) -> bool: return String(a.id) < String(b.id))
 	return out
 
-## Weighted pick from `pool` for `roll` in [0, 1). Pure and total: an empty pool
-## or all-zero weights returns null, and a roll at either end still lands on a
-## real entry, so the caller never has to special-case the boundaries.
+## Weighted pick from `pool` for `roll` in [0, 1). Null for an empty pool or
+## all-zero weights; a roll at either end still lands on a real entry, so the
+## caller never has to special-case the boundaries (see WeightedPick).
 static func pick(pool: Array[ShipData], roll: float) -> ShipData:
-	if pool.is_empty():
-		return null
-	var total: float = 0.0
+	var weights: PackedFloat32Array = PackedFloat32Array()
 	for ship: ShipData in pool:
-		total += maxf(ship.weight, 0.0)
-	if total <= 0.0:
-		return null
-	var target: float = clampf(roll, 0.0, 0.999999) * total
-	var running: float = 0.0
-	for ship: ShipData in pool:
-		running += maxf(ship.weight, 0.0)
-		if target < running:
-			return ship
-	return pool[pool.size() - 1]
+		weights.append(ship.weight)
+	var index: int = WeightedPick.index_for(weights, roll)
+	return pool[index] if index >= 0 else null
 
 static func register_for_test(ship: ShipData) -> void:
 	_scanned = true

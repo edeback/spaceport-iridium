@@ -177,7 +177,16 @@ func spawn_visitor_at(bay: ModuleBase, wallet: int = -1, stay_hours: float = -1.
 	return _deliver_visitor(bay, wallet, stay_hours)
 
 func _deliver_visitor(bay: ModuleBase, wallet: int = -1, stay_hours: float = -1.0) -> VisitorPawn:
-	var visitor: VisitorPawn = visitor_pawn_scene.instantiate() as VisitorPawn
+	# Which KIND of guest (WI-47 M10). An empty data/pawns/ falls through to the
+	# authored fallback scene, so the base game works either way.
+	var kind: PawnData = PawnData.roll_for_role(PawnData.Role.VISITOR)
+	var scene: PackedScene = kind.scene if kind != null and kind.scene != null else visitor_pawn_scene
+	if scene == null:
+		return null
+	var visitor: VisitorPawn = scene.instantiate() as VisitorPawn
+	if visitor == null:
+		push_warning("Visitor scene for '%s' is not a VisitorPawn" % (kind.id if kind != null else &"<fallback>"))
+		return null
 	Global.world_manager.pawn_layer.add_child(visitor)
 	visitor.current_module = bay
 	visitor.global_position = Global.cell_to_world(bay.module_cell, true)

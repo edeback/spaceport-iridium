@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PawnData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/pawns/pawn_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://pawns/visitor_pawn.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"visitor"
+display_name = "Visitor"
+scene = ExtResource("2_scene")
+role = 1
+weight = 1.0
+hire_price_mult = 1.0
