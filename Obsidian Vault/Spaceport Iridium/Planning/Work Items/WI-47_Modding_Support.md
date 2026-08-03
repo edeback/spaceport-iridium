@@ -4,6 +4,8 @@
 >
 > **The M9 spike passed: 29 checks green in all four of {editor, exported build} × {text-script pack, binary-token pack}.** Mod scripts load, extend vanilla classes and dispatch through them; mod `.tres` resolve vanilla scripts by uid and by path; a vanilla `JobData` inside a mod pack resolves a mod `JobDriver`. Nothing in stages 1–5 needs redesigning. Two things the spike changed: M9's constraint is **sharper** than written (a mod script cannot name its own `class_name` either) and **less serious** than feared (`preload()`/`load()` by path substitutes completely), and M1 gains a hard requirement to mount with `replace_files = false`. Full results in M9 below.
 >
+> **Stage 4 PARTIAL — M5 and M6 shipped 2026-08-03; M8-recipes, M7-ships and M10 not started.** 579 GUT green plus a 10-check in-game run. The stage was always five independent items ("each can ship or slip alone"); these two are complete and verified, the other three are untouched. **Do M8-recipes next** — the WI's own "do this one regardless", and the difference between mods adding ores and mods adding ore *chains*. The "not yet audited" sweep is still outstanding.
+>
 > **Stage 3 (M3, M4, M11) shipped**: save sections are a registry, instance data resolves per-resource, and `meta.mods` records what wrote a save. 574 GUT green, plus a 9-check in-game round trip. **Next: stage 4 (M5, M6, M8-recipes, M7-ships, M10) — additive and independent, each can ship or slip alone.**
 >
 > **Stage 2 (M2) shipped**: `get_save_data()`/`load_save_data()`/`save_key()`/`save_order()` on both component bases; `ModuleBase`'s fifteen-lookup chain and `SaveManager`'s eight-lookup pawn chain are now walks. 562 GUT green. Acceptance test passed: a save written by the **pre-refactor** code (21 modules, 3 pawns, 11 distinct component blocks) loads under the new walk and re-saves value-for-value identical apart from the one documented shape change. **Next: stage 3 (M3, M4, M11).**
@@ -136,6 +138,14 @@ Any modded resource with `has_variance = true` silently loses its instance data 
 
 ### M5 — `ModuleData.UICategory` is an enum
 
+> **DONE 2026-08-03 (stage 4).** New `BuildCategoryData` (`data/build_categories/`), scanned as a `ContentPaths` kind, with twelve vanilla `.tres` at sort_order 0/10/…/100 and `other` at 1000. `ModuleData.ui_category` became `category_id: StringName`; all 39 module `.tres` that declared one were rewritten; `BuildMenuModel` groups and orders on it.
+>
+> - **`cat_icon` moved out of the scene.** It was an inspector dict on the BuildMenu node keyed by the enum — unreachable to a mod, and display data for scanned content living in a scene. It's now a field on each category resource; the two authored icons (Core's truss glyph, Power's solar atlas region) moved into `core.tres` and `power.tres`, and `build_menu.tscn` is down to a script reference.
+> - **An undeclared category still renders**, under its own id, sorted at `UNKNOWN_SORT_ORDER` (past even `other`) so a module from an uninstalled mod can never displace vanilla rail order. Tested.
+> - Verified in-game: 45 modules, every one in a declared category, rail order identical to the old enum sequence — Core, Power, Life Support, Industry, Food, Mining, Storage, Crew, Commerce, Defense, Logistics. `Other` correctly doesn't appear: everything that would fall in it is `hidden`.
+
+### M5 — original finding
+
 [`module_data.gd`](../../../../data/modules/module_data.gd) declares a fixed 12-value enum, and [`build_menu_model.gd:17–30`](../../../../ui/buttons/build_menu_model.gd) maps each to a label. Enums cannot be extended from data, so a mod cannot add a build-menu rail category — its modules all land in `OTHER`.
 
 **Fix.** `StringName category_id` plus a scanned `BuildCategoryData.tres` carrying `id`, `display_name`, `sort_order`, `cat_icon`. `BuildMenuModel.group_modules` / `category_order` / `category_name` all key on the resource instead of the enum.
@@ -143,6 +153,18 @@ Any modded resource with `has_variance = true` silently loses its instance data 
 Cheap **now** — WI-43 shipped days ago and the call sites are small and fresh — and it gets steadily more expensive. Worth doing even if the rest of this WI slips.
 
 ### M6 — Content-ish scene preloads
+
+> **DONE 2026-08-03 (stage 4)**, but **the finding below is wrong about the truss fix** and the correction matters.
+>
+> **`ModuleBase.replacement_on_delete` is dead code.** It is declared, set by no scene, and read by nothing. The four truss preloads are also not about replacement-on-delete at all: they auto-place truss *underneath* a corridor/stairs/turbolift/airlock when it lands on an empty MODULE cell. The actual replace-on-delete path is `WorldManager.replacement_module`, which has always been a proper `@export`.
+>
+> So the four sites now resolve through `ModuleBase.structural_backfill()` → `WorldManager.replacement_module` — the same authored resource `remove_module` backfills with, giving one answer to "what is the structural placeholder" instead of five. `replacement_on_delete` was left in place rather than deleted (removing an export is beyond "make preloads reachable"), but it should go.
+>
+> The rest: `MiningComponent.mining_drone_scene` and `LogisticsBayComponent.hauler_robot_scene` became `@export`s **keeping their current scene as the default**, so no module scene needed editing and a mod's own module can point elsewhere. `InspectionRunner`'s two preloads became plain fields injected by `UnlockManager` from new exports — the runner is created in code and has no scene, so the manager is the only authored surface, matching `RaidManager.pirate_ship_scene` / `CrewManager.crew_pawn_scene`.
+>
+> Verified in-game, including the one change with live consequences: placing a corridor on an empty MODULE cell still auto-places truss beneath it.
+
+### M6 — original finding
 
 Not many, but each one is a thing a mod can't reach:
 
@@ -300,7 +322,7 @@ Stated explicitly so the implementer doesn't assume this WI swept the whole code
 2. ~~**Stage 1 — M1.** Loader + `ContentPaths` + namespacing.~~ **DONE 2026-08-02** — see M1.
 3. ~~**Stage 2 — M2.** Component save hooks, both bases.~~ **DONE 2026-08-02** — see M2.
 4. ~~**Stage 3 — M3, M4, M11.** Save participants, instance-data registry, and the `meta.mods` list.~~ **DONE 2026-08-02** — see M3, M4, M11.
-5. **Stage 4 — M5, M6, M8-recipes, M7-ships, M10.** Additive and independent of each other; each can ship or slip alone. Sweep the "not yet audited" list here.
+5. **Stage 4 — M5, M6, M8-recipes, M7-ships, M10.** Additive and independent of each other; each can ship or slip alone. Sweep the "not yet audited" list here. **M5 and M6 DONE 2026-08-03; M8-recipes, M7-ships, M10 and the audit sweep remain.** M8-recipes first.
 6. **Stage 5 — M8 patch ops.** Only if a real mod wants it.
 
 Stages 2 and 3 change no save bytes and add no features. They will feel like no progress and they are the entire item.

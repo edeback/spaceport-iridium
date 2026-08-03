@@ -13,5 +13,5 @@ description = "Mysterious power from the third dimension."
 scene = ExtResource("2_wsl8j")
 icon = ExtResource("1_wsl8j")
 tags = Array[String](["Power"])
-ui_category = 1
+category_id = &"power"
 unlocked_by_default = false

@@ -1,16 +1,6 @@
 [gd_scene format=3 uid="uid://db7eeol2eexb"]
 
 [ext_resource type="Script" uid="uid://ccdbdj7u88u2u" path="res://ui/buttons/build_menu.gd" id="1_bmenu"]
-[ext_resource type="Texture2D" uid="uid://wydp85db7mim" path="res://assets/sprites/icon_truss_structure.png" id="2_xnv70"]
-[ext_resource type="Texture2D" uid="uid://cs0ht0ea12qtx" path="res://assets/sprites/solar_panel_tilemap.png" id="3_imnlo"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_n2crx"]
-atlas = ExtResource("3_imnlo")
-region = Rect2(0, 0, 64, 64)
 
 [node name="BuildMenu" type="VBoxContainer" unique_id=1562027511]
 script = ExtResource("1_bmenu")
-cat_icon = Dictionary[int, Texture2D]({
-0: ExtResource("2_xnv70"),
-1: SubResource("AtlasTexture_n2crx")
-})

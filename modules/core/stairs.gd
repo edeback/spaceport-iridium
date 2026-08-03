@@ -2,8 +2,6 @@
 class_name StairsModule
 extends ModuleBase
 
-var truss: ModuleData = preload("res://data/modules/core/truss_mdata.tres")
-
 @export var collision_upper: CollisionShape2D
 
 func _ready() -> void:
@@ -17,7 +15,7 @@ func on_place() -> void:
 	super()
 	if Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, module_cell) == null:
 		# add a truss segment below
-		Global.world_manager.add_module(truss, module_cell)
+		Global.world_manager.add_module(structural_backfill(), module_cell)
 	
 func set_sprite(_module: ModuleBase) -> void:
 	if _module == null or _module is StairsModule or _module is CorridorModule:

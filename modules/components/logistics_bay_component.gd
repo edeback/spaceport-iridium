@@ -10,17 +10,11 @@ extends ComponentBase
 
 @export var power_consumer: PowerConsumptionComponent
 
-## Loaded by path at first spawn and cached statically (shared across all bays).
-## Deliberately load() not preload(): the robot scene is authored alongside this
-## script, and a runtime load resolves it from disk without a compile-time
-## dependency edge.
-const HAULER_ROBOT_SCENE_PATH: String = "res://pawns/hauler_robot.tscn"
-static var _hauler_robot_scene: PackedScene = null
-
-static func _get_hauler_robot_scene() -> PackedScene:
-	if _hauler_robot_scene == null:
-		_hauler_robot_scene = load(HAULER_ROBOT_SCENE_PATH) as PackedScene
-	return _hauler_robot_scene
+## Which robot this bay builds. Exported so a mod's logistics module can ship its
+## own hauler (WI-47 M6) - it was a hardcoded res:// path string with a static
+## cache, which nothing outside this file could reach. The vanilla scene is the
+## default, so no existing module scene needed touching.
+@export var hauler_robot_scene: PackedScene = preload("res://pawns/hauler_robot.tscn")
 
 ## Base cap on owned robots; upgrades raise the effective cap via STAT_MAX_ROBOTS.
 @export var max_robots: int = 3
@@ -92,7 +86,7 @@ func buy_robot() -> bool:
 	return true
 
 func _spawn_robot() -> HaulerRobotPawn:
-	var robot: HaulerRobotPawn = _get_hauler_robot_scene().instantiate() as HaulerRobotPawn
+	var robot: HaulerRobotPawn = hauler_robot_scene.instantiate() as HaulerRobotPawn
 	robot.parent_bay = self
 	# Add to the tree before assigning current_module: its setter reparents to the
 	# module canvas, which needs a parent to exist (same order as SaveManager's

@@ -15,8 +15,13 @@ extends Node
 ## Runtime-only: nothing here is saved. A save taken mid-inspection reloads with
 ## no inspector and the offer re-rolls (UnlockManager drops the in-progress flag).
 
-const SHIP_SCENE: PackedScene = preload("res://objects/arrival_shuttle.tscn")
-const INSPECTOR_SCENE: PackedScene = preload("res://pawns/inspector_pawn.tscn")
+## The ARC ship and the inspector who rides it. Handed over by UnlockManager from
+## its own exports (WI-47 M6) rather than preloaded by path here: this node is
+## created in code and has no scene of its own, so an export on the manager is the
+## only authored surface - the same arrangement RaidManager.pirate_ship_scene and
+## CrewManager.crew_pawn_scene already use.
+var ship_scene: PackedScene
+var inspector_scene: PackedScene
 ## Fly-in distance for the ARC ship, matching the trader/crew shuttles.
 const SHIP_APPROACH_DISTANCE: float = 1400.0
 
@@ -50,10 +55,10 @@ func begin() -> void:
 	if not is_instance_valid(_bay):
 		_fail("the docking bay was lost")
 		return
-	if SHIP_SCENE == null:
+	if ship_scene == null:
 		_on_ship_docked()
 		return
-	_ship = SHIP_SCENE.instantiate() as ArrivalShuttle
+	_ship = ship_scene.instantiate() as ArrivalShuttle
 	Global.world_manager.pawn_layer.add_child(_ship)
 	var dock: Vector2 = DockingBay.dock_position_for(_bay)
 	_ship.setup(dock, dock + Vector2(DockingBay.approach_sign_for(_bay) * SHIP_APPROACH_DISTANCE, 0.0))
@@ -64,7 +69,7 @@ func _on_ship_docked() -> void:
 	if not is_instance_valid(_bay):
 		_fail("the docking bay was lost")
 		return
-	_inspector = INSPECTOR_SCENE.instantiate() as InspectorPawn
+	_inspector = inspector_scene.instantiate() as InspectorPawn
 	Global.world_manager.pawn_layer.add_child(_inspector)
 	_inspector.current_module = _bay
 	_inspector.global_position = Global.cell_to_world(_bay.module_cell, true)

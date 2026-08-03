@@ -31,6 +31,7 @@ const SKILLS: StringName = &"skills"
 const TRAITS: StringName = &"traits"
 const SHOPS: StringName = &"shops"
 const DIFFICULTY: StringName = &"difficulty"
+const BUILD_CATEGORIES: StringName = &"build_categories"
 
 ## Every kind there is. A scan for anything else is a typo, and a typo here would
 ## otherwise surface as "this mod added no content", which is invisible - so an
@@ -38,6 +39,7 @@ const DIFFICULTY: StringName = &"difficulty"
 const KINDS: Array[StringName] = [
 	MODULES, RESOURCES, UNLOCKS, LOCAL_UPGRADES, TIERS, JOBS,
 	EVENTS, DISEASES, SKILLS, TRAITS, SHOPS, DIFFICULTY,
+	BUILD_CATEGORIES,
 ]
 
 ## Roots in load order, base game first. Static so the menus can scan content

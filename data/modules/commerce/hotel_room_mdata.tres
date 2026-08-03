@@ -20,7 +20,7 @@ ExtResource("5_steel"): 3,
 ExtResource("6_credits"): 400
 })
 tags = Array[String](["Commerce", "Lodging"])
-ui_category = 8
+category_id = &"commerce"
 upkeep_per_cycle = 4
 unlocked_by_default = false
 metadata/_custom_type_script = "uid://vwmofdckg7hu"

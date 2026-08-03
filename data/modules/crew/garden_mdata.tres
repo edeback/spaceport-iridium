@@ -20,7 +20,7 @@ ExtResource("5_garden"): 4,
 ExtResource("6_garden"): 400
 })
 tags = Array[String](["Crew"])
-ui_category = 7
+category_id = &"crew"
 upkeep_per_cycle = 6
 unlocked_by_default = false
 metadata/_custom_type_script = "uid://vwmofdckg7hu"

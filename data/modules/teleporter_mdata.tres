@@ -21,5 +21,5 @@ ExtResource("4_lf14v"): 4,
 ExtResource("5_neg3i"): 2
 })
 tags = Array[String](["Transportation"])
-ui_category = 10
+category_id = &"logistics"
 unlocked_by_default = false

@@ -10,7 +10,7 @@ extends VBoxContainer
 ##
 ## Grouping/ordering/search/MRU are pure and tested in BuildMenuModel; this node owns
 ## only the view - button instancing, unlock-driven visibility, and flyout placement.
-## It keys on the ModuleData.UICategory enum, never tags (tags stay reserved for gameplay).
+## It keys on ModuleData.category_id, never tags (tags stay reserved for gameplay).
 
 const MODULE_BUTTON: PackedScene = preload("res://ui/buttons/module_button.tscn")
 const RECENT_CAP: int = 5
@@ -23,21 +23,17 @@ const FLYOUT_WIDTH: float = 300.0
 const FLYOUT_MAX_HEIGHT: float = 440.0
 const FLYOUT_GAP: float = 6.0
 
-## Set in the inspector: the icon shown on each rail category button. Falls back to a
-## representative module's icon for any category left unset.
-@export var cat_icon: Dictionary[ModuleData.UICategory, Texture2D]
-
 ## Every non-hidden module, scanned once - the source of truth for grouping, search,
 ## recent lookups, and unlock reactivity.
 var _modules: Array[ModuleData] = []
 var _by_id: Dictionary[StringName, ModuleData] = {}
-## UICategory -> Array[ModuleData] (name-sorted), straight from BuildMenuModel.
+## category id -> Array[ModuleData] (name-sorted), straight from BuildMenuModel.
 var _groups: Dictionary = {}
-## UICategory -> its rail Button, so unlock changes can retoggle rail visibility.
-var _rail_buttons: Dictionary[int, Button] = {}
+## category id -> its rail Button, so unlock changes can retoggle rail visibility.
+var _rail_buttons: Dictionary[StringName, Button] = {}
 var _recent_ids: Array[StringName] = []
-## The UICategory whose flyout is open, or -1 for search results / closed.
-var _open_category: int = -1
+## The category whose flyout is open, or &"" for search results / closed.
+var _open_category: StringName = &""
 
 var _search: LineEdit
 var _recent_label: Label
@@ -100,15 +96,15 @@ func _build_rail() -> void:
 	_rail = VBoxContainer.new()
 	_rail.add_theme_constant_override("separation", 2)
 	add_child(_rail)
-	var categories: Array[int] = []
+	var categories: Array[StringName] = []
 	categories.assign(_groups.keys())
-	for category: int in BuildMenuModel.category_order(categories):
+	for category: StringName in BuildMenuModel.category_order(categories):
 		_rail.add_child(_make_rail_button(category))
 
 ## A rail button: a fixed RAIL_ICON_PX square icon + the category name. Composed from a
 ## TextureRect rather than Button.icon so the icon is an exact square regardless of the
 ## source texture - Button.icon/expand_icon can't pin a size while text is present.
-func _make_rail_button(category: int) -> Button:
+func _make_rail_button(category: StringName) -> Button:
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(0, RAIL_ICON_PX + 8)
 	button.clip_text = true
@@ -156,10 +152,12 @@ func _build_flyout() -> void:
 	_scroll.add_child(_flyout_grid)
 	add_child(_flyout)
 
-## Rail icon for a category: the inspector-set cat_icon entry, or a representative
-## module's icon as a fallback while cat_icon is still being filled in.
-func _category_icon(category: int) -> Texture2D:
-	var icon: Texture2D = cat_icon.get(category)
+## Rail icon for a category: the BuildCategoryData's own cat_icon, or a
+## representative module's icon as a fallback for a category that declares none.
+## Used to be an inspector dict on this node keyed by the enum - which a mod could
+## not add to, and which put display data for scanned content in a scene (WI-47 M5).
+func _category_icon(category: StringName) -> Texture2D:
+	var icon: Texture2D = BuildCategoryData.icon_of(category)
 	if icon != null:
 		return icon
 	for module_data: ModuleData in _bucket(category):
@@ -169,7 +167,7 @@ func _category_icon(category: int) -> Texture2D:
 
 # --- rail / flyout interaction -------------------------------------------------
 
-func _on_rail_pressed(category: int) -> void:
+func _on_rail_pressed(category: StringName) -> void:
 	if _open_category == category and _flyout.visible:
 		close_flyout()
 		return
@@ -184,7 +182,7 @@ func _on_search_changed(text: String) -> void:
 	if query.is_empty():
 		close_flyout() # clearing search dismisses the results flyout
 		return
-	_open_category = -1 # search results have no rail anchor
+	_open_category = &"" # search results have no rail anchor
 	_populate_grid(BuildMenuModel.filter_by_name(_modules, query))
 	_flyout.visible = true
 	_fit_and_place_flyout.call_deferred()
@@ -194,7 +192,7 @@ func flyout_open() -> bool:
 
 func close_flyout() -> void:
 	_flyout.visible = false
-	_open_category = -1
+	_open_category = &""
 
 ## Fits the flyout to its content (capped, then scrolls) and parks it just right of
 ## the rail, clamped inside the viewport. Deferred so the grid has laid out and
@@ -267,21 +265,21 @@ func _rebuild_recent_row() -> void:
 
 func _on_module_lock_changed() -> void:
 	_refresh_rail_visibility()
-	if _flyout.visible and _open_category != -1:
+	if _flyout.visible and _open_category != &"":
 		_populate_grid(_bucket(_open_category))
 		_fit_and_place_flyout.call_deferred()
 
 func _refresh_rail_visibility() -> void:
-	for category: int in _rail_buttons:
+	for category: StringName in _rail_buttons:
 		_rail_buttons[category].visible = _category_has_unlocked(category)
 
-func _category_has_unlocked(category: int) -> bool:
+func _category_has_unlocked(category: StringName) -> bool:
 	for module_data: ModuleData in _bucket(category):
 		if module_data.is_unlocked():
 			return true
 	return false
 
 ## Typed view into the (untyped-valued) _groups dictionary.
-func _bucket(category: int) -> Array[ModuleData]:
+func _bucket(category: StringName) -> Array[ModuleData]:
 	var bucket: Array[ModuleData] = _groups.get(category, [] as Array[ModuleData])
 	return bucket

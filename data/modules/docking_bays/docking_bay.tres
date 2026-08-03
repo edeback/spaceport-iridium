@@ -23,7 +23,7 @@ resource_costs = Dictionary[ExtResource("3_2k04c"), int]({
 ExtResource("4_2k04c"): 8
 })
 tags = Array[String](["Dock"])
-ui_category = 8
+category_id = &"commerce"
 flippable = true
 flipped_scene = ExtResource("1_vpvv2")
 metadata/_custom_type_script = "uid://vwmofdckg7hu"

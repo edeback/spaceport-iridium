@@ -2,8 +2,6 @@
 class_name CorridorModule
 extends ModuleBase
 		
-var truss: ModuleData = preload("res://data/modules/core/truss_mdata.tres")
-		
 @export var door_sprite: Sprite2D
 @export var window_sprite: Sprite2D
 
@@ -19,7 +17,7 @@ func on_place() -> void:
 	super()
 	if Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, module_cell) == null:
 		# add a truss segment below
-		Global.world_manager.add_module(truss, module_cell)
+		Global.world_manager.add_module(structural_backfill(), module_cell)
 	
 func door_connected_to(_cell: Vector2i, from_layer: WorldManager.StructureLayer) -> void:
 	if from_layer == WorldManager.StructureLayer.MODULE:

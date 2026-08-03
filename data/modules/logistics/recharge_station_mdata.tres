@@ -18,7 +18,7 @@ resource_costs = Dictionary[ExtResource("2_res"), int]({
 ExtResource("4_steel"): 12
 })
 tags = Array[String](["Logistics"])
-ui_category = 10
+category_id = &"logistics"
 unlocked_by_default = false
 max_hp = 100.0
 upkeep_per_cycle = 1

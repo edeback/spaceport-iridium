@@ -20,7 +20,7 @@ ExtResource("5_steel"): 20,
 ExtResource("6_credits"): 700
 })
 tags = Array[String](["Crew"])
-ui_category = 7
+category_id = &"crew"
 upkeep_per_cycle = 5
 unlocked_by_default = false
 metadata/_custom_type_script = "uid://vwmofdckg7hu"

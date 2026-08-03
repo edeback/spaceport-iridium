@@ -27,6 +27,12 @@ const INSPECTION_EVENT_ID: StringName = &"arc_inspection_offer"
 ## The inspector fails (and leaves) the moment its health drops below this
 ## (0..100). Low O2 is the realistic path; the threshold trips well before death.
 @export var inspection_health_fail_threshold: float = 70.0
+## The ARC vessel and the inspector it carries, handed to each InspectionRunner
+## (WI-47 M6). Authored here because the runner is created in code and has no
+## scene of its own - the arrangement RaidManager and CrewManager already use for
+## their spawned entities. Defaults keep the vanilla pair without a scene edit.
+@export var inspection_ship_scene: PackedScene = preload("res://objects/arrival_shuttle.tscn")
+@export var inspector_pawn_scene: PackedScene = preload("res://pawns/inspector_pawn.tscn")
 
 ## Bump when the save format changes incompatibly.
 const SAVE_VERSION: int = 1
@@ -333,6 +339,8 @@ func begin_inspection() -> void:
 		checklist.assign(data.inspection_tags)
 	_inspection_in_progress = true
 	var runner := InspectionRunner.new()
+	runner.ship_scene = inspection_ship_scene
+	runner.inspector_scene = inspector_pawn_scene
 	add_child(runner)
 	runner.setup(bay, checklist, inspection_dwell_hours, inspection_health_fail_threshold)
 	runner.begin()

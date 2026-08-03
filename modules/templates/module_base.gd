@@ -7,6 +7,21 @@ extends ObjectBase
 @onready var nameplate: Label = $Offset/Sprite/Nameplate
 @export var replacement_on_delete: ModuleData
 
+## The structural placeholder a MODULE-layer cell falls back to - truss, in the
+## base game (WI-47 M6).
+##
+## Corridors, stairs, turbolifts and airlocks auto-place one underneath themselves
+## when they land on an empty MODULE cell. Each of the four used to `preload()`
+## `res://data/modules/core/truss_mdata.tres` by path, which a mod could neither
+## reach nor replace. It resolves through WorldManager's authored
+## `replacement_module` export instead - the same resource `remove_module` already
+## backfills vacated cells with, so there is now one answer to "what is the
+## structural placeholder" rather than five.
+func structural_backfill() -> ModuleData:
+	if Global.world_manager == null:
+		return null
+	return Global.world_manager.replacement_module
+
 @export var size: Vector2i = Vector2i(1, 1)
 @export var show_debug: bool = true:
 	set(new_show_debug):

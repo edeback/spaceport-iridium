@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="BuildCategoryData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://data/build_categories/build_category_data.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://wydp85db7mim" path="res://assets/sprites/icon_truss_structure.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"core"
+display_name = "Core"
+sort_order = 0
+cat_icon = ExtResource("2_icon")

@@ -18,7 +18,7 @@ resource_costs = Dictionary[ExtResource("2_1vcgf"), int]({
 ExtResource("3_y48wj"): 2
 })
 tags = Array[String](["Industrial"])
-ui_category = 4
+category_id = &"food"
 can_break_down = true
 breakdown_chance_per_hour = 0.006
 metadata/_custom_type_script = "uid://vwmofdckg7hu"

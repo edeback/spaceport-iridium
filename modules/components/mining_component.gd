@@ -3,7 +3,9 @@ extends ComponentBase
 
 @export var output_storage: StorageComponent
 @export var power_consumer: PowerConsumptionComponent
-var mining_drone_scene: PackedScene = preload("res://pawns/mining_drone_pawn.tscn")
+## Exported so a mod's mining module can fly its own drone (WI-47 M6); the vanilla
+## scene is the default, so no existing module scene needed touching.
+@export var mining_drone_scene: PackedScene = preload("res://pawns/mining_drone_pawn.tscn")
 @export var max_drones: int = 3
 @export var drone_respawn_seconds: float = 5.0
 

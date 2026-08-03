@@ -20,7 +20,7 @@ ExtResource("5_steel"): 5,
 ExtResource("6_credits"): 350
 })
 tags = Array[String](["Life Support"])
-ui_category = 2
+category_id = &"life_support"
 upkeep_per_cycle = 4
 unlocked_by_default = false
 metadata/_custom_type_script = "uid://vwmofdckg7hu"

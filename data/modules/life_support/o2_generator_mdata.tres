@@ -18,5 +18,5 @@ resource_costs = Dictionary[ExtResource("3_rdata"), int]({
 ExtResource("4_steel"): 4
 })
 tags = Array[String](["Industrial"])
-ui_category = 2
+category_id = &"life_support"
 unlocked_by_default = false

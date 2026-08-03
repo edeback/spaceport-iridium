@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildCategoryData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://data/build_categories/build_category_data.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://cs0ht0ea12qtx" path="res://assets/sprites/solar_panel_tilemap.png" id="2_atlas"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_power"]
+atlas = ExtResource("2_atlas")
+region = Rect2(0, 0, 64, 64)
+
+[resource]
+script = ExtResource("1_script")
+id = &"power"
+display_name = "Power"
+sort_order = 10
+cat_icon = SubResource("AtlasTexture_power")

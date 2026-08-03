@@ -20,7 +20,7 @@ ExtResource("5_maint"): 6,
 ExtResource("6_maint"): 600
 })
 tags = Array[String](["Industrial"])
-ui_category = 3
+category_id = &"industry"
 upkeep_per_cycle = 10
 unlocked_by_default = false
 metadata/_custom_type_script = "uid://vwmofdckg7hu"

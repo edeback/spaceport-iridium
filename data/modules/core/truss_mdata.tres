@@ -17,7 +17,7 @@ resource_costs = Dictionary[ExtResource("2_xapty"), int]({
 ExtResource("3_xapty"): 5
 })
 tags = Array[String](["Core"])
-ui_category = 0
+category_id = &"core"
 multiplacement = 3
 ignore_multiplacement_connection_check = true
 max_hp = 400.0
