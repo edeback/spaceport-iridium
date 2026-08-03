@@ -2,6 +2,12 @@
 class_name StructureComponent
 extends ComponentBase
 
+## The point arrays below are module-local cell offsets, so they are read against
+## the module's footprint - `owner_module.size`. This component deliberately has no
+## `size` of its own: it used to carry an @export mirrored from the module in
+## _ready(), which meant every module scene authored the footprint twice and the two
+## had to be kept aligned by hand. ModuleBase.size is the only footprint. The module
+## editor's grid panel resolves it by walking up to the ModuleBase.
 @export var show_debug: bool = false:
 	set(new_show):
 		show_debug = new_show
@@ -33,15 +39,8 @@ var module_connections: Dictionary[ModuleBase, bool] = {}
 ## spam through StructureManager + AdjacencyManager). Cleared on teardown.
 var _connections_made: bool = false
 
-@export var size: Vector2i = Vector2i(2, 2)
-
 signal module_connections_changed(new_connections: Dictionary[ModuleBase, bool])
 
-func _ready() -> void:
-	super()
-	size = owner_module.size
-	
-	
 func can_connect_to(world_cell: Vector2i) -> bool:
 	var local_cell: Vector2i = world_cell - owner_module.module_cell
 	return connection_points.has(local_cell) or internal_points.has(local_cell)

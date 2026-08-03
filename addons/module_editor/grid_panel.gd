@@ -15,17 +15,27 @@ var object: Object
 func init_from_editor(editor_in: EditorProperty) -> void:
 	editor = editor_in
 	object = editor.get_edited_object()
-	#if edited_object is ModuleBase:
-		#module = edited_object as ModuleBase
-	#elif edited_object is StructureComponent:
-		#module = (edited_object as StructureComponent).owner_module
 	refresh()
 	pass
 
+## The footprint the grid is drawn against. The edited object is either the
+## ModuleBase itself or one of its components (StructureComponent owns the point
+## arrays), and only the module knows its own size - components no longer mirror it.
+## Walks parents rather than reading `owner_module`, which ComponentBase only fills
+## in from _ready() and so is null in the editor.
+func module_size() -> Vector2i:
+	var node: Node = object as Node
+	while node != null:
+		if node is ModuleBase:
+			return (node as ModuleBase).size
+		node = node.get_parent()
+	return Vector2i.ONE
+
 func refresh() -> void:
-	if object.size != last_size:
-		last_size = object.size
-		set_up(object.size, object.get(editor.get_edited_property()))
+	var size: Vector2i = module_size()
+	if size != last_size:
+		last_size = size
+		set_up(size, object.get(editor.get_edited_property()))
 	else:
 		var enabled: Array[Vector2i] = object.get(editor.get_edited_property())
 		for pos in button_dictionary:

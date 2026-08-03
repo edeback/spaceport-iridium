@@ -151,7 +151,6 @@ visible = false
 connection_points = Array[Vector2i]([Vector2i(1, 0), Vector2i(2, 0)])
 internal_points = Array[Vector2i]([Vector2i(1, 0)])
 must_be_clear_points = Array[Vector2i]([Vector2i(0, 0)])
-size = Vector2i(2, 1)
 
 [node name="PowerConsumptionComponent" parent="." index="3" unique_id=1006788337 instance=ExtResource("7_b4qdx")]
 visible = false
