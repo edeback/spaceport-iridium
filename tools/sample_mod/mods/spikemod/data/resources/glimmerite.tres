@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ResourceData" load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"spikemod.glimmerite"
+name = "Glimmerite"
+default_cost = 42
+default_market_supply = 17
+has_variance = true
+merge_tolerance = 0.1

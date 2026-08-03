@@ -11,7 +11,6 @@ extends Resource
 ## written back onto this shared resource. Balance (price band, payout) lives here
 ## per the balance-in-data invariant.
 
-const SHOPS_PATH: String = "res://data/shops/"
 
 ## Stable identifier (matches the .tres stem); saved as the ShopComponent's
 ## selected type. Never rename once players have saves referencing it.
@@ -50,12 +49,11 @@ static func _ensure_scanned() -> void:
 	if _scanned:
 		return
 	_scanned = true
-	for path: String in ResourceScanner.scan_paths(SHOPS_PATH):
+	for path: String in ContentPaths.scan(ContentPaths.SHOPS):
 		var res: Resource = ResourceLoader.load(path)
 		if res is ShopTypeData:
 			var shop := res as ShopTypeData
-			if shop.id == &"":
-				push_warning("ShopTypeData with empty id, skipping: " + path)
+			if not ContentPaths.accept_id(shop.id, path, "ShopTypeData"):
 				continue
 			_registry[shop.id] = shop
 			_ordered.append(shop)

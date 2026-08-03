@@ -98,18 +98,20 @@ func _unhandled_input(event: InputEvent) -> void:
 # --- id lookups -------------------------------------------------------------
 
 func _build_lookups() -> void:
-	for path: String in ResourceScanner.scan_paths("res://data/modules/"):
+	for path: String in ContentPaths.scan(ContentPaths.MODULES):
 		var res: Resource = ResourceLoader.load(path)
 		if res is ModuleData:
-			_register_id(_module_data_by_id, (res as ModuleData).id, res, path)
-	for path: String in ResourceScanner.scan_paths("res://data/resources/"):
+			_register_id(_module_data_by_id, (res as ModuleData).id, res, path, "ModuleData")
+	for path: String in ContentPaths.scan(ContentPaths.RESOURCES):
 		var res: Resource = ResourceLoader.load(path)
 		if res is ResourceData:
-			_register_id(_resource_data_by_id, (res as ResourceData).id, res, path)
+			_register_id(_resource_data_by_id, (res as ResourceData).id, res, path, "ResourceData")
 
-func _register_id(table: Dictionary, id: StringName, res: Resource, path: String) -> void:
-	if id == &"":
-		push_warning("Save id missing on " + path + " - it cannot be saved/loaded")
+func _register_id(table: Dictionary, id: StringName, res: Resource, path: String, what: String) -> void:
+	# Empty and mis-namespaced ids are rejected centrally (WI-47 M1) - two mods
+	# both shipping &"crystal" would otherwise collide, and which one won would
+	# depend on mod load order.
+	if not ContentPaths.accept_id(id, path, what):
 		return
 	if table.has(id):
 		push_warning("Duplicate save id '" + String(id) + "' (" + path + ") - keeping the first")

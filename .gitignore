@@ -5,6 +5,10 @@
 .import/
 export.cfg
 export_presets.cfg
+# ...except the sample mod's, which IS the fixture: it is how the .pck gets
+# built, and both of its presets are load-bearing (WI-47 M9 tested text and
+# binary-token script export separately).
+!tools/sample_mod/export_presets.cfg
 
 !*.import
 

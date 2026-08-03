@@ -1,0 +1,15 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://mods/spikemod/scripts/spike_node.gd" id="1_root"]
+[ext_resource type="Script" path="res://modules/components/component_base.gd" id="2_comp"]
+[ext_resource type="Resource" path="res://mods/spikemod/data/resources/shimmer_default.tres" id="3_shimmer"]
+
+[node name="SpikeRoot" type="Node2D"]
+script = ExtResource("1_root")
+marker = "spikemod-scene-ok"
+
+[node name="SpikeVanillaComponent" type="Node2D" parent="."]
+script = ExtResource("2_comp")
+
+[node name="SpikeHolder" type="Node2D" parent="."]
+metadata/shimmer = ExtResource("3_shimmer")

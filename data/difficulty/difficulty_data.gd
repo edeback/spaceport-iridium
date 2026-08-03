@@ -12,7 +12,6 @@ extends Resource
 ## the consuming site - never a new subsystem. Every number is balance, so it
 ## lives in the .tres, not in code.
 
-const DIFFICULTY_PATH: String = "res://data/difficulty/"
 ## The level a game runs at when nothing has been chosen: a fresh boot straight
 ## into main.tscn, and every pre-WI-37 save.
 const DEFAULT_ID: StringName = &"normal"
@@ -76,12 +75,11 @@ static func _ensure_scanned() -> void:
 	if _scanned:
 		return
 	_scanned = true
-	for path: String in ResourceScanner.scan_paths(DIFFICULTY_PATH):
+	for path: String in ContentPaths.scan(ContentPaths.DIFFICULTY):
 		var res: Resource = ResourceLoader.load(path)
 		if res is DifficultyData:
 			var difficulty := res as DifficultyData
-			if difficulty.id == &"":
-				push_warning("DifficultyData with empty id, skipping: " + path)
+			if not ContentPaths.accept_id(difficulty.id, path, "DifficultyData"):
 				continue
 			_registry[difficulty.id] = difficulty
 			_ordered.append(difficulty)

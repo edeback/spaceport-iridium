@@ -7,7 +7,6 @@ extends Resource
 ## invariant) and display metadata.
 
 const MAX_LEVEL: int = 10
-const SKILLS_PATH: String = "res://data/skills/"
 
 ## Stable identifier used as the skill key everywhere (jobs' get_skill(),
 ## the per-pawn state dict, the set_skill cheat).
@@ -53,12 +52,11 @@ static func _ensure_scanned() -> void:
 	if _scanned:
 		return
 	_scanned = true
-	for path: String in ResourceScanner.scan_paths(SKILLS_PATH):
+	for path: String in ContentPaths.scan(ContentPaths.SKILLS):
 		var res: Resource = ResourceLoader.load(path)
 		if res is SkillData:
 			var skill := res as SkillData
-			if skill.id == &"":
-				push_warning("SkillData with empty id, skipping: " + path)
+			if not ContentPaths.accept_id(skill.id, path, "SkillData"):
 				continue
 			_registry[skill.id] = skill
 			_ordered.append(skill)

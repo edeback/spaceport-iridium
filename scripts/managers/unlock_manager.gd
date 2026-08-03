@@ -11,9 +11,6 @@ extends Node
 ##   - live query: a module applies all active global modifiers when it is built
 ##     (ModuleBase.ready_constructed -> apply_global_modifiers)
 
-const UNLOCK_PATH: String = "res://data/unlocks/"
-const LOCAL_UPGRADE_PATH: String = "res://data/local_upgrades/"
-const TIER_PATH: String = "res://data/tiers/"
 ## Weight-0 event fired explicitly by UnlockManager when goals are met (WI-26);
 ## its Accept/Decline choices route back here via EventEffectInspectionResponse.
 const INSPECTION_EVENT_ID: StringName = &"arc_inspection_offer"
@@ -103,29 +100,27 @@ func _ready() -> void:
 # --- loading --------------------------------------------------------------
 
 func _load_unlocks() -> void:
-	for file_path: String in ResourceScanner.scan_paths(UNLOCK_PATH):
+	for file_path: String in ContentPaths.scan(ContentPaths.UNLOCKS):
 		var res: Resource = ResourceLoader.load(file_path)
 		if res is UnlockData:
 			var unlock := res as UnlockData
-			if unlock.id == &"":
-				push_warning("UnlockData with empty id, skipping: " + file_path)
+			if not ContentPaths.accept_id(unlock.id, file_path, "UnlockData"):
 				continue
 			_unlocks[unlock.id] = unlock
 			if unlock.unlocked_by_default:
 				force_unlock(unlock)
 
 func _load_local_upgrades() -> void:
-	for file_path: String in ResourceScanner.scan_paths(LOCAL_UPGRADE_PATH):
+	for file_path: String in ContentPaths.scan(ContentPaths.LOCAL_UPGRADES):
 		var res: Resource = ResourceLoader.load(file_path)
 		if res is LocalUpgradeData:
 			var upgrade := res as LocalUpgradeData
-			if upgrade.id == &"":
-				push_warning("LocalUpgradeData with empty id, skipping: " + file_path)
+			if not ContentPaths.accept_id(upgrade.id, file_path, "LocalUpgradeData"):
 				continue
 			_local_upgrades[upgrade.id] = upgrade
 
 func _load_tiers() -> void:
-	for file_path: String in ResourceScanner.scan_paths(TIER_PATH):
+	for file_path: String in ContentPaths.scan(ContentPaths.TIERS):
 		var res: Resource = ResourceLoader.load(file_path)
 		if res is TierData:
 			var tier := res as TierData

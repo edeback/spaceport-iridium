@@ -1,0 +1,8 @@
+{
+	"id": "spikemod",
+	"name": "WI-47 M9 Spike Mod",
+	"version": "0.1.0",
+	"game_version": "0.1.0-dev",
+	"deps": [],
+	"load_after": []
+}

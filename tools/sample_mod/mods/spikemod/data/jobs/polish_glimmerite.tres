@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="JobData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/jobs/job_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://mods/spikemod/scripts/job_driver_polish.gd" id="2_driver"]
+
+[resource]
+script = ExtResource("1_data")
+id = &"spikemod.polish_glimmerite"
+display_name = "Polish Glimmerite"
+report_template = "Polishing {resource}"
+category = 2
+skill = &""
+xp_reward = 0.0
+player_cancelable = true
+saveable = true
+driver = ExtResource("2_driver")

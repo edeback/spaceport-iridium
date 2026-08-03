@@ -7,7 +7,6 @@ extends Resource
 ## effects, contagiousness, acquisition tags, treatment cost, and the station tier
 ## it unlocks at (balance-in-data invariant).
 
-const DISEASES_PATH: String = "res://data/diseases/"
 
 ## Stable identifier used as the disease key everywhere (the active-state dict,
 ## the infect cheat, save/load, outbreak selection).
@@ -68,12 +67,11 @@ static func _ensure_scanned() -> void:
 	if _scanned:
 		return
 	_scanned = true
-	for path: String in ResourceScanner.scan_paths(DISEASES_PATH):
+	for path: String in ContentPaths.scan(ContentPaths.DISEASES):
 		var res: Resource = ResourceLoader.load(path)
 		if res is DiseaseData:
 			var disease := res as DiseaseData
-			if disease.id == &"":
-				push_warning("DiseaseData with empty id, skipping: " + path)
+			if not ContentPaths.accept_id(disease.id, path, "DiseaseData"):
 				continue
 			_registry[disease.id] = disease
 			_ordered.append(disease)

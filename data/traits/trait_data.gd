@@ -7,7 +7,6 @@ extends Resource
 ## fields below and apply them. Which traits a pawn has lives on
 ## PawnTraitsComponent; this is the shared, tunable definition.
 
-const TRAITS_PATH: String = "res://data/traits/"
 
 ## Stable identifier - also the key used for this trait's permanent happiness
 ## modifier on PawnNeedsComponent, so applying/removing it is idempotent.
@@ -52,12 +51,11 @@ static func _ensure_scanned() -> void:
 	if _scanned:
 		return
 	_scanned = true
-	for path: String in ResourceScanner.scan_paths(TRAITS_PATH):
+	for path: String in ContentPaths.scan(ContentPaths.TRAITS):
 		var res: Resource = ResourceLoader.load(path)
 		if res is TraitData:
 			var trait_data := res as TraitData
-			if trait_data.id == &"":
-				push_warning("TraitData with empty id, skipping: " + path)
+			if not ContentPaths.accept_id(trait_data.id, path, "TraitData"):
 				continue
 			_registry[trait_data.id] = trait_data
 			_ordered.append(trait_data)

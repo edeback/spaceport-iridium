@@ -12,7 +12,6 @@ extends VBoxContainer
 ## only the view - button instancing, unlock-driven visibility, and flyout placement.
 ## It keys on the ModuleData.UICategory enum, never tags (tags stay reserved for gameplay).
 
-const MODULE_PATH: String = "res://data/modules/"
 const MODULE_BUTTON: PackedScene = preload("res://ui/buttons/module_button.tscn")
 const RECENT_CAP: int = 5
 ## Rail category icons are pinned to this square; recent-strip icons to the smaller one.
@@ -65,9 +64,14 @@ func _ready() -> void:
 func _scan_modules() -> void:
 	_modules.clear()
 	_by_id.clear()
-	for file_path: String in ResourceScanner.scan_paths(MODULE_PATH):
+	for file_path: String in ContentPaths.scan(ContentPaths.MODULES):
 		var module_data: ModuleData = ResourceLoader.load(file_path, "ModuleData")
 		if module_data == null or module_data.hidden:
+			continue
+		# Same id gate SaveManager applies. A module the save system refuses is a
+		# module the player must not be able to place - otherwise a mod with a
+		# badly namespaced id builds fine and vanishes on load.
+		if not ContentPaths.accept_id(module_data.id, file_path, "ModuleData"):
 			continue
 		_modules.append(module_data)
 		_by_id[module_data.id] = module_data

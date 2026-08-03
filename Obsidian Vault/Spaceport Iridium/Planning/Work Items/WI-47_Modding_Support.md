@@ -1,6 +1,10 @@
 # WI-47 — Modding Support
 
-> **Status: PLANNED (2026-08-01).** Design only, nothing implemented. Sized as a multi-stage item in the WI-44 mould — stages 1–3 are pure refactors of existing behaviour and are the whole load-bearing part; stages 4–5 are additive and can be dropped or deferred without stranding anything.
+> **Status: SPIKE + STAGE 1 DONE (2026-08-02). Stages 2–5 not started.** Sized as a multi-stage item in the WI-44 mould — stages 1–3 are pure refactors of existing behaviour and are the whole load-bearing part; stages 4–5 are additive and can be dropped or deferred without stranding anything.
+>
+> **The M9 spike passed: 29 checks green in all four of {editor, exported build} × {text-script pack, binary-token pack}.** Mod scripts load, extend vanilla classes and dispatch through them; mod `.tres` resolve vanilla scripts by uid and by path; a vanilla `JobData` inside a mod pack resolves a mod `JobDriver`. Nothing in stages 1–5 needs redesigning. Two things the spike changed: M9's constraint is **sharper** than written (a mod script cannot name its own `class_name` either) and **less serious** than feared (`preload()`/`load()` by path substitutes completely), and M1 gains a hard requirement to mount with `replace_files = false`. Full results in M9 below.
+>
+> **Stage 1 (M1) shipped**: `ModManager` autoload + `ContentPaths` + id namespacing, all 13 scan sites converted. 549 GUT green (505 baseline + 44 new in `test_content_paths.gd` / `test_mod_registry.gd`), plus a 15-check headless probe that mounts the real sample mod and finds its job type and its resource in the real registries, and a fail-soft pass over five broken mods. Save-neutral. **Next: stage 2 (M2), component save hooks.**
 
 ## Goal
 
@@ -35,14 +39,26 @@ Recorded up front so nobody rebuilds it.
 
 ### M1 — There is no loader
 
+> **DONE 2026-08-02 (stage 1).** What shipped, and where it differs from the design below:
+>
+> - **`scripts/managers/mod_manager.gd`** — autoload, first in `project.godot`, ahead of `Global`. No `class_name` (an autoload and a global class can't share a name; `global.gd` and `signal_bus.gd` set the precedent), and it deliberately touches neither `Global` nor `SignalBus`, because neither exists yet when it runs.
+> - **The manifest lives OUTSIDE the `.pck`**, at `user://mods/<folder>/mod.json` next to it. Not a style choice: `load_resource_pack()` has no counterpart, so a mounted pack can never be unmounted, so every decision about whether to load a mod at all has to be made from something readable *before* mounting. This is the one real departure from the design as written.
+> - **`scripts/mods/mod_manifest.gd` + `mod_registry.gd`** — the manifest shape and all the ordering/validation rules, pure and unit-tested. `ModManager` is only filesystem and mounting.
+> - **`scripts/utility/content_paths.gd`** — `roots_for(kind)` as designed, plus `scan(kind)` (what the 13 sites actually call, one line each) and `accept_id()`, the namespacing gate.
+> - **Ordering is alphabetical among equals**, via `String` comparison. `Array[StringName].sort()` compares the names' interned *pointers*, so it yields an order that is stable within a run and meaningless between runs — a live bug the tests caught.
+> - **Two mods claiming one id drops both**, as decided. **A missing dependency drops transitively.** **A `game_version` mismatch warns and loads anyway**, matching M11's decided posture.
+> - **Known gap, not closed:** mods can't *shadow* vanilla files (that's what `replace_files = false` buys), but a pack *can* add files at `res://data/...` paths vanilla doesn't use, and those scan as base-game content and bypass namespacing. Closing it would need a "which pack did this file come from" API that doesn't exist. It also isn't a security boundary — mods run arbitrary GDScript by design (decision 6) — so it stays a documented mod-author rule.
+
 Every scan root is a `const String` baked to `res://`: 11 named constants (`MODULE_PATH`, `UNLOCK_PATH`, `TIER_PATH`, `LOCAL_UPGRADE_PATH`, `JOB_PATH`, `EVENT_PATH`, `DISEASES_PATH`, `SKILLS_PATH`, `TRAITS_PATH`, `SHOPS_PATH`, `DIFFICULTY_PATH`) plus two inline strings in [`save_manager.gd:101,105`](../../../../scripts/managers/save_manager.gd). Nothing calls `load_resource_pack`.
 
 **Fix.** Two new pieces:
 
-- **`ModManager`** — autoload, ordered *before* `Global`. Scans `user://mods/*/mod.json`, validates the manifest (`id`, `name`, `version`, `game_version`, optional `deps` and `load_after`), topo-sorts, `ProjectSettings.load_resource_pack()`s each `.pck` in order, and records what loaded plus what failed and why.
+- **`ModManager`** — autoload, ordered *before* `Global`. Scans `user://mods/*/mod.json`, validates the manifest (`id`, `name`, `version`, `game_version`, optional `deps` and `load_after`), topo-sorts, `ProjectSettings.load_resource_pack(path, false)`s each `.pck` in order, and records what loaded plus what failed and why.
 - **`ContentPaths`** — the roots registry. `ContentPaths.roots_for(&"modules")` returns `["res://data/modules/", "res://mods/coolmod/data/modules/", …]`; the 13 call sites loop it instead of taking a const. Base game roots register themselves so vanilla is just "mod zero" and the code path is never untested.
 
 Mod `.pck`s mount into `res://mods/<id>/` by convention rather than overwriting `res://data/`, so a mod can never shadow a vanilla file by accident — shadowing becomes an explicit stage-5 operation.
+
+**`replace_files = false` is mandatory, not stylistic** (M9 spike finding 2). An exported pack ships `res://.godot/global_script_class_cache.cfg`, `res://.godot/uid_cache.bin` and `res://project.binary` whether the author wants it to or not; the default `true` hands a mod the power to shadow those and every vanilla resource. The manifest is also the *only* thing `ModManager` may read with `FileAccess`: a pack exported with binary-token scripts stores `res://….gdc` + `res://….gd.remap`, so `FileAccess` on a mod script's `.gd` path returns `ERR_FILE_NOT_FOUND` while `ResourceLoader` resolves it fine (finding 4).
 
 **Id namespacing.** Mod content ids must be `modid.thing`. [`SaveManager._register_id`](../../../../scripts/managers/save_manager.gd) currently warns and *keeps the first* on a duplicate, which is load-order-dependent and easy to miss. Make a collision between two *different* mods a hard, surfaced error (mod list screen, not just `push_warning`), and validate the prefix at load. Vanilla ids stay unprefixed — they're the reserved namespace.
 
@@ -126,18 +142,56 @@ That single fact is the difference between "mods can add ores" and "mods can add
 
 ### M9 — Exported builds will not register mod `class_name`s
 
+> **SPIKED 2026-08-02. Confirmed, with one correction and one reprieve.** 29 checks, run in all four of {editor build, exported build} × {text-script pack, binary-token pack} — 29/29 green in every one. Method and full findings below.
+
 `global_script_class_cache.cfg` is baked at export. Scripts inside a mod `.pck` do load and run, but their `class_name` is not registered, so:
 
-- Mod script A cannot reference mod script B by class name, or type against it.
+- **A mod script cannot reference *any* mod `class_name` — including its own.** This is stricter than the original "A cannot reference B". `class_name X` may be *declared* freely (harmless, and the mod's own project needs it for editor support), but every *reference* to `X` is a hard failure: `Compile Error: Identifier not found: SpikeShimmerData` on a script's own `X.new()`, `Parse Error: Could not find type "X" in the current scope` on another script's use of it. The practical bite is that the vanilla subclass idiom is uncopyable — `OreInstanceData.merged_with()` opens with `other as OreInstanceData` and builds an `OreInstanceData.new()`, and a mod writing the same subclass can do neither.
 - Mod `.tres` files must reference scripts by `uid://` or path, never by class name.
-- Mod scripts *can* reference vanilla class names freely — those are baked.
+- Mod scripts *can* reference vanilla class names freely — those are baked. Confirmed both by `extends ItemInstanceData` and by a static call through `ResourceScanner`.
+- **This is not export-only.** The editor build behaves identically, because a pack-mounted script is missing from the class cache either way. Good news for the rest of this WI: stages 1–5 can be developed and verified without exporting.
 
-WI-44's `@export var driver: Script` already does the right thing here (a `Script` reference, not a `class_name` string), and the reasoning in its comment — "so that renaming the driver is caught when the resource is loaded" — turns out to be the modding-correct choice too.
+**The reprieve: `preload()` and `load()` by path substitute completely.** All four routes work, in both build types:
 
-**Two consequences to commit to now:**
+| Mod script needs | Works? |
+| --- | --- |
+| `const Helper := preload("res://mods/<id>/scripts/helper.gd")`, then `Helper.static_fn()` / `Helper.new()` | yes |
+| `load("res://mods/<id>/scripts/helper.gd")` at call time (optional cross-mod deps) | yes |
+| `preload()` of a **vanilla** script by path | yes — identical result to the class_name route |
+| another of itself: `(get_script() as GDScript).new()`; identity: `other.get_script() == get_script()` | yes |
 
-1. **Never re-uid an existing script or resource.** Mod `.tres` files will reference vanilla scripts by uid. Add this to the standing rules.
-2. **Spike this before designing around it.** Build a throwaway `.pck` with one script and one `.tres` referencing a vanilla class, export the game, and confirm it loads. Everything downstream assumes it does. This is stage 1's first task, not its last.
+So M9 costs mods static typing across their own files, and nothing else. It is an authoring rule, not a capability gap, and it belongs in the mod-author docs rather than in the engine-facing design.
+
+WI-44's `@export var driver: Script` already does the right thing here (a `Script` reference, not a `class_name` string), and the reasoning in its comment — "so that renaming the driver is caught when the resource is loaded" — turns out to be the modding-correct choice too. The spike loaded a **vanilla** `JobData.tres` living inside a mod pack whose `driver` pointed at a **mod** script, instantiated it, and called through it. That combination is the most load-bearing one in the whole design and it works untouched.
+
+#### Other spike findings
+
+1. **uid beats a stale path.** A mod `.tres` referencing `resource_data.gd` by its correct uid and a deliberately wrong path loaded fine. So "**never re-uid**" is the real rule — moving or renaming a vanilla script is safe as long as its `.uid` sidecar travels with it. Add to the standing rules.
+2. **Mount with `replace_files = false`.** Not optional. An exported pack carries `res://.godot/global_script_class_cache.cfg`, `res://.godot/uid_cache.bin` **and** `res://project.binary` alongside the mod's own files, and the default `replace_files = true` lets any mod shadow all three plus any vanilla resource. With `false`: a deliberate shadow of a vanilla `.tres` lost to the vanilla copy, the global class list stayed at exactly its pre-mount size, and vanilla resources kept loading. This makes M1's "a mod can never shadow a vanilla file by accident" true *by mechanism* rather than by naming convention — worth keeping both.
+3. **A `script_class="..."` header hint naming an unregistered mod class is harmless.** The editor writes one into every `.tres` whose script has a `class_name`; the loader treats it as a hint and falls through to the script reference. Mod authors don't have to hand-strip it.
+4. **Both script export modes work, and they behave differently on disk.** Text mode ships `res://….gd` verbatim. Binary-token mode (which is what *this* project's own preset uses, `script_export_mode=2`) ships `res://….gdc` plus a `res://….gd.remap`; `load("….gd")` follows the remap transparently, but `FileAccess` on the `.gd` path returns `ERR_FILE_NOT_FOUND`. **Consequence for M1: `ModManager` must read `mod.json` through `FileAccess` (plain files are never remapped) and everything else through `ResourceLoader` — it must never `FileAccess` a mod script.** `ResourceScanner` already strips `.remap`, which is exactly why.
+5. **Discovery needs no new code.** `ResourceLoader.list_directory` and `DirAccess.open` both see a pack-mounted root, and `ResourceScanner.scan_paths` recursed one correctly (4 `.tres` across two nested dirs) in all four environments. `ContentPaths` only has to supply the roots; the 13 scan sites need no other change.
+6. **Mod scenes work end to end** — a `.tscn` in the pack with a mod script on its root, a *vanilla* `ComponentBase` script on a child, and an `ExtResource` pointing at a mod `.tres`, all resolved on `instantiate()`.
+7. **Late mounting is fine.** The probe mounted from an autoload *after* the main scene was already up and everything resolved. That doesn't settle the "`ModManager` before `Global`" open question — content *scanning* still has to happen after the mount — but it does rule out needing to mount before engine startup.
+8. **A mod project does not need the game's source to build a pack.** Hand-written `.tres` carrying the right uid and path resolve at runtime against the game's `res://`, and a mod script that can't compile in its own project still exports (text mode doesn't parse; binary mode only tokenizes). The pack does have to be authored at the *mount* path — files must live at `res://mods/<id>/…` in the mod project. In practice authors will still want an SDK copy of the project for editor support; that's a stage-1 deliverable, not a blocker.
+
+#### What the spike did NOT cover
+
+Autoload ordering (`ModManager` before `Global`); a modded module actually placed, built and saved; two mods with colliding ids; the cost of N packs at startup. All of those are stage-1/stage-3 work with real code behind them.
+
+#### Reproducing it
+
+Throwaway mod project (bare, ~10 files, so anything it resolves provably came from the game and not from a vanilla script the pack carried along): `mods/spikemod/{mod.json, scripts/*.gd, data/{resources,jobs}/*.tres, scenes/spike_scene.tscn}` plus one `data/resources/test_resource.tres` that exists only to attempt a shadow. Two presets differing solely in `script_export_mode` (0 and 2).
+
+```
+godot --headless --path <modproj> --export-pack "Mod Pack" spikemod.pck
+copy spikemod.pck  ->  %APPDATA%/Godot/app_userdata/Spaceport Iridium/mods/
+godot --headless --path . -- --mod-spike                       # editor build
+godot --headless --path . --export-release "Windows Desktop" <out.exe>
+"<out.exe>" --headless -- --mod-spike                          # exported build
+```
+
+The probe was a temporary `ModSpike` autoload gated on `OS.get_cmdline_user_args().has("--mod-spike")`, writing to `user://mod_spike_result.txt` (the exported build has no console wrapper, so stdout isn't reachable). Deleted after, along with its autoload entry — see the WI-30..WI-33 probe pattern.
 
 ### M10 — Pawn variations have no data resource
 
@@ -169,10 +223,12 @@ Stated explicitly so the implementer doesn't assume this WI swept the whole code
 
 ## Files to touch
 
-**Stage 1 (loader)**
-- `scripts/managers/mod_manager.gd`, `scripts/utility/content_paths.gd` — new
+**Stage 1 (loader) — DONE**
+- `scripts/managers/mod_manager.gd`, `scripts/mods/{mod_manifest,mod_registry}.gd`, `scripts/utility/content_paths.gd` — new
 - `project.godot` — `ModManager` autoload, ordered before `Global`
 - The 13 scan sites: `ui/buttons/build_menu.gd`, `scripts/managers/save_manager.gd` (×2), `scripts/managers/unlock_manager.gd` (×3), `scripts/managers/event_manager.gd`, `scripts/jobs/job_data_registry.gd`, `data/{difficulty,diseases,shops,skills,traits}/*_data.gd`
+- `ui/menus/main_menu.gd` — the one place outside a scan site that named a path constant
+- `tools/sample_mod/` + `tools/.gdignore` — the fixture, kept out of the game's filesystem scan and out of its export
 
 **Stage 2 (component persistence)**
 - `modules/components/component_base.gd`, `pawns/pawn_component_base.gd` — virtual hooks + `save_order` + `save_key`
@@ -196,12 +252,12 @@ Stated explicitly so the implementer doesn't assume this WI swept the whole code
 **Throughout**
 - `tests/unit/test_mod_registry.gd`, `tests/unit/test_content_paths.gd` — new
 - `tests/unit/test_component_persistence.gd` — extend; it's the safety net for stage 2
-- A sample mod under `tests/fixtures/` or similar, shipped as the living example
+- A sample mod under `tests/fixtures/` or similar, shipped as the living example. The M9 spike's throwaway mod project is its seed — it already covers a variance resource, a mod `ItemInstanceData` subclass, a mod `JobDriver` behind a vanilla `JobData`, a mod scene with a vanilla component, and both script export modes; what it lacks is a module, a tech node, a build category and anything that saves state.
 
 ## Implementation order
 
-1. **M9 spike first.** One `.pck`, one script, one `.tres`, exported build. Half a day. If mod scripts don't load the way this WI assumes, most of stages 4–5 need redesigning and it's better to know on day one.
-2. **Stage 1 — M1.** Loader + `ContentPaths` + namespacing. Nothing else is testable until content can come from somewhere else.
+1. ~~**M9 spike first.**~~ **DONE 2026-08-02** — 29/29 in all four environments, no redesign needed. See M9.
+2. ~~**Stage 1 — M1.** Loader + `ContentPaths` + namespacing.~~ **DONE 2026-08-02** — see M1.
 3. **Stage 2 — M2.** Component save hooks, both bases. Pure refactor, biggest blast radius, fully covered by existing tests. Do it while stage 1 is the only new thing in flight.
 4. **Stage 3 — M3, M4, M11.** Save participants, instance-data registry, and the `meta.mods` list. M11 goes here rather than later because it freezes part of the meta shape and every save written after this stage should carry it.
 5. **Stage 4 — M5, M6, M8-recipes, M7-ships, M10.** Additive and independent of each other; each can ship or slip alone. Sweep the "not yet audited" list here.
@@ -217,7 +273,7 @@ Stages 2 and 3 change no save bytes and add no features. They will feel like no 
 - **Missing mod, unknown sections:** M3's passthrough must survive a full save→load→save round trip with the mod disabled, and the re-enabled mod must find its state intact.
 - **Two mods, same id:** hard error surfaced in the UI, not a `push_warning` into the log.
 - **Mod content referenced by an unlock:** a `GrantModuleEffect` pointing at a module from a *different* mod that isn't installed. Must degrade to a dead tech node, not a crash on `UnlockManager` scan.
-- **A mod's `.tres` referencing a vanilla script whose uid changed.** This is M9's rule failing in practice. Detect and log clearly rather than surfacing as a generic load error.
+- **A mod's `.tres` referencing a vanilla script whose uid changed.** This is M9's rule failing in practice. Detect and log clearly rather than surfacing as a generic load error. (Spike: uid takes precedence over path, so a *moved* vanilla script is fine as long as its `.uid` moved with it. Only a *changed* uid breaks a mod — hence "never re-uid", not "never move".)
 - **Recipe inversion (M8):** a vanilla processor whose scene array and the new tag index disagree during the transition. Assert-free migration — build from the index, log the diff once, delete the array in a follow-up.
 - **Save with mods, load in vanilla:** already works for modules; confirm for jobs (`JobDataRegistry` returns null → job dropped), resources, and pawn scenes.
 - **M11 on a pre-WI-47 save:** absent `meta.mods` must read as "no mods", not as "mods missing", or every legacy save warns.
@@ -225,7 +281,7 @@ Stages 2 and 3 change no save bytes and add no features. They will feel like no 
 
 ## Verification
 
-1. **Spike:** exported build loads a `.pck` containing one script and one `.tres`; the `.tres`'s script reference resolves.
+1. ~~**Spike:** exported build loads a `.pck` containing one script and one `.tres`; the `.tres`'s script reference resolves.~~ **PASSED 2026-08-02**, plus mod↔mod `preload`, mod scenes, the `driver: Script` round trip, both script export modes, and the shadowing/`replace_files` behaviour.
 2. **Stage 2 regression:** save a mature station, apply stage 2, load the *pre-refactor* save → byte-identical world state. This is the acceptance test for the whole stage; a diff of the two save files should be empty.
 3. **Ordering:** a processor mid-batch with a queued recipe, a deconstructing module with reconfigured storage, and a fuel generator mid-burn (WI-45 A3) all survive save/load after stage 2. These are the three constraints most likely to break.
 4. **Stage 3:** disable a mod that owns a save section, load, save, re-enable, load → state intact.
@@ -237,7 +293,7 @@ Stages 2 and 3 change no save bytes and add no features. They will feel like no 
 
 ## Open questions
 
-- **Autoload ordering.** `ModManager` must run before `Global`, but `Global` is where every manager registers. Confirm a plain autoload ordered first is sufficient, or whether the packs need mounting even earlier (a `--main-pack` style bootstrap, or from the main menu before the scene swap).
+- **Autoload ordering.** `ModManager` must run before `Global`, but `Global` is where every manager registers. Confirm a plain autoload ordered first is sufficient, or whether the packs need mounting even earlier (a `--main-pack` style bootstrap, or from the main menu before the scene swap). The M9 spike narrowed this: mounting from an autoload *after* the main scene was already running still resolved everything, so nothing has to happen before engine startup — the constraint is only "mount before the first scan", not "mount before boot".
 - **Mod list UI.** WI-36 built the main menu and settings shell. A mods page belongs there, but it's unscoped — this WI assumes at minimum a read-only list with load status and errors.
 - **`ResourceScanner` cost.** 12 roots × N mods, each `ResourceLoader.load`ed at startup. Fine at vanilla scale; unmeasured at 30 mods. Worth a number before stage 4.
 

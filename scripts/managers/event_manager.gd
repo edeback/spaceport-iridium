@@ -10,7 +10,6 @@ extends Node
 ## fire from TimeManager's sim loop - so events can't roll while paused by
 ## construction (WI-13 edge case: verified, no wall-clock timers here).
 
-const EVENT_PATH: String = "res://data/events/"
 
 ## Average cycles between natural events. Rolls happen twice per cycle
 ## (cycle start + one random mid-cycle hour); each roll's chance derives
@@ -53,12 +52,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			SignalBus.station_alert.emit("Debug: no eligible event to fire")
 
 func _load_events() -> void:
-	for file_path: String in ResourceScanner.scan_paths(EVENT_PATH):
+	for file_path: String in ContentPaths.scan(ContentPaths.EVENTS):
 		var res: Resource = ResourceLoader.load(file_path)
 		if res is EventData:
 			var event := res as EventData
-			if event.id == &"":
-				push_warning("EventData with empty id, skipping: " + file_path)
+			if not ContentPaths.accept_id(event.id, file_path, "EventData"):
 				continue
 			if not event.has_free_choice():
 				push_warning("Event '%s' has no always-available choice - its card can soft-lock" % event.id)

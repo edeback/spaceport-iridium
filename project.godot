@@ -34,6 +34,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+ModManager="*res://scripts/managers/mod_manager.gd"
 Global="*res://scripts/managers/global.gd"
 SignalBus="*res://scripts/managers/signal_bus.gd"
 Panku="*res://addons/panku_console/console.tscn"

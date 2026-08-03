@@ -12,8 +12,6 @@ extends RefCounted
 ## without a manager node - including from Job.from_dict() during a load, which
 ## runs before most managers have finished restoring.
 
-const JOB_PATH: String = "res://data/jobs"
-
 static var _by_id: Dictionary[StringName, JobData] = {}
 static var _scanned: bool = false
 
@@ -21,12 +19,11 @@ static func _ensure_scanned() -> void:
 	if _scanned:
 		return
 	_scanned = true
-	for file_path: String in ResourceScanner.scan_paths(JOB_PATH):
+	for file_path: String in ContentPaths.scan(ContentPaths.JOBS):
 		var res: Resource = ResourceLoader.load(file_path)
 		if res is JobData:
 			var job_data := res as JobData
-			if job_data.id == &"":
-				push_warning("JobData with empty id, skipping: " + file_path)
+			if not ContentPaths.accept_id(job_data.id, file_path, "JobData"):
 				continue
 			if _by_id.has(job_data.id):
 				push_warning("Duplicate JobData id '%s', keeping the first: %s" % [job_data.id, file_path])

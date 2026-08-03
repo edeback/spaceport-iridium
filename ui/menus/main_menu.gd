@@ -119,7 +119,9 @@ func _build_difficulty_cards() -> void:
 	if levels.is_empty():
 		# No data/difficulty/ at all: keep New Game working (Global falls back to
 		# neutral values) rather than stranding the player on an empty picker.
-		push_warning("No DifficultyData found in " + DifficultyData.DIFFICULTY_PATH + " - New Game will run at default settings")
+		var searched := PackedStringArray(ContentPaths.roots_for(ContentPaths.DIFFICULTY))
+		push_warning("No DifficultyData found in " + ", ".join(searched)
+				+ " - New Game will run at default settings")
 		_difficulty_container.add_child(_start_button("Start", DifficultyData.DEFAULT_ID))
 	for difficulty: DifficultyData in levels:
 		_difficulty_container.add_child(_difficulty_card(difficulty))

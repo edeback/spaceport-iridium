@@ -177,12 +177,14 @@
             "id": "84aff4476ec664aa",
             "type": "leaf",
             "state": {
-              "type": "release-notes",
+              "type": "markdown",
               "state": {
-                "currentVersion": "1.13.4"
+                "file": "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-book-up",
-              "title": "Release Notes 1.13.4"
+              "icon": "lucide-file",
+              "title": "WI-47_Modding_Support"
             }
           }
         ],
@@ -335,17 +337,17 @@
   },
   "active": "84aff4476ec664aa",
   "lastOpenFiles": [
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.61436.405b1a173e99",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.61436.f93eb178f29c",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.61436.b1aa744e0847",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.61436.67fe4af5dddf",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.61436.ea8608b0d508",
-    "Spaceport Iridium/Planning/02_Roadmap.md.tmp.61436.d1a6378670cf",
-    "Spaceport Iridium/Planning/02_Roadmap.md.tmp.61436.075f2c740929",
-    "Spaceport Iridium/Planning/02_Roadmap.md.tmp.61436.11e25c731a9b",
-    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.61436.d44901507f5d",
-    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.61436.66b46c0afd61",
-    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.61436.bf8a2b22dcc0",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.7c44f1cecfcd",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.d3f89b44fc6d",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.03a09f6b4fc7",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.2e2c68fd2c60",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.aeaf375ab4f7",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.94bf37203cd0",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.1841db9832fd",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.6a711d9d2cea",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.62e7905d5c9c",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.58dcd5dfc0c9",
+    "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md.tmp.26912.971da97fa4e8",
     "Spaceport Iridium/Planning/Work Items/WI-47_Modding_Support.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-46_Structure_Connectivity.md",
     "Spaceport Iridium/Planning/Work Items/WI-46_Modding_Support.md",
