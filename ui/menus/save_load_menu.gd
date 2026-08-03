@@ -160,6 +160,16 @@ func _build_row(info: Dictionary) -> Control:
 	stamp.text = String(info.get("timestamp", "")).replace("T", "  ")
 	stamp.self_modulate = Color(1, 1, 1, 0.45)
 	text_box.add_child(stamp)
+	# Mods this save used that aren't loaded now (WI-47 M11). Shown on the row
+	# rather than at load time so the player finds out BEFORE committing - the
+	# whole reason the mod list lives in the cheap meta block.
+	var drift: PackedStringArray = SaveManager.mod_drift(info.get("mods", []))
+	if not drift.is_empty():
+		var warning := Label.new()
+		warning.text = "⚠ " + ", ".join(drift)
+		warning.self_modulate = Color(1, 0.8, 0.4)
+		warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		text_box.add_child(warning)
 	row.add_child(text_box)
 
 	var action_btn := Button.new()

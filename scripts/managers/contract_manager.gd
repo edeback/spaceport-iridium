@@ -54,6 +54,9 @@ signal contracts_changed
 
 func _ready() -> void:
 	Global.contract_manager = self
+	# After world: contract demand re-registers on the restored bay via the first
+	# slow_tick; staged goods are already back in the bin.
+	SaveManager.register_section(&"contracts", 140, get_save_data, load_save_data)
 	SignalBus.trader_arrived.connect(_on_trader_arrived)
 	Global.time_manager.cycle_changed.connect(_on_cycle_changed)
 	Global.time_manager.slow_tick.connect(_on_slow_tick)

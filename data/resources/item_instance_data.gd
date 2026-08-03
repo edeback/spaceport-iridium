@@ -27,8 +27,23 @@ func merged_with(_other: ItemInstanceData, _self_weight: float, _other_weight: f
 func get_display_suffix() -> String:
 	return ""
 
-## Save-file form. Subclasses override with their own "type" tag + fields;
-## SaveManager.instance_from_dict() is the matching factory (kept there, not
-## here, so the base class never references its subclasses).
+## Short, stable tag written into the save as `"type"` and checked on the way back
+## (WI-47 M4). It keeps saves human-readable and catches a resource whose
+## instance_data_script has been swapped for an incompatible one.
+##
+## Namespace it like any other mod id: `mymod.purity`, not `purity`.
+func type_id() -> StringName:
+	return &"generic"
+
+## Save-file form. Subclasses add their own fields; the "type" tag comes from
+## type_id() so the two can't drift apart.
 func to_dict() -> Dictionary:
-	return {"type": "generic"}
+	return {"type": String(type_id())}
+
+## Read back what to_dict() wrote. This used to be a hardcoded `match` on the type
+## tag inside SaveManager, naming OreInstanceData and FoodInstanceData directly -
+## which meant a modded resource with has_variance = true silently lost its
+## instance data on save, i.e. lost the entire point of the variance. The factory
+## now resolves the script from the owning ResourceData and calls this.
+func from_dict(_data: Dictionary) -> void:
+	pass

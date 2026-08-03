@@ -41,6 +41,16 @@ var needs_recalc: bool = true
 ## merge. Ignored when has_variance is false.
 @export_range(0.0, 1.0, 0.01) var merge_tolerance: float = 0.05
 
+## Which ItemInstanceData subclass this resource's stacks carry (WI-47 M4).
+## Required when has_variance is true; ignored otherwise.
+##
+## Held as a Script reference rather than a type-name string for the same reason
+## JobData.driver is: a rename is caught when the resource loads, and - the reason
+## it matters here - a mod's class_name is never registered in an exported build,
+## so a name would be unresolvable from a mod anyway. The save's `"type"` tag is a
+## readability aid and a mismatch check; THIS is what decides the class.
+@export var instance_data_script: Script
+
 var registered_storage: Array[StorageComponent] = []
 
 #@export var show_test: bool = false:

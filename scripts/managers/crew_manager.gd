@@ -65,6 +65,8 @@ var _game_over_fired: bool = false
 
 func _ready() -> void:
 	Global.crew_manager = self
+	# After world: pending hires resolve their bay by layer+cell at arrival.
+	SaveManager.register_section(&"crew", 110, get_save_data, load_save_data)
 	SignalBus.crew_resigned.connect(_on_crew_resigned)
 	# A trader visit refreshes the recruitment offers (WI-22).
 	SignalBus.trader_arrived.connect(_on_trader_arrived)

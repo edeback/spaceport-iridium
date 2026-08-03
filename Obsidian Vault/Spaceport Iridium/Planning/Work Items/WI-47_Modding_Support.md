@@ -4,6 +4,8 @@
 >
 > **The M9 spike passed: 29 checks green in all four of {editor, exported build} × {text-script pack, binary-token pack}.** Mod scripts load, extend vanilla classes and dispatch through them; mod `.tres` resolve vanilla scripts by uid and by path; a vanilla `JobData` inside a mod pack resolves a mod `JobDriver`. Nothing in stages 1–5 needs redesigning. Two things the spike changed: M9's constraint is **sharper** than written (a mod script cannot name its own `class_name` either) and **less serious** than feared (`preload()`/`load()` by path substitutes completely), and M1 gains a hard requirement to mount with `replace_files = false`. Full results in M9 below.
 >
+> **Stage 3 (M3, M4, M11) shipped**: save sections are a registry, instance data resolves per-resource, and `meta.mods` records what wrote a save. 574 GUT green, plus a 9-check in-game round trip. **Next: stage 4 (M5, M6, M8-recipes, M7-ships, M10) — additive and independent, each can ship or slip alone.**
+>
 > **Stage 2 (M2) shipped**: `get_save_data()`/`load_save_data()`/`save_key()`/`save_order()` on both component bases; `ModuleBase`'s fifteen-lookup chain and `SaveManager`'s eight-lookup pawn chain are now walks. 562 GUT green. Acceptance test passed: a save written by the **pre-refactor** code (21 modules, 3 pawns, 11 distinct component blocks) loads under the new walk and re-saves value-for-value identical apart from the one documented shape change. **Next: stage 3 (M3, M4, M11).**
 >
 > **Stage 1 (M1) shipped**: `ModManager` autoload + `ContentPaths` + id namespacing, all 13 scan sites converted. 549 GUT green (505 baseline + 44 new in `test_content_paths.gd` / `test_mod_registry.gd`), plus a 15-check headless probe that mounts the real sample mod and finds its job type and its resource in the real registries, and a fail-soft pass over five broken mods. Save-neutral. **Next: stage 2 (M2), component save hooks.**
@@ -96,6 +98,14 @@ This stage is a pure refactor with a large blast radius and total test coverage 
 
 ### M3 — Save sections are a literal
 
+> **DONE 2026-08-02 (stage 3).** `SaveSection` (`scripts/managers/save_section.gd`) + a registry on `SaveManager`; the 17-entry dictionary literal and the 17-call load sequence are both walks now. Each of the 16 participants registers one line in its own `_ready()`, next to its `Global` registration, carrying its order number and the reason for it. `difficulty` stays written directly — it's an id chosen before the run starts, so there is no system holding state to ask.
+>
+> - **The registry is static.** `SaveManager` is deliberately last under `Managers/`, so it doesn't exist yet when the systems that feed it are readying — there is no instance to register into. Registration replaces by id, so the scene reload a load performs refreshes every vanilla entry, and `SaveSection.is_live()` prunes anything left pointing at a freed node.
+> - **`empty` per section**, because the two list-shaped sections (`piles`, `pawns`) can't be handed `{}` when absent — the receiving methods are typed.
+> - **Unclaimed passthrough** works and is verified across a full save → load → save. One caveat now documented in the code: "untouched" means *semantically*, not byte-for-byte. The block goes through `JSON.parse_string`, and JSON has a single number type, so an int returns as a float. Every vanilla loader already coerces with `int()`/`float()` for exactly that reason; a mod reading its own section is under the same obligation whether or not it sat out a session.
+
+### M3 — original finding
+
 [`save_manager.gd:283–305`](../../../../scripts/managers/save_manager.gd) hardcodes 17 sections; `_apply_pending_load` hardcodes their load order at `:661–695`, with ordering comments as load-bearing as M2's ("phantom settlement fires" — economy after time; pawns before crew; contracts after traders).
 
 A mod that adds a manager — a new threat system, a faction, a research track — has nowhere to put state.
@@ -103,6 +113,14 @@ A mod that adds a manager — a new threat system, a faction, a research track �
 **Fix.** A `SaveParticipant` interface (`section_id() -> StringName`, `save_order() -> int`, `get_save_data()`, `load_save_data()`), registered on `SaveManager` the way managers already register into `Global` in `_ready()`. Vanilla managers register with their current section ids and explicit order numbers derived from today's sequence. Unknown sections in a save (mod present when saved, absent when loaded) are **preserved and written back out untouched** rather than dropped — so disabling a mod for one session doesn't destroy its state.
 
 ### M4 — `ItemInstanceData` subtypes are a hardcoded match
+
+> **DONE 2026-08-02 (stage 3), by a different route than either option below.** `ResourceData` gained `@export var instance_data_script: Script`, and `instance_from_dict(resource, data)` resolves the class from the resource that owns the stack instead of from any table. `ItemInstanceData` gained `type_id()` and `from_dict()`, so reading a block is the subclass's own job — the `match` in `SaveManager` naming `OreInstanceData` and `FoodInstanceData` is gone.
+>
+> Chosen over the `type_id` + global registry the finding recommends because a global registry needs a *registration step*, and a mod has no code entry point to run one from (there is no mod-init hook, and M9 means a mod class can't even be named). A `Script` on the resource is pure data, is the shape M9 proved works from inside a `.pck`, and has no shared namespace — two mods can both call their variance "purity" without colliding. The `"type"` tag stays in the save for readability and is checked on the way back, warning when a resource's script has been swapped under an existing save.
+>
+> Wired into the six vanilla variance resources (five ores → `OreInstanceData`, biomass → `FoodInstanceData`). A resource that declares no script drops the variance and keeps the stack — losing a richness value is survivable, losing the ore would not be.
+
+### M4 — original finding
 
 [`save_manager.gd:153`](../../../../scripts/managers/save_manager.gd):
 
@@ -216,6 +234,13 @@ Crew / visitor / robot differ by scene plus code (`RobotPawnBase` builds its ene
 
 ### M11 — The save must record its mod list
 
+> **DONE 2026-08-02 (stage 3).** `meta.mods` is `[{id, version}, …]` from `ModManager.mod_records()`. `SaveManager.mod_drift(saved_records)` is one pure rule shared by the slot browser and the load path: a mod that isn't installed, or is installed at a different version, is drift; extra mods are not. Absent on pre-WI-47 saves reads as "no mods", not "mods missing".
+>
+> - **Slot browser** renders an amber `⚠` line naming each drifted mod, before the player commits.
+> - **On load**: `push_warning` plus a `station_alert`, naming mod and version, and the game proceeds. Verified end to end — saved with the sample mod installed, uninstalled it, loaded: *"This save used mods that aren't loaded: spikemod (0.1.0) is not installed. Modules and items from them are gone, and the station may be unplayable."*
+
+### M11 — original finding
+
 A save written with mods and loaded without them is not a small degradation. Decision 4 says fail soft, and `world_manager.gd:203` does exactly that per module — but "fail soft" applied to a station whose reactor, refinery and half its corridors came from an absent mod produces a *running game that is no longer playable*, silently. The player deserves to be told which it is, and the game cannot tell them without recording what was loaded.
 
 **Fix.** The `meta` block gains `mods: [{id, version}, …]` — `meta` already exists to let the slot browser render a row without parsing sections, and this is the same kind of cheap header data.
@@ -274,7 +299,7 @@ Stated explicitly so the implementer doesn't assume this WI swept the whole code
 1. ~~**M9 spike first.**~~ **DONE 2026-08-02** — 29/29 in all four environments, no redesign needed. See M9.
 2. ~~**Stage 1 — M1.** Loader + `ContentPaths` + namespacing.~~ **DONE 2026-08-02** — see M1.
 3. ~~**Stage 2 — M2.** Component save hooks, both bases.~~ **DONE 2026-08-02** — see M2.
-4. **Stage 3 — M3, M4, M11.** Save participants, instance-data registry, and the `meta.mods` list. M11 goes here rather than later because it freezes part of the meta shape and every save written after this stage should carry it.
+4. ~~**Stage 3 — M3, M4, M11.** Save participants, instance-data registry, and the `meta.mods` list.~~ **DONE 2026-08-02** — see M3, M4, M11.
 5. **Stage 4 — M5, M6, M8-recipes, M7-ships, M10.** Additive and independent of each other; each can ship or slip alone. Sweep the "not yet audited" list here.
 6. **Stage 5 — M8 patch ops.** Only if a real mod wants it.
 
@@ -299,7 +324,7 @@ Stages 2 and 3 change no save bytes and add no features. They will feel like no 
 1. ~~**Spike:** exported build loads a `.pck` containing one script and one `.tres`; the `.tres`'s script reference resolves.~~ **PASSED 2026-08-02**, plus mod↔mod `preload`, mod scenes, the `driver: Script` round trip, both script export modes, and the shadowing/`replace_files` behaviour.
 2. ~~**Stage 2 regression:** save a mature station, apply stage 2, load the *pre-refactor* save → byte-identical world state.~~ **PASSED 2026-08-02**, with the criterion corrected from byte-identical to structurally identical: the walk deliberately writes blocks in restore order, so key order moves. 21 modules × 11 component block types + 3 pawns, every value identical, only the documented `traits` shape change differing.
 3. **Ordering:** a processor mid-batch with a queued recipe, a deconstructing module with reconfigured storage, and a fuel generator mid-burn (WI-45 A3) all survive save/load after stage 2. These are the three constraints most likely to break.
-4. **Stage 3:** disable a mod that owns a save section, load, save, re-enable, load → state intact.
+4. ~~**Stage 3:** disable a mod that owns a save section, load, save, re-enable, load → state intact.~~ **PASSED 2026-08-02** — a section from an absent mod was injected on disk, survived load → re-save unchanged, and every other section round-tripped value-for-value (0 differences). All 16 vanilla sections registered in the documented order. The re-enable half is covered by the passthrough being value-preserving.
 5. **M11:** save a station built largely from a mod's modules, disable the mod, open the slot browser → the row is marked before loading. Load anyway → warning names the mod, the game runs, the modded modules are gone. Re-enable, load the *same* save → the station is whole again and the mod's section survived the round trip.
 6. **The sample mod is the real test.** Ship one that exercises every path: a new resource with variance, a processor recipe attached to a *vanilla* refinery by tag, a new module with a new component that saves state, a new job type with a driver, a tech node granting the module, a new build category, a ship variant, a pawn kind. If the sample mod needs a single core edit, this WI isn't done.
 7. **Fail-soft:** a mod with a malformed manifest, a mod with a `.tres` referencing a missing script, and two mods with colliding ids each produce a clear message and a running game.

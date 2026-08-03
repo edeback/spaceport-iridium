@@ -2,6 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://briilrlnsabt7" path="res://ui/icons/biomass.svg" id="1_tf8hw"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_if2j3"]
+[ext_resource type="Script" uid="uid://y70ak4bpajky" path="res://data/resources/food_instance_data.gd" id="9_instance"]
 
 [resource]
 script = ExtResource("2_if2j3")
@@ -11,3 +12,4 @@ icon = ExtResource("1_tf8hw")
 default_cost = 50
 has_variance = true
 merge_tolerance = 0.1
+instance_data_script = ExtResource("9_instance")

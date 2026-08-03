@@ -68,6 +68,9 @@ var _slow_tick_progress: float = 0.0
 
 func _ready() -> void:
 	Global.time_manager = self
+	# First: every other system ticks in the loaded calendar, and time's restore
+	# announces itself with calendar_restored rather than replaying cycle_changed.
+	SaveManager.register_section(&"time", 10, get_save_data, load_save_data)
 	# Run before everything that reads sim_delta this frame.
 	process_priority = -100
 	speed_changed.connect(_resync_sim_animations)

@@ -11,6 +11,8 @@ var last_turboshaft: int = 0
 
 func _ready() -> void:
 	Global.turbolift_manager = self
+	# After world: shafts have re-merged from module adjacency by now.
+	SaveManager.register_section(&"turbolifts", 80, get_save_data, load_save_data)
 
 func add_turbolift_module(module: ModuleTurbolift) -> void:
 	var module_cell := module.module_cell

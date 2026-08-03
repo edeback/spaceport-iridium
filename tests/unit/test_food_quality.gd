@@ -46,12 +46,26 @@ func test_merged_with_foreign_instance_returns_self() -> void:
 # --- save round-trip ----------------------------------------------------------
 
 func test_to_dict_round_trips_through_save_manager() -> void:
+	# WI-47 M4: the factory resolves the class from the owning ResourceData's
+	# instance_data_script rather than a hardcoded type table, so the round trip
+	# needs a resource that declares one.
+	var resource := ResourceData.new()
+	resource.id = &"biomass"
+	resource.has_variance = true
+	resource.instance_data_script = FoodInstanceData
 	var dict := _food(0.63, &"meat").to_dict()
-	assert_eq(String(dict.get("type", "")), "food", "tagged as food for the factory")
-	var restored := SaveManager.instance_from_dict(dict) as FoodInstanceData
+	assert_eq(String(dict.get("type", "")), "food", "tagged as food for readability")
+	var restored := SaveManager.instance_from_dict(resource, dict) as FoodInstanceData
 	assert_not_null(restored, "instance_from_dict rebuilds a FoodInstanceData")
 	assert_almost_eq(restored.quality, 0.63, 0.0001, "quality survives the round-trip")
 	assert_eq(restored.food_type, &"meat", "food_type survives the round-trip")
+
+func test_a_resource_with_no_instance_script_drops_variance_but_keeps_the_stack() -> void:
+	# Fail soft: the mod that owned the variance is gone. Losing the richness is
+	# survivable; losing the resources would not be.
+	var resource := ResourceData.new()
+	resource.id = &"biomass"
+	assert_null(SaveManager.instance_from_dict(resource, _food(0.63).to_dict()))
 
 # --- static effect mappings (Action_Eat) --------------------------------------
 

@@ -63,6 +63,10 @@ var _orbit_radius: float = 600.0
 
 func _ready() -> void:
 	Global.raid_manager = self
+	# After world: an in-progress raid respawns its ships against the restored
+	# station geometry. Events don't re-fire effects on load, so there's no risk of
+	# a second raid spawning alongside the restored one (WI-32 edge case).
+	SaveManager.register_section(&"raid", 150, get_save_data, load_save_data)
 	raids_enabled = Global.difficulty_raids_enabled()
 
 # --- lifecycle ----------------------------------------------------------------

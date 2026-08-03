@@ -2,6 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://dndbetb7emkl1" path="res://ui/icons/iridium.svg" id="1_4o811"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_vak54"]
+[ext_resource type="Script" uid="uid://do6ps5sjin4c1" path="res://data/resources/ore_instance_data.gd" id="9_instance"]
 
 [resource]
 script = ExtResource("2_vak54")
@@ -12,3 +13,4 @@ default_cost = 60
 default_market_supply = 60
 has_variance = true
 merge_tolerance = 0.1
+instance_data_script = ExtResource("9_instance")

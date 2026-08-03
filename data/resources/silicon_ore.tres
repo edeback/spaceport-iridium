@@ -2,6 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://yu18u38pl0b8" path="res://ui/icons/silicates.svg" id="1_cfxov"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_ohxop"]
+[ext_resource type="Script" uid="uid://do6ps5sjin4c1" path="res://data/resources/ore_instance_data.gd" id="9_instance"]
 
 [resource]
 script = ExtResource("2_ohxop")
@@ -11,3 +12,4 @@ icon = ExtResource("1_cfxov")
 default_market_supply = 200
 has_variance = true
 merge_tolerance = 0.1
+instance_data_script = ExtResource("9_instance")

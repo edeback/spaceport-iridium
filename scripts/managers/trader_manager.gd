@@ -55,6 +55,9 @@ signal visit_changed
 
 func _ready() -> void:
 	Global.trader_manager = self
+	# After world AND market: an active visit re-parks its shuttle at the bay, and
+	# its price snapshot/stock restore by resource id.
+	SaveManager.register_section(&"traders", 120, get_save_data, load_save_data)
 	hours_to_next_visit = first_visit_hours
 	Global.time_manager.slow_tick.connect(_on_slow_tick)
 

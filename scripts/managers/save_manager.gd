@@ -33,6 +33,26 @@ static var _loading: bool = false
 var _module_data_by_id: Dictionary[StringName, ModuleData] = {}
 var _resource_data_by_id: Dictionary[StringName, ResourceData] = {}
 
+## Registered sections (WI-47 M3), in registration order; sorted on use.
+##
+## STATIC on purpose. SaveManager is deliberately LAST under Managers/ (it applies
+## a pending load deferred), so it does not exist yet when the systems that feed it
+## are readying - there is no instance for them to register into. Registration
+## replaces by id, so the scene reload a load performs refreshes every vanilla
+## entry, and anything left pointing at a freed node is dropped by is_live().
+static var _sections: Array[SaveSection] = []
+
+## Sections read from the last loaded save that nobody claimed - a mod's state
+## while the mod is disabled. Written back out untouched on the next save (WI-47
+## M3), so turning a mod off for one session doesn't destroy its data.
+##
+## "Untouched" means semantically, not byte-for-byte: the block goes through
+## JSON.parse_string on the way in, and JSON has a single number type, so an int
+## comes back a float. Every vanilla load_save_data already coerces with int()/
+## float() for that reason - a mod reading its own section is under the same
+## obligation whether or not it sat out a session.
+var _unclaimed_sections: Dictionary = {}
+
 ## version -> Callable(data: Dictionary) -> Dictionary, upgrading one version
 ## step. Static because the menus load saves before any SaveManager node exists
 ## (WI-36).
@@ -64,6 +84,48 @@ static func _migrate_1_to_2(data: Dictionary) -> Dictionary:
 	data["version"] = 2
 	return data
 
+# --- section registry (WI-47 M3) ------------------------------------------------
+
+## Declares a top-level save section. Call from the contributing system's _ready(),
+## next to its Global registration. Re-registering an id replaces it, which is what
+## makes this survive the scene reload a load performs.
+##
+## `order` is both the write order and the restore order - see the vanilla numbers
+## in each manager for what depends on what. A mod manager with no constraints
+## should sit above every vanilla number so it restores against a finished station.
+static func register_section(id: StringName, order: int, collect: Callable, apply: Callable,
+		empty: Variant = {}) -> void:
+	if id == &"":
+		push_warning("SaveManager: refusing to register a section with no id")
+		return
+	for index: int in _sections.size():
+		if _sections[index].id == id:
+			_sections[index] = SaveSection.new(id, order, collect, apply, empty)
+			return
+	_sections.append(SaveSection.new(id, order, collect, apply, empty))
+
+## Registered sections in restore order. Prunes entries whose node has been freed
+## on the way past, so a removed mod manager stops being called.
+static func sections_in_order() -> Array[SaveSection]:
+	var live: Array[SaveSection] = []
+	for section: SaveSection in _sections:
+		if section.is_live():
+			live.append(section)
+	_sections = live
+	# Explicitly tiebroken on id, since Array.sort_custom is not stable and two
+	# sections at one order must not swap between runs.
+	live = live.duplicate()
+	live.sort_custom(func(a: SaveSection, b: SaveSection) -> bool:
+		if a.order != b.order:
+			return a.order < b.order
+		return String(a.id) < String(b.id))
+	return live
+
+## Test seam, mirroring JobDataRegistry.clear_for_test: the registry is static and
+## therefore shared by every suite in a run.
+static func clear_sections_for_test() -> void:
+	_sections = []
+
 static func has_pending_load() -> bool:
 	return not _pending_load.is_empty()
 
@@ -78,6 +140,12 @@ static func clear_pending_load() -> void:
 
 func _ready() -> void:
 	Global.save_manager = self
+	# The four sections SaveManager owns itself rather than delegating to a
+	# manager. Numbers interleave with the managers' (see each manager's _ready):
+	# resources before economy, piles before pawns, pawns before crew/events.
+	register_section(&"resources", 30, _get_resources_save, _load_resources)
+	register_section(&"piles", 90, _get_piles_save, _load_piles, [])
+	register_section(&"pawns", 100, _get_pawns_save, _load_pawns, [])
 	_build_lookups()
 	_reset_resource_runtime_state()
 	if has_pending_load():
@@ -151,18 +219,41 @@ func get_resource_by_id(id: StringName) -> ResourceData:
 
 ## Rebuild an ItemInstanceData from its to_dict() form. Returns null for
 ## empty/generic entries (null instance_data == plain fungible stack).
-static func instance_from_dict(data: Dictionary) -> ItemInstanceData:
-	match String(data.get("type", "")):
-		"ore":
-			var ore := OreInstanceData.new()
-			ore.richness = float(data.get("richness", 0.5))
-			return ore
-		"food":
-			var food := FoodInstanceData.new()
-			food.quality = float(data.get("quality", FoodInstanceData.DEFAULT_QUALITY))
-			food.food_type = StringName(data.get("food_type", ""))
-			return food
-	return null
+## Rebuilds a stack's variance data (WI-47 M4). The class comes from the owning
+## ResourceData's instance_data_script, not from a table in here: this used to be
+## a `match` naming OreInstanceData and FoodInstanceData, so any modded resource
+## with has_variance = true silently lost its instance data on every save.
+##
+## Resolving per-resource rather than through a global type_id table also means two
+## mods can both call their variance "purity" without colliding - there is no
+## shared namespace to collide in.
+static func instance_from_dict(resource: ResourceData, data: Dictionary) -> ItemInstanceData:
+	if data.is_empty():
+		return null
+	var saved_type: String = String(data.get("type", ""))
+	if resource == null or resource.instance_data_script == null:
+		# A stack that carries variance for a resource that no longer declares any:
+		# the mod that owned it is gone, or the .tres lost its script. Dropping the
+		# variance keeps the stack (and its amount), which is the fail-soft choice.
+		if saved_type != "":
+			push_warning("Saved '%s' instance data has no instance_data_script to rebuild it on %s"
+					% [saved_type, resource.id if resource != null else &"<null resource>"])
+		return null
+	var script := resource.instance_data_script as GDScript
+	if script == null or not script.can_instantiate():
+		push_warning("instance_data_script on '%s' cannot be instantiated" % resource.id)
+		return null
+	var instance := script.new() as ItemInstanceData
+	if instance == null:
+		push_warning("instance_data_script on '%s' is not an ItemInstanceData" % resource.id)
+		return null
+	# The tag is advisory, but a mismatch means the resource's script changed under
+	# an existing save and the fields about to be read may not be the ones written.
+	if saved_type != "" and saved_type != String(instance.type_id()):
+		push_warning("Saved instance type '%s' on '%s' no longer matches its script ('%s') - reading anyway"
+				% [saved_type, resource.id, instance.type_id()])
+	instance.from_dict(data)
+	return instance
 
 static func stacks_to_dicts(stacks: Array[ResourceStack]) -> Array:
 	var out: Array = []
@@ -177,7 +268,7 @@ static func stack_from_dict(resource: ResourceData, data: Dictionary) -> Resourc
 	var stack := ResourceStack.new()
 	stack.resource_data = resource
 	stack.amount = int(data.get("amount", 0))
-	stack.instance_data = instance_from_dict(data.get("instance", {}))
+	stack.instance_data = instance_from_dict(resource, data.get("instance", {}))
 	return stack
 
 ## Reference to a placed module instance: layer + root cell uniquely identify
@@ -282,29 +373,7 @@ func save_slot(slot: String) -> Error:
 		# Cheap headline stats for the slot list (WI-36), so the menus never have
 		# to parse the (large) sections just to render a row.
 		"meta": _get_meta(),
-		"sections": {
-			# Difficulty (WI-37) is a single id rather than a manager section: it's
-			# chosen once before the run and never mutates, so there's no state to
-			# collect. Written here as well as in meta because meta is a display
-			# summary - this is the authoritative field the load path restores from.
-			"difficulty": String(Global.difficulty_id()),
-			"time": Global.time_manager.get_save_data(),
-			"unlocks": Global.unlock_manager.get_save_data(),
-			"resources": _get_resources_save(),
-			"market": Global.market_manager.get_save_data(),
-			"economy": Global.economy_manager.get_save_data(),
-			"world": Global.world_manager.get_save_data(),
-			"asteroids": Global.asteroid_manager.get_save_data(),
-			"turbolifts": Global.turbolift_manager.get_save_data(),
-			"piles": _get_piles_save(),
-			"pawns": _get_pawns_save(),
-			"crew": Global.crew_manager.get_save_data(),
-			"traders": Global.trader_manager.get_save_data(),
-			"events": Global.event_manager.get_save_data(),
-			"contracts": Global.contract_manager.get_save_data(),
-			"raid": Global.raid_manager.get_save_data(),
-			"visitors": Global.visitor_manager.get_save_data(),
-		},
+		"sections": _collect_sections(),
 	}
 	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
 	var file := FileAccess.open(_slot_path(slot), FileAccess.WRITE)
@@ -325,6 +394,40 @@ static func slot_path(slot: String) -> String:
 
 ## Headline stats written into the envelope. Kept to values the slot list shows -
 ## anything richer belongs in a section, not here.
+## Every registered section, in order, plus anything the last load carried that
+## nobody claimed. Unclaimed blocks go LAST and are never inspected: they belong
+## to a mod that is currently disabled, and the only correct thing to do with them
+## is hand them back unchanged.
+func _collect_sections() -> Dictionary:
+	var out: Dictionary = {
+		# Difficulty (WI-37) is not a participant: it's a single id chosen before the
+		# run starts and never mutated, so there is no system holding state to ask.
+		# Written here as well as in meta because meta is a display summary - this is
+		# the authoritative field the load path restores from.
+		"difficulty": String(Global.difficulty_id()),
+	}
+	for section: SaveSection in sections_in_order():
+		out[String(section.id)] = section.collect.call()
+	for key: String in _unclaimed_sections:
+		if not out.has(key):
+			out[key] = _unclaimed_sections[key]
+	return out
+
+## Hands each registered section its block, in order, and remembers the rest.
+func _apply_sections(sections: Dictionary) -> void:
+	var claimed: Dictionary[String, bool] = {"difficulty": true}
+	for section: SaveSection in sections_in_order():
+		var key: String = String(section.id)
+		claimed[key] = true
+		section.apply.call(sections.get(key, section.empty))
+	_unclaimed_sections = {}
+	for key: String in sections:
+		if not claimed.has(key):
+			_unclaimed_sections[key] = sections[key]
+	if not _unclaimed_sections.is_empty():
+		print("[save] %d section(s) belong to systems that aren't loaded (%s) - preserved untouched"
+				% [_unclaimed_sections.size(), ", ".join(PackedStringArray(_unclaimed_sections.keys()))])
+
 func _get_meta() -> Dictionary:
 	var credits: ResourceData = get_resource_by_id(&"credits")
 	return {
@@ -335,7 +438,58 @@ func _get_meta() -> Dictionary:
 		"tier": Global.unlock_manager.current_tier if Global.unlock_manager != null else 1,
 		# WI-37: the slot list labels each save with the difficulty it was played at.
 		"difficulty": String(Global.difficulty_id()),
+		# WI-47 M11: which mods wrote this. In meta rather than a section because the
+		# slot browser has to be able to mark a mismatched save BEFORE the player
+		# commits to loading it, and meta exists precisely so a row can render
+		# without parsing the (large) sections.
+		"mods": ModManager.mod_records(),
 	}
+
+# --- mod drift (WI-47 M11) ------------------------------------------------------
+
+## Mods this save was written with that aren't loaded now, plus mods whose version
+## has changed. Pure - takes the record list rather than reading a save - so the
+## slot browser and the load path share one rule.
+##
+## A mod present at a DIFFERENT version counts as drift too: a mod that renamed its
+## ids between versions is indistinguishable from a missing one at load time.
+## Extra mods installed since the save are NOT drift - additive content that wasn't
+## there before is the normal, working case.
+static func mod_drift(saved_records: Array) -> PackedStringArray:
+	var out: PackedStringArray = PackedStringArray()
+	var loaded: Dictionary[String, String] = {}
+	for record: Dictionary in ModManager.mod_records():
+		loaded[String(record.get("id", ""))] = String(record.get("version", ""))
+	for entry: Variant in saved_records:
+		# Hand-edited or truncated saves reach here too; a malformed entry is
+		# skipped rather than reported as a missing mod nobody can install.
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var record: Dictionary = entry
+		var id: String = String(record.get("id", ""))
+		if id == "":
+			continue
+		var version: String = String(record.get("version", ""))
+		if not loaded.has(id):
+			out.append("%s (%s) is not installed" % [id, version])
+		elif loaded[id] != version:
+			out.append("%s was saved at %s, installed version is %s" % [id, version, loaded[id]])
+	return out
+
+## Called on the load path. A WARNING, never a refusal (WI-47 M11): there is no way
+## to know in advance how load-bearing the missing content was, and refusing would
+## strand saves whose mod merely changed version. Proceeding is the player's call;
+## making it silently is not.
+func _warn_about_mod_drift(data: Dictionary) -> void:
+	var meta: Dictionary = data.get("meta", {})
+	# Absent on every pre-WI-47 save, and that has to read as "no mods", not as
+	# "mods missing", or every legacy save warns.
+	var drift: PackedStringArray = mod_drift(meta.get("mods", []))
+	if drift.is_empty():
+		return
+	var summary: String = "This save used mods that aren't loaded: %s. Modules and items from them are gone, and the station may be unplayable." % ", ".join(drift)
+	push_warning("[save] " + summary)
+	SignalBus.station_alert.emit(summary)
 
 ## Global (non-storage) resource totals - currently just credits and anything
 ## else with has_global_store. Storage-held amounts live in the world section.
@@ -613,6 +767,8 @@ static func summarize(data: Dictionary, slot: String) -> Dictionary:
 		# WI-37. Pre-WI-37 saves carry neither key and read back as Normal, which is
 		# also the difficulty they will actually load at.
 		"difficulty": String(read_difficulty(data)),
+		# WI-47 M11. Absent on pre-WI-47 saves, which correctly reads as "no mods".
+		"mods": meta.get("mods", []),
 	}
 
 ## "Cycle 4, 14:00 · 12340 cr · 6 crew" - the one-line subtitle for a slot row.
@@ -663,11 +819,13 @@ static func _migrate(data: Dictionary) -> Dictionary:
 		version = new_version
 	return data
 
-## Runs on the fresh scene, one deferred tick after every _ready(). Section
-## order matters: time first (systems tick in loaded time), unlocks before
-## world (ready_constructed applies global modifiers / granted-module checks),
-## world before asteroids/piles/pawns (jobs restored on pawns resolve their
-## targets - modules, asteroids, piles - so all three must exist first).
+## Runs on the fresh scene, one deferred tick after every _ready(). Section order
+## matters and now lives on the sections themselves (WI-47 M3) - each registrant
+## carries the reason for its number. The shape of it is unchanged: time first
+## (systems tick in loaded time), unlocks before world (ready_constructed applies
+## global modifiers / granted-module checks), world before asteroids/piles/pawns
+## (jobs restored on pawns resolve their targets - modules, asteroids, piles - so
+## all three must exist first).
 func _apply_pending_load() -> void:
 	var data: Dictionary = _pending_load
 	var slot: String = _pending_slot
@@ -675,41 +833,8 @@ func _apply_pending_load() -> void:
 	_pending_slot = ""
 	_loading = true
 	var sections: Dictionary = data.get("sections", {})
-	Global.time_manager.load_save_data(sections.get("time", {}))
-	Global.unlock_manager.load_save_data(sections.get("unlocks", {}))
-	_load_resources(sections.get("resources", {}))
-	Global.market_manager.load_save_data(sections.get("market", {}))
-	# After resources: the economy ledger/loan/insolvency counters restore. No
-	# phantom settlement fires - time.load_save_data above announces the restored
-	# calendar with calendar_restored rather than replaying cycle_changed (WI-38 A3).
-	Global.economy_manager.load_save_data(sections.get("economy", {}))
-	Global.world_manager.load_save_data(sections.get("world", {}))
-	# After world, before pawns: mining jobs resolve their asteroid by id.
-	Global.asteroid_manager.load_save_data(sections.get("asteroids", {}))
-	# After world: shafts have re-merged from module adjacency by now.
-	Global.turbolift_manager.load_save_data(sections.get("turbolifts", {}))
-	# Before pawns: a restored collect-pile job resolves its pile by id.
-	_load_piles(sections.get("piles", []))
-	_load_pawns(sections.get("pawns", []))
-	# After world: pending hires resolve their bay by layer+cell at arrival.
-	Global.crew_manager.load_save_data(sections.get("crew", {}))
-	# After world AND market: an active visit re-parks its shuttle at the bay
-	# and its price snapshot/stock restore by resource id.
-	Global.trader_manager.load_save_data(sections.get("traders", {}))
-	# After pawns: station-wide happiness effects re-apply to the loaded crew.
-	# After market: supply shocks re-register without re-snapping stock.
-	Global.event_manager.load_save_data(sections.get("events", {}))
-	# After world: contract demand re-registers on the restored bay via the
-	# first slow_tick; staged goods are already back in the bin.
-	Global.contract_manager.load_save_data(sections.get("contracts", {}))
-	# After world: an in-progress raid respawns its ships against the restored
-	# station geometry. Events don't re-fire effects on load, so there's no risk
-	# of a second raid spawning alongside the restored one (WI-32 edge case).
-	Global.raid_manager.load_save_data(sections.get("raid", {}))
-	# Visitor economy (WI-33): reputation + arrival pacing. The guest pawns
-	# themselves ride in the pawns section (typed like robots); this restores only
-	# the manager's standing/accumulator. Independent of other sections' order.
-	Global.visitor_manager.load_save_data(sections.get("visitors", {}))
+	_warn_about_mod_drift(data)
+	_apply_sections(sections)
 	_loading = false
 	print("Loaded save from %s" % Global.time_manager.format_time())
 	game_loaded.emit(slot)

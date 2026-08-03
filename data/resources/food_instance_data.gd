@@ -37,8 +37,15 @@ func merged_with(other: ItemInstanceData, self_weight: float, other_weight: floa
 func get_display_suffix() -> String:
 	return "%d%%" % roundi(quality * 100.0)
 
+func type_id() -> StringName:
+	return &"food"
+
 func to_dict() -> Dictionary:
 	return {"type": "food", "quality": quality, "food_type": String(food_type)}
+
+func from_dict(data: Dictionary) -> void:
+	quality = float(data.get("quality", DEFAULT_QUALITY))
+	food_type = StringName(data.get("food_type", ""))
 
 # --- pure quality -> effect mappings (WI-29) ----------------------------------
 # Static so the eat job and the GUT suite share one implementation without needing a

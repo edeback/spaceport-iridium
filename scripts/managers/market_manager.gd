@@ -19,6 +19,7 @@ signal market_updated
 
 func _ready() -> void:
 	Global.market_manager = self
+	SaveManager.register_section(&"market", 40, get_save_data, load_save_data)
 	for resource: ResourceData in market_resources:
 		market_data[resource] = resource.default_market_supply
 	# Market supply drifts back toward default once per game-hour.

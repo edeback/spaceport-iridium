@@ -33,6 +33,8 @@ var _next_asteroid_id: int = 0
 
 func _ready() -> void:
 	Global.asteroid_manager = self
+	# After world, before pawns: mining jobs resolve their asteroid by id.
+	SaveManager.register_section(&"asteroids", 70, get_save_data, load_save_data)
 
 
 func _process(delta: float) -> void:
