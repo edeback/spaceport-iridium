@@ -128,6 +128,16 @@ func get_ui() -> ModuleComponentUI:
 
 # --- persistence --------------------------------------------------------------
 
+## AFTER the upgrades block (WI-38 A2): effective_capacity() reads the
+## upgrade-modified stat, and the restored charge is clamped against it. This is
+## the one vanilla component whose position in the chain is a correctness
+## requirement rather than a convention.
+func save_order() -> int:
+	return UPGRADE_SAVE_ORDER + 10
+
+func save_key() -> StringName:
+	return &"shield"
+
 func get_save_data() -> Dictionary:
 	return {"charge": _charge, "online": _online}
 

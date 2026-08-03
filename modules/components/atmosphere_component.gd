@@ -154,6 +154,12 @@ func get_ui() -> ModuleComponentUI:
 
 # --- persistence -------------------------------------------------------------
 
+func save_order() -> int:
+	return 60
+
+func save_key() -> StringName:
+	return &"atmosphere"
+
 func get_save_data() -> Dictionary:
 	var out: Dictionary = {"o2": o2, "co2": co2}
 	if is_breached():

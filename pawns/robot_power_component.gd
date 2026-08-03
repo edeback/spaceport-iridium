@@ -158,6 +158,12 @@ func _robot_label() -> String:
 
 # --- persistence (WI-28) -----------------------------------------------------
 
+func save_order() -> int:
+	return 70
+
+func save_key() -> StringName:
+	return &"robot_power"
+
 func get_save_data() -> Dictionary:
 	return {"energy": energy}
 

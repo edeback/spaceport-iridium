@@ -86,6 +86,12 @@ func health_percent01() -> float:
 
 # --- persistence -------------------------------------------------------------
 
+func save_order() -> int:
+	return 20
+
+func save_key() -> StringName:
+	return &"health"
+
 func get_save_data() -> Dictionary:
 	return {"health": health_value}
 

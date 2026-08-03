@@ -120,6 +120,13 @@ func get_next_job(_pawn: PawnBase) -> Job:
 # re-register with this bay by component ref; the respawn timer is deliberately
 # dropped. Empty dict = no preference, so the common case costs nothing.
 
+## Player-selected priority ore only (WI-45 A6). Drones restore separately, as pawns.
+func save_order() -> int:
+	return 130
+
+func save_key() -> StringName:
+	return &"mining"
+
 func get_save_data() -> Dictionary:
 	if priority_ore == null or priority_ore.id == &"":
 		return {}

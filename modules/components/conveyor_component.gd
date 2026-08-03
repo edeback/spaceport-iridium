@@ -331,6 +331,16 @@ func _notification(what: int) -> void:
 ## Each lane saves its endpoints as component refs (module layer+cell + node path),
 ## resource as its id, and buffer as stacks. Restored by load_save_data after the
 ## world is rebuilt (endpoints resolve against already-placed modules).
+## Endpoints resolve against modules already placed in the world load's first
+## phase, so restoring anywhere in the second phase is safe. Stays before the
+## upgrades block on purpose: load_save_data grows the lane array itself rather
+## than depending on the Extra Belt upgrade having restored first.
+func save_order() -> int:
+	return 100
+
+func save_key() -> StringName:
+	return &"conveyor"
+
 func get_save_data() -> Dictionary:
 	var lane_dicts: Array = []
 	for lane: ConveyorLane in lanes:

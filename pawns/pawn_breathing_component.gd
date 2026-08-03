@@ -137,6 +137,12 @@ func _on_hour_changed(_hour: int) -> void:
 
 # --- persistence (WI-31) -----------------------------------------------------
 
+func save_order() -> int:
+	return 60
+
+func save_key() -> StringName:
+	return &"breathing"
+
 func get_save_data() -> Dictionary:
 	# Only written when nonzero, so a station of interior crew adds nothing.
 	if _eva_hours <= 0.0:

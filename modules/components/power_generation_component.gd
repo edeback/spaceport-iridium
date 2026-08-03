@@ -96,6 +96,13 @@ func generate_power(delta: float) -> float:
 # first tick - the partial burn it already paid for is real state, not a cache.
 # `powered` is derived and re-decided below from the two restored values.
 
+## Beside the consumption block, and order-independent for the same reasons.
+func save_order() -> int:
+	return 120
+
+func save_key() -> StringName:
+	return &"power_generation"
+
 func get_save_data() -> Dictionary:
 	var data: Dictionary = {}
 	if force_off:

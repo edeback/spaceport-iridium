@@ -423,6 +423,13 @@ func get_upgrade_save_data() -> Dictionary:
 ## Full per-instance save data: placement, build state, and component state
 ## (construction progress, storage contents keyed by component path, upgrade
 ## tiers). WorldManager's world section aggregates these.
+##
+## Components write their own blocks (WI-47 M2). This used to be fifteen
+## get_component_by_type() lookups naming every component type by hand, which is
+## why a component ModuleBase had never heard of could not be saved at all.
+## Ordering that used to live in comments here now lives on each component's
+## save_order(), and the local-upgrade block splits the walk because the shield
+## has to restore after it.
 func get_save_data() -> Dictionary:
 	var data: Dictionary = {
 		"id": String(module_data.id),
@@ -430,90 +437,11 @@ func get_save_data() -> Dictionary:
 		"flipped": flipped,
 		"built": is_complete(),
 	}
-	var construction: ConstructionComponent = get_component_by_type(ConstructionComponent) as ConstructionComponent
-	if construction != null:
-		data["construction"] = construction.get_save_data()
-	var storages: Dictionary = {}
-	for component: ComponentBase in components:
-		if component is StorageComponent:
-			var storage_save: Dictionary = (component as StorageComponent).get_save_data()
-			if not storage_save.is_empty():
-				storages[String(get_path_to(component))] = storage_save
-	if not storages.is_empty():
-		data["storage"] = storages
-	var trade: TradeComponent = get_component_by_type(TradeComponent) as TradeComponent
-	if trade != null:
-		var trade_save: Dictionary = trade.get_save_data()
-		if not trade_save.is_empty():
-			data["trade"] = trade_save
-	var processor: ProcessorComponent = get_component_by_type(ProcessorComponent) as ProcessorComponent
-	if processor != null:
-		var processor_save: Dictionary = processor.get_save_data()
-		if not processor_save.is_empty():
-			data["processor"] = processor_save
-	var workspace: WorkspaceComponent = get_component_by_type(WorkspaceComponent) as WorkspaceComponent
-	if workspace != null:
-		var workspace_save: Dictionary = workspace.get_save_data()
-		if not workspace_save.is_empty():
-			data["workspace"] = workspace_save
-	var atmosphere: AtmosphereComponent = get_component_by_type(AtmosphereComponent) as AtmosphereComponent
-	if atmosphere != null:
-		data["atmosphere"] = atmosphere.get_save_data()
-	var o2_generator: OxygenGeneratorComponent = get_component_by_type(OxygenGeneratorComponent) as OxygenGeneratorComponent
-	if o2_generator != null:
-		var generator_save: Dictionary = o2_generator.get_save_data()
-		if not generator_save.is_empty():
-			data["o2_generator"] = generator_save
-	# Sustenance pool amount + quality (WI-29). Only mess-hall-style modules have
-	# this; the key is absent otherwise and on pre-WI-29 saves.
-	var sustenance: SustenanceComponent = get_component_by_type(SustenanceComponent) as SustenanceComponent
-	if sustenance != null:
-		data["sustenance"] = sustenance.get_save_data()
-	# Storefront type (WI-33): only the selected ShopTypeData id. Absent on
-	# non-shop modules and on pre-WI-33 saves.
-	var shop: ShopComponent = get_component_by_type(ShopComponent) as ShopComponent
-	if shop != null:
-		var shop_save: Dictionary = shop.get_save_data()
-		if not shop_save.is_empty():
-			data["shop"] = shop_save
-	# Conveyor config + buffer (WI-27). Endpoints save as component refs resolved
-	# after every module is placed (world load is two-phase).
-	var conveyor: ConveyorComponent = get_component_by_type(ConveyorComponent) as ConveyorComponent
-	if conveyor != null:
-		data["conveyor"] = conveyor.get_save_data()
-	# Shield capacitor + hysteresis (WI-38 A2). Without this a mid-raid save/load
-	# restores the pirates faithfully but hands every bubble back at full charge.
-	var shield: ShieldComponent = get_component_by_type(ShieldComponent) as ShieldComponent
-	if shield != null:
-		data["shield"] = shield.get_save_data()
-	# Battery charge (WI-39). Same class of bug as the shield above: without it a
-	# station that banked power overnight reloads with an empty reserve.
-	var battery: BatteryComponent = get_component_by_type(BatteryComponent) as BatteryComponent
-	if battery != null:
-		data["battery"] = battery.get_save_data()
-	# Manual force-shutdown, and a fuel generator's partial burn (WI-45 A3). No
-	# module scene carries two of either component, so the single-lookup form the
-	# other component keys use is correct - storage's path-keyed dict is only
-	# needed because processors genuinely have an Input and an Output bin.
-	var power_consumer: PowerConsumptionComponent = get_component_by_type(PowerConsumptionComponent) as PowerConsumptionComponent
-	if power_consumer != null:
-		var consumer_save: Dictionary = power_consumer.get_save_data()
-		if not consumer_save.is_empty():
-			data["power_consumption"] = consumer_save
-	var power_generator: PowerGenerationComponent = get_component_by_type(PowerGenerationComponent) as PowerGenerationComponent
-	if power_generator != null:
-		var generator_save: Dictionary = power_generator.get_save_data()
-		if not generator_save.is_empty():
-			data["power_generation"] = generator_save
-	# Mining bay's player-selected priority ore (WI-45 A6).
-	var mining: MiningComponent = get_component_by_type(MiningComponent) as MiningComponent
-	if mining != null:
-		var mining_save: Dictionary = mining.get_save_data()
-		if not mining_save.is_empty():
-			data["mining"] = mining_save
+	_save_components(data, true)
 	var upgrades: Dictionary = get_upgrade_save_data()
 	if not upgrades.is_empty():
 		data["upgrades"] = upgrades
+	_save_components(data, false)
 	# Durability (WI-24): only written when it deviates from a pristine module, so
 	# untouched saves stay compact and old saves load as full-health.
 	if is_complete() and hp >= 0.0 and hp < max_hp():
@@ -524,82 +452,11 @@ func get_save_data() -> Dictionary:
 
 ## Restore per-instance state. Call AFTER the ready pass (ready_constructed /
 ## ready_blueprint) so components have done their normal state setup first.
-## Construction before storage: the deconstructed path reconfigures the
-## material storage, and the storage section then restores actual contents.
 func load_save_data(data: Dictionary) -> void:
-	var construction: ConstructionComponent = get_component_by_type(ConstructionComponent) as ConstructionComponent
-	if construction != null and data.has("construction"):
-		construction.load_save_data(data["construction"])
-	# Processor before storage: restoring the selected recipe reconfigures the
-	# input/output slots, and the storage section then restores actual
-	# contents on top of that configuration.
-	var processor: ProcessorComponent = get_component_by_type(ProcessorComponent) as ProcessorComponent
-	if processor != null and data.has("processor"):
-		processor.load_save_data(data["processor"])
-	# Workspace assignments (WI-23) restore as pending pawn_ids; the component
-	# re-links them to live pawns on the first slow_tick, once the roster loads.
-	var workspace: WorkspaceComponent = get_component_by_type(WorkspaceComponent) as WorkspaceComponent
-	if workspace != null and data.has("workspace"):
-		workspace.load_save_data(data["workspace"])
-	var storages: Dictionary = data.get("storage", {})
-	for path_str: String in storages:
-		var storage: StorageComponent = get_node_or_null(NodePath(path_str)) as StorageComponent
-		if storage == null:
-			push_warning("Saved storage component not found on " + name + ": " + path_str)
-			continue
-		storage.load_save_data(storages[path_str])
-	var trade: TradeComponent = get_component_by_type(TradeComponent) as TradeComponent
-	if trade != null and data.has("trade"):
-		trade.load_save_data(data["trade"])
-	var atmosphere: AtmosphereComponent = get_component_by_type(AtmosphereComponent) as AtmosphereComponent
-	if atmosphere != null and data.has("atmosphere"):
-		atmosphere.load_save_data(data["atmosphere"])
-	var o2_generator: OxygenGeneratorComponent = get_component_by_type(OxygenGeneratorComponent) as OxygenGeneratorComponent
-	if o2_generator != null and data.has("o2_generator"):
-		o2_generator.load_save_data(data["o2_generator"])
-	# Sustenance pool (WI-29). After storage so a re-placed mess hall has its
-	# Kitchen bay restored first; the pool is independent of it either way.
-	var sustenance: SustenanceComponent = get_component_by_type(SustenanceComponent) as SustenanceComponent
-	if sustenance != null and data.has("sustenance"):
-		sustenance.load_save_data(data["sustenance"])
-	# Storefront type (WI-33): re-select the saved ShopTypeData id. Missing key
-	# (non-shop / pre-WI-33) leaves the scene's default type in place.
-	var shop: ShopComponent = get_component_by_type(ShopComponent) as ShopComponent
-	if shop != null and data.has("shop"):
-		shop.load_save_data(data["shop"])
-	# Conveyor (WI-27): endpoints resolve against modules already placed in the
-	# world load's first phase, so restoring here (second phase) is safe.
-	var conveyor: ConveyorComponent = get_component_by_type(ConveyorComponent) as ConveyorComponent
-	if conveyor != null and data.has("conveyor"):
-		conveyor.load_save_data(data["conveyor"])
-	# Power (WI-45 A3). Order-independent of everything above: neither block
-	# touches storage or the grid, and PowerManager re-runs distribution on its
-	# own next tick. A turboshaft's own force_shutdown re-applies over these in
-	# the turbolifts section, which runs after the world - correct, since a
-	# shut-down shaft's floors must not come back powered.
-	var power_consumer: PowerConsumptionComponent = get_component_by_type(PowerConsumptionComponent) as PowerConsumptionComponent
-	if power_consumer != null and data.has("power_consumption"):
-		power_consumer.load_save_data(data["power_consumption"])
-	var power_generator: PowerGenerationComponent = get_component_by_type(PowerGenerationComponent) as PowerGenerationComponent
-	if power_generator != null and data.has("power_generation"):
-		power_generator.load_save_data(data["power_generation"])
-	# Mining priority ore (WI-45 A6). Drones restore separately as pawns.
-	var mining: MiningComponent = get_component_by_type(MiningComponent) as MiningComponent
-	if mining != null and data.has("mining"):
-		mining.load_save_data(data["mining"])
+	_load_components(data, true)
 	load_upgrade_save_data(data.get("upgrades", {}))
-	# Shield (WI-38 A2) AFTER upgrades: effective_capacity() reads the upgrade-modified
-	# stat, and the restored charge has to be clamped against the upgraded capacity.
-	var shield: ShieldComponent = get_component_by_type(ShieldComponent) as ShieldComponent
-	if shield != null and data.has("shield"):
-		shield.load_save_data(data["shield"])
-	# Battery (WI-39). Sits beside the shield for symmetry, but unlike the shield it
-	# has no ordering requirement against upgrades - max_power_stored is a plain
-	# export, so the clamp is against a constant. Nothing in ready_constructed
-	# re-seeds the charge, so this restore is the last word.
-	var battery: BatteryComponent = get_component_by_type(BatteryComponent) as BatteryComponent
-	if battery != null and data.has("battery"):
-		battery.load_save_data(data["battery"])
+	_load_components(data, false)
+	_warn_orphaned_blocks(data)
 	# Durability (WI-24). Restore HP and any lingering breakdown, then re-derive
 	# the damage modifier + visual from the loaded HP. Missing keys = pristine.
 	if data.has("hp"):
@@ -609,6 +466,77 @@ func load_save_data(data: Dictionary) -> void:
 		_apply_breakdown_modifier()
 	_refresh_damage_modifier()
 	_update_shader()
+
+## Components in restore order: save_order() ascending, registration order within
+## a tier. Explicitly index-tiebroken because Array.sort_custom is not stable, and
+## a module with two same-order components must not reorder between runs.
+func _components_in_save_order() -> Array[ComponentBase]:
+	var registration: Dictionary[ComponentBase, int] = {}
+	for index: int in components.size():
+		registration[components[index]] = index
+	var ordered: Array[ComponentBase] = components.duplicate()
+	ordered.sort_custom(func(a: ComponentBase, b: ComponentBase) -> bool:
+		var order_a: int = a.save_order()
+		var order_b: int = b.save_order()
+		if order_a != order_b:
+			return order_a < order_b
+		return int(registration[a]) < int(registration[b]))
+	return ordered
+
+## One half of the walk. `before_upgrades` splits it at ComponentBase's
+## UPGRADE_SAVE_ORDER, which is where this module's own local-upgrade block goes.
+func _save_components(data: Dictionary, before_upgrades: bool) -> void:
+	for component: ComponentBase in _components_in_save_order():
+		if _is_before_upgrades(component) != before_upgrades:
+			continue
+		var block: Dictionary = component.get_save_data()
+		if block.is_empty():
+			continue
+		var key: String = String(component.save_key())
+		if component.saves_per_instance():
+			var group: Dictionary = data.get(key, {})
+			group[String(get_path_to(component))] = block
+			data[key] = group
+		else:
+			data[key] = block
+
+func _load_components(data: Dictionary, before_upgrades: bool) -> void:
+	for component: ComponentBase in _components_in_save_order():
+		if _is_before_upgrades(component) != before_upgrades:
+			continue
+		var key: String = String(component.save_key())
+		if not data.has(key):
+			continue
+		if component.saves_per_instance():
+			var group: Dictionary = data[key]
+			var path: String = String(get_path_to(component))
+			if group.has(path):
+				component.load_save_data(group[path])
+		else:
+			component.load_save_data(data[key])
+
+func _is_before_upgrades(component: ComponentBase) -> bool:
+	return component.save_order() < ComponentBase.UPGRADE_SAVE_ORDER
+
+## A saved per-instance block whose component is gone - the node was renamed or
+## moved between the save and now. The walk iterates live components, so it can't
+## notice on its own, and silently dropping a bin's contents is exactly the kind
+## of loss the resource invariant exists to prevent. Same warning the hand-written
+## storage loop used to produce.
+func _warn_orphaned_blocks(data: Dictionary) -> void:
+	var live_paths: Dictionary[String, PackedStringArray] = {}
+	for component: ComponentBase in components:
+		if not component.saves_per_instance():
+			continue
+		var key: String = String(component.save_key())
+		var paths: PackedStringArray = live_paths.get(key, PackedStringArray())
+		paths.append(String(get_path_to(component)))
+		live_paths[key] = paths
+	for key: String in live_paths:
+		var group: Dictionary = data.get(key, {})
+		for saved_path: String in group:
+			if not live_paths[key].has(saved_path):
+				push_warning("Saved %s component not found on %s: %s" % [key, name, saved_path])
 
 ## Restore tiers saved by get_upgrade_save_data() and re-apply their modifiers,
 ## exactly as if each tier had been purchased. Call after module_data is set.

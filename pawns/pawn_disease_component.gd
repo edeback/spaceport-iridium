@@ -369,6 +369,15 @@ func _pawn_label() -> String:
 
 # --- persistence --------------------------------------------------------------
 
+## After skills and traits: load_save_data re-derives the skill maluses, mood
+## modifiers and move-speed penalty from the restored disease state, so the base
+## skill levels and trait modifiers have to already be in place.
+func save_order() -> int:
+	return 50
+
+func save_key() -> StringName:
+	return &"disease"
+
 func get_save_data() -> Dictionary:
 	if _active.is_empty():
 		return {}

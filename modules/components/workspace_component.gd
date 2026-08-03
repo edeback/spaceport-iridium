@@ -122,6 +122,15 @@ func toggle(pawn: PawnBase) -> void:
 
 ## Empty dict when nothing is assigned, so the module's save section stays lean
 ## for the common unassigned case.
+## Assignments (WI-23) restore as pending pawn_ids and re-link to live pawns on
+## the first slow_tick, once the roster has loaded - so nothing here depends on
+## where in the chain it sits.
+func save_order() -> int:
+	return 30
+
+func save_key() -> StringName:
+	return &"workspace"
+
 func get_save_data() -> Dictionary:
 	var ids: Array = []
 	for pawn: PawnBase in assigned:

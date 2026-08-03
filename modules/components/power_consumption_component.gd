@@ -78,6 +78,16 @@ func consume_power(delta: float, input_power: float) -> float:
 #
 # Empty dict = pristine, so an untouched station adds nothing to its save.
 
+## Order-independent (WI-45 A3): neither power block touches storage or the grid,
+## and PowerManager re-runs distribution on its own next tick. A turboshaft's own
+## force_shutdown re-applies over this in the turbolifts section, which runs after
+## the world - correct, since a shut-down shaft's floors must not come back powered.
+func save_order() -> int:
+	return 110
+
+func save_key() -> StringName:
+	return &"power_consumption"
+
 func get_save_data() -> Dictionary:
 	if not force_off:
 		return {}

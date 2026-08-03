@@ -448,6 +448,19 @@ func withdraw_stacks(resource: ResourceData, quantity: int, use_reserve: bool = 
 ## shape was the bare resource map with no room for a component-level field;
 ## load_save_data still reads it, keyed off the absence of "resources" (no
 ## ResourceData id is "resources", so the discriminator can't collide).
+## After construction and processor, both of which reconfigure which bins exist
+## and what they accept; this block then fills them.
+func save_order() -> int:
+	return 40
+
+func save_key() -> StringName:
+	return &"storage"
+
+## The one component a module can carry several of - a processor has an Input bin
+## and an Output bin - so the blocks nest under "storage" keyed by node path.
+func saves_per_instance() -> bool:
+	return true
+
 func get_save_data() -> Dictionary:
 	var resources: Dictionary = {}
 	for resource: ResourceData in storage_data:

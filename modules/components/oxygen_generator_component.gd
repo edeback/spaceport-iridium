@@ -74,6 +74,12 @@ func _process(delta: float) -> void:
 
 # --- persistence -------------------------------------------------------------
 
+func save_order() -> int:
+	return 70
+
+func save_key() -> StringName:
+	return &"o2_generator"
+
 func get_save_data() -> Dictionary:
 	if buffer <= 0.0:
 		return {}

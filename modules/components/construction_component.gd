@@ -216,6 +216,15 @@ func setup_storage_post_deconstruction() -> void:
 
 # --- persistence ------------------------------------------------------------
 
+## First of everything. The deconstruction path reconfigures the module's material
+## storage, so construction has to have restored before the storage block puts
+## actual contents into those bins.
+func save_order() -> int:
+	return 10
+
+func save_key() -> StringName:
+	return &"construction"
+
 func get_save_data() -> Dictionary:
 	return {"state": current_state, "work_done": work_seconds_done}
 

@@ -132,6 +132,12 @@ func _robot_label() -> String:
 
 # --- persistence (WI-28) -----------------------------------------------------
 
+func save_order() -> int:
+	return 80
+
+func save_key() -> StringName:
+	return &"robot_integrity"
+
 func get_save_data() -> Dictionary:
 	return {"integrity": integrity}
 

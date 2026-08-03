@@ -426,6 +426,14 @@ func advance_work(amount: float) -> bool:
 # progress + richness resumes the exact same batch, and _manned_processing sees
 # processing == true so it won't withdraw again.
 
+## Before storage: restoring the selected recipe reconfigures the input/output
+## slots, and the storage block then restores contents on top of that layout.
+func save_order() -> int:
+	return 20
+
+func save_key() -> StringName:
+	return &"processor"
+
 func get_save_data() -> Dictionary:
 	var data: Dictionary = {}
 	if can_select_recipes() and recipe != null:

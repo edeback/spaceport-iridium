@@ -389,14 +389,6 @@ func _get_pawns_save() -> Array:
 					"resource": String(resource.id),
 					"stacks": stacks_to_dicts(pawn.inventory_component.carried[resource].stacks),
 				})
-		var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
-		# Health lives in its own component (WI-05), so it gets its own section.
-		var health: PawnHealthComponent = pawn.get_component_by_type(PawnHealthComponent) as PawnHealthComponent
-		# Skills (WI-22): levels + partial xp, own section like needs/health.
-		var skills: PawnSkillsComponent = pawn.get_component_by_type(PawnSkillsComponent) as PawnSkillsComponent
-		# Traits (WI-22): just the id list; happiness modifiers are re-derived
-		# from it on load (see PawnTraitsComponent), never saved as modifiers.
-		var traits: PawnTraitsComponent = pawn.get_component_by_type(PawnTraitsComponent) as PawnTraitsComponent
 		# Conveyed pawns (WI-15, formalized by WI-20): rides aren't serialized -
 		# a pawn a carrier owns saves as standing at the cab's current floor
 		# module, never a mid-shaft position. If ride state ever does get
@@ -427,41 +419,25 @@ func _get_pawns_save() -> Array:
 			"personal_credits": pawn.personal_credits,
 			"position": [save_position.x, save_position.y],
 			"module": module_ref(save_module),
-			"needs": needs.get_save_data() if needs != null else {},
-			"health": health.get_save_data() if health != null else {},
-			"skills": skills.get_save_data() if skills != null else {},
-			"traits": traits.get_save_data() if traits != null else [],
 			"schedule": Array(pawn.schedule.slots) if pawn.schedule != null else [],
 			"carried": carried,
 		}
-		# Diseases (WI-31): active-disease state (stage/timers/treatment progress);
-		# staged effects re-derive from it on load, never saved as modifiers. Absent
-		# when the crew member is well, so a healthy station stays lean.
-		var disease: PawnDiseaseComponent = pawn.get_component_by_type(PawnDiseaseComponent) as PawnDiseaseComponent
-		if disease != null:
-			var disease_save: Dictionary = disease.get_save_data()
-			if not disease_save.is_empty():
-				entry["disease"] = disease_save
-		# EVA accrual toward Void Sickness (WI-31); absent for interior crew.
-		var breathing: PawnBreathingComponent = pawn.get_component_by_type(PawnBreathingComponent) as PawnBreathingComponent
-		if breathing != null:
-			var breathing_save: Dictionary = breathing.get_save_data()
-			if not breathing_save.is_empty():
-				entry["breathing"] = breathing_save
+		# Component blocks (WI-47 M2): needs, health, skills, traits, disease,
+		# breathing and the two robot components each write their own, in the order
+		# their save_order() declares. This used to name all eight by hand, which is
+		# why a modded pawn component could not persist at all.
+		#
+		# One shape change falls out of it: a pawn with no needs component (robots,
+		# visitors) no longer gets an empty "needs": {} written for it, because a
+		# component that isn't there can't write a block. Nothing reads those, and
+		# the load side has always tolerated the key being absent.
+		_save_pawn_components(pawn, entry)
 		# Mining Drones need their parent
 		if pawn is MiningDronePawn and (pawn as MiningDronePawn).parent_mining_component != null:
 			entry["mining_comp"] = component_ref((pawn as MiningDronePawn).parent_mining_component)
 		# Hauler robots (WI-27) ride the same way, referencing their Logistics Bay.
 		if pawn is HaulerRobotPawn and (pawn as HaulerRobotPawn).parent_bay != null:
 			entry["logistics_bay"] = component_ref((pawn as HaulerRobotPawn).parent_bay)
-		# Robot battery + integrity (WI-28), only present on robots. Charger and
-		# repair-bay slot occupancy is runtime-only and re-derives on load.
-		var robot_power: RobotPowerComponent = pawn.get_component_by_type(RobotPowerComponent) as RobotPowerComponent
-		if robot_power != null:
-			entry["robot_power"] = robot_power.get_save_data()
-		var robot_integrity: RobotIntegrityComponent = pawn.get_component_by_type(RobotIntegrityComponent) as RobotIntegrityComponent
-		if robot_integrity != null:
-			entry["robot_integrity"] = robot_integrity.get_save_data()
 		# Guest visit state (WI-33): stay timer + leaving latch. Only on visitors.
 		if pawn is VisitorPawn:
 			entry["visitor"] = (pawn as VisitorPawn).get_visitor_save_data()
@@ -478,6 +454,45 @@ func _get_pawns_save() -> Array:
 			entry["job_queue"] = queue_data
 		out.append(entry)
 	return out
+
+## Pawn components in restore order (WI-47 M2). Explicitly index-tiebroken because
+## Array.sort_custom is not stable, and two same-order components must not swap
+## between runs. Mirrors ModuleBase._components_in_save_order.
+func _pawn_components_in_save_order(pawn: PawnBase) -> Array[PawnComponentBase]:
+	var registration: Dictionary[PawnComponentBase, int] = {}
+	for index: int in pawn.components.size():
+		registration[pawn.components[index]] = index
+	var ordered: Array[PawnComponentBase] = pawn.components.duplicate()
+	ordered.sort_custom(func(a: PawnComponentBase, b: PawnComponentBase) -> bool:
+		var order_a: int = a.save_order()
+		var order_b: int = b.save_order()
+		if order_a != order_b:
+			return order_a < order_b
+		return int(registration[a]) < int(registration[b]))
+	return ordered
+
+func _save_pawn_components(pawn: PawnBase, entry: Dictionary) -> void:
+	for component: PawnComponentBase in _pawn_components_in_save_order(pawn):
+		var block: Dictionary = component.get_save_data()
+		if block.is_empty():
+			continue
+		entry[String(component.save_key())] = block
+
+func _load_pawn_components(pawn: PawnBase, entry: Dictionary) -> void:
+	for component: PawnComponentBase in _pawn_components_in_save_order(pawn):
+		var key: String = String(component.save_key())
+		if not entry.has(key):
+			continue
+		component.load_save_data(_migrate_pawn_block(key, entry[key]))
+
+## Pre-WI-47 saves wrote traits as a bare Array of ids. The shared hook is
+## Dictionary-typed - GDScript forbids narrowing an overridden parameter, so no
+## single component can keep a different shape - so the legacy form is wrapped
+## here, in the one place that knows it is legacy. Nothing else needs migrating.
+func _migrate_pawn_block(key: String, block: Variant) -> Dictionary:
+	if key == "traits" and block is Array:
+		return {"ids": block}
+	return block as Dictionary
 
 ## Serializes a pawn's personal queue, preserving order and dropping any jobs
 ## that aren't saveable (to_dict() == {}).
@@ -783,27 +798,12 @@ func _load_pawns(data: Array) -> void:
 		else:
 			# These values won't get updated if we don't push a new module value
 			pawn.update_layer_and_sprite()
-		var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
-		if needs != null:
-			needs.load_save_data(entry.get("needs", {}))
-		var health: PawnHealthComponent = pawn.get_component_by_type(PawnHealthComponent) as PawnHealthComponent
-		if health != null:
-			health.load_save_data(entry.get("health", {}))
-		var skills: PawnSkillsComponent = pawn.get_component_by_type(PawnSkillsComponent) as PawnSkillsComponent
-		if skills != null:
-			skills.load_save_data(entry.get("skills", {}))
-		var traits: PawnTraitsComponent = pawn.get_component_by_type(PawnTraitsComponent) as PawnTraitsComponent
-		if traits != null:
-			traits.load_save_data(entry.get("traits", []))
-		# Diseases (WI-31) after skills/traits: load_save_data re-derives the skill
-		# maluses / mood modifiers / move-speed from the restored disease state, so
-		# the base skill levels and trait modifiers must already be in place.
-		var disease: PawnDiseaseComponent = pawn.get_component_by_type(PawnDiseaseComponent) as PawnDiseaseComponent
-		if disease != null:
-			disease.load_save_data(entry.get("disease", {}))
-		var breathing: PawnBreathingComponent = pawn.get_component_by_type(PawnBreathingComponent) as PawnBreathingComponent
-		if breathing != null:
-			breathing.load_save_data(entry.get("breathing", {}))
+		# Component blocks (WI-47 M2), in save_order(): needs, health, skills,
+		# traits, disease (which re-derives its maluses from the skills and traits
+		# above it), breathing, then the robot pair. The robot components are
+		# created in RobotPawnBase._ready, i.e. during the add_child above, so
+		# they are already registered by the time this walks.
+		_load_pawn_components(pawn, entry)
 		# Painted schedules are per-pawn state; _ready already duplicated the
 		# scene's shared default, so writing into slots is safe. Shift state
 		# itself isn't saved - is_on_shift() derives from the loaded hour.
@@ -825,15 +825,6 @@ func _load_pawns(data: Array) -> void:
 		# Hauler robots (WI-27) re-register with their bay so it re-owns/powers them.
 		if pawn is HaulerRobotPawn:
 			(pawn as HaulerRobotPawn).set_owner_component(resolve_component_ref(entry.get("logistics_bay", {})) as LogisticsBayComponent)
-		# Robot battery + integrity (WI-28). The components are created in
-		# RobotPawnBase._ready (on add_child, above), so they resolve here.
-		# Missing keys (pre-WI-28 saves) default to full inside load_save_data.
-		var robot_power: RobotPowerComponent = pawn.get_component_by_type(RobotPowerComponent) as RobotPowerComponent
-		if robot_power != null:
-			robot_power.load_save_data(entry.get("robot_power", {}))
-		var robot_integrity: RobotIntegrityComponent = pawn.get_component_by_type(RobotIntegrityComponent) as RobotIntegrityComponent
-		if robot_integrity != null:
-			robot_integrity.load_save_data(entry.get("robot_integrity", {}))
 		# Guest visit state (WI-33): stay timer + leaving latch. A guest saved
 		# mid-walk-out resumes leaving; the reported latch prevents a double count.
 		if pawn is VisitorPawn and entry.has("visitor"):
@@ -846,10 +837,14 @@ func _load_pawns(data: Array) -> void:
 		# and a pawn carrying cargo sweeps it before the
 		# restored haul re-runs (no double-withdraw). Jobs whose targets are gone
 		# deserialize to null and are silently dropped.
-		_load_pawn_jobs(pawn, entry, needs)
+		_load_pawn_jobs(pawn, entry)
 
 ## Rebuilds current_job + job_queue onto a freshly restored pawn.
-func _load_pawn_jobs(pawn: PawnBase, entry: Dictionary, needs: PawnNeedsComponent) -> void:
+func _load_pawn_jobs(pawn: PawnBase, entry: Dictionary) -> void:
+	# Looked up here rather than threaded down from the restore walk: a restored
+	# need-job has to be re-adopted by the needs component so the need stops
+	# re-queueing a duplicate, and that is the only reason this function wants it.
+	var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
 	for job_data: Dictionary in entry.get("job_queue", []):
 		var job: Job = Job.from_dict(job_data)
 		if job != null:

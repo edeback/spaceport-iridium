@@ -127,6 +127,15 @@ func consume_sustenance(amount: int) -> Dictionary:
 # the module then keeps its export default (empty pool at DEFAULT quality) and
 # refills from the saved storage bay, exactly as before this component saved.
 
+## After storage, so a re-placed mess hall has its Kitchen bay back first. The
+## pool is independent of it either way, but the old chain restored in this order
+## and there is no reason to change it.
+func save_order() -> int:
+	return 80
+
+func save_key() -> StringName:
+	return &"sustenance"
+
 func get_save_data() -> Dictionary:
 	return {"available": sustenance_available, "quality": pool_quality}
 

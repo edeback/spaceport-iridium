@@ -71,6 +71,16 @@ func store_power(delta: float, input_power: float) -> float:
 ## this every battery reloads empty, and a station running its night cycle off
 ## reserve silently comes back with none. Same shape as the shield capacitor
 ## (WI-38 A2) so the two read identically.
+## Sits beside the shield for symmetry, but unlike the shield it has NO ordering
+## requirement: max_power_stored is a plain @export, so load_save_data clamps
+## against a constant. If battery capacity ever becomes upgradeable, this has to
+## stay after UPGRADE_SAVE_ORDER for real, exactly as the shield does.
+func save_order() -> int:
+	return UPGRADE_SAVE_ORDER + 20
+
+func save_key() -> StringName:
+	return &"battery"
+
 func get_save_data() -> Dictionary:
 	return {"stored": total_power_stored}
 

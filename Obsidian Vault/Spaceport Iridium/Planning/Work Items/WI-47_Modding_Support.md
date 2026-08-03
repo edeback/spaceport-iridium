@@ -4,6 +4,8 @@
 >
 > **The M9 spike passed: 29 checks green in all four of {editor, exported build} × {text-script pack, binary-token pack}.** Mod scripts load, extend vanilla classes and dispatch through them; mod `.tres` resolve vanilla scripts by uid and by path; a vanilla `JobData` inside a mod pack resolves a mod `JobDriver`. Nothing in stages 1–5 needs redesigning. Two things the spike changed: M9's constraint is **sharper** than written (a mod script cannot name its own `class_name` either) and **less serious** than feared (`preload()`/`load()` by path substitutes completely), and M1 gains a hard requirement to mount with `replace_files = false`. Full results in M9 below.
 >
+> **Stage 2 (M2) shipped**: `get_save_data()`/`load_save_data()`/`save_key()`/`save_order()` on both component bases; `ModuleBase`'s fifteen-lookup chain and `SaveManager`'s eight-lookup pawn chain are now walks. 562 GUT green. Acceptance test passed: a save written by the **pre-refactor** code (21 modules, 3 pawns, 11 distinct component blocks) loads under the new walk and re-saves value-for-value identical apart from the one documented shape change. **Next: stage 3 (M3, M4, M11).**
+>
 > **Stage 1 (M1) shipped**: `ModManager` autoload + `ContentPaths` + id namespacing, all 13 scan sites converted. 549 GUT green (505 baseline + 44 new in `test_content_paths.gd` / `test_mod_registry.gd`), plus a 15-check headless probe that mounts the real sample mod and finds its job type and its resource in the real registries, and a fail-soft pass over five broken mods. Save-neutral. **Next: stage 2 (M2), component save hooks.**
 
 ## Goal
@@ -63,6 +65,19 @@ Mod `.pck`s mount into `res://mods/<id>/` by convention rather than overwriting 
 **Id namespacing.** Mod content ids must be `modid.thing`. [`SaveManager._register_id`](../../../../scripts/managers/save_manager.gd) currently warns and *keeps the first* on a duplicate, which is load-order-dependent and easy to miss. Make a collision between two *different* mods a hard, surfaced error (mod list screen, not just `push_warning`), and validate the prefix at load. Vanilla ids stay unprefixed — they're the reserved namespace.
 
 ### M2 — Components cannot save state
+
+> **DONE 2026-08-02 (stage 2).** Four hooks on `ComponentBase` and `PawnComponentBase` — `get_save_data()`, `load_save_data()`, `save_key()`, `save_order()` — plus `saves_per_instance()` on the module side. `ModuleBase` lost 155 lines; `SaveManager._load_pawns` and `_get_pawns_save` lost their eight-lookup chains. Deviations from the design below, all deliberate:
+>
+> - **Methods, not exported vars.** `save_order`/`save_key` are virtual methods, not `@export`s. An exported int shows up in the inspector on every component in every module scene, so a scene-level override could silently reorder loading for one module — and ordering is exactly the thing whose failure only shows up in modded saves. A method is a property of the component *type*, which is what it actually is.
+> - **One order, not two.** Save order and load order genuinely differed (save wrote storage third, load restored it fourth; shield was written mid-file but restored after upgrades). One number now serves both, taking the *load* order as the real one, so the file's keys come out in restore order. That changes key ORDER in newly written saves, which is not semantic — the acceptance test compares parsed structures, not bytes.
+> - **`save_order` defaults to 1000, not 0.** The WI's own edge case asked for this to be checked: at 0 a mod component would restore *before* construction and storage, the one place it could break vanilla's constraints from outside. At 1000 it restores last, seeing a module that is already whole. A unit test asserts every vanilla component sorts below it.
+> - **One shape change: `traits`.** Its block was a bare `Array` of ids and is now `{"ids": [...]}`. Forced, not chosen: GDScript **rejects narrowing an overridden parameter** (base `load_save_data(Variant)` + child `(Dictionary)` is a parse error; return-type covariance *is* allowed, which is why `get_save_data()` needed no changes). So one shared parameter type has to serve every component, and a bare Array can't. `SaveManager._migrate_pawn_block` wraps the legacy form on the way in — verified against a genuine pre-refactor save.
+> - **Pawns with no needs/health/skills/traits component** (robots, visitors) no longer get empty `"needs": {}` blocks written for them. A component that isn't there can't write a block; the load side has always tolerated the key being absent.
+> - The `UPGRADE_SAVE_ORDER` constant splits the module walk, because local upgrades are module-level data that has to restore *between* two groups of components — the shield clamps its charge against the upgrade-modified capacity.
+>
+> **Acceptance test** (the WI's own, run for real): `git stash` the stage-2 diff → build a 21-module station with 11 distinct component block types and 3 pawns → save → restore the diff → load that save under the new walk → re-save → structural diff. Result: **every key value-for-value identical**, the only differences being the three expected `traits` ones. The legacy `["optimist"]` Array loaded and re-saved as `{"ids": ["optimist"]}` with the trait intact.
+>
+> `tests/unit/test_component_save_contract.gd` (13 tests) pins the ordering constraints that used to be comments: construction and processor before storage, shield after the upgrades block, disease after skills and traits, storage the only per-instance component, and every vanilla key equal to its legacy string.
 
 **This is the single biggest blocker and the reason stage 2 exists.**
 
@@ -258,7 +273,7 @@ Stated explicitly so the implementer doesn't assume this WI swept the whole code
 
 1. ~~**M9 spike first.**~~ **DONE 2026-08-02** — 29/29 in all four environments, no redesign needed. See M9.
 2. ~~**Stage 1 — M1.** Loader + `ContentPaths` + namespacing.~~ **DONE 2026-08-02** — see M1.
-3. **Stage 2 — M2.** Component save hooks, both bases. Pure refactor, biggest blast radius, fully covered by existing tests. Do it while stage 1 is the only new thing in flight.
+3. ~~**Stage 2 — M2.** Component save hooks, both bases.~~ **DONE 2026-08-02** — see M2.
 4. **Stage 3 — M3, M4, M11.** Save participants, instance-data registry, and the `meta.mods` list. M11 goes here rather than later because it freezes part of the meta shape and every save written after this stage should carry it.
 5. **Stage 4 — M5, M6, M8-recipes, M7-ships, M10.** Additive and independent of each other; each can ship or slip alone. Sweep the "not yet audited" list here.
 6. **Stage 5 — M8 patch ops.** Only if a real mod wants it.
@@ -282,7 +297,7 @@ Stages 2 and 3 change no save bytes and add no features. They will feel like no 
 ## Verification
 
 1. ~~**Spike:** exported build loads a `.pck` containing one script and one `.tres`; the `.tres`'s script reference resolves.~~ **PASSED 2026-08-02**, plus mod↔mod `preload`, mod scenes, the `driver: Script` round trip, both script export modes, and the shadowing/`replace_files` behaviour.
-2. **Stage 2 regression:** save a mature station, apply stage 2, load the *pre-refactor* save → byte-identical world state. This is the acceptance test for the whole stage; a diff of the two save files should be empty.
+2. ~~**Stage 2 regression:** save a mature station, apply stage 2, load the *pre-refactor* save → byte-identical world state.~~ **PASSED 2026-08-02**, with the criterion corrected from byte-identical to structurally identical: the walk deliberately writes blocks in restore order, so key order moves. 21 modules × 11 component block types + 3 pawns, every value identical, only the documented `traits` shape change differing.
 3. **Ordering:** a processor mid-batch with a queued recipe, a deconstructing module with reconfigured storage, and a fuel generator mid-burn (WI-45 A3) all survive save/load after stage 2. These are the three constraints most likely to break.
 4. **Stage 3:** disable a mod that owns a save section, load, save, re-enable, load → state intact.
 5. **M11:** save a station built largely from a mod's modules, disable the mod, open the slot browser → the row is marked before loading. Load anyway → warning names the mod, the game runs, the modded modules are gone. Re-enable, load the *same* save → the station is whole again and the mod's section survived the round trip.

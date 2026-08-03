@@ -302,6 +302,12 @@ func _recompute_happiness() -> void:
 
 # --- persistence -------------------------------------------------------------
 
+func save_order() -> int:
+	return 10
+
+func save_key() -> StringName:
+	return &"needs"
+
 func get_save_data() -> Dictionary:
 	var data: Dictionary = {
 		"hunger": hunger_value,

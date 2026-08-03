@@ -122,6 +122,12 @@ func complete_sale(pawn: PawnBase, amount: int) -> void:
 # --- persistence --------------------------------------------------------------
 # Only the selected type id round-trips; capacity/claims are runtime-only.
 
+func save_order() -> int:
+	return 90
+
+func save_key() -> StringName:
+	return &"shop"
+
 func get_save_data() -> Dictionary:
 	if shop_type == null:
 		return {}

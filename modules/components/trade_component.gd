@@ -148,6 +148,12 @@ func _set_slot_desired(resource: ResourceData, desired: int) -> void:
 # --- persistence ----------------------------------------------------------------
 # Aggregated into the module's save entry by ModuleBase.get_save_data().
 
+func save_order() -> int:
+	return 50
+
+func save_key() -> StringName:
+	return &"trade"
+
 func get_save_data() -> Dictionary:
 	if sell_orders.is_empty() and buy_orders.is_empty():
 		return {}

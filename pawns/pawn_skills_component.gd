@@ -106,6 +106,12 @@ func _announce_level_up(def: SkillData, new_level: int) -> void:
 
 # --- persistence --------------------------------------------------------------
 
+func save_order() -> int:
+	return 30
+
+func save_key() -> StringName:
+	return &"skills"
+
 func get_save_data() -> Dictionary:
 	var out: Dictionary = {}
 	for skill: StringName in _skills:

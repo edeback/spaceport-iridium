@@ -133,15 +133,28 @@ func _on_slow_tick(_interval: float) -> void:
 # load via set_traits (NOT saved as modifiers), mirroring how station-wide
 # effects are re-derived rather than persisted.
 
-func get_save_data() -> Array:
-	var out: Array = []
-	for trait_data: TraitData in traits:
-		out.append(String(trait_data.id))
-	return out
+func save_order() -> int:
+	return 40
 
-func load_save_data(data: Array) -> void:
+func save_key() -> StringName:
+	return &"traits"
+
+## The block is `{"ids": [...]}`. It was a bare Array until WI-47 stage 2, and had
+## to change: the shared hook is Dictionary-typed (GDScript forbids narrowing an
+## overridden parameter, so one component cannot opt into a different shape), and
+## a component that can't use the hook can't be walked generically. SaveManager
+## wraps the legacy Array on the way in, so old saves are unaffected.
+func get_save_data() -> Dictionary:
+	var ids: Array = []
+	for trait_data: TraitData in traits:
+		ids.append(String(trait_data.id))
+	if ids.is_empty():
+		return {}
+	return {"ids": ids}
+
+func load_save_data(data: Dictionary) -> void:
 	var restored: Array[TraitData] = []
-	for entry: Variant in data:
+	for entry: Variant in data.get("ids", []):
 		var trait_data: TraitData = TraitData.by_id(StringName(entry))
 		if trait_data != null:
 			restored.append(trait_data)
