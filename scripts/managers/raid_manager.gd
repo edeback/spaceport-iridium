@@ -14,8 +14,12 @@ extends Node
 ## is seeded from Global.difficulty at ready, and the raid event family carries an
 ## EventConditionDifficultyAllowsRaids so those cards are never even drawn.
 
+## Fallback raider, used when no ShipData declares an eligible variant (WI-47 M7)
+## - an empty data/ships/ still produces a working raid, and every pre-M7 save
+## restores its ships through this.
 @export var pirate_ship_scene: PackedScene
-## Salvage dropped by each destroyed ship (a pile in space, EVA-collectable).
+## Default salvage dropped by a destroyed ship (a pile in space, EVA-collectable).
+## A ShipData variant may override either half.
 @export var salvage_resource: ResourceData
 @export var salvage_amount: Vector2i = Vector2i(4, 10)
 
@@ -91,10 +95,14 @@ func start_raid(strength: float = -1.0) -> bool:
 		print("RaidManager: raid suppressed - %s difficulty has raids disabled" %
 			SaveManager.difficulty_label(Global.difficulty_id()))
 		return false
-	if active or pirate_ship_scene == null:
+	if active:
 		return false
 	if strength < 0.0:
 		strength = compute_strength()
+	# A raid needs SOMETHING to fly: either a declared variant or the fallback
+	# scene. The variant check can't happen before strength is known.
+	if pirate_ship_scene == null and ShipData.eligible(strength).is_empty():
+		return false
 	_recompute_geometry()
 	var ship_count: int = clampi(roundi(strength / maxf(strength_per_ship, 0.01)), 1, max_ships)
 	active = true
@@ -106,18 +114,38 @@ func start_raid(strength: float = -1.0) -> bool:
 	_departed_count = 0
 	_ships.clear()
 	var base_angle: float = randf() * TAU
+	# Rolled per ship, so one wave can mix variants (WI-47 M7). The pool is fixed
+	# for the wave: a raid sized at spawn shouldn't gain heavier ships as the
+	# player's credits move mid-fight.
+	var pool: Array[ShipData] = ShipData.eligible(strength)
 	for i: int in ship_count:
 		var angle: float = base_angle + TAU * float(i) / float(ship_count)
-		var ship: PirateShip = _spawn_ship(angle, 1.0 if (i % 2 == 0) else -1.0)
+		var ship: PirateShip = _spawn_ship(ShipData.pick(pool, randf()), angle, 1.0 if (i % 2 == 0) else -1.0)
+		if ship == null:
+			continue
 		_initial_hp_pool += ship.max_hp
 		_ships.append(ship)
+	if _ships.is_empty():
+		# Nothing could be spawned at all (no variants and no fallback scene).
+		active = false
+		return false
 	SignalBus.station_alert.emit("Raiders inbound! %d hostile ship(s) closing on the station." % ship_count)
 	SignalBus.raid_started.emit(_strength)
 	SignalBus.raid_state_changed.emit()
 	return true
 
-func _spawn_ship(angle: float, spin: float) -> PirateShip:
-	var ship: PirateShip = pirate_ship_scene.instantiate() as PirateShip
+## Instantiates one raider of `variant` (null = the fallback scene) and puts it on
+## its orbit. Returns null only if neither the variant nor the fallback resolves.
+func _spawn_ship(variant: ShipData, angle: float, spin: float) -> PirateShip:
+	var scene: PackedScene = variant.scene if variant != null and variant.scene != null else pirate_ship_scene
+	if scene == null:
+		return null
+	var ship: PirateShip = scene.instantiate() as PirateShip
+	if ship == null:
+		push_warning("RaidManager: ship scene for '%s' is not a PirateShip" %
+				(variant.id if variant != null else &"<fallback>"))
+		return null
+	ship.ship_data = variant
 	Global.world_manager.pawn_layer.add_child(ship)
 	ship.setup(self, _center, _orbit_radius, _orbit_radius + approach_margin, angle, spin)
 	return ship
@@ -157,7 +185,7 @@ func note_pirate_damage(amount: float) -> void:
 func report_ship_destroyed(ship: PirateShip) -> void:
 	_ships.erase(ship)
 	_destroyed_count += 1
-	_drop_salvage(ship.global_position)
+	_drop_salvage(ship.global_position, ship.ship_data)
 	SignalBus.ship_destroyed.emit(ship)
 	SignalBus.raid_state_changed.emit()
 	_check_end()
@@ -170,10 +198,18 @@ func report_ship_departed(ship: PirateShip) -> void:
 
 ## Pulls the salvage pile in toward the station so a kill way out at the ring is
 ## still a reasonable EVA (never further than the orbit radius from centre).
-func _drop_salvage(at: Vector2) -> void:
-	if salvage_resource == null:
+func _drop_salvage(at: Vector2, variant: ShipData = null) -> void:
+	# A variant overrides either half of the drop independently (WI-47 M7), so a
+	# heavier raider can pay out more without redeclaring what it pays out in.
+	var resource: ResourceData = salvage_resource
+	if variant != null and variant.salvage_resource != null:
+		resource = variant.salvage_resource
+	var range_units: Vector2i = salvage_amount
+	if variant != null and variant.salvage_amount.x >= 0:
+		range_units = variant.salvage_amount
+	if resource == null:
 		return
-	var amount: int = randi_range(salvage_amount.x, maxi(salvage_amount.x, salvage_amount.y))
+	var amount: int = randi_range(range_units.x, maxi(range_units.x, range_units.y))
 	if amount <= 0:
 		return
 	var dir: Vector2 = (at - _center)
@@ -183,7 +219,7 @@ func _drop_salvage(at: Vector2) -> void:
 	else:
 		dir = Vector2.RIGHT
 	var pile: ResourcePile = ResourcePile.spawn(Global.world_manager.pawn_layer, _center + dir * dist)
-	pile.add_amount(salvage_resource, amount)
+	pile.add_amount(resource, amount)
 
 func _check_end() -> void:
 	if not active:
@@ -311,10 +347,17 @@ func load_save_data(data: Dictionary) -> void:
 		_center = Vector2(float(centre_arr[0]), float(centre_arr[1]))
 	_orbit_radius = float(data.get("orbit_radius", 600.0))
 	for entry: Dictionary in data.get("ships", []):
-		var ship: PirateShip = pirate_ship_scene.instantiate() as PirateShip
-		Global.world_manager.pawn_layer.add_child(ship)
-		# Seed the orbit geometry, then overwrite the dynamic state from the save.
-		ship.setup(self, _center, _orbit_radius, _orbit_radius + approach_margin, float(entry.get("angle", 0.0)), float(entry.get("spin", 1.0)))
+		# Restore the variant that was flying (WI-47 M7). A missing key is a
+		# pre-M7 save; an id nothing declares is a mod that has been uninstalled.
+		# Both fall back to the default scene so the fight still restores rather
+		# than losing a ship the player is mid-battle with.
+		var ship_id: StringName = StringName(String(entry.get("ship", "")))
+		var variant: ShipData = ShipData.by_id(ship_id) if ship_id != &"" else null
+		if ship_id != &"" and variant == null:
+			push_warning("Saved raider variant '%s' is not installed - restoring it as the default raider" % ship_id)
+		var ship: PirateShip = _spawn_ship(variant, float(entry.get("angle", 0.0)), float(entry.get("spin", 1.0)))
+		if ship == null:
+			continue
 		ship.load_save_data(entry)
 		_ships.append(ship)
 	SignalBus.raid_started.emit(_strength)

@@ -30,6 +30,12 @@ extends Sprite2D
 
 var hp: float = -1.0
 
+## Which ShipData spawned this ship (WI-47 M7). Null for a ship spawned straight
+## from RaidManager's fallback scene, and on ships restored from a pre-M7 save.
+## Drives the salvage drop and is written into the save so a mid-raid load
+## restores the right variant.
+var ship_data: ShipData = null
+
 var _manager: RaidManager
 var _orbit_center: Vector2
 var _orbit_radius: float = 600.0
@@ -210,7 +216,7 @@ func _depart() -> void:
 # --- persistence --------------------------------------------------------------
 
 func get_save_data() -> Dictionary:
-	return {
+	var out: Dictionary = {
 		"pos": [global_position.x, global_position.y],
 		"hp": hp,
 		"angle": _angle,
@@ -218,6 +224,11 @@ func get_save_data() -> Dictionary:
 		"fleeing": _fleeing,
 		"cooldown": _fire_cooldown,
 	}
+	# Absent on a ship from the fallback scene, which is also what every pre-M7
+	# save looks like - RaidManager reads a missing key as "the fallback".
+	if ship_data != null and ship_data.id != &"":
+		out["ship"] = String(ship_data.id)
+	return out
 
 ## Restore mid-raid state. Called after setup() has seeded the orbit geometry, so
 ## only the per-ship dynamic state is overwritten here.

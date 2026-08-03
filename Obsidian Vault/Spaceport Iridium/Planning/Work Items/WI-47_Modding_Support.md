@@ -4,7 +4,7 @@
 >
 > **The M9 spike passed: 29 checks green in all four of {editor, exported build} × {text-script pack, binary-token pack}.** Mod scripts load, extend vanilla classes and dispatch through them; mod `.tres` resolve vanilla scripts by uid and by path; a vanilla `JobData` inside a mod pack resolves a mod `JobDriver`. Nothing in stages 1–5 needs redesigning. Two things the spike changed: M9's constraint is **sharper** than written (a mod script cannot name its own `class_name` either) and **less serious** than feared (`preload()`/`load()` by path substitutes completely), and M1 gains a hard requirement to mount with `replace_files = false`. Full results in M9 below.
 >
-> **Stage 4 PARTIAL — M5, M6 and M8-recipes shipped 2026-08-03; M7-ships and M10 not started.** 590 GUT green plus two in-game runs (10 checks and 7). The stage was always five independent items ("each can ship or slip alone"); three are complete and verified. **M7-ships, M10 pawn kinds and the "not yet audited" sweep remain**, and none of them blocks anything — M8 was the load-bearing one.
+> **Stage 4 PARTIAL — M5, M6, M8-recipes and M7-ships shipped 2026-08-03; M10 not started.** 601 GUT green plus three in-game runs. Four of the stage's five independent items are complete and verified. **M10 pawn kinds and the "not yet audited" sweep remain**, and neither blocks anything.
 >
 > **Stage 3 (M3, M4, M11) shipped**: save sections are a registry, instance data resolves per-resource, and `meta.mods` records what wrote a save. 574 GUT green, plus a 9-check in-game round trip. **Next: stage 4 (M5, M6, M8-recipes, M7-ships, M10) — additive and independent, each can ship or slip alone.**
 >
@@ -175,6 +175,20 @@ Not many, but each one is a thing a mod can't reach:
 
 ### M7 — New dangers means one new manager per danger
 
+> **SHIP VARIANTS DONE 2026-08-03 (stage 4). The deferred `ThreatData`/`ThreatDriver` half is untouched, as intended.**
+>
+> `ShipData` (`data/ships/`), scanned as a `ContentPaths` kind, with one vanilla `pirate_raider.tres`. `RaidManager` rolls each ship in a wave from `ShipData.eligible(strength)` via a weighted `pick()`, so one wave can mix variants.
+>
+> - **Per-ship stats deliberately stayed on the scene.** The finding lists "scene, HP, weapon loadout, speed, orbit behaviour script, salvage table" as ShipData's contents, but hull/speed/damage/interval/range/tint are *already* exports on the PirateShip scene. Mirroring them onto the resource would only create two places to disagree. `ShipData` carries scene + selection (`min_strength`, `weight`) + salvage; a modder making a heavier raider inherits the scene, retunes its exports, and points a `ShipData` at it — exactly how `ModuleData` relates to its module scene.
+> - **Salvage overrides per half.** `salvage_resource` null and `salvage_amount.x < 0` fall back to RaidManager's, so a variant only declares what differs.
+> - **`min_strength`** gates heavier raiders behind station value, so they appear as the station grows rather than ambushing a starting base. The pool is fixed at spawn: a wave shouldn't gain heavier ships because the player's credits moved mid-fight.
+> - **The wave is reproducible.** `eligible()` sorts by id at the point the pool is built rather than at scan time — it is the list that feeds the roll, and sorting there holds however entries reached the registry. A unit test caught this: the test seam bypassed a scan-time sort.
+> - **Saves record the variant per ship** (`"ship"` key), and both a missing key (pre-M7 save) and an unknown id (uninstalled mod) fall back to `pirate_ship_scene` with a warning — the fight restores rather than losing a ship the player is mid-battle with.
+>
+> Verified live: a 5-ship raid spawns tagged variants, saves mid-fight with all five recorded, restores all five as the right variant; and a save hand-edited to name `absentmod.dreadnought` still restores all five, on the fallback, warning once per ship.
+
+### M7 — original finding
+
 `RaidManager` is hardcoded to pirates end to end: one `pirate_ship_scene`, one `PirateShip` class, one strength formula, one save section, one banner. A mod adding a *different kind* of threat — a derelict drifting in, a rival station's blockade, a solar flare — has to write a manager, and M3 is what lets it do that at all.
 
 **Fix, scoped deliberately.** Two tiers:
@@ -336,7 +350,7 @@ Stated explicitly so the implementer doesn't assume this WI swept the whole code
 2. ~~**Stage 1 — M1.** Loader + `ContentPaths` + namespacing.~~ **DONE 2026-08-02** — see M1.
 3. ~~**Stage 2 — M2.** Component save hooks, both bases.~~ **DONE 2026-08-02** — see M2.
 4. ~~**Stage 3 — M3, M4, M11.** Save participants, instance-data registry, and the `meta.mods` list.~~ **DONE 2026-08-02** — see M3, M4, M11.
-5. **Stage 4 — M5, M6, M8-recipes, M7-ships, M10.** Additive and independent of each other; each can ship or slip alone. Sweep the "not yet audited" list here. **M5, M6 and M8-recipes DONE 2026-08-03; M7-ships, M10 and the audit sweep remain.**
+5. **Stage 4 — M5, M6, M8-recipes, M7-ships, M10.** Additive and independent of each other; each can ship or slip alone. Sweep the "not yet audited" list here. **M5, M6, M8-recipes and M7-ships DONE 2026-08-03; M10 and the audit sweep remain.**
 6. **Stage 5 — M8 patch ops.** Only if a real mod wants it.
 
 Stages 2 and 3 change no save bytes and add no features. They will feel like no progress and they are the entire item.
