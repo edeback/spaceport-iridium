@@ -1,12 +1,7 @@
 
-Localization Prep
-- Goal: Make it easier to localize in the future
-- Create a localization CSV
-- Move existing text in code to using tr("")
 
-Audio
-- Goal: Add more interesting sound
-- Sounds for module placement, maybe building effects, effects when alerts spawn, etc
+
+
 
 Crew O2 Supply
 - Goal: Make crew not linger in space
@@ -27,9 +22,7 @@ Crew O2 Supply
 Pawn Relationships
 - Goal: Give more flavor to the game, add story
 
-Modding?
 
-Tutorial/Onboarding
 
 ARC relationship arc & independence; expeditions; observatory and research, foreign relations/other stations; crises framework; station warp travel; New Game+ corporations; exotic elements; tutorial (SAI); audio pass.
 
@@ -49,3 +42,9 @@ Atmosphere rates not directly set to module size? (so can have large modules tha
 
 
 "Skill" to enum from StringName
+- Downside is that then you can't add skills dynamically?
+
+
+Hyperspace?
+- https://godotshaders.com/shader/hyper-space-speed-effect/
+

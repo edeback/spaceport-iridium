@@ -1,14 +1,12 @@
 Modules should have a list of present pawns so you can go module.get_present() (or something like that) to figure out who is there without looking through every pawn
 
 When pawns wander, pick a random inner node (if it has one) instead of just flipping between the boundary of two modules
-
-Use SelfModulate on crew pawns to give them different colors (at random). They also need names!!
+- They now pick a "stand" target so maybe that's good enough?
 
 For resources:
 Show relationships between resources in the UI
 Give them categories? So ore can be shown together, tier one/two/three materials etc
 
-Hunger/Eat should take time. (~1 hr) Allows lingering in the mess hall for a bit.
 
 Pawn issues should be promoted to the alerts section of the pawn screen too
 
@@ -21,12 +19,9 @@ Starting main UI flow - select 2 (or more?) pawns from a pool of candidates to s
 Traits - something more general, like "quality" plus condition (flat/mult, attribute)?
 
 visitor_pawn looks for recruitment component instead of docking bay to leave
-
-There's Module.size and StructureComponent.size and they need to be aligned but why are they in two different spots?
+- Maybe add recruitment component to teleporter too?
 
 Conveyor module needs door
-
-Asteroids should "pop" (with vfx) when fully mined
 
 Battery improvements (upgrades, actual usefulness)
 
@@ -36,8 +31,6 @@ Get capacitators on power_consumption_components working and move shields/weapon
 
 Trade order screen - show current supplies for validation
 
-"Vent" checkbox on storage not persisted - need to save
-Force power off not persisted - need to save
 
 Ice should get quality and that should matter for ice purifier
 Introduce comets which are asteroids except mostly ice and some carbon
@@ -46,7 +39,9 @@ Spread slow ticks around? Make even slower ticks? Ideally don't do heavy lifting
 
 Processor_component: in try_deposit_outputs() any excess should get dumped into a pile in the room. Full storage should stop a new job from starting, however.
 
-Minimap doesn't get big enough to see pirates
+~~Minimap doesn't get big enough to see pirates~~
+
+~~Currently the minimap expands to show asteroids, but since asteroids move around a lot it causes the minimap to constantly shift. The minimap should not resize smaller unless there has been a large enough change (ideally large enough that it rarely has to move due to asteroids). It should always resize up (if needed), however, to ensure everything is visible. Also, it should resize to include pirates in the bounds, as it also tracks pirates.~~
 
 Room info at a glance
 - For example, show that it is iron ore being processed and how much time
@@ -62,13 +57,6 @@ Happiness modifiers don't persist saving:
 Arrivals pick a specific bay that gets saved and then looked up in a fragile way - they probably can just grab whatever bay there is, doesn't really matter where they arrive. This also solves for having two bays, hiring from one and then deleting it (crew_manager)
 
 Possibly shuttle upgrade: Starts at the planet position (and layer - background space) at 0 scale. Slowly scales up as arrives. Would likely need some tricky math to determine where it "appears" to be due to parallax - should be more aligned to front as it gets closer
-
-Animations:
-- Don't follow timescale currently
-- Can change them via animation.speed_scale = Global.time_manager.speed
-- And keep updated via Global.time_manager.speed_changed
-- However LinkedDoorState is probably leaking as I get null callbacks even though I clear speed_changed on predelete
-- Maybe more important first to not have awaits...
 
 For trader screen
 - Create rows like other screen so better UI can be made
@@ -116,3 +104,6 @@ Prompt for work items:
 I'd like to create a new Work Item.
 Goal: etc etc
 Please write out a Work Item similar to those already created (Goal, Design, Files to Touch, Implementation Order, Edge Cases, Verification) and place it in the Work Items folder. If there is a part of the design that is unclear or needs elaboration, come up with some options and ask me which one to use.
+
+
+What is missing from this game that would make it more fun? What are players looking for that they may not find?
