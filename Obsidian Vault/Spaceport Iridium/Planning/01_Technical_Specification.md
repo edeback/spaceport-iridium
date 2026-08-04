@@ -233,7 +233,7 @@ WI-45 closed this as a *coverage* question — every component and manager field
 
 ### 2.3 Performance posture
 Scale is still modest (tens of modules, dozens of pawns, a handful of ships), so almost nothing is hot. The rules to keep it that way:
-- No per-frame `get_nodes_in_group` scans in hot paths. `PowerManager`'s were retired by WI-39 (registration arrays) and the four storage scans collapsed into one by WI-40; `WeaponComponent._pick_target` (C10) is now the standing offender.
+- No per-frame `get_nodes_in_group` scans in hot paths. `PowerManager`'s were retired by WI-39 (registration arrays), the four storage scans collapsed into one by WI-40, and `WeaponComponent._pick_target` now reads `RaidManager.live_ships()` (C10) — the manager already owns the authoritative wave, so every turret shares one array instead of scanning the `pirate_ship` group itself. That accessor returns the live array, not a copy, precisely because copying per turret per frame would be the same cost in a different shape; treat it as read-only.
 - Reachability stays O(1) via subgraphs — protect this invariant.
 - Adjacency fields stay change-driven and coalesced (never a tick scan); atmosphere diffusion stays on `slow_tick` and stays mass-conserving.
 - When storage counts grow: per-resource indices on `ResourceData.registered_storage` instead of group scans. WI-40 collapsed the four storage searches into `StorageQuery`, so this is now a change in one function rather than four — but it is a behavior-risk change (registration timing ≠ group-membership timing) and wants its own verification pass. The *sustenance/slot*-finding loops (WI-27/28/31/33 each added one shaped like the storage ones) are still un-unified.

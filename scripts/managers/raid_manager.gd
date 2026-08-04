@@ -297,6 +297,14 @@ func pay_off() -> bool:
 	SignalBus.raid_state_changed.emit()
 	return true
 
+## The live wave, in spawn order. Read-only for callers - this hands back the
+## manager's own array rather than a copy, because turrets read it every frame
+## and per-turret-per-frame allocation is exactly what this replaces (C10).
+## Entries are erased as ships die or leave, but a caller may still see one that
+## was freed earlier this frame, so validity-check before dereferencing.
+func live_ships() -> Array[PirateShip]:
+	return _ships
+
 func ship_count() -> int:
 	var n: int = 0
 	for ship: PirateShip in _ships:

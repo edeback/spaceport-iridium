@@ -118,15 +118,19 @@ func _fire_at(target: PirateShip) -> void:
 	queue_redraw()
 
 ## Nearest live ship within range AND inside the firing arc, or null.
+## Reads RaidManager's authoritative wave array rather than scanning the tree:
+## this runs per turret per frame, and a dozen turrets scanning the same group a
+## dozen times a frame was pure duplicated work (C10).
 func _pick_target() -> PirateShip:
+	if Global.raid_manager == null:
+		return null
 	var origin: Vector2 = _muzzle()
 	var reach: float = effective_range()
 	var reach2: float = reach * reach
 	var best: PirateShip = null
 	var best_d2: float = INF
-	for node: Node in get_tree().get_nodes_in_group(Groups.PIRATE_SHIP):
-		var ship: PirateShip = node as PirateShip
-		if ship == null or not is_instance_valid(ship):
+	for ship: PirateShip in Global.raid_manager.live_ships():
+		if not is_instance_valid(ship):
 			continue
 		var to_ship: Vector2 = ship.global_position - origin
 		var d2: float = to_ship.length_squared()
