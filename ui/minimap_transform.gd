@@ -40,3 +40,39 @@ func map_to_world(map: Vector2) -> Vector2:
 	if scale == 0.0:
 		return bounds.position
 	return bounds.position + (map - offset) / scale
+
+# --- fitted-box hysteresis ----------------------------------------------------
+
+## Settle the box the fit actually uses. Asteroids drift and ships orbit every
+## slow_tick, so feeding the raw content AABB straight into configure() rescales
+## the whole map several times a second and nothing on it holds still. Rules:
+##
+##   - Grow immediately whenever `desired` escapes `current` - everything the
+##     minimap draws has to stay on the minimap.
+##   - Shrink only once `current` is `shrink_ratio` times larger than it needs to
+##     be on either axis (the letterbox fit is driven by whichever axis is
+##     tighter, so per-axis, not by area).
+##   - Either way pad the new box by `slack` of its own span on each side, so the
+##     next few ticks of drift land inside it instead of resizing again.
+##
+## Keep `1 + 2 * slack` comfortably below `shrink_ratio` or the padding added by
+## one resize is itself enough to trigger the opposite resize and the map
+## oscillates.
+static func settle_bounds(current: Rect2, desired: Rect2, slack: float, shrink_ratio: float) -> Rect2:
+	# No box yet (first fit): adopt the content outright rather than merging with
+	# a meaningless zero-size rect at the origin.
+	if current.size.x <= 0.0 or current.size.y <= 0.0:
+		return _padded(desired, slack)
+	if not current.encloses(desired):
+		return _padded(current.merge(desired), slack)
+	var too_wide: bool = current.size.x > desired.size.x * shrink_ratio
+	var too_tall: bool = current.size.y > desired.size.y * shrink_ratio
+	if too_wide or too_tall:
+		return _padded(desired, slack)
+	return current
+
+static func _padded(box: Rect2, slack: float) -> Rect2:
+	if slack <= 0.0:
+		return box
+	var pad: Vector2 = box.size * slack
+	return box.grow_individual(pad.x, pad.y, pad.x, pad.y)

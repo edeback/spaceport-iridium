@@ -21,6 +21,15 @@ const MARGIN: float = 8.0
 const MIN_WORLD_SPAN: float = 900.0
 ## World-space breathing room added around the content bounds (2 cells each side).
 const WORLD_PAD: float = 128.0
+## Fraction of its own span the fitted box is padded by whenever it does resize.
+## Buys roughly a quarter of the current view of drift before the next resize.
+const BOUNDS_SLACK: float = 0.12
+## How much larger than necessary the fitted box has to get before it shrinks
+## back. Asteroids drift and raiders orbit constantly, so a box that tracked the
+## content exactly would rescale the map several times a second; growth stays
+## immediate, only shrinking waits for a change this big. Must stay above
+## 1 + 2 * BOUNDS_SLACK so a resize can't trigger its own opposite.
+const BOUNDS_SHRINK_RATIO: float = 1.6
 
 ## tag -> fill color for built modules. Unlisted tags fall back to HULL_COLOR.
 ## Exported so the palette can be retuned without touching code (balance/visuals
@@ -62,9 +71,11 @@ const DRAW_LAYERS: Array[WorldManager.StructureLayer] = [
 ]
 
 var _transform: MinimapTransform = MinimapTransform.new()
-## Cached world AABB of all content; recomputed only when content changes
-## (module add/remove, slow_tick), never on a plain camera move.
-var _content_bounds: Rect2 = Rect2(Vector2.ZERO, Vector2(MIN_WORLD_SPAN, MIN_WORLD_SPAN))
+## World AABB the fit currently uses; recomputed only when content changes
+## (module add/remove, slow_tick), never on a plain camera move. This is the
+## settled box, not the raw content AABB - see MinimapTransform.settle_bounds.
+## Starts zero-sized so the first recompute adopts the content as-is.
+var _content_bounds: Rect2 = Rect2()
 var _collapsed: bool = false
 var _header: Button
 
@@ -131,8 +142,12 @@ func _process(_delta: float) -> void:
 
 # --- bounds -------------------------------------------------------------------
 
-## Recompute the world AABB spanning every occupied cell plus every live
-## asteroid, padded. Cheap enough to run on content changes / slow_tick.
+## Recompute the world AABB spanning every occupied cell, every live asteroid and
+## every tracked ship, padded - i.e. everything _draw() puts on the map, so
+## nothing it draws can land outside it (raiders orbit well clear of the station
+## and used to be clipped off the edge). Cheap enough to run on content changes /
+## slow_tick. The result is run through the hysteresis before it becomes the
+## fitted box, because asteroids and ships move every single tick.
 func _recompute_bounds() -> void:
 	var world: WorldManager = Global.world_manager
 	if world == null:
@@ -155,11 +170,20 @@ func _recompute_bounds() -> void:
 			min_p = Vector2(minf(min_p.x, p.x), minf(min_p.y, p.y))
 			max_p = Vector2(maxf(max_p.x, p.x), maxf(max_p.y, p.y))
 			has_any = true
-	if not has_any:
-		_content_bounds = Rect2(Vector2.ZERO, Vector2(MIN_WORLD_SPAN, MIN_WORLD_SPAN))
-		return
-	var pad: Vector2 = Vector2(WORLD_PAD, WORLD_PAD)
-	_content_bounds = Rect2(min_p - pad, (max_p - min_p) + pad * 2.0)
+	for node: Node in get_tree().get_nodes_in_group(Groups.MINIMAP_TRACKED):
+		var ship: Node2D = node as Node2D
+		if ship == null or not is_instance_valid(ship):
+			continue
+		var p: Vector2 = ship.global_position
+		min_p = Vector2(minf(min_p.x, p.x), minf(min_p.y, p.y))
+		max_p = Vector2(maxf(max_p.x, p.x), maxf(max_p.y, p.y))
+		has_any = true
+	var desired: Rect2 = Rect2(Vector2.ZERO, Vector2(MIN_WORLD_SPAN, MIN_WORLD_SPAN))
+	if has_any:
+		var pad: Vector2 = Vector2(WORLD_PAD, WORLD_PAD)
+		desired = Rect2(min_p - pad, (max_p - min_p) + pad * 2.0)
+	_content_bounds = MinimapTransform.settle_bounds(
+		_content_bounds, desired, BOUNDS_SLACK, BOUNDS_SHRINK_RATIO)
 
 # --- drawing ------------------------------------------------------------------
 

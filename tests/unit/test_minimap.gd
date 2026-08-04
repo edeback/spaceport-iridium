@@ -81,3 +81,69 @@ func test_zero_world_bounds_uses_min_span() -> void:
 	var t := _fit(Rect2(Vector2(500.0, 500.0), Vector2.ZERO))
 	assert_almost_eq(t.bounds.size.x, MIN_SPAN, 0.001, "empty content still gets a finite span")
 	assert_gt(t.scale, 0.0, "scale stays positive")
+
+# --- fitted-box hysteresis ---------------------------------------------------
+
+const SLACK := 0.12
+const SHRINK := 1.6
+
+func _settle(current: Rect2, desired: Rect2) -> Rect2:
+	return MinimapTransform.settle_bounds(current, desired, SLACK, SHRINK)
+
+func test_first_fit_adopts_the_content() -> void:
+	var desired := Rect2(Vector2(100.0, 100.0), Vector2(1000.0, 1000.0))
+	var settled := _settle(Rect2(), desired)
+	assert_true(settled.encloses(desired), "empty starting box takes the content")
+	assert_almost_eq(settled.size.x, 1000.0 * (1.0 + 2.0 * SLACK), 0.001, "padded by the slack")
+
+func test_drifting_inside_the_box_does_not_resize() -> void:
+	# The whole point: an asteroid wandering within the current box must leave the
+	# fit completely untouched, so the map holds still.
+	var current := Rect2(Vector2.ZERO, Vector2(2000.0, 2000.0))
+	var settled := _settle(current, Rect2(Vector2(400.0, 300.0), Vector2(1400.0, 1500.0)))
+	assert_eq(settled, current, "no resize while the content stays inside")
+
+func test_content_escaping_grows_immediately() -> void:
+	var current := Rect2(Vector2.ZERO, Vector2(2000.0, 2000.0))
+	var desired := Rect2(Vector2(-300.0, 500.0), Vector2(900.0, 900.0))
+	var settled := _settle(current, desired)
+	assert_true(settled.encloses(desired), "the escaped content is visible again")
+	assert_true(settled.encloses(current), "growth never drops what was already shown")
+
+func test_growth_overshoots_so_continued_drift_is_free() -> void:
+	# A rock drifting steadily outward should not resize the map every tick: the
+	# slack added by one growth has to absorb the next several steps.
+	var box := Rect2(Vector2.ZERO, Vector2(2000.0, 2000.0))
+	var edge := 2000.0
+	var resizes := 0
+	for i in 12:
+		edge += 20.0
+		var desired := Rect2(Vector2.ZERO, Vector2(edge, 2000.0))
+		var next := _settle(box, desired)
+		if next != box:
+			resizes += 1
+		box = next
+		assert_true(box.encloses(desired), "content stays inside at step %d" % i)
+	assert_lt(resizes, 3, "240px of outward drift costs at most a couple of resizes")
+
+func test_small_shrink_is_ignored() -> void:
+	var current := Rect2(Vector2.ZERO, Vector2(2000.0, 2000.0))
+	# 25% smaller - visible, but nowhere near worth rescaling the whole map for.
+	var settled := _settle(current, Rect2(Vector2(250.0, 250.0), Vector2(1500.0, 1500.0)))
+	assert_eq(settled, current, "the box holds until the content is much smaller")
+
+func test_large_shrink_refits() -> void:
+	# Raid over, the far-flung ships are gone: the map should come back in.
+	var current := Rect2(Vector2.ZERO, Vector2(4000.0, 4000.0))
+	var desired := Rect2(Vector2(1800.0, 1800.0), Vector2(600.0, 600.0))
+	var settled := _settle(current, desired)
+	assert_lt(settled.size.x, current.size.x * 0.5, "refitted down to the real content")
+	assert_true(settled.encloses(desired), "and the content is still fully inside")
+
+func test_resize_does_not_trigger_its_own_opposite() -> void:
+	# The invariant tying the two constants together: settling twice on unchanged
+	# content must be a fixed point, or the map oscillates every tick.
+	var desired := Rect2(Vector2(500.0, 500.0), Vector2(700.0, 1300.0))
+	var once := _settle(Rect2(Vector2.ZERO, Vector2(6000.0, 6000.0)), desired)
+	var twice := _settle(once, desired)
+	assert_eq(twice, once, "second pass on the same content is a no-op")
