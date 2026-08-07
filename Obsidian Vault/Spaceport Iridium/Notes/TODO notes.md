@@ -42,6 +42,7 @@ Processor_component: in try_deposit_outputs() any excess should get dumped into 
 Station Prestige
 - Instead of "level"
 - Equivalent to "stars" in SimTower
+- Or "Milestones" like in City Skylines
 
 Room info at a glance
 - For example, show that it is iron ore being processed and how much time
