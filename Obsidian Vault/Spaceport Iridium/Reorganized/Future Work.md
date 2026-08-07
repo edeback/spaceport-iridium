@@ -19,10 +19,6 @@ Crew O2 Supply
 		- Pawns can do research jobs here to advance science slowly
 		- When manned, gives early warning of dangerous events like pirate attacks to give the station time to prepare
 
-Pawn Relationships
-- Goal: Give more flavor to the game, add story
-
-
 
 ARC relationship arc & independence; expeditions; observatory and research, foreign relations/other stations; crises framework; station warp travel; New Game+ corporations; exotic elements; tutorial (SAI); audio pass.
 

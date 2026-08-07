@@ -39,9 +39,9 @@ Spread slow ticks around? Make even slower ticks? Ideally don't do heavy lifting
 
 Processor_component: in try_deposit_outputs() any excess should get dumped into a pile in the room. Full storage should stop a new job from starting, however.
 
-~~Minimap doesn't get big enough to see pirates~~
-
-~~Currently the minimap expands to show asteroids, but since asteroids move around a lot it causes the minimap to constantly shift. The minimap should not resize smaller unless there has been a large enough change (ideally large enough that it rarely has to move due to asteroids). It should always resize up (if needed), however, to ensure everything is visible. Also, it should resize to include pirates in the bounds, as it also tracks pirates.~~
+Station Prestige
+- Instead of "level"
+- Equivalent to "stars" in SimTower
 
 Room info at a glance
 - For example, show that it is iron ore being processed and how much time
@@ -104,6 +104,3 @@ Prompt for work items:
 I'd like to create a new Work Item.
 Goal: etc etc
 Please write out a Work Item similar to those already created (Goal, Design, Files to Touch, Implementation Order, Edge Cases, Verification) and place it in the Work Items folder. If there is a part of the design that is unclear or needs elaboration, come up with some options and ask me which one to use.
-
-
-What is missing from this game that would make it more fun? What are players looking for that they may not find?
