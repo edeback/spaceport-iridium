@@ -1,8 +1,4 @@
 
-
-
-
-
 Crew O2 Supply
 - Goal: Make crew not linger in space
 - Crew have O2 supply that depletes in space with time, must return to station to refill or take suffocation damage
