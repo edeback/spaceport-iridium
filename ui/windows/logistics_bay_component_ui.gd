@@ -51,7 +51,9 @@ func _refresh() -> void:
 		var integrity_pct: int = 100
 		if robot.integrity_component != null:
 			integrity_pct = int(round(robot.integrity_component.integrity_percent()))
-		text += "\n  • Energy %d%%   Integrity %d%%" % [energy_pct, integrity_pct]
+		# Named per robot so the row points at a specific droid the player can find,
+		# rather than three identical bullets.
+		text += "\n  • %s - Energy %d%%   Integrity %d%%" % [robot.pawn_name, energy_pct, integrity_pct]
 	_robots_label.text = text
 	_buy_button.text = "Buy robot (%d cr)" % bay.robot_cost
 	_buy_button.disabled = not bay.can_buy_robot()

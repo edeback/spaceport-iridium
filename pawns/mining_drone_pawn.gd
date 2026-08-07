@@ -5,6 +5,11 @@ extends RobotPawnBase
 
 var parent_mining_component: MiningComponent = null
 
+## Numbered station-wide, not per bay: two Mining Bays produce Mining Droid 1-6,
+## not two sets of 1-3 (see RobotDesignation).
+func default_designation() -> String:
+	return "Mining Droid"
+
 ## Drones only mine, and only for their own bay - never the shared board. The
 ## shared RobotPawnBase.start_job handles the cargo sweep, personal queue, and the
 ## WI-28 energy gates; these two hooks supply the drone-specific bits.

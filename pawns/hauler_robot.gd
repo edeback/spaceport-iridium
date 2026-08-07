@@ -13,6 +13,11 @@ extends RobotPawnBase
 ## re-registers here via set_owner_component().
 var parent_bay: LogisticsBayComponent = null
 
+## Numbered station-wide, not per bay: two Logistics Bays produce Hauling Droid
+## 1-6, not two sets of 1-3 (see RobotDesignation).
+func default_designation() -> String:
+	return "Hauling Droid"
+
 ## HAUL-only board claim (WI-27). The shared RobotPawnBase.start_job handles the
 ## cargo sweep, personal queue, and the WI-28 energy gates; this hook supplies the
 ## board claim, filtered to HAUL - never BUILD/WORK/NEEDS, which crew keep. Priority

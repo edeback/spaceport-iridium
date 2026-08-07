@@ -586,6 +586,11 @@ func _get_pawns_save() -> Array:
 		# component that isn't there can't write a block. Nothing reads those, and
 		# the load side has always tolerated the key being absent.
 		_save_pawn_components(pawn, entry)
+		# Robot number ("Mining Droid 2" -> 2). Saved with the name it built so a
+		# robot produced after the load can't be handed a number a restored robot
+		# is already wearing. Robots only, so crew entries stay unchanged.
+		if pawn is RobotPawnBase:
+			entry["robot_index"] = (pawn as RobotPawnBase).robot_index
 		# Mining Drones need their parent
 		if pawn is MiningDronePawn and (pawn as MiningDronePawn).parent_mining_component != null:
 			entry["mining_comp"] = component_ref((pawn as MiningDronePawn).parent_mining_component)
@@ -907,6 +912,12 @@ func _load_pawns(data: Array) -> void:
 			var alpha: float = float(tint_arr[3]) if tint_arr.size() >= 4 else 1.0
 			pawn.tint = Color(float(tint_arr[0]), float(tint_arr[1]), float(tint_arr[2]), alpha)
 		pawn.hire_price = int(entry.get("hire_price", 0))
+		# Robot number, set before add_child for the same reason pawn_id is: _ready
+		# allocates one only when it arrives unset. A save from before robots were
+		# named has neither key, so its robots get numbered (and named) at _ready
+		# in load order, as if they were just built.
+		if pawn is RobotPawnBase:
+			(pawn as RobotPawnBase).robot_index = int(entry.get("robot_index", 0))
 		# Personal wallet (WI-33). Missing on pre-WI-33 saves -> 0, same as a pawn
 		# that never earned. Set before add_child, like the other scalar identity.
 		pawn.personal_credits = int(entry.get("personal_credits", 0))

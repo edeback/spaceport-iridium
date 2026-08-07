@@ -23,6 +23,20 @@ extends PawnBase
 ## Kept exported so both robot scenes' authored `powered = true` still binds.
 @export var powered: bool = true
 
+## --- identity -----------------------------------------------------------------
+
+## Display designation for this robot kind ("Mining Droid"), the front half of the
+## numbered name every pawn-listing UI shows. Empty = fall back to the subclass's
+## default_designation(); exported anyway so a mod's robot scene can label itself,
+## since a mod can't declare a class_name to override that hook (WI-47 M6).
+@export var robot_designation: String = ""
+
+## Station-wide number within this designation ("Mining Droid 2" -> 2). Allocated
+## in _ready and round-tripped through the save so a loaded robot keeps the name
+## the player learned and a robot built afterwards can't collide with it.
+## 0 = unallocated.
+@export var robot_index: int = 0
+
 ## --- energy tuning (WI-28), forwarded to RobotPowerComponent ------------------
 @export var energy_max: float = 100.0
 @export var energy_idle_drain_per_hour: float = 0.5
@@ -43,6 +57,15 @@ var integrity_component: RobotIntegrityComponent
 
 func _ready() -> void:
 	super()
+	# Identity: nothing else names a robot, and an unnamed pawn shows up as an
+	# anonymous "Crew member" everywhere. A loaded robot arrives with both fields
+	# already set (SaveManager writes them before add_child) and skips this; a
+	# save from before robots were named has neither, so its robots get numbered
+	# here, in load order, exactly like freshly built ones.
+	if robot_index <= 0:
+		robot_index = _allocate_robot_index()
+	if pawn_name.is_empty():
+		pawn_name = RobotDesignation.format_name(get_designation(), robot_index)
 	# Battery + integrity (WI-28). Created in code - not scene children - so tuning
 	# stays on the pawn root (overridable per robot scene) and both robot scenes get
 	# them without editing their subtrees. Appended to `components` so
@@ -69,6 +92,33 @@ func _ready() -> void:
 	integrity_component.reset_full()
 	components.append(integrity_component)
 	add_child(integrity_component)
+
+## Designation shown in UI: the scene's override first, then the per-class default.
+func get_designation() -> String:
+	return robot_designation if not robot_designation.is_empty() else default_designation()
+
+## Per-class fallback designation, overridden by each robot subclass. Only reached
+## when the robot's scene leaves robot_designation empty.
+func default_designation() -> String:
+	return "Droid"
+
+## Lowest free number among the live robots sharing this designation. Scanned
+## rather than counted off a manager: a destroyed robot puts its number back in
+## circulation just by leaving the tree, there's no counter to reset between runs
+## or restore on load, and spawns are rare enough (one drone per bay per respawn
+## timer) that the scan cost never shows up.
+func _allocate_robot_index() -> int:
+	var designation: String = get_designation()
+	var used: PackedInt32Array = []
+	for node: Node in get_tree().get_nodes_in_group(Groups.PAWN):
+		var robot: RobotPawnBase = node as RobotPawnBase
+		# Skips self - super() already joined the group, still holding index 0 -
+		# and anything mid-teardown, whose number is free again.
+		if robot == null or robot == self or robot.is_queued_for_deletion():
+			continue
+		if robot.robot_index >= 1 and robot.get_designation() == designation:
+			used.append(robot.robot_index)
+	return RobotDesignation.next_index(used)
 
 ## Tears the robot down (bay removed, or robot destroyed). Carried cargo is dumped
 ## as a pile by PawnBase's PREDELETE handler, satisfying the resource invariant.
