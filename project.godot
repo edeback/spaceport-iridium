@@ -39,6 +39,7 @@ Global="*res://scripts/managers/global.gd"
 SignalBus="*res://scripts/managers/signal_bus.gd"
 Panku="*res://addons/panku_console/console.tscn"
 _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
+DialogueManager="*uid://c3rodes2l3gxb"
 
 [debug]
 
@@ -64,11 +65,12 @@ export/convert_text_resources_to_binary=false
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg", "res://addons/gut/plugin.cfg", "res://addons/m12_name_generator/plugin.cfg", "res://addons/module_editor/plugin.cfg", "res://addons/panku_console/plugin.cfg", "res://addons/script-ide/plugin.cfg", "res://addons/yard/plugin.cfg")
+enabled=PackedStringArray("res://addons/dialogue_manager/plugin.cfg", "res://addons/godot_ai/plugin.cfg", "res://addons/gut/plugin.cfg", "res://addons/m12_name_generator/plugin.cfg", "res://addons/module_editor/plugin.cfg", "res://addons/panku_console/plugin.cfg", "res://addons/script-ide/plugin.cfg", "res://addons/yard/plugin.cfg")
 
 [gui]
 
 theme/default_font_multichannel_signed_distance_field=true
+theme/custom="uid://djqf6raokvcao"
 
 [input]
 
