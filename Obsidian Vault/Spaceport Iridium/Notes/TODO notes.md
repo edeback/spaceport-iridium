@@ -39,10 +39,15 @@ Spread slow ticks around? Make even slower ticks? Ideally don't do heavy lifting
 
 Processor_component: in try_deposit_outputs() any excess should get dumped into a pile in the room. Full storage should stop a new job from starting, however.
 
-Station Prestige
+Station "Prestige"
 - Instead of "level"
 - Equivalent to "stars" in SimTower
 - Or "Milestones" like in City Skylines
+- **"Class I" -> "Class V" Station**
+	- When you gain a level, "ARC has granted you a Class II Station Charter"
+- Also consider scale words
+	- Outpost, Station, Port, Hub, Metropolis
+	- Harder to connect many words to scale, though, and not having "Spaceport" be the final tier (which it wouldn't, "port" isn't a very large word) would negate some of the idea of "Spaceport Iridium"
 
 Room info at a glance
 - For example, show that it is iron ore being processed and how much time
