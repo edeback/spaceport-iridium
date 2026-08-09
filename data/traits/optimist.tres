@@ -9,4 +9,5 @@ display_name = "Optimist"
 description = "Sees the bright side - a permanent lift to mood."
 exclusive_group = &"mood"
 happiness_offset = 0.1
+social_polarity = 1.0
 price_modifier = 1.15

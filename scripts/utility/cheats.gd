@@ -146,6 +146,73 @@ func add_trait(trait_id: StringName, cell: Vector2i) -> String:
 	traits.add_trait(trait_data)
 	return _report("gave %s the %s trait" % [pawn.pawn_name, trait_data.display_name])
 
+## Prints the social ledger (WI-48) of the crew pawn nearest `cell`: who they
+## have spoken to, what they think of them, and when they last talked.
+func dump_opinions(cell: Vector2i) -> String:
+	var pawn: PawnBase = _crew_at_or_near(cell)
+	if pawn == null:
+		return _report("dump_opinions found no crew pawn near %s" % cell)
+	var social: SocializeComponent = pawn.get_component_by_type(SocializeComponent) as SocializeComponent
+	if social == null:
+		return _report("%s has no socialize component" % pawn.pawn_name)
+	var lines: PackedStringArray = PackedStringArray()
+	for other: PawnBase in Global.crew_manager.get_crew():
+		if other == pawn:
+			continue
+		var record: PawnOpinion = social.record_of(other.pawn_id)
+		if record == null or record.chats <= 0:
+			lines.append("  %s: not met" % other.pawn_name)
+			continue
+		lines.append("  %s: %+.1f (%s), %d chat(s), last C%d %02d:00, %s" % [
+			other.pawn_name, record.value, SocialMath.opinion_label(record.value),
+			record.chats, record.last_cycle, record.last_hour,
+			"good" if record.last_positive else "bad"])
+	if lines.is_empty():
+		lines.append("  (no other crew aboard)")
+	# The detail goes to the REPL echo; the alert just names whose ledger it was.
+	print("%s's opinions:\n%s" % [pawn.pawn_name, "\n".join(lines)])
+	return _report("dumped %s's opinions (%d chats logged) - see the console" % [
+			pawn.pawn_name, social.recent_chats().size()])
+
+## Sets what the crew pawn nearest `cell_a` thinks of the one nearest `cell_b`
+## (WI-48), on the -100..+100 scale. One direction only - call it twice with the
+## cells swapped for a mutual feud. Marks the pair as having spoken.
+func set_opinion(cell_a: Vector2i, cell_b: Vector2i, value: float) -> String:
+	var pawn_a: PawnBase = _crew_at_or_near(cell_a)
+	var pawn_b: PawnBase = _crew_at_or_near(cell_b)
+	if pawn_a == null or pawn_b == null:
+		return _report("set_opinion needs a crew pawn near each cell")
+	if pawn_a == pawn_b:
+		return _report("set_opinion picked the same pawn twice - use cells nearer each crew member")
+	var social: SocializeComponent = pawn_a.get_component_by_type(SocializeComponent) as SocializeComponent
+	if social == null:
+		return _report("%s has no socialize component" % pawn_a.pawn_name)
+	social.set_opinion(pawn_b.pawn_id, value)
+	return _report("%s now thinks %+.0f of %s (%s)" % [pawn_a.pawn_name, value, pawn_b.pawn_name,
+			SocialMath.opinion_label(value)])
+
+## Forces a chat (WI-48) between the crew pawns nearest each cell, ignoring both
+## cooldowns and whether they share a module. The outcome is still rolled, so
+## repeated calls are the fast way to watch a relationship form.
+func force_chat(cell_a: Vector2i, cell_b: Vector2i) -> String:
+	var pawn_a: PawnBase = _crew_at_or_near(cell_a)
+	var pawn_b: PawnBase = _crew_at_or_near(cell_b)
+	if pawn_a == null or pawn_b == null:
+		return _report("force_chat needs a crew pawn near each cell")
+	if pawn_a == pawn_b:
+		return _report("force_chat picked the same pawn twice - use cells nearer each crew member")
+	var social_a: SocializeComponent = pawn_a.get_component_by_type(SocializeComponent) as SocializeComponent
+	var social_b: SocializeComponent = pawn_b.get_component_by_type(SocializeComponent) as SocializeComponent
+	if social_a == null or social_b == null:
+		return _report("both pawns need a socialize component to chat")
+	if not social_a.force_chat(social_b):
+		return _report("could not resolve a chat between %s and %s" % [pawn_a.pawn_name, pawn_b.pawn_name])
+	var record: PawnOpinion = social_a.record_of(pawn_b.pawn_id)
+	return _report("%s and %s chatted - it went %s (%s now %+.1f)" % [
+			pawn_a.pawn_name, pawn_b.pawn_name,
+			"well" if record.last_positive else "badly",
+			pawn_a.pawn_name, record.value])
+
 ## Infects the crew pawn nearest `cell` with disease `id` (WI-31), e.g.
 ## infect("station_flu", Vector2i(16, 8)). Bypasses the station-tier unlock gate
 ## and transmission so you can force a disease for testing.

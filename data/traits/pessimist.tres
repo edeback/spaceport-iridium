@@ -9,4 +9,5 @@ display_name = "Pessimist"
 description = "Dwells on the worst - a permanent drag on mood."
 exclusive_group = &"mood"
 happiness_offset = -0.1
+social_polarity = -1.0
 price_modifier = 0.85

@@ -64,19 +64,39 @@ func damage_multiplier() -> float:
 		m *= trait_data.damage_multiplier
 	return m
 
-## Product of passive-social multipliers (Introvert 0, Extrovert 2); 1.0 normal.
-func passive_social_multiplier() -> float:
+## Product of chat-interval multipliers (Extrovert 0.5, Introvert 2.0); 1.0
+## normal. SocializeComponent scales its base interval by this (WI-48).
+func chat_interval_multiplier() -> float:
 	var m: float = 1.0
 	for trait_data: TraitData in traits:
-		m *= trait_data.passive_social_multiplier
+		m *= trait_data.chat_interval_multiplier
 	return m
 
-## Extra percentage points on the passive-social recreation cap (Extrovert).
-func passive_social_cap_bonus() -> float:
-	var b: float = 0.0
+## Product of chat recreation payout multipliers (WI-48); 1.0 normal.
+func chat_recreation_multiplier() -> float:
+	var m: float = 1.0
 	for trait_data: TraitData in traits:
-		b += trait_data.passive_social_cap_bonus
-	return b
+		m *= trait_data.chat_recreation_multiplier
+	return m
+
+## This pawn's position on every social axis their traits touch (WI-48), for
+## SocialMath.trait_affinity. Traits with no polarity are socially invisible and
+## never enter the dictionary - an absent axis means "no opinion", which is not
+## the same as a 0.0 entry would be if a future axis ever summed differently.
+##
+## roll_set guarantees at most one trait per exclusive_group, so the accumulate
+## below only ever compounds when a mod authors two traits onto one explicit
+## social_axis; clamped for that case.
+func social_axes() -> Dictionary[StringName, float]:
+	var axes: Dictionary[StringName, float] = {}
+	for trait_data: TraitData in traits:
+		if is_zero_approx(trait_data.social_polarity):
+			continue
+		var axis: StringName = trait_data.effective_social_axis()
+		if axis == &"":
+			continue
+		axes[axis] = clampf(axes.get(axis, 0.0) + trait_data.social_polarity, -1.0, 1.0)
+	return axes
 
 ## True if any trait recharges recreation while alone (Introvert).
 func prefers_solitude() -> bool:

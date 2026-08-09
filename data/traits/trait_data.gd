@@ -27,17 +27,40 @@ extends Resource
 ## Multiplies incoming health decay (starvation/suffocation). Hardy < 1 (tough),
 ## Weak > 1 (frail). 1.0 = unaffected.
 @export var damage_multiplier: float = 1.0
-## Scales passive social recreation gain from company. Introvert 0 (crowds do
-## nothing), Extrovert 2 (thrives). 1.0 = normal.
-@export var passive_social_multiplier: float = 1.0
-## Percentage points added to the passive-social recreation cap (Extrovert).
-@export var passive_social_cap_bonus: float = 0.0
-## Introvert: gains passive recreation while ALONE in a module instead of from
-## company.
+## Scales how long this pawn waits between wanting to chat (WI-48). Extrovert
+## 0.5 (twice as often), Introvert 2.0 (half as often). 1.0 = normal.
+##
+## Replaced passive_social_multiplier when chats replaced the passive company
+## drip: the trait now changes how OFTEN company pays off, not how fast it
+## trickles.
+@export var chat_interval_multiplier: float = 1.0
+## Scales the recreation one good chat pays this pawn (WI-48). 1.0 = normal.
+@export var chat_recreation_multiplier: float = 1.0
+## Introvert: gains passive recreation while ALONE in a module. Untouched by
+## WI-48 - solitude doesn't involve another pawn, so chats don't replace it.
 @export var solitude_recreation: bool = false
+
+# --- social axes (WI-48) -------------------------------------------------------
+# Two pawns whose traits sit on the same axis get along better when their
+# polarities match and worse when they oppose. A trait opts in by carrying a
+# nonzero polarity; everything else is socially invisible.
+
+## Where this trait sits on its axis: +1 and -1 are the two poles, 0.0 (the
+## default) means the trait has no bearing on how people get on.
+@export_range(-1.0, 1.0) var social_polarity: float = 0.0
+## The axis social_polarity is measured on. Empty falls back to exclusive_group,
+## which already pairs Optimist/Pessimist and Introvert/Extrovert - so the
+## vanilla traits need one line each, not a second taxonomy. Set this explicitly
+## only for an axis whose traits are NOT mutually exclusive at roll time.
+@export var social_axis: StringName = &""
+
 ## Multiplies a hire candidate's price (WI-22): desirable traits > 1 (costlier),
 ## drawbacks < 1 (cheaper). 1.0 = price-neutral.
 @export var price_modifier: float = 1.0
+
+## The axis this trait actually contributes to; see social_axis.
+func effective_social_axis() -> StringName:
+	return social_axis if social_axis != &"" else exclusive_group
 
 # --- shared registry ----------------------------------------------------------
 # Same pattern as SkillData: scan res://data/traits/ once, cache id -> TraitData.

@@ -6,8 +6,10 @@
 script = ExtResource("1_trait")
 id = &"introvert"
 display_name = "Introvert"
-description = "Recharges alone; crowds do nothing for them."
+description = "Recharges alone; talks half as often and gets less out of it."
 exclusive_group = &"sociability"
-passive_social_multiplier = 0.0
+chat_interval_multiplier = 2.0
+chat_recreation_multiplier = 0.6
 solitude_recreation = true
+social_polarity = -1.0
 price_modifier = 0.95

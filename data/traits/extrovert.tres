@@ -6,8 +6,9 @@
 script = ExtResource("1_trait")
 id = &"extrovert"
 display_name = "Extrovert"
-description = "Thrives in company - faster social recreation, to a higher cap."
+description = "Thrives in company - chats twice as often, and gets more out of each one."
 exclusive_group = &"sociability"
-passive_social_multiplier = 2.0
-passive_social_cap_bonus = 15.0
+chat_interval_multiplier = 0.5
+chat_recreation_multiplier = 1.5
+social_polarity = 1.0
 price_modifier = 1.1

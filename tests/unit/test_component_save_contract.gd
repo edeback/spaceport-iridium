@@ -39,6 +39,7 @@ func _pawn_components() -> Dictionary[String, PawnComponentBase]:
 		"skills": autofree(PawnSkillsComponent.new()),
 		"traits": autofree(PawnTraitsComponent.new()),
 		"disease": autofree(PawnDiseaseComponent.new()),
+		"social": autofree(SocializeComponent.new()),
 		"breathing": autofree(PawnBreathingComponent.new()),
 		"robot_power": autofree(RobotPowerComponent.new()),
 		"robot_integrity": autofree(RobotIntegrityComponent.new()),

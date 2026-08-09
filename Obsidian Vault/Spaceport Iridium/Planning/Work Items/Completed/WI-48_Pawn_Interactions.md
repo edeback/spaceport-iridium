@@ -1,6 +1,18 @@
 # WI-48 — Pawn Interactions
 
-> **Phase 4, first item. Planned, not started.** The roadmap, tech spec and Phase-4 notes are deliberately *not* updated yet — the rest of Phase 4 is still being planned, and the ordering around this item isn't settled. Update [[02_Roadmap]] and [[01_Technical_Specification]] when the phase is laid out, not when this doc lands.
+> **STATUS: COMPLETE (2026-08-09).** Shipped as designed apart from the eight deviations below. Nine files touched, four new. **688 GUT green** (50 suites) including **37 new `SocialMath` tests**, plus a **65-check headless probe** green on repeated runs and a windowed screenshot of the finished tab. Save is backward-compatible: a pre-WI-48 save has no `social` block, and a missing block is a `continue` in `_load_pawn_components`, which reads correctly as "this crew has never chatted."
+>
+> **Deviations from the design below:**
+> 1. **`opinion_delta`'s falloff is measured against the target, not the origin.** §4 specified `±magnitude × (1 − |opinion| / OPINION_MAX)`. That shape makes climbing out of −90 almost impossible — the same term that stops a friendship inflating also strangles any recovery from a feud. Shipped: `magnitude × (target − current) / OPINION_MAX`. Identical at neutral, still asymptotic at the extreme it heads for, but a pair at −90 recovers at ~1.9× the neutral rate. A feud is now a state you can climb out of, which is the point of having one.
+> 2. **The ledger record is its own `class_name PawnOpinion`** (`scripts/utility/pawn_opinion.gd`), not an inline dictionary. Three systems hold these (component, tab, cheats) and all three wanted it typed.
+> 3. **`save_order` is 55, not 50** — the disease component already owns 50. Nothing depends on the position; it just has to be unique and below the mod default.
+> 4. **§7's mood refresh costs a scan per tick**, so the "cheaper than what it replaces" claim in *Edge cases* holds for the chat path only. Someone else walking out of the room has to move this pawn's mood, and only a scan knows that. Short-circuited on an empty ledger, which is every pawn's first hours.
+> 5. **Unmet crew are skipped in the mood mean, not averaged in as zeroes.** One friend in a room of strangers reads as a friend rather than a diluted quarter of one.
+> 6. **`skill_term` runs −0.1 … +1.0 across two slopes, with the kink at level 3.** Mean social skill 0 is a bore (−0.1), 3 is average company (0.0), 10 is a genuinely good conversationalist (+1.0). The penalty side is deliberately shallow and the bonus side steep, so no social skill is a mild drag while a lot of it is worth real odds — at the default `skill_weight` of 0.10 that reads as **0.740 / 0.750 / 0.850** on the chance. Both anchor points are exported (`social_skill_neutral_level`, `social_skill_floor`). A disease dulling the skill can now push a pawn from average company down into being a bore.
+> 7. **`_hide_tab` must defer its `set_tab_hidden`.** A `TabContainer` rebuilds its tab bar after children are added, so the same-frame call landed on an index that didn't exist yet and silently did nothing — robots kept an empty "Social" tab button. Caught by a probe check, which is the whole reason that check exists.
+> 8. **§9's tab needed its scroll height driven from code.** The tab wraps its rows in a `ScrollContainer` so a big roster scrolls instead of growing the floating panel without bound — but a `ScrollContainer` reports a minimum height of **zero** (it is built to be handed a size, not to ask for one), and every other tab in this panel sizes the panel to its own content. The tab therefore collapsed to its 8px of margins and rendered **empty** in-game while its rows were perfectly correct underneath. `_fit_scroll_height()` sets `custom_minimum_size.y` to `min(content, MAX_CONTENT_HEIGHT = 260)` after each rebuild, plus a `minimum_size_changed` backstop. It must stay synchronous and tree-agnostic: `ui_main` calls `set_pawn` on the panel **before** adding it to the tree, so anything awaiting a frame or touching `get_tree()` there runs against a null tree.
+>
+> The roadmap, tech spec and Phase-4 notes are deliberately **not** updated yet — the rest of Phase 4 is still being planned and the ordering around this item isn't settled. Update [[02_Roadmap]] and [[01_Technical_Specification]] when the phase is laid out.
 
 ## Goal
 
@@ -91,7 +103,9 @@ Names are snapshotted into `recent` because the partner may be gone by the time 
 
 The `exclusive_group` fallback is why this is two data lines rather than a new taxonomy; the explicit `social_axis` exists so a modder can define an axis whose traits *aren't* mutually exclusive at roll time.
 
-**The social skill.** `data/skills/social.tres` exists and currently has no gameplay effect — only the disease maluses reference it. This is the natural place to give it one, so it's included deliberately: the pair's social skill nudges `P(positive)` (`skill_weight`, small), and both participants earn a little social xp per chat. Diseases that dull the social skill therefore make the sick worse company, for free. **Setting `skill_weight` to 0 in the exported tuning disables the whole hook** if it plays badly — it's one number, not a structural dependency.
+**The social skill.** `data/skills/social.tres` exists and currently has no gameplay effect — only the disease maluses reference it. This is the natural place to give it one, so it's included deliberately: the pair's mean social skill shifts `P(positive)`, and both participants earn a little social xp per chat.
+
+The curve is two slopes meeting at level 3, not one line. Level 0 is **a bore** (term −0.1), level 3 is **average company** (0.0), level 10 is **a good conversationalist** (+1.0). Being unskilled is a real but small penalty; being skilled is a large bonus. Diseases that dull the social skill therefore make the sick worse company, for free — and can push an average talker below neutral. **Setting `skill_weight` to 0 in the exported tuning disables the whole hook** if it plays badly — it's one number, not a structural dependency.
 
 ### 7 — Mood from sharing a room
 
@@ -108,6 +122,7 @@ One id, recomputed, means it can never stack or leak when a pawn walks out of th
 `scripts/utility/social_math.gd` (`class_name SocialMath`), all static, no `Global`/`SignalBus` — so it's GUT-testable per the standing rule:
 
 - `positive_chance(opinion_mean, affinity, skill_term, tuning) -> float`
+- `skill_term(level_a, level_b, max_level, neutral_level, floor_term) -> float`
 - `opinion_delta(current, positive, magnitude) -> float`
 - `mood_offset(mean_opinion, neutral_band, max_offset) -> float`
 - `chat_interval(base, trait_multiplier) -> float`
@@ -178,6 +193,14 @@ Not touched: `scripts/managers/save_manager.gd` (component hooks carry it), `paw
 - **Difficulty (WI-37).** No hook in v1. If it wants one later, `base_positive_chance` is the single knob.
 
 ## Verification
+
+**Result: 688 GUT green (50 suites, 37 new) + 65/65 probe checks, plus a windowed screenshot of the finished tab.** The probe (temporary `Wi48Probe` autoload against `main.tscn` headless, removed after) drove chats by hand-emitting `slow_tick` at a known interval with the sim paused, which makes every timing check deterministic.
+
+Three findings came out of verification, and the third is the important lesson:
+
+- Deviation 7 above (deferred `set_tab_hidden`).
+- A naive A/B of two 200-chat walks — verification item 3 as originally written — measures the dice rather than the traits: opinion feedback makes the walk a runaway dominated by its first few rolls, and the social xp the *first* walk earns biases the *second*. It now holds opinion and skill weights fixed, seeds the RNG, and asserts on the odds as well as the outcome.
+- **The UI check passed while the real panel was broken, because the probe set the tab up in the wrong order.** It did `add_child` then `set_pawn`; `ui_main.gd` does `set_pawn` then `add_child`. Building the tab in-tree hid deviation 8 completely — the rows were correct either way, and only the *layout* differed. A UI probe must replicate the caller's exact call order, not merely reach the same end state. It now instantiates the real `pawn_info_panel.tscn`, calls `set_pawn` out of tree, adds it to `ui_main`, selects the tab, and asserts the tab occupies real height rather than only that its rows exist. Layout regressions are invisible to "did the data arrive?" checks.
 
 1. **GUT:** `test_social.gd` over `SocialMath` — positive-chance monotonicity in opinion/affinity/skill and clamping at both ends; delta falloff approaching but never exceeding ±100; mood offset exactly 0 across the whole neutral band and continuous at its edges; trait affinity for aligned / conflicting / unrelated / neutral-polarity pairs; interval multipliers (Extrovert 0.5, Introvert 2.0, both traits absent 1.0); partner weighting favouring the unmet and the long-unspoken; label banding boundaries.
 2. **Headless probe** (temporary autoload, the standard fallback): two crew in one module — assert a chat resolves within the expected window, both cooldowns reset together, both ledgers gained a symmetric-sign entry with independent deltas, and recreation rose on a positive outcome but not past the cap. Then force ~50 chats via the cheat and assert the pair's opinions trend positive with `base_positive_chance` at 0.75, and trend negative with it at 0.1 — the trend claim is the one this design most needs proven.

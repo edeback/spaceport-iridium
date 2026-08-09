@@ -59,6 +59,11 @@ signal crew_hired(pawn: PawnBase)
 ## A pawn's skill just leveled up (WI-22) - for UI flavor / alerts.
 @warning_ignore("unused_signal")
 signal pawn_skill_leveled(pawn: PawnBase, skill: StringName, new_level: int)
+## Two pawns just finished a chat (WI-48). `positive` is the verdict they share;
+## `delta` is the mean of the two opinion shifts, which can differ per direction.
+## Emitted once per chat by the initiating component, never twice.
+@warning_ignore("unused_signal")
+signal pawns_chatted(a: PawnBase, b: PawnBase, positive: bool, delta: float)
 ## The recruitment candidate pool changed (WI-22): refreshed on a trader visit
 ## or a candidate hired. The open recruitment window re-reads on this.
 @warning_ignore("unused_signal")
