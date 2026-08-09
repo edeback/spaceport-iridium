@@ -1,6 +1,4 @@
-extends "res://Planets/Planet.gd"
-
-
+extends StellarObjectVisual
 
 func set_pixels(amount):
 	$BlackHole.material.set_shader_parameter("pixels", amount)

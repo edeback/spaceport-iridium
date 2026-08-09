@@ -1,12 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://b47dpsuy2ch3g"]
+[gd_scene format=3 uid="uid://b47dpsuy2ch3g"]
 
-[ext_resource type="PackedScene" path="res://Planets/Planet.tscn" id="1"]
-[ext_resource type="Script" path="res://Planets/GasPlanetLayers/GasPlanetLayers.gd" id="2"]
-[ext_resource type="Shader" path="res://Planets/GasPlanetLayers/Ring.gdshader" id="3"]
-[ext_resource type="Shader" path="res://Planets/GasPlanetLayers/GasLayers.gdshader" id="4"]
+[ext_resource type="Script" uid="uid://cp63okmullc1h" path="res://assets/external/pixel_planets/GasPlanetLayers/GasPlanetLayers.gd" id="1_2cl1k"]
+[ext_resource type="Shader" uid="uid://bmgpwjrh1wkg6" path="res://assets/external/pixel_planets/GasPlanetLayers/GasLayers.gdshader" id="2_e1eu0"]
+[ext_resource type="Shader" uid="uid://w0j4cg7tta2y" path="res://assets/external/pixel_planets/GasPlanetLayers/Ring.gdshader" id="3_cnmt6"]
 
 [sub_resource type="ShaderMaterial" id="5"]
-shader = ExtResource("4")
+shader = ExtResource("2_e1eu0")
 shader_parameter/pixels = 100.0
 shader_parameter/rotation = 0.0
 shader_parameter/cloud_cover = 0.61
@@ -27,7 +26,7 @@ shader_parameter/seed = 6.314
 shader_parameter/time = 0.0
 
 [sub_resource type="ShaderMaterial" id="6"]
-shader = ExtResource("3")
+shader = ExtResource("3_cnmt6")
 shader_parameter/pixels = 300.0
 shader_parameter/rotation = 0.7
 shader_parameter/light_origin = Vector2(-0.1, 0.3)
@@ -45,7 +44,7 @@ shader_parameter/OCTAVES = 4
 shader_parameter/seed = 8.461
 shader_parameter/time = 0.0
 
-[node name="Planet" instance=ExtResource("1")]
+[node name="Planet" unique_id=672592476]
 custom_minimum_size = Vector2(0, 0)
 layout_mode = 3
 anchors_preset = 15
@@ -53,17 +52,17 @@ offset_right = -412.0
 offset_bottom = -200.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("2")
+script = ExtResource("1_2cl1k")
 relative_scale = 3.0
 gui_zoom = 2.5
 
-[node name="GasLayers" type="ColorRect" parent="." index="0"]
+[node name="GasLayers" type="ColorRect" parent="." index="0" unique_id=910227940]
 material = SubResource("5")
 layout_mode = 0
 offset_right = 100.0
 offset_bottom = 100.0
 
-[node name="Ring" type="ColorRect" parent="." index="1"]
+[node name="Ring" type="ColorRect" parent="." index="1" unique_id=1462560062]
 material = SubResource("6")
 layout_mode = 0
 offset_left = -100.0

@@ -1,8 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://bj7tr13ilvj3h"]
+[gd_scene format=3 uid="uid://bj7tr13ilvj3h"]
 
-[ext_resource type="Shader" path="res://Planets/Asteroids/Asteroids.gdshader" id="1"]
-[ext_resource type="PackedScene" path="res://Planets/Planet.tscn" id="2"]
-[ext_resource type="Script" path="res://Planets/Asteroids/Asteroid.gd" id="3"]
+[ext_resource type="Shader" uid="uid://b6ilkq80ta7c1" path="res://assets/external/pixel_planets/Asteroids/Asteroids.gdshader" id="1"]
+[ext_resource type="PackedScene" uid="uid://d20pakj34nu00" path="res://assets/external/pixel_planets/StellarObjectVisual.tscn" id="2"]
+[ext_resource type="Script" uid="uid://b3x4eix5k3bca" path="res://assets/external/pixel_planets/Asteroids/Asteroid.gd" id="3"]
 
 [sub_resource type="ShaderMaterial" id="1"]
 shader = ExtResource("1")
@@ -16,17 +16,15 @@ shader_parameter/octaves = 2
 shader_parameter/seed = 1.567
 shader_parameter/should_dither = true
 
-[node name="Asteroid" instance=ExtResource("2")]
+[node name="Asteroid" unique_id=864628958 instance=ExtResource("2")]
 custom_minimum_size = Vector2(100, 100)
-layout_mode = 3
-anchors_preset = 15
 offset_right = -412.0
 offset_bottom = -200.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("3")
 
-[node name="Asteroid" type="ColorRect" parent="." index="0"]
+[node name="Asteroid" type="ColorRect" parent="." index="0" unique_id=2022694958]
 material = SubResource("1")
 layout_mode = 0
 offset_right = 100.0

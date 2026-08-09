@@ -1,9 +1,9 @@
-[gd_scene load_steps=7 format=3 uid="uid://nn5fi105o1xv"]
+[gd_scene format=3 uid="uid://nn5fi105o1xv"]
 
-[ext_resource type="PackedScene" path="res://Planets/Planet.tscn" id="1"]
-[ext_resource type="Script" path="res://Planets/BlackHole/BlackHole.gd" id="2"]
-[ext_resource type="Shader" path="res://Planets/BlackHole/BlackHoleRing.gdshader" id="3"]
-[ext_resource type="Shader" path="res://Planets/BlackHole/BlackHole.gdshader" id="4"]
+[ext_resource type="PackedScene" uid="uid://d20pakj34nu00" path="res://assets/external/pixel_planets/StellarObjectVisual.tscn" id="1"]
+[ext_resource type="Script" uid="uid://du5sfn3lks2pn" path="res://assets/external/pixel_planets/BlackHole/BlackHole.gd" id="2"]
+[ext_resource type="Shader" uid="uid://sxc1buoajep" path="res://assets/external/pixel_planets/BlackHole/BlackHoleRing.gdshader" id="3"]
+[ext_resource type="Shader" uid="uid://wfpt0iayjikf" path="res://assets/external/pixel_planets/BlackHole/BlackHole.gdshader" id="4"]
 
 [sub_resource type="ShaderMaterial" id="3"]
 shader = ExtResource("4")

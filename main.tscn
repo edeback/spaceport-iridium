@@ -64,6 +64,8 @@
 [ext_resource type="Script" uid="uid://d0bklsxrd4qvm" path="res://scripts/managers/trader_manager.gd" id="35_tradermgr"]
 [ext_resource type="Resource" path="res://data/traders/first_caravan.tres" id="36_caravan"]
 [ext_resource type="PackedScene" uid="uid://bqpttolexash5" path="res://objects/trader_shuttle.tscn" id="37_tradershuttle"]
+[ext_resource type="PackedScene" uid="uid://clqvlybt45o7r" path="res://assets/external/pixel_planets/Star/Star.tscn" id="59_uatky"]
+[ext_resource type="PackedScene" uid="uid://crdxh2i35dorc" path="res://assets/external/pixel_planets/Rivers/Rivers.tscn" id="60_ntx8l"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2cqfq"]
 atlas = ExtResource("11_2cqfq")
@@ -7735,7 +7737,15 @@ texture_filter = 1
 scroll_scale = Vector2(0.1, 0.1)
 follow_viewport = false
 
+[node name="Star" parent="BackgroundLayers/BackgroundLayers/LocalStar" unique_id=1391753778 instance=ExtResource("59_uatky")]
+offset_left = 200.0
+offset_top = 200.0
+offset_right = 200.0
+offset_bottom = 200.0
+scale = Vector2(2, 2)
+
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="BackgroundLayers/BackgroundLayers/LocalStar" unique_id=1217125302]
+visible = false
 position = Vector2(100, 100)
 scale = Vector2(2, 2)
 sprite_frames = SubResource("SpriteFrames_gncs7")
@@ -7749,7 +7759,19 @@ texture_filter = 1
 scroll_scale = Vector2(0.15, 0.15)
 follow_viewport = false
 
+[node name="Control2" parent="BackgroundLayers/BackgroundLayers/Planet" unique_id=844727825 instance=ExtResource("60_ntx8l")]
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 600.0
+offset_top = 350.0
+offset_right = 600.0
+offset_bottom = 350.0
+grow_horizontal = 1
+grow_vertical = 1
+
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="BackgroundLayers/BackgroundLayers/Planet" unique_id=1527511544]
+visible = false
 position = Vector2(600, 350)
 sprite_frames = SubResource("SpriteFrames_madyc")
 autoplay = "default"

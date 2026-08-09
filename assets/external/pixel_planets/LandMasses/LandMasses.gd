@@ -1,4 +1,4 @@
-extends "res://Planets/Planet.gd"
+extends StellarObjectVisual
 
 func set_pixels(amount):	
 	$Water.material.set_shader_parameter("pixels", amount)

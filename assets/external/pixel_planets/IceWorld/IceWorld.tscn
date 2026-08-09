@@ -1,9 +1,9 @@
-[gd_scene load_steps=9 format=3 uid="uid://cax1rhbpl13hv"]
+[gd_scene format=3 uid="uid://cax1rhbpl13hv"]
 
-[ext_resource type="PackedScene" path="res://Planets/Planet.tscn" id="1"]
-[ext_resource type="Shader" path="res://Planets/LandMasses/PlanetUnder.gdshader" id="2"]
-[ext_resource type="Script" path="res://Planets/IceWorld/IceWorld.gd" id="3"]
-[ext_resource type="Shader" path="res://Planets/LandMasses/Clouds.gdshader" id="4"]
+[ext_resource type="PackedScene" uid="uid://d20pakj34nu00" path="res://assets/external/pixel_planets/StellarObjectVisual.tscn" id="1"]
+[ext_resource type="Shader" uid="uid://bppx6aloac1k1" path="res://assets/external/pixel_planets/LandMasses/PlanetUnder.gdshader" id="2"]
+[ext_resource type="Script" uid="uid://dstjbo8ch3xpp" path="res://assets/external/pixel_planets/IceWorld/IceWorld.gd" id="3"]
+[ext_resource type="Shader" uid="uid://bt6nkuvjcjcvh" path="res://assets/external/pixel_planets/LandMasses/Clouds.gdshader" id="4"]
 
 [sub_resource type="ShaderMaterial" id="1"]
 shader = ExtResource("2")

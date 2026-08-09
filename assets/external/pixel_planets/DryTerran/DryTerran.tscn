@@ -1,7 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://cqwgwog1pm6s3"]
+[gd_scene format=3 uid="uid://cqwgwog1pm6s3"]
 
-[ext_resource type="PackedScene" path="res://Planets/Planet.tscn" id="1"]
-[ext_resource type="Script" path="res://Planets/DryTerran/DryTerran.gd" id="2"]
+[ext_resource type="PackedScene" uid="uid://d20pakj34nu00" path="res://assets/external/pixel_planets/StellarObjectVisual.tscn" id="1"]
+[ext_resource type="Script" uid="uid://uwr2vaqcd4d2" path="res://assets/external/pixel_planets/DryTerran/DryTerran.gd" id="2"]
 
 [sub_resource type="Shader" id="1"]
 code = "shader_type canvas_item;

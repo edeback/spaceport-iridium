@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://d20pakj34nu00"]
+
+[ext_resource type="Script" uid="uid://nono0vp3vmyw" path="res://assets/external/pixel_planets/StellarObjectVisual.gd" id="1_k2gro"]
+
+[node name="Planet" type="Control" unique_id=699489124]
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -312.0
+offset_bottom = -100.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+script = ExtResource("1_k2gro")

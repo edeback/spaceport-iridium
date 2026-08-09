@@ -1,9 +1,9 @@
-[gd_scene load_steps=7 format=3 uid="uid://deyy6w0ssnedu"]
+[gd_scene format=3 uid="uid://deyy6w0ssnedu"]
 
-[ext_resource type="PackedScene" path="res://Planets/Planet.tscn" id="1"]
-[ext_resource type="Shader" path="res://Planets/NoAtmosphere/NoAtmosphere.gdshader" id="2"]
-[ext_resource type="Shader" path="res://Planets/NoAtmosphere/Craters.gdshader" id="3"]
-[ext_resource type="Script" path="res://Planets/NoAtmosphere/NoAtmosphere.gd" id="4"]
+[ext_resource type="PackedScene" uid="uid://d20pakj34nu00" path="res://assets/external/pixel_planets/StellarObjectVisual.tscn" id="1"]
+[ext_resource type="Shader" uid="uid://bqx3v5v1elwtc" path="res://assets/external/pixel_planets/NoAtmosphere/NoAtmosphere.gdshader" id="2"]
+[ext_resource type="Shader" uid="uid://yg4ic7rljggq" path="res://assets/external/pixel_planets/NoAtmosphere/Craters.gdshader" id="3"]
+[ext_resource type="Script" uid="uid://b607hn0daa8wa" path="res://assets/external/pixel_planets/NoAtmosphere/NoAtmosphere.gd" id="4"]
 
 [sub_resource type="ShaderMaterial" id="1"]
 shader = ExtResource("2")

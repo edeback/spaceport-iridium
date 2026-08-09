@@ -1,8 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://bgah3ujav5t77"]
+[gd_scene format=3 uid="uid://bgah3ujav5t77"]
 
-[ext_resource type="PackedScene" path="res://Planets/Planet.tscn" id="1"]
-[ext_resource type="Shader" path="res://Planets/Galaxy/Galaxy.gdshader" id="2"]
-[ext_resource type="Script" path="res://Planets/Galaxy/Galaxy.gd" id="3"]
+[ext_resource type="PackedScene" uid="uid://d20pakj34nu00" path="res://assets/external/pixel_planets/StellarObjectVisual.tscn" id="1"]
+[ext_resource type="Shader" uid="uid://caegg1khxuh7j" path="res://assets/external/pixel_planets/Galaxy/Galaxy.gdshader" id="2"]
+[ext_resource type="Script" uid="uid://cama2ybwedgmj" path="res://assets/external/pixel_planets/Galaxy/Galaxy.gd" id="3"]
 
 [sub_resource type="ShaderMaterial" id="4"]
 shader = ExtResource("2")

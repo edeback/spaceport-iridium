@@ -1,10 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://bwvk0bdbotelo"]
+[gd_scene format=3 uid="uid://bwvk0bdbotelo"]
 
-[ext_resource type="Script" path="res://Planets/GasPlanet/GasPlanet.gd" id="1"]
-[ext_resource type="Shader" path="res://Planets/GasPlanet/GasPlanet.gdshader" id="2"]
+[ext_resource type="Script" uid="uid://6d1w2hb4rgtn" path="res://assets/external/pixel_planets/GasPlanet/GasPlanet.gd" id="1_0umdu"]
+[ext_resource type="Shader" uid="uid://ca6ewhgfyx0wb" path="res://assets/external/pixel_planets/GasPlanet/GasPlanet.gdshader" id="2_6mf3v"]
 
 [sub_resource type="ShaderMaterial" id="1"]
-shader = ExtResource("2")
+shader = ExtResource("2_6mf3v")
 shader_parameter/pixels = 100.0
 shader_parameter/cloud_cover = 0.0
 shader_parameter/light_origin = Vector2(0.25, 0.25)
@@ -21,7 +21,7 @@ shader_parameter/seed = 5.939
 shader_parameter/time = 0.0
 
 [sub_resource type="ShaderMaterial" id="2"]
-shader = ExtResource("2")
+shader = ExtResource("2_6mf3v")
 shader_parameter/pixels = 100.0
 shader_parameter/cloud_cover = 0.538
 shader_parameter/light_origin = Vector2(0.25, 0.25)
@@ -37,7 +37,7 @@ shader_parameter/OCTAVES = 5
 shader_parameter/seed = 5.939
 shader_parameter/time = 0.0
 
-[node name="Control" type="Control"]
+[node name="Control" type="Control" unique_id=1462037351]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -47,15 +47,15 @@ offset_bottom = -200.0
 grow_horizontal = 2
 grow_vertical = 2
 pivot_offset = Vector2(100, 100)
-script = ExtResource("1")
+script = ExtResource("1_0umdu")
 
-[node name="Cloud" type="ColorRect" parent="."]
+[node name="Cloud" type="ColorRect" parent="." unique_id=49847105]
 material = SubResource("1")
 layout_mode = 0
 offset_right = 100.0
 offset_bottom = 100.0
 
-[node name="Cloud2" type="ColorRect" parent="."]
+[node name="Cloud2" type="ColorRect" parent="." unique_id=1024809505]
 material = SubResource("2")
 layout_mode = 0
 offset_right = 100.0

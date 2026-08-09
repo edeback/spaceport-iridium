@@ -1,3 +1,4 @@
+class_name StellarObjectVisual
 extends Control
 
 var time = 1000.0
