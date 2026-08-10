@@ -221,8 +221,14 @@ godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/unit -gexit
 
 *(Everything the previous revision listed as open — the CONVEYED state, job/asteroid serialization, automated tests, the cheat console, sim-time animations, minimap, overlays, main menu and settings — has shipped, and Phase 3.5's second wave has since closed the job-system inheritance tree (WI-44), the build-menu layout (WI-43) and the persistence sweep (WI-45). What follows is what is actually left.)*
 
-### 2.1 WI-12: Storage QoL
-The one Phase-2 item never done, and the only outstanding gap in the routing language players can *see* now that WI-35 draws it. Wanted: an edit mode on `player_configurable` storages (resource checklist, per-resource desired amounts, component priority), unchecking a stocked resource draining it via normal hauls rather than destroying it, vent-to-space with confirmation, and an auto-dump toggle. WI-27's conveyor endpoint rules already assume this config language exists.
+### 2.1 Storage configuration — shipped, with two gaps
+WI-12 (Storage QoL) is **done** (2026-07-19), landed partly by direct editing rather than as a tracked pass. `player_configurable` storages have an edit mode (accepted-resource checklist, per-resource desired amounts, component priority through `update_priority()` — never a raw field write, per WI-45 A5), dump-with-amount behind a confirmation, and a per-resource `autodump` flag that is saved and drives `StorageData.autodump_amount()`. WI-27's conveyor endpoint rules depend on that config language and have it.
+
+Two of its designed tasks were dropped and are the residual gaps:
+- **No `draining` flag.** Unchecking a resource that still holds stock **dumps it to the module's overflow pile** immediately (`UIStorageComponent.dump_stacks`) for haulers to collect, rather than marking the slot draining and letting normal export hauls empty it in place. The pile route loses no resources, so it satisfies the no-silent-loss rule, but it is a visible pile rather than a quiet drain and it bypasses storage priority on the way out.
+- **No mass-sell.** The trade-panel bulk-sell button was never built.
+
+The remaining *presentation* gap is that all of this is reachable only through one module's storage tab at a time; the station-wide view is [[WI-56_Panels_Crew_And_Stores]]'s Stores panel, which is specified as surfacing every one of these controls without changing the mechanics.
 
 ### 2.2 Save/load completeness
 WI-45 closed this as a *coverage* question — every component and manager field is now either saved or commented as deliberately derived. What remains is structural rather than missing:

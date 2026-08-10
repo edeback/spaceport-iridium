@@ -1,6 +1,6 @@
 Goal: Add detail to the world and show it to the player. Expanding on existing systems, better UI.
 
-**Pawn Interactions:** (Already written up, WI-48)
+**Pawn Interactions:** (Already written up and complete, WI-48)
 - Goal: Pawns should have meaningful interactions with each other. Give more flavor to the game, add story.
 - Pawns now "chat" occasionally when they are in the same module
 	- This replaces the current "passive recreation boost" when two pawns are in the same module
@@ -22,9 +22,10 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 **Audio:**
 - Goal: Add sounds for feedback and immersion
 - Create a system to easily play sounds at positions
+	- Use `AudioStreamPlayer2D`
 - New sounds:
 	- On module placement (can be unique per module type)
-	- When a module is clicked on (again unique per module)
+	- When a module is clicked on (again can have unique override per module)
 	- When an alert is triggered
 	- When the trader arrives
 	- Combat sounds (firing and when a target is hit)
@@ -79,20 +80,28 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 **Pawn Relationships:**
 - Goal: Pawns should form relationships with each other, a stronger form of interactions
 
-**UI Rework:**
-- Merge UI panels into one larger system, and give them a unified look
-- https://claude.ai/design/p/d4fdab39-dde5-4ff9-9aba-4ae13578fe3e?file=Iridium+UI+Spec.dc.html
-- Also improve existing panels:
+**UI Rework:** (Written up as [[04_UI_Rework_Program]] — nine work items, WI-49 … WI-57)
+- Goal: Merge UI panels into one larger system, and give them a unified look
+- This was designed in Claude Design and that project is exported at assets/external/spaceport-iridium-ui-layout
+	- The implementation is in `Iridium Console UI Spec.dc.html`
+	- Please read the README as well as the UI Spec in full, as it details what the final output should look like
+- Note that this mockup does not necessary reflect the exact content of some of the tabs. For example, a crewmember has more tabs in its inspector than in the mockup, make sure to port all the tabs from the current game. The mockup is more of a style guide.
+- Some notes and improvements:
 	- **Pawn Inspect Pane:**
 		- Goal: Be able to see all the details of a pawn
 		- "Needs" pane should also break out all the mood modifiers that go into the "happiness" calculation
-		- New "Relationships" pane for describing relationships (requires relationships to be implemented first)
 	- **Alerts:**
 		- "High priority" alerts should require the player to click to dismiss them, so they aren't missed
 			- Low priority alerts - someone is hungry, for example, can be transient
 			- Critical alerts should additionally pause the game until acknowledged
 		- Alerts that specifically mention a pawn or module can be clicked on to jump to that pawn or module
 		- There should be a log of those high/critical priority alerts so the player can go back and see what has happened
+	- **Crew:**
+		- The "Show All Jobs" button is what displays the same content as the current "Jobs" screen, both the jobs taken by the crew as well as the ones not yet picked up.
+	- **R&D:**
+		- The mockup describes research points, but that is for a not-yet-designed system, continue to use credits as the resource to spend to unlock technology
+	- **Comms:**
+		- Instead of the Inspection event firing randomly, the "Contact ARC" button allows the player to pick when they are ready for an inspection.
 
 **Pawn Death:**
 - When health goes to zero, the pawn should die

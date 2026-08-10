@@ -40,3 +40,10 @@ Atmosphere rates not directly set to module size? (so can have large modules tha
 Hyperspace?
 - https://godotshaders.com/shader/hyper-space-speed-effect/
 
+
+Smarter Pawn Lookups
+- Right now we do a lot of scanning of pawns
+- Each module should carry a list of pawns inside it
+- This way when a system needs what pawns are in a module, they can just look it up there
+- Also objects should be able to subscribe to an event when a pawn enters or exits
+	- This can then be used for Pawn Interactions to determine mood modifiers instead of scanning every frame
