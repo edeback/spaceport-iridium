@@ -27,10 +27,19 @@ extends Control
 ## purpose - the 56/34 header-height difference is what makes the hierarchy
 ## read, so it must not be this frame with a parameter.
 
+## Loaded rather than preloaded by callers: the scene sets this script, so a
+## `preload` from inside it would be a cyclic resource inclusion.
+const SCENE_PATH: String = "res://ui/theme/console_panel.tscn"
+
 ## Shown right-aligned in the header when a panel does not override it. Esc
 ## closes every panel (WI-50 owns the arbitration), so this is the honest
 ## default rather than a per-panel decision.
 const DEFAULT_HOTKEY: String = "ESC"
+
+## Panels are code-built (program decision 8), so the frame needs a one-call
+## instantiation path like the widgets have.
+static func create() -> ConsolePanel:
+	return load(SCENE_PATH).instantiate() as ConsolePanel
 
 @export var title: String = "PANEL":
 	set(value):

@@ -20,12 +20,12 @@ extends Control
 ##
 ## **WI-49 pilot conversion.** This was a code-built full-rect window that
 ## invented its own frame; it now mounts a [ConsolePanel] and builds its rows
-## from [ListRow] and [SectionLabel]. It is the exact operation WI-50 performs
-## seven more times, done once here so the frame's API gets found wanting while
-## that is still cheap. It keeps its side-button toggle until WI-50 replaces the
-## side column with the console.
-
-const CONSOLE_PANEL: PackedScene = preload("res://ui/theme/console_panel.tscn")
+## from [ListRow] and [SectionLabel].
+##
+## **WI-50** made it the CREW mode's panel. It no longer opens or closes itself:
+## [ModeManager] owns visibility and Esc, and this only implements the
+## `on_opened` hook so the board is current the moment it appears. WI-56 puts the
+## crew roster in front of it.
 
 ## Rows past this are summarised as a count. A backed-up board can hold hundreds;
 ## the player needs the shape of the queue, not every entry.
@@ -48,18 +48,10 @@ func _ready() -> void:
 	if Global.time_manager != null:
 		Global.time_manager.slow_tick.connect(_on_slow_tick)
 
-func _unhandled_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed("ui_cancel"):
-		visible = false
-		get_viewport().set_input_as_handled()
-
-func open() -> void:
-	visible = true
-	# Ambient HUD strips (the overlay toolbar, the alert feed) are mounted after
-	# this panel and would otherwise draw across its header. An opened panel is
-	# the thing the player just asked for, so it goes on top. WI-50 removes the
-	# need for this by making panel mounting exclusive.
-	move_to_front()
+## [ModeManager]'s open hook. A panel that only refreshes `if visible` needs one
+## refresh at the moment it becomes visible, or it shows whatever the board
+## looked like when it was last closed.
+func on_opened() -> void:
 	refresh()
 
 func _on_slow_tick(_interval: float) -> void:
@@ -69,13 +61,14 @@ func _on_slow_tick(_interval: float) -> void:
 # --- shell --------------------------------------------------------------------
 
 func _build_shell() -> void:
-	_panel = CONSOLE_PANEL.instantiate() as ConsolePanel
+	_panel = ConsolePanel.create()
 	_panel.title = "Jobs"
 	# The board's shape ("4 in progress, 12 waiting") is exactly what the header's
 	# subtitle slot is for, so it is not also a row inside the list.
 	_panel.subtitle = ""
 	_panel.panel_width = UIMetrics.PANEL_CREW_WIDTH
 	_panel.content_padding = UIMetrics.CONTENT_PAD
+	_panel.hotkey = ModeManager.hotkey_label(ModeManager.Mode.CREW)
 	add_child(_panel)
 
 	var column := VBoxContainer.new()

@@ -5,21 +5,47 @@
 [node name="UiTimeScaleSelect" type="MarginContainer"]
 script = ExtResource("1_lvnw1")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
+[node name="Column" type="VBoxContainer" parent="."]
 layout_mode = 2
-theme_override_constants/separation = 8
+size_flags_vertical = 4
+theme_override_constants/separation = 4
 
-[node name="ClockLabel" type="Label" parent="HBoxContainer"]
+[node name="TopRow" type="HBoxContainer" parent="Column"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ClockBlock" type="VBoxContainer" parent="Column/TopRow"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 0
+
+[node name="ClockLabel" type="Label" parent="Column/TopRow/ClockBlock"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Cycle 1, 06:00"
+theme_type_variation = &"ClockMetric"
+text = "06:00"
 
-[node name="PauseButton" type="CheckButton" parent="HBoxContainer"]
+[node name="CycleLabel" type="Label" parent="Column/TopRow/ClockBlock"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Pause"
+theme_type_variation = &"ReadoutLabel"
+text = "CYCLE 1"
 
-[node name="SpeedButtons" type="HBoxContainer" parent="HBoxContainer"]
+[node name="Spacer" type="Control" parent="Column/TopRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="PauseButton" type="Button" parent="Column/TopRow"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 2
+size_flags_vertical = 4
+focus_mode = 0
+theme_type_variation = &"ActionSecondary"
+toggle_mode = true
+text = "PAUSE"
+
+[node name="SpeedButtons" type="HBoxContainer" parent="Column"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4

@@ -11,17 +11,29 @@ extends VBoxContainer
 ## Grouping/ordering/search/MRU are pure and tested in BuildMenuModel; this node owns
 ## only the view - button instancing, unlock-driven visibility, and flyout placement.
 ## It keys on ModuleData.category_id, never tags (tags stay reserved for gameplay).
+##
+## WI-50 moved this out of `ui_main.tscn`'s left column and into the BUILD mode's
+## [ConsolePanel]. The only functional change is [member flyout_anchor]: the flyout
+## has to park beside the *panel*, not beside this VBox, or it would open on top of
+## the panel's own right border.
 
 const MODULE_BUTTON: PackedScene = preload("res://ui/buttons/module_button.tscn")
 const RECENT_CAP: int = 5
 ## Rail category icons are pinned to this square; recent-strip icons to the smaller one.
 const RAIL_ICON_PX: int = 64
 const RECENT_ICON_PX: int = 40
-## Flyout geometry. Width is fixed so the grid wraps predictably; height fits content
-## up to the cap, past which the grid scrolls inside instead of pushing off-screen.
-const FLYOUT_WIDTH: float = 300.0
+## Flyout geometry. Width comes from the design system (356 rail + 340 flyout = the
+## program doc's 696 total); height fits content up to the cap, past which the grid
+## scrolls inside instead of pushing off-screen.
+const FLYOUT_WIDTH: float = float(UIMetrics.PANEL_BUILD_FLYOUT_WIDTH)
 const FLYOUT_MAX_HEIGHT: float = 440.0
-const FLYOUT_GAP: float = 6.0
+## Zero: the flyout butts against the panel's right edge, so the two borders read as
+## one seam and the pair measures exactly the width the design says it does.
+const FLYOUT_GAP: float = 0.0
+
+## What the flyout parks beside. Null means this node - the case when the menu is
+## used outside a panel. The BUILD factory sets it to the [ConsolePanel].
+var flyout_anchor: Control = null
 
 ## Every non-hidden module, scanned once - the source of truth for grouping, search,
 ## recent lookups, and unlock reactivity.
@@ -187,8 +199,22 @@ func _on_search_changed(text: String) -> void:
 	_flyout.visible = true
 	_fit_and_place_flyout.call_deferred()
 
+## `is_visible_in_tree`, not `visible`: `top_level` detaches the flyout's transform
+## but not its visibility, so closing the Build panel hides the flyout while leaving
+## its own `visible` true. Esc's "close the flyout first" level would otherwise claim
+## the key for a flyout nobody can see.
 func flyout_open() -> bool:
-	return _flyout.visible
+	return _flyout.is_visible_in_tree()
+
+## The other half of that: the menu puts its own flyout away whenever it stops
+## being visible, so reopening Build does not reopen a category the player
+## already dismissed. It lives here rather than in whatever mounted the menu,
+## because the flyout is this node's to own under any mount.
+## The `_flyout` guard is load-bearing: visibility notifications fire on tree
+## entry, before `_ready` has built it.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED and _flyout != null and not is_visible_in_tree():
+		close_flyout()
 
 func close_flyout() -> void:
 	_flyout.visible = false
@@ -211,7 +237,8 @@ func _fit_and_place_flyout() -> void:
 	var y: float = anchor.global_position.y if anchor != null else _search.global_position.y
 	var viewport_height: float = get_viewport_rect().size.y
 	y = clampf(y, 0.0, maxf(0.0, viewport_height - _scroll.custom_minimum_size.y - 12.0))
-	_flyout.global_position = Vector2(global_position.x + size.x + FLYOUT_GAP, y)
+	var side: Control = flyout_anchor if flyout_anchor != null else self
+	_flyout.global_position = Vector2(side.global_position.x + side.size.x + FLYOUT_GAP, y)
 
 ## Fills the flyout grid with a category's (or search's) modules. Buttons here keep the
 ## full ModuleButton look (icon + name); only the rail and recent strip use bare icons.

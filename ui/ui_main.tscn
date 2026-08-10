@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://ce6npnqw8s3mu"]
 
 [ext_resource type="Script" uid="uid://de484prd4xlyv" path="res://ui/ui_main.gd" id="1_2bqpn"]
-[ext_resource type="PackedScene" uid="uid://db7eeol2eexb" path="res://ui/buttons/build_menu.tscn" id="3_ka3re"]
 [ext_resource type="Texture2D" uid="uid://lfuwsqm704un" path="res://ui/icons/energy.svg" id="3_wyidc"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="4_pqeum"]
 [ext_resource type="PackedScene" uid="uid://dbm37hjpuku3k" path="res://ui/resource_display_ui.tscn" id="4_wyidc"]
@@ -27,18 +26,10 @@
 [ext_resource type="PackedScene" uid="uid://wjvf1i75pf0u" path="res://ui/windows/component_ui_panels/asteroid_info_panel.tscn" id="18_astinfo"]
 [ext_resource type="PackedScene" uid="uid://mroynql4rcbs" path="res://ui/windows/trade/trade_screen.tscn" id="19_xyc40"]
 [ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="21_bgs1r"]
-[ext_resource type="PackedScene" uid="uid://cmkeqkbs2pdr1" path="res://ui/ui_time_scale_select.tscn" id="37_848xd"]
 [ext_resource type="PackedScene" uid="uid://byip82db78f7" path="res://ui/windows/module_info_ingame_panel.tscn" id="38_x3wcs"]
 [ext_resource type="PackedScene" path="res://ui/windows/turboshaft_panel.tscn" id="39_tshft"]
 
-[sub_resource type="InputEventKey" id="InputEventKey_1h8lm"]
-device = -1
-keycode = 4194305
-
-[sub_resource type="Shortcut" id="Shortcut_xyc40"]
-events = [SubResource("InputEventKey_1h8lm")]
-
-[node name="UiMain" type="Control" unique_id=2019768832 node_paths=PackedStringArray("resource_display_container")]
+[node name="UiMain" type="Control" unique_id=2019768832 node_paths=PackedStringArray("vitals_strip", "resource_display_container")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -47,158 +38,65 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_2bqpn")
-resource_display_container = NodePath("ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer")
+vitals_strip = NodePath("VitalsStrip")
+resource_display_container = NodePath("VitalsStrip/ResourceContainer")
 resource_display_ui = ExtResource("4_wyidc")
 resources_to_display = Array[ExtResource("4_pqeum")]([ExtResource("5_47oex"), ExtResource("9_pset1"), ExtResource("6_b5r2u"), ExtResource("8_u34n7"), ExtResource("9_bgs1r"), ExtResource("5_rtsem"), ExtResource("11_6porg"), ExtResource("13_0sakr"), ExtResource("13_s5567"), ExtResource("12_6re3r"), ExtResource("15_qnfs5"), ExtResource("10_j1br4"), ExtResource("8_xyc40"), ExtResource("14_p3y7p"), ExtResource("7_1h8lm"), ExtResource("11_lnfpq"), ExtResource("21_bgs1r")])
 pawn_info_screen = ExtResource("15_x3wcs")
 resource_pile_screen = ExtResource("17_w7nyr")
 asteroid_info_screen = ExtResource("18_astinfo")
 
-[node name="ResourceDisplayPanel" type="PanelContainer" parent="." unique_id=1186352041]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -230.0
-offset_top = -102.0
-offset_right = 230.0
-grow_horizontal = 2
-grow_vertical = 0
+[node name="VitalsStrip" type="HBoxContainer" parent="." unique_id=133719880]
+layout_mode = 0
+offset_right = 460.0
+offset_bottom = 52.0
+size_flags_vertical = 4
 
-[node name="MarginContainer" type="MarginContainer" parent="ResourceDisplayPanel" unique_id=1153547948]
-layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
-
-[node name="HBoxContainer" type="HBoxContainer" parent="ResourceDisplayPanel/MarginContainer" unique_id=133719880]
-layout_mode = 2
-
-[node name="EnergyDisplayContainer" type="PanelContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer" unique_id=2060079048 node_paths=PackedStringArray("energy_used_label")]
+[node name="EnergyDisplayContainer" type="PanelContainer" parent="VitalsStrip" unique_id=2060079048 node_paths=PackedStringArray("energy_used_label")]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 script = ExtResource("15_rtsem")
 energy_used_label = NodePath("MarginContainer/VBoxContainer/EnergyUsedLabel")
 
-[node name="MarginContainer" type="MarginContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer" unique_id=1699026209]
+[node name="MarginContainer" type="MarginContainer" parent="VitalsStrip/EnergyDisplayContainer" unique_id=1699026209]
 layout_mode = 2
 theme_override_constants/margin_left = 4
 theme_override_constants/margin_top = 2
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer/MarginContainer" unique_id=1007458240]
+[node name="VBoxContainer" type="VBoxContainer" parent="VitalsStrip/EnergyDisplayContainer/MarginContainer" unique_id=1007458240]
 layout_mode = 2
 size_flags_vertical = 4
 
-[node name="PanelContainer" type="PanelContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer/MarginContainer/VBoxContainer" unique_id=1217976286]
+[node name="PanelContainer" type="PanelContainer" parent="VitalsStrip/EnergyDisplayContainer/MarginContainer/VBoxContainer" unique_id=1217976286]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="EnergyIcon" type="TextureRect" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer/MarginContainer/VBoxContainer/PanelContainer" unique_id=769114458]
-custom_minimum_size = Vector2(30, 30)
+[node name="EnergyIcon" type="TextureRect" parent="VitalsStrip/EnergyDisplayContainer/MarginContainer/VBoxContainer/PanelContainer" unique_id=769114458]
+custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 texture = ExtResource("3_wyidc")
 expand_mode = 1
 
-[node name="EnergyLabel" type="Label" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer/MarginContainer/VBoxContainer" unique_id=1670626873]
+[node name="EnergyLabel" type="Label" parent="VitalsStrip/EnergyDisplayContainer/MarginContainer/VBoxContainer" unique_id=1670626873]
 layout_mode = 2
 size_flags_horizontal = 4
-text = "Energy"
+theme_type_variation = &"ReadoutLabel"
+text = "ENERGY"
 
-[node name="EnergyUsedLabel" type="Label" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/EnergyDisplayContainer/MarginContainer/VBoxContainer" unique_id=990410902]
+[node name="EnergyUsedLabel" type="Label" parent="VitalsStrip/EnergyDisplayContainer/MarginContainer/VBoxContainer" unique_id=990410902]
 layout_mode = 2
 size_flags_horizontal = 4
+theme_type_variation = &"Metric"
 text = "87 / 300"
 
-[node name="ResourceContainer" type="HBoxContainer" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer" unique_id=1542373739]
+[node name="ResourceContainer" type="HBoxContainer" parent="VitalsStrip" unique_id=1542373739]
 layout_mode = 2
-
-[node name="PanelContainer2" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" unique_id=775071548 instance=ExtResource("4_wyidc")]
-layout_mode = 2
-
-[node name="PanelContainer3" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" unique_id=836193402 instance=ExtResource("4_wyidc")]
-layout_mode = 2
-
-[node name="PanelContainer4" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" unique_id=435608622 instance=ExtResource("4_wyidc")]
-layout_mode = 2
-
-[node name="PanelContainer5" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" unique_id=1044300108 instance=ExtResource("4_wyidc")]
-layout_mode = 2
-
-[node name="PanelContainer6" parent="ResourceDisplayPanel/MarginContainer/HBoxContainer/ResourceContainer" unique_id=983873649 instance=ExtResource("4_wyidc")]
-layout_mode = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1258212530]
-layout_mode = 1
-anchors_preset = 9
-anchor_bottom = 1.0
-offset_right = 190.0
-grow_vertical = 2
-
-[node name="PanelContainer" type="PanelContainer" parent="VBoxContainer" unique_id=828912190]
-layout_mode = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/PanelContainer" unique_id=2069499512]
-layout_mode = 2
-theme_override_constants/margin_left = 4
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 4
-theme_override_constants/margin_bottom = 4
-
-[node name="DisplayCorridorsCheckbox" type="CheckBox" parent="VBoxContainer/PanelContainer/MarginContainer" unique_id=312351359]
-unique_name_in_owner = true
-layout_mode = 2
-button_pressed = true
-text = "Display Corridors"
-
-[node name="Modules" type="PanelContainer" parent="VBoxContainer" unique_id=615522520]
-layout_mode = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules" unique_id=11590616]
-layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
-
-[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/Modules/MarginContainer" unique_id=792435669]
-layout_mode = 2
-
-[node name="BuildMenu" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer" unique_id=2038703158 instance=ExtResource("3_ka3re")]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer" unique_id=39982694]
-layout_mode = 2
-size_flags_vertical = 10
-theme_override_constants/margin_left = 4
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 4
-theme_override_constants/margin_bottom = 4
-
-[node name="ModuleInfoButton" type="Button" parent="VBoxContainer/Modules/MarginContainer/VBoxContainer/MarginContainer" unique_id=939840124]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 10
-shortcut = SubResource("Shortcut_xyc40")
-text = "Module Info"
-
-[node name="UiTimeScaleSelect" parent="." unique_id=1319912742 instance=ExtResource("37_848xd")]
-layout_mode = 1
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_top = -31.0
-offset_right = 215.0
-grow_vertical = 0
 
 [node name="TradeScreen" parent="." unique_id=1329679237 instance=ExtResource("19_xyc40")]
 visible = false
@@ -231,6 +129,3 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 0
 grow_vertical = 0
-
-[connection signal="toggled" from="VBoxContainer/PanelContainer/MarginContainer/DisplayCorridorsCheckbox" to="." method="_on_check_button_toggled"]
-[connection signal="pressed" from="VBoxContainer/Modules/MarginContainer/VBoxContainer/MarginContainer/ModuleInfoButton" to="." method="_on_info_button_pressed"]

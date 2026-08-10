@@ -1,6 +1,6 @@
 # 04 — UI Rework Program (WI-49 … WI-57)
 
-> **STATUS: in progress — WI-49 shipped 2026-08-10, WI-50…57 not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
+> **STATUS: in progress — WI-49 and WI-50 shipped 2026-08-10, WI-51…57 not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
 >
 > The source design is **`assets/external/spaceport-iridium-ui-layout/project/Iridium Console UI Spec.dc.html`**, a Claude Design handoff bundle: ten reference screens at 1920×1080 plus the rules that produce them. Read it before implementing any child WI. Numbers in this doc are transcribed from it and are authoritative for implementation; where this doc and the mockup disagree, **this doc wins** (it carries the gameplay corrections from [[New Work for Phase 4]] that the mockup predates).
 >
@@ -152,7 +152,7 @@ The mockup's own suggested build order, split finer so no work item touches more
 | WI | Title | Why here |
 | --- | --- | --- |
 | [[WI-49_UI_Design_System]] ✅ | Theme, palette, type, shared panel frame, widget library | "Every later step gets cheaper, and this alone closes most of the polish gap." Nothing else can start without the frame |
-| [[WI-50_Console_And_Modes]] | Console strip, mode buttons, exclusive mounting, Esc rewrite, time zone | Existing screens get **ported in behind it unchanged**. They look inconsistent for a while and still behave better than they do now |
+| [[WI-50_Console_And_Modes]] ✅ | Console strip, mode buttons, exclusive mounting, Esc rewrite, time zone | Existing screens get **ported in behind it unchanged**. They look inconsistent for a while and still behave better than they do now |
 | [[WI-51_Inspector]] | One bottom-right surface, swapped tab sets, nothing-selected line | The largest single reduction in surface count; also where the mood-modifier breakdown lands |
 | [[WI-52_Vitals_And_Ledger]] | Pinned strip + ledger flyout + per-cycle rates + pin persistence | "Do this before adding more resources, not after" |
 | [[WI-53_Alerts]] | Severity model, sticky/critical alerts, jump-to-subject, history log | The one item with real gameplay consequence (critical alerts pause the sim) |
@@ -177,6 +177,30 @@ Shipped 2026-08-10. Cite this rather than re-deriving it; details and the traps 
 Two rules that came out of building it and bind the later items: **the scene authors structure, the script applies every number from `UIMetrics`** (so no `.tscn` can hold a header height that disagrees with the design system), and **frame node lookups are lazy**, because exported setters fire before children exist and callers configure a frame before mounting it.
 
 `Stepper` already implements the commit rule the Stores panel needs: the displayed value moves per step, but `value_changed` fires once on release or after a quiet period. `value_previewed` is for live readouts only.
+
+## What WI-50 landed (the mounting contract everything else uses)
+
+Shipped 2026-08-10. Details and the six traps found are in [[WI-50_Console_And_Modes]].
+
+| File | What it is |
+| --- | --- |
+| `ui/console/mode_manager.gd` (`ModeManager`) | The **only** mutable "what is open" state in the HUD. `Mode` enum, `ORDER`/`LABELS`/`HOTKEY_ACTIONS`, `register(mode, factory)` / `register_unavailable(mode, reason)`, `open`/`close`/`toggle`/`current`, and the mode hotkeys with the text-focus guard. Session-only, tree-independent, 28 GUT tests. |
+| `ui/console/console_bar.tscn` + `.gd` (`ConsoleBar`) | The 112px strip. Builds its buttons from `ModeManager.ORDER`, `bind(manager)` wires both directions, `vitals_zone()` / `time_zone()` are where WI-52 and the clock live. |
+| `ui/console/mode_button.tscn` + `.gd` (`ModeButton`) | 70×74. `active` / `bar` / `dot` / `badge` are **four distinct signals** and the widget is where that distinction is enforced. `set_disabled_with_reason()` for a declared-but-unbuilt slot. |
+| `ui/icons/console/*.svg` | Nine glyphs. Authored, not `_draw()`, because `_draw()` is the one thing headless verification cannot see. |
+| `ConsolePanel.create()` / `SCENE_PATH` | Added to WI-49's frame so panels are one call, like the widgets. |
+| `UIPalette.console_gradient()`, `UIType.CLOCK` | The console's own gradient and the 28px clock variation. |
+
+**The contract for every later panel:**
+
+1. Register a **factory**, not an instance. It is called at most once, on first open, and the panel is cached from then on. `register_unavailable(mode, reason)` for a slot that has a button before it has a panel; the console tracks the registry through `registry_changed`, so registration order does not matter.
+2. A factory may parent its own panel or leave it orphaned; orphans land on `UIMain`'s `PanelLayer`.
+3. Implement `on_opened()` / `on_closed()` if — and only if — the panel holds work it must not do while closed.
+4. **Never set `visible` on yourself.** Declare `signal close_requested` and emit it from your own close control; `ModeManager` connects it duck-typed, the same way it finds the two hooks. Hiding yourself leaves `ModeManager.current()` stale and the next hotkey press closes nothing.
+5. Take the panel width from `UIMetrics`, and the printed hotkey from `ModeManager.hotkey_label(mode)` so a rebind follows.
+6. **Every HUD hotkey is a real input action** in `Global.REMAPPABLE_ACTIONS` — including the overlay digits, which WI-50 converted. `ModeManager.text_entry_has_focus(viewport)` is the one place that decides whether the player is typing; call it, do not re-write it.
+
+Esc is now five levels in `ui_main.gd`: game-over latch → held preview → console flyout → *(trader modal)* → the open mode → the selection chain → an active overlay. WI-51 collapses the selection chain to one check; WI-55 removes the trader level.
 
 ## Cross-cutting risks
 

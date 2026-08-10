@@ -1,0 +1,85 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/console/console_bar.gd" id="1_console"]
+
+[node name="ConsoleBar" type="Control"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -112.0
+grow_horizontal = 2
+grow_vertical = 0
+script = ExtResource("1_console")
+
+[node name="Gradient" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 0
+
+[node name="TopBorder" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 1.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="Highlight" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 1.0
+offset_bottom = 2.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="Row" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 2.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="ModeZone" type="MarginContainer" parent="Row"]
+custom_minimum_size = Vector2(715, 0)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Buttons" type="HBoxContainer" parent="Row/ModeZone"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/separation = 5
+
+[node name="DividerA" type="ColorRect" parent="Row"]
+custom_minimum_size = Vector2(1, 0)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="VitalsZone" type="MarginContainer" parent="Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="DividerB" type="ColorRect" parent="Row"]
+custom_minimum_size = Vector2(1, 0)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="TimeZone" type="MarginContainer" parent="Row"]
+custom_minimum_size = Vector2(247, 0)
+layout_mode = 2
+mouse_filter = 2

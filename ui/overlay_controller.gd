@@ -11,8 +11,20 @@ extends Control
 ## Value->color lives in the pure OverlayPalette; this class owns the mode
 ## lifecycle, the per-module iteration, the signal wiring, and (logistics) the
 ## OverlayFlowLayer that draws arrows/labels on top of the world.
+##
+## WI-50 turned the free-floating toolbar strip into the OVERLAY console panel.
+## The overlay itself is deliberately **not** a mode panel: the tint outlives the
+## panel that switched it on, which is exactly what the console button's cyan bar
+## reports. So the digit hotkeys moved off the buttons' [Shortcut]s (which only
+## fire while their button is visible) and into this node's `_unhandled_input`,
+## where they keep working with the panel shut - the stated design.
 
 enum Mode { NONE, POWER, O2, INTEGRITY, VIBRATION, LOGISTICS }
+
+## Fires whenever the painted overlay changes, so the console can light or clear
+## the OVERLAY button's bar. The mode registry is no use for this: the bar means
+## "live even though the panel is closed".
+signal overlay_mode_changed(mode: Mode)
 
 ## Field level treated as "full red" in vibration mode. A single forge's nearest
 ## structural neighbour sits near 0.5 (intensity 1.0 * falloff 0.5); a module
@@ -26,10 +38,18 @@ const PULSE_HZ: float = 2.2
 const PULSE_MIN_A: float = 0.4
 const PULSE_MAX_A: float = 0.95
 
-## Toolbar placement: a horizontal strip in the top bar, nudged right of the
-## left-hand module column (176px wide) so it clears it.
-const TOOLBAR_LEFT: float = 184.0
-const TOOLBAR_TOP: float = 8.0
+## Overlay hotkeys, in panel order: the digit each is bound to by default, and
+## the mode it paints. Real input actions rather than raw keycodes (program
+## decision 9), so WI-36's remapper lists them, a rebind is possible, and a key
+## bound to something else later cannot be silently swallowed here.
+const HOTKEY_ACTIONS: Dictionary[StringName, Mode] = {
+	&"overlay_clear": Mode.NONE,
+	&"overlay_power": Mode.POWER,
+	&"overlay_o2": Mode.O2,
+	&"overlay_integrity": Mode.INTEGRITY,
+	&"overlay_vibration": Mode.VIBRATION,
+	&"overlay_logistics": Mode.LOGISTICS,
+}
 
 var _mode: Mode = Mode.NONE
 var _flow_layer: OverlayFlowLayer
@@ -40,61 +60,104 @@ var _pulse_time: float = 0.0
 
 var _button_group := ButtonGroup.new()
 var _legend: Label
+var _panel: ConsolePanel
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	set_process(false)
-	_build_toolbar()
 	_build_flow_layer()
 
-# --- toolbar ------------------------------------------------------------------
+# --- the OVERLAY panel --------------------------------------------------------
 
-func _build_toolbar() -> void:
-	var strip := HBoxContainer.new()
-	strip.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	strip.offset_left = TOOLBAR_LEFT
-	strip.offset_top = TOOLBAR_TOP
-	strip.add_theme_constant_override("separation", 4)
+## The mode registry's factory. Built on first open and cached there, and left
+## unparented so the manager mounts it on the panel layer - a panel parented to
+## this zero-content controller would have nothing to take its height from.
+func panel() -> ConsolePanel:
+	if _panel != null and is_instance_valid(_panel):
+		return _panel
+	_panel = ConsolePanel.create()
+	_panel.title = "Overlays"
+	_panel.panel_width = UIMetrics.PANEL_OVERLAYS_WIDTH
+	_panel.content_padding = UIMetrics.CONTENT_PAD
+	_panel.hotkey = ModeManager.hotkey_label(ModeManager.Mode.OVERLAY)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", UIMetrics.SECTION_GAP)
+	_panel.content().add_child(column)
+
+	var modes := VBoxContainer.new()
+	modes.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	modes.add_child(SectionLabel.create("Station view"))
 	_button_group.allow_unpress = true
-	# Order + hotkeys: 1..5 across the strip.
-	_add_mode_button(strip, Mode.POWER, "Power", KEY_1)
-	_add_mode_button(strip, Mode.O2, "O₂", KEY_2)
-	_add_mode_button(strip, Mode.INTEGRITY, "Integrity", KEY_3)
-	_add_mode_button(strip, Mode.VIBRATION, "Vibration", KEY_4)
-	_add_mode_button(strip, Mode.LOGISTICS, "Logistics", KEY_5)
+	# Order + hotkeys: 1..5 down the panel, 0 clears. The printed key comes from
+	# the live InputMap, so a rebind shows up on the button.
+	_add_mode_button(modes, Mode.POWER, "Power", &"overlay_power")
+	_add_mode_button(modes, Mode.O2, "O₂", &"overlay_o2")
+	_add_mode_button(modes, Mode.INTEGRITY, "Integrity", &"overlay_integrity")
+	_add_mode_button(modes, Mode.VIBRATION, "Vibration", &"overlay_vibration")
+	_add_mode_button(modes, Mode.LOGISTICS, "Logistics", &"overlay_logistics")
+	column.add_child(modes)
+
 	_legend = Label.new()
 	_legend.theme_type_variation = UIType.META_LINE
-	_legend.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	strip.add_child(_legend)
-	add_child(strip)
-	_refresh_legend()
+	_legend.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(_legend)
 
-func _add_mode_button(strip: HBoxContainer, mode: Mode, label: String, keycode: Key) -> void:
-	var button := Button.new()
+	# The corridor-display toggle is a real feature the console design has no slot
+	# for, and it is the same category of thing as an overlay - a way of looking at
+	# the station - so it lands here rather than being dropped with the left column
+	# it used to live in.
+	var extras := VBoxContainer.new()
+	extras.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	extras.add_child(SectionLabel.create("Display"))
+	var corridors := CheckBox.new()
+	corridors.text = "Display corridors"
+	corridors.button_pressed = true
+	corridors.focus_mode = Control.FOCUS_NONE
+	corridors.toggled.connect(_on_corridor_display_toggled)
+	extras.add_child(corridors)
+	column.add_child(extras)
+
+	_refresh_legend()
+	_sync_buttons()
+	return _panel
+
+func _add_mode_button(parent: Node, mode: Mode, label: String, action: StringName) -> void:
+	var key: String = ModeManager.action_hotkey_label(action)
+	var button: ActionButton = ActionButton.create("%s   %s" % [key, label])
 	button.toggle_mode = true
 	button.button_group = _button_group
 	button.focus_mode = Control.FOCUS_NONE
-	button.text = "%d %s" % [_hotkey_digit(keycode), label]
-	button.shortcut = _make_shortcut(keycode)
-	button.tooltip_text = "%s overlay (%d)" % [label, _hotkey_digit(keycode)]
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.tooltip_text = "%s overlay (%s)" % [label, key]
 	button.set_meta("overlay_mode", mode)
 	# Reconcile after the toggle settles: with a radio ButtonGroup, switching
 	# fires the old button's toggled(false) and the new one's toggled(true) in an
 	# order we don't want to depend on, so we read the group's pressed button once
 	# the dust settles rather than reacting to each edge.
 	button.toggled.connect(func(_on: bool) -> void: _reconcile_mode.call_deferred())
-	strip.add_child(button)
+	parent.add_child(button)
 
-func _hotkey_digit(keycode: Key) -> int:
-	return keycode - KEY_0
+func _on_corridor_display_toggled(toggled_on: bool) -> void:
+	if Global.world_manager == null:
+		return
+	Global.world_manager.show_module_layer(
+		WorldManager.StructureLayer.CORRIDOR if toggled_on else WorldManager.StructureLayer.MODULE)
 
-func _make_shortcut(keycode: Key) -> Shortcut:
-	var ev := InputEventKey.new()
-	ev.keycode = keycode
-	var sc := Shortcut.new()
-	sc.events = [ev]
-	return sc
+## The overlay hotkeys live here rather than on the buttons because a [Shortcut]
+## only fires while its button is visible in the tree, and the whole point of the
+## overlay is that it survives its panel being closed.
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventKey or event is InputEventMouseButton):
+		return
+	if ModeManager.text_entry_has_focus(get_viewport()):
+		return
+	for action: StringName in HOTKEY_ACTIONS:
+		if InputMap.has_action(action) and event.is_action_pressed(action):
+			get_viewport().set_input_as_handled()
+			set_mode(HOTKEY_ACTIONS[action])
+			return
 
 ## Esc clears an active overlay, but the decision isn't made here: UIMain ranks
 ## every Esc claimant in one place (WI-36) and calls set_mode(NONE) when the
@@ -128,6 +191,7 @@ func set_mode(new_mode: Mode) -> void:
 	_activate()
 	_sync_buttons()
 	_refresh_legend()
+	overlay_mode_changed.emit(_mode)
 
 func _activate() -> void:
 	if _mode == Mode.NONE:

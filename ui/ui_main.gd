@@ -1,6 +1,20 @@
 class_name UIMain
 extends Control
 
+## The HUD root. After WI-50 this is a mount table plus the Esc ladder, and
+## nothing else: navigation lives in [ConsoleBar], "what is open" lives in
+## [ModeManager], and every panel is registered here as a factory rather than
+## wired up by hand.
+##
+## Draw order is the order things are added in [method _ready], and it matters:
+## ambient strips first, then the mode panels (an opened panel is the thing the
+## player just asked for, so it draws over the alert feed), then the console,
+## then the right column, then the modals, then the pause menu last.
+
+## Reparented into the console's vitals zone on ready. WI-52 replaces its
+## contents with the pinned-vitals strip and the ledger chip; this item only
+## moves the existing resource display into the zone as-is.
+@export var vitals_strip: Control
 @export var resource_display_container: HBoxContainer
 @export var resource_display_ui: PackedScene
 @export var resources_to_display: Array[ResourceData]
@@ -17,28 +31,141 @@ var cur_asteroid_info_screen: AsteroidInfoPanel
 var preview_model : ModuleBase
 var skip_emit: bool = false
 
-# Called when the node enters the scene tree for the first time.
-var unlock_panel: UnlockPanel
+const CONSOLE_BAR_SCENE: PackedScene = preload("res://ui/console/console_bar.tscn")
+const BUILD_MENU_SCENE: PackedScene = preload("res://ui/buttons/build_menu.tscn")
+const CONTRACTS_SCREEN_SCENE: PackedScene = preload("res://ui/windows/contracts_screen.tscn")
+const EVENT_CARD_SCENE: PackedScene = preload("res://ui/windows/event_card.tscn")
+const TRADER_SCREEN_SCENE: PackedScene = preload("res://ui/windows/trade/trader_screen.tscn")
+const MINIMAP_SCENE: PackedScene = preload("res://ui/minimap.tscn")
+const GAME_OVER_SCENE: PackedScene = preload("res://ui/game_over_screen.tscn")
+
+## STORES has a console slot before it has a panel. A disabled button that says
+## why is better than a hidden one, and it proves the console layout at full
+## width from day one.
+const STORES_REASON: String = "Station stores arrive in a later update"
+
+var console: ConsoleBar
+var mode_manager: ModeManager
+## Every mode panel is mounted here rather than directly on the HUD, so that
+## `move_to_front()` on open raises a panel above the ambient strips without ever
+## raising it above the modals or the pause menu.
+var _panel_layer: Control
+
+var overlay_controller: OverlayController
+## The build menu is the one panel body this file keeps a handle on, because Esc
+## level 2 asks it whether its flyout is open. Every other panel is reachable
+## through `mode_manager.panel_for()` and does not need a field here.
+var _build_menu: BuildMenu
 
 func _ready() -> void:
-	# The build menu (rail + flyout) is a self-contained scene mounted in ui_main.tscn;
-	# it scans and groups modules by ui_category on its own _ready (WI-43).
-	create_resource_display()
 	Global.ui_main = self
-	Global.ui_in_game.input_mode_changed.connect(_on_input_mode_changed)
-	_setup_unlock_ui()
+	SignalBus.game_over.connect(_on_game_over)
+	create_resource_display()
 	_setup_alerts_strip()
 	_setup_raid_ui()
 	_setup_crew_ui()
-	SignalBus.game_over.connect(_on_game_over)
+	_setup_console()
+	_setup_overlay_ui()
+	_setup_modes()
+	# Bound after registration so the console can render STORES disabled from the
+	# first frame rather than one refresh later.
+	console.bind(mode_manager)
+	console.bind_overlay(overlay_controller)
+	_setup_minimap_ui()
 	_setup_trader_ui()
 	_setup_event_ui()
-	_setup_contracts_ui()
-	_setup_economy_ui()
-	_setup_jobs_ui()
-	_setup_minimap_ui()
-	_setup_overlay_ui()
 	_setup_pause_menu()
+
+# --- console & modes ----------------------------------------------------------
+
+func _setup_console() -> void:
+	_panel_layer = Control.new()
+	_panel_layer.name = "PanelLayer"
+	_panel_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# The layer is a mounting point, not a surface: it must never eat a click
+	# meant for the station between two panels.
+	_panel_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_panel_layer)
+
+	mode_manager = ModeManager.new()
+	mode_manager.name = "ModeManager"
+	mode_manager.mount = _panel_layer
+	add_child(mode_manager)
+
+	console = CONSOLE_BAR_SCENE.instantiate() as ConsoleBar
+	add_child(console)
+	console.sys_pressed.connect(_on_sys_pressed)
+	_mount_vitals_strip()
+
+## The resource strip is authored in this scene (it carries the energy readout's
+## exported label path) and moved into the console's middle zone here. It is
+## wrapped in a scroll container because seventeen resource tiles are wider than
+## the flex zone: without it the strip's minimum width would push the time zone
+## off the right edge. WI-52 replaces the whole thing with six pinned vitals and
+## a ledger chip, at which point the wrapper goes.
+func _mount_vitals_strip() -> void:
+	if vitals_strip == null or console == null:
+		return
+	var scroll := ScrollContainer.new()
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	console.vitals_zone().add_child(scroll)
+	vitals_strip.get_parent().remove_child(vitals_strip)
+	scroll.add_child(vitals_strip)
+
+## The mode table. Adding a mode is a line here plus a factory, and the factory
+## is not called until the player first opens that mode.
+func _setup_modes() -> void:
+	mode_manager.register(ModeManager.Mode.BUILD, _make_build_panel)
+	mode_manager.register(ModeManager.Mode.CREW, _make_crew_panel)
+	mode_manager.register_unavailable(ModeManager.Mode.STORES, STORES_REASON)
+	mode_manager.register(ModeManager.Mode.TRADE, _make_trade_panel)
+	mode_manager.register(ModeManager.Mode.RND, _make_research_panel)
+	mode_manager.register(ModeManager.Mode.COMMS, _make_comms_panel)
+	mode_manager.register(ModeManager.Mode.OVERLAY, overlay_controller.panel)
+
+## BUILD: the WI-43 rail + flyout, lifted out of the old left column into the
+## frame. The menu is unchanged apart from being told what to park its flyout
+## beside.
+func _make_build_panel() -> Control:
+	var panel: ConsolePanel = ConsolePanel.create()
+	panel.title = "Build"
+	panel.panel_width = UIMetrics.PANEL_BUILD_WIDTH
+	panel.content_padding = UIMetrics.CONTENT_PAD
+	panel.hotkey = ModeManager.hotkey_label(ModeManager.Mode.BUILD)
+	_build_menu = BUILD_MENU_SCENE.instantiate() as BuildMenu
+	_build_menu.flyout_anchor = panel
+	panel.content().add_child(_build_menu)
+	return panel
+
+## CREW: the job board, until WI-56 puts the roster in front of it.
+func _make_crew_panel() -> Control:
+	return JobsScreen.new()
+
+## TRADE: the contracts board temporarily *is* the Trade mode. WI-55 merges the
+## two trade screens into the real panel and makes this a tab of it.
+func _make_trade_panel() -> Control:
+	return CONTRACTS_SCREEN_SCENE.instantiate() as ContractsScreen
+
+func _make_research_panel() -> Control:
+	return UnlockPanel.new()
+
+## COMMS: the economy page, until WI-57 makes it a tab of the ARC panel.
+func _make_comms_panel() -> Control:
+	return EconomyScreen.new()
+
+func _on_sys_pressed() -> void:
+	if pause_menu != null:
+		pause_menu.toggle()
+
+## Station overlays (WI-35): a self-contained UI-side controller that owns the
+## overlay tint, the digit hotkeys, and the logistics flow layer. Its panel is
+## the OVERLAY mode; the tint deliberately outlives that panel, which is what the
+## console button's cyan bar reports.
+func _setup_overlay_ui() -> void:
+	overlay_controller = OverlayController.new()
+	add_child(overlay_controller)
 
 ## Pause menu (WI-36). Added last so it sits on top of every other HUD panel;
 ## it claims Esc only when esc_claimed() says nothing else wants it.
@@ -48,16 +175,19 @@ func _setup_pause_menu() -> void:
 	pause_menu = PauseMenu.new()
 	add_child(pause_menu)
 
-## Single arbitration point for the Escape key (WI-36). Everything that cancels or
-## closes on Esc is ranked here, most-transient first, and Esc always resolves the
-## topmost one. The pause menu asks esc_claimed() before opening, so it only ever
-## gets the press once nothing else wants it - and because both sides consult the
-## same ordering, the outcome doesn't depend on input-propagation order between
-## sibling HUD controls.
+# --- Escape -------------------------------------------------------------------
+
+## Single arbitration point for the Escape key (WI-36, rewritten in WI-50).
+## Everything that cancels or closes on Esc is ranked here, most-transient first,
+## and Esc always resolves the topmost one. The pause menu asks esc_claimed()
+## before opening, so it only ever gets the press once nothing else wants it -
+## and because both sides consult the same ordering, the outcome doesn't depend
+## on input-propagation order between sibling HUD controls.
 ##
-## Some panels (Research, Contracts, Economy) still close themselves on Esc. Their
-## handler and this one do the same thing, so whichever runs first wins and the
-## result is identical.
+## Exclusive mounting is what shrank this from eleven named claims to five
+## levels: seven of those claims collapsed into one `has_open_mode()` check,
+## because the layout now guarantees there is at most one panel to close. The
+## remaining selection block is WI-51's to collapse the same way.
 func esc_claimed() -> bool:
 	return _topmost_esc_claim() != &""
 
@@ -75,24 +205,20 @@ func _topmost_esc_claim() -> StringName:
 	# reopen anything behind it.
 	if _game_over_shown:
 		return &"game_over"
-	# A held preview is the most transient thing on screen: cancel it first.
+	# 1. A held preview is the most transient thing on screen: cancel it first.
 	if Global.ui_in_game != null and Global.ui_in_game.cur_input_mode != UIInGame.InputMode.None:
 		return &"preview"
-	if %BuildMenu.flyout_open():
+	# 2. A console flyout is a child of something else and closes before it.
+	if _build_menu != null and _build_menu.flyout_open():
 		return &"flyout"
-	# Modal-ish windows next, then the passive info panels.
+	# The trader screen is a modal that pauses the sim; it is not a mode and
+	# outranks one. WI-55 folds it into the Trade panel and this level goes.
 	if _trader_screen != null and _trader_screen.visible:
 		return &"trader"
-	if unlock_panel != null and unlock_panel.visible:
-		return &"unlocks"
-	if _contracts_screen != null and _contracts_screen.visible:
-		return &"contracts"
-	if _economy_screen != null and _economy_screen.visible:
-		return &"economy"
-	if _jobs_screen != null and _jobs_screen.visible:
-		return &"jobs"
-	if overlay_controller != null and overlay_controller.has_active_mode():
-		return &"overlay"
+	# 3. The open mode. One check, not seven.
+	if mode_manager != null and mode_manager.has_open_mode():
+		return &"mode"
+	# 4. The current selection. WI-51 collapses these five into one inspector.
 	if cur_pawn_info != null and is_instance_valid(cur_pawn_info):
 		return &"pawn_info"
 	if cur_asteroid_info_screen != null and is_instance_valid(cur_asteroid_info_screen):
@@ -103,6 +229,11 @@ func _topmost_esc_claim() -> StringName:
 		return &"turboshaft"
 	if %ModuleInfoPanel.visible:
 		return &"module_info"
+	# Last: a painted overlay. It is ranked below everything because the overlay
+	# is designed to outlive its panel - Esc must never take it away while the
+	# player still has something else open. `0` clears it directly.
+	if overlay_controller != null and overlay_controller.has_active_mode():
+		return &"overlay"
 	return &""
 
 func _close_esc_claim(claim: StringName) -> void:
@@ -112,19 +243,11 @@ func _close_esc_claim(claim: StringName) -> void:
 		&"preview":
 			Global.ui_in_game.change_input_mode(UIInGame.InputMode.None)
 		&"flyout":
-			%BuildMenu.close_flyout()
+			_build_menu.close_flyout()
 		&"trader":
 			_trader_screen.close()
-		&"unlocks":
-			unlock_panel.visible = false
-		&"contracts":
-			_contracts_screen.visible = false
-		&"economy":
-			_economy_screen.visible = false
-		&"jobs":
-			_jobs_screen.visible = false
-		&"overlay":
-			overlay_controller.set_mode(OverlayController.Mode.NONE)
+		&"mode":
+			mode_manager.close()
 		&"pawn_info":
 			cur_pawn_info.queue_free()
 			cur_pawn_info = null
@@ -138,10 +261,14 @@ func _close_esc_claim(claim: StringName) -> void:
 			%TurboshaftPanel.close()
 		&"module_info":
 			close_info_panel()
+		&"overlay":
+			overlay_controller.set_mode(OverlayController.Mode.NONE)
 
 ## Minimal alerts strip (WI-05): critical pawn needs surface as brief
 ## top-center messages. Informational only - no forced job interrupts, the
 ## pawn keeps handling its own queue (see PawnNeedsComponent).
+##
+## WI-53 replaces this with the severity-ranked alert feed in the right column.
 var _alerts_box: VBoxContainer
 var _active_alerts: Dictionary[String, Label] = {}
 
@@ -199,8 +326,13 @@ func _spawn_alert(key: String, text: String) -> void:
 # --- raid banner (WI-32) ------------------------------------------------------
 
 ## Top-strip banner shown while a pirate raid is on: ship count + a "Hail" button
-## that pays the shrinking ransom to end the raid. Code-built like the rest of
-## the top-bar UI. It refreshes off raid_state_changed (ships lost, price moved).
+## that pays the shrinking ransom to end the raid. It refreshes off
+## raid_state_changed (ships lost, price moved).
+##
+## WI-50's cleanup list says this goes; it stays because its replacement doesn't
+## exist yet. The banner is the only way to reach `pay_off()`, so deleting it now
+## would remove a real action from the game for the length of three work items.
+## WI-53 turns it into a critical alert and WI-57 gives ARC its own surface.
 var _raid_banner: PanelContainer
 var _raid_label: Label
 var _raid_pay_btn: Button
@@ -242,13 +374,14 @@ func _refresh_raid_banner() -> void:
 
 # --- crew count & game over (WI-07) -------------------------------------------
 
-const GAME_OVER_SCENE: PackedScene = preload("res://ui/game_over_screen.tscn")
-
 var _crew_count_label: Label
 var _game_over_shown: bool = false
 
+## The crew count rides along in the vitals strip until WI-52 turns it into a
+## proper vital chip.
 func _setup_crew_ui() -> void:
 	_crew_count_label = Label.new()
+	_crew_count_label.theme_type_variation = UIType.METRIC
 	resource_display_container.add_child(_crew_count_label)
 	SignalBus.crew_hired.connect(func(_pawn: PawnBase) -> void: _refresh_crew_count())
 	# Deferred: the departed pawn is still in the tree until end of frame.
@@ -276,8 +409,6 @@ func _on_game_over(reason: String) -> void:
 
 # --- trader screen (WI-08) ------------------------------------------------------
 
-const TRADER_SCREEN_SCENE: PackedScene = preload("res://ui/windows/trade/trader_screen.tscn")
-
 var _trader_screen: TraderScreen
 
 func _setup_trader_ui() -> void:
@@ -290,105 +421,48 @@ func _setup_trader_ui() -> void:
 func open_trader_screen() -> void:
 	_trader_screen.open()
 
+## WI-50 deliberately dropped the auto-open. Under exclusive mounting, an
+## incoming trader force-closing the player's open Build panel mid-placement is
+## hostile, so arrival raises an alert and lights TRADE's readiness dot (the
+## console listens to the same signal) instead of stealing the screen. The trade
+## itself is still one click away, from the docking bay's own panel.
 func _on_trader_arrived(trader: TraderData) -> void:
-	_spawn_alert("trader_arrived", "%s has docked!" % trader.trader_name)
-	_trader_screen.open()
+	_spawn_alert("trader_arrived", "%s has docked - open the docking bay to trade." % trader.trader_name)
 
 func _on_trader_departed(trader: TraderData) -> void:
 	if _trader_screen.visible:
 		_trader_screen.close()
 	_spawn_alert("trader_departed", "%s has departed." % trader.trader_name)
 
-# --- events & contracts (WI-13 / WI-14) ------------------------------------------
+# --- events (WI-13) -------------------------------------------------------------
 
-const EVENT_CARD_SCENE: PackedScene = preload("res://ui/windows/event_card.tscn")
-const CONTRACTS_SCREEN_SCENE: PackedScene = preload("res://ui/windows/contracts_screen.tscn")
-
-var _contracts_screen: ContractsScreen
-
-## The card manages its own visibility/queue off SignalBus.event_triggered.
+## The card manages its own visibility/queue off SignalBus.event_triggered. It is
+## a modal, not a mode: it sits above the console and is not routed through
+## ModeManager.
 func _setup_event_ui() -> void:
 	add_child(EVENT_CARD_SCENE.instantiate())
 
-func _setup_contracts_ui() -> void:
-	_contracts_screen = CONTRACTS_SCREEN_SCENE.instantiate() as ContractsScreen
-	add_child(_contracts_screen)
-	_add_side_button("Contracts", func() -> void:
-		if _contracts_screen.visible:
-			_contracts_screen.visible = false
-		else:
-			_contracts_screen.open()
-	)
-
-## Economy page (WI-25): a top-bar toggle next to Contracts, opening the ledger /
-## loan / cost-toggle window. Code-built like the research panel.
-var _economy_screen: EconomyScreen
-
-func _setup_economy_ui() -> void:
-	_economy_screen = EconomyScreen.new()
-	add_child(_economy_screen)
-	_add_side_button("Economy", func() -> void:
-		if _economy_screen.visible:
-			_economy_screen.visible = false
-		else:
-			_economy_screen.open()
-	)
-
-## Job board (WI-44): a top-bar toggle opening the station's work queue - what is
-## in progress, what is waiting, and why a chosen pawn will not take a given job.
-var _jobs_screen: JobsScreen
-
-func _setup_jobs_ui() -> void:
-	_jobs_screen = JobsScreen.new()
-	add_child(_jobs_screen)
-	_add_side_button("Jobs", func() -> void:
-		if _jobs_screen.visible:
-			_jobs_screen.visible = false
-		else:
-			_jobs_screen.open()
-	)
-
-## Minimap (WI-34): a self-contained upper-right overview panel. It anchors
-## itself to the top-right and manages its own redraw/collapse, so mounting is
-## just an add_child on this full-rect HUD control.
-const MINIMAP_SCENE: PackedScene = preload("res://ui/minimap.tscn")
-
+## Minimap (WI-34): the top of the permanent right column. It anchors itself and
+## manages its own redraw/collapse, so mounting is just an add_child.
 func _setup_minimap_ui() -> void:
-	add_child(MINIMAP_SCENE.instantiate())
+	var minimap: ReadoutPanel = MINIMAP_SCENE.instantiate() as ReadoutPanel
+	add_child(minimap)
+	_map_readout = minimap
 
-## Station overlays (WI-35): a self-contained UI-side controller that owns its
-## own toolbar strip (top bar), hotkeys (1-5, Esc), legend, and the logistics
-## flow layer. Pure view - it only writes each module's OVERLAY_COLOR shader
-## param while a mode is active, and is session-only (nothing saved).
-var overlay_controller: OverlayController
+## The station map's collapse toggle, so the printed `M` on its header does
+## something. The action exists in its own right (the program doc settles M for
+## the map and G for Comms); wiring it here is what keeps the two from drifting.
+var _map_readout: ReadoutPanel
 
-func _setup_overlay_ui() -> void:
-	overlay_controller = OverlayController.new()
-	add_child(overlay_controller)
-
-func _setup_unlock_ui() -> void:
-	unlock_panel = UnlockPanel.new()
-	unlock_panel.visible = false
-	add_child(unlock_panel)
-	_add_side_button("Research", toggle_unlock_panel)
-
-## Adds a button just above the existing "Module Info" button, reusing its
-## style so it fits in (Research, Contracts, ...).
-func _add_side_button(label: String, on_pressed: Callable) -> Button:
-	var info_btn: Button = %ModuleInfoButton
-	var info_margin: Node = info_btn.get_parent()
-	var side_vbox: Node = info_margin.get_parent()
-	var button := Button.new()
-	button.text = label
-	button.pressed.connect(on_pressed)
-	side_vbox.add_child(button)
-	side_vbox.move_child(button, info_margin.get_index())
-	return button
-
-func toggle_unlock_panel() -> void:
-	unlock_panel.visible = not unlock_panel.visible
-	if unlock_panel.visible:
-		unlock_panel.refresh()
+func _shortcut_input(event: InputEvent) -> void:
+	if not event.is_action_pressed("toggle_map"):
+		return
+	if _map_readout == null or not is_instance_valid(_map_readout):
+		return
+	if ModeManager.text_entry_has_focus(get_viewport()):
+		return
+	get_viewport().set_input_as_handled()
+	_map_readout.toggle_collapsed()
 
 func create_resource_display() -> void:
 	for node: Node in resource_display_container.get_children():
@@ -397,20 +471,6 @@ func create_resource_display() -> void:
 		var resource_ui: ResourceDisplayUI = resource_display_ui.instantiate() as ResourceDisplayUI
 		resource_ui.set_resource(resource_data)
 		resource_display_container.add_child(resource_ui)
-		
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
-
-
-func _on_check_button_toggled(toggled_on: bool) -> void:
-	Global.world_manager.show_module_layer(WorldManager.StructureLayer.CORRIDOR if toggled_on else WorldManager.StructureLayer.MODULE)
-
-func _on_info_button_pressed() -> void:
-	Global.ui_in_game.change_input_mode(UIInGame.InputMode.None)
-
-func _on_input_mode_changed(new_mode: UIInGame.InputMode) -> void:
-	%ModuleInfoButton.disabled = (new_mode != UIInGame.InputMode.Module)
 
 func pawn_clicked(pawn: PawnBase) -> void:
 	if cur_pawn_info != null:
@@ -435,7 +495,7 @@ func _pawn_bracket_rect(pawn: PawnBase) -> Rect2:
 			var sprite_size: Vector2 = frame_texture.get_size() * pawn.animated_sprite.scale
 			return Rect2(Vector2(-sprite_size.x / 2,-sprite_size.y), sprite_size)
 	return Rect2(Vector2(-16, -24), Vector2(32, 48))
-	
+
 func resource_pile_clicked(pile: ResourcePile) -> void:
 	if cur_resource_pile_screen != null:
 		cur_resource_pile_screen.queue_free()
@@ -455,7 +515,7 @@ func asteroid_clicked(asteroid: AsteroidBase) -> void:
 	cur_asteroid_info_screen = asteroid_info_screen.instantiate() as AsteroidInfoPanel
 	cur_asteroid_info_screen.set_asteroid(asteroid)
 	add_child(cur_asteroid_info_screen)
-	
+
 var _click_cycler: ClickCycler = ClickCycler.new()
 
 ## Entry point for module footprint clicks - arbitrates stacked cells and
@@ -485,4 +545,3 @@ func toggle_info_panel(selected_module: ModuleBase) -> void:
 func close_info_panel() -> void:
 	%ModuleInfoPanel.set_module(null)
 	%ModuleInfoPanel.visible = false
-	

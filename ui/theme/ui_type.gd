@@ -38,9 +38,14 @@ const ENTITY_NAME_LARGE: StringName = &"EntityNameLarge"
 ## Every number. IBM Plex Mono 700, 13px.
 const METRIC: StringName = &"Metric"
 
-## A headline number - the console vitals, the clock, a panel's balance chip.
-## IBM Plex Mono 700, 16px.
+## A headline number - the console vitals, a panel's balance chip. IBM Plex Mono
+## 700, 16px.
 const METRIC_LARGE: StringName = &"MetricLarge"
+
+## The console clock, and nothing else (WI-50). IBM Plex Mono 700, 28px - the
+## largest type in the HUD, because the time zone is the one readout the player
+## checks without looking for it.
+const CLOCK: StringName = &"ClockMetric"
 
 ## The status line under an entity name. IBM Plex Mono 500, 11px, light
 ## tracking, caps.

@@ -6,11 +6,18 @@ extends Control
 ## the recurring-cost toggles. A management screen like Research/Contracts - it
 ## does NOT pause the sim and refreshes live off SignalBus.economy_changed while
 ## open. Built entirely in code (like UnlockPanel) so there's no .tscn to author.
+##
+## WI-50 mounted it as the COMMS mode; WI-57 makes it a tab of the real Comms
+## panel (loans, the ARC levy, the ledger and tier progress are all ARC
+## business). Visibility and Esc belong to [ModeManager] from here on.
 
 const COST_ORDER: Array[StringName] = [
 	&"loan_payment", &"wages", &"upkeep", &"levy_fee", &"levy_skim", &"severance", &"penalty", &"event",
 ]
 const INCOME_ORDER: Array[StringName] = [&"trade", &"contract", &"shops", &"hotels", &"dining", &"event"]
+
+## Asks [ModeManager] to close this mode - see [ContractsScreen].
+signal close_requested
 
 var _content: VBoxContainer
 
@@ -24,13 +31,9 @@ func _ready() -> void:
 	# the open page on those too.
 	SignalBus.visitors_changed.connect(_on_economy_changed)
 
-func _unhandled_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed("ui_cancel"):
-		visible = false
-		get_viewport().set_input_as_handled()
-
-func open() -> void:
-	visible = true
+## [ModeManager]'s open hook: the page only refreshes while visible, so it needs
+## one refresh at the moment it becomes visible.
+func on_opened() -> void:
 	refresh()
 
 func _on_economy_changed() -> void:
@@ -65,7 +68,7 @@ func _build_shell() -> void:
 	var close_btn := Button.new()
 	close_btn.text = "X"
 	close_btn.custom_minimum_size = Vector2(32, 0)
-	close_btn.pressed.connect(func() -> void: visible = false)
+	close_btn.pressed.connect(close_requested.emit)
 	title_bar.add_child(close_btn)
 
 	var scroll := ScrollContainer.new()

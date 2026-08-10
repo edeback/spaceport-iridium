@@ -6,9 +6,16 @@ extends Control
 ## the horizontal axis, so same-depth siblings share a column and branches read
 ## clearly. Rebuilds on every global_unlock_changed so purchasing a node
 ## re-evaluates its dependents.
+##
+## WI-50 mounted it as the R&D mode with no internal changes; WI-55 reflows it
+## into a 1400px panel with the tiers running left to right. Visibility and Esc
+## belong to [ModeManager] now.
 
 ## Preferred top-to-bottom ordering of trees; any others follow alphabetically.
 const TREE_ORDER: Array[StringName] = [&"power", &"food", &"industrial", &"defense"]
+
+## Asks [ModeManager] to close this mode - see [ContractsScreen].
+signal close_requested
 
 var _trees_container: VBoxContainer
 var _cards: Array[UnlockNodeCard] = []
@@ -23,13 +30,13 @@ func _ready() -> void:
 	# the tier panel section (WI-26).
 	SignalBus.station_tier_changed.connect(_on_tier_changed)
 	SignalBus.station_tier_progress_changed.connect(_on_tier_progress_changed)
-	# Content is built lazily on first open (toggle_unlock_panel calls refresh),
-	# so we don't build twice while the panel starts hidden.
+	# Content is built lazily on first open (on_opened calls refresh), so we don't
+	# build twice while the panel starts hidden.
 
-func _unhandled_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed("ui_cancel"):
-		visible = false
-		get_viewport().set_input_as_handled()
+## [ModeManager]'s open hook. This is also the panel's first build: the shell is
+## empty until something asks for a refresh.
+func on_opened() -> void:
+	refresh()
 
 func _build_shell() -> void:
 	# Dimming backdrop that also swallows clicks meant for the game behind it.
@@ -66,7 +73,7 @@ func _build_shell() -> void:
 	var close_btn := Button.new()
 	close_btn.text = "X"
 	close_btn.custom_minimum_size = Vector2(32, 0)
-	close_btn.pressed.connect(func() -> void: visible = false)
+	close_btn.pressed.connect(close_requested.emit)
 	title_bar.add_child(close_btn)
 
 	# Station tier / promotion-goals section (WI-26), above the trees. Rebuilt

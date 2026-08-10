@@ -83,7 +83,7 @@ func test_nothing_in_the_theme_has_a_corner_radius() -> void:
 func _all_variations() -> Array[StringName]:
 	return [
 		UIType.PANEL_TITLE, UIType.READOUT_LABEL, UIType.ENTITY_NAME,
-		UIType.ENTITY_NAME_LARGE, UIType.METRIC, UIType.METRIC_LARGE,
+		UIType.ENTITY_NAME_LARGE, UIType.METRIC, UIType.METRIC_LARGE, UIType.CLOCK,
 		UIType.META_LINE, UIType.MODE_LABEL, UIType.HOTKEY, UIType.TAB_LABEL,
 		UIType.BODY, UIType.ACTION_PRIMARY, UIType.ACTION_SECONDARY,
 		UIType.ACTION_DESTRUCTIVE, UIType.TAB_ACTIVE, UIType.TAB_INACTIVE,
@@ -134,8 +134,8 @@ func test_tracked_variations_actually_carry_tracking() -> void:
 ## Numbers and names are not tracked - tracking a mono metric makes columns of
 ## digits stop lining up with each other.
 func test_untracked_variations_are_plain_fonts() -> void:
-	for name: StringName in [UIType.METRIC, UIType.METRIC_LARGE, UIType.ENTITY_NAME,
-			UIType.ENTITY_NAME_LARGE, UIType.HOTKEY, UIType.BODY]:
+	for name: StringName in [UIType.METRIC, UIType.METRIC_LARGE, UIType.CLOCK,
+			UIType.ENTITY_NAME, UIType.ENTITY_NAME_LARGE, UIType.HOTKEY, UIType.BODY]:
 		var variation: FontVariation = _theme.get_font(&"font", name) as FontVariation
 		var tracking: int = variation.spacing_glyph if variation != null else 0
 		assert_eq(tracking, 0, "%s is untracked" % name)

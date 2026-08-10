@@ -66,6 +66,27 @@ const REMAPPABLE_ACTIONS: Array[StringName] = [
 	&"camera_drag",
 	&"camera_zoom_in",
 	&"camera_zoom_out",
+	# Console modes (WI-50). Every mode hotkey is a real action precisely so it
+	# shows up here - a hotkey the player cannot rebind is one the console can
+	# only teach, never adapt to.
+	&"mode_build",
+	&"mode_crew",
+	&"mode_stores",
+	&"mode_trade",
+	&"mode_research",
+	&"mode_comms",
+	&"mode_overlays",
+	&"toggle_map",
+	&"overlay_power",
+	&"overlay_o2",
+	&"overlay_integrity",
+	&"overlay_vibration",
+	&"overlay_logistics",
+	&"overlay_clear",
+	# `toggle_ledger` (L) is authored in the input map so WI-52 cannot have to
+	# rename it, but it is deliberately NOT listed here until it does something -
+	# the remap screen is the one place an unhandled action is visible, and a
+	# rebindable key that silently does nothing is a bug report.
 	&"quick_save",
 	&"quick_load",
 	&"toggle_pause_menu",
@@ -86,6 +107,20 @@ const ACTION_LABELS: Dictionary[StringName, String] = {
 	&"camera_drag": "Drag camera",
 	&"camera_zoom_in": "Zoom in",
 	&"camera_zoom_out": "Zoom out",
+	&"mode_build": "Build panel",
+	&"mode_crew": "Crew panel",
+	&"mode_stores": "Stores panel",
+	&"mode_trade": "Trade panel",
+	&"mode_research": "R&D panel",
+	&"mode_comms": "Comms panel",
+	&"mode_overlays": "Overlays panel",
+	&"toggle_map": "Collapse station map",
+	&"overlay_power": "Power overlay",
+	&"overlay_o2": "Oxygen overlay",
+	&"overlay_integrity": "Integrity overlay",
+	&"overlay_vibration": "Vibration overlay",
+	&"overlay_logistics": "Logistics overlay",
+	&"overlay_clear": "Clear overlay",
 	&"quick_save": "Quicksave",
 	&"quick_load": "Quickload",
 	&"toggle_pause_menu": "Pause menu",

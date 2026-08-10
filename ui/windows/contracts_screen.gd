@@ -5,18 +5,22 @@ extends Control
 ## (progress + time remaining), and recent history. A management screen like
 ## the research panel - it does NOT pause the sim, and refreshes live off
 ## ContractManager.contracts_changed while open.
+##
+## WI-50 mounted it as the TRADE mode. It still looks like its old self - WI-55
+## reflows it into a tab of the real Trade panel - but visibility and Esc are
+## [ModeManager]'s now, so it no longer hides itself behind the manager's back.
+
+## Asks [ModeManager] to close this mode. A panel that set its own `visible`
+## would leave the manager believing it is still open.
+signal close_requested
 
 func _ready() -> void:
 	visible = false
 	Global.contract_manager.contracts_changed.connect(_on_contracts_changed)
 
-func _unhandled_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed("ui_cancel"):
-		visible = false
-		get_viewport().set_input_as_handled()
-
-func open() -> void:
-	visible = true
+## [ModeManager]'s open hook - see [method _on_contracts_changed] for why a
+## panel that only refreshes while visible needs one.
+func on_opened() -> void:
 	refresh()
 
 func _on_contracts_changed() -> void:
@@ -24,7 +28,7 @@ func _on_contracts_changed() -> void:
 		refresh()
 
 func _on_close_pressed() -> void:
-	visible = false
+	close_requested.emit()
 
 func refresh() -> void:
 	var manager: ContractManager = Global.contract_manager

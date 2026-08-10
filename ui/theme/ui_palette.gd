@@ -126,6 +126,7 @@ static var _cached_rows: Dictionary[Row, StyleBoxFlat] = {}
 static var _cached_panel_gradient: GradientTexture2D = null
 static var _cached_readout_gradient: GradientTexture2D = null
 static var _cached_rule_gradient: GradientTexture2D = null
+static var _cached_console_gradient: GradientTexture2D = null
 
 # --- helpers ------------------------------------------------------------------
 
@@ -164,6 +165,15 @@ static func readout_header_gradient() -> GradientTexture2D:
 	if _cached_readout_gradient == null:
 		_cached_readout_gradient = _make_gradient(READOUT_HEADER_TOP, READOUT_HEADER_BOTTOM)
 	return _cached_readout_gradient
+
+## The console strip (WI-50): CONSOLE at the top down to CONSOLE_BOTTOM at the
+## foot. The console is the only surface in the game that also wears a cyan top
+## border, which is what welds it to the bottom edge instead of floating.
+## Shared - do not mutate.
+static func console_gradient() -> GradientTexture2D:
+	if _cached_console_gradient == null:
+		_cached_console_gradient = _make_gradient(CONSOLE, CONSOLE_BOTTOM)
+	return _cached_console_gradient
 
 ## The rule that trails off to the right of a section label: a hairline that
 ## fades from a dim cyan into nothing, so a section reads as opening rather than
