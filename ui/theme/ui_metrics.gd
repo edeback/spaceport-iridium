@@ -36,6 +36,50 @@ const CONSOLE_TIME_WIDTH: int = 247
 ## Height of a vitals tile and of the ledger chip in the console strip.
 const CONSOLE_TILE_HEIGHT: int = 52
 
+# --- vitals & ledger (WI-52) --------------------------------------------------
+
+## One pinned vitals chip. Fixed, not content-sized: a chip that grew when its
+## number gained a digit would re-lay the whole strip out several times a second
+## and visibly jitter. The number gets a compact form instead
+## ([method LedgerModel.format_compact]).
+const VITALS_CHIP_WIDTH: int = 108
+const VITALS_CHIP_GAP: int = 6
+## The fixed right-hand `LEDGER · 18 ▸` control. Wider than a vitals chip because
+## it carries a word rather than a number.
+const LEDGER_CHIP_WIDTH: int = 132
+
+## The ledger flyout: four columns above the console, stopping short of the right
+## column.
+const LEDGER_WIDTH: int = 760
+const LEDGER_COLUMN_WIDTH: int = 176
+const LEDGER_COLUMN_GAP: int = 8
+## Distance from the right edge of the screen the flyout must stop at, so it
+## never opens over the map, the alert feed or the inspector: the right column
+## plus its own gutter plus one more.
+const LEDGER_RIGHT_INSET: int = RIGHT_COLUMN_WIDTH + SCREEN_GUTTER * 2
+## Tallest the flyout may become before its columns start scrolling. Leaves the
+## station map and one gutter untouched above it, same budget the inspector uses.
+const LEDGER_TOP_LIMIT: int = 280
+
+## Room the console's flex zone actually has for chips, at a given screen width.
+## The two zone dividers are 1px each.
+static func vitals_zone_width(screen_width: int = SCREEN_SIZE.x) -> float:
+	return float(screen_width - CONSOLE_MODES_WIDTH - CONSOLE_TIME_WIDTH - BORDER_WIDTH * 2
+		- CONTENT_PAD * 2)
+
+## Width `count` vitals chips plus the ledger chip consume, gaps included. The
+## strip asserts this against [method vitals_zone_width] when it builds, so a
+## seventh pin cannot silently push the ledger chip off the edge.
+static func vitals_strip_width(count: int) -> float:
+	if count <= 0:
+		return float(LEDGER_CHIP_WIDTH)
+	return float(VITALS_CHIP_WIDTH * count + VITALS_CHIP_GAP * count + LEDGER_CHIP_WIDTH)
+
+## Tallest the ledger flyout's content region may become.
+static func ledger_max_content_height(screen_height: int = SCREEN_SIZE.y) -> int:
+	return maxi(0, screen_height - CONSOLE_HEIGHT - SCREEN_GUTTER - LEDGER_TOP_LIMIT
+		- READOUT_HEADER_HEIGHT)
+
 # --- panels -------------------------------------------------------------------
 
 ## Left-mounted mode panels. Fixed widths, one per mode.

@@ -11,9 +11,9 @@ extends Control
 ##   - [b]Modes, 715px, left.[/b] Seven mode buttons at 5px gaps, then a divider,
 ##     then AIDE and SYS. Built from [constant ModeManager.ORDER], so adding a
 ##     mode never means authoring a button.
-##   - [b]Vitals, flex.[/b] Owned by WI-52. This item mounts the existing
-##     resource strip into the zone as-is and leaves the pinning and ledger work
-##     alone, which is why [method vitals_zone] is public and empty.
+##   - [b]Vitals, flex.[/b] Six pinned chips plus the LEDGER control ([VitalsStrip],
+##     WI-52). The console builds it; [UIMain] owns the flyout it opens, because
+##     a flyout has to sit *above* the console rather than inside it.
 ##   - [b]Time, 247px, right.[/b] The clock over the cycle line, and the
 ##     pause/speed row - `ui_time_scale_select.tscn` reparented, not rewritten.
 ##
@@ -65,6 +65,7 @@ var _divider_a: ColorRect
 var _divider_b: ColorRect
 var _vitals_zone: MarginContainer
 var _time_zone: MarginContainer
+var _vitals: VitalsStrip
 
 var _mode_buttons: Dictionary[ModeManager.Mode, ModeButton] = {}
 var _manager: ModeManager
@@ -78,6 +79,7 @@ func _ready() -> void:
 	_apply_layout()
 	_apply_colors()
 	_build_time_zone()
+	_build_vitals_zone()
 	_build_buttons()
 	_connect_adornment_sources()
 	refresh_adornments()
@@ -98,11 +100,17 @@ func _ensure_refs() -> void:
 
 # --- public -------------------------------------------------------------------
 
-## Where WI-52's pinned vitals strip goes. Empty on purpose: this item only
-## mounts the existing resource display here.
+## The console's flex zone. Public so a caller can mount something beside the
+## strip; the strip itself is [method vitals].
 func vitals_zone() -> MarginContainer:
 	_ensure_refs()
 	return _vitals_zone
+
+## The pinned vitals strip (WI-52). [UIMain] needs it to wire the ledger flyout
+## the LEDGER chip opens, and a probe needs it to read the pin list back.
+func vitals() -> VitalsStrip:
+	_ensure_refs()
+	return _vitals
 
 ## One mode's console button, for a caller that needs to read or drive an
 ## adornment directly (verification probes; WI-53's alert badges).
@@ -273,6 +281,16 @@ func _build_time_zone() -> void:
 	if _time_zone == null:
 		return
 	_time_zone.add_child(TIME_SELECT_SCENE.instantiate())
+
+# --- vitals zone --------------------------------------------------------------
+
+func _build_vitals_zone() -> void:
+	_ensure_refs()
+	if _vitals_zone == null:
+		return
+	_vitals = VitalsStrip.new()
+	_vitals.name = "VitalsStrip"
+	_vitals_zone.add_child(_vitals)
 
 # --- adornments ---------------------------------------------------------------
 

@@ -105,6 +105,21 @@ func set_icon(texture: Texture2D) -> void:
 	if _icon.visible and _swatch != null:
 		_swatch.visible = false
 
+## Recolours the right-hand slot on its own, for the rows whose metric carries a
+## sign - the ledger's per-cycle rate, the trade table's margin, the economy
+## tab's ledger lines. Call it *after* [method configure], which resets the slot
+## to the row treatment's own text colour.
+##
+## Deliberately not a parameter of `configure`: the row treatment says what kind
+## of row this is, and a sign colour says which way one number is going. Folding
+## them together is how "amber means falling" and "amber means breached" would
+## end up sharing a code path (invariant 5).
+func set_action_color(color: Color) -> void:
+	_ensure_refs()
+	if _action_label == null:
+		return
+	_action_label.add_theme_color_override("font_color", color)
+
 func set_kind(kind: UIPalette.Row) -> void:
 	_ensure_refs()
 	_kind = kind

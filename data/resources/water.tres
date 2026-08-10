@@ -9,3 +9,4 @@ id = &"water"
 name = "Water"
 icon = ExtResource("1_gd1xi")
 default_cost = 50
+ledger_category = 2

@@ -9,3 +9,4 @@ id = &"hydrogen"
 name = "Hydrogen"
 icon = ExtResource("1_r2jc5")
 default_cost = 50
+ledger_category = 2

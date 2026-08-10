@@ -1,6 +1,27 @@
 # WI-52 — Vitals Strip & Resource Ledger
 
-> **STATUS: planned, not started.** Fourth item of the [[04_UI_Rework_Program]]. Depends on [[WI-49_UI_Design_System]] and [[WI-50_Console_And_Modes]] (this item fills the console's middle zone).
+> **STATUS: COMPLETE, 2026-08-10.** Fourth item of the [[04_UI_Rework_Program]]. Depends on [[WI-49_UI_Design_System]] and [[WI-50_Console_And_Modes]] (this item fills the console's middle zone).
+>
+> **866 GUT tests green** (was 823; +18 in `test_resource_rate_tracker`, +25 in `test_ledger_grouping`). **52-check headless probe green** against the real `main.tscn`. Windowed 1920×1080 screenshots captured of the console strip with a falling amber vital, the open ledger, pin mode, the ledger coexisting with Build, and the HUD at rest. **Save adds one new section (`vitals`); absent key = the designed default six, so `SAVE_VERSION` did not move and pre-WI-52 saves load unchanged.** Closes **C13**.
+>
+> **Deviations from the design below, and why:**
+>
+> 1. **Pins save as one ordered list, not the design's `{"pinned": […], "derived": […]}` pair.** Order is part of what the player curated, and two lists cannot express a derived chip sitting between two resource chips — while the verification the item asks for is literally "restores the same ids in the same order". Derived entries carry a `derived:` prefix, which no resource id can collide with: base-game ids are hand-authored and a mod's must begin with its own `modid.` prefix ([[WI-47_Modding_Support]] M1).
+> 2. **The refill target is the saved list's length, not the pin cap.** The design says an under-full strip "refills from the default order rather than leaving a gap". Applied literally that makes unpinning impossible — unpin `credits`, which is one of the defaults, and it comes straight back. So a shortfall refills only up to *what the save asked for*: six saved with one lost to a removed mod restores six; four saved deliberately restores four; an empty or absent list is the one case with no expressed intent and means the designed six. `toggle_pin` does not refill at all. Both failures were caught by the probe, not by inspection.
+> 3. **`show_in_ledger` is a plain opt-out `bool`, not a derived default.** The design floated `has_global_store or tradable or is stored anywhere`. A derived default is unpredictable (a resource silently leaves the ledger when the last bin holding it is demolished) and still needs an explicit override for `stored_energy`, which is `has_global_store`-adjacent. Defaulting to `true` gets the modding requirement for free and puts the two exclusions in the two `.tres` files that want them.
+> 4. **`LedgerModel.in_category()` returns one column per call rather than a grouped dictionary.** GDScript rejects nested typed collections outright — `Dictionary[Category, Array[ResourceData]]` is a parse error, not a style choice. Four calls over eighteen resources is not a cost worth an untyped return for.
+> 5. **The rate tracker decimates inside `sample()`.** `slow_tick` is 4 Hz sim-time, so a cycle is 960 ticks; retaining all of them would be a 960-entry buffer per resource for no extra fidelity. `sample_spacing_hours` (0.25) drops anything that arrives too soon, so `ResourceManager` just calls it on every tick and the cadence stays one testable rule rather than a counter on the manager.
+> 6. **`ResourceManager` now discovers resources rather than only reading its authored `storable_resources`.** A modded resource was in no manager's list, so it would never have recalculated, never accrued a rate, and never reached the ledger. It unions the authored array with a `ContentPaths.scan` of every registered root, mirroring what `SaveManager._build_lookups` already does.
+> 7. **PIN MODE promotes its own button to the primary weight while on, and swaps every row's icon for a pin swatch.** The theme's secondary button has no distinct pressed state, so the toggle read as inert in both states — visible only in the screenshot, which is exactly what the program doc warns headless cannot catch. The swatch swap is the design's own wording ("PIN MODE turns each row's swatch into a pin toggle") and doubles as the affordance: outside pin mode eighteen rows must not look like eighteen controls.
+> 8. **The CREW chip goes amber when heads exceed bunks, and the starting station has no bunks** — so a fresh game boots with one amber chip. Kept deliberately: it is a real, actionable warning (unrested crew resign) and it is the first thing a new station should be told to fix. Worth revisiting if [[WI-53_Alerts]] finds amber over-subscribed.
+> 9. **Two small additions to WI-49's library, both additive.** `ListRow.set_action_color()`, because a sign-coloured right-hand metric is a recurring need the program doc already anticipated in `UIPalette.sign_color`'s own comment; and `ResourceData.average_instance_value()`, the station-wide counterpart of the per-bin richness figure the storage tab shows.
+>
+> **Traps found, for the WIs that follow:**
+>
+> - **Headless reports a 1920×1920 viewport, not the project's 1920×1080.** Any probe asserting an anchored control's absolute position must measure against `get_viewport().get_visible_rect()`, never `UIMetrics.SCREEN_SIZE`. A right-edge check passed and a bottom-edge check failed for this reason alone.
+> - **`Callable.bind()` must be symmetric across connect and disconnect.** Connecting `handler.bind(x)` and disconnecting the bare `handler` silently no-ops — `is_connected` returns false and nothing errors. `VitalsStrip` rebuilds the same bound callable to disconnect with.
+> - **Nested typed collections do not parse.** See deviation 4. The error (`Nested typed collections are not supported`) surfaces as a cascade of "Could not resolve class X" in every *consumer* of the file, which points at the wrong script entirely; `--headless --check-only --script <file>` on the suspect file is what finds it.
+> - **A pre-existing `ConsoleBar` warning fires on every boot**: it counts its 1px group divider as a 70px button, so ten children "need 745px" in a 715px zone. Harmless, but it is noise that will mask a real overflow warning from a later panel.
 
 ## Goal
 
@@ -84,16 +105,20 @@ Two open questions to settle during implementation, both defaulting to "no": sho
 
 ## Files to touch
 
-- **New:** `ui/console/vitals_strip.tscn` + `.gd`, `ui/console/vitals_chip.tscn` + `.gd`, `ui/console/resource_ledger.tscn` + `.gd`, `scripts/utility/resource_rate_tracker.gd`, `tests/unit/test_resource_rate_tracker.gd`, `tests/unit/test_ledger_grouping.gd`
-- `data/resources/resource_data.gd` — `ledger_category`, the ledger-inclusion flag
-- `data/resources/*.tres` — 18 category assignments
-- `scripts/managers/resource_manager.gd` — owns the rate tracker; feeds it on `slow_tick`
-- `data/resources/resource_data.gd` — C13: `force_withdraw` recalcs and emits like `change_global_total`
-- `scripts/managers/save_manager.gd` — the `vitals` section
-- `ui/console/console_bar.gd` — mounts the strip in the flex zone
-- `ui/ui_main.gd` — `create_resource_display()` and `_refresh_crew_count()` deleted
-- **Deleted:** `ui/resource_display_ui.tscn` + `.gd`, `ui/energy_display_ui.gd`, and `ui_main.tscn`'s `ResourceDisplayPanel` subtree (its energy/oxygen/crew logic moves into derived chips)
-- `scripts/utility/cheats.gd` — a `dump_rates()` cheat is worth having while tuning the window
+*As shipped. `VitalsStrip` is a code-built `HBoxContainer` (no `.tscn`) because it authors nothing a scene could hold, and the `vitals` save section is registered by the strip itself rather than added to `SaveManager` — the WI-47 M3 pattern, so the section dies with the HUD instead of being a hardcoded entry that fails when there is none.*
+
+- **New:** `ui/console/vitals_strip.gd` (`VitalsStrip`), `ui/console/vitals_chip.tscn` + `.gd` (`VitalsChip`), `ui/console/resource_ledger.tscn` + `.gd` (`ResourceLedger`), `scripts/utility/resource_rate_tracker.gd` (`ResourceRateTracker`), `scripts/utility/ledger_model.gd` (`LedgerModel`), `tests/unit/test_resource_rate_tracker.gd`, `tests/unit/test_ledger_grouping.gd`
+- `data/resources/resource_data.gd` — `Category` enum + `ledger_category`, `show_in_ledger`, `average_instance_value()`, and the C13 fix in `force_withdraw`
+- `data/resources/*.tres` — 17 category assignments (credits takes the GOODS default) + 2 exclusions
+- `scripts/managers/resource_manager.gd` — owns the rate tracker; discovers resources; feeds the tracker on `slow_tick`
+- `scripts/managers/atmosphere_manager.gd` — `station_average_o2_partial()`, volume-weighted, for the OXYGEN chip
+- `ui/theme/ui_metrics.gd` — chip/ledger geometry and the two zone-fit helpers
+- `ui/theme/widgets/list_row.gd` — `set_action_color()`
+- `ui/console/console_bar.gd` — builds the strip in the flex zone; `vitals()` accessor
+- `ui/ui_main.gd` — `create_resource_display()`, `_setup_crew_ui()`, `_refresh_crew_count()` and `_mount_vitals_strip()` deleted; mounts the ledger; Esc level 2b; `toggle_ledger` in `_shortcut_input`
+- `scripts/managers/global.gd` — `toggle_ledger` joins `REMAPPABLE_ACTIONS` and `ACTION_LABELS`
+- **Deleted:** `ui/resource_display_ui.tscn` + `.gd`, `ui/energy_display_ui.gd`, and `ui_main.tscn`'s whole `VitalsStrip` subtree with its four exports
+- `scripts/utility/cheats.gd` — `dump_rates()`
 
 ## Implementation order
 

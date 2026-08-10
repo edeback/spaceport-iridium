@@ -1,0 +1,66 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/console/vitals_chip.gd" id="1_chip"]
+
+[node name="VitalsChip" type="PanelContainer"]
+custom_minimum_size = Vector2(108, 52)
+offset_right = 108.0
+offset_bottom = 52.0
+size_flags_horizontal = 0
+size_flags_vertical = 4
+mouse_filter = 1
+script = ExtResource("1_chip")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
+
+[node name="Column" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Top" type="HBoxContainer" parent="Margin/Column"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 5
+
+[node name="Swatch" type="ColorRect" parent="Margin/Column/Top"]
+custom_minimum_size = Vector2(12, 12)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="Icon" type="TextureRect" parent="Margin/Column/Top"]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+size_flags_vertical = 4
+visible = false
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Value" type="Label" parent="Margin/Column/Top"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"MetricLarge"
+text = "0"
+
+[node name="Suffix" type="Label" parent="Margin/Column/Top"]
+layout_mode = 2
+size_flags_vertical = 4
+visible = false
+theme_type_variation = &"MetaLine"
+text = ""
+
+[node name="Caption" type="Label" parent="Margin/Column"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"ReadoutLabel"
+text = "VITAL"
+clip_text = true

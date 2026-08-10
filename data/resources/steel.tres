@@ -9,3 +9,4 @@ id = &"steel"
 name = "Steel"
 icon = ExtResource("1_yc37q")
 default_cost = 100
+ledger_category = 1

@@ -11,14 +11,6 @@ extends Control
 ## player just asked for, so it draws over the alert feed), then the console,
 ## then the right column, then the modals, then the pause menu last.
 
-## Reparented into the console's vitals zone on ready. WI-52 replaces its
-## contents with the pinned-vitals strip and the ledger chip; this item only
-## moves the existing resource display into the zone as-is.
-@export var vitals_strip: Control
-@export var resource_display_container: HBoxContainer
-@export var resource_display_ui: PackedScene
-@export var resources_to_display: Array[ResourceData]
-
 var preview_model : ModuleBase
 var skip_emit: bool = false
 
@@ -28,6 +20,7 @@ const CONTRACTS_SCREEN_SCENE: PackedScene = preload("res://ui/windows/contracts_
 const EVENT_CARD_SCENE: PackedScene = preload("res://ui/windows/event_card.tscn")
 const TRADER_SCREEN_SCENE: PackedScene = preload("res://ui/windows/trade/trader_screen.tscn")
 const MINIMAP_SCENE: PackedScene = preload("res://ui/minimap.tscn")
+const LEDGER_SCENE: PackedScene = preload("res://ui/console/resource_ledger.tscn")
 const INSPECTOR_SCENE: PackedScene = preload("res://ui/inspector/inspector_panel.tscn")
 const GAME_OVER_SCENE: PackedScene = preload("res://ui/game_over_screen.tscn")
 
@@ -52,10 +45,8 @@ var _build_menu: BuildMenu
 func _ready() -> void:
 	Global.ui_main = self
 	SignalBus.game_over.connect(_on_game_over)
-	create_resource_display()
 	_setup_alerts_strip()
 	_setup_raid_ui()
-	_setup_crew_ui()
 	_setup_console()
 	_setup_overlay_ui()
 	_setup_modes()
@@ -89,24 +80,22 @@ func _setup_console() -> void:
 	console = CONSOLE_BAR_SCENE.instantiate() as ConsoleBar
 	add_child(console)
 	console.sys_pressed.connect(_on_sys_pressed)
-	_mount_vitals_strip()
+	_setup_ledger()
 
-## The resource strip is authored in this scene (it carries the energy readout's
-## exported label path) and moved into the console's middle zone here. It is
-## wrapped in a scroll container because seventeen resource tiles are wider than
-## the flex zone: without it the strip's minimum width would push the time zone
-## off the right edge. WI-52 replaces the whole thing with six pinned vitals and
-## a ledger chip, at which point the wrapper goes.
-func _mount_vitals_strip() -> void:
-	if vitals_strip == null or console == null:
-		return
-	var scroll := ScrollContainer.new()
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	console.vitals_zone().add_child(scroll)
-	vitals_strip.get_parent().remove_child(vitals_strip)
-	scroll.add_child(vitals_strip)
+## The resource ledger (WI-52). Built by this file rather than by the console
+## because it is a flyout: it has to sit *above* the console strip, and a child
+## of the console would be clipped by it.
+##
+## Deliberately not a mode (invariant 1's one exception) - checking stock
+## mid-build must not close Build - so [ModeManager] never sees it and Esc ranks
+## it by hand, above the open mode.
+var ledger: ResourceLedger
+
+func _setup_ledger() -> void:
+	ledger = LEDGER_SCENE.instantiate() as ResourceLedger
+	add_child(ledger)
+	ledger.strip = console.vitals()
+	console.vitals().ledger_toggled.connect(ledger.toggle)
 
 ## The mode table. Adding a mode is a line here plus a factory, and the factory
 ## is not called until the player first opens that mode.
@@ -225,6 +214,11 @@ func _topmost_esc_claim() -> StringName:
 	# 2. A console flyout is a child of something else and closes before it.
 	if _build_menu != null and _build_menu.flyout_open():
 		return &"flyout"
+	# The resource ledger is the other flyout and ranks with them, for a slightly
+	# different reason: it is deliberately allowed to coexist with an open mode
+	# (WI-52), so Esc must take it away before the panel it is sitting over.
+	if ledger != null and is_instance_valid(ledger) and ledger.is_open():
+		return &"ledger"
 	# The trader screen is a modal that pauses the sim; it is not a mode and
 	# outranks one. WI-55 folds it into the Trade panel and this level goes.
 	if _trader_screen != null and _trader_screen.visible:
@@ -252,6 +246,8 @@ func _close_esc_claim(claim: StringName) -> void:
 			Global.ui_in_game.change_input_mode(UIInGame.InputMode.None)
 		&"flyout":
 			_build_menu.close_flyout()
+		&"ledger":
+			ledger.close()
 		&"trader":
 			_trader_screen.close()
 		&"mode":
@@ -369,28 +365,12 @@ func _refresh_raid_banner() -> void:
 	_raid_pay_btn.text = "Hail: pay off (%d cr)" % price
 	_raid_pay_btn.disabled = not mgr.can_pay_off()
 
-# --- crew count & game over (WI-07) -------------------------------------------
+# --- game over (WI-07) --------------------------------------------------------
 
-var _crew_count_label: Label
+## The crew count used to be a Label appended to the old resource strip and
+## refreshed off four signals. It is a derived vitals chip now (WI-52), polled
+## with the rest of the strip, so the signal wiring went with the label.
 var _game_over_shown: bool = false
-
-## The crew count rides along in the vitals strip until WI-52 turns it into a
-## proper vital chip.
-func _setup_crew_ui() -> void:
-	_crew_count_label = Label.new()
-	_crew_count_label.theme_type_variation = UIType.METRIC
-	resource_display_container.add_child(_crew_count_label)
-	SignalBus.crew_hired.connect(func(_pawn: PawnBase) -> void: _refresh_crew_count())
-	# Deferred: the departed pawn is still in the tree until end of frame.
-	SignalBus.crew_departed.connect(func(_pawn: PawnBase) -> void: _refresh_crew_count.call_deferred())
-	Global.save_manager.game_loaded.connect(func(_slot: String) -> void: _refresh_crew_count())
-	# Starting crew also spawns deferred after the first module is added (CrewManager), and its managers ready
-	# before this UI - so this deferred call lands after the spawn.
-	SignalBus.module_added.connect(func(_module: ModuleBase) -> void: _refresh_crew_count.call_deferred(), CONNECT_ONE_SHOT)
-
-func _refresh_crew_count() -> void:
-	if Global.crew_manager != null and is_instance_valid(_crew_count_label):
-		_crew_count_label.text = "  Crew: %d" % Global.crew_manager.crew_count()
 
 ## Shared by every game-over path (WI-07 crew abandonment, WI-25 bankruptcy).
 ## The first to fire wins - _game_over_shown keeps the two paths from stacking
@@ -451,23 +431,23 @@ func _setup_minimap_ui() -> void:
 ## the map and G for Comms); wiring it here is what keeps the two from drifting.
 var _map_readout: ReadoutPanel
 
+## The two readout hotkeys that are not modes: M folds the station map, L opens
+## the resource ledger. Both go through the same text-focus guard every other HUD
+## hotkey uses (WI-50 contract point 6) - typing "steel" into the build search
+## must not fold the map.
 func _shortcut_input(event: InputEvent) -> void:
-	if not event.is_action_pressed("toggle_map"):
-		return
-	if _map_readout == null or not is_instance_valid(_map_readout):
-		return
 	if ModeManager.text_entry_has_focus(get_viewport()):
 		return
-	get_viewport().set_input_as_handled()
-	_map_readout.toggle_collapsed()
-
-func create_resource_display() -> void:
-	for node: Node in resource_display_container.get_children():
-		node.queue_free()
-	for resource_data: ResourceData in resources_to_display:
-		var resource_ui: ResourceDisplayUI = resource_display_ui.instantiate() as ResourceDisplayUI
-		resource_ui.set_resource(resource_data)
-		resource_display_container.add_child(resource_ui)
+	if event.is_action_pressed("toggle_map"):
+		if _map_readout == null or not is_instance_valid(_map_readout):
+			return
+		get_viewport().set_input_as_handled()
+		_map_readout.toggle_collapsed()
+	elif event.is_action_pressed("toggle_ledger"):
+		if ledger == null or not is_instance_valid(ledger):
+			return
+		get_viewport().set_input_as_handled()
+		ledger.toggle()
 
 # --- selection (WI-51) ---------------------------------------------------------
 

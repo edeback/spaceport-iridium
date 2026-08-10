@@ -116,6 +116,23 @@ func spawn_resource(id: StringName, amount: int, cell: Vector2i) -> String:
 	pile.add_amount(resource, amount)
 	return _report("spawned a pile of %d %s at %s" % [amount, resource.name, cell])
 
+## Prints every ledger resource's total, per-cycle rate and retained sample count
+## (WI-52) - the readout for tuning the rate tracker's window against a known
+## production loop, and the way to tell a genuine flat line ("0.0" with a full
+## buffer) apart from "no data yet" (an em dash).
+func dump_rates() -> String:
+	var manager: ResourceManager = Global.resource_manager
+	if manager == null:
+		return _report("no resource manager")
+	var lines: Array[String] = []
+	for resource: ResourceData in manager.ledger_resources():
+		lines.append("%s: %d | %s/cyc | %d samples" % [
+			resource.name, resource.get_total(),
+			LedgerModel.format_per_cycle(manager.rate_per_cycle(resource)),
+			manager.rates.sample_count(resource.id)])
+	_report("dumped %d resource rates" % lines.size())
+	return "\n".join(lines)
+
 ## Sets skill `skill` to `level` (0..10) on the crew pawn nearest `cell` (WI-22).
 ## Pass ids as plain strings, e.g. set_skill("construction", 10, Vector2i(16, 8)).
 func set_skill(skill: StringName, level: int, cell: Vector2i) -> String:

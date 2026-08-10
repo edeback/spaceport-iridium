@@ -9,3 +9,4 @@ id = &"silicon"
 name = "Silicon"
 icon = ExtResource("1_sr5dd")
 default_cost = 30
+ledger_category = 1

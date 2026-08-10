@@ -10,3 +10,4 @@ name = "Iridium"
 icon = ExtResource("1_2f26a")
 default_cost = 180
 default_market_supply = 30
+ledger_category = 1

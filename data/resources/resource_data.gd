@@ -67,6 +67,27 @@ var needs_recalc: bool = true
 ## AsteroidManager's own ore_spawn_weights dictionary overrides this per ore.
 @export var asteroid_spawn_weight: float = 0.0
 
+## --- ledger presentation (WI-52) ---------------------------------------------
+
+## Which column of the resource ledger this resource is listed under.
+##
+## PRESENTATION ONLY, exactly as ModuleData.ui_category is (WI-43): it buckets a
+## list and nothing may branch on it. `tags`-vs-`ui_category` is the same rule -
+## gameplay reads gameplay fields. Nothing may group the ledger on `tradable` or
+## `has_variance` either, which correlate with these columns today by accident.
+enum Category { RAW_ORE, REFINED, LIFE_SUPPORT, GOODS }
+
+@export var ledger_category: Category = Category.GOODS
+
+## Does this resource appear in player-facing resource lists (the ledger, and
+## therefore the set of things that can be pinned into the vitals strip)?
+##
+## Opt-OUT rather than opt-in, so a modded resource reaches the ledger with no
+## core edit (WI-47). The base game turns it off in exactly two places -
+## `test_resource` (a fixture) and `stored_energy` (a battery accounting unit
+## that is never stored, traded or hauled).
+@export var show_in_ledger: bool = true
+
 var registered_storage: Array[StorageComponent] = []
 
 #@export var show_test: bool = false:
@@ -100,6 +121,34 @@ func get_total(force_recalc: bool = false) -> int:
 	_recalc_resource(force_recalc)
 	return cached_total
 
+## Station-wide amount-weighted average of the variance value (ore richness, food
+## quality) across every registered storage, or -1.0 when nothing carries any -
+## the same "no info" sentinel [method ResourceStackContainer.average_instance_value]
+## uses, so a caller can tell it apart from a legitimate 0.0.
+##
+## The station-wide counterpart of the per-bin figure the storage tab already
+## shows (WI-52; the ledger prints it as "142 · 72% AVG"). Weighted by each bin's
+## total rather than by its variant-carrying units: for a `has_variance` resource
+## every stack carries instance data in practice, and the distinction would cost
+## a second accessor on StorageData for a meta line.
+func average_instance_value() -> float:
+	if not has_variance:
+		return -1.0
+	var units: int = 0
+	var weighted: float = 0.0
+	for component: StorageComponent in registered_storage:
+		var data: StorageData = component.storage_data.get(self)
+		if data == null or data.stored <= 0:
+			continue
+		var average: float = data.average_instance_value()
+		if average < 0.0:
+			continue
+		weighted += average * float(data.stored)
+		units += data.stored
+	if units <= 0:
+		return -1.0
+	return weighted / float(units)
+
 func register_component(component: StorageComponent) -> void:
 	if not registered_storage.has(component):
 		registered_storage.append(component)
@@ -118,13 +167,23 @@ func _recalc_resource(force_recalc: bool = false) -> void:
 		cached_total = total
 		total_changed.emit(total)
 
+## Spends `amount` wherever it can be found: the global store if there is one,
+## otherwise across registered storages until the debt is covered.
+##
+## Recalculates and emits before returning, the same way change_global_total
+## does (WI-52, bug C13). It used to only set needs_recalc, so ResourceManager's
+## next slow tick was what moved the display - meaning hiring crew, paying off a
+## raid, buying a module and purchasing an upgrade all left the credit readout
+## stale for up to a quarter of a sim-second. It self-healed, so it read as UI
+## lag rather than as a bug; with credits a first-class vital chip that lag would
+## sit on the most-watched number on screen, so the two paths are now symmetric.
 func force_withdraw(amount: int) -> void:
 	if has_global_store:
 		global_total -= amount
-		needs_recalc = true
 	else:
 		var remaining_amount: int = amount
 		for component in registered_storage:
 			remaining_amount -= component.withdraw_up_to(self, remaining_amount)
 			if remaining_amount <= 0:
 				break
+	_recalc_resource(true)

@@ -9,3 +9,4 @@ id = &"iron"
 name = "Iron"
 icon = ExtResource("1_uxbi3")
 default_cost = 30
+ledger_category = 1

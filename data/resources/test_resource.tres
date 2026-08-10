@@ -8,3 +8,4 @@ name = ""
 show_test = false
 test_val = ""
 id = &"test_resource"
+show_in_ledger = false

@@ -173,6 +173,34 @@ func _check_alerts() -> void:
 			var module_name: String = module.module_data.name if module.module_data != null else "module"
 			SignalBus.station_alert.emit("Low oxygen in %s!" % module_name)
 
+## Station-average O2 partial pressure across completed pressurized modules, as
+## the percentage the OXYGEN vitals chip reads (WI-52).
+##
+## Volume-weighted, not a mean of the per-module partials: a 1-cell corridor at
+## 10% and a 6-cell habitat at 100% is a station that is mostly fine, and an
+## unweighted average would call it 55% and light the strip amber.
+##
+## Registration already implies "constructed" (a component registers in
+## ready_constructed and unregisters on the way back to blueprint), so the
+## validity check is only a guard against a module freed between ticks.
+##
+## On the same 0-100 scale as `alert_o2_partial` and `nominal_pressure`, so the
+## chip's threshold and the low-O2 alert's agree by construction.
+func station_average_o2_partial() -> float:
+	var total_o2: float = 0.0
+	var total_volume: float = 0.0
+	for module: ModuleBase in _components:
+		if module == null or not is_instance_valid(module):
+			continue
+		var volume: float = _components[module].volume()
+		if volume <= 0.0:
+			continue
+		total_o2 += _components[module].o2
+		total_volume += volume
+	if total_volume <= 0.0:
+		return 0.0
+	return total_o2 / total_volume
+
 ## Console/debug helper: one line per registered module.
 func debug_dump() -> String:
 	var lines: Array[String] = []

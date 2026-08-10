@@ -10,3 +10,4 @@ name = "Gold"
 icon = ExtResource("1_biixu")
 default_cost = 90
 default_market_supply = 50
+ledger_category = 1

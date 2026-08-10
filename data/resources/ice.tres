@@ -9,3 +9,4 @@ id = &"ice"
 name = "Ice"
 icon = ExtResource("1_bms27")
 default_cost = 25
+ledger_category = 2

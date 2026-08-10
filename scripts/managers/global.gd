@@ -83,10 +83,7 @@ const REMAPPABLE_ACTIONS: Array[StringName] = [
 	&"overlay_vibration",
 	&"overlay_logistics",
 	&"overlay_clear",
-	# `toggle_ledger` (L) is authored in the input map so WI-52 cannot have to
-	# rename it, but it is deliberately NOT listed here until it does something -
-	# the remap screen is the one place an unhandled action is visible, and a
-	# rebindable key that silently does nothing is a bug report.
+	&"toggle_ledger",
 	&"quick_save",
 	&"quick_load",
 	&"toggle_pause_menu",
@@ -115,6 +112,7 @@ const ACTION_LABELS: Dictionary[StringName, String] = {
 	&"mode_comms": "Comms panel",
 	&"mode_overlays": "Overlays panel",
 	&"toggle_map": "Collapse station map",
+	&"toggle_ledger": "Resource ledger",
 	&"overlay_power": "Power overlay",
 	&"overlay_o2": "Oxygen overlay",
 	&"overlay_integrity": "Integrity overlay",

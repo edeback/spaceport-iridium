@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://ui/theme/readout_panel.tscn" id="1_frame"]
+[ext_resource type="Script" path="res://ui/console/resource_ledger.gd" id="2_ledger"]
+
+[node name="ResourceLedger" instance=ExtResource("1_frame")]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -1144.0
+offset_top = -166.0
+offset_right = -384.0
+offset_bottom = -132.0
+grow_horizontal = 0
+grow_vertical = 0
+script = ExtResource("2_ledger")
+label = "Resource Ledger"
+panel_width = 760
+content_padding = 10
+drop_shadow = true

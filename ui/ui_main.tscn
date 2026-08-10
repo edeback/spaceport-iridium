@@ -1,30 +1,9 @@
 [gd_scene format=3 uid="uid://ce6npnqw8s3mu"]
 
 [ext_resource type="Script" uid="uid://de484prd4xlyv" path="res://ui/ui_main.gd" id="1_2bqpn"]
-[ext_resource type="Texture2D" uid="uid://lfuwsqm704un" path="res://ui/icons/energy.svg" id="3_wyidc"]
-[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="4_pqeum"]
-[ext_resource type="PackedScene" uid="uid://dbm37hjpuku3k" path="res://ui/resource_display_ui.tscn" id="4_wyidc"]
-[ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="5_47oex"]
-[ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="5_rtsem"]
-[ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="6_b5r2u"]
-[ext_resource type="Resource" uid="uid://1an3ftgpeh6u" path="res://data/resources/hydrogen.tres" id="7_1h8lm"]
-[ext_resource type="Resource" uid="uid://bdtv1cjftf2g1" path="res://data/resources/iron.tres" id="8_u34n7"]
-[ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="8_xyc40"]
-[ext_resource type="Resource" uid="uid://c8o0o81ej48mp" path="res://data/resources/carbon_ore.tres" id="9_bgs1r"]
-[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="9_pset1"]
-[ext_resource type="Resource" uid="uid://b27jc67v174pi" path="res://data/resources/iridium.tres" id="10_j1br4"]
-[ext_resource type="Resource" uid="uid://cns3lrfd8jekj" path="res://data/resources/silicon_ore.tres" id="11_6porg"]
-[ext_resource type="Resource" uid="uid://tf727fx7vlah" path="res://data/resources/oxygen.tres" id="11_lnfpq"]
-[ext_resource type="Resource" uid="uid://c56jj6kgs36sx" path="res://data/resources/gold.tres" id="12_6re3r"]
-[ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicon.tres" id="13_0sakr"]
-[ext_resource type="Resource" uid="uid://cnje5k2redpx0" path="res://data/resources/gold_ore.tres" id="13_s5567"]
-[ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="14_p3y7p"]
-[ext_resource type="Resource" uid="uid://bj04ftawqiwko" path="res://data/resources/iridium_ore.tres" id="15_qnfs5"]
-[ext_resource type="Script" uid="uid://c6excany0u70v" path="res://ui/energy_display_ui.gd" id="15_rtsem"]
 [ext_resource type="PackedScene" uid="uid://mroynql4rcbs" path="res://ui/windows/trade/trade_screen.tscn" id="19_xyc40"]
-[ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="21_bgs1r"]
 
-[node name="UiMain" type="Control" unique_id=2019768832 node_paths=PackedStringArray("vitals_strip", "resource_display_container")]
+[node name="UiMain" type="Control" unique_id=2019768832]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -33,62 +12,6 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_2bqpn")
-vitals_strip = NodePath("VitalsStrip")
-resource_display_container = NodePath("VitalsStrip/ResourceContainer")
-resource_display_ui = ExtResource("4_wyidc")
-resources_to_display = Array[ExtResource("4_pqeum")]([ExtResource("5_47oex"), ExtResource("9_pset1"), ExtResource("6_b5r2u"), ExtResource("8_u34n7"), ExtResource("9_bgs1r"), ExtResource("5_rtsem"), ExtResource("11_6porg"), ExtResource("13_0sakr"), ExtResource("13_s5567"), ExtResource("12_6re3r"), ExtResource("15_qnfs5"), ExtResource("10_j1br4"), ExtResource("8_xyc40"), ExtResource("14_p3y7p"), ExtResource("7_1h8lm"), ExtResource("11_lnfpq"), ExtResource("21_bgs1r")])
-
-[node name="VitalsStrip" type="HBoxContainer" parent="." unique_id=133719880]
-layout_mode = 0
-offset_right = 460.0
-offset_bottom = 52.0
-size_flags_vertical = 4
-
-[node name="EnergyDisplayContainer" type="PanelContainer" parent="VitalsStrip" unique_id=2060079048 node_paths=PackedStringArray("energy_used_label")]
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-script = ExtResource("15_rtsem")
-energy_used_label = NodePath("MarginContainer/VBoxContainer/EnergyUsedLabel")
-
-[node name="MarginContainer" type="MarginContainer" parent="VitalsStrip/EnergyDisplayContainer" unique_id=1699026209]
-layout_mode = 2
-theme_override_constants/margin_left = 4
-theme_override_constants/margin_top = 2
-theme_override_constants/margin_right = 4
-theme_override_constants/margin_bottom = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="VitalsStrip/EnergyDisplayContainer/MarginContainer" unique_id=1007458240]
-layout_mode = 2
-size_flags_vertical = 4
-
-[node name="PanelContainer" type="PanelContainer" parent="VitalsStrip/EnergyDisplayContainer/MarginContainer/VBoxContainer" unique_id=1217976286]
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-
-[node name="EnergyIcon" type="TextureRect" parent="VitalsStrip/EnergyDisplayContainer/MarginContainer/VBoxContainer/PanelContainer" unique_id=769114458]
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-texture = ExtResource("3_wyidc")
-expand_mode = 1
-
-[node name="EnergyLabel" type="Label" parent="VitalsStrip/EnergyDisplayContainer/MarginContainer/VBoxContainer" unique_id=1670626873]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_type_variation = &"ReadoutLabel"
-text = "ENERGY"
-
-[node name="EnergyUsedLabel" type="Label" parent="VitalsStrip/EnergyDisplayContainer/MarginContainer/VBoxContainer" unique_id=990410902]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_type_variation = &"Metric"
-text = "87 / 300"
-
-[node name="ResourceContainer" type="HBoxContainer" parent="VitalsStrip" unique_id=1542373739]
-layout_mode = 2
 
 [node name="TradeScreen" parent="." unique_id=1329679237 instance=ExtResource("19_xyc40")]
 visible = false

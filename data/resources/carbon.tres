@@ -9,3 +9,4 @@ id = &"carbon"
 name = "Carbon"
 icon = ExtResource("1_ak25u")
 default_cost = 30
+ledger_category = 1

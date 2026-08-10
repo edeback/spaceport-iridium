@@ -9,3 +9,4 @@ id = &"oxygen"
 name = "Oxygen"
 icon = ExtResource("1_0myac")
 default_cost = 50
+ledger_category = 2
