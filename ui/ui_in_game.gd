@@ -26,8 +26,12 @@ var preview_multimodules: Array[PreviewModule] = []
 
 var last_hovered_cell: Vector2i
 
-## Selection brackets (WI-10): module and pawn selection each get their own
-## instance - both info panels can be open at once.
+## Selection brackets (WI-10). Two instances, but no longer because two info
+## panels can be open at once - under one inspector (WI-51) exactly one thing is
+## selected, so only one set is ever live. They stay separate because they are
+## driven from different places: module brackets off [ModuleBase.selected], pawn
+## brackets off the inspector via [method set_selected_pawn]. A single shared
+## instance would have to know which of the two raised it.
 var module_brackets: SelectionBrackets
 var pawn_brackets: SelectionBrackets
 
@@ -47,6 +51,26 @@ func _on_module_selected(module: ModuleBase) -> void:
 		module_brackets.show_around(module, Rect2(Vector2.ZERO, Vector2(module.size * Global.CELL_SIZE)))
 	else:
 		module_brackets.clear_if_target(module)
+
+## Points the pawn brackets at `pawn`, or clears them for null - which is what
+## selecting a module, an asteroid, a pile or nothing at all passes.
+func set_selected_pawn(pawn: PawnBase) -> void:
+	if pawn == null or not is_instance_valid(pawn):
+		pawn_brackets.clear()
+		return
+	pawn_brackets.show_around(pawn, _pawn_bracket_rect(pawn))
+
+## The pawn's sprite footprint in its own local space, so the brackets frame the
+## art rather than a nominal cell. Falls back to a sensible box for a pawn whose
+## sprite frames have not loaded.
+func _pawn_bracket_rect(pawn: PawnBase) -> Rect2:
+	if pawn.animated_sprite != null and pawn.animated_sprite.sprite_frames != null:
+		var frame_texture: Texture2D = pawn.animated_sprite.sprite_frames.get_frame_texture(
+			pawn.animated_sprite.animation, pawn.animated_sprite.frame)
+		if frame_texture != null:
+			var sprite_size: Vector2 = frame_texture.get_size() * pawn.animated_sprite.scale
+			return Rect2(Vector2(-sprite_size.x / 2.0, -sprite_size.y), sprite_size)
+	return Rect2(Vector2(-16, -24), Vector2(32, 48))
 
 func change_input_mode(mode: InputMode, module: ModuleData = null) -> void:
 	#Input.mouse_mode = Input.MOUSE_MODE_HIDDEN

@@ -87,6 +87,26 @@ const SCREEN_GUTTER: int = 20
 ## sets, not a single readout.
 const INSPECTOR_WIDTH: int = 420
 
+## Y the inspector's top edge may never cross (WI-51). The inspector is
+## bottom-anchored and grows *upward* with its content, so a module with eight
+## component tabs would otherwise climb into the readouts above it. Today that is
+## the station map (20px gutter + its 240px box) plus one more gutter; WI-53's
+## alert feed stacks below the map and this grows with it.
+const INSPECTOR_TOP_LIMIT: int = 280
+
+## Side of the subject block's icon.
+const INSPECTOR_ICON_SIZE: int = 50
+
+## Tallest the inspector may become before its tab content starts scrolling
+## inside itself instead of pushing the panel further up the screen.
+static func inspector_max_height(screen_height: int = SCREEN_SIZE.y) -> int:
+	return maxi(0, screen_height - CONSOLE_HEIGHT - SCREEN_GUTTER - INSPECTOR_TOP_LIMIT)
+
+## The same, less the 34px readout header - the budget the tab set's content
+## region actually has to fit into.
+static func inspector_max_content_height(screen_height: int = SCREEN_SIZE.y) -> int:
+	return maxi(0, inspector_max_height(screen_height) - READOUT_HEADER_HEIGHT)
+
 # --- shared spacing -----------------------------------------------------------
 
 const BORDER_WIDTH: int = 1

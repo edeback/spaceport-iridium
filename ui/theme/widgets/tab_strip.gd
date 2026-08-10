@@ -19,12 +19,15 @@ extends Control
 
 const SCENE_PATH: String = "res://ui/theme/widgets/tab_strip.tscn"
 
+## One row of tabs. The strip grows past this when its tabs wrap.
+const MIN_HEIGHT: int = 32
+
 ## Emitted when the player picks a tab, and when [method select] changes the
 ## selection. Not emitted by [method set_tabs] restoring a selection, because
 ## rebuilding a strip is not the player choosing anything.
 signal tab_selected(id: StringName)
 
-var _row: HBoxContainer
+var _row: HFlowContainer
 var _underline: ColorRect
 
 ## Tab ids in strip order, so a rebuild can restore the selection and an index
@@ -39,12 +42,29 @@ func _ready() -> void:
 	_ensure_refs()
 	if _underline != null:
 		_underline.color = UIPalette.EDGE
+	if _row != null and not _row.minimum_size_changed.is_connected(_refit):
+		_row.minimum_size_changed.connect(_refit)
+	_refit()
 
 func _ensure_refs() -> void:
 	if _row != null:
 		return
-	_row = get_node_or_null("Row") as HBoxContainer
+	_row = get_node_or_null("Row") as HFlowContainer
 	_underline = get_node_or_null("Underline") as ColorRect
+
+## Gives the strip a height that fits however many rows its tabs wrapped onto.
+##
+## The row is an [HFlowContainer], so a set of tabs wider than the panel wraps
+## instead of running off the edge - the module tab set can reach eight tabs on a
+## 420px inspector. Flow containers derive their minimum height from their
+## current *width*, which is only known after a layout pass, so this re-runs on
+## `minimum_size_changed` rather than measuring once (the WI-48 lesson).
+func _refit() -> void:
+	_ensure_refs()
+	if _row == null:
+		return
+	custom_minimum_size.y = maxf(float(MIN_HEIGHT),
+		_row.get_combined_minimum_size().y + float(UIMetrics.BORDER_WIDTH))
 
 # --- public -------------------------------------------------------------------
 

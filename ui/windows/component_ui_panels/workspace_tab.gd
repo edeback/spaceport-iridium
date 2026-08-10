@@ -7,8 +7,15 @@ extends ModuleComponentUI
 ## (WorkspaceComponent.get_ui()). An empty assignment leaves the module's jobs
 ## open to everyone; a non-empty one restricts them to the listed crew.
 
+## The roster grows the tab up to this, then scrolls. Driven from code for the
+## same reason as [LocalUpgradesTab]: a ScrollContainer reports a minimum height
+## of zero, and the inspector sizes itself to its content - so an unmeasured
+## scroll renders the crew list at nothing while every row inside it is correct.
+const MAX_CONTENT_HEIGHT: float = 280.0
+
 var workspace: WorkspaceComponent
 var _list: VBoxContainer
+var _scroll: ScrollContainer
 var _header: Label
 
 func setup(component: WorkspaceComponent) -> void:
@@ -30,15 +37,17 @@ func setup(component: WorkspaceComponent) -> void:
 	_header = Label.new()
 	outer.add_child(_header)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	outer.add_child(scroll)
+	_scroll = ScrollContainer.new()
+	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	outer.add_child(_scroll)
 
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_list.add_theme_constant_override("separation", 4)
-	scroll.add_child(_list)
+	_scroll.add_child(_list)
+	_list.minimum_size_changed.connect(_fit_height)
 
 	if not workspace.assignment_changed.is_connected(refresh):
 		workspace.assignment_changed.connect(refresh)
@@ -49,6 +58,13 @@ func setup(component: WorkspaceComponent) -> void:
 
 func _on_roster_changed(_pawn: PawnBase) -> void:
 	refresh()
+
+## Synchronous and tree-agnostic - the tab set configures this page before it
+## enters the tree.
+func _fit_height() -> void:
+	if _scroll == null or _list == null:
+		return
+	_scroll.custom_minimum_size.y = minf(_list.get_combined_minimum_size().y, MAX_CONTENT_HEIGHT)
 
 func refresh() -> void:
 	if not is_instance_valid(workspace):
@@ -68,10 +84,12 @@ func refresh() -> void:
 		var empty := Label.new()
 		empty.text = "No crew to assign."
 		_list.add_child(empty)
+		_fit_height()
 		return
 
 	for pawn: PawnBase in crew:
 		_list.add_child(_build_row(pawn))
+	_fit_height()
 
 func _build_row(pawn: PawnBase) -> Control:
 	var row := HBoxContainer.new()

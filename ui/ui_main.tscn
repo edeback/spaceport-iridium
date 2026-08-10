@@ -21,13 +21,8 @@
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="14_p3y7p"]
 [ext_resource type="Resource" uid="uid://bj04ftawqiwko" path="res://data/resources/iridium_ore.tres" id="15_qnfs5"]
 [ext_resource type="Script" uid="uid://c6excany0u70v" path="res://ui/energy_display_ui.gd" id="15_rtsem"]
-[ext_resource type="PackedScene" uid="uid://dtipd1rwqes7u" path="res://ui/pawns/pawn_info_panel.tscn" id="15_x3wcs"]
-[ext_resource type="PackedScene" uid="uid://1cce1a2cba56" path="res://ui/windows/component_ui_panels/resource_pile_inventory_tab.tscn" id="17_w7nyr"]
-[ext_resource type="PackedScene" uid="uid://wjvf1i75pf0u" path="res://ui/windows/component_ui_panels/asteroid_info_panel.tscn" id="18_astinfo"]
 [ext_resource type="PackedScene" uid="uid://mroynql4rcbs" path="res://ui/windows/trade/trade_screen.tscn" id="19_xyc40"]
 [ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="21_bgs1r"]
-[ext_resource type="PackedScene" uid="uid://byip82db78f7" path="res://ui/windows/module_info_ingame_panel.tscn" id="38_x3wcs"]
-[ext_resource type="PackedScene" path="res://ui/windows/turboshaft_panel.tscn" id="39_tshft"]
 
 [node name="UiMain" type="Control" unique_id=2019768832 node_paths=PackedStringArray("vitals_strip", "resource_display_container")]
 layout_mode = 3
@@ -42,9 +37,6 @@ vitals_strip = NodePath("VitalsStrip")
 resource_display_container = NodePath("VitalsStrip/ResourceContainer")
 resource_display_ui = ExtResource("4_wyidc")
 resources_to_display = Array[ExtResource("4_pqeum")]([ExtResource("5_47oex"), ExtResource("9_pset1"), ExtResource("6_b5r2u"), ExtResource("8_u34n7"), ExtResource("9_bgs1r"), ExtResource("5_rtsem"), ExtResource("11_6porg"), ExtResource("13_0sakr"), ExtResource("13_s5567"), ExtResource("12_6re3r"), ExtResource("15_qnfs5"), ExtResource("10_j1br4"), ExtResource("8_xyc40"), ExtResource("14_p3y7p"), ExtResource("7_1h8lm"), ExtResource("11_lnfpq"), ExtResource("21_bgs1r")])
-pawn_info_screen = ExtResource("15_x3wcs")
-resource_pile_screen = ExtResource("17_w7nyr")
-asteroid_info_screen = ExtResource("18_astinfo")
 
 [node name="VitalsStrip" type="HBoxContainer" parent="." unique_id=133719880]
 layout_mode = 0
@@ -105,27 +97,3 @@ offset_left = -503.0
 offset_top = -301.0
 offset_right = 503.0
 offset_bottom = 301.0
-
-[node name="ModuleInfoPanel" parent="." unique_id=1500315581 instance=ExtResource("38_x3wcs")]
-unique_name_in_owner = true
-visible = false
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 0
-grow_vertical = 0
-
-[node name="TurboshaftPanel" parent="." unique_id=1068723709 instance=ExtResource("39_tshft")]
-unique_name_in_owner = true
-visible = false
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 0
-grow_vertical = 0

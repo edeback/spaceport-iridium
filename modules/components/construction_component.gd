@@ -268,9 +268,16 @@ func _setup_deconstructed_for_load() -> void:
 	# components signed up for everything a standing module does. Undo that.
 	owner_module.ready_deconstructing()
 
+## A progress readout, so only while there is progress to report. WI-51 moved the
+## deconstruct/demolish pair out to the inspector's footer, which left a finished
+## module with a Build tab that had nothing in it.
 func has_ui() -> bool:
-	return (not owner_module.module_data.instant_build) if owner_module and owner_module.module_data else false
-	
+	if owner_module == null or owner_module.module_data == null:
+		return false
+	if owner_module.module_data.instant_build:
+		return false
+	return current_state != ConstructionState.Built
+
 func get_ui() -> ModuleComponentUI:
 	var ui: ConstructionComponentUI = ui_info_panel_element.instantiate() as ConstructionComponentUI
 	ui.set_construction_component(self)

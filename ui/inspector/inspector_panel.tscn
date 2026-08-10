@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3 uid="uid://cq1nspctr0way"]
+
+[ext_resource type="PackedScene" path="res://ui/theme/readout_panel.tscn" id="1_frame"]
+[ext_resource type="Script" path="res://ui/inspector/inspector_panel.gd" id="2_inspector"]
+
+[node name="Inspector" instance=ExtResource("1_frame")]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -440.0
+offset_top = -166.0
+offset_right = -20.0
+offset_bottom = -132.0
+grow_horizontal = 0
+grow_vertical = 0
+script = ExtResource("2_inspector")
+label = "Selected · Nothing"
+panel_width = 420
+content_padding = 10
+drop_shadow = true

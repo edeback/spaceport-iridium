@@ -280,7 +280,14 @@ func _tick_modifiers(sim_hours: float) -> void:
 		else:
 			_modifiers[id] = modifier
 
-func _recompute_happiness() -> void:
+## The first half of the happiness formula: the mean of every enabled need,
+## plus health when the pawn has that component.
+##
+## Public because the Needs tab prints it as its own line (WI-51). That line is
+## not decoration - it is the only way to tell "my crew are miserable because the
+## station is failing them" from "my crew are miserable because of a run of bad
+## events", and those have completely different fixes.
+func needs_average() -> float:
 	var total: float = 0.0
 	var count: int = 0
 	for need: NeedDef in _needs:
@@ -292,10 +299,31 @@ func _recompute_happiness() -> void:
 	if health != null:
 		total += health.health_percent01()
 		count += 1
-	var new_happiness: float = (total / count) if count > 0 else 1.0
+	return (total / count) if count > 0 else 1.0
+
+## The live modifiers as `{id, value, hours_remaining}` rows, biggest effect
+## first (INF hours = until something removes it).
+##
+## The UI must not reach into `_modifiers` directly: it is a Vector2-packed
+## dictionary whose shape is this component's business, and a tab that read it
+## would break the next time the packing changed. Sorting is
+## [MoodCatalog.sort_by_magnitude] so the order is a tested rule rather than
+## whatever the dictionary iterates in.
+func get_modifier_breakdown() -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
 	for id: StringName in _modifiers:
-		new_happiness += _modifiers[id].x
-	new_happiness = clampf(new_happiness, 0.0, 1.0)
+		var modifier: Vector2 = _modifiers[id]
+		rows.append({"id": id, "value": modifier.x, "hours_remaining": modifier.y})
+	return MoodCatalog.sort_by_magnitude(rows)
+
+func _recompute_happiness() -> void:
+	var modifier_total: float = 0.0
+	for id: StringName in _modifiers:
+		modifier_total += _modifiers[id].x
+	# One formula, in one place: the Needs tab renders the same call over the
+	# same two numbers, so the breakdown it shows is arithmetically what the sim
+	# ran - clamp included.
+	var new_happiness: float = MoodCatalog.combine(needs_average(), modifier_total)
 	if absf(new_happiness - happiness) > 0.001:
 		happiness = new_happiness
 		happiness_changed.emit(happiness)

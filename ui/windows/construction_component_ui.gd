@@ -1,13 +1,19 @@
 class_name ConstructionComponentUI
 extends ModuleComponentUI
 
-@export var progress_container: HBoxContainer
+## Build / teardown progress for a module that is not finished yet.
+##
+## WI-51 took the DECONSTRUCT and DEMOLISH buttons out of here and put them in
+## the inspector's footer, where the design wants a module's destructive actions:
+## outline-only, in one place, on every module rather than only on the ones whose
+## construction component happens to have a UI. What is left is the progress
+## readout, which is the only thing this tab was ever for while a module was
+## actually building - and [ConstructionComponent.has_ui] now retires the tab
+## once the module is Built, so the strip never carries an empty page.
+
+@export var progress_container: Control
 @export var label: Label
 @export var progress_bar: ProgressBar
-
-@export var button_container: HBoxContainer
-@export var deconstruct_button: Button
-@export var demolish_button: Button
 
 var construction_component: ConstructionComponent
 
@@ -19,36 +25,21 @@ func set_construction_component(component: ConstructionComponent) -> void:
 
 func construction_state_changed(new_state: ConstructionComponent.ConstructionState) -> void:
 	match new_state:
-		ConstructionComponent.ConstructionState.Paused:
-			pass
-		ConstructionComponent.ConstructionState.NotStarted:
-			progress_container.visible = true
-			progress_bar.value = construction_component.get_progress()
-			label.text = "Constructing: "
-			button_container.visible = false
+		ConstructionComponent.ConstructionState.NotStarted, \
+		ConstructionComponent.ConstructionState.Paused, \
 		ConstructionComponent.ConstructionState.Constructing:
 			progress_container.visible = true
 			progress_bar.value = construction_component.get_progress()
-			label.text = "Constructing: "
-			button_container.visible = false
-		ConstructionComponent.ConstructionState.Built:
-			progress_container.visible = false
-			button_container.visible = true
+			label.text = "CONSTRUCTING"
 		ConstructionComponent.ConstructionState.Deconstructing:
 			progress_container.visible = true
-			label.text = "Deconstructing: "
 			progress_bar.value = construction_component.get_progress()
-			button_container.visible = false
-		ConstructionComponent.ConstructionState.Deconstructed:
+			label.text = "DECONSTRUCTING"
+		_:
+			# Built, and the export-bin drain after Deconstructed: nothing is
+			# progressing, so the readout says nothing rather than showing a bar
+			# stuck at either end.
 			progress_container.visible = false
-			button_container.visible = false
-			
+
 func _on_progress_changed(new_progress: float) -> void:
 	progress_bar.value = new_progress
-
-func _on_deconstruct_button_pressed() -> void:
-	construction_component.start_deconstruction()
-
-func _on_demolish_button_pressed() -> void:
-	Global.world_manager.remove_module(construction_component.owner_module)
-	

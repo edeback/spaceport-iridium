@@ -37,10 +37,13 @@ func _refresh() -> void:
 		_status_label.text = "Next trader: ~%d h" % ceili(maxf(manager.hours_to_next_visit, 0.0))
 		_trader_button.visible = false
 
+## Both trade surfaces used to deselect the module first, because the module info
+## panel was a floating box that could sit on top of them. The inspector is
+## right-anchored and 420px wide, so neither centred screen reaches it - and
+## keeping the docking bay selected while you trade with it is the more useful
+## behaviour anyway (WI-51). WI-55 folds both of these into the Trade panel.
 func on_open_trade_screen() -> void:
-	Global.ui_main.close_info_panel()
 	SignalBus.set_up_trade.emit(trade_component)
 
 func _on_open_trader_screen() -> void:
-	Global.ui_main.close_info_panel()
 	Global.ui_main.open_trader_screen()

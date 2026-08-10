@@ -1,6 +1,6 @@
 # 04 — UI Rework Program (WI-49 … WI-57)
 
-> **STATUS: in progress — WI-49 and WI-50 shipped 2026-08-10, WI-51…57 not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
+> **STATUS: in progress — WI-49, WI-50 and WI-51 shipped 2026-08-10, WI-52…57 not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
 >
 > The source design is **`assets/external/spaceport-iridium-ui-layout/project/Iridium Console UI Spec.dc.html`**, a Claude Design handoff bundle: ten reference screens at 1920×1080 plus the rules that produce them. Read it before implementing any child WI. Numbers in this doc are transcribed from it and are authoritative for implementation; where this doc and the mockup disagree, **this doc wins** (it carries the gameplay corrections from [[New Work for Phase 4]] that the mockup predates).
 >
@@ -153,7 +153,7 @@ The mockup's own suggested build order, split finer so no work item touches more
 | --- | --- | --- |
 | [[WI-49_UI_Design_System]] ✅ | Theme, palette, type, shared panel frame, widget library | "Every later step gets cheaper, and this alone closes most of the polish gap." Nothing else can start without the frame |
 | [[WI-50_Console_And_Modes]] ✅ | Console strip, mode buttons, exclusive mounting, Esc rewrite, time zone | Existing screens get **ported in behind it unchanged**. They look inconsistent for a while and still behave better than they do now |
-| [[WI-51_Inspector]] | One bottom-right surface, swapped tab sets, nothing-selected line | The largest single reduction in surface count; also where the mood-modifier breakdown lands |
+| [[WI-51_Inspector]] ✅ | One bottom-right surface, swapped tab sets, nothing-selected line | The largest single reduction in surface count; also where the mood-modifier breakdown lands |
 | [[WI-52_Vitals_And_Ledger]] | Pinned strip + ledger flyout + per-cycle rates + pin persistence | "Do this before adding more resources, not after" |
 | [[WI-53_Alerts]] | Severity model, sticky/critical alerts, jump-to-subject, history log | The one item with real gameplay consequence (critical alerts pause the sim) |
 | [[WI-54_Panels_Build_And_Overlays]] | The two narrow panels that already exist | Cheapest panel conversions; proves the frame at two widths |
@@ -200,7 +200,23 @@ Shipped 2026-08-10. Details and the six traps found are in [[WI-50_Console_And_M
 5. Take the panel width from `UIMetrics`, and the printed hotkey from `ModeManager.hotkey_label(mode)` so a rebind follows.
 6. **Every HUD hotkey is a real input action** in `Global.REMAPPABLE_ACTIONS` — including the overlay digits, which WI-50 converted. `ModeManager.text_entry_has_focus(viewport)` is the one place that decides whether the player is typing; call it, do not re-write it.
 
-Esc is now five levels in `ui_main.gd`: game-over latch → held preview → console flyout → *(trader modal)* → the open mode → the selection chain → an active overlay. WI-51 collapses the selection chain to one check; WI-55 removes the trader level.
+Esc is now five levels in `ui_main.gd`: game-over latch → held preview → console flyout → *(trader modal)* → the open mode → the selection → an active overlay. WI-51 collapsed the selection chain to one check; WI-55 removes the trader level.
+
+## What WI-51 landed (the selection API everything else consumes)
+
+Shipped 2026-08-10. Details and the five traps found are in [[WI-51_Inspector]].
+
+| File | What it is |
+| --- | --- |
+| `ui/inspector/inspector_panel.tscn` + `.gd` (`InspectorPanel`) | The one selection surface: a bottom-right `ReadoutPanel`, 420px, one gutter above the console, **growing upward** to a hard top limit. `SelectionKind`, `select()` / `clear()` / `kind()` / `selected_subject()` / `camera_target()`, the static `kind_of()`, `signal selection_changed`, and the nothing-selected line with its caret. |
+| `ui/inspector/tab_sets/*.gd` | One `InspectorTabSet` per kind — `CrewTabSet`, `ModuleTabSet`, `AsteroidTabSet`, `PileTabSet`, `TurboshaftTabSet`. A set answers *what the thing is called, what its meta line says, which tabs it has, what each page holds*; the panel owns the surface. Nodes, not RefCounteds, so their connections die with them. |
+| `ui/inspector/inspector_tab_plan.gd` (`InspectorTabPlan`) | Pure: module tab ordering (production → power → storage → crew → structure → *unknown* → upgrades), the short labels, duplicate numbering, and the component-derived crew tab set. 25 tests. |
+| `scripts/utility/mood_catalog.gd` (`MoodCatalog`) | Pure: modifier id → `{label, blurb, cause}` across the fixed table and the three dynamic families (disease/trait/event), the duration-or-cause column, breakdown sorting, and **the happiness formula itself** (`combine`) — which `PawnNeedsComponent` now calls, so the breakdown and the sim cannot diverge. 30 tests. |
+| `PawnNeedsComponent.get_modifier_breakdown()` / `needs_average()` | The two accessors the Needs tab needs. Nothing else may read `_modifiers`. |
+
+**The contract for WI-53 and WI-56:** `InspectorPanel.select(subject)` is the *only* way to raise a selection surface, and `camera_target()` is what to hand `GameCamera.jump_to()`. Both are already exposed; the camera half has no caller yet.
+
+**Two rules that bind the later panels:** a page that scrolls must drive its own `custom_minimum_size.y` from its content, and a panel that sizes itself to its content must re-fit on `minimum_size_changed` rather than measuring once. Both are the WI-48 zero-height lesson, and WI-51 hit each of them twice.
 
 ## Cross-cutting risks
 

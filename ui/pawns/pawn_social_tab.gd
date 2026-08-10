@@ -29,10 +29,13 @@ const COLOUR_THRESHOLD: float = 20.0
 ## even though the rows underneath were correct.
 const MAX_CONTENT_HEIGHT: float = 260.0
 
-const POSITIVE_COLOUR := Color(0.55, 0.9, 0.6)
-const NEGATIVE_COLOUR := Color(0.95, 0.55, 0.55)
-const NEUTRAL_COLOUR := Color(1.0, 1.0, 1.0, 0.7)
-const UNMET_COLOUR := Color(1.0, 1.0, 1.0, 0.45)
+## Taken from the chrome palette rather than hand-mixed (WI-49: nothing in `ui/`
+## names a colour of its own). Growth for a friendship, destructive for a feud,
+## body text for indifference, and meta grey for a crewmate they have not met.
+const POSITIVE_COLOUR := UIPalette.GROWTH
+const NEGATIVE_COLOUR := UIPalette.DESTRUCTIVE
+const NEUTRAL_COLOUR := UIPalette.TEXT
+const UNMET_COLOUR := UIPalette.TEXT_META
 
 var pawn: PawnBase = null
 var social: SocializeComponent = null
@@ -41,7 +44,10 @@ func set_pawn(_pawn: PawnBase) -> void:
 	pawn = _pawn
 	social = _pawn.get_component_by_type(SocializeComponent) as SocializeComponent
 	if social == null:
-		_hide_tab()
+		# Defensive only. WI-51 derives the crew tab set from the pawn's
+		# components, so a pawn with no SocializeComponent never gets this tab
+		# added in the first place - which is what retired the deferred
+		# `set_tab_hidden` dance the old TabContainer needed (WI-48 deviation 7).
 		return
 	SignalBus.pawns_chatted.connect(_on_pawns_chatted)
 	# The roster is read fresh on every rebuild, so a hire or a departure while
@@ -53,18 +59,6 @@ func set_pawn(_pawn: PawnBase) -> void:
 	# after _rebuild has already measured them.
 	(%SocialRows as Control).minimum_size_changed.connect(_fit_scroll_height)
 	_rebuild()
-
-## A TabContainer keeps drawing the tab button for a hidden child, so hiding the
-## control alone would leave a robot with an empty "Social" tab.
-func _hide_tab() -> void:
-	visible = false
-	var tabs := get_parent() as TabContainer
-	if tabs != null:
-		# Deferred: a TabContainer rebuilds its tab bar after children are added,
-		# so a set_tab_hidden issued in the same frame as the add lands on an
-		# index the bar does not have yet and silently does nothing - which left
-		# robots with an empty Social tab button.
-		tabs.set_tab_hidden.call_deferred(get_index(), true)
 
 func _rebuild() -> void:
 	var container: VBoxContainer = %SocialRows

@@ -19,15 +19,6 @@ extends Control
 @export var resource_display_ui: PackedScene
 @export var resources_to_display: Array[ResourceData]
 
-@export var pawn_info_screen: PackedScene
-var cur_pawn_info: PawnInfoPanel
-
-@export var resource_pile_screen: PackedScene
-var cur_resource_pile_screen: ResourcePileInventoryTab
-
-@export var asteroid_info_screen: PackedScene
-var cur_asteroid_info_screen: AsteroidInfoPanel
-
 var preview_model : ModuleBase
 var skip_emit: bool = false
 
@@ -37,6 +28,7 @@ const CONTRACTS_SCREEN_SCENE: PackedScene = preload("res://ui/windows/contracts_
 const EVENT_CARD_SCENE: PackedScene = preload("res://ui/windows/event_card.tscn")
 const TRADER_SCREEN_SCENE: PackedScene = preload("res://ui/windows/trade/trader_screen.tscn")
 const MINIMAP_SCENE: PackedScene = preload("res://ui/minimap.tscn")
+const INSPECTOR_SCENE: PackedScene = preload("res://ui/inspector/inspector_panel.tscn")
 const GAME_OVER_SCENE: PackedScene = preload("res://ui/game_over_screen.tscn")
 
 ## STORES has a console slot before it has a panel. A disabled button that says
@@ -71,7 +63,9 @@ func _ready() -> void:
 	# first frame rather than one refresh later.
 	console.bind(mode_manager)
 	console.bind_overlay(overlay_controller)
+	mode_manager.mode_changed.connect(_on_mode_changed)
 	_setup_minimap_ui()
+	_setup_inspector_ui()
 	_setup_trader_ui()
 	_setup_event_ui()
 	_setup_pause_menu()
@@ -159,6 +153,26 @@ func _on_sys_pressed() -> void:
 	if pause_menu != null:
 		pause_menu.toggle()
 
+## Some panels mean to own the whole screen - the mockup hides the inspector
+## behind Trade and R&D on the grounds that selection means nothing there.
+##
+## That is a **per-panel declaration**, never a list of special cases here: a
+## panel that wants it exposes a `hides_inspector` property, which is read
+## duck-typed exactly the way [ModeManager] finds `on_opened` / `on_closed`. A
+## panel that declares nothing leaves the inspector alone, which is the right
+## default for the five narrow modes.
+func _on_mode_changed(new_mode: ModeManager.Mode, _previous: ModeManager.Mode) -> void:
+	if inspector == null or not is_instance_valid(inspector):
+		return
+	var panel: Control = null
+	if new_mode != ModeManager.Mode.NONE:
+		panel = mode_manager.panel_for(new_mode)
+	# `get()` on an undeclared property returns null, and `bool(null)` is not a
+	# thing GDScript will build - so the presence test has to be the type check,
+	# not a cast.
+	var declared: Variant = panel.get(&"hides_inspector") if panel != null else null
+	inspector.visible = not (declared is bool and bool(declared))
+
 ## Station overlays (WI-35): a self-contained UI-side controller that owns the
 ## overlay tint, the digit hotkeys, and the logistics flow layer. Its panel is
 ## the OVERLAY mode; the tint deliberately outlives that panel, which is what the
@@ -218,17 +232,11 @@ func _topmost_esc_claim() -> StringName:
 	# 3. The open mode. One check, not seven.
 	if mode_manager != null and mode_manager.has_open_mode():
 		return &"mode"
-	# 4. The current selection. WI-51 collapses these five into one inspector.
-	if cur_pawn_info != null and is_instance_valid(cur_pawn_info):
-		return &"pawn_info"
-	if cur_asteroid_info_screen != null and is_instance_valid(cur_asteroid_info_screen):
-		return &"asteroid_info"
-	if cur_resource_pile_screen != null and is_instance_valid(cur_resource_pile_screen):
-		return &"pile_info"
-	if %TurboshaftPanel.visible:
-		return &"turboshaft"
-	if %ModuleInfoPanel.visible:
-		return &"module_info"
+	# 4. The current selection. One check, not five (WI-51): every kind of
+	# selection renders into the same inspector, so there is only ever one thing
+	# here to close.
+	if inspector != null and is_instance_valid(inspector) and inspector.has_selection():
+		return &"selection"
 	# Last: a painted overlay. It is ranked below everything because the overlay
 	# is designed to outlive its panel - Esc must never take it away while the
 	# player still has something else open. `0` clears it directly.
@@ -248,19 +256,8 @@ func _close_esc_claim(claim: StringName) -> void:
 			_trader_screen.close()
 		&"mode":
 			mode_manager.close()
-		&"pawn_info":
-			cur_pawn_info.queue_free()
-			cur_pawn_info = null
-		&"asteroid_info":
-			cur_asteroid_info_screen.queue_free()
-			cur_asteroid_info_screen = null
-		&"pile_info":
-			cur_resource_pile_screen.queue_free()
-			cur_resource_pile_screen = null
-		&"turboshaft":
-			%TurboshaftPanel.close()
-		&"module_info":
-			close_info_panel()
+		&"selection":
+			inspector.clear()
 		&"overlay":
 			overlay_controller.set_mode(OverlayController.Mode.NONE)
 
@@ -472,76 +469,56 @@ func create_resource_display() -> void:
 		resource_ui.set_resource(resource_data)
 		resource_display_container.add_child(resource_ui)
 
-func pawn_clicked(pawn: PawnBase) -> void:
-	if cur_pawn_info != null:
-		cur_pawn_info.queue_free()
-		if cur_pawn_info.pawn == pawn:
-			# Just close, nothing else
-			return
-	cur_pawn_info = pawn_info_screen.instantiate()
-	cur_pawn_info.set_pawn(pawn)
-	add_child(cur_pawn_info)
-	Global.ui_in_game.pawn_brackets.show_around(pawn, _pawn_bracket_rect(pawn))
-	# tree_exiting fires on both close paths (exit button and the re-click
-	# toggle's queue_free above); clear_if_target keeps a newly selected pawn's
-	# brackets alive when the old panel's deferred free lands after them.
-	cur_pawn_info.tree_exiting.connect(func() -> void:
-		Global.ui_in_game.pawn_brackets.clear_if_target(pawn))
+# --- selection (WI-51) ---------------------------------------------------------
 
-func _pawn_bracket_rect(pawn: PawnBase) -> Rect2:
-	if pawn.animated_sprite != null and pawn.animated_sprite.sprite_frames != null:
-		var frame_texture: Texture2D = pawn.animated_sprite.sprite_frames.get_frame_texture(pawn.animated_sprite.animation, pawn.animated_sprite.frame)
-		if frame_texture != null:
-			var sprite_size: Vector2 = frame_texture.get_size() * pawn.animated_sprite.scale
-			return Rect2(Vector2(-sprite_size.x / 2,-sprite_size.y), sprite_size)
-	return Rect2(Vector2(-16, -24), Vector2(32, 48))
+## The bottom-right selection surface. Every click path in the game funnels into
+## `inspector.select()`; nothing else may instantiate a selection surface.
+var inspector: InspectorPanel
+
+## Mounted after the map so it draws above the ambient strips, and before the
+## modals so it never draws over one. It anchors itself to the bottom-right and
+## grows upward with its content, so mounting is just an add_child.
+func _setup_inspector_ui() -> void:
+	inspector = INSPECTOR_SCENE.instantiate() as InspectorPanel
+	add_child(inspector)
+	inspector.selection_changed.connect(_on_selection_changed)
+
+## Selection brackets follow the inspector rather than the panels. Module
+## brackets are driven by `ModuleBase.selected`, which the module and turboshaft
+## tab sets raise and drop; the pawn brackets have no such flag, so they are
+## pointed from here. Selecting anything that is not a pawn clears them, which is
+## what "only one thing is selected" means on screen.
+func _on_selection_changed(selection_kind: InspectorPanel.SelectionKind) -> void:
+	if Global.ui_in_game == null:
+		return
+	var pawn: PawnBase = null
+	if selection_kind == InspectorPanel.SelectionKind.CREW:
+		pawn = inspector.selected_subject() as PawnBase
+	Global.ui_in_game.set_selected_pawn(pawn)
+
+func pawn_clicked(pawn: PawnBase) -> void:
+	inspector.select(pawn)
 
 func resource_pile_clicked(pile: ResourcePile) -> void:
-	if cur_resource_pile_screen != null:
-		cur_resource_pile_screen.queue_free()
-		if cur_resource_pile_screen.resource_pile == pile:
-			return
-	cur_resource_pile_screen = resource_pile_screen.instantiate()
-	cur_resource_pile_screen.set_resource_pile(pile)
-	add_child(cur_resource_pile_screen)
+	inspector.select(pile)
 
 func asteroid_clicked(asteroid: AsteroidBase) -> void:
-	if cur_asteroid_info_screen != null:
-		var was_same: bool = cur_asteroid_info_screen.asteroid == asteroid
-		cur_asteroid_info_screen.queue_free()
-		cur_asteroid_info_screen = null
-		if was_same:
-			return
-	cur_asteroid_info_screen = asteroid_info_screen.instantiate() as AsteroidInfoPanel
-	cur_asteroid_info_screen.set_asteroid(asteroid)
-	add_child(cur_asteroid_info_screen)
+	inspector.select(asteroid)
 
 var _click_cycler: ClickCycler = ClickCycler.new()
 
-## Entry point for module footprint clicks - arbitrates stacked cells and
-## cycles through them on repeated clicks (WI-10).
+## Entry point for module footprint clicks. [ClickCycler] still arbitrates
+## stacked cells and cycles through them on repeated clicks (WI-10) - that is a
+## different problem from what the panel does with the answer, which is why it
+## survives the collapse unchanged.
+##
+## Turbolifts need no branch here any more: [InspectorPanel.kind_of] resolves a
+## finished lift to the TURBOSHAFT tab set, so "a lift opens something else" is a
+## property of the selection rather than of this handler.
 func module_clicked(module: ModuleBase) -> void:
 	var cell: Vector2i = Global.world_to_cell(module.get_global_mouse_position())
-	var panel_open: bool = %ModuleInfoPanel.visible and %ModuleInfoPanel.module_viewed != null
-	var target: ModuleBase = _click_cycler.handle_click(module, cell, panel_open)
+	var target: ModuleBase = _click_cycler.handle_click(
+		module, cell, inspector.selected_subject() is ModuleBase)
 	if target == null:
 		return
-	toggle_info_panel(target)
-
-func toggle_info_panel(selected_module: ModuleBase) -> void:
-	# Turbolifts are managed per-shaft (WI-11): any lift in a shaft opens the
-	# shaft panel instead of the per-module info panel.
-	if selected_module is ModuleTurbolift and selected_module.is_complete():
-		close_info_panel()
-		%TurboshaftPanel.toggle_for(selected_module as ModuleTurbolift)
-		return
-	%TurboshaftPanel.close()
-	if %ModuleInfoPanel.visible == true and %ModuleInfoPanel.module_viewed == selected_module:
-		close_info_panel()
-	else:
-		%ModuleInfoPanel.set_module(selected_module)
-		%ModuleInfoPanel.visible = true
-
-func close_info_panel() -> void:
-	%ModuleInfoPanel.set_module(null)
-	%ModuleInfoPanel.visible = false
+	inspector.select(target)
