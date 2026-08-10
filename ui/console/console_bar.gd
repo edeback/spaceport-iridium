@@ -226,13 +226,39 @@ func _build_buttons() -> void:
 	sys.pressed.connect(sys_pressed.emit)
 	_buttons_row.add_child(sys)
 
-	# The zone is a fixed reserve; the buttons are what actually has to fit in
-	# it. Asserting the relationship at build time rather than only in a test is
-	# what stops an eighth mode from silently overflowing into the vitals.
-	var consumed: float = UIMetrics.mode_zone_width(_buttons_row.get_child_count())
-	if consumed > float(UIMetrics.CONSOLE_MODES_WIDTH - UIMetrics.PANEL_HEADER_PAD):
+	_assert_fits()
+
+## Warns when the mode row has outgrown its fixed zone. The zone is a fixed
+## reserve; the buttons are what actually has to fit in it, and asserting the
+## relationship at build time rather than only in a test is what stops an eighth
+## mode from silently overflowing into the vitals.
+##
+## The row is not uniform, so it is measured per child rather than from a flat
+## count: it is `n` [ModeButton]s [i]plus[/i] the 1px group divider, and charging
+## that divider a full [constant UIMetrics.MODE_BUTTON] width put the total ~69px
+## over and warned on every boot about a row that fits. Buttons go through
+## [method UIMetrics.mode_zone_width]; anything else contributes its own width
+## and one more gap.
+func _assert_fits() -> void:
+	var buttons: int = 0
+	var extras: int = 0
+	var extra_width: float = 0.0
+	for child: Node in _buttons_row.get_children():
+		if child is ModeButton:
+			buttons += 1
+			continue
+		var control: Control = child as Control
+		if control == null:
+			continue
+		extras += 1
+		extra_width += control.custom_minimum_size.x
+	var consumed: float = (UIMetrics.mode_zone_width(buttons) + extra_width
+		+ float(UIMetrics.MODE_BUTTON_GAP * extras))
+	# The zone's own left margin is not room the buttons get to use.
+	var available: float = float(UIMetrics.CONSOLE_MODES_WIDTH - UIMetrics.PANEL_HEADER_PAD)
+	if consumed > available:
 		push_warning("ConsoleBar: %d console buttons need %dpx but the mode zone reserves %d"
-			% [_buttons_row.get_child_count(), int(consumed), UIMetrics.CONSOLE_MODES_WIDTH])
+			% [buttons, int(consumed), int(available)])
 
 ## The zone dividers and the mode-group divider are the same hairline in the same
 ## colour; only the height differs, so they are made in one place.
