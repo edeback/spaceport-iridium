@@ -183,7 +183,7 @@ func _spawn_alert(key: String, text: String) -> void:
 		return
 	var label := Label.new()
 	label.text = text
-	label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.3))
+	label.add_theme_color_override("font_color", UIPalette.ATTENTION)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_alerts_box.add_child(label)
 	_active_alerts[key] = label
@@ -215,7 +215,7 @@ func _setup_raid_ui() -> void:
 	row.add_theme_constant_override("separation", 12)
 	_raid_banner.add_child(row)
 	_raid_label = Label.new()
-	_raid_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.35))
+	_raid_label.add_theme_color_override("font_color", UIPalette.ATTENTION)
 	row.add_child(_raid_label)
 	_raid_pay_btn = Button.new()
 	_raid_pay_btn.pressed.connect(_on_raid_hail_pressed)
@@ -380,9 +380,6 @@ func _add_side_button(label: String, on_pressed: Callable) -> Button:
 	var side_vbox: Node = info_margin.get_parent()
 	var button := Button.new()
 	button.text = label
-	var style: StyleBox = info_btn.get_theme_stylebox("normal")
-	if style != null:
-		button.add_theme_stylebox_override("normal", style)
 	button.pressed.connect(on_pressed)
 	side_vbox.add_child(button)
 	side_vbox.move_child(button, info_margin.get_index())

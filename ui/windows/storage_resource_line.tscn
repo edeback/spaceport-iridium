@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://8o5roogmn3fd" path="res://ui/windows/storage_resource_line.gd" id="1_b4rr0"]
 [ext_resource type="Texture2D" uid="uid://ct3m5xg41ptib" path="res://assets/external/kenney_ui/PNG/Grey/Default/icon_cross.png" id="2_nlufw"]
-[ext_resource type="Theme" uid="uid://be0o5q2vl2xnx" path="res://ui/themes/spinbox_theme.tres" id="3_jodna"]
 [ext_resource type="Texture2D" uid="uid://dtddmta7qm6au" path="res://assets/external/kenney_ui/PNG/Grey/Default/icon_outline_cross.png" id="3_ovn6y"]
 [ext_resource type="Texture2D" uid="uid://cbjmsmhra0t83" path="res://assets/sprites/trash-can.png" id="5_nlufw"]
 [ext_resource type="Texture2D" uid="uid://baq1qvi3o8jpm" path="res://assets/external/kenney_ui/Vector/Red/button_square_flat.svg" id="5_ovn6y"]
@@ -60,7 +59,6 @@ text = "/"
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 4
-theme = ExtResource("3_jodna")
 rounded = true
 alignment = 2
 

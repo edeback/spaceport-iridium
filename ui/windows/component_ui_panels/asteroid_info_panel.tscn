@@ -34,7 +34,7 @@ contents_container = NodePath("MarginContainer/VBoxContainer/ContentsContainer")
 designate_button = NodePath("MarginContainer/VBoxContainer/DesignateButton")
 
 [node name="NinePatchRect" type="NinePatchRect" parent="." unique_id=1305638306]
-self_modulate = Color(0.5356965, 0.26156273, 0.30489907, 1)
+self_modulate = Color(0.12, 0.13, 0.15, 0.97)
 layout_mode = 2
 texture = ExtResource("2_8dsux")
 patch_margin_left = 8

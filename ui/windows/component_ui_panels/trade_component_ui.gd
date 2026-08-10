@@ -13,7 +13,7 @@ func _ready() -> void:
 	# (next trader ETA / docked countdown) and a docked-only trader button.
 	var box: VBoxContainer = $MarginContainer/VBoxContainer
 	_status_label = Label.new()
-	_status_label.add_theme_font_size_override("font_size", 12)
+	_status_label.theme_type_variation = UIType.BODY
 	box.add_child(_status_label)
 	box.move_child(_status_label, 0)
 	_trader_button = Button.new()

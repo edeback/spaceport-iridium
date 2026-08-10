@@ -114,22 +114,22 @@ func _refresh_tier_section() -> void:
 
 	var heading := Label.new()
 	heading.text = "Station Tier %d%s" % [tier, ("  —  " + tier_name) if tier_name != "" else ""]
-	heading.add_theme_font_size_override("font_size", 18)
+	heading.theme_type_variation = UIType.READOUT_LABEL
 	_tier_section.add_child(heading)
 
 	if data == null or data.is_max_goal() or mgr.is_max_tier():
 		var capped := Label.new()
 		capped.text = "Top tier reached — the station answers to no further inspection."
-		capped.add_theme_font_size_override("font_size", 12)
-		capped.modulate = Color(0.75, 0.9, 0.78)
+		capped.theme_type_variation = UIType.BODY
+		capped.add_theme_color_override("font_color", UIPalette.GROWTH)
 		_tier_section.add_child(capped)
 		_tier_section.add_child(_section_rule())
 		return
 
 	var goals_label := Label.new()
 	goals_label.text = "Promotion goals (export the goods, then request an ARC inspection):"
-	goals_label.add_theme_font_size_override("font_size", 12)
-	goals_label.modulate = Color(0.8, 0.82, 0.9)
+	goals_label.theme_type_variation = UIType.BODY
+	goals_label.add_theme_color_override("font_color", UIPalette.TEXT)
 	_tier_section.add_child(goals_label)
 
 	# Export goals with progress bars.
@@ -143,7 +143,7 @@ func _refresh_tier_section() -> void:
 		var name_label := Label.new()
 		name_label.text = "Export %s" % res_name
 		name_label.custom_minimum_size.x = 150
-		name_label.add_theme_font_size_override("font_size", 12)
+		name_label.theme_type_variation = UIType.BODY
 		row.add_child(name_label)
 		var bar := ProgressBar.new()
 		bar.custom_minimum_size = Vector2(180, 14)
@@ -153,8 +153,9 @@ func _refresh_tier_section() -> void:
 		row.add_child(bar)
 		var amount_label := Label.new()
 		amount_label.text = "%d / %d" % [have, goal]
-		amount_label.add_theme_font_size_override("font_size", 12)
-		amount_label.modulate = Color(0.7, 1.0, 0.75) if have >= goal else Color(0.9, 0.9, 0.9)
+		amount_label.theme_type_variation = UIType.BODY
+		amount_label.add_theme_color_override("font_color",
+			UIPalette.GROWTH if have >= goal else UIPalette.TEXT)
 		row.add_child(amount_label)
 		_tier_section.add_child(row)
 
@@ -166,22 +167,22 @@ func _refresh_tier_section() -> void:
 			var built: bool = mgr.built_module_count_with_tag(tag) > 0
 			parts.append("%s %s" % ["[x]" if built else "[ ]", tag])
 		facilities.text = "Required facilities: " + "   ".join(parts)
-		facilities.add_theme_font_size_override("font_size", 12)
-		facilities.modulate = Color(0.8, 0.82, 0.9)
+		facilities.theme_type_variation = UIType.BODY
+		facilities.add_theme_color_override("font_color", UIPalette.TEXT)
 		_tier_section.add_child(facilities)
 
 	# Inspection status line.
 	var status := Label.new()
-	status.add_theme_font_size_override("font_size", 12)
+	status.theme_type_variation = UIType.BODY
 	if mgr.is_inspection_active():
 		status.text = "An ARC inspector is aboard, touring the station..."
-		status.modulate = Color(0.95, 0.85, 0.5)
+		status.add_theme_color_override("font_color", UIPalette.ATTENTION_TEXT)
 	elif mgr.tier_goals_met():
 		status.text = "Goals met — an ARC inspection will be offered shortly."
-		status.modulate = Color(0.7, 1.0, 0.75)
+		status.add_theme_color_override("font_color", UIPalette.GROWTH)
 	else:
 		status.text = "Meet every goal and build the required facilities to earn an inspection."
-		status.modulate = Color(0.85, 0.8, 0.7)
+		status.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
 	_tier_section.add_child(status)
 	_tier_section.add_child(_section_rule())
 
@@ -204,7 +205,7 @@ func _build_tree(tree_id: StringName, unlocks: Array[UnlockData]) -> Control:
 
 	var header := Label.new()
 	header.text = String(tree_id).capitalize()
-	header.add_theme_font_size_override("font_size", 18)
+	header.theme_type_variation = UIType.READOUT_LABEL
 	block.add_child(header)
 
 	# Same-tree dependency graph: children[node] = nodes that require it.

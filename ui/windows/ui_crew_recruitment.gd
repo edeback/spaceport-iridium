@@ -46,8 +46,8 @@ func _rebuild() -> void:
 	var candidates: Array[HireCandidate] = manager.get_candidates()
 	if candidates.is_empty():
 		var empty := Label.new()
-		empty.add_theme_font_size_override(&"font_size", 11)
-		empty.modulate = Color(1, 1, 1, 0.6)
+		empty.theme_type_variation = UIType.META_LINE
+		empty.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		empty.text = "No recruits available — check back after a trader visits."
 		candidate_list.add_child(empty)
@@ -67,14 +67,14 @@ func _make_card(candidate: HireCandidate) -> Control:
 	name_label.text = candidate.pawn_name
 	info.add_child(name_label)
 	var skills_label := Label.new()
-	skills_label.add_theme_font_size_override(&"font_size", 11)
+	skills_label.theme_type_variation = UIType.META_LINE
 	skills_label.text = _skills_text(candidate)
 	info.add_child(skills_label)
 	var traits_text: String = _traits_text(candidate)
 	if traits_text != "":
 		var traits_label := Label.new()
-		traits_label.add_theme_font_size_override(&"font_size", 11)
-		traits_label.modulate = Color(1, 1, 1, 0.75)
+		traits_label.theme_type_variation = UIType.META_LINE
+		traits_label.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
 		traits_label.text = traits_text
 		info.add_child(traits_label)
 	row.add_child(info)

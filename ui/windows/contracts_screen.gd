@@ -38,8 +38,8 @@ func _fill_section(container: VBoxContainer, contracts: Array[ContractData], bui
 		child.queue_free()
 	if contracts.is_empty():
 		var empty := Label.new()
-		empty.text = empty_text
-		empty.self_modulate = Color(1, 1, 1, 0.5)
+		empty.text = empty_text.to_upper()
+		empty.theme_type_variation = UIType.META_LINE
 		container.add_child(empty)
 		return
 	for contract: ContractData in contracts:
@@ -97,9 +97,9 @@ func _build_history_row(contract: ContractData) -> Control:
 		contract.total_payout() if contract.state == ContractData.State.FULFILLED else -contract.penalty]
 	match contract.state:
 		ContractData.State.FULFILLED:
-			label.self_modulate = Color(0.6, 1.0, 0.6)
+			label.add_theme_color_override("font_color", UIPalette.GROWTH)
 		ContractData.State.FAILED:
-			label.self_modulate = Color(1.0, 0.5, 0.45)
+			label.add_theme_color_override("font_color", UIPalette.DESTRUCTIVE)
 		_:
-			label.self_modulate = Color(1, 1, 1, 0.6)
+			label.add_theme_color_override("font_color", UIPalette.TEXT_META)
 	return label

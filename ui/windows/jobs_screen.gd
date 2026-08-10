@@ -13,16 +13,25 @@ extends Control
 ## Two lists, because the board only holds UNCLAIMED work: `find_job()` removes a
 ## job when a pawn takes it, so "in progress" has to come from sweeping pawns.
 ##
-## A management screen like Economy/Contracts - it does NOT pause the sim. It
-## refreshes on `slow_tick` while open (the same cadence JobManager ages the board
-## on) rather than per frame, because `explain_block()` runs driver validity
-## checks and pathfinding queries that have no business happening 60 times a
-## second. Built in code, like the other station pages, so there is no .tscn.
+## It does NOT pause the sim. It refreshes on `slow_tick` while open (the same
+## cadence JobManager ages the board on) rather than per frame, because
+## `explain_block()` runs driver validity checks and pathfinding queries that
+## have no business happening 60 times a second.
+##
+## **WI-49 pilot conversion.** This was a code-built full-rect window that
+## invented its own frame; it now mounts a [ConsolePanel] and builds its rows
+## from [ListRow] and [SectionLabel]. It is the exact operation WI-50 performs
+## seven more times, done once here so the frame's API gets found wanting while
+## that is still cheap. It keeps its side-button toggle until WI-50 replaces the
+## side column with the console.
+
+const CONSOLE_PANEL: PackedScene = preload("res://ui/theme/console_panel.tscn")
 
 ## Rows past this are summarised as a count. A backed-up board can hold hundreds;
 ## the player needs the shape of the queue, not every entry.
 const MAX_ROWS: int = 40
 
+var _panel: ConsolePanel
 var _content: VBoxContainer
 var _pawn_picker: OptionButton
 ## Crew in picker order, so the selected index maps back to a pawn. Rebuilt on
@@ -46,6 +55,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func open() -> void:
 	visible = true
+	# Ambient HUD strips (the overlay toolbar, the alert feed) are mounted after
+	# this panel and would otherwise draw across its header. An opened panel is
+	# the thing the player just asked for, so it goes on top. WI-50 removes the
+	# need for this by making panel mounting exclusive.
+	move_to_front()
 	refresh()
 
 func _on_slow_tick(_interval: float) -> void:
@@ -55,42 +69,26 @@ func _on_slow_tick(_interval: float) -> void:
 # --- shell --------------------------------------------------------------------
 
 func _build_shell() -> void:
-	var window := PanelContainer.new()
-	window.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT)
-	window.custom_minimum_size = Vector2(500, 600)
-	window.offset_right = -16
-	window.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	window.grow_vertical = Control.GROW_DIRECTION_BOTH
-	add_child(window)
+	_panel = CONSOLE_PANEL.instantiate() as ConsolePanel
+	_panel.title = "Jobs"
+	# The board's shape ("4 in progress, 12 waiting") is exactly what the header's
+	# subtitle slot is for, so it is not also a row inside the list.
+	_panel.subtitle = ""
+	_panel.panel_width = UIMetrics.PANEL_CREW_WIDTH
+	_panel.content_padding = UIMetrics.CONTENT_PAD
+	add_child(_panel)
 
-	var margin := MarginContainer.new()
-	for side: String in ["left", "top", "right", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 12)
-	window.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
-	margin.add_child(vbox)
-
-	var title_bar := HBoxContainer.new()
-	vbox.add_child(title_bar)
-	var title := Label.new()
-	title.text = "Jobs"
-	title.add_theme_font_size_override("font_size", 24)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title_bar.add_child(title)
-	var close_btn := Button.new()
-	close_btn.text = "X"
-	close_btn.custom_minimum_size = Vector2(32, 0)
-	close_btn.pressed.connect(func() -> void: visible = false)
-	title_bar.add_child(close_btn)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", UIMetrics.SECTION_GAP)
+	_panel.content().add_child(column)
 
 	var picker_row := HBoxContainer.new()
-	picker_row.add_theme_constant_override("separation", 6)
-	vbox.add_child(picker_row)
+	picker_row.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	column.add_child(picker_row)
 	var picker_label := Label.new()
-	picker_label.text = "Explain for:"
-	picker_label.self_modulate = Color(1, 1, 1, 0.55)
+	picker_label.theme_type_variation = UIType.READOUT_LABEL
+	picker_label.text = "EXPLAIN FOR"
+	picker_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	picker_row.add_child(picker_label)
 	_pawn_picker = OptionButton.new()
 	_pawn_picker.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -101,10 +99,10 @@ func _build_shell() -> void:
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	vbox.add_child(scroll)
+	column.add_child(scroll)
 
 	_content = VBoxContainer.new()
-	_content.add_theme_constant_override("separation", 10)
+	_content.add_theme_constant_override("separation", UIMetrics.SECTION_GAP)
 	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_content)
 
@@ -123,7 +121,7 @@ func refresh() -> void:
 		child.queue_free()
 	var working: Array[PawnBase] = _working_pawns()
 	var waiting: Array[Job] = Global.job_manager.get_board_snapshot()
-	_build_summary(working.size(), waiting.size())
+	_panel.subtitle = "%d in progress - %d waiting" % [working.size(), waiting.size()]
 	_build_working(working)
 	_build_waiting(waiting)
 
@@ -155,43 +153,34 @@ func _working_pawns() -> Array[PawnBase]:
 
 # --- sections -----------------------------------------------------------------
 
-func _build_summary(working: int, waiting: int) -> void:
-	var label := Label.new()
-	label.text = "%d in progress, %d waiting" % [working, waiting]
-	label.add_theme_font_size_override("font_size", 18)
-	_content.add_child(label)
-
 func _build_working(working: Array[PawnBase]) -> void:
 	var section := VBoxContainer.new()
-	section.add_theme_constant_override("separation", 2)
-	section.add_child(_heading("In progress"))
+	section.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	section.add_child(SectionLabel.create("In progress"))
 	if working.is_empty():
-		section.add_child(_muted("    (nobody is working)"))
+		section.add_child(_muted("Nobody is working"))
 	for pawn: PawnBase in working:
 		var job: Job = pawn.current_job
-		section.add_child(_line("  %s - %s" % [_pawn_name(pawn), job.report()],
-			job.get_category_name(), Color(0.75, 0.9, 1.0)))
-		var subtask: String = job.subtask_report()
-		if not subtask.is_empty():
-			section.add_child(_muted("      %s" % subtask))
+		section.add_child(_row(
+			"%s - %s" % [_pawn_name(pawn), job.report()],
+			job.subtask_report(),
+			job.get_category_name(),
+			UIPalette.Row.LIVE))
 	_content.add_child(section)
 
 func _build_waiting(waiting: Array[Job]) -> void:
 	var section := VBoxContainer.new()
-	section.add_theme_constant_override("separation", 2)
-	section.add_child(_heading("Waiting on the board"))
+	section.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	section.add_child(SectionLabel.create("Waiting on the board"))
 	if waiting.is_empty():
-		section.add_child(_muted("    (the board is empty)"))
+		section.add_child(_muted("The board is empty"))
 	var shown: int = mini(waiting.size(), MAX_ROWS)
 	for i: int in shown:
 		var job: Job = waiting[i]
-		section.add_child(_line("  %s" % job.report(),
-			"%s  p%d" % [job.get_category_name(), job.priority]))
-		var detail: String = _detail_for(job)
-		if not detail.is_empty():
-			section.add_child(_muted("      %s" % detail))
+		section.add_child(_row(job.report(), _detail_for(job),
+			"%s p%d" % [job.get_category_name(), job.priority], UIPalette.Row.INERT))
 	if waiting.size() > shown:
-		section.add_child(_muted("    ... and %d more" % (waiting.size() - shown)))
+		section.add_child(_muted("... and %d more" % (waiting.size() - shown)))
 	_content.add_child(section)
 
 ## The second line under a waiting job: how long it has sat there, its workspace
@@ -224,30 +213,18 @@ func _age_text(seconds: float) -> String:
 func _pawn_name(pawn: PawnBase) -> String:
 	return pawn.pawn_name if not pawn.pawn_name.is_empty() else "Crew"
 
-func _heading(text: String) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_size_override("font_size", 16)
-	return label
-
-func _line(left_text: String, right_text: String, color: Color = Color.WHITE) -> Control:
-	var row := HBoxContainer.new()
-	var left := Label.new()
-	left.text = left_text
-	left.self_modulate = color
-	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	left.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	row.add_child(left)
-	var right := Label.new()
-	right.text = right_text
-	right.self_modulate = Color(color, 0.6)
-	right.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	row.add_child(right)
+func _row(name_text: String, meta_text: String, action_text: String,
+		kind: UIPalette.Row) -> ListRow:
+	var row: ListRow = ListRow.create()
+	row.configure(name_text, meta_text, action_text, kind)
+	# Rows here are reports, not controls - there is nothing to open yet, so the
+	# button never takes focus and never looks clickable on hover.
+	row.disabled = true
 	return row
 
 func _muted(text: String) -> Label:
 	var label := Label.new()
-	label.text = text
-	label.self_modulate = Color(1, 1, 1, 0.55)
+	label.theme_type_variation = UIType.META_LINE
+	label.text = text.to_upper()
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return label

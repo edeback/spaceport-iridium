@@ -90,7 +90,7 @@ func _rebuild_diseases() -> void:
 	if ids.is_empty():
 		var healthy := Label.new()
 		healthy.text = "Healthy"
-		healthy.modulate = Color(0.6, 1.0, 0.6)
+		healthy.add_theme_color_override("font_color", UIPalette.GROWTH)
 		_diseases_box.add_child(healthy)
 		return
 	for id: StringName in ids:
@@ -101,7 +101,7 @@ func _rebuild_diseases() -> void:
 		var stage: int = pawn_disease.stage_of(id)
 		var treated: int = int(round(pawn_disease.treat_fraction(id) * 100.0))
 		row.text = "%s - stage %d/%d - treated %d%%" % [disease.display_name, stage + 1, disease.stage_count(), treated]
-		row.modulate = Color(1.0, 0.7, 0.6)
+		row.modulate = UIPalette.ATTENTION_TEXT
 		row.tooltip_text = disease.description
 		row.mouse_filter = Control.MOUSE_FILTER_STOP
 		_diseases_box.add_child(row)

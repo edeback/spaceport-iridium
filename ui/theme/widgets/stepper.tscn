@@ -1,0 +1,48 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://damwv5qp2ex4s" path="res://ui/theme/widgets/stepper.gd" id="1_w"]
+
+[node name="Stepper" type="PanelContainer"]
+offset_right = 106.0
+offset_bottom = 28.0
+size_flags_horizontal = 0
+size_flags_vertical = 4
+script = ExtResource("1_w")
+
+[node name="Row" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Minus" type="Button" parent="Row"]
+custom_minimum_size = Vector2(26, 0)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"TabInactive"
+text = "−"
+
+[node name="SepLeft" type="ColorRect" parent="Row"]
+custom_minimum_size = Vector2(1, 0)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.11372549, 0.17254902, 0.2509804, 1)
+
+[node name="Value" type="Label" parent="Row"]
+custom_minimum_size = Vector2(52, 0)
+layout_mode = 2
+theme_type_variation = &"Metric"
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SepRight" type="ColorRect" parent="Row"]
+custom_minimum_size = Vector2(1, 0)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.11372549, 0.17254902, 0.2509804, 1)
+
+[node name="Plus" type="Button" parent="Row"]
+custom_minimum_size = Vector2(26, 0)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"TabInactive"
+text = "+"

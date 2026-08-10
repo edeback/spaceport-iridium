@@ -19,7 +19,7 @@ func setup(weapon: WeaponComponent) -> void:
 	add_child(vbox)
 	var title := Label.new()
 	title.text = "Laser Turret"
-	title.add_theme_color_override("font_color", Color(0.9, 0.55, 0.4))
+	title.theme_type_variation = UIType.READOUT_LABEL
 	vbox.add_child(title)
 	_damage = Label.new()
 	vbox.add_child(_damage)

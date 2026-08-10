@@ -64,7 +64,7 @@ func _build_toolbar() -> void:
 	_add_mode_button(strip, Mode.VIBRATION, "Vibration", KEY_4)
 	_add_mode_button(strip, Mode.LOGISTICS, "Logistics", KEY_5)
 	_legend = Label.new()
-	_legend.add_theme_color_override("font_color", Color(0.85, 0.88, 0.92))
+	_legend.theme_type_variation = UIType.META_LINE
 	_legend.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	strip.add_child(_legend)
 	add_child(strip)

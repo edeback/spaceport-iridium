@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://bqpuv7wysl1nf" path="res://ui/windows/ui_storage_component.gd" id="1_6j2gs"]
 [ext_resource type="PackedScene" uid="uid://dprv5w0bvxvvb" path="res://ui/windows/storage_resource_line.tscn" id="2_4o4nm"]
-[ext_resource type="Theme" uid="uid://be0o5q2vl2xnx" path="res://ui/themes/spinbox_theme.tres" id="3_oliwk"]
 [ext_resource type="Texture2D" uid="uid://bkb1dr2qo71j1" path="res://ui/icons/ore.svg" id="4_w6hf2"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4o4nm"]
@@ -11,22 +10,6 @@ content_margin_top = 0.0
 content_margin_right = 0.0
 content_margin_bottom = 0.0
 bg_color = Color(0.12955844, 0.1295585, 0.12955838, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
-corner_detail = 5
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oliwk"]
-content_margin_left = 0.0
-content_margin_top = 0.0
-content_margin_right = 0.0
-content_margin_bottom = 0.0
-bg_color = Color(0.40659866, 0.558377, 0.86383194, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -153,7 +136,6 @@ text = "Priority: "
 
 [node name="PriorityValue" type="SpinBox" parent="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer/HBoxContainer" unique_id=1305261179]
 layout_mode = 2
-theme = ExtResource("3_oliwk")
 min_value = -100.0
 value = 1.0
 rounded = true
@@ -163,7 +145,6 @@ alignment = 2
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_oliwk")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="DumpResourcePanel" unique_id=181595976]
 layout_mode = 2

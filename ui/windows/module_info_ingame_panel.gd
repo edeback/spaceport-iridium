@@ -62,7 +62,7 @@ func _build_hp_row() -> void:
 	_hp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_hp_row.add_child(_hp_bar)
 	_hp_status = Label.new()
-	_hp_status.add_theme_color_override("font_color", Color(0.85, 0.55, 0.2))
+	_hp_status.theme_type_variation = UIType.METRIC
 	_hp_row.add_child(_hp_status)
 	vbox.add_child(_hp_row)
 	vbox.move_child(_hp_row, header.get_index() + 1)
@@ -74,8 +74,8 @@ func _build_env_section() -> void:
 	var vbox: Node = header.get_parent()
 	_env_section = VBoxContainer.new()
 	var title := Label.new()
-	title.text = "Environment"
-	title.add_theme_color_override("font_color", Color(0.6, 0.75, 0.6))
+	title.text = "ENVIRONMENT"
+	title.theme_type_variation = UIType.READOUT_LABEL
 	_env_section.add_child(title)
 	vbox.add_child(_env_section)
 	# Just under the HP row (which itself sits under the header).

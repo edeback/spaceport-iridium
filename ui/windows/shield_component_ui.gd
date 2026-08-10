@@ -17,7 +17,7 @@ func setup(shield: ShieldComponent) -> void:
 	add_child(vbox)
 	var title := Label.new()
 	title.text = "Shield Generator"
-	title.add_theme_color_override("font_color", Color(0.45, 0.75, 1.0))
+	title.theme_type_variation = UIType.READOUT_LABEL
 	vbox.add_child(title)
 	_absorb = Label.new()
 	vbox.add_child(_absorb)
@@ -45,4 +45,4 @@ func _refresh() -> void:
 		_status.remove_theme_color_override("font_color")
 	else:
 		_status.text = "Status: offline — recharging"
-		_status.add_theme_color_override("font_color", Color(0.9, 0.5, 0.3))
+		_status.add_theme_color_override("font_color", UIPalette.ATTENTION)

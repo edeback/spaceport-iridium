@@ -53,7 +53,7 @@ func _build_lane_block(index: int) -> void:
 	if conveyor.lanes.size() > 1:
 		var header := Label.new()
 		header.text = "Belt %d" % (index + 1)
-		header.add_theme_font_size_override("font_size", 12)
+		header.theme_type_variation = UIType.BODY
 		inner.add_child(header)
 
 	var source_selector := _add_row(inner, "Source:")
@@ -61,11 +61,11 @@ func _build_lane_block(index: int) -> void:
 	var resource_selector := _add_row(inner, "Resource:")
 
 	var buffer_label := Label.new()
-	buffer_label.add_theme_font_size_override("font_size", 11)
+	buffer_label.theme_type_variation = UIType.META_LINE
 	inner.add_child(buffer_label)
 	var status_label := Label.new()
-	status_label.add_theme_font_size_override("font_size", 11)
-	status_label.add_theme_color_override("font_color", Color(0.85, 0.55, 0.2))
+	status_label.theme_type_variation = UIType.META_LINE
+	status_label.add_theme_color_override("font_color", UIPalette.ATTENTION)
 	inner.add_child(status_label)
 
 	var row: Dictionary = {

@@ -31,51 +31,6 @@
 [ext_resource type="PackedScene" uid="uid://byip82db78f7" path="res://ui/windows/module_info_ingame_panel.tscn" id="38_x3wcs"]
 [ext_resource type="PackedScene" path="res://ui/windows/turboshaft_panel.tscn" id="39_tshft"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xdhp5"]
-bg_color = Color(0.0782779, 0.271425, 7.21961e-08, 1)
-border_width_left = 6
-border_width_top = 6
-border_width_right = 6
-border_width_bottom = 6
-border_color = Color(0, 0, 0, 1)
-corner_radius_top_left = 16
-corner_radius_top_right = 16
-corner_radius_bottom_right = 16
-corner_radius_bottom_left = 16
-shadow_size = 6
-shadow_offset = Vector2(-3, -3)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u8vfh"]
-bg_color = Color(0.0367339, 0.13205, 0.257585, 1)
-border_width_left = 6
-border_width_top = 6
-border_width_right = 6
-border_width_bottom = 6
-border_color = Color(0, 0, 0, 1)
-corner_radius_top_left = 16
-corner_radius_top_right = 16
-corner_radius_bottom_right = 16
-corner_radius_bottom_left = 16
-shadow_size = 6
-shadow_offset = Vector2(-3, -3)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1h8lm"]
-content_margin_left = 4.0
-content_margin_top = 4.0
-content_margin_right = 4.0
-content_margin_bottom = 4.0
-bg_color = Color(0.1, 0.1, 0.1, 0.6)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0, 0, 0, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
-corner_detail = 5
-
 [sub_resource type="InputEventKey" id="InputEventKey_1h8lm"]
 device = -1
 keycode = 4194305
@@ -111,7 +66,6 @@ offset_top = -102.0
 offset_right = 230.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_styles/panel = SubResource("StyleBoxFlat_xdhp5")
 
 [node name="MarginContainer" type="MarginContainer" parent="ResourceDisplayPanel" unique_id=1153547948]
 layout_mode = 2
@@ -191,7 +145,6 @@ grow_vertical = 2
 
 [node name="PanelContainer" type="PanelContainer" parent="VBoxContainer" unique_id=828912190]
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_u8vfh")
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/PanelContainer" unique_id=2069499512]
 layout_mode = 2
@@ -208,7 +161,6 @@ text = "Display Corridors"
 
 [node name="Modules" type="PanelContainer" parent="VBoxContainer" unique_id=615522520]
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_u8vfh")
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Modules" unique_id=11590616]
 layout_mode = 2
@@ -236,7 +188,6 @@ theme_override_constants/margin_bottom = 4
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 10
-theme_override_styles/normal = SubResource("StyleBoxFlat_1h8lm")
 shortcut = SubResource("Shortcut_xyc40")
 text = "Module Info"
 

@@ -51,10 +51,10 @@ func _build_rows() -> void:
 ## description as a hover tooltip. A HSeparator divides it from the skill rows.
 func _build_traits(container: VBoxContainer) -> void:
 	var header := Label.new()
-	header.add_theme_font_size_override(&"font_size", 11)
+	header.theme_type_variation = UIType.READOUT_LABEL
 	if traits == null or traits.traits.is_empty():
 		header.text = "Traits: none"
-		header.modulate = Color(1, 1, 1, 0.6)
+		header.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
 		container.add_child(header)
 	else:
 		header.text = "Traits"
@@ -81,10 +81,10 @@ func _update_row(def: SkillData) -> void:
 	var malus: int = skills.malus_for(def.id)
 	if malus > 0:
 		level_label.text = "Lv %d (-%d)" % [skills.effective_level(def.id), malus]
-		level_label.modulate = Color(1.0, 0.6, 0.6)
+		level_label.add_theme_color_override("font_color", UIPalette.DESTRUCTIVE)
 	else:
 		level_label.text = "Lv %d" % level
-		level_label.modulate = Color.WHITE
+		level_label.add_theme_color_override("font_color", UIPalette.TEXT_EMPHASIS)
 	var bar := refs["bar"] as ProgressBar
 	if level >= SkillData.MAX_LEVEL:
 		bar.value = 1.0

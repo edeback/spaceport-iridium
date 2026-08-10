@@ -60,7 +60,7 @@ func _build_row(upgrade: LocalUpgradeData) -> Control:
 	info.add_child(title)
 
 	var detail := Label.new()
-	detail.add_theme_font_size_override("font_size", 12)
+	detail.theme_type_variation = UIType.BODY
 	if tier >= upgrade.max_tiers:
 		detail.text = "Maxed out"
 	else:

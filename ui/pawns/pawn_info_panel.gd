@@ -45,7 +45,7 @@ func _setup_crew_controls() -> void:
 	var wage: int = EconomyManager.wage_for(pawn.hire_price, Global.economy_manager.wage_fraction)
 	var wage_label := Label.new()
 	wage_label.text = "Wage: %d cr/cycle" % wage
-	wage_label.self_modulate = Color(1, 1, 1, 0.7)
+	wage_label.theme_type_variation = UIType.META_LINE
 	wage_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(wage_label)
 	var fire_btn := Button.new()
@@ -93,7 +93,7 @@ func _setup_robot_controls() -> void:
 		_robot_integrity_bar = _make_stat_row(section, "Integrity", integrity.integrity_max, integrity.integrity)
 		integrity.integrity_changed.connect(_on_robot_integrity_changed)
 	_robot_state_label = Label.new()
-	_robot_state_label.self_modulate = Color(1, 1, 1, 0.7)
+	_robot_state_label.theme_type_variation = UIType.META_LINE
 	section.add_child(_robot_state_label)
 	vbox.add_child(section)
 	vbox.move_child(section, header_hbox.get_index() + 1)
@@ -113,10 +113,10 @@ func _setup_visitor_controls() -> void:
 	var section := VBoxContainer.new()
 	section.add_theme_constant_override("separation", 2)
 	_visitor_wallet_label = Label.new()
-	_visitor_wallet_label.self_modulate = Color(1, 1, 1, 0.8)
+	_visitor_wallet_label.theme_type_variation = UIType.META_LINE
 	section.add_child(_visitor_wallet_label)
 	_visitor_time_label = Label.new()
-	_visitor_time_label.self_modulate = Color(1, 1, 1, 0.8)
+	_visitor_time_label.theme_type_variation = UIType.META_LINE
 	section.add_child(_visitor_time_label)
 	vbox.add_child(section)
 	vbox.move_child(section, header_hbox.get_index() + 1)

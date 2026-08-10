@@ -7,15 +7,15 @@ extends Control
 ## _draw()-based Control (no SubViewport by design - we want silhouettes, not a
 ## render), screen-fixed on the HUD CanvasLayer, and fully real-time (no sim
 ## scaling anywhere here - ships freezing while paused is correct).
+##
+## WI-49 moved the frame out: this is now the *canvas* inside a [ReadoutPanel],
+## which owns the surface, the 34px "STATION MAP" header, the border and the
+## collapse toggle. Everything below the frame - the fit, the bounds
+## hysteresis, the drawing and the click-to-jump - is unchanged; the panel
+## simply hands it a rect to draw in.
 
-## Square world-fit draw area, in screen pixels.
-const MAP_SIZE: float = 220.0
-## Collapsible header strip height.
-const HEADER_H: float = 22.0
-## Inner padding between the panel edge and the fitted world content.
+## Inner padding between the content edge and the fitted world content.
 const CONTENT_PAD: float = 6.0
-## Gap from the parent's top-right corner.
-const MARGIN: float = 8.0
 ## Smallest world span the fit will zoom to, so a young station reads as a small
 ## cluster rather than a few giant pixels. ~14 cells across.
 const MIN_WORLD_SPAN: float = 900.0
@@ -59,7 +59,8 @@ const BOUNDS_SHRINK_RATIO: float = 1.6
 @export var friendly_ship_color: Color = Color(0.45, 0.85, 0.95)
 @export var pirate_ship_color: Color = Color(1.0, 0.4, 0.35)
 @export var viewport_rect_color: Color = Color(1.0, 1.0, 1.0, 0.85)
-@export var panel_bg_color: Color = Color(0.05, 0.07, 0.09, 0.7)
+## The map's own darker inset inside the readout's surface. The surface itself
+## belongs to [ReadoutPanel] and is not drawn here.
 @export var map_bg_color: Color = Color(0.03, 0.05, 0.07, 0.55)
 
 ## Layers drawn back-to-front so MODULE cells sit on top of the dimmer
@@ -76,8 +77,6 @@ var _transform: MinimapTransform = MinimapTransform.new()
 ## settled box, not the raw content AABB - see MinimapTransform.settle_bounds.
 ## Starts zero-sized so the first recompute adopts the content as-is.
 var _content_bounds: Rect2 = Rect2()
-var _collapsed: bool = false
-var _header: Button
 
 ## Camera state we watched on the last frame, to redraw the viewport rect only
 ## when the camera actually moved or zoomed.
@@ -86,12 +85,9 @@ var _last_cam_zoom: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	clip_contents = true
-	set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	offset_left = -(MAP_SIZE + MARGIN)
-	offset_right = -MARGIN
-	offset_top = MARGIN
-	offset_bottom = MARGIN + HEADER_H + MAP_SIZE
-	_build_header()
+	# The readout frame sizes and positions this canvas; the map only ever fills
+	# whatever content region it is given.
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_recompute_bounds()
 	# Content-change redraws: build/demolish and the slow tick (drifting asteroids,
 	# moving ships). Camera moves are polled in _process instead - they don't
@@ -100,24 +96,6 @@ func _ready() -> void:
 	SignalBus.module_removed.connect(_on_content_changed)
 	if Global.time_manager != null:
 		Global.time_manager.slow_tick.connect(_on_slow_tick)
-
-func _build_header() -> void:
-	_header = Button.new()
-	_header.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	_header.offset_bottom = HEADER_H
-	_header.focus_mode = Control.FOCUS_NONE
-	_header.pressed.connect(_toggle_collapsed)
-	add_child(_header)
-	_refresh_header_text()
-
-func _refresh_header_text() -> void:
-	_header.text = ("▸ Minimap" if _collapsed else "▾ Minimap")
-
-func _toggle_collapsed() -> void:
-	_collapsed = not _collapsed
-	offset_bottom = MARGIN + HEADER_H + (0.0 if _collapsed else MAP_SIZE)
-	_refresh_header_text()
-	queue_redraw()
 
 func _on_content_changed(_module: ModuleBase) -> void:
 	_recompute_bounds()
@@ -130,7 +108,9 @@ func _on_slow_tick(_interval: float) -> void:
 ## Poll the camera every real frame (UI is real-time): redraw only when it moved
 ## or zoomed, so a still camera costs nothing.
 func _process(_delta: float) -> void:
-	if _collapsed:
+	# The frame hides this canvas when the readout is collapsed, and there is
+	# nothing to redraw for a map nobody can see.
+	if not is_visible_in_tree():
 		return
 	var cam: GameCamera = _get_camera()
 	if cam == null:
@@ -189,13 +169,10 @@ func _recompute_bounds() -> void:
 
 func _map_rect() -> Rect2:
 	return Rect2(
-		Vector2(CONTENT_PAD, HEADER_H + CONTENT_PAD),
-		Vector2(size.x - CONTENT_PAD * 2.0, size.y - HEADER_H - CONTENT_PAD * 2.0))
+		Vector2(CONTENT_PAD, CONTENT_PAD),
+		Vector2(size.x - CONTENT_PAD * 2.0, size.y - CONTENT_PAD * 2.0))
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), panel_bg_color)
-	if _collapsed:
-		return
 	var map_rect: Rect2 = _map_rect()
 	draw_rect(map_rect, map_bg_color)
 	_transform.configure(_content_bounds, map_rect, MIN_WORLD_SPAN)
@@ -286,8 +263,6 @@ func _draw_viewport_rect() -> void:
 ## leaking through to the world (so it never places a module mid-build-preview
 ## or selects an object underneath).
 func _gui_input(event: InputEvent) -> void:
-	if _collapsed:
-		return
 	if event is InputEventMouseButton:
 		var button: InputEventMouseButton = event
 		if button.pressed and button.button_index == MOUSE_BUTTON_LEFT:

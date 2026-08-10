@@ -132,13 +132,13 @@ func _build_game_tab() -> Control:
 	box.add_child(row)
 
 	_difficulty_detail = Label.new()
-	_difficulty_detail.self_modulate = Color(1, 1, 1, 0.7)
+	_difficulty_detail.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
 	_difficulty_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_difficulty_detail)
 
 	var hint := Label.new()
 	hint.text = "Difficulty is chosen when you start a new game and cannot be changed afterwards."
-	hint.self_modulate = Color(1, 1, 1, 0.55)
+	hint.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(hint)
 	return box
@@ -166,7 +166,7 @@ func _build_audio_tab() -> Control:
 		func(value: float) -> void: Global.settings.effects_volume = value))
 	var hint := Label.new()
 	hint.text = "Volumes apply immediately and are saved when you close this screen."
-	hint.self_modulate = Color(1, 1, 1, 0.55)
+	hint.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(hint)
 	return box
@@ -234,7 +234,7 @@ func _build_display_tab() -> Control:
 
 	var hint := Label.new()
 	hint.text = "Resolution only applies in windowed mode, and is clamped to your screen."
-	hint.self_modulate = Color(1, 1, 1, 0.55)
+	hint.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(hint)
 	return box
@@ -336,7 +336,7 @@ func _build_capture_overlay() -> void:
 	vbox.add_child(_capture_label)
 	var hint := Label.new()
 	hint.text = "Keyboard and mouse only."
-	hint.self_modulate = Color(1, 1, 1, 0.55)
+	hint.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(hint)
 	var cancel := Button.new()

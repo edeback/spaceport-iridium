@@ -84,8 +84,8 @@ func _build_search() -> void:
 
 func _build_recent() -> void:
 	_recent_label = Label.new()
-	_recent_label.text = "Recent"
-	_recent_label.add_theme_font_size_override("font_size", 11)
+	_recent_label.text = "RECENT"
+	_recent_label.theme_type_variation = UIType.READOUT_LABEL
 	_recent_label.visible = false
 	add_child(_recent_label)
 	_recent_row = HFlowContainer.new()

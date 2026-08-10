@@ -87,7 +87,9 @@ func _update_total(_value: int = 0) -> void:
 		total -= int((row["buy"] as SpinBox).value) * manager.buy_prices.get(resource, 0)
 		total += int((row["sell"] as SpinBox).value) * manager.sell_prices.get(resource, 0)
 	%TotalCreditsLabel.text = str(total)
-	%TotalCreditsLabel.self_modulate = Color.RED if Global.resource_manager.credit_resource.get_total() + total < 0 else Color.WHITE
+	%TotalCreditsLabel.add_theme_color_override("font_color",
+		UIPalette.ATTENTION if Global.resource_manager.credit_resource.get_total() + total < 0
+		else UIPalette.TEXT_EMPHASIS)
 		
 func _on_commit_pressed() -> void:
 	var buys: Dictionary[ResourceData, int] = {}

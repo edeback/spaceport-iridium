@@ -12,13 +12,13 @@ var _cost_label: Label
 var _status_label: Label
 var _button: Button
 
-const COLOR_UNLOCKED := Color(0.25, 0.55, 0.30)
-const COLOR_AVAILABLE := Color(0.24, 0.42, 0.66)
-const COLOR_LOCKED := Color(0.30, 0.30, 0.34)
-const COLOR_UNAFFORDABLE := Color(0.55, 0.40, 0.22)
-## Tier-locked (WI-26): a distinct purple so a node the station hasn't earned
-## reads differently from a prerequisite lock.
-const COLOR_TIER_LOCKED := Color(0.42, 0.30, 0.55)
+const COLOR_UNLOCKED := UIPalette.GROWTH
+const COLOR_AVAILABLE := UIPalette.LIVE
+const COLOR_LOCKED := UIPalette.DIVIDER
+const COLOR_UNAFFORDABLE := UIPalette.ATTENTION
+## Tier-locked (WI-26): the station hasn't earned this node yet, which is ARC
+## business - so it wears the ARC edge rather than a colour of its own.
+const COLOR_TIER_LOCKED := UIPalette.ATTENTION_BORDER
 
 func setup(u: UnlockData) -> void:
 	unlock = u
@@ -50,15 +50,15 @@ func setup(u: UnlockData) -> void:
 
 	_name_label = Label.new()
 	_name_label.text = unlock.name
-	_name_label.add_theme_font_size_override("font_size", 16)
+	_name_label.theme_type_variation = UIType.ENTITY_NAME
 	vbox.add_child(_name_label)
 
 	_cost_label = Label.new()
-	_cost_label.add_theme_font_size_override("font_size", 12)
+	_cost_label.theme_type_variation = UIType.METRIC
 	vbox.add_child(_cost_label)
 
 	_status_label = Label.new()
-	_status_label.add_theme_font_size_override("font_size", 12)
+	_status_label.theme_type_variation = UIType.META_LINE
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(_status_label)
 
@@ -91,7 +91,7 @@ func refresh() -> void:
 		_cost_label.visible = false
 		_button.visible = false
 		_status_label.text = "Unlocked"
-		_status_label.modulate = Color(0.7, 1.0, 0.75)
+		_status_label.add_theme_color_override("font_color", UIPalette.GROWTH)
 		border_color = COLOR_UNLOCKED
 	else:
 		_cost_label.visible = true
@@ -102,17 +102,17 @@ func refresh() -> void:
 			# can't be earned regardless of prereqs or credits (WI-26).
 			_button.disabled = true
 			_status_label.text = "Requires Station Tier %d" % unlock.min_tier
-			_status_label.modulate = Color(0.80, 0.70, 0.95)
+			_status_label.add_theme_color_override("font_color", UIPalette.ATTENTION_META)
 			border_color = COLOR_TIER_LOCKED
 		elif not mgr.prerequisites_met(unlock):
 			_button.disabled = true
 			_status_label.text = "Requires: " + _prereq_names()
-			_status_label.modulate = Color(0.7, 0.7, 0.75)
+			_status_label.add_theme_color_override("font_color", UIPalette.TEXT_META)
 			border_color = COLOR_LOCKED
 		elif not unlock.can_afford():
 			_button.disabled = true
 			_status_label.text = "Can't afford"
-			_status_label.modulate = Color(1.0, 0.7, 0.5)
+			_status_label.add_theme_color_override("font_color", UIPalette.ATTENTION_TEXT)
 			border_color = COLOR_UNAFFORDABLE
 		else:
 			_button.disabled = false
@@ -123,10 +123,10 @@ func refresh() -> void:
 
 func _make_style(border_color: Color) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.11, 0.12, 0.15, 0.95)
-	sb.set_border_width_all(2)
+	sb.bg_color = UIPalette.CONTROL_FILL
+	sb.set_border_width_all(UIMetrics.BORDER_WIDTH)
 	sb.border_color = border_color
-	sb.set_corner_radius_all(4)
+	sb.set_corner_radius_all(0)
 	sb.set_content_margin_all(2)
 	return sb
 

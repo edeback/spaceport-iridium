@@ -145,7 +145,7 @@ func _row_tooltip(other: PawnBase, record: PawnOpinion, met: bool) -> String:
 func _build_log(container: VBoxContainer) -> void:
 	var header := Label.new()
 	header.text = "Recent chats"
-	header.add_theme_font_size_override(&"font_size", 11)
+	header.theme_type_variation = UIType.READOUT_LABEL
 	container.add_child(header)
 	var entries: Array[Dictionary] = social.recent_chats()
 	if entries.is_empty():
@@ -162,7 +162,7 @@ func _build_log(container: VBoxContainer) -> void:
 			"went well" if positive else "went badly",
 			float(entry.get("delta", 0.0)),
 		], POSITIVE_COLOUR if positive else NEGATIVE_COLOUR)
-		line.add_theme_font_size_override(&"font_size", 11)
+		line.theme_type_variation = UIType.META_LINE
 		container.add_child(line)
 
 func _muted_label(text: String, colour: Color) -> Label:

@@ -67,7 +67,7 @@ func _build_choice(choice: EventChoice) -> Control:
 		var detail_label := Label.new()
 		detail_label.text = detail
 		detail_label.add_theme_font_size_override("font_size", 14)
-		detail_label.self_modulate = Color(1, 1, 1, 0.7)
+		detail_label.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
 		detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		box.add_child(detail_label)
 	return box

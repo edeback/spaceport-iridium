@@ -84,7 +84,7 @@ func _build_shell() -> void:
 
 	var version := Label.new()
 	version.text = ProjectSettings.get_setting("application/config/version", "dev build")
-	version.self_modulate = Color(1, 1, 1, 0.4)
+	version.add_theme_color_override("font_color", UIPalette.TEXT_META)
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(version)
 
@@ -110,7 +110,7 @@ func _build_difficulty_cards() -> void:
 
 	var note := Label.new()
 	note.text = "This is fixed for the whole game and can't be changed later."
-	note.self_modulate = Color(1, 1, 1, 0.55)
+	note.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_difficulty_container.add_child(note)
@@ -145,7 +145,7 @@ func _difficulty_card(difficulty: DifficultyData) -> Control:
 
 	var body := Label.new()
 	body.text = difficulty.description
-	body.self_modulate = Color(1, 1, 1, 0.75)
+	body.add_theme_color_override("font_color", UIPalette.TEXT)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(body)
 
@@ -153,7 +153,7 @@ func _difficulty_card(difficulty: DifficultyData) -> Control:
 	# never leave the card describing the old numbers.
 	var effects := Label.new()
 	effects.text = difficulty.effect_summary()
-	effects.self_modulate = Color(0.7, 0.85, 1.0)
+	effects.add_theme_color_override("font_color", UIPalette.LIVE_BRIGHT)
 	effects.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(effects)
 

@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://w6f5ifgmrhc5" path="res://ui/theme/widgets/action_button.gd" id="1_w"]
+
+[node name="ActionButton" type="Button"]
+offset_right = 96.0
+offset_bottom = 30.0
+focus_mode = 0
+theme_type_variation = &"ActionSecondary"
+text = "ACTION"
+script = ExtResource("1_w")

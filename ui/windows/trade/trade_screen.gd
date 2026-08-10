@@ -47,7 +47,8 @@ func refresh_total() -> void:
 	# so a negative projection is allowed - just shown in red as a warning.
 	%SubmitButton.disabled = false
 	var current_credits: int = Global.resource_manager.credit_resource.get_total()
-	%TotalCreditsLabel.self_modulate = Color.RED if current_credits + total_change < 0 else Color.WHITE
+	%TotalCreditsLabel.add_theme_color_override("font_color",
+		UIPalette.ATTENTION if current_credits + total_change < 0 else UIPalette.TEXT_EMPHASIS)
 
 func submit() -> void:
 	for row: TradeResourceRow in trade_resource_rows:

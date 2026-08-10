@@ -1,6 +1,25 @@
 # WI-49 — UI Design System & Panel Frame
 
-> **STATUS: planned, not started.** First item of the [[04_UI_Rework_Program]]. Palette, type and geometry values come from that doc, which is the single authority — do not re-transcribe them from the mockup here.
+> **STATUS: COMPLETE, 2026-08-10.** First item of the [[04_UI_Rework_Program]]. Palette, type and geometry values come from that doc, which is the single authority — do not re-transcribe them from the mockup here.
+>
+> **739 GUT tests green** (was 683; +56 across `test_ui_palette` and `test_ui_theme`). Save-neutral — this item adds no save state. Verified with windowed 1920×1080 screenshots of the main menu, difficulty picker, settings, save/load, the in-game HUD, the converted minimap and jobs panel, and a full regression walk of research, contracts, economy, pause, module info and pawn info.
+>
+> **Deviations from the design below, and why:**
+>
+> 1. **A third pure file shipped: `ui/theme/ui_type.gd` (`class_name UIType`).** The design named only `UIPalette` and `UIMetrics`, but type-variation names are a contract between a `.tres` entry and a `theme_type_variation` assignment tied together by a bare string — a misspelling renders as the plain base type and nothing errors. This is the [[WI-41_Group_Constants]] argument applied to theme variations, so it got the same treatment.
+> 2. **The theme was generated from `UIPalette` once, then checked in as the artifact of record.** Hand-transcribing ~40 palette colours into `.tres` float triples is exactly the drift the item exists to prevent, so a throwaway generator built the `Theme` from `UIPalette` and saved it; the generator was then deleted. `tests/unit/test_ui_theme.gd` guards the agreement from here on (and pins the uid `project.godot` points at, which the save dropped and had to be restored by hand).
+> 3. **`HatchBar` is an eighth widget.** `StatBar`'s striped fill is four lines of `_draw()` and would otherwise have been a texture asset needing re-authoring every time the palette moved. Script-only, used inside `stat_bar.tscn`.
+> 4. **Each widget got a `static func create()`.** Panels are code-built (decision 8), so `.tscn` widgets needed a one-call instantiation path; scene authors can still drop the `.tscn` in.
+> 5. **The legacy info-panel window chrome was re-tinted, not left alone.** `pawn_info_panel`, `module_info_ingame_panel`, `turboshaft_panel` and `asteroid_info_panel` share a bright-blue Kenney `NinePatchRect` background. Against the new text ramp its labels became unreadable, which fails this item's own regression bar, so their `self_modulate` now lands on the palette's surfaces. WI-51 replaces the chrome outright; this is only enough to keep them legible until it does.
+> 6. **MSDF turned out to be a non-issue.** The imported UI fonts already carry `multichannel_signed_distance_field=false`; the project setting only affects Godot's *built-in* default font, which the theme now replaces. 9px mode labels and 11px meta lines render sharp at 1×.
+>
+> **Traps found, for the WIs that follow:**
+>
+> - **`TextureRect.stretch_mode = 1` is TILE, not SCALE** (`STRETCH_SCALE` is `0`). A tiled 1×64 header gradient happens to *look* like a gradient at 56px tall, so this hid in the panel header and only showed up as a dashed section rule.
+> - **`_get_minimum_size()` is ignored on `Button` subclasses.** `Button` overrides `get_minimum_size()` in C++ and never consults the script virtual, so `ListRow` had to drive `custom_minimum_size` off the inner row's `minimum_size_changed` instead. Every row rendered at 28px with the meta line spilling out until this was found.
+> - **Godot resolves theme items up the *class* chain**, so `CheckBox`/`CheckButton` inherit `Button/styles/normal` and render as filled buttons with a tick unless they are given their own entries. Any new base-control entry needs the same audit.
+> - **`self_modulate` multiplies the theme's font colour**, so a palette colour passed through it comes out muddy. `add_theme_color_override("font_color", …)` is the channel that actually sets text colour.
+> - **Frame node lookups must be lazy.** Exported setters run during scene load before children exist, and callers configure a frame before mounting it — the [[WI-48_Pawn_Interactions]] call-order lesson, applied to the frame everything else is built on.
 
 ## Goal
 

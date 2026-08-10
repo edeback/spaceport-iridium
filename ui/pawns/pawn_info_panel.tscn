@@ -45,7 +45,7 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 
 [node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/BaseScreen" unique_id=1888946475]
-self_modulate = Color(0.768243, 0.52438736, 0.7868966, 1)
+self_modulate = Color(0.12, 0.13, 0.15, 0.97)
 layout_mode = 2
 texture = ExtResource("2_4c6nk")
 patch_margin_left = 8
@@ -98,6 +98,7 @@ theme_override_constants/margin_right = -4
 theme_override_constants/margin_bottom = -4
 
 [node name="NinePatchRect" type="NinePatchRect" parent="MarginContainer/BaseScreen/MarginContainer2/VBoxContainer/MarginContainer" unique_id=1935925781]
+self_modulate = Color(0.19, 0.19, 0.2, 1)
 layout_mode = 2
 texture = ExtResource("2_4c6nk")
 patch_margin_left = 6

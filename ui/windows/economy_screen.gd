@@ -101,8 +101,8 @@ func _build_balance(economy: EconomyManager) -> void:
 	var balance: int = economy.balance()
 	var label := Label.new()
 	label.text = "Balance: %d cr" % balance
-	label.add_theme_font_size_override("font_size", 20)
-	label.self_modulate = Color(1.0, 0.5, 0.45) if balance < 0 else Color(0.6, 1.0, 0.6)
+	label.theme_type_variation = UIType.METRIC_LARGE
+	label.add_theme_color_override("font_color", UIPalette.sign_color(float(balance)))
 	_content.add_child(label)
 
 func _build_toggles(economy: EconomyManager) -> void:
@@ -130,8 +130,8 @@ func _build_cycle_section(heading: String, record: Dictionary, economy: EconomyM
 	section.add_theme_constant_override("separation", 2)
 	var header := Label.new()
 	var cycle_no: int = int(record.get("cycle", 0))
-	header.text = "%s (cycle %d)" % [heading, cycle_no] if cycle_no > 0 else heading
-	header.add_theme_font_size_override("font_size", 16)
+	header.text = ("%s (cycle %d)" % [heading, cycle_no] if cycle_no > 0 else heading).to_upper()
+	header.theme_type_variation = UIType.READOUT_LABEL
 	section.add_child(header)
 
 	var income: Dictionary = record.get("income", {})
@@ -146,7 +146,7 @@ func _build_cycle_section(heading: String, record: Dictionary, economy: EconomyM
 		var value: int = int(income.get(category, 0))
 		if value > 0:
 			gross_income += value
-			section.add_child(_line("  %s" % EconomyManager.category_label(category), "+%d" % value, Color(0.6, 1.0, 0.6)))
+			section.add_child(_line("  %s" % EconomyManager.category_label(category), "+%d" % value, UIPalette.LIVE))
 
 	var total_cost: int = 0
 	for category: StringName in COST_ORDER:
@@ -161,10 +161,10 @@ func _build_cycle_section(heading: String, record: Dictionary, economy: EconomyM
 			elif category == &"upkeep":
 				section.add_child(_expandable(EconomyManager.category_label(category), value, _upkeep_detail(economy)))
 			else:
-				section.add_child(_line("  %s" % EconomyManager.category_label(category), "-%d" % value, Color(1.0, 0.6, 0.55)))
+				section.add_child(_line("  %s" % EconomyManager.category_label(category), "-%d" % value, UIPalette.ATTENTION))
 
 	var net: int = gross_income - total_cost
-	section.add_child(_line("  Net", "%+d" % net, Color(0.6, 1.0, 0.6) if net >= 0 else Color(1.0, 0.6, 0.55)))
+	section.add_child(_line("  Net", "%+d" % net, UIPalette.sign_color(float(net))))
 	_content.add_child(section)
 
 ## Visitor economy summary (WI-33): live guest count + station reputation. The
@@ -176,19 +176,19 @@ func _build_visitors_section() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 2)
 	var header := Label.new()
-	header.text = "Visitors"
-	header.add_theme_font_size_override("font_size", 16)
+	header.text = "VISITORS"
+	header.theme_type_variation = UIType.READOUT_LABEL
 	box.add_child(header)
-	box.add_child(_line("  On station", str(visitors.visitor_count()), Color(1, 1, 1, 0.8)))
-	box.add_child(_line("  Reputation", "%d%%" % roundi(visitors.reputation * 100.0), Color(1, 1, 1, 0.8)))
+	box.add_child(_line("  On station", str(visitors.visitor_count()), UIPalette.TEXT))
+	box.add_child(_line("  Reputation", "%d%%" % roundi(visitors.reputation * 100.0), UIPalette.TEXT))
 	_content.add_child(box)
 
 func _build_levy_summary(economy: EconomyManager) -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 2)
 	var header := Label.new()
-	header.text = "ARC levy"
-	header.add_theme_font_size_override("font_size", 16)
+	header.text = "ARC LEVY"
+	header.theme_type_variation = UIType.READOUT_LABEL
 	box.add_child(header)
 	if economy.levy_enabled:
 		box.add_child(_muted("  %d%% of income skimmed, plus %d cr every %d cycles." %
@@ -201,8 +201,8 @@ func _build_loan_section(economy: EconomyManager) -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
 	var header := Label.new()
-	header.text = "Loan"
-	header.add_theme_font_size_override("font_size", 16)
+	header.text = "LOAN"
+	header.theme_type_variation = UIType.READOUT_LABEL
 	box.add_child(header)
 	if economy.loan_active:
 		box.add_child(_muted("  Owed: %d cr, drafting %d cr/cycle (%d left)." %
@@ -234,7 +234,7 @@ func _wage_detail(economy: EconomyManager) -> Control:
 		box.add_child(_muted("    (no wage-drawing crew)"))
 	for pawn: PawnBase in breakdown:
 		var name_text: String = pawn.pawn_name if not pawn.pawn_name.is_empty() else "Crew"
-		box.add_child(_line("    %s" % name_text, "-%d" % int(breakdown[pawn]), Color(1, 1, 1, 0.7)))
+		box.add_child(_line("    %s" % name_text, "-%d" % int(breakdown[pawn]), UIPalette.TEXT_SECONDARY))
 	return box
 
 func _upkeep_detail(economy: EconomyManager) -> Control:
@@ -246,14 +246,14 @@ func _upkeep_detail(economy: EconomyManager) -> Control:
 	var base: int = 0
 	for module: ModuleBase in breakdown:
 		base += int(breakdown[module])
-		box.add_child(_line("    %s" % module.module_data.name, "-%d" % int(breakdown[module]), Color(1, 1, 1, 0.7)))
+		box.add_child(_line("    %s" % module.module_data.name, "-%d" % int(breakdown[module]), UIPalette.TEXT_SECONDARY))
 	# Difficulty scales the bill as a whole (WI-37), so the per-module rows are base
 	# costs. Show the adjustment explicitly rather than let the rows fail to sum to
 	# the charged total above them.
 	var scaled: int = economy.upkeep_total()
 	if scaled != base:
 		var difficulty_name: String = SaveManager.difficulty_label(Global.difficulty_id())
-		box.add_child(_line("    %s rate" % difficulty_name, "%+d" % (base - scaled), Color(1, 1, 1, 0.7)))
+		box.add_child(_line("    %s rate" % difficulty_name, "%+d" % (base - scaled), UIPalette.TEXT_SECONDARY))
 	return box
 
 # --- widgets ------------------------------------------------------------------
@@ -269,7 +269,7 @@ func _expandable(label: String, amount: int, detail: Control) -> Control:
 	toggle.toggle_mode = true
 	toggle.focus_mode = Control.FOCUS_NONE
 	toggle.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	toggle.self_modulate = Color(1.0, 0.6, 0.55)
+	toggle.add_theme_color_override("font_color", UIPalette.ATTENTION)
 	toggle.text = "  ▸ %s      -%d" % [label, amount]
 	toggle.toggled.connect(func(pressed: bool) -> void:
 		toggle.text = "  %s %s      -%d" % ["▾" if pressed else "▸", label, amount]
@@ -278,16 +278,17 @@ func _expandable(label: String, amount: int, detail: Control) -> Control:
 	box.add_child(detail)
 	return box
 
-func _line(left_text: String, right_text: String, color: Color = Color.WHITE) -> Control:
+func _line(left_text: String, right_text: String, color: Color = UIPalette.TEXT) -> Control:
 	var row := HBoxContainer.new()
 	var left := Label.new()
 	left.text = left_text
-	left.self_modulate = color
+	left.add_theme_color_override("font_color", color)
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(left)
 	var right := Label.new()
 	right.text = right_text
-	right.self_modulate = color
+	right.theme_type_variation = UIType.METRIC
+	right.add_theme_color_override("font_color", color)
 	right.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	row.add_child(right)
 	return row
@@ -295,6 +296,6 @@ func _line(left_text: String, right_text: String, color: Color = Color.WHITE) ->
 func _muted(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.self_modulate = Color(1, 1, 1, 0.55)
+	label.add_theme_color_override("font_color", UIPalette.TEXT_META)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return label

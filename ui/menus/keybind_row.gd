@@ -41,7 +41,8 @@ func refresh() -> void:
 	_binding_button.text = GameSettings.describe_events(Global.get_effective_events(action))
 	# Flag a customised binding so "which of these did I change?" is answerable
 	# without opening a diff against the defaults.
-	_binding_button.self_modulate = Color(0.7, 0.9, 1.0) if Global.settings.has_binding(action) else Color.WHITE
+	_binding_button.add_theme_color_override("font_color",
+		UIPalette.LIVE_BRIGHT if Global.settings.has_binding(action) else UIPalette.TEXT)
 
 ## Shown while this row's capture overlay is up.
 func set_capturing(capturing: bool) -> void:

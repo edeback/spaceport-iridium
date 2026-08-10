@@ -1,6 +1,6 @@
 # 04 — UI Rework Program (WI-49 … WI-57)
 
-> **STATUS: planned, not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
+> **STATUS: in progress — WI-49 shipped 2026-08-10, WI-50…57 not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
 >
 > The source design is **`assets/external/spaceport-iridium-ui-layout/project/Iridium Console UI Spec.dc.html`**, a Claude Design handoff bundle: ten reference screens at 1920×1080 plus the rules that produce them. Read it before implementing any child WI. Numbers in this doc are transcribed from it and are authoritative for implementation; where this doc and the mockup disagree, **this doc wins** (it carries the gameplay corrections from [[New Work for Phase 4]] that the mockup predates).
 >
@@ -110,7 +110,8 @@ Every existing UI file and where it goes. Nothing in this table may be silently 
 
 | Current | Fate |
 | --- | --- |
-| `ui/themes/base_theme.tres` (empty) | Filled in — the real theme |
+| `ui/themes/base_theme.tres` (empty) | ✅ Filled in — the real theme (WI-49) |
+| `ui/themes/spinbox_theme.tres` | ✅ Deleted; folded into `LineEdit/constants/minimum_character_width` (WI-49) |
 | `ui/resource_display_ui.tscn`, `energy_display_ui.gd`, `ui_main.tscn`'s `ResourceDisplayPanel` | Vitals strip in the console |
 | `ui/ui_time_scale_select.tscn` | Console time zone |
 | `ui_main.gd` `_add_side_button()` + the `VBoxContainer` side column | **Deleted.** Modes replace it |
@@ -150,7 +151,7 @@ The mockup's own suggested build order, split finer so no work item touches more
 
 | WI | Title | Why here |
 | --- | --- | --- |
-| [[WI-49_UI_Design_System]] | Theme, palette, type, shared panel frame, widget library | "Every later step gets cheaper, and this alone closes most of the polish gap." Nothing else can start without the frame |
+| [[WI-49_UI_Design_System]] ✅ | Theme, palette, type, shared panel frame, widget library | "Every later step gets cheaper, and this alone closes most of the polish gap." Nothing else can start without the frame |
 | [[WI-50_Console_And_Modes]] | Console strip, mode buttons, exclusive mounting, Esc rewrite, time zone | Existing screens get **ported in behind it unchanged**. They look inconsistent for a while and still behave better than they do now |
 | [[WI-51_Inspector]] | One bottom-right surface, swapped tab sets, nothing-selected line | The largest single reduction in surface count; also where the mood-modifier breakdown lands |
 | [[WI-52_Vitals_And_Ledger]] | Pinned strip + ledger flyout + per-cycle rates + pin persistence | "Do this before adding more resources, not after" |
@@ -159,6 +160,23 @@ The mockup's own suggested build order, split finer so no work item touches more
 | [[WI-55_Panels_Trade_And_RD]] | The two widest panels, reflowed in place | Existing content, new layout, plus the Contracts tab merge |
 | [[WI-56_Panels_Crew_And_Stores]] | Two genuinely new panels | Crew roster and the station-wide storage view have no predecessor |
 | [[WI-57_Panel_Comms_And_Retirement]] | Comms panel, ARC contact, and deleting the last legacy windows | The closer: nothing may be left mounted outside the console |
+
+## What WI-49 landed (the API everything else builds on)
+
+Shipped 2026-08-10. Cite this rather than re-deriving it; details and the traps found are in [[WI-49_UI_Design_System]].
+
+| File | What it is |
+| --- | --- |
+| `ui/theme/ui_palette.gd` (`UIPalette`) | Every chrome colour as a `const`, the three list-row `StyleBoxFlat` treatments (`Row.INERT/LIVE/AMBER` + `row_style/row_accent/row_text/row_meta`), the header and section-rule gradients, `tinted()`, and `sign_color()`. Nothing in `ui/` may name a hex literal. |
+| `ui/theme/ui_metrics.gd` (`UIMetrics`) | The geometry table as `const`, the tracking values, and the derived helpers (`panel_bottom`, `panel_content_height`, `inspector_top`, `inspector_bottom_offset`, `mode_zone_width`). |
+| `ui/theme/ui_type.gd` (`UIType`) | The theme's type-variation names as `StringName` constants — 11 label variations, 5 button variations. Never write the string. |
+| `ui/theme/console_panel.tscn` + `.gd` | The left mode panel. `title` / `subtitle` / `hotkey` / `panel_width` / `content_padding` / `active`, plus `content()` and `add_header_control()`. Anchors itself; provides no scrolling. |
+| `ui/theme/readout_panel.tscn` + `.gd` | The right-column surface. `label` / `accent_color` / `panel_width` / `content_height` / `collapsible` / `collapsed` / `drop_shadow`, plus `content()`, `add_action()` and `collapse_toggled`. Takes its own height when anchored to a point. |
+| `ui/theme/widgets/` | `StatBar`, `HatchBar`, `Chip`, `Stepper`, `TabStrip`, `ListRow`, `SectionLabel`, `ActionButton`. Each has a `static create()`. |
+
+Two rules that came out of building it and bind the later items: **the scene authors structure, the script applies every number from `UIMetrics`** (so no `.tscn` can hold a header height that disagrees with the design system), and **frame node lookups are lazy**, because exported setters fire before children exist and callers configure a frame before mounting it.
+
+`Stepper` already implements the commit rule the Stores panel needs: the displayed value moves per step, but `value_changed` fires once on release or after a quiet period. `value_previewed` is for live readouts only.
 
 ## Cross-cutting risks
 

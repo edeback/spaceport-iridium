@@ -97,7 +97,7 @@ func _build_shell() -> void:
 
 	_empty_hint = Label.new()
 	_empty_hint.text = "No saved games yet."
-	_empty_hint.self_modulate = Color(1, 1, 1, 0.6)
+	_empty_hint.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
 	vbox.add_child(_empty_hint)
 
 	_new_slot_row = HBoxContainer.new()
@@ -154,11 +154,11 @@ func _build_row(info: Dictionary) -> Control:
 	text_box.add_child(name_label)
 	var detail := Label.new()
 	detail.text = SaveManager.describe_slot(info)
-	detail.self_modulate = Color(1, 1, 1, 0.7)
+	detail.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
 	text_box.add_child(detail)
 	var stamp := Label.new()
 	stamp.text = String(info.get("timestamp", "")).replace("T", "  ")
-	stamp.self_modulate = Color(1, 1, 1, 0.45)
+	stamp.add_theme_color_override("font_color", UIPalette.TEXT_META)
 	text_box.add_child(stamp)
 	# Mods this save used that aren't loaded now (WI-47 M11). Shown on the row
 	# rather than at load time so the player finds out BEFORE committing - the
@@ -167,7 +167,7 @@ func _build_row(info: Dictionary) -> Control:
 	if not drift.is_empty():
 		var warning := Label.new()
 		warning.text = "⚠ " + ", ".join(drift)
-		warning.self_modulate = Color(1, 0.8, 0.4)
+		warning.add_theme_color_override("font_color", UIPalette.ATTENTION)
 		warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		text_box.add_child(warning)
 	row.add_child(text_box)
