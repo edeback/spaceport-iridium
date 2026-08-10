@@ -1,6 +1,6 @@
 # 04 — UI Rework Program (WI-49 … WI-57)
 
-> **STATUS: in progress — WI-49, WI-50 and WI-51 shipped 2026-08-10, WI-52…57 not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
+> **STATUS: in progress — WI-49, WI-50, WI-51 and WI-52 shipped 2026-08-10, WI-53…57 not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
 >
 > The source design is **`assets/external/spaceport-iridium-ui-layout/project/Iridium Console UI Spec.dc.html`**, a Claude Design handoff bundle: ten reference screens at 1920×1080 plus the rules that produce them. Read it before implementing any child WI. Numbers in this doc are transcribed from it and are authoritative for implementation; where this doc and the mockup disagree, **this doc wins** (it carries the gameplay corrections from [[New Work for Phase 4]] that the mockup predates).
 >
@@ -112,11 +112,11 @@ Every existing UI file and where it goes. Nothing in this table may be silently 
 | --- | --- |
 | `ui/themes/base_theme.tres` (empty) | ✅ Filled in — the real theme (WI-49) |
 | `ui/themes/spinbox_theme.tres` | ✅ Deleted; folded into `LineEdit/constants/minimum_character_width` (WI-49) |
-| `ui/resource_display_ui.tscn`, `energy_display_ui.gd`, `ui_main.tscn`'s `ResourceDisplayPanel` | Vitals strip in the console |
+| `ui/resource_display_ui.tscn`, `energy_display_ui.gd`, `ui_main.tscn`'s `ResourceDisplayPanel` | ✅ Deleted; replaced by the pinned vitals strip (WI-52) |
 | `ui/ui_time_scale_select.tscn` | Console time zone |
 | `ui_main.gd` `_add_side_button()` + the `VBoxContainer` side column | **Deleted.** Modes replace it |
 | `ui_main.gd` `_setup_alerts_strip()` / `_spawn_alert()` | Rewritten as the alert feed (WI-53) |
-| `ui_main.gd` `_refresh_crew_count()` label | Crew vital chip in the strip |
+| `ui_main.gd` `_refresh_crew_count()` label | ✅ Deleted; it is the CREW derived chip (WI-52) |
 | `ui_main.gd` `_topmost_esc_claim()` / `_close_esc_claim()` | Rewritten against the mode stack (WI-50) |
 | `ui/minimap.tscn` | Station Map readout, top of the right column |
 | `_setup_raid_ui()` raid banner | A critical alert + the Comms/ARC surface (WI-53, WI-57) |
@@ -154,7 +154,7 @@ The mockup's own suggested build order, split finer so no work item touches more
 | [[WI-49_UI_Design_System]] ✅ | Theme, palette, type, shared panel frame, widget library | "Every later step gets cheaper, and this alone closes most of the polish gap." Nothing else can start without the frame |
 | [[WI-50_Console_And_Modes]] ✅ | Console strip, mode buttons, exclusive mounting, Esc rewrite, time zone | Existing screens get **ported in behind it unchanged**. They look inconsistent for a while and still behave better than they do now |
 | [[WI-51_Inspector]] ✅ | One bottom-right surface, swapped tab sets, nothing-selected line | The largest single reduction in surface count; also where the mood-modifier breakdown lands |
-| [[WI-52_Vitals_And_Ledger]] | Pinned strip + ledger flyout + per-cycle rates + pin persistence | "Do this before adding more resources, not after" |
+| [[WI-52_Vitals_And_Ledger]] ✅ | Pinned strip + ledger flyout + per-cycle rates + pin persistence | "Do this before adding more resources, not after" |
 | [[WI-53_Alerts]] | Severity model, sticky/critical alerts, jump-to-subject, history log | The one item with real gameplay consequence (critical alerts pause the sim) |
 | [[WI-54_Panels_Build_And_Overlays]] | The two narrow panels that already exist | Cheapest panel conversions; proves the frame at two widths |
 | [[WI-55_Panels_Trade_And_RD]] | The two widest panels, reflowed in place | Existing content, new layout, plus the Contracts tab merge |
@@ -200,7 +200,7 @@ Shipped 2026-08-10. Details and the six traps found are in [[WI-50_Console_And_M
 5. Take the panel width from `UIMetrics`, and the printed hotkey from `ModeManager.hotkey_label(mode)` so a rebind follows.
 6. **Every HUD hotkey is a real input action** in `Global.REMAPPABLE_ACTIONS` — including the overlay digits, which WI-50 converted. `ModeManager.text_entry_has_focus(viewport)` is the one place that decides whether the player is typing; call it, do not re-write it.
 
-Esc is now five levels in `ui_main.gd`: game-over latch → held preview → console flyout → *(trader modal)* → the open mode → the selection → an active overlay. WI-51 collapsed the selection chain to one check; WI-55 removes the trader level.
+Esc is now five levels in `ui_main.gd`: game-over latch → held preview → console flyout *(build flyout, then the resource ledger)* → *(trader modal)* → the open mode → the selection → an active overlay. WI-51 collapsed the selection chain to one check; WI-52 added the ledger beside the build flyout; WI-55 removes the trader level.
 
 ## What WI-51 landed (the selection API everything else consumes)
 
@@ -218,12 +218,35 @@ Shipped 2026-08-10. Details and the five traps found are in [[WI-51_Inspector]].
 
 **Two rules that bind the later panels:** a page that scrolls must drive its own `custom_minimum_size.y` from its content, and a panel that sizes itself to its content must re-fit on `minimum_size_changed` rather than measuring once. Both are the WI-48 zero-height lesson, and WI-51 hit each of them twice.
 
+## What WI-52 landed (the rate and the pin list everything else can read)
+
+Shipped 2026-08-10. Details, the nine deviations and the four traps found are in [[WI-52_Vitals_And_Ledger]].
+
+| File | What it is |
+| --- | --- |
+| `scripts/utility/resource_rate_tracker.gd` (`ResourceRateTracker`) | Pure: a per-resource ring buffer of `(sim_hours, total)` and a least-squares slope over the window, in units per cycle. Sim-time stamps, self-decimating, `NO_RATE` rather than a fabricated `0.0`, never saved. 18 tests. |
+| `scripts/utility/ledger_model.gd` (`LedgerModel`) | Pure: `category_of` / `in_category`, the `derived:` id namespace, `DEFAULT_PINS`, `PIN_CAP`, `resolve_pins` (drop / dedupe / cap / refill-to-the-saved-length), and the three formatters — `format_per_cycle`, `rate_color`, `format_compact`. 25 tests. |
+| `ResourceManager.rates` / `rate_per_cycle()` / `ledger_resources()` | The manager owns the tracker (never the shared `.tres` — WI-38 A8) and now *discovers* resources rather than only reading its authored array, so a modded one is tracked and listed with no core edit. |
+| `ui/console/vitals_strip.gd` (`VitalsStrip`) | The console's flex zone. `pinned_ids` / `is_pinned` / `toggle_pin` / `pin_count` / `has_room_to_pin`, `signal pins_changed`, `signal ledger_toggled`, and the `vitals` save section. Resource chips repaint on `total_changed`; derived chips and the falling-vital test ride a real-time timer. |
+| `ui/console/vitals_chip.tscn` + `.gd` (`VitalsChip`) | The 108×52 tile. Fixed width by construction, so a number gaining a digit never re-lays out the strip. |
+| `ui/console/resource_ledger.tscn` + `.gd` (`ResourceLedger`) | The flyout. `open` / `close` / `toggle` / `is_open`, `strip` for the pin toggles. Bottom-right, grows upward, stops one right-column-plus-two-gutters short of the edge. |
+| `ListRow.set_action_color()`, `ResourceData.average_instance_value()` | The two additive helpers, both of which the later panels want. |
+| `Cheats.dump_rates()` | Total, per-cycle rate and sample count per resource — how you tell a flat line from "no data yet". |
+
+**The contract for the later panels:**
+
+1. **`ledger_category` is presentation only**, exactly as `ui_category` is (WI-43). Nothing may branch on it, and nothing may group a list on `tradable` or `has_variance` because they happen to correlate today.
+2. A rate is `ResourceRateTracker.NO_RATE` until there is history. Test with `has_rate()`, print with `LedgerModel.format_per_cycle()`; never compare against `0.0`.
+3. **The ledger is the only surface allowed to coexist with a mode** (invariant 1's one exception) and it sits at Esc level 2, beside the build flyout. Nothing else gets that exemption without a line in this doc.
+4. **Console flyouts never open over the map, alerts or inspector** — `UIMetrics.LEDGER_RIGHT_INSET` is the encoded form of that rule.
+5. `SaveManager.register_section` is called by the **UI node that owns the state**, not added to `SaveManager`. WI-53's alert history should do the same.
+
 ## Cross-cutting risks
 
 - **`ui_main.gd` is the choke point.** All nine items touch it, and it is 491 lines of hand-wired `_setup_*` calls. WI-50 should reduce it to a mount table plus the mode registry; if it is still growing by WI-55, stop and refactor.
 - **MCP has been unreliable since the back half of Phase 3, and this is a UI program.** Headless probes cannot verify `_draw()`, shaders, or layout. Every panel WI needs a **windowed screenshot** in its verification, and the WI-48 lesson applies hard: *a probe must replicate the caller's exact call order*, because building a control in-tree hides layout bugs that the real mount path exposes. "Did the data arrive?" checks pass while a panel renders at zero height.
 - **Pure logic must be extracted to be testable.** GUT covers pure classes only. Anything with a rule in it — alert severity classification, resource rate smoothing, ledger grouping, tab-set selection, panel geometry — belongs in a static/pure class with its own suite, exactly as `BuildMenuModel`, `MinimapTransform` and `OverlayPalette` already are.
-- **Save compatibility.** Only two items add save state: WI-52 (pinned resources) and WI-53 (alert history). Both are new absent-key-means-default sections; `SAVE_VERSION` should not need to move.
+- **Save compatibility.** Only two items add save state: WI-52 (pinned resources) and WI-53 (alert history). Both are new absent-key-means-default sections; `SAVE_VERSION` should not need to move. WI-52's `vitals` section shipped this way and `SAVE_VERSION` did not move.
 - **Do not gate gameplay on UI categories.** `ModuleData.ui_category` buckets the build menu; `tags` is gameplay (WI-43). The Stores and Crew panels will be tempted to group on one and filter on the other.
 
 ## Related
@@ -231,7 +254,7 @@ Shipped 2026-08-10. Details and the five traps found are in [[WI-51_Inspector]].
 - [[New Work for Phase 4]] — the source brief, including the alert, crew, R&D and Comms corrections folded into this doc.
 - [[01_Technical_Specification]] — needs a UI section once WI-50 lands; there is currently no architectural description of the HUD at all.
 - [[02_Roadmap]] — Phase 4 ordering.
-- [[03_Bugs_and_Improvements]] — **C13** (`force_withdraw` doesn't emit `total_changed`, so the credit HUD lags a slow tick) lands squarely in WI-52's vitals strip and should be fixed there.
+- [[03_Bugs_and_Improvements]] — **C13** (`force_withdraw` doesn't emit `total_changed`, so the credit HUD lags a slow tick) ✅ fixed in WI-52.
 - [[WI-48_Pawn_Interactions]] — its §9 Social tab is superseded by WI-51's inspector tab set.
 - [[WI-43_Build_Menu]] — the rail/flyout the Build panel is built from, and the `ui_category` vs `tags` rule.
 - [[WI-36_Main_UI_Flow]] — Esc arbitration, the keybind remapper, and the out-of-game menus this program leaves alone.

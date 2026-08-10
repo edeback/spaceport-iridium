@@ -1,3 +1,9 @@
+Run a test of actual vs mockup, list deviations (if any).
+
+StringNames are cropping back up, should move them to a consts file again.
+
+Hire moves to Crew tab from docking bay
+
 Modules should have a list of present pawns so you can go module.get_present() (or something like that) to figure out who is there without looking through every pawn
 
 When pawns wander, pick a random inner node (if it has one) instead of just flipping between the boundary of two modules

@@ -19,6 +19,29 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 - New UI panel on the Pawn Inspect window
 	- Lists each other crewmember and their opinion of that crewmember (no robots)
 
+**UI Rework:** (Written up as [[04_UI_Rework_Program]] — nine work items, WI-49 … WI-57)
+- Goal: Merge UI panels into one larger system, and give them a unified look
+- This was designed in Claude Design and that project is exported at assets/external/spaceport-iridium-ui-layout
+	- The implementation is in `Iridium Console UI Spec.dc.html`
+	- Please read the README as well as the UI Spec in full, as it details what the final output should look like
+- Note that this mockup does not necessary reflect the exact content of some of the tabs. For example, a crewmember has more tabs in its inspector than in the mockup, make sure to port all the tabs from the current game. The mockup is more of a style guide.
+- Some notes and improvements:
+	- **Pawn Inspect Pane:**
+		- Goal: Be able to see all the details of a pawn
+		- "Needs" pane should also break out all the mood modifiers that go into the "happiness" calculation
+	- **Alerts:**
+		- "High priority" alerts should require the player to click to dismiss them, so they aren't missed
+			- Low priority alerts - someone is hungry, for example, can be transient
+			- Critical alerts should additionally pause the game until acknowledged
+		- Alerts that specifically mention a pawn or module can be clicked on to jump to that pawn or module
+		- There should be a log of those high/critical priority alerts so the player can go back and see what has happened
+	- **Crew:**
+		- The "Show All Jobs" button is what displays the same content as the current "Jobs" screen, both the jobs taken by the crew as well as the ones not yet picked up.
+	- **R&D:**
+		- The mockup describes research points, but that is for a not-yet-designed system, continue to use credits as the resource to spend to unlock technology
+	- **Comms:**
+		- Instead of the Inspection event firing randomly, the "Contact ARC" button allows the player to pick when they are ready for an inspection.
+
 **Audio:**
 - Goal: Add sounds for feedback and immersion
 - Create a system to easily play sounds at positions
@@ -80,28 +103,6 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 **Pawn Relationships:**
 - Goal: Pawns should form relationships with each other, a stronger form of interactions
 
-**UI Rework:** (Written up as [[04_UI_Rework_Program]] — nine work items, WI-49 … WI-57)
-- Goal: Merge UI panels into one larger system, and give them a unified look
-- This was designed in Claude Design and that project is exported at assets/external/spaceport-iridium-ui-layout
-	- The implementation is in `Iridium Console UI Spec.dc.html`
-	- Please read the README as well as the UI Spec in full, as it details what the final output should look like
-- Note that this mockup does not necessary reflect the exact content of some of the tabs. For example, a crewmember has more tabs in its inspector than in the mockup, make sure to port all the tabs from the current game. The mockup is more of a style guide.
-- Some notes and improvements:
-	- **Pawn Inspect Pane:**
-		- Goal: Be able to see all the details of a pawn
-		- "Needs" pane should also break out all the mood modifiers that go into the "happiness" calculation
-	- **Alerts:**
-		- "High priority" alerts should require the player to click to dismiss them, so they aren't missed
-			- Low priority alerts - someone is hungry, for example, can be transient
-			- Critical alerts should additionally pause the game until acknowledged
-		- Alerts that specifically mention a pawn or module can be clicked on to jump to that pawn or module
-		- There should be a log of those high/critical priority alerts so the player can go back and see what has happened
-	- **Crew:**
-		- The "Show All Jobs" button is what displays the same content as the current "Jobs" screen, both the jobs taken by the crew as well as the ones not yet picked up.
-	- **R&D:**
-		- The mockup describes research points, but that is for a not-yet-designed system, continue to use credits as the resource to spend to unlock technology
-	- **Comms:**
-		- Instead of the Inspection event firing randomly, the "Contact ARC" button allows the player to pick when they are ready for an inspection.
 
 **Pawn Death:**
 - When health goes to zero, the pawn should die
