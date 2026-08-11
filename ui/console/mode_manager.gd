@@ -17,8 +17,8 @@ extends Node
 ##
 ## **Panels are hidden, not freed, on close.** A panel that holds a live
 ## subscription it must not service while closed implements `on_opened()` /
-## `on_closed()` and connects there. `jobs_screen` and `economy_screen` already
-## refresh only `if visible`; the hooks make that a contract instead of a habit.
+## `on_closed()` and connects there. Every panel in the game refreshes only while
+## it is on screen; the hooks make that a contract instead of a habit.
 ##
 ## Session-only: nothing about which panel was open is saved. A load lands in the
 ## no-panel state, which is the state Esc returns the player to anyway.

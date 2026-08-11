@@ -22,6 +22,11 @@ extends Node
 ## CrewManager.crew_pawn_scene already use.
 var ship_scene: PackedScene
 var inspector_scene: PackedScene
+
+## Who the Comms log says these messages are from (WI-57). One constant rather
+## than the string four times, because the sender is the row's name column and
+## four spellings would read as four correspondents.
+const ARC_SENDER: String = "ARC Central"
 ## Fly-in distance for the ARC ship, matching the trader/crew shuttles.
 const SHIP_APPROACH_DISTANCE: float = 1400.0
 
@@ -63,9 +68,14 @@ func begin() -> void:
 	var dock: Vector2 = DockingBay.dock_position_for(_bay)
 	_ship.setup(dock, dock + Vector2(DockingBay.approach_sign_for(_bay) * SHIP_APPROACH_DISTANCE, 0.0))
 	_ship.docked.connect(_on_ship_docked, CONNECT_ONE_SHOT)
-	AlertManager.raise_alert(&"inspection_arriving", AlertData.Priority.HIGH,
+	# Both halves (WI-57): every stage of an inspection is ARC talking to the
+	# station, so each one leaves a row in the Comms log as well as an alert.
+	AlertManager.transmit(&"inspection_arriving", AlertData.Priority.HIGH,
 		"ARC inspection inbound", "An inspection vessel is approaching the docking bay",
-		_bay, &"comms")
+		&"arc", ARC_SENDER,
+		"Our inspector is on approach. Have the checklist facilities crewed, powered and"
+			+ " breathable before they disembark.",
+		&"comms", _bay)
 
 func _on_ship_docked() -> void:
 	if not is_instance_valid(_bay):
@@ -172,9 +182,11 @@ func _pass() -> void:
 		return
 	_resolved = true
 	AlertManager.resolve_alert(&"inspection_aboard")
-	AlertManager.raise_alert(&"inspection_result", AlertData.Priority.HIGH,
+	AlertManager.transmit(&"inspection_result", AlertData.Priority.HIGH,
 		"ARC inspection passed", "The inspector is satisfied · promotion approved",
-		null, &"comms")
+		&"arc", ARC_SENDER,
+		"Our inspector found the station in good order. Promotion approved.",
+		&"comms")
 	if Global.unlock_manager != null:
 		Global.unlock_manager.on_inspection_passed()
 	_send_inspector_home()
@@ -184,8 +196,11 @@ func _fail(reason: String) -> void:
 		return
 	_resolved = true
 	AlertManager.resolve_alert(&"inspection_aboard")
-	AlertManager.raise_alert(&"inspection_result", AlertData.Priority.HIGH,
-		"ARC inspection failed", "%s · the inspector is leaving" % reason, null, &"comms")
+	AlertManager.transmit(&"inspection_result", AlertData.Priority.HIGH,
+		"ARC inspection failed", "%s · the inspector is leaving" % reason,
+		&"arc", ARC_SENDER,
+		"The inspection was abandoned: %s. Put it right and request another." % reason,
+		&"comms")
 	if Global.unlock_manager != null:
 		Global.unlock_manager.on_inspection_failed(reason)
 	_send_inspector_home()

@@ -330,6 +330,12 @@ func _connect_adornment_sources() -> void:
 	SignalBus.global_unlock_changed.connect(refresh_adornments.unbind(1))
 	SignalBus.crew_resigning.connect(func(_pawn: PawnBase, _hours: float) -> void: refresh_adornments())
 	SignalBus.crew_resignation_cancelled.connect(func(_pawn: PawnBase) -> void: refresh_adornments())
+	# The unread badge should move the instant something arrives rather than up to
+	# a second later - a transmission and its alert land together, and a badge that
+	# lagged the alert feed would read as a bug (WI-57).
+	SignalBus.transmissions_changed.connect(refresh_adornments)
+	SignalBus.raid_started.connect(func(_strength: float) -> void: refresh_adornments())
+	SignalBus.raid_ended.connect(func(_outcome: StringName) -> void: refresh_adornments())
 	var timer := Timer.new()
 	timer.wait_time = ADORNMENT_INTERVAL
 	timer.autostart = true
@@ -353,12 +359,24 @@ func refresh_adornments() -> void:
 	_mode_buttons[ModeManager.Mode.RND].dot = _an_unlock_is_affordable()
 	_mode_buttons[ModeManager.Mode.CREW].dot = _crew_wants_attention()
 	_mode_buttons[ModeManager.Mode.OVERLAY].bar = _overlay != null and _overlay.has_active_mode()
-	# COMMS' unread badge has no source until WI-57 brings transmissions in. The
-	# mechanism is here and wired; only the number is missing.
-	_mode_buttons[ModeManager.Mode.COMMS].badge = 0
+	# The amber count invariant 5 budgets for an unread transmission is spent here
+	# and nowhere else: the rows in the Comms feed are cyan, and this one badge is
+	# what tells the player to go and look at them (WI-57).
+	_mode_buttons[ModeManager.Mode.COMMS].badge = _unread_transmissions()
+	# A raid puts a live, expiring decision in the ARC block - the payoff falls
+	# while the player is not looking at it, which is exactly what the readiness
+	# dot means.
+	_mode_buttons[ModeManager.Mode.COMMS].dot = _raid_is_on()
 
 func _trader_is_docked() -> bool:
 	return Global.trader_manager != null and Global.trader_manager.visit_active
+
+func _unread_transmissions() -> int:
+	var manager: AlertManager = Global.alert_manager
+	return manager.unread_transmissions() if manager != null else 0
+
+func _raid_is_on() -> bool:
+	return Global.raid_manager != null and Global.raid_manager.active
 
 func _an_unlock_is_affordable() -> bool:
 	# The predicate lives on the manager (WI-55): the R&D panel's own header asks

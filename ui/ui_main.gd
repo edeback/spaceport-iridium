@@ -141,9 +141,10 @@ func _make_trade_panel() -> Control:
 func _make_research_panel() -> Control:
 	return UnlockPanel.create()
 
-## COMMS: the economy page, until WI-57 makes it a tab of the ARC panel.
+## COMMS: transmissions and the ARC relationship at 620px, with the quota and the
+## books as its other two tabs (WI-57). The last mode to get a real panel.
 func _make_comms_panel() -> Control:
-	return EconomyScreen.new()
+	return CommsPanel.create()
 
 func _on_sys_pressed() -> void:
 	if pause_menu != null:

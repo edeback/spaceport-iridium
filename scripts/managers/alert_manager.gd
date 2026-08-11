@@ -31,11 +31,27 @@ extends Node
 ##
 ## The classification *rules* are [AlertRules], which is pure and tested; this
 ## node is the state and the wiring.
+##
+## ## Transmissions (WI-57)
+##
+## This manager also owns the [TransmissionLog], on the WI's own "one owner for
+## things that arrived" reading. The two lists stay sharply distinct - an alert is
+## "look at this now", a transmission is "this arrived and you can read it later",
+## a hull breach is never a transmission and a contract offer is both - but they
+## are raised **together, by one helper** ([method transmit]) rather than at
+## twenty separate call sites, which is the only way the durable half stays in
+## step with the transient one.
 
 ## The alert history's save section. Late: it depends on nothing and nothing
 ## depends on it, and it must restore after the calendar so a stamp reads right.
 const SAVE_SECTION: StringName = &"alerts"
 const SAVE_ORDER: int = 210
+
+## The transmission log's own section, beside the alert log for the same reasons.
+## Absent key = an empty log, so a pre-WI-57 save loads and `SAVE_VERSION` stays
+## put.
+const TRANSMISSION_SECTION: StringName = &"transmissions"
+const TRANSMISSION_ORDER: int = 215
 
 ## This manager's entry in [TimeManager]'s hold set. One hold for the whole
 ## queue, not one per alert: three simultaneous criticals stop the sim once and
@@ -62,6 +78,9 @@ var _live: Array[AlertData] = []
 var _by_id: Dictionary[StringName, AlertData] = {}
 ## HIGH and CRITICAL alerts, newest first, bounded and saved.
 var _history: Array[AlertData] = []
+## Everything that arrived and can be read later (WI-57). Pure and tested; this
+## node only owns it, saves it, and announces that it moved.
+var transmissions: TransmissionLog = TransmissionLog.new()
 ## Monotonic raise counter - the recency tiebreak, see [member AlertData.sequence].
 var _sequence: int = 0
 ## Whether this manager currently holds the sim.
@@ -74,6 +93,8 @@ var _armed: bool = false
 func _ready() -> void:
 	Global.alert_manager = self
 	SaveManager.register_section(SAVE_SECTION, SAVE_ORDER, get_save_data, load_save_data, {})
+	SaveManager.register_section(TRANSMISSION_SECTION, TRANSMISSION_ORDER,
+		get_transmission_save_data, load_transmission_save_data, {})
 	_connect_sources()
 	var timer := Timer.new()
 	timer.name = "SweepTimer"
@@ -119,6 +140,68 @@ static func resolve_alert(id: StringName) -> void:
 	var manager: AlertManager = Global.alert_manager
 	if manager != null and is_instance_valid(manager):
 		manager.resolve(id)
+
+# --- transmissions (WI-57) ------------------------------------------------------
+
+## Raises an alert **and** posts the durable transmission behind it, in one call.
+##
+## This is the helper WI-57 §3 asks for, and the reason it exists is arithmetic:
+## the alternative is twenty call sites each remembering to do both, and the first
+## one that forgets produces a notification the player can miss forever. A caller
+## that wants only the transient half still calls [method raise_alert]; a hull
+## breach must never come through here.
+##
+## The first four arguments are the alert's, unchanged from [method raise_alert],
+## so a converted call site keeps the row it already had. The rest are the
+## transmission's, and only two of them are new information:
+##
+##   - `family` - what kind of thing arrived, for the row's avatar slot;
+##   - `sender` - who it is from, which becomes the row's **name** column where an
+##     alert row carries the title;
+##   - `body` - the long form, revealed when the row is expanded. Empty falls back
+##     to the subject line, so a caller with nothing more to say may omit it.
+##
+## The transmission's one-line subject **is** the alert's `title`, deliberately
+## rather than a tenth parameter: it is the same sentence, and a signature that
+## let a caller give the two lists different words is a signature that eventually
+## would.
+##
+## Returns the alert, matching [method raise_alert], because that is the half a
+## caller occasionally wants to adjust afterwards.
+static func transmit(id: StringName, priority: AlertData.Priority, title: String, detail: String,
+		family: StringName, sender: String, body: String = "", route: StringName = &"",
+		subject_ref: Variant = null, group_title: String = "") -> AlertData:
+	var manager: AlertManager = Global.alert_manager
+	if manager != null and is_instance_valid(manager):
+		manager.post_transmission(family, sender, title, body, route, subject_ref)
+	return raise_alert(id, priority, title, detail, subject_ref, route, group_title)
+
+## Posts a transmission without raising an alert - for something that arrived and
+## genuinely does not warrant interrupting anyone. Rare on purpose: if it is worth
+## logging it is usually worth a LOW alert, which is free.
+func post_transmission(family: StringName, sender: String, subject: String,
+		body: String = "", route: StringName = &"",
+		subject_ref: Variant = null) -> TransmissionData:
+	var cycle: int = Global.time_manager.cycle if Global.time_manager != null else 0
+	var hour: int = Global.time_manager.hour if Global.time_manager != null else 0
+	var entry: TransmissionData = transmissions.post(
+		family, sender, subject, body, cycle, hour, route, subject_ref)
+	SignalBus.transmissions_changed.emit()
+	return entry
+
+## `MARK ALL READ`. Non-destructive - it zeroes the badge and deletes nothing.
+func mark_transmissions_read() -> void:
+	if transmissions.mark_all_read():
+		SignalBus.transmissions_changed.emit()
+
+## Marks one entry read - what expanding a row does.
+func mark_transmission_read(entry: TransmissionData) -> void:
+	if transmissions.mark_read(entry):
+		SignalBus.transmissions_changed.emit()
+
+## The console's COMMS badge.
+func unread_transmissions() -> int:
+	return transmissions.unread_count()
 
 # --- raising --------------------------------------------------------------------
 
@@ -374,9 +457,22 @@ func _on_crew_departed(pawn: PawnBase) -> void:
 ## incoming trader force-closing the player's open Build panel mid-placement is
 ## hostile. This is the alert that replaced it, and its subject is the docking
 ## bay - so the row's JUMP lands on the thing the player has to click anyway.
+##
+## Both halves since WI-57. A visit is durable news - it happened, it had a
+## trader's name on it, and a player who was mid-build when it docked should be
+## able to find out later who came. **The repeats do not collapse**: the same
+## caravan arriving on five cycles is five rows in the log, where it is one
+## refreshed row in the feed, which is the difference between the two lists.
 func _on_trader_arrived(trader: TraderData) -> void:
+	var bay: ModuleBase = _docking_bay()
+	# The instance methods rather than the static [method transmit]: this is the
+	# manager, so routing back out through `Global.alert_manager` to reach itself
+	# would only add a way for the call to go somewhere else.
+	post_transmission(&"trader", trader.trader_name, "Trader docked",
+		"We are alongside and open for business. Set your orders before we cast off.",
+		&"trade", bay)
 	raise(&"trader_docked", AlertData.Priority.HIGH, "Trader docked",
-		"%s · open the docking bay to trade" % trader.trader_name, _docking_bay())
+		"%s · open the docking bay to trade" % trader.trader_name, bay)
 
 func _on_trader_departed(trader: TraderData) -> void:
 	resolve(&"trader_docked")
@@ -441,3 +537,13 @@ func load_save_data(data: Dictionary) -> void:
 		_history.append(AlertData.from_dict(record))
 	_history = AlertRules.trim_history(_history)
 	SignalBus.alerts_changed.emit()
+
+## The transmission log's section (WI-57). Separate from the alert history's on
+## purpose: the two lists have different lifetimes and different rules, and a
+## single blob would make "absent key = empty" ambiguous between them.
+func get_transmission_save_data() -> Dictionary:
+	return transmissions.to_save()
+
+func load_transmission_save_data(data: Dictionary) -> void:
+	transmissions.load_save(data)
+	SignalBus.transmissions_changed.emit()

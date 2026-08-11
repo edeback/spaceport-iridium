@@ -318,8 +318,10 @@ func grant_export(id: StringName, amount: int) -> String:
 	SignalBus.resources_exported.emit(resource, amount)
 	return _report("credited %d %s toward tier export goals" % [amount, resource.name])
 
-## Starts an ARC inspection immediately (WI-26), skipping the goal check and the
-## offer card. Needs a docking bay for the inspector's ship to arrive at.
+## Starts an ARC inspection immediately (WI-26), skipping every readiness check
+## the Comms panel's button makes (WI-57). Needs a docking bay for the inspector's
+## ship to arrive at - that is the one precondition the runner cannot do without,
+## so it is not a gate this can skip.
 func start_inspection() -> String:
 	Global.unlock_manager.begin_inspection()
 	return _report("requested an ARC inspection now")

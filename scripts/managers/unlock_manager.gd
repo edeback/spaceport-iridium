@@ -10,17 +10,50 @@ extends Node
 ##   - broadcast: unlocking a StatModifierEffect applies it to already-built modules
 ##   - live query: a module applies all active global modifiers when it is built
 ##     (ModuleBase.ready_constructed -> apply_global_modifiers)
+##
+## It also owns WI-26's 1-5 station tier ladder, and since WI-57 **the player asks
+## for an inspection rather than being offered one.** The `arc_inspection_offer`
+## event, its Accept/Decline effect and the per-cycle roll behind them are gone;
+## [method inspection_block] is the same readiness test the roll used to make, and
+## it produces a sentence for the Comms panel's button instead of gating a random
+## number. That converts "wait and hope" into "prepare, then commit", which is the
+## shape the rest of the tier system already has - and it makes the first
+## inspection, which switches [EconomyManager]'s cost streams on, a deliberate
+## decision rather than something that happens to the player.
 
-## Weight-0 event fired explicitly by UnlockManager when goals are met (WI-26);
-## its Accept/Decline choices route back here via EventEffectInspectionResponse.
-const INSPECTION_EVENT_ID: StringName = &"arc_inspection_offer"
+## Why the Comms panel's `REQUEST INSPECTION` button is disabled (WI-57), or
+## READY. Each member names its own blocker on the button rather than leaving it
+## greyed - a disabled control with no reason is the failure mode this replaces.
+##
+## Precedence is the order of the members, and it is deliberate: the blockers that
+## are about *when* come before the ones about *what you must still build*,
+## because a station in its cooldown does not need to be told about its goals.
+enum InspectionBlock {
+	## Nothing in the way - the button acts.
+	READY,
+	## The ladder is finished. Disabled with its own label, never hidden: a button
+	## that vanishes at the moment the player has actually won reads as a bug.
+	MAX_TIER,
+	## An inspector is already aboard.
+	IN_PROGRESS,
+	## A failed inspection costs a few cycles before ARC will come back.
+	COOLING_DOWN,
+	## Export goals are not met yet.
+	GOALS_UNMET,
+	## Every export goal is met but a checklist facility is missing, which would
+	## instant-fail the tour.
+	FACILITY_MISSING,
+	## Nothing to receive the ARC vessel.
+	NO_BAY,
+}
 
 # --- station tiers (WI-26) tunables -------------------------------------------
-## Per-cycle chance an ARC inspection is offered once the current tier's export
-## goals are met (and a docking bay exists). Two-ish cycles between offers on
-## average; declining just re-rolls later.
-@export var inspection_offer_chance_per_cycle: float = 0.5
-## Cycles the offer stays silent after a decline or a failed inspection.
+## Cycles ARC stays away after a failed inspection.
+##
+## WI-57 deleted the per-cycle offer roll this also gated - promotion is now a
+## thing the player asks for, not a coin flip that may or may not land on a cycle
+## they happen to be ready for. The cooldown survives the change because a failed
+## inspection costing you a few cycles is a **consequence**, not a dice roll.
 @export var inspection_reoffer_cooldown_cycles: int = 2
 ## Sim-hours the inspector dwells at each checklist module.
 @export var inspection_dwell_hours: float = 1.0
@@ -81,14 +114,24 @@ var current_tier: int = 1
 ## resource id -> units exported so far toward the CURRENT tier's goals. Reset on
 ## every tier-up (overflow doesn't carry). Populated by SignalBus.resources_exported.
 var _export_progress: Dictionary[StringName, int] = {}
-## Cycles left before another inspection offer may roll (set after a decline/fail).
+## Cycles left before ARC will accept another inspection request (set on a fail).
+##
+## **Saved** (see [method get_save_data]), and since WI-57 that matters in a way
+## it did not when it only gated a dice roll: it now gates a button the player
+## presses, so a cooldown that evaporated on reload would make a failed inspection
+## undoable by quitting to the menu - exactly the quiet exploit a save audit
+## exists to catch.
 var _inspection_cooldown_cycles: int = 0
-## True while an ARC inspection offer card is pending OR an inspector is touring.
-## Runtime-only: never saved, so a load always resolves to "no inspection".
-var _inspection_offer_pending: bool = false
+## True while an inspector is touring.
+##
+## Runtime-only and never saved, so a load always resolves to "no inspection" -
+## the inspector pawn is the one pawn excluded from saves, so there is nothing for
+## the flag to describe. **A save taken mid-tour therefore reloads with the button
+## reading READY rather than `INSPECTOR ABOARD`, and that is correct rather than a
+## bug**: the tour is gone, so asking for another one is the only sensible state.
 var _inspection_in_progress: bool = false
 
-## For the tier panel: is an inspector currently aboard the station?
+## For the Comms panel: is an inspector currently aboard the station?
 func is_inspection_active() -> bool:
 	return _inspection_in_progress
 
@@ -315,52 +358,111 @@ func advance_tier() -> void:
 	var data: TierData = current_tier_data()
 	var label: String = data.display_name if data != null and data.display_name != "" else str(current_tier)
 	SignalBus.station_tier_changed.emit(current_tier)
-	AlertManager.raise_alert(&"tier_promoted", AlertData.Priority.HIGH,
-		"Station promoted to Tier %d" % current_tier, label, null, &"comms")
+	AlertManager.transmit(&"tier_promoted", AlertData.Priority.HIGH,
+		"Station promoted to Tier %d" % current_tier, label,
+		&"arc", InspectionRunner.ARC_SENDER,
+		("This station is rated Tier %d%s. New licences follow; so does a heavier"
+			+ " share of the Corporation's overheads.")
+			% [current_tier, (" — " + label) if label != "" else ""],
+		&"comms")
 	# Nudge every listener that gates on tier (unlock cards, tier panel).
 	SignalBus.station_tier_progress_changed.emit()
 
-# --- inspection offer pacing & lifecycle (WI-26) ------------------------------
+# --- inspection lifecycle (WI-26, player-initiated since WI-57) ---------------
 
-## Once per cycle: tick the re-offer cooldown, and if the current tier's goals are
-## met (and a docking bay exists to receive the ARC ship), roll a chance to offer
-## an inspection. The offer is fired explicitly through EventManager so it ignores
-## natural-event pacing; declining or failing sets a cooldown before the next roll.
+## Once per cycle: tick the cooldown after a failed inspection.
+##
+## That is all this does now. It used to also roll `inspection_offer_chance_per_cycle`
+## and fire an offer card, which meant the player met promotion as a coin flip that
+## might not land on a cycle they happened to be ready for. WI-57 deletes the dice
+## and keeps the readiness checks, which is what [method inspection_block] is.
 ## (No is_loading() guard: cycle_changed isn't replayed on load any more - WI-38 A3.)
 func _on_cycle_changed(_cycle: int) -> void:
-	if _inspection_cooldown_cycles > 0:
-		_inspection_cooldown_cycles -= 1
-	if _inspection_offer_pending or _inspection_in_progress:
+	if _inspection_cooldown_cycles <= 0:
 		return
-	if is_max_tier() or _inspection_cooldown_cycles > 0:
-		return
-	if not tier_goals_met():
-		return
-	# The ARC ship needs a bay; no bay means no way to run the tour.
-	if Global.trader_manager == null or Global.trader_manager.find_trade_bay() == null:
-		return
-	if randf() < inspection_offer_chance_per_cycle:
-		_offer_inspection()
-
-func _offer_inspection() -> void:
-	if Global.event_manager == null:
-		return
-	_inspection_offer_pending = true
-	Global.event_manager.fire_event_by_id(INSPECTION_EVENT_ID)
+	_inspection_cooldown_cycles -= 1
+	# The button prints the remaining cycles, so it has to repaint as they tick.
 	SignalBus.station_tier_progress_changed.emit()
 
-## Accept path (EventEffectInspectionResponse): dock the ARC ship and start the
-## tour. Aborts harmlessly if the bay vanished between offer and accept.
+## Why `REQUEST INSPECTION` cannot be pressed right now, or READY.
+##
+## The readiness checks are the ones the deleted per-cycle roll used to make, in
+## the same order and with the same meanings - the change is that they now produce
+## a *sentence on a button* instead of gating a random number.
+func inspection_block() -> InspectionBlock:
+	if is_max_tier():
+		return InspectionBlock.MAX_TIER
+	if _inspection_in_progress:
+		return InspectionBlock.IN_PROGRESS
+	if _inspection_cooldown_cycles > 0:
+		return InspectionBlock.COOLING_DOWN
+	var goals: Vector2i = export_goal_progress()
+	if goals.x < goals.y:
+		return InspectionBlock.GOALS_UNMET
+	# Exports are all in but a checklist facility is missing - the tour would
+	# instant-fail on arrival, which is the WI-26 edge case this check exists for.
+	if missing_inspection_tag() != "":
+		return InspectionBlock.FACILITY_MISSING
+	# The ARC ship needs a bay; no bay means no way to run the tour.
+	if Global.trader_manager == null or Global.trader_manager.find_trade_bay() == null:
+		return InspectionBlock.NO_BAY
+	return InspectionBlock.READY
+
+func can_request_inspection() -> bool:
+	return inspection_block() == InspectionBlock.READY
+
+## Export goals reached out of the total this tier asks for, as `[met, total]`.
+## The `n OF m EXPORT GOALS MET` figure on the disabled button.
+func export_goal_progress() -> Vector2i:
+	var data: TierData = current_tier_data()
+	if data == null:
+		return Vector2i.ZERO
+	var met: int = 0
+	var total: int = 0
+	for resource_id: StringName in data.export_goals:
+		total += 1
+		if export_progress_for(resource_id) >= int(data.export_goals[resource_id]):
+			met += 1
+	return Vector2i(met, total)
+
+## The first checklist tag this station has no built module for, or "". The
+## inspector tours one module per tag, so a missing one is a guaranteed fail.
+func missing_inspection_tag() -> String:
+	var data: TierData = current_tier_data()
+	if data == null:
+		return ""
+	for tag: String in data.inspection_tags:
+		if built_module_count_with_tag(tag) <= 0:
+			return tag
+	return ""
+
+## Cycles until ARC will consider another request.
+func inspection_cooldown_remaining() -> int:
+	return _inspection_cooldown_cycles
+
+## Docks the ARC ship and starts the tour - the `REQUEST INSPECTION` button's
+## action since WI-57, called directly rather than through an event card's Accept
+## choice. Aborts harmlessly if the bay vanished between the button being painted
+## and pressed.
+##
+## Deliberately **not** gated on [method can_request_inspection]: the button asks
+## first, and `Cheats.start_inspection` is supposed to be able to skip the ladder.
+## The bay check stays here because it is not a gate, it is the one precondition
+## the runner physically cannot do without.
 func begin_inspection() -> void:
-	_inspection_offer_pending = false
 	if _inspection_in_progress:
 		return
 	var bay: ModuleBase = Global.trader_manager.find_trade_bay() if Global.trader_manager != null else null
 	if bay == null:
+		# No cooldown here any more (WI-57). It made sense when this was the Accept
+		# branch of an offer - the offer had been consumed - but the player now
+		# presses a button that says NO DOCKING BAY when there is none, so the only
+		# way to reach this is a bay lost between the paint and the press. Charging
+		# two cycles for that would be a penalty for something they did not do.
 		AlertManager.raise_alert(&"inspection_no_bay", AlertData.Priority.HIGH,
 			"ARC inspection postponed",
-			"No docking bay to receive the inspector · they will return later", null, &"comms")
-		_inspection_cooldown_cycles = inspection_reoffer_cooldown_cycles
+			"No docking bay to receive the inspector · ask again once one is built",
+			null, &"comms")
 		SignalBus.station_tier_progress_changed.emit()
 		return
 	var data: TierData = current_tier_data()
@@ -374,14 +476,6 @@ func begin_inspection() -> void:
 	add_child(runner)
 	runner.setup(bay, checklist, inspection_dwell_hours, inspection_health_fail_threshold)
 	runner.begin()
-	SignalBus.station_tier_progress_changed.emit()
-
-## Decline path: no penalty, another offer rolls after the cooldown (WI-26).
-func decline_inspection() -> void:
-	_inspection_offer_pending = false
-	_inspection_cooldown_cycles = inspection_reoffer_cooldown_cycles
-	AlertManager.raise_alert(&"inspection_declined", AlertData.Priority.HIGH,
-		"ARC inspection declined", "They will offer another in a few cycles", null, &"comms")
 	SignalBus.station_tier_progress_changed.emit()
 
 ## Called by InspectionRunner when the tour completes successfully.

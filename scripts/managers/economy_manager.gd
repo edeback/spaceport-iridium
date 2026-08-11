@@ -19,6 +19,10 @@ extends Node
 ## The ledger is the single source of truth for the UI: every income skim and
 ## every charge writes it, and the economy page is a pure view over it.
 
+## Who the Comms log says the money messages are from (WI-57). Shared with
+## [InspectionRunner] so ARC is one correspondent in the feed rather than two.
+const ARC_SENDER: String = InspectionRunner.ARC_SENDER
+
 # --- cost toggles (flipped on by WI-26's first ARC inspection) -----------------
 var wages_enabled: bool = false
 var upkeep_enabled: bool = false
@@ -150,8 +154,13 @@ func enable_recurring_costs() -> void:
 	wages_enabled = true
 	upkeep_enabled = true
 	levy_enabled = true
-	AlertManager.raise_alert(&"levy_enabled", AlertData.Priority.HIGH, "ARC levy is now in force",
-		"Wages, upkeep and a profit tax on your promoted station", null, &"comms")
+	AlertManager.transmit(&"levy_enabled", AlertData.Priority.HIGH, "ARC levy is now in force",
+		"Wages, upkeep and a profit tax on your promoted station",
+		&"finance", ARC_SENDER,
+		("A promoted station carries its own weight. From this cycle we draft wages,"
+			+ " module upkeep and %d%% of every credit you earn.")
+			% int(round(levy_fraction * 100.0)),
+		&"comms")
 	_emit_changed()
 
 # --- income routing (called by trade/contract payouts) ------------------------
@@ -296,8 +305,15 @@ func _announce_settlement(balance_before: int) -> void:
 			parts.append("%s %d" % [_category_label(category), value])
 	if total <= 0:
 		return
-	AlertManager.raise_alert(&"arc_settlement", AlertData.Priority.HIGH, "ARC settlement",
-		"-%d cr · %s" % [total, ", ".join(parts)], null, &"comms")
+	# The settlement is the one recurring transmission, and it is the reason the log
+	# has a cap: a station that runs for forty cycles gets forty of these, and they
+	# are exactly what a bounded ring buffer is for.
+	AlertManager.transmit(&"arc_settlement", AlertData.Priority.HIGH, "ARC settlement",
+		"-%d cr · %s" % [total, ", ".join(parts)],
+		&"finance", ARC_SENDER,
+		"Drafted %d credits this cycle: %s. Balance after settlement: %d cr."
+			% [total, ", ".join(parts), balance_before - total],
+		&"comms")
 
 func _finalize_current(new_cycle: int) -> void:
 	_history.append(_current)
@@ -326,10 +342,14 @@ func _update_insolvency() -> void:
 			warning_issued = true
 			# CRITICAL (WI-53): this is the step before `game_over`, and the whole
 			# grace window can elapse while the player is doing something else.
-			AlertManager.raise_alert(&"bankruptcy", AlertData.Priority.CRITICAL,
+			AlertManager.transmit(&"bankruptcy", AlertData.Priority.CRITICAL,
 				"ARC demands payment",
 				"Clear your debt within %d cycles or the station is repossessed" % grace_cycles,
-				null, &"comms")
+				&"finance", ARC_SENDER,
+				("Your account has been in arrears for %d cycles. Return it to credit within"
+					+ " %d, or the Corporation exercises its right of repossession.")
+					% [insolvent_cycles, grace_cycles],
+				&"comms")
 			_offer_insolvency_card()
 	elif insolvent_cycles >= warning_cycles + grace_cycles:
 		_game_over_fired = true
@@ -361,9 +381,13 @@ func take_loan(principal: int) -> bool:
 	loan_payments_left = maxi(loan_term_cycles, 1)
 	loan_payment = int(ceil(float(loan_remaining) / float(loan_payments_left)))
 	Global.resource_manager.credit_resource.change_global_total(principal)
-	AlertManager.raise_alert(&"loan_approved", AlertData.Priority.HIGH, "ARC loan approved",
+	AlertManager.transmit(&"loan_approved", AlertData.Priority.HIGH, "ARC loan approved",
 		"+%d cr now · repaying %d cr over %d cycles" % [principal, loan_remaining, loan_payments_left],
-		null, &"comms")
+		&"finance", ARC_SENDER,
+		("%d credits advanced against the station. We draft %d a cycle for %d cycles;"
+			+ " the schedule is not negotiable.")
+			% [principal, loan_payment, loan_payments_left],
+		&"comms")
 	_emit_changed()
 	return true
 
@@ -375,8 +399,11 @@ func repay_loan_early() -> bool:
 	if owed > 0:
 		_charge(&"loan_payment", owed)
 	_clear_loan()
-	AlertManager.raise_alert(&"loan_repaid", AlertData.Priority.HIGH, "ARC loan repaid",
-		"Cleared in full · -%d cr" % owed, null, &"comms")
+	AlertManager.transmit(&"loan_repaid", AlertData.Priority.HIGH, "ARC loan repaid",
+		"Cleared in full · -%d cr" % owed,
+		&"finance", ARC_SENDER,
+		"Your account is settled. %d credits cleared the outstanding balance." % owed,
+		&"comms")
 	_emit_changed()
 	return true
 

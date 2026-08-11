@@ -1,123 +1,103 @@
-class_name EconomyScreen
-extends Control
+class_name FinanceTab
+extends VBoxContainer
 
-## The economy page (WI-25): current balance, this-cycle and last-cycle ledger
-## breakdowns, the ARC levy summary, loan controls, and the read-only state of
-## the recurring-cost toggles. A management screen like Research/Contracts - it
-## does NOT pause the sim and refreshes live off SignalBus.economy_changed while
-## open. Built entirely in code (like UnlockPanel) so there's no .tscn to author.
+## The `FINANCE` tab of the Comms panel (WI-57 §4): the station's books - balance,
+## this-cycle and last-cycle ledger breakdowns by category, the expandable
+## wages/upkeep per-payer detail, visitors and reputation, the ARC levy summary,
+## and the loan controls.
 ##
-## WI-50 mounted it as the COMMS mode; WI-57 makes it a tab of the real Comms
-## panel (loans, the ARC levy, the ledger and tier progress are all ARC
-## business). Visibility and Esc belong to [ModeManager] from here on.
+## This is `economy_screen.gd`, moved. Its **content is unchanged**; what it lost
+## is a bespoke `PanelContainer` window it anchored to the centre-right of the
+## screen, a 24px title, an `X` button, and its own `close_requested` signal - all
+## four of which the [ConsolePanel] frame above it now provides once for every
+## panel in the game (invariant 6).
+##
+## It belongs to Comms because it is ARC's business end to end: the levy is ARC's
+## skim, the loans are ARC's loans, and the cost streams switch on the moment ARC
+## promotes the station (program decision 1). A ledger with no console slot of its
+## own was the other option and it would have been the twentieth surface this
+## program exists to delete.
+##
+## Refreshes live off [signal SignalBus.economy_changed] while visible, and does
+## **not** pause the sim.
 
+## Cost and income category display order. Fixed rather than dictionary order so
+## the ledger reads the same way twice.
 const COST_ORDER: Array[StringName] = [
 	&"loan_payment", &"wages", &"upkeep", &"levy_fee", &"levy_skim", &"severance", &"penalty", &"event",
 ]
 const INCOME_ORDER: Array[StringName] = [&"trade", &"contract", &"shops", &"hotels", &"dining", &"event"]
 
-## Asks [ModeManager] to close this mode (WI-50 contract point 4) - a panel that
-## set its own `visible` would leave the manager believing it is still open.
-signal close_requested
-
 var _content: VBoxContainer
 
 func _ready() -> void:
-	visible = false
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_build_shell()
+	add_theme_constant_override("separation", 0)
+	size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_build_body()
 	SignalBus.economy_changed.connect(_on_economy_changed)
 	# Visitor count/reputation move independently of the ledger (WI-33), so refresh
 	# the open page on those too.
 	SignalBus.visitors_changed.connect(_on_economy_changed)
-
-## [ModeManager]'s open hook: the page only refreshes while visible, so it needs
-## one refresh at the moment it becomes visible.
-func on_opened() -> void:
 	refresh()
 
 func _on_economy_changed() -> void:
-	if visible:
+	if is_visible_in_tree():
 		refresh()
 
-func _build_shell() -> void:
-	var window := PanelContainer.new()
-	window.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT)
-	window.custom_minimum_size = Vector2(440, 560)
-	window.offset_right = -16
-	window.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	window.grow_vertical = Control.GROW_DIRECTION_BOTH
-	add_child(window)
-
-	var margin := MarginContainer.new()
-	for side: String in ["left", "top", "right", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 12)
-	window.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
-	margin.add_child(vbox)
-
-	var title_bar := HBoxContainer.new()
-	vbox.add_child(title_bar)
-	var title := Label.new()
-	title.text = "Economy"
-	title.add_theme_font_size_override("font_size", 24)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title_bar.add_child(title)
-	var close_btn := Button.new()
-	close_btn.text = "X"
-	close_btn.custom_minimum_size = Vector2(32, 0)
-	close_btn.pressed.connect(close_requested.emit)
-	title_bar.add_child(close_btn)
-
+## Just a scroll and a column now. The window this used to build is the frame's
+## job; a tab that drew its own would be exactly the inconsistency invariant 6
+## names as most of the polish gap.
+func _build_body() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	vbox.add_child(scroll)
+	add_child(scroll)
 
 	_content = VBoxContainer.new()
-	_content.add_theme_constant_override("separation", 10)
 	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content.add_theme_constant_override("separation", UIMetrics.SECTION_GAP)
 	scroll.add_child(_content)
 
 func refresh() -> void:
 	if _content == null:
 		return
 	for child: Node in _content.get_children():
+		_content.remove_child(child)
 		child.queue_free()
 	var economy: EconomyManager = Global.economy_manager
 	if economy == null:
 		return
 	_build_balance(economy)
-	_build_toggles(economy)
-	_build_visitors_section()
 	_build_cycle_section("This cycle", economy.current_record(), economy)
 	_build_cycle_section("Last cycle", economy.last_record(), economy)
+	_build_visitors_section()
 	_build_levy_summary(economy)
 	_build_loan_section(economy)
 
 # --- sections -----------------------------------------------------------------
 
+## The balance, plus which cost streams are live. The two belong together: a
+## healthy balance with the streams still off is a different situation from the
+## same number after a promotion, and the player has to be able to tell.
 func _build_balance(economy: EconomyManager) -> void:
+	var block := VBoxContainer.new()
+	block.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	block.add_child(SectionLabel.create("Balance"))
+
 	var balance: int = economy.balance()
 	var label := Label.new()
-	label.text = "Balance: %d cr" % balance
+	label.text = "%d cr" % balance
 	label.theme_type_variation = UIType.METRIC_LARGE
+	# A negative balance is a falling vital, which is one of the four sanctioned
+	# amber uses (invariant 5).
 	label.add_theme_color_override("font_color", UIPalette.sign_color(float(balance)))
-	_content.add_child(label)
+	block.add_child(label)
 
-func _build_toggles(economy: EconomyManager) -> void:
 	var any_on: bool = economy.wages_enabled or economy.upkeep_enabled or economy.levy_enabled
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 2)
-	if not any_on:
-		box.add_child(_muted("Recurring costs begin after your first ARC inspection."))
-	else:
-		box.add_child(_muted("Active cost streams: %s" % _active_streams(economy)))
-	_content.add_child(box)
+	block.add_child(_muted("Recurring costs begin after your first ARC inspection."
+		if not any_on else "Active cost streams: %s" % _active_streams(economy)))
+	_content.add_child(block)
 
 func _active_streams(economy: EconomyManager) -> String:
 	var parts: Array[String] = []
@@ -132,16 +112,14 @@ func _active_streams(economy: EconomyManager) -> String:
 func _build_cycle_section(heading: String, record: Dictionary, economy: EconomyManager) -> void:
 	var section := VBoxContainer.new()
 	section.add_theme_constant_override("separation", 2)
-	var header := Label.new()
 	var cycle_no: int = int(record.get("cycle", 0))
-	header.text = ("%s (cycle %d)" % [heading, cycle_no] if cycle_no > 0 else heading).to_upper()
-	header.theme_type_variation = UIType.READOUT_LABEL
-	section.add_child(header)
+	section.add_child(SectionLabel.create(
+		"%s (cycle %d)" % [heading, cycle_no] if cycle_no > 0 else heading))
 
 	var income: Dictionary = record.get("income", {})
 	var costs: Dictionary = record.get("costs", {})
 	if income.is_empty() and costs.is_empty():
-		section.add_child(_muted("  Nothing recorded yet."))
+		section.add_child(_muted("Nothing recorded yet."))
 		_content.add_child(section)
 		return
 
@@ -150,7 +128,7 @@ func _build_cycle_section(heading: String, record: Dictionary, economy: EconomyM
 		var value: int = int(income.get(category, 0))
 		if value > 0:
 			gross_income += value
-			section.add_child(_line("  %s" % EconomyManager.category_label(category), "+%d" % value, UIPalette.LIVE))
+			section.add_child(_line(EconomyManager.category_label(category), "+%d" % value, UIPalette.LIVE))
 
 	var total_cost: int = 0
 	for category: StringName in COST_ORDER:
@@ -165,10 +143,10 @@ func _build_cycle_section(heading: String, record: Dictionary, economy: EconomyM
 			elif category == &"upkeep":
 				section.add_child(_expandable(EconomyManager.category_label(category), value, _upkeep_detail(economy)))
 			else:
-				section.add_child(_line("  %s" % EconomyManager.category_label(category), "-%d" % value, UIPalette.ATTENTION))
+				section.add_child(_line(EconomyManager.category_label(category), "-%d" % value, UIPalette.ATTENTION))
 
 	var net: int = gross_income - total_cost
-	section.add_child(_line("  Net", "%+d" % net, UIPalette.sign_color(float(net))))
+	section.add_child(_line("Net", "%+d" % net, UIPalette.sign_color(float(net))))
 	_content.add_child(section)
 
 ## Visitor economy summary (WI-33): live guest count + station reputation. The
@@ -179,52 +157,44 @@ func _build_visitors_section() -> void:
 		return
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 2)
-	var header := Label.new()
-	header.text = "VISITORS"
-	header.theme_type_variation = UIType.READOUT_LABEL
-	box.add_child(header)
-	box.add_child(_line("  On station", str(visitors.visitor_count()), UIPalette.TEXT))
-	box.add_child(_line("  Reputation", "%d%%" % roundi(visitors.reputation * 100.0), UIPalette.TEXT))
+	box.add_child(SectionLabel.create("Visitors"))
+	box.add_child(_line("On station", str(visitors.visitor_count()), UIPalette.TEXT))
+	box.add_child(_line("Reputation", "%d%%" % roundi(visitors.reputation * 100.0), UIPalette.TEXT))
 	_content.add_child(box)
 
 func _build_levy_summary(economy: EconomyManager) -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 2)
-	var header := Label.new()
-	header.text = "ARC LEVY"
-	header.theme_type_variation = UIType.READOUT_LABEL
-	box.add_child(header)
+	box.add_child(SectionLabel.create("ARC levy"))
 	if economy.levy_enabled:
-		box.add_child(_muted("  %d%% of income skimmed, plus %d cr every %d cycles." %
+		box.add_child(_muted("%d%% of income skimmed, plus %d cr every %d cycles." %
 			[int(round(economy.levy_fraction * 100.0)), economy.levy_fee_amount, economy.levy_fee_cycles]))
 	else:
-		box.add_child(_muted("  Not yet levied."))
+		box.add_child(_muted("Not yet levied."))
 	_content.add_child(box)
 
 func _build_loan_section(economy: EconomyManager) -> void:
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 4)
-	var header := Label.new()
-	header.text = "LOAN"
-	header.theme_type_variation = UIType.READOUT_LABEL
-	box.add_child(header)
+	box.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	box.add_child(SectionLabel.create("Loan"))
 	if economy.loan_active:
-		box.add_child(_muted("  Owed: %d cr, drafting %d cr/cycle (%d left)." %
+		box.add_child(_muted("Owed: %d cr, drafting %d cr/cycle (%d left)." %
 			[economy.loan_remaining, economy.loan_payment, economy.loan_payments_left]))
-		var repay := Button.new()
-		repay.text = "Repay in full (%d cr)" % economy.loan_remaining
+		var repay: ActionButton = ActionButton.create(
+			"Repay in full (%d cr)" % economy.loan_remaining, ActionButton.Weight.PRIMARY)
+		repay.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		repay.pressed.connect(func() -> void: economy.repay_loan_early())
 		box.add_child(repay)
 	else:
-		box.add_child(_muted("  Borrow from ARC at %d%% interest, repaid over %d cycles." %
+		box.add_child(_muted("Borrow from ARC at %d%% interest, repaid over %d cycles." %
 			[int(round(economy.loan_interest_fraction * 100.0)), economy.loan_term_cycles]))
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
+		row.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
 		for principal: int in economy.loan_principal_tiers:
-			var btn := Button.new()
-			btn.text = "Take %d" % principal
-			btn.pressed.connect(func() -> void: economy.take_loan(principal))
-			row.add_child(btn)
+			var button: ActionButton = ActionButton.create(
+				"Take %d" % principal, ActionButton.Weight.SECONDARY)
+			button.pressed.connect(func() -> void: economy.take_loan(principal))
+			row.add_child(button)
 		box.add_child(row)
 	_content.add_child(box)
 
@@ -262,8 +232,8 @@ func _upkeep_detail(economy: EconomyManager) -> Control:
 
 # --- widgets ------------------------------------------------------------------
 
-## A collapsible cost row: a flat toggle button "▸ Label   -amount" that reveals
-## `detail` when clicked. Detail starts hidden.
+## A collapsible cost row: a flat toggle "▸ Label   -amount" that reveals `detail`
+## when clicked. Detail starts hidden.
 func _expandable(label: String, amount: int, detail: Control) -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 0)
@@ -274,9 +244,9 @@ func _expandable(label: String, amount: int, detail: Control) -> Control:
 	toggle.focus_mode = Control.FOCUS_NONE
 	toggle.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	toggle.add_theme_color_override("font_color", UIPalette.ATTENTION)
-	toggle.text = "  ▸ %s      -%d" % [label, amount]
+	toggle.text = "▸ %s      -%d" % [label, amount]
 	toggle.toggled.connect(func(pressed: bool) -> void:
-		toggle.text = "  %s %s      -%d" % ["▾" if pressed else "▸", label, amount]
+		toggle.text = "%s %s      -%d" % ["▾" if pressed else "▸", label, amount]
 		detail.visible = pressed)
 	box.add_child(toggle)
 	box.add_child(detail)
@@ -288,6 +258,10 @@ func _line(left_text: String, right_text: String, color: Color = UIPalette.TEXT)
 	left.text = left_text
 	left.add_theme_color_override("font_color", color)
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Ellipsed rather than allowed to grow: a long module name in the upkeep detail
+	# would otherwise push the amount column off the panel (the WI-53 [ListRow]
+	# lesson, which applies to any hand-built row too).
+	left.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	row.add_child(left)
 	var right := Label.new()
 	right.text = right_text
@@ -300,6 +274,7 @@ func _line(left_text: String, right_text: String, color: Color = UIPalette.TEXT)
 func _muted(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
+	label.theme_type_variation = UIType.BODY
 	label.add_theme_color_override("font_color", UIPalette.TEXT_META)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return label

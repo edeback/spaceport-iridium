@@ -106,10 +106,19 @@ func generate_offer(premium_bonus: float) -> ContractData:
 	contract.offered_cycle = Global.time_manager.cycle
 	offers.append(contract)
 	SignalBus.contract_offered.emit(contract)
-	AlertManager.raise_alert(AlertRules.make_id(&"contract_offered", contract.id),
+	# Both halves (WI-57): an offer is the textbook case of a notification that is
+	# "look at this now" *and* "this arrived and you can read it later" - it is an
+	# approach from a trading house with terms, and the terms outlive the alert.
+	AlertManager.transmit(AlertRules.make_id(&"contract_offered", contract.id),
 		AlertData.Priority.HIGH, "Contract offered",
 		"%s · %d %s by cycle %d" % [contract.issuer, contract.amount, resource.name,
-		contract.deadline_cycle], null, &"trade", "%d contracts are on offer")
+		contract.deadline_cycle],
+		&"contract", contract.issuer,
+		("We will take %d %s at %d credits a unit, delivered to your bay by cycle %d."
+			+ " Fail to ship and the penalty is %d credits.")
+			% [contract.amount, resource.name, contract.unit_price,
+			contract.deadline_cycle, contract.penalty],
+		&"trade", null, "%d contracts are on offer")
 	contracts_changed.emit()
 	return contract
 

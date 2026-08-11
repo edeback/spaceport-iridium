@@ -27,12 +27,21 @@ extends VBoxContainer
 ## that says `depth` means the column; everything that says `tier` without
 ## qualification means the station's, exactly as [UnlockManager] uses it.
 ##
-## The station-tier / promotion block at the top is WI-26's and is **on loan**: it
-## moves to Comms with the rest of the ARC relationship in WI-57. It stays here
-## until then so the goals are not homeless for a week.
+## WI-57 **moved the station-tier / promotion block out** to the Comms panel's
+## `QUOTA` tab, where it sits beside the `REQUEST INSPECTION` button that acts on
+## it. It was on loan here from WI-26 so the goals would not be homeless; with it
+## gone, "tier" means exactly one thing on this screen - a node's `min_tier` gate -
+## which is the ambiguity WI-55 flagged and this closes.
 
 ## Preferred tab order; any other tree follows alphabetically.
 const TREE_ORDER: Array[StringName] = [&"power", &"food", &"industrial", &"defense"]
+
+## The panel's standing instruction. Added in WI-57's consistency pass: this was
+## the one panel of the nine with no footer, which side by side read as an
+## unfinished frame rather than as a panel that had nothing to say. It says the
+## two things a player gets wrong here - that the currency is credits (program
+## decision 5) and that a locked node explains itself rather than hiding.
+const FOOTER: String = "Costs are credits · a locked node names what it is waiting for"
 
 ## Width every card and every empty cell is pinned to, so depth columns line up
 ## across rows. Mirrors [constant UnlockNodeCard.CARD_WIDTH].
@@ -48,7 +57,6 @@ var _balance: Chip
 var _tabs: TabStrip
 var _scroll: ScrollContainer
 var _tree_host: Control
-var _tier_section: VBoxContainer
 var _cards: Array[UnlockNodeCard] = []
 ## Tab order, so a rebuild can restore the player's tab.
 var _tree_ids: Array[StringName] = []
@@ -64,6 +72,8 @@ static func create() -> ConsolePanel:
 	# 1400px plus the 344px right column and its gutters is 1764 at 1920: it fits
 	# only with the inspector out of the way, and selection means nothing here.
 	frame.hides_inspector = true
+	frame.footer_text = FOOTER
+	frame.footer_variation = UIType.BODY
 	var body := UnlockPanel.new()
 	body._frame = frame
 	frame.content().add_child(body)
@@ -74,10 +84,10 @@ func _ready() -> void:
 	_build_header_control()
 	_build_body()
 	SignalBus.global_unlock_changed.connect(_on_unlock_changed)
-	# Tier-up re-evaluates every node's tier gate; goal progress only moves the
-	# promotion block (WI-26).
+	# Tier-up re-evaluates every node's `min_tier` gate. Goal progress no longer
+	# concerns this panel at all - it moved to Comms' QUOTA tab with the block that
+	# rendered it (WI-57).
 	SignalBus.station_tier_changed.connect(_on_tier_changed)
-	SignalBus.station_tier_progress_changed.connect(_on_tier_progress_changed)
 	# Affordability moves whenever credits do, and the header prints the balance.
 	var credits: ResourceData = Global.resource_manager.credit_resource \
 		if Global.resource_manager != null else null
@@ -112,18 +122,13 @@ func _build_body() -> void:
 	head.add_theme_constant_override("separation", UIMetrics.SECTION_GAP)
 	pad.add_child(head)
 
-	# WI-26's promotion block, on loan until WI-57 moves it to Comms.
-	_tier_section = VBoxContainer.new()
-	_tier_section.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
-	head.add_child(_tier_section)
-
 	_tabs = TabStrip.create()
 	_tabs.tab_selected.connect(_on_tab_selected)
 	head.add_child(_tabs)
 
-	# The trees scroll inside themselves so the tab strip and the promotion block
-	# never leave the screen. Both axes: a deep tree is wider than 1400px, and
-	# scroll-x is the answer the WI reserved for exactly that.
+	# The trees scroll inside themselves so the tab strip never leaves the screen.
+	# Both axes: a deep tree is wider than 1400px, and scroll-x is the answer the
+	# WI reserved for exactly that.
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var scroll_pad := MarginContainer.new()
@@ -145,7 +150,6 @@ func refresh() -> void:
 	if _tree_host == null:
 		return
 	_refresh_balance()
-	_refresh_tier_section()
 	var by_tree: Dictionary = _unlocks_by_tree()
 	_tree_ids = _ordered_tree_ids(by_tree.keys())
 	var defs: Array = []
@@ -199,16 +203,10 @@ func _on_unlock_changed(_unlock: UnlockData) -> void:
 	_repaint_cards()
 	_apply_subtitle()
 
-## Tier-up (WI-26): re-evaluate every card's tier gate and the promotion block.
+## Tier-up (WI-26): re-evaluate every card's `min_tier` gate.
 func _on_tier_changed(_new_tier: int) -> void:
 	if is_visible_in_tree():
-		_refresh_tier_section()
 		_repaint_cards()
-
-## Goal progress and inspection state moved: only the promotion block needs it.
-func _on_tier_progress_changed() -> void:
-	if is_visible_in_tree():
-		_refresh_tier_section()
 
 ## Opens a tree by id, exactly as clicking its tab does.
 ##
@@ -234,67 +232,6 @@ func _on_tab_selected(tree_id: StringName) -> void:
 	# A new tree starts at its roots, not at wherever the last one was scrolled to.
 	_scroll.scroll_horizontal = 0
 	_scroll.scroll_vertical = 0
-
-# --- the promotion block (WI-26, on loan) ---------------------------------------
-
-func _refresh_tier_section() -> void:
-	if _tier_section == null:
-		return
-	for child: Node in _tier_section.get_children():
-		_tier_section.remove_child(child)
-		child.queue_free()
-	var manager: UnlockManager = Global.unlock_manager
-	var data: TierData = manager.current_tier_data()
-	var tier_name: String = data.display_name if data != null and data.display_name != "" else ""
-	var heading: SectionLabel = SectionLabel.create(
-		"Station tier %d%s" % [manager.current_tier, (" · " + tier_name) if tier_name != "" else ""])
-	heading.accent_color = UIPalette.ATTENTION
-	_tier_section.add_child(heading)
-
-	if data == null or data.is_max_goal() or manager.is_max_tier():
-		_tier_section.add_child(_note(
-			"Top tier reached - the station answers to no further inspection.", UIPalette.GROWTH))
-		return
-
-	# Export goals, as bars in a row: at 1400px they fit side by side, where the
-	# stacked version wasted the whole width on a 180px bar.
-	var goals := HBoxContainer.new()
-	goals.add_theme_constant_override("separation", UIMetrics.SECTION_GAP)
-	_tier_section.add_child(goals)
-	for resource_id: StringName in data.export_goals:
-		var goal: int = data.export_goals[resource_id]
-		var have: int = mini(manager.export_progress_for(resource_id), goal)
-		var resource: ResourceData = Global.save_manager.get_resource_by_id(resource_id)
-		var label: String = resource.name if resource != null and resource.name != "" \
-			else String(resource_id)
-		var bar: StatBar = StatBar.create()
-		bar.custom_minimum_size.x = 220.0
-		bar.configure("Export %s" % label, float(have) / maxf(float(goal), 1.0),
-			"%d / %d" % [have, goal], UIPalette.GROWTH if have >= goal else UIPalette.LIVE)
-		goals.add_child(bar)
-
-	# Required-facility checklist: the module tags the ARC inspector will tour.
-	if not data.inspection_tags.is_empty():
-		var facilities := HBoxContainer.new()
-		facilities.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
-		_tier_section.add_child(facilities)
-		for tag: String in data.inspection_tags:
-			var built: bool = manager.built_module_count_with_tag(tag) > 0
-			var chip: Chip = Chip.create()
-			chip.configure(tag.capitalize(), "", Color(0, 0, 0, 0),
-				UIPalette.Row.LIVE if built else UIPalette.Row.INERT)
-			facilities.add_child(chip)
-
-	if manager.is_inspection_active():
-		_tier_section.add_child(_note("An ARC inspector is aboard, touring the station.",
-			UIPalette.ATTENTION_TEXT))
-	elif manager.tier_goals_met():
-		_tier_section.add_child(_note("Goals met - an ARC inspection will be offered shortly.",
-			UIPalette.GROWTH))
-	else:
-		_tier_section.add_child(_note(
-			"Meet every goal and build the required facilities to earn an inspection.",
-			UIPalette.TEXT_SECONDARY))
 
 func _note(text: String, color: Color) -> Label:
 	var label := Label.new()

@@ -94,12 +94,18 @@ func configure(name_text: String, meta_text: String = "", action_text: String = 
 	_refit()
 
 ## A coloured square on the left - a resource swatch, a module tag colour.
-func set_swatch(color: Color) -> void:
+##
+## `size` overrides the list-item square, the same way [method set_icon]'s does
+## and for a related reason: Comms' transmission rows reserve a 34px **avatar**
+## slot (WI-57), sized now so that dropping a faction portrait into it later does
+## not re-lay the list out. The row grows to fit it, because [method _refit]
+## measures the content.
+func set_swatch(color: Color, size: int = SWATCH_SIZE) -> void:
 	_ensure_refs()
 	if _swatch == null:
 		return
 	_swatch.color = color
-	_swatch.custom_minimum_size = Vector2(float(SWATCH_SIZE), float(SWATCH_SIZE))
+	_swatch.custom_minimum_size = Vector2(float(size), float(size))
 	_swatch.visible = color.a > 0.0
 	if _swatch.visible and _icon != null:
 		_icon.visible = false

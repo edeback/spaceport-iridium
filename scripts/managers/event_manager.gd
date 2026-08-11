@@ -132,19 +132,43 @@ func fire_event_by_id(id: StringName) -> bool:
 	fire_event(event)
 	return true
 
+## The sender a notification-only event is logged under (WI-57). Events have no
+## authored issuer field, so this is honest rather than invented - the station's
+## own systems noticed something.
+const EVENT_SENDER: String = "Station log"
+
 func fire_event(event: EventData) -> void:
 	_fired_cycle[event.id] = Global.time_manager.cycle
 	if event.choices.is_empty():
-		# Notification-only: apply immediately, no card, alert strip only.
+		# Notification-only: apply immediately, no card - the alert and the Comms
+		# log entry are the whole of its UI.
 		for effect: EventEffect in event.auto_effects:
 			if effect != null:
 				effect.apply(event)
-		SignalBus.station_alert.emit(event.body)
+		_log_event(event)
 		SignalBus.event_triggered.emit(event)
 		return
 	# Card events queue - two simultaneous fires show sequentially (edge case).
 	pending_events.append(event)
+	# **The card is not a transmission** (WI-57 edge case) and must not be routed
+	# through the log - it is a modal the player answers, not something to read
+	# later. The *record* that it happened is worth keeping, so a card event logs
+	# its title and body without the choices that only make sense in the card.
+	_log_event(event)
 	SignalBus.event_triggered.emit(event)
+
+## Both halves of an event's announcement (WI-57).
+##
+## The alert stays a plain [signal SignalBus.station_alert] - LOW, transient, and
+## exactly what fifty other sites use for "something happened, mention it" - and
+## the durable half becomes a Comms row, so a player who was mid-placement when a
+## micrometeorite hit can still find out what it said.
+func _log_event(event: EventData) -> void:
+	SignalBus.station_alert.emit(event.body)
+	if Global.alert_manager == null:
+		return
+	var title: String = event.title if not event.title.is_empty() else "Station event"
+	Global.alert_manager.post_transmission(&"event", EVENT_SENDER, title, event.body)
 
 func peek_pending() -> EventData:
 	return pending_events.front() if not pending_events.is_empty() else null

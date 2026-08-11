@@ -112,6 +112,15 @@ signal station_alert_raised(alert: AlertData)
 ## than off six.
 @warning_ignore("unused_signal")
 signal alerts_changed
+## The transmission log changed (WI-57) - something arrived, or something was
+## marked read. One signal for both, because the Comms feed and the console's
+## unread badge re-derive from the log either way.
+##
+## Distinct from [signal alerts_changed] even though [AlertManager] owns both
+## lists: a LOW alert ageing out must not repaint the Comms panel, and a message
+## being read must not repaint the alert feed.
+@warning_ignore("unused_signal")
+signal transmissions_changed
 @warning_ignore("unused_signal")
 signal trader_arrived(trader: TraderData)
 @warning_ignore("unused_signal")

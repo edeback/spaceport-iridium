@@ -12,8 +12,13 @@ extends ReadoutPanel
 ## stacked under the alert feed while a raid is on and gone the rest of the time,
 ## rather than staying a bespoke panel floating over the middle of the station.
 ##
-## WI-57 gives ARC its own surface and the payoff negotiation belongs there; this
-## is the interim home, and it is a frame rather than a one-off.
+## WI-57 gave ARC its own surface and put the payoff there too, in the Comms
+## panel's ARC block - hailing raiders for terms is the same category of action as
+## hailing ARC. **This readout stays**, deliberately: it is permanently on screen
+## during a fight, and WI-57 §6 flags its own risk that a payoff buried one
+## keypress deep is too slow while the beams are landing. Two entry points to one
+## action, which is the pattern the crew roster and the alert feed already use for
+## selection.
 
 const SCENE_PATH: String = "res://ui/alerts/raid_readout.tscn"
 
