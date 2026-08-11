@@ -4,6 +4,11 @@ extends PanelContainer
 ## the current action's subtask line, both composed by the job itself (WI-44) -
 ## `JobData.report_template` with the job's own targets substituted in, and
 ## `ActionBase.report()` for the step. Nothing here knows about job types.
+##
+## The headline goes through [PawnStatus] since WI-56, so this tab, the crew
+## roster and the job board say the same thing about the same pawn. It used to
+## print the literal word "Nothing" for a null job, which is a third spelling of
+## "Idle" - and the roster is a column of forty of these where that shows.
 
 var pawn: PawnBase = null
 ## The job we're currently listening to, so its subtask signal can be dropped when
@@ -22,11 +27,16 @@ func set_pawn(_pawn: PawnBase) -> void:
 
 func job_changed() -> void:
 	_watch(pawn.current_job if pawn != null else null)
+	var line: PawnStatus.Line = PawnStatus.of(pawn)
+	var task: Label = %CurrentTask
+	task.text = line.text
+	task.add_theme_color_override("font_color", PawnStatus.tone_color(line.tone))
 	if pawn != null and pawn.current_job != null:
-		%CurrentTask.text = "%s  [%s]" % [pawn.current_job.report(), pawn.current_job.get_category_name()]
+		# The category stays: it is the one thing the status sentence deliberately
+		# does not carry, and this tab is where a player would look for it.
+		task.text = "%s  [%s]" % [line.text, pawn.current_job.get_category_name()]
 		cancel_button.visible = pawn.current_job.player_cancelable()
 	else:
-		%CurrentTask.text = "Nothing"
 		cancel_button.visible = false
 	subtask_changed()
 

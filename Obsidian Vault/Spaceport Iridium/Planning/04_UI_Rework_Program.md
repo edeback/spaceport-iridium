@@ -1,6 +1,6 @@
 # 04 — UI Rework Program (WI-49 … WI-57)
 
-> **STATUS: in progress — WI-49 … WI-54 shipped 2026-08-10, WI-55 shipped 2026-08-11, WI-56…57 not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
+> **STATUS: in progress — WI-49 … WI-54 shipped 2026-08-10, WI-55 and WI-56 shipped 2026-08-11, WI-57 not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
 >
 > The source design is **`assets/external/spaceport-iridium-ui-layout/project/Iridium Console UI Spec.dc.html`**, a Claude Design handoff bundle: ten reference screens at 1920×1080 plus the rules that produce them. Read it before implementing any child WI. Numbers in this doc are transcribed from it and are authoritative for implementation; where this doc and the mockup disagree, **this doc wins** (it carries the gameplay corrections from [[New Work for Phase 4]] that the mockup predates).
 >
@@ -91,8 +91,8 @@ Nine console buttons: seven modes, then a divider, then two utilities.
 | Mode | Width | Hotkey | Built from | WI |
 | --- | --- | --- | --- | --- |
 | BUILD | 356 + 340 | B | `ui/buttons/build_menu.gd` (rail + flyout already exist, WI-43) | WI-54 |
-| CREW | 660 | C | **New.** Roster panel; "Show All Jobs" opens `jobs_screen` content | WI-56 |
-| STORES | 1080 | S | **New.** Station-wide view of `ui_storage_component`'s per-module controls | WI-56 |
+| CREW | 660 | C | ✅ `crew_panel.gd`; `SHOW ALL JOBS` swaps `jobs_screen` in as a second view | WI-56 |
+| STORES | 1080 | E | ✅ `stores_panel.gd`; every bin's priority and contents in one list | WI-56 |
 | TRADE | 1180 | T | `trade_screen` + `trader_screen` merged; Contracts becomes a tab | WI-55 |
 | R&D | 1400 | R | `unlocks/unlock_panel.gd`, reflowed to tiers left-to-right | WI-55 |
 | COMMS | 620 | M? | **New.** Transmissions + ARC; `economy_screen` becomes a tab | WI-57 |
@@ -127,7 +127,7 @@ Every existing UI file and where it goes. Nothing in this table may be silently 
 
 **Becomes a mode panel (WI-54 … WI-57):**
 
-✅ `buttons/build_menu.tscn` and ✅ `overlay_controller.gd`'s toolbar + legend (WI-54; `buttons/module_resource_cost_ui.*` deleted with them, `module_button_tooltip` demoted to the recent strip's hover card). ✅ `trade/trade_screen.tscn`, ✅ `trade/trader_screen.tscn` and ✅ `windows/contracts_screen.tscn` — all three **deleted**, merged into `trade/trade_panel.gd` + `trade/contracts_tab.gd` (WI-55); ✅ `unlocks/unlock_panel.gd` + `unlock_node_card.gd` reframed (WI-55). Still to go: `windows/economy_screen.gd`; `windows/jobs_screen.gd`; `windows/ui_crew_recruitment.tscn` (the Crew panel's HIRE action).
+✅ `buttons/build_menu.tscn` and ✅ `overlay_controller.gd`'s toolbar + legend (WI-54; `buttons/module_resource_cost_ui.*` deleted with them, `module_button_tooltip` demoted to the recent strip's hover card). ✅ `trade/trade_screen.tscn`, ✅ `trade/trader_screen.tscn` and ✅ `windows/contracts_screen.tscn` — all three **deleted**, merged into `trade/trade_panel.gd` + `trade/contracts_tab.gd` (WI-55); ✅ `unlocks/unlock_panel.gd` + `unlock_node_card.gd` reframed (WI-55). ✅ `windows/jobs_screen.gd` — no longer a panel; it is the Crew panel's second view and reports its shape through a signal (WI-56). ✅ `windows/ui_crew_recruitment.tscn` — unchanged, and now reachable from the Crew footer as well as from the crew-quarters module (WI-56). Still to go: `windows/economy_screen.gd` (WI-57).
 
 **Untouched by this program:** `menus/main_menu.tscn`, `settings_menu.gd`, `save_load_menu.gd`, `keybind_row.gd`, `pause_menu.gd`, `game_over_screen.tscn` (WI-36's out-of-game flow — it has its own consistent look and no console). `event_card.tscn` is untouched here because the Phase-4 **Dialogue** item is going to rewrite it against Dialogue Manager; it should adopt the new theme for free and otherwise be left alone. `preview_module`, `selection_brackets`, `overlay_flow_layer`, `click_cycler` are world-space, not chrome.
 
@@ -158,7 +158,7 @@ The mockup's own suggested build order, split finer so no work item touches more
 | [[WI-53_Alerts]] ✅ | Severity model, sticky/critical alerts, jump-to-subject, history log | The one item with real gameplay consequence (critical alerts pause the sim) |
 | [[WI-54_Panels_Build_And_Overlays]] ✅ | The two narrow panels that already exist | Cheapest panel conversions; proves the frame at two widths |
 | [[WI-55_Panels_Trade_And_RD]] ✅ | The two widest panels, reflowed in place | Existing content, new layout, plus the Contracts tab merge |
-| [[WI-56_Panels_Crew_And_Stores]] | Two genuinely new panels | Crew roster and the station-wide storage view have no predecessor |
+| [[WI-56_Panels_Crew_And_Stores]] ✅ | Two genuinely new panels | Crew roster and the station-wide storage view have no predecessor |
 | [[WI-57_Panel_Comms_And_Retirement]] | Comms panel, ARC contact, and deleting the last legacy windows | The closer: nothing may be left mounted outside the console |
 
 ## What WI-49 landed (the API everything else builds on)
@@ -214,7 +214,7 @@ Shipped 2026-08-10. Details and the five traps found are in [[WI-51_Inspector]].
 | `scripts/utility/mood_catalog.gd` (`MoodCatalog`) | Pure: modifier id → `{label, blurb, cause}` across the fixed table and the three dynamic families (disease/trait/event), the duration-or-cause column, breakdown sorting, and **the happiness formula itself** (`combine`) — which `PawnNeedsComponent` now calls, so the breakdown and the sim cannot diverge. 30 tests. |
 | `PawnNeedsComponent.get_modifier_breakdown()` / `needs_average()` | The two accessors the Needs tab needs. Nothing else may read `_modifiers`. |
 
-**The contract for WI-53 and WI-56:** `InspectorPanel.select(subject)` is the *only* way to raise a selection surface, and `camera_target()` is what to hand `GameCamera.jump_to()`. Both are already exposed; the camera half has no caller yet.
+**The contract for WI-53 and WI-56:** `InspectorPanel.select(subject)` is the *only* way to raise a selection surface, and `camera_target()` is what to hand `GameCamera.jump_to()`. Both have callers now — WI-53's alert rows and WI-56's crew roster and Stores cards — and all three guard the same way: `select()` **toggles** when handed the already-selected subject, which is right for a click on the station and wrong for a list row, so a row click checks `selected_subject()` first.
 
 **Two rules that bind the later panels:** a page that scrolls must drive its own `custom_minimum_size.y` from its content, and a panel that sizes itself to its content must re-fit on `minimum_size_changed` rather than measuring once. Both are the WI-48 zero-height lesson, and WI-51 hit each of them twice.
 
@@ -313,9 +313,32 @@ Shipped 2026-08-11. Details, the ten deviations and the four traps found are in 
 5. **Two things called "tier" is a real hazard.** R&D's columns are prerequisite depth and its node gates say `NEEDS STATION TIER n`. Comms owns the station tier outright from WI-57, at which point R&D's promotion block moves there and this stops being ambiguous.
 6. **A screenshot is part of the verification, still.** Three of this item's four defects were invisible to a 92-check probe — a hairline too dim to see, a tab strip painted on the wrong tab, and a probe stocking a bin that silently stocked nothing.
 
+## What WI-56 landed (the pawn-status vocabulary and the two new panels)
+
+Shipped 2026-08-11. Details, the twelve deviations and the four traps found are in [[WI-56_Panels_Crew_And_Stores]].
+
+| File | What it is |
+| --- | --- |
+| `scripts/utility/pawn_status.gd` (`PawnStatus`) | Pure: **the one place in the game that turns a pawn into a sentence**. A `Facts` record and its `facts_for(pawn)` adapter, the sentence table, `describe` / `tone_of` / `is_idle` / `tone_color` / `tone_row`, the roster's `Filter` / `Sort` / `passes` / `compares_before`, and `summarize` / `summary_text` / `summary_color` behind the problem line. 44 tests. |
+| `scripts/utility/stores_model.gd` (`StoresModel`) | Pure: `Entry`, the three sorts and their total comparator, `LEGEND`, the priority range/bands/`priority_label`/`priority_color`, `lists` (which bins are real storage), `modules_holding_stock`, `subtitle_text`. 24 tests. |
+| `ui/windows/crew_panel.gd` + `crew_roster_row.gd` | The 660px roster: filter pills, sort, the problem-line bar with `SHIFT ROTA` and `HIRE`, and the two-view state machine (`show_roster` / `show_board` / `board_visible`). |
+| `ui/windows/stores_panel.gd` + `stores_module_card.gd` | The 1080px bin list: the legend line, sort, one card per bin with a priority `Stepper`, a fill gauge and contents chips. |
+| `ui/windows/storage_overlays.gd` (`StorageOverlays`) | WI-12's two dialogs, extracted: the accepted-resource checklist and the per-resource desired/dump/auto-dump dialog, plus the shared `dump_to_pile`. Both the Stores card and the inspector's storage tab call in. |
+| `Chip.chip_style(kind)`, `StorageComponent.resource_consumers()` / `autodump_warning()`, `PawnNeedsComponent.has_critical_need()` | The four additive helpers. |
+| `JobsScreen` | Reframed again: a body rather than a panel, reporting its shape through `signal subtitle_changed`. |
+
+**The contract for WI-57:**
+
+1. **`PawnStatus` is the only place a pawn becomes a sentence.** The roster, the job board, the inspector's Job tab and `RobotVitalsTab.state_text` all read it; a fifth surface adds a caller, never a fifth set of rules. The tone set is closed and **only three states spend amber** (resigning, a critical need, a drone out of power) — invariant 5, enforced by a test.
+2. **Off duty is not idle.** `PawnStatus.is_idle` requires `on_shift`, and the console's CREW readiness dot now asks the same question the panel's problem line answers. Any future "is somebody free?" check goes through it.
+3. **A two-view panel swaps in place through public methods.** Crew's `show_roster()` / `show_board()` are public precisely because WI-55's tab-strip defect was a view driven around its own entry point; a probe or a screenshot driver must use the same door the player does.
+4. **Storage priority has one vocabulary now** (`StoresModel.priority_label` / `priority_color`, delegating to `UIPalette.sign_color`) and one range. Nothing may print its own words for a haul priority, and **priority writes go through `update_priority()`** — the WI-45 A5 rule, now asserted by a probe that watches an already-posted job's priority move.
+5. **A construction bin on a finished module is not storage.** `StoresModel.lists` is the membership rule; anything else enumerating bins should use it rather than `Groups.RESOURCE_STORAGE`, whose membership tracks `accepts_exports` rather than "has a StorageComponent".
+6. **A screenshot is part of the verification, still.** Three of this item's defects were invisible to an 81-check probe — six dead bins the model and the panel agreed about, priority captions ellipsed to nonsense in a fixed column, and a colour that said the opposite of the text beside it.
+
 ## Cross-cutting risks
 
-- **`ui_main.gd` is the choke point.** All nine items touch it, and it was 491 lines of hand-wired `_setup_*` calls. WI-50 reduced it to a mount table plus the mode registry; the check was "if it is still growing by WI-55, stop and refactor", and it is not — **478 lines after WI-55**, which deleted the trader-screen mount, its departure handler and an Esc level while adding two one-line factories. No refactor needed.
+- **`ui_main.gd` is the choke point.** All nine items touch it, and it was 491 lines of hand-wired `_setup_*` calls. WI-50 reduced it to a mount table plus the mode registry; the check was "if it is still growing by WI-55, stop and refactor", and it is not — **480 lines after WI-56**, which added a one-line STORES factory and deleted the `register_unavailable` call and its reason constant. No refactor needed; WI-57 is the last item that touches it.
 - **MCP has been unreliable since the back half of Phase 3, and this is a UI program.** Headless probes cannot verify `_draw()`, shaders, or layout. Every panel WI needs a **windowed screenshot** in its verification, and the WI-48 lesson applies hard: *a probe must replicate the caller's exact call order*, because building a control in-tree hides layout bugs that the real mount path exposes. "Did the data arrive?" checks pass while a panel renders at zero height.
 - **Pure logic must be extracted to be testable.** GUT covers pure classes only. Anything with a rule in it — alert severity classification, resource rate smoothing, ledger grouping, tab-set selection, panel geometry — belongs in a static/pure class with its own suite, exactly as `BuildMenuModel`, `MinimapTransform` and `OverlayPalette` already are.
 - **Save compatibility.** Only two items add save state: WI-52 (pinned resources) and WI-53 (alert history). Both are new absent-key-means-default sections; `SAVE_VERSION` should not need to move. WI-52's `vitals` section shipped this way and `SAVE_VERSION` did not move.

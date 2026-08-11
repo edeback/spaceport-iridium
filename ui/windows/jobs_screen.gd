@@ -1,5 +1,5 @@
 class_name JobsScreen
-extends Control
+extends VBoxContainer
 
 ## The station job board (WI-44): what work is queued, who is doing what, and -
 ## the part that earns the panel - WHY a given pawn will not take a given job.
@@ -8,7 +8,8 @@ extends Control
 ## script. The board is a priority-sorted queue whose entries are rejected by
 ## per-driver `can_do()` rules; the rejection reason existed only as a boolean
 ## returned deep inside a scan. `JobDriver.explain_block()` turns that into a
-## sentence, and this panel is where it surfaces.
+## sentence, and this panel is where it surfaces. **That explanation is the whole
+## value of this view** and survives every reframing intact.
 ##
 ## Two lists, because the board only holds UNCLAIMED work: `find_job()` removes a
 ## job when a pawn takes it, so "in progress" has to come from sweeping pawns.
@@ -18,20 +19,28 @@ extends Control
 ## `explain_block()` runs driver validity checks and pathfinding queries that
 ## have no business happening 60 times a second.
 ##
-## **WI-49 pilot conversion.** This was a code-built full-rect window that
-## invented its own frame; it now mounts a [ConsolePanel] and builds its rows
-## from [ListRow] and [SectionLabel].
+## ## How it has moved
 ##
-## **WI-50** made it the CREW mode's panel. It no longer opens or closes itself:
-## [ModeManager] owns visibility and Esc, and this only implements the
-## `on_opened` hook so the board is current the moment it appears. WI-56 puts the
-## crew roster in front of it.
+## **WI-49** converted it from a code-built full-rect window that invented its own
+## frame to one that mounts a [ConsolePanel]. **WI-50** made it the CREW mode's
+## panel outright. **WI-56** takes the frame away again: this is now the *second
+## view* of the Crew panel - the roster is who, the board is what - reached by
+## `SHOW ALL JOBS` and returned from by a back control in the header. A
+## drill-down rather than a peer, so it is a swap rather than a tab.
+##
+## It is therefore a plain body now: [CrewPanel] owns the frame, calls
+## [method refresh] when it swaps this in, and takes the board's shape from
+## [signal subtitle_changed].
 
 ## Rows past this are summarised as a count. A backed-up board can hold hundreds;
 ## the player needs the shape of the queue, not every entry.
 const MAX_ROWS: int = 40
 
-var _panel: ConsolePanel
+## The board's shape ("4 IN PROGRESS · 12 WAITING"), for whatever frame is
+## hosting this view. Emitted rather than written, because the body no longer
+## owns a header to write it into.
+signal subtitle_changed(text: String)
+
 var _content: VBoxContainer
 var _pawn_picker: OptionButton
 ## Crew in picker order, so the selected index maps back to a pawn. Rebuilt on
@@ -41,43 +50,22 @@ var _picker_pawns: Array[PawnBase] = []
 var _selected: PawnBase = null
 
 func _ready() -> void:
-	visible = false
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_build_shell()
+	size_flags_vertical = Control.SIZE_EXPAND_FILL
+	add_theme_constant_override("separation", UIMetrics.SECTION_GAP)
+	_build_body()
 	if Global.time_manager != null:
 		Global.time_manager.slow_tick.connect(_on_slow_tick)
 
-## [ModeManager]'s open hook. A panel that only refreshes `if visible` needs one
-## refresh at the moment it becomes visible, or it shows whatever the board
-## looked like when it was last closed.
-func on_opened() -> void:
-	refresh()
-
 func _on_slow_tick(_interval: float) -> void:
-	if visible:
+	if is_visible_in_tree():
 		refresh()
 
 # --- shell --------------------------------------------------------------------
 
-func _build_shell() -> void:
-	_panel = ConsolePanel.create()
-	_panel.title = "Jobs"
-	# The board's shape ("4 in progress, 12 waiting") is exactly what the header's
-	# subtitle slot is for, so it is not also a row inside the list.
-	_panel.subtitle = ""
-	_panel.panel_width = UIMetrics.PANEL_CREW_WIDTH
-	_panel.content_padding = UIMetrics.CONTENT_PAD
-	_panel.hotkey = ModeManager.hotkey_label(ModeManager.Mode.CREW)
-	add_child(_panel)
-
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", UIMetrics.SECTION_GAP)
-	_panel.content().add_child(column)
-
+func _build_body() -> void:
 	var picker_row := HBoxContainer.new()
 	picker_row.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
-	column.add_child(picker_row)
+	add_child(picker_row)
 	var picker_label := Label.new()
 	picker_label.theme_type_variation = UIType.READOUT_LABEL
 	picker_label.text = "EXPLAIN FOR"
@@ -92,7 +80,7 @@ func _build_shell() -> void:
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	column.add_child(scroll)
+	add_child(scroll)
 
 	_content = VBoxContainer.new()
 	_content.add_theme_constant_override("separation", UIMetrics.SECTION_GAP)
@@ -114,7 +102,7 @@ func refresh() -> void:
 		child.queue_free()
 	var working: Array[PawnBase] = _working_pawns()
 	var waiting: Array[Job] = Global.job_manager.get_board_snapshot()
-	_panel.subtitle = "%d in progress - %d waiting" % [working.size(), waiting.size()]
+	subtitle_changed.emit("%d in progress · %d waiting" % [working.size(), waiting.size()])
 	_build_working(working)
 	_build_waiting(waiting)
 
@@ -136,6 +124,9 @@ func _rebuild_picker() -> void:
 	# A pawn that left the station takes its selection with it.
 	_selected = previous if restore_index > 0 else null
 
+## Everyone with a live job, robots included - *"robots hauling show up in the job
+## board view but not the roster"*, because the board is about the work and the
+## roster is about the staff.
 func _working_pawns() -> Array[PawnBase]:
 	var out: Array[PawnBase] = []
 	for node: Node in get_tree().get_nodes_in_group(Groups.PAWN):
@@ -146,6 +137,10 @@ func _working_pawns() -> Array[PawnBase]:
 
 # --- sections -----------------------------------------------------------------
 
+## The in-progress list. The sentence comes from [PawnStatus] rather than from
+## `job.report()` directly (WI-56), so the board and the roster in front of it
+## describe the same pawn the same way - which they did not before: a drone
+## recharging read as "Recharging at Bay" here and "Recharging" there.
 func _build_working(working: Array[PawnBase]) -> void:
 	var section := VBoxContainer.new()
 	section.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
@@ -154,11 +149,23 @@ func _build_working(working: Array[PawnBase]) -> void:
 		section.add_child(_muted("Nobody is working"))
 	for pawn: PawnBase in working:
 		var job: Job = pawn.current_job
-		section.add_child(_row(
-			"%s - %s" % [_pawn_name(pawn), job.report()],
+		var line: PawnStatus.Line = PawnStatus.of(pawn)
+		# Real work keeps the live treatment this section has always had, and a pawn
+		# in trouble escalates past it - but an **idle** pawn goes inert. Five cyan
+		# rows under `IN PROGRESS` all reading "Idle — no work available" is a
+		# screenshot-only defect and exactly the shape WI-54 and WI-55 both hit:
+		# every check about the data passed while the colour said the opposite.
+		var kind: UIPalette.Row = UIPalette.Row.LIVE
+		if line.tone == PawnStatus.Tone.ALERT:
+			kind = UIPalette.Row.AMBER
+		elif line.tone == PawnStatus.Tone.IDLE:
+			kind = UIPalette.Row.INERT
+		var row: ListRow = _row(
+			"%s — %s" % [_pawn_name(pawn), line.text],
 			job.subtask_report(),
 			job.get_category_name(),
-			UIPalette.Row.LIVE))
+			kind)
+		section.add_child(row)
 	_content.add_child(section)
 
 func _build_waiting(waiting: Array[Job]) -> void:

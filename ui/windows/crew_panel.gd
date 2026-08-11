@@ -1,0 +1,638 @@
+class_name CrewPanel
+extends VBoxContainer
+
+## The body of the CREW mode panel (WI-56): the station roster at 660px.
+##
+## One of the two panels in this program with **no predecessor**. Comparing two
+## crew members' morale meant clicking each of them in turn, which is why an
+## unhappy crew member goes unnoticed until they resign - the information existed
+## per-entity and nowhere else.
+##
+## ## What a row says
+##
+## `swatch · name / status / location · morale`, and **status is the primary
+## column**: *"'Working at Mining Bay', 'Moving to Refinery', 'Idle' - a full
+## sentence, colour-coded. Idle is what the player is scanning for."* A sentence
+## beats a state enum because the player is looking for the *absence* of purpose,
+## and "Idle" reads as absence in a way that a blank cell does not. The sentence
+## and its colour come from [PawnStatus], which the job board behind this panel
+## and the inspector beside it also read - three surfaces inventing three
+## sentences for one state is how "Idle" and "No job" end up meaning the same
+## thing on two screens.
+##
+## ## Two views, not two tabs
+##
+## `SHOW ALL JOBS` swaps [JobsScreen] in **in place**, with a back control in the
+## header. A drill-down rather than a peer: the roster is who, the board is what.
+## Same mode, same width, same frame - so it is a swap, and a tab strip would have
+## implied they were alternatives.
+##
+## ## Who is in the list
+##
+## [method CrewManager.get_crew] - so **not** robots (no needs, no morale, no
+## shift) and **not** visitors (guests are not staff). Both exclusions fall out of
+## asking for the crew list rather than scanning [constant Groups.PAWN], which is
+## also why neither needs an `is_robot` check. Robots hauling do appear in the job
+## board view, and the subtitle saying `n ABOARD` rather than `n PAWNS` is the
+## mitigation for someone reading that as a bug.
+##
+## Selection is [method InspectorPanel.select] plus a camera jump, and nothing
+## else: *"clicking a name fills the same right-hand inspector as clicking the
+## person on the station. One detail view, two ways in."* This panel does not own
+## a detail view. Ever.
+
+## The panel's standing instruction, in the frame's footer strip (WI-54 contract
+## point 1) rather than as the last row of a list that scrolls.
+const FOOTER_ROSTER: String = "Click a name to inspect and jump to them"
+const FOOTER_BOARD: String = "The board holds unclaimed work · pick a crew member to see why they are blocked"
+
+## Filter pill captions, in panel order.
+const FILTER_LABELS: Dictionary[PawnStatus.Filter, String] = {
+	PawnStatus.Filter.ALL: "All",
+	PawnStatus.Filter.ON_SHIFT: "On shift",
+	PawnStatus.Filter.IDLE: "Idle",
+	PawnStatus.Filter.UNHAPPY: "Unhappy",
+}
+
+## Sort captions, in the OptionButton's order. STATUS first: it is the default,
+## because it puts the actionable rows at the top.
+const SORT_ORDER: Array[PawnStatus.Sort] = [
+	PawnStatus.Sort.STATUS, PawnStatus.Sort.MORALE, PawnStatus.Sort.NAME,
+]
+const SORT_LABELS: Dictionary[PawnStatus.Sort, String] = {
+	PawnStatus.Sort.STATUS: "Status",
+	PawnStatus.Sort.MORALE: "Morale",
+	PawnStatus.Sort.NAME: "Name",
+}
+
+var _frame: ConsolePanel
+var _roster_view: VBoxContainer
+var _board: JobsScreen
+## The board's padded host. It is what gets shown and hidden, so the board itself
+## never has to know it is one of two views.
+var _board_host: MarginContainer
+var _back_button: ActionButton
+var _list: VBoxContainer
+var _summary_label: Label
+var _hire_button: ActionButton
+var _rota_button: ActionButton
+var _filter_buttons: Dictionary[PawnStatus.Filter, Button] = {}
+var _sort_picker: OptionButton
+
+var _filter: PawnStatus.Filter = PawnStatus.Filter.ALL
+var _sort: PawnStatus.Sort = PawnStatus.Sort.STATUS
+## Pawn -> its row, so a selection change can repaint one row rather than rebuild
+## the list under the player's cursor.
+var _rows: Dictionary[PawnBase, CrewRosterRow] = {}
+
+## Builds the frame and mounts this body in it. One call, like the widgets have -
+## [UIMain] stays a mount table.
+static func create() -> ConsolePanel:
+	var frame: ConsolePanel = ConsolePanel.create()
+	frame.title = "Crew"
+	frame.panel_width = UIMetrics.PANEL_CREW_WIDTH
+	frame.content_padding = 0
+	frame.hotkey = ModeManager.hotkey_label(ModeManager.Mode.CREW)
+	frame.footer_text = FOOTER_ROSTER
+	frame.footer_variation = UIType.BODY
+	var body := CrewPanel.new()
+	body._frame = frame
+	frame.content().add_child(body)
+	return frame
+
+func _ready() -> void:
+	add_theme_constant_override("separation", 0)
+	_build_back_control()
+	_build_roster_view()
+	_build_board_view()
+	_connect_sources()
+	show_roster()
+
+# --- construction ----------------------------------------------------------------
+
+## The back control lives in the frame's one header slot, beside the hotkey hint,
+## and is hidden while the roster is up. A drill-down needs exactly one way out
+## that is not Esc - Esc closes the *mode*, which from the board would drop the
+## player two levels at once.
+func _build_back_control() -> void:
+	_back_button = ActionButton.create("◀ Roster", ActionButton.Weight.SECONDARY)
+	_back_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_back_button.visible = false
+	_back_button.pressed.connect(show_roster)
+	if _frame != null:
+		_frame.add_header_control(_back_button)
+
+func _build_roster_view() -> void:
+	_roster_view = VBoxContainer.new()
+	_roster_view.name = "Roster"
+	_roster_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_roster_view.add_theme_constant_override("separation", 0)
+	add_child(_roster_view)
+
+	var pad := MarginContainer.new()
+	pad.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	for side: String in ["left", "top", "right", "bottom"]:
+		pad.add_theme_constant_override("margin_" + side, UIMetrics.CONTENT_PAD)
+	_roster_view.add_child(pad)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", UIMetrics.SECTION_GAP)
+	pad.add_child(column)
+
+	column.add_child(_build_controls())
+
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(scroll)
+
+	_list = VBoxContainer.new()
+	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_list.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	scroll.add_child(_list)
+
+	_roster_view.add_child(_build_summary_bar())
+
+## Filter pills, the sort picker, and `SHOW ALL JOBS`.
+##
+## The pills are [Button]s wearing the tab type variations rather than [Chip]s,
+## which is what the design names them. A [Chip] is a [PanelContainer]: making one
+## clickable means hand-rolling hover, press and focus, which is precisely what
+## WI-49's widget library exists to prevent. The variations give the pill look
+## with a real button underneath.
+func _build_controls() -> Control:
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+
+	var pills := HFlowContainer.new()
+	pills.add_theme_constant_override("h_separation", UIMetrics.ROW_GAP)
+	pills.add_theme_constant_override("v_separation", UIMetrics.ROW_GAP)
+	column.add_child(pills)
+	for filter: PawnStatus.Filter in FILTER_LABELS:
+		var pill := Button.new()
+		pill.text = FILTER_LABELS[filter].to_upper()
+		pill.focus_mode = Control.FOCUS_NONE
+		pill.pressed.connect(_on_filter_pressed.bind(filter))
+		pills.add_child(pill)
+		_filter_buttons[filter] = pill
+
+	var tools := HBoxContainer.new()
+	tools.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	column.add_child(tools)
+
+	var sort_caption := Label.new()
+	sort_caption.text = "SORT"
+	sort_caption.theme_type_variation = UIType.READOUT_LABEL
+	sort_caption.add_theme_color_override("font_color", UIPalette.TEXT_META)
+	sort_caption.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	tools.add_child(sort_caption)
+
+	_sort_picker = OptionButton.new()
+	for sort: PawnStatus.Sort in SORT_ORDER:
+		_sort_picker.add_item(SORT_LABELS[sort])
+	_sort_picker.select(0)
+	_sort_picker.item_selected.connect(_on_sort_selected)
+	tools.add_child(_sort_picker)
+
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tools.add_child(spacer)
+
+	var board_button: ActionButton = ActionButton.create(
+		"Show all jobs", ActionButton.Weight.SECONDARY)
+	board_button.pressed.connect(show_board)
+	tools.add_child(board_button)
+
+	_paint_filters()
+	return column
+
+## The problem line and the two footer actions, welded to the foot of the content.
+##
+## Not [member ConsolePanel.footer_text]: that strip carries the panel's standing
+## *instruction*, one line of meta text, and this is live state plus two buttons.
+## They stack, which is how the instruction stays visible under a summary that
+## changes every tick. Same split [TradePanel] uses for its NET bar.
+func _build_summary_bar() -> PanelContainer:
+	var bar := PanelContainer.new()
+	var box := StyleBoxFlat.new()
+	box.bg_color = UIPalette.CONTROL_FILL
+	box.border_color = UIPalette.DIVIDER
+	box.set_border_width_all(0)
+	box.border_width_top = UIMetrics.BORDER_WIDTH
+	box.set_corner_radius_all(0)
+	box.set_content_margin_all(float(UIMetrics.CONTENT_PAD))
+	bar.add_theme_stylebox_override("panel", box)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	bar.add_child(row)
+
+	_summary_label = Label.new()
+	_summary_label.theme_type_variation = UIType.META_LINE
+	_summary_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_summary_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_summary_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	row.add_child(_summary_label)
+
+	_rota_button = ActionButton.create("Shift rota", ActionButton.Weight.SECONDARY)
+	_rota_button.pressed.connect(_on_rota_pressed)
+	row.add_child(_rota_button)
+
+	_hire_button = ActionButton.create("Hire", ActionButton.Weight.PRIMARY)
+	_hire_button.pressed.connect(_on_hire_pressed)
+	row.add_child(_hire_button)
+	return bar
+
+func _build_board_view() -> void:
+	_board_host = MarginContainer.new()
+	_board_host.name = "BoardPad"
+	_board_host.visible = false
+	_board_host.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	for side: String in ["left", "top", "right", "bottom"]:
+		_board_host.add_theme_constant_override("margin_" + side, UIMetrics.CONTENT_PAD)
+	add_child(_board_host)
+
+	_board = JobsScreen.new()
+	_board.name = "Board"
+	_board_host.add_child(_board)
+	_board.subtitle_changed.connect(_on_board_subtitle)
+
+## Everything that can change a row. All of them refresh only while the panel is
+## on screen, which is what [method on_opened] is for.
+##
+## The three departure signals are handled **deferred**: the pawn is still in the
+## tree when they fire and is gone by the end of the frame, so rebuilding
+## immediately would list somebody who has already left. `ui_main._setup_crew_ui`
+## handled it this way for the same reason.
+func _connect_sources() -> void:
+	SignalBus.crew_hired.connect(_on_roster_changed.unbind(1))
+	SignalBus.crew_departed.connect(_on_roster_changed.unbind(1))
+	SignalBus.crew_resigned.connect(_on_roster_changed.unbind(1))
+	SignalBus.crew_resigning.connect(_on_roster_changed.unbind(2))
+	SignalBus.crew_resignation_cancelled.connect(_on_roster_changed.unbind(1))
+	SignalBus.hire_candidates_changed.connect(_on_hire_state_changed)
+	if Global.time_manager != null:
+		Global.time_manager.slow_tick.connect(_on_slow_tick.unbind(1))
+
+# --- mode hooks --------------------------------------------------------------------
+
+func on_opened() -> void:
+	refresh()
+
+# --- views -------------------------------------------------------------------------
+
+## The two views are public because the swap **is** part of this panel's contract
+## - `SHOW ALL JOBS` and the back control are two ways into one state machine, and
+## a probe or a screenshot driver has to be able to reach the second view through
+## the same door the player uses. WI-55's tab-strip defect was exactly this shape:
+## a view driven around its own entry point paints the wrong header.
+func show_roster() -> void:
+	_roster_view.visible = true
+	_board_host.visible = false
+	_back_button.visible = false
+	if _frame != null and is_instance_valid(_frame):
+		_frame.title = "Crew"
+		_frame.footer_text = FOOTER_ROSTER
+	refresh()
+
+func show_board() -> void:
+	_roster_view.visible = false
+	_board_host.visible = true
+	_back_button.visible = true
+	if _frame != null and is_instance_valid(_frame):
+		_frame.title = "Jobs"
+		_frame.footer_text = FOOTER_BOARD
+	_board.refresh()
+
+## True while the job board is the view on screen.
+func board_visible() -> bool:
+	return _board_host != null and _board_host.visible
+
+## The roster rows currently listed, in display order.
+func roster_rows() -> Array[CrewRosterRow]:
+	var out: Array[CrewRosterRow] = []
+	for child: Node in _list.get_children():
+		var row := child as CrewRosterRow
+		if row != null:
+			out.append(row)
+	return out
+
+## The problem line as it currently reads.
+func summary_line() -> String:
+	return _summary_label.text if _summary_label != null else ""
+
+func _on_board_subtitle(text: String) -> void:
+	if _board_host.visible and _frame != null and is_instance_valid(_frame):
+		_frame.subtitle = text
+
+# --- refresh -----------------------------------------------------------------------
+
+func _on_slow_tick() -> void:
+	if not is_visible_in_tree() or not _roster_view.visible:
+		return
+	refresh()
+
+func _on_roster_changed() -> void:
+	# Deferred: the departing pawn is still in the tree right now.
+	_refresh_deferred.call_deferred()
+
+func _refresh_deferred() -> void:
+	if is_visible_in_tree():
+		refresh()
+
+func _on_hire_state_changed() -> void:
+	if is_visible_in_tree():
+		_refresh_actions()
+
+## Rebuilds the whole list.
+##
+## Rows are rebuilt rather than reconciled because the *order* changes with the
+## data - a pawn going idle moves to the top under the default sort - so keeping
+## row objects alive would only save the allocation while still re-parenting every
+## one of them. The roster is a handful of entries; a station with sixty crew is
+## not a station this game produces.
+func refresh() -> void:
+	if _list == null:
+		return
+	var manager: CrewManager = Global.crew_manager
+	var crew: Array[PawnBase] = manager.get_crew() if manager != null else [] as Array[PawnBase]
+	var bunks: int = manager.sleep_capacity() if manager != null else 0
+	_apply_header(crew.size(), bunks)
+
+	var facts: Array[PawnStatus.Facts] = []
+	var happiness: Array[float] = []
+	for pawn: PawnBase in crew:
+		facts.append(PawnStatus.facts_for(pawn))
+		happiness.append(_happiness_of(pawn))
+	_apply_summary(facts, happiness, bunks)
+
+	var order: Array[int] = _ordered_indices(crew, facts, happiness)
+	for child: Node in _list.get_children():
+		_list.remove_child(child)
+		child.queue_free()
+	_rows.clear()
+	var selected: Variant = _selected_subject()
+	var shown: int = 0
+	for index: int in order:
+		if not PawnStatus.passes(facts[index], happiness[index], _filter):
+			continue
+		var pawn: PawnBase = crew[index]
+		var row: CrewRosterRow = CrewRosterRow.create()
+		_list.add_child(row)
+		row.bind(pawn)
+		row.set_morale(happiness[index])
+		row.pressed.connect(_on_row_pressed.bind(pawn))
+		if selected == pawn:
+			row.set_selected(true)
+		_rows[pawn] = row
+		shown += 1
+	if shown == 0:
+		_list.add_child(_empty_line(crew.is_empty()))
+	_refresh_actions()
+
+## Indices into `crew`, sorted. Index-based rather than a sort over row objects
+## so the three parallel arrays stay in step; the comparator itself is pure and
+## tested ([method PawnStatus.compares_before]).
+func _ordered_indices(crew: Array[PawnBase], facts: Array[PawnStatus.Facts],
+		happiness: Array[float]) -> Array[int]:
+	var order: Array[int] = []
+	for i: int in crew.size():
+		order.append(i)
+	var sort: PawnStatus.Sort = _sort
+	order.sort_custom(func(a: int, b: int) -> bool:
+		return PawnStatus.compares_before(
+			facts[a], happiness[a], _name_of(crew[a]),
+			facts[b], happiness[b], _name_of(crew[b]), sort))
+	return order
+
+func _name_of(pawn: PawnBase) -> String:
+	return pawn.pawn_name if not pawn.pawn_name.is_empty() else "Crew member"
+
+func _happiness_of(pawn: PawnBase) -> float:
+	var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
+	return needs.happiness if needs != null else -1.0
+
+func _apply_header(crew_count: int, bunks: int) -> void:
+	if _frame == null or not is_instance_valid(_frame) or _board_host.visible:
+		return
+	_frame.subtitle = "%d aboard · %d bunks" % [crew_count, bunks]
+
+## *"A one-line summary - idle count, unhappy count, bunks short - so the panel
+## answers 'is my crew fine?' without reading six rows."*
+func _apply_summary(facts: Array[PawnStatus.Facts], happiness: Array[float],
+		bunks: int) -> void:
+	var summary: PawnStatus.Summary = PawnStatus.summarize(facts, happiness, bunks)
+	_summary_label.text = PawnStatus.summary_text(summary)
+	_summary_label.add_theme_color_override("font_color", PawnStatus.summary_color(summary))
+
+## Zero crew is also the game-over condition, so this state is brief - but it must
+## render its problem rather than an empty box.
+func _empty_line(no_crew: bool) -> Label:
+	var label := Label.new()
+	label.theme_type_variation = UIType.META_LINE
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_color_override("font_color", UIPalette.TEXT_META)
+	label.text = ("NOBODY ABOARD — HIRE SOMEONE BEFORE THE STATION IS WRITTEN OFF" if no_crew
+		else "NO CREW MATCH THIS FILTER")
+	return label
+
+## `HIRE` is disabled with its reason on the button rather than hidden:
+## [method CrewManager.hire_block_reason] already produces the sentence, and
+## making the player guess why a button is missing is the failure mode this
+## replaces.
+func _refresh_actions() -> void:
+	var manager: CrewManager = Global.crew_manager
+	if manager == null:
+		_hire_button.disabled = true
+		return
+	var reason: String = manager.hire_block_reason()
+	var bay: Node = _recruitment_bay()
+	if bay == null:
+		reason = "No docking bay with crew quarters"
+	_hire_button.disabled = reason != ""
+	_hire_button.tooltip_text = reason if reason != "" else "Recruit a new crew member"
+	_rota_button.disabled = manager.crew_count() == 0
+
+# --- interaction ---------------------------------------------------------------------
+
+func _on_filter_pressed(filter: PawnStatus.Filter) -> void:
+	_filter = filter
+	_paint_filters()
+	refresh()
+
+func _paint_filters() -> void:
+	for filter: PawnStatus.Filter in _filter_buttons:
+		var pill: Button = _filter_buttons[filter]
+		if is_instance_valid(pill):
+			pill.theme_type_variation = UIType.TAB_ACTIVE if filter == _filter \
+				else UIType.TAB_INACTIVE
+
+func _on_sort_selected(index: int) -> void:
+	if index < 0 or index >= SORT_ORDER.size():
+		return
+	_sort = SORT_ORDER[index]
+	refresh()
+
+## The one thing a row click does: fill the shared inspector and travel there.
+##
+## [method InspectorPanel.select] toggles when handed the already-selected
+## subject, which is right for a click on the station and wrong here - a roster
+## click that deselected would leave the row highlighted with nothing behind it.
+## Same guard WI-53's jump-to uses.
+func _on_row_pressed(pawn: PawnBase) -> void:
+	var inspector: InspectorPanel = _inspector()
+	if inspector == null:
+		return
+	if inspector.selected_subject() != pawn:
+		inspector.select(pawn)
+	var target: Node2D = inspector.camera_target()
+	var camera: GameCamera = get_viewport().get_camera_2d() as GameCamera
+	if camera != null and target != null:
+		camera.jump_to(target.global_position)
+	_paint_selection(pawn)
+
+## Repaints the two rows that can have changed rather than rebuilding the list,
+## so a click does not shuffle the row out from under the cursor.
+func _paint_selection(selected: PawnBase) -> void:
+	for pawn: PawnBase in _rows:
+		var row: CrewRosterRow = _rows[pawn]
+		if not is_instance_valid(row):
+			continue
+		row.refresh()
+		if pawn == selected:
+			row.set_selected(true)
+
+func _selected_subject() -> Variant:
+	var inspector: InspectorPanel = _inspector()
+	return inspector.selected_subject() if inspector != null else null
+
+func _inspector() -> InspectorPanel:
+	if Global.ui_main == null or not is_instance_valid(Global.ui_main):
+		return null
+	return Global.ui_main.inspector
+
+# --- footer actions --------------------------------------------------------------------
+
+## Hiring used to be reachable only by finding and clicking the crew-quarters
+## module, because the recruitment window is a *component UI* on it. As a Crew
+## panel action it becomes discoverable; the component keeps working where it is.
+func _on_hire_pressed() -> void:
+	var component: CrewRecruitmentComponent = _recruitment_bay()
+	if component == null:
+		return
+	var ui: ModuleComponentUI = component.get_ui()
+	if ui == null:
+		return
+	_open_dialog("Recruitment", ui)
+
+## The station's crew gateway. The first constructed bay carrying the component,
+## which is the same rule arriving shuttles and departing crew already follow.
+func _recruitment_bay() -> CrewRecruitmentComponent:
+	for node: Node in get_tree().get_nodes_in_group(Groups.CREW_RECRUITMENT):
+		var component := node as CrewRecruitmentComponent
+		if component != null and component.owner_module != null \
+				and component.owner_module.is_complete():
+			return component
+	return null
+
+## `SHIFT ROTA` is a station-wide view of what the inspector's Schedule tab shows
+## per pawn, and it is deliberately **read-only** in v1: a station-wide schedule
+## *editor* is a feature, not a reframing, and per-pawn editing already exists one
+## click away. Scoped this way by the WI itself.
+func _on_rota_pressed() -> void:
+	_open_dialog("Shift rota", _build_rota())
+
+func _build_rota() -> Control:
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+
+	var legend := Label.new()
+	legend.theme_type_variation = UIType.META_LINE
+	legend.add_theme_color_override("font_color", UIPalette.TEXT_META)
+	legend.text = "CYAN ON DUTY · DIM OFF · EDIT A ROTA IN THE INSPECTOR'S SCHEDULE TAB"
+	column.add_child(legend)
+	column.add_child(_rota_hour_scale())
+
+	var manager: CrewManager = Global.crew_manager
+	var crew: Array[PawnBase] = manager.get_crew() if manager != null else [] as Array[PawnBase]
+	if crew.is_empty():
+		var empty := Label.new()
+		empty.theme_type_variation = UIType.META_LINE
+		empty.text = "NOBODY ABOARD"
+		column.add_child(empty)
+		return column
+	for pawn: PawnBase in crew:
+		column.add_child(_rota_row(pawn))
+	return column
+
+## The hour ruler over the grid. Every fourth hour is labelled - a number per
+## cell would be unreadable at [constant ROTA_CELL] wide, and every sixth would
+## not line up with the shift boundaries the game actually generates.
+const ROTA_CELL := Vector2(14, 18)
+const ROTA_NAME_WIDTH: int = 150
+const ROTA_LABEL_EVERY: int = 4
+
+func _rota_hour_scale() -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 2)
+	var spacer := Control.new()
+	spacer.custom_minimum_size.x = float(ROTA_NAME_WIDTH)
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(spacer)
+	for hour: int in TimeManager.HOURS_PER_CYCLE:
+		var label := Label.new()
+		label.custom_minimum_size.x = ROTA_CELL.x
+		label.theme_type_variation = UIType.META_LINE
+		label.add_theme_color_override("font_color", UIPalette.TEXT_META)
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.text = "%02d" % hour if hour % ROTA_LABEL_EVERY == 0 else ""
+		row.add_child(label)
+	return row
+
+func _rota_row(pawn: PawnBase) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 2)
+	var name_label := Label.new()
+	name_label.custom_minimum_size.x = float(ROTA_NAME_WIDTH)
+	name_label.theme_type_variation = UIType.ENTITY_NAME
+	name_label.text = _name_of(pawn)
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(name_label)
+	var current_hour: int = Global.time_manager.hour if Global.time_manager != null else -1
+	for hour: int in TimeManager.HOURS_PER_CYCLE:
+		var cell := ColorRect.new()
+		cell.custom_minimum_size = ROTA_CELL
+		cell.tooltip_text = "%02d:00" % hour
+		# A pawn with no schedule (never happens for crew today, but a modded pawn
+		# kind can ship one) is always on duty - the same answer is_on_shift gives.
+		var working: bool = pawn.schedule == null or pawn.schedule.is_work_hour(hour)
+		cell.color = UIPalette.tinted(UIPalette.LIVE, 0.55) if working \
+			else UIPalette.tinted(UIPalette.EDGE, 0.9)
+		if hour == current_hour:
+			# The now-marker: the one cell that says where in the cycle we are, so
+			# a grid of two shifts is legible without reading the ruler.
+			cell.color = UIPalette.LIVE if working else UIPalette.CONTROL_BORDER
+		row.add_child(cell)
+	return row
+
+## Both footer actions open a dialog rather than a second panel, because
+## invariant 1 says there is one panel and neither of these is a mode. Parented to
+## the HUD rather than to this body so a panel close does not free a question the
+## player is halfway through answering - the same rule [CrewTabSet]'s fire
+## confirmation follows.
+func _open_dialog(title: String, body: Control) -> void:
+	var dialog := AcceptDialog.new()
+	dialog.title = title
+	dialog.ok_button_text = "Close"
+	dialog.min_size = Vector2i(UIMetrics.PANEL_CREW_WIDTH, 320)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(float(UIMetrics.PANEL_CREW_WIDTH), 320.0)
+	scroll.add_child(body)
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dialog.add_child(scroll)
+	dialog.confirmed.connect(dialog.queue_free)
+	dialog.canceled.connect(dialog.queue_free)
+	Global.ui_main.add_child(dialog)
+	dialog.popup_centered()

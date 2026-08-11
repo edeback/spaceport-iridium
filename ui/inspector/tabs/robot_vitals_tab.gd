@@ -64,20 +64,13 @@ func _refresh() -> void:
 ## The one-line "what is this drone doing" report. Static and pawn-argumented so
 ## the crew tab set can print the same words in the subject meta line without
 ## opening the tab.
+##
+## The six branches this used to hold moved into [PawnStatus] (WI-56), which is
+## now the one place in the game that turns a pawn into a sentence - the crew
+## roster is a column of exactly this text and a second opinion about what a
+## drone is doing would be visible forty rows deep. Kept as a wrapper because
+## "state text" is what the two callers here want and neither needs the tone.
 static func state_text(robot: RobotPawnBase) -> String:
 	if robot == null or not is_instance_valid(robot):
 		return ""
-	if robot.power_component != null and robot.power_component.must_recharge():
-		return "Out of power — crawling"
-	var job: Job = robot.current_job
-	if job != null and job.is_type(&"recharge"):
-		return "Recharging"
-	if job != null and job.is_type(&"get_repaired"):
-		return "Getting repaired"
-	if robot.power_component != null and robot.power_component.wants_recharge():
-		return "Seeking a charger"
-	# A pawn with nothing to do still has a job - PawnBase hands it idle_wander -
-	# so "no job" is `is_idle_type`, not null (the WI-50 readiness-dot trap).
-	if job == null or job.is_idle_type():
-		return "Idle"
-	return "Working"
+	return PawnStatus.of(robot).text

@@ -67,6 +67,19 @@ func set_kind(kind: UIPalette.Row) -> void:
 	_ensure_refs()
 	if _label == null:
 		return
+	add_theme_stylebox_override("panel", chip_style(kind))
+	_label.add_theme_color_override("font_color", UIPalette.row_text(kind))
+	_value.add_theme_color_override("font_color", UIPalette.row_meta(kind))
+
+## The chip surface for a row treatment, as a fresh [StyleBoxFlat] the caller
+## owns.
+##
+## Static because a *clickable* chip cannot be this widget: a [PanelContainer]
+## with a hand-rolled `gui_input` is exactly what WI-49's widget library exists to
+## prevent, so Stores' content chips (WI-56) are [Button]s wearing this style
+## instead. One definition of "what a chip looks like", two controls that can be
+## one.
+static func chip_style(kind: UIPalette.Row) -> StyleBoxFlat:
 	# The shared row styles carry list-row padding, which is far too generous
 	# for a chip, so this is one of the documented duplicate()-to-mutate cases.
 	var box: StyleBoxFlat = UIPalette.row_style(kind).duplicate() as StyleBoxFlat
@@ -79,6 +92,4 @@ func set_kind(kind: UIPalette.Row) -> void:
 		# row it gets the control fill rather than nothing.
 		box.bg_color = UIPalette.CONTROL_FILL
 		box.border_color = UIPalette.CONTROL_BORDER
-	add_theme_stylebox_override("panel", box)
-	_label.add_theme_color_override("font_color", UIPalette.row_text(kind))
-	_value.add_theme_color_override("font_color", UIPalette.row_meta(kind))
+	return box

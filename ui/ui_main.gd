@@ -26,11 +26,6 @@ const LEDGER_SCENE: PackedScene = preload("res://ui/console/resource_ledger.tscn
 const INSPECTOR_SCENE: PackedScene = preload("res://ui/inspector/inspector_panel.tscn")
 const GAME_OVER_SCENE: PackedScene = preload("res://ui/game_over_screen.tscn")
 
-## STORES has a console slot before it has a panel. A disabled button that says
-## why is better than a hidden one, and it proves the console layout at full
-## width from day one.
-const STORES_REASON: String = "Station stores arrive in a later update"
-
 var console: ConsoleBar
 var mode_manager: ModeManager
 ## Every mode panel is mounted here rather than directly on the HUD, so that
@@ -51,8 +46,9 @@ func _ready() -> void:
 	_setup_overlay_ui()
 	_setup_build_cursor_hint()
 	_setup_modes()
-	# Bound after registration so the console can render STORES disabled from the
-	# first frame rather than one refresh later.
+	# Bound after registration so the console renders every button's real state
+	# from the first frame rather than one refresh later. (`registry_changed` makes
+	# the order safe either way; this only saves a repaint.)
 	console.bind(mode_manager)
 	console.bind_overlay(overlay_controller)
 	mode_manager.mode_changed.connect(_on_mode_changed)
@@ -105,7 +101,7 @@ func _setup_ledger() -> void:
 func _setup_modes() -> void:
 	mode_manager.register(ModeManager.Mode.BUILD, _make_build_panel)
 	mode_manager.register(ModeManager.Mode.CREW, _make_crew_panel)
-	mode_manager.register_unavailable(ModeManager.Mode.STORES, STORES_REASON)
+	mode_manager.register(ModeManager.Mode.STORES, _make_stores_panel)
 	mode_manager.register(ModeManager.Mode.TRADE, _make_trade_panel)
 	mode_manager.register(ModeManager.Mode.RND, _make_research_panel)
 	mode_manager.register(ModeManager.Mode.COMMS, _make_comms_panel)
@@ -126,9 +122,15 @@ func _make_build_panel() -> Control:
 	panel.content().add_child(_build_menu)
 	return panel
 
-## CREW: the job board, until WI-56 puts the roster in front of it.
+## CREW: the station roster at 660px, with the job board as its second view
+## (WI-56). It builds its own frame, so this is one call.
 func _make_crew_panel() -> Control:
-	return JobsScreen.new()
+	return CrewPanel.create()
+
+## STORES: every module holding stock, its haul priority and its contents, at
+## 1080px (WI-56).
+func _make_stores_panel() -> Control:
+	return StoresPanel.create()
 
 ## TRADE: the order sheet, the docked confirmation and the contracts board, merged
 ## into one 1180px panel (WI-55). It builds its own frame, so this is one call.

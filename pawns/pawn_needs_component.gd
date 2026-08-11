@@ -230,6 +230,17 @@ func _promote_critical_jobs() -> void:
 	for need: NeedDef in criticals:
 		owner_pawn.promote_queued_job(need.pending_job)
 
+## True while any enabled need sits in its critical band - the one thing about a
+## crew member that makes their roster row spend amber short of a resignation
+## (WI-56). Reads the same `was_critical` latch _process maintains rather than
+## re-measuring, so the row and the critical-need alert can never disagree about
+## whether this pawn is in trouble.
+func has_critical_need() -> bool:
+	for need: NeedDef in _needs:
+		if need.was_critical:
+			return true
+	return false
+
 # --- resignation (WI-07) --------------------------------------------------------
 
 ## Sustained misery -> pending resignation (alert + grace window) -> final.

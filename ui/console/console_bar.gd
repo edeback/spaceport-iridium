@@ -369,18 +369,20 @@ func _an_unlock_is_affordable() -> bool:
 ## "There is something here you can do now": somebody is idle, or somebody has
 ## given notice. Both are things the player can act on from the Crew panel.
 ##
-## Idle is `Job.is_idle_type()`, not `current_job == null`. A pawn with nothing
-## to do is immediately given an `idle_wander` job (`PawnBase._pick_next_job`),
-## so a null job lasts a frame or two and a dot keyed on it would essentially
-## never light. This is the same test `PawnBreathingComponent` uses.
+## The idle test is [method PawnStatus.is_idle] rather than a local one (WI-56).
+## It is the same rule the Crew panel's problem line counts with, and a dot that
+## lit for a roster the panel then reported as `0 IDLE` would be worse than no
+## dot. Two details it carries that a local test kept getting wrong: idle is
+## `Job.is_idle_type()` and not `current_job == null` (a pawn with nothing to do
+## is handed `idle_wander` immediately, so a null job lasts a frame or two), and
+## an **off-shift** pawn with nothing to do is the schedule working rather than a
+## staffing problem - without that, the dot was lit every night.
 func _crew_wants_attention() -> bool:
 	var manager: CrewManager = Global.crew_manager
 	if manager == null:
 		return false
 	for pawn: PawnBase in manager.get_crew():
-		if pawn.current_job == null or pawn.current_job.is_idle_type():
-			return true
-		var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
-		if needs != null and needs.resigned:
+		var facts: PawnStatus.Facts = PawnStatus.facts_for(pawn)
+		if PawnStatus.is_idle(facts) or facts.resigned or facts.resignation_pending:
 			return true
 	return false

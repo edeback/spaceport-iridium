@@ -235,12 +235,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/WI-56_Panels_Crew_And_Stores.md",
+                "file": "Spaceport Iridium/Planning/Work Items/WI-57_Panel_Comms_And_Retirement.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "WI-56_Panels_Crew_And_Stores"
+              "title": "WI-57_Panel_Comms_And_Retirement"
             }
           }
         ],
@@ -393,20 +393,21 @@
   },
   "active": "48feecced3684526",
   "lastOpenFiles": [
-    "Spaceport Iridium/Planning/02_Roadmap.md.tmp.3892.e5857625c0e2",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.3892.0098fccc5c0f",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.3892.bcddbbbdc231",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.3892.3f81434291b1",
-    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.3892.17b08b427855",
-    "Spaceport Iridium/Planning/04_UI_Rework_Program.md.tmp.3892.314fc4406c97",
-    "Spaceport Iridium/Planning/04_UI_Rework_Program.md.tmp.3892.2e6c7556b8cb",
-    "Spaceport Iridium/Planning/04_UI_Rework_Program.md.tmp.3892.526ffa51cadf",
-    "Spaceport Iridium/Planning/04_UI_Rework_Program.md.tmp.3892.e2a470429737",
-    "Spaceport Iridium/Planning/04_UI_Rework_Program.md.tmp.3892.cd1698ec98c2",
-    "Spaceport Iridium/Planning/04_UI_Rework_Program.md.tmp.3892.2fe7b7f5f827",
-    "Spaceport Iridium/Planning/Work Items/WI-55_Panels_Trade_And_RD.md",
-    "Spaceport Iridium/Planning/Work Items/Completed/WI-55_Panels_Trade_And_RD.md",
+    "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md.tmp.65792.b10fffd1fc4e",
+    "Spaceport Iridium/Planning/04_UI_Rework_Program.md.tmp.65792.d768e81c40f4",
+    "Spaceport Iridium/Planning/02_Roadmap.md.tmp.65792.b3bfd44dabbb",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.65792.d07b56239c0d",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.65792.0e4772ed29b7",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.65792.8d6ea6af6c15",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.65792.10fd71b3c743",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.65792.6e6e7c0a0fc6",
+    "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.65792.18147cb3f017",
+    "Spaceport Iridium/Planning/04_UI_Rework_Program.md.tmp.65792.4c18042becde",
+    "Spaceport Iridium/Planning/04_UI_Rework_Program.md.tmp.65792.c0885297fa23",
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-56_Panels_Crew_And_Stores.md",
     "Spaceport Iridium/Planning/Work Items/WI-56_Panels_Crew_And_Stores.md",
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-55_Panels_Trade_And_RD.md",
+    "Spaceport Iridium/Planning/Work Items/WI-55_Panels_Trade_And_RD.md",
     "Spaceport Iridium/Planning/Work Items/WI-54_Panels_Build_And_Overlays.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-54_Panels_Build_And_Overlays.md",
     "Spaceport Iridium/Planning/Work Items/WI-57_Panel_Comms_And_Retirement.md",
@@ -428,7 +429,6 @@
     "Spaceport Iridium/Planning/Work Items/WI-51_Inspector.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-49_UI_Design_System.md",
     "Spaceport Iridium/Planning/Work Items/WI-50_Console_And_Modes.md",
-    "Spaceport Iridium/Planning/04_UI_Rework_Program.md",
     "references-1785814732017.png",
     "Pasted image 20260712204434.png",
     "Pasted image 20251208125343.png",

@@ -231,8 +231,47 @@ func update_priority(new_priority: int) -> void:
 			data.set_job_priority(new_priority)
 		#for job: the haul job in default_import_jobs.values():
 			#job.priority = priority
-	
-	
+
+## Which station systems eat `resource`, as player-facing phrases; empty when
+## nothing does (WI-56).
+##
+## Autodump *destroys* stock, and the standing rule is that the player never
+## loses resources without an explicit action that loses them. Enabling it on a
+## resource the galley or a reactor is living on is exactly such an action - so
+## the confirmation names what will starve, which WI-12 called a kindness and
+## skipped. It stays a *warning*, not a block: venting surplus biomass while the
+## hydroponics bay runs flat out is a legitimate thing to want.
+##
+## A live query rather than a cached set: reactors get built and galleys get
+## deconstructed, and a stale answer here would understate the cost.
+func resource_consumers(resource: ResourceData) -> Array[String]:
+	var consumers: Array[String] = []
+	if resource == null or not is_inside_tree():
+		return consumers
+	for node: Node in get_tree().get_nodes_in_group(Groups.SUSTENANCE_COMPONENT):
+		var sustenance := node as SustenanceComponent
+		if sustenance != null and sustenance.sustenance_resource == resource:
+			consumers.append("crew meals")
+			break
+	# Generators are a PowerManager registry rather than a group (WI-39), which is
+	# also the only list guaranteed to hold just the constructed ones.
+	if Global.power_manager != null:
+		for generator: PowerGenerationComponent in Global.power_manager.power_generators:
+			if is_instance_valid(generator) and generator.resource_consumed == resource:
+				consumers.append("power generation")
+				break
+	return consumers
+
+## "" when venting `resource` costs the station nothing it is relying on;
+## otherwise the sentence the dump confirmation adds.
+func autodump_warning(resource: ResourceData) -> String:
+	var consumers: Array[String] = resource_consumers(resource)
+	if consumers.is_empty():
+		return ""
+	return "%s is consumed by %s. Auto-dumping it destroys stock the station is using." % [
+		resource.name, " and ".join(consumers)]
+
+
 func can_store_resource(resource: ResourceData) -> bool:
 	if allow_any_resource:
 		return true
