@@ -73,6 +73,7 @@ func _on_trader_arrived(_trader: TraderData) -> void:
 	# Standing offers expire if unaccepted by the next visit (WI-14 design).
 	for offer: ContractData in offers:
 		offer.state = ContractData.State.EXPIRED
+		AlertManager.resolve_alert(AlertRules.make_id(&"contract_offered", offer.id))
 		_push_history(offer)
 	if not offers.is_empty():
 		SignalBus.station_alert.emit("Unclaimed contract offers have expired")
@@ -105,8 +106,10 @@ func generate_offer(premium_bonus: float) -> ContractData:
 	contract.offered_cycle = Global.time_manager.cycle
 	offers.append(contract)
 	SignalBus.contract_offered.emit(contract)
-	SignalBus.station_alert.emit("%s offers a contract: %d %s by cycle %d" %
-		[contract.issuer, contract.amount, resource.name, contract.deadline_cycle])
+	AlertManager.raise_alert(AlertRules.make_id(&"contract_offered", contract.id),
+		AlertData.Priority.HIGH, "Contract offered",
+		"%s · %d %s by cycle %d" % [contract.issuer, contract.amount, resource.name,
+		contract.deadline_cycle], null, &"trade", "%d contracts are on offer")
 	contracts_changed.emit()
 	return contract
 
@@ -126,6 +129,10 @@ func accept(contract: ContractData) -> bool:
 	if not offers.has(contract) or accept_block_reason() != "":
 		return false
 	offers.erase(contract)
+	# The offer is no longer on the table, so its sticky alert should not be
+	# either - a HIGH row the player has already acted on is exactly the clutter
+	# that trains dismissal reflexes (WI-53).
+	AlertManager.resolve_alert(AlertRules.make_id(&"contract_offered", contract.id))
 	contract.state = ContractData.State.ACCEPTED
 	active.append(contract)
 	# Demand registers on the bay via the next _sync_demand tick.
@@ -137,6 +144,7 @@ func accept(contract: ContractData) -> bool:
 func decline(contract: ContractData) -> void:
 	if offers.has(contract):
 		offers.erase(contract)
+		AlertManager.resolve_alert(AlertRules.make_id(&"contract_offered", contract.id))
 		contracts_changed.emit()
 
 # --- fulfillment ------------------------------------------------------------------
@@ -193,8 +201,10 @@ func _complete(contract: ContractData) -> void:
 	reputation += 1
 	_push_history(contract)
 	SignalBus.contract_completed.emit(contract)
-	SignalBus.station_alert.emit("Contract fulfilled: +%d credits from %s" %
-		[contract.total_payout(), contract.issuer])
+	AlertManager.resolve_alert(AlertRules.make_id(&"contract_due", contract.id))
+	AlertManager.raise_alert(AlertRules.make_id(&"contract_done", contract.id),
+		AlertData.Priority.HIGH, "Contract fulfilled",
+		"%s · +%d credits" % [contract.issuer, contract.total_payout()], null, &"trade")
 	contracts_changed.emit()
 
 # --- deadlines & resolution --------------------------------------------------------
@@ -206,8 +216,13 @@ func _on_cycle_changed(cycle: int) -> void:
 			_fail(contract)
 		elif cycle == contract.deadline_cycle and not contract.deadline_warned:
 			contract.deadline_warned = true
-			SignalBus.station_alert.emit("Contract deadline: %d %s due for %s by end of this cycle!" %
-				[contract.remaining(), contract.resource.name, contract.issuer])
+			# CRITICAL (WI-53): the penalty lands at the end of *this* cycle, and a
+			# cycle is four real minutes - long enough to miss and short enough
+			# that there is still time to ship if the player is told now.
+			AlertManager.raise_alert(AlertRules.make_id(&"contract_due", contract.id),
+				AlertData.Priority.CRITICAL, "Contract due this cycle",
+				"%s · %d %s still owed" % [contract.issuer, contract.remaining(),
+				contract.resource.name], null, &"trade", "%d contracts are due this cycle")
 
 ## All-or-nothing bonus: goods already shipped only earn ordinary market sell
 ## price, and the penalty lands on top. Credits may go negative - debt is the
@@ -225,9 +240,11 @@ func _fail(contract: ContractData) -> void:
 		_demand_component.release_contract_demand(contract.resource, contract.remaining())
 	_push_history(contract)
 	SignalBus.contract_failed.emit(contract)
-	SignalBus.station_alert.emit("Contract FAILED: %s penalty -%d credits%s" %
-		[contract.issuer, contract.penalty,
-		" (partial goods paid %d)" % salvage_pay if salvage_pay > 0 else ""])
+	AlertManager.resolve_alert(AlertRules.make_id(&"contract_due", contract.id))
+	AlertManager.raise_alert(AlertRules.make_id(&"contract_failed", contract.id),
+		AlertData.Priority.HIGH, "Contract failed",
+		"%s · penalty -%d credits%s" % [contract.issuer, contract.penalty,
+		" · partial goods paid %d" % salvage_pay if salvage_pay > 0 else ""], null, &"trade")
 	contracts_changed.emit()
 
 func _push_history(contract: ContractData) -> void:
@@ -258,7 +275,8 @@ func _sync_demand() -> void:
 	if component == null:
 		if not active.is_empty() and not _bay_lost_alerted:
 			_bay_lost_alerted = true
-			SignalBus.station_alert.emit("No docking bay - active contracts can't ship!")
+			AlertManager.raise_alert(&"no_docking_bay", AlertData.Priority.HIGH,
+				"No docking bay", "Active contracts cannot ship", null, &"build")
 		return
 	_bay_lost_alerted = false
 	_ensure_demand_amounts(component)

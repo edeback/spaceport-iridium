@@ -1,6 +1,6 @@
 # 04 — UI Rework Program (WI-49 … WI-57)
 
-> **STATUS: in progress — WI-49, WI-50, WI-51 and WI-52 shipped 2026-08-10, WI-53…57 not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
+> **STATUS: in progress — WI-49, WI-50, WI-51, WI-52 and WI-53 shipped 2026-08-10, WI-54…57 not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
 >
 > The source design is **`assets/external/spaceport-iridium-ui-layout/project/Iridium Console UI Spec.dc.html`**, a Claude Design handoff bundle: ten reference screens at 1920×1080 plus the rules that produce them. Read it before implementing any child WI. Numbers in this doc are transcribed from it and are authoritative for implementation; where this doc and the mockup disagree, **this doc wins** (it carries the gameplay corrections from [[New Work for Phase 4]] that the mockup predates).
 >
@@ -16,7 +16,7 @@ The end state: navigation in a console welded to the bottom edge, **one** panel 
 
 These are the load-bearing rules. Every child WI is judged against them.
 
-1. **One panel.** Build, Crew, Stores, Trade, R&D, Comms and Overlays are *modes*, not windows. Opening one closes the last. Two panels can never coexist — so there is no z-order to manage and no "close everything" problem.
+1. **One panel.** Build, Crew, Stores, Trade, R&D, Comms and Overlays are *modes*, not windows. Opening one closes the last. Two panels can never coexist — so there is no z-order to manage and no "close everything" problem. Two **readout flyouts** are chartered exceptions: the resource ledger (WI-52) and the alert log (WI-53). Both are raised from a permanent readout rather than from the console, both are things you glance at rather than work in, and closing Build to check stock or to read what just happened is exactly the interruption this rule exists to prevent. Nothing else gets the exemption without a line here.
 2. **One inspector.** Crew, module, asteroid, pile, turboshaft and corridor selections render into the *same* bottom-right surface with a swapped tab set. Nothing selected shrinks it to a single line of text rather than hiding it.
 3. **Left is doing, right is watching.** Panels only ever open on the left. Map, alerts and inspector own the right edge permanently and never move, so opening a panel shifts nothing the player was reading.
 4. **Vitals are pinned; everything else is the ledger.** Six resources sit in the console strip; the rest live behind the ledger chip, grouped. Pinning promotes any resource into the strip, so the layout is indifferent to 20 resources or 100.
@@ -115,11 +115,11 @@ Every existing UI file and where it goes. Nothing in this table may be silently 
 | `ui/resource_display_ui.tscn`, `energy_display_ui.gd`, `ui_main.tscn`'s `ResourceDisplayPanel` | ✅ Deleted; replaced by the pinned vitals strip (WI-52) |
 | `ui/ui_time_scale_select.tscn` | Console time zone |
 | `ui_main.gd` `_add_side_button()` + the `VBoxContainer` side column | **Deleted.** Modes replace it |
-| `ui_main.gd` `_setup_alerts_strip()` / `_spawn_alert()` | Rewritten as the alert feed (WI-53) |
+| `ui_main.gd` `_setup_alerts_strip()` / `_spawn_alert()` | ✅ Deleted; the alert feed replaces it (WI-53) |
 | `ui_main.gd` `_refresh_crew_count()` label | ✅ Deleted; it is the CREW derived chip (WI-52) |
 | `ui_main.gd` `_topmost_esc_claim()` / `_close_esc_claim()` | Rewritten against the mode stack (WI-50) |
-| `ui/minimap.tscn` | Station Map readout, top of the right column |
-| `_setup_raid_ui()` raid banner | A critical alert + the Comms/ARC surface (WI-53, WI-57) |
+| `ui/minimap.tscn` | ✅ Station Map readout, top of the right column (WI-49 pilot); WI-53 made the column a measured stack |
+| `_setup_raid_ui()` raid banner | ✅ Split (WI-53): raid start is a critical alert, the payoff moved to a right-column `RaidReadout`. WI-57 gives ARC its own surface |
 
 **Becomes an inspector tab set (WI-51):**
 
@@ -155,7 +155,7 @@ The mockup's own suggested build order, split finer so no work item touches more
 | [[WI-50_Console_And_Modes]] ✅ | Console strip, mode buttons, exclusive mounting, Esc rewrite, time zone | Existing screens get **ported in behind it unchanged**. They look inconsistent for a while and still behave better than they do now |
 | [[WI-51_Inspector]] ✅ | One bottom-right surface, swapped tab sets, nothing-selected line | The largest single reduction in surface count; also where the mood-modifier breakdown lands |
 | [[WI-52_Vitals_And_Ledger]] ✅ | Pinned strip + ledger flyout + per-cycle rates + pin persistence | "Do this before adding more resources, not after" |
-| [[WI-53_Alerts]] | Severity model, sticky/critical alerts, jump-to-subject, history log | The one item with real gameplay consequence (critical alerts pause the sim) |
+| [[WI-53_Alerts]] ✅ | Severity model, sticky/critical alerts, jump-to-subject, history log | The one item with real gameplay consequence (critical alerts pause the sim) |
 | [[WI-54_Panels_Build_And_Overlays]] | The two narrow panels that already exist | Cheapest panel conversions; proves the frame at two widths |
 | [[WI-55_Panels_Trade_And_RD]] | The two widest panels, reflowed in place | Existing content, new layout, plus the Contracts tab merge |
 | [[WI-56_Panels_Crew_And_Stores]] | Two genuinely new panels | Crew roster and the station-wide storage view have no predecessor |
@@ -200,7 +200,7 @@ Shipped 2026-08-10. Details and the six traps found are in [[WI-50_Console_And_M
 5. Take the panel width from `UIMetrics`, and the printed hotkey from `ModeManager.hotkey_label(mode)` so a rebind follows.
 6. **Every HUD hotkey is a real input action** in `Global.REMAPPABLE_ACTIONS` — including the overlay digits, which WI-50 converted. `ModeManager.text_entry_has_focus(viewport)` is the one place that decides whether the player is typing; call it, do not re-write it.
 
-Esc is now five levels in `ui_main.gd`: game-over latch → held preview → console flyout *(build flyout, then the resource ledger)* → *(trader modal)* → the open mode → the selection → an active overlay. WI-51 collapsed the selection chain to one check; WI-52 added the ledger beside the build flyout; WI-55 removes the trader level.
+Esc is now five levels in `ui_main.gd`: game-over latch → held preview → console flyout *(build flyout, then the resource ledger, then the alert log)* → *(trader modal)* → the open mode → the selection → an active overlay. WI-51 collapsed the selection chain to one check; WI-52 added the ledger beside the build flyout and WI-53 the alert log; WI-55 removes the trader level. **An outstanding critical alert is deliberately not on the ladder** (WI-53): the player hammers Esc, and an acknowledgement Esc can satisfy is one that gets satisfied without being read.
 
 ## What WI-51 landed (the selection API everything else consumes)
 
@@ -240,6 +240,28 @@ Shipped 2026-08-10. Details, the nine deviations and the four traps found are in
 3. **The ledger is the only surface allowed to coexist with a mode** (invariant 1's one exception) and it sits at Esc level 2, beside the build flyout. Nothing else gets that exemption without a line in this doc.
 4. **Console flyouts never open over the map, alerts or inspector** — `UIMetrics.LEDGER_RIGHT_INSET` is the encoded form of that rule.
 5. `SaveManager.register_section` is called by the **UI node that owns the state**, not added to `SaveManager`. WI-53's alert history should do the same.
+
+## What WI-53 landed (the alert API, and the pause every later panel must respect)
+
+Shipped 2026-08-10. Details, the nine deviations and the four traps found are in [[WI-53_Alerts]].
+
+| File | What it is |
+| --- | --- |
+| `scripts/utility/alert_data.gd` (`AlertData`) | The record — `Priority` (LOW/HIGH/CRITICAL), id, title/detail, subject, route, cycle/hour, `sequence`, `count`, `acknowledged`, `suppress_pause`, `group_title`. `subject_node()` is the only sanctioned way to read a subject. |
+| `scripts/utility/alert_rules.gd` (`AlertRules`) | Pure: the tier table, `make_id` / `family_of`, ordering, ageing, `survives_clear`, the `Group` coalescer, the feed cap. 35 tests. |
+| `scripts/managers/alert_manager.gd` (`AlertManager`) | A node under `Managers/` after `TimeManager`. Owns the live queue, the log, the pause latch and the `alerts` save section. `AlertManager.raise_alert(id, priority, title, detail, subject, route, group_title)` is the static every emit site calls; `resolve_alert(id)` is the "the condition ended" path. |
+| `TimeManager.hold_pause` / `release_pause` / `is_paused` / `pause_holders` | Reference-counted pause, replacing four independent "was it paused before I opened?" flags that could not compose. |
+| `ui/alerts/` | `alert_feed`, `alert_row`, `alert_history`, `raid_readout`, plus three authored glyphs. |
+| `InspectorPanel.top_limit`, `UIMain._layout_right_column()` | The right column is now a measured stack — map, raid readout, feed — that hands the inspector its live ceiling. |
+
+**The contract for WI-54 … WI-57:**
+
+1. **`SignalBus.station_alert(message)` is not deprecated.** It is the correct interface for "something happened, mention it", and the shim gives every one of its fifty-odd sites a LOW alert for free. Reach for `AlertManager.raise_alert` only when the alert genuinely deserves a tier, a subject or a route.
+2. **CRITICAL is a closed set.** Six members, listed in [[WI-53_Alerts]] §4, and the membership test is "the player will lose something irreversible if they are looking away". A new panel does not get to add one; if more than one or two fire in twenty minutes at 4x, the classification is wrong.
+3. **Never write `TimeManager.paused` from a panel.** That field is the player's own pause and it is what saves. A panel that must stop the sim takes a named hold — the docked-trader pause WI-55 inherits is `trader_screen`'s hold, and merging it into the Trade panel means moving the hold, not reinventing the flag.
+4. **A panel that wants to be reachable from an alert declares a route id**, and `AlertFeed.ROUTES` maps it to a `ModeManager.Mode`. `build` / `crew` / `stores` / `trade` / `research` / `comms` are already wired, including for the modes whose panels do not exist yet.
+5. **The alert log is the second (and last chartered) exception to invariant 1**, at Esc level 2 beside the resource ledger.
+6. `ListRow`'s name and meta labels are ellipsed, and that is load-bearing rather than cosmetic — see the trap in [[WI-53_Alerts]]. Any new list built on `ListRow` inherits the fix; any list that hand-rolls its own row will rediscover the bug.
 
 ## Cross-cutting risks
 

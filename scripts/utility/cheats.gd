@@ -447,6 +447,57 @@ func offer_contract() -> String:
 	return _report("offered contract: %d %s by cycle %d" %
 		[contract.amount, contract.resource.name, contract.deadline_cycle])
 
+# --- alerts (WI-53) -----------------------------------------------------------
+
+## Raises a test alert at `priority` (0 low, 1 high, 2 critical).
+##
+## Criticals are otherwise hard to provoke on demand - the tier exists precisely
+## because almost nothing qualifies - and the pause latch is the one part of this
+## game that has to be exercised deliberately rather than waited for.
+##
+## The `CHEAT: ` prefix keeps it out of the history log ([method AlertManager._log]),
+## so a session spent testing the latch does not leave a log full of fake breaches.
+func fire_alert(priority: int = 2, subject_cell: Vector2i = Vector2i(-9999, -9999)) -> String:
+	var tier: AlertData.Priority = AlertData._priority_from(priority)
+	var subject: ModuleBase = null
+	if subject_cell != Vector2i(-9999, -9999):
+		subject = _module_at_or_near(subject_cell)
+	var alert: AlertData = AlertManager.raise_alert(
+		AlertRules.make_id(&"cheat_alert", subject if subject != null else randi()),
+		tier, "CHEAT: test alert",
+		"Raised at %s priority" % AlertRules.priority_label(tier).to_lower(), subject)
+	if alert == null:
+		return "no AlertManager in the tree"
+	return "raised a %s alert%s" % [AlertRules.priority_label(tier).to_lower(),
+		" on %s" % subject._display_name() if subject != null else ""]
+
+## Acknowledges every live alert, including outstanding criticals - the escape
+## hatch for a latch that will not release because its alert scrolled out of a
+## capped feed.
+func clear_alerts() -> String:
+	var manager: AlertManager = Global.alert_manager
+	if manager == null:
+		return "no AlertManager in the tree"
+	var live: Array[AlertData] = manager.live()
+	for alert: AlertData in live:
+		manager.acknowledge(alert)
+	return _report("acknowledged %d alert(s)" % live.size())
+
+## Live alerts and the pause state, so "why is the game frozen" has an answer
+## that does not require reading the feed.
+func dump_alerts() -> String:
+	var manager: AlertManager = Global.alert_manager
+	if manager == null:
+		return "no AlertManager in the tree"
+	var lines: Array[String] = ["outstanding: %d, holding pause: %s, holders: %s" % [
+		manager.outstanding_count(), str(manager.is_holding_pause()),
+		str(Global.time_manager.pause_holders()) if Global.time_manager != null else "?"]]
+	for alert: AlertData in AlertRules.order(manager.live()):
+		lines.append("  [%s] %s - %s%s" % [AlertRules.priority_label(alert.priority),
+			alert.title, alert.detail, "  (ack)" if alert.acknowledged else ""])
+	lines.append("history: %d entry(s)" % manager.history().size())
+	return "\n".join(lines)
+
 # --- helpers ------------------------------------------------------------------
 
 ## The living crew pawn (drones excluded) nearest `cell` by world distance, or

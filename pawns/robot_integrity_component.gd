@@ -109,7 +109,10 @@ func _on_repair_end(job: Job) -> void:
 	if integrity_percent() < repair_seek_threshold_percent:
 		_retry_cooldown = retry_cooldown_seconds
 		if not _stranded_alerted:
-			SignalBus.station_alert.emit("%s is damaged with no reachable Repair Bay" % _robot_label())
+			AlertManager.raise_alert(AlertRules.make_id(&"robot_unrepaired", owner_pawn),
+				AlertData.Priority.HIGH, "Robot cannot be repaired",
+				"%s · no reachable Repair Bay" % _robot_label(), owner_pawn, &"",
+				"%d robots cannot reach a Repair Bay")
 			_stranded_alerted = true
 	else:
 		_stranded_alerted = false
@@ -120,7 +123,11 @@ func _destroy() -> void:
 	if _destroyed:
 		return
 	_destroyed = true
-	SignalBus.station_alert.emit("%s was destroyed" % _robot_label())
+	# CRITICAL (WI-53): already irreversible by the time it fires, and the
+	# easiest loss in the game to miss - a robot simply stops existing.
+	AlertManager.raise_alert(AlertRules.make_id(&"robot_lost", owner_pawn),
+		AlertData.Priority.CRITICAL, "Robot destroyed", _robot_label(), owner_pawn, &"crew",
+		"%d robots were destroyed")
 	var robot: RobotPawnBase = owner_pawn as RobotPawnBase
 	if robot != null:
 		robot.notify_destroyed_by_integrity()

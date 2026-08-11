@@ -75,7 +75,9 @@ func _process(delta: float) -> void:
 	visit_remaining_hours -= sim_hours
 	if visit_remaining_hours <= 1.0 and not _departure_warned:
 		_departure_warned = true
-		SignalBus.station_alert.emit("%s departs in about an hour" % trader.trader_name)
+		AlertManager.raise_alert(&"trader_departing", AlertData.Priority.HIGH,
+			"Trader departing", "%s leaves in about an hour" % trader.trader_name,
+			find_trade_bay())
 	if visit_remaining_hours <= 0.0:
 		_end_visit("visit time over")
 
@@ -233,7 +235,9 @@ func _fulfill(bay_trade: TradeComponent) -> void:
 		if amount <= 0:
 			if bay_trade.import_storage.space_available() <= 0 and not _import_full_alerted:
 				_import_full_alerted = true
-				SignalBus.station_alert.emit("Import bin full — haul it out to keep buying")
+				AlertManager.raise_alert(&"import_bin_full", AlertData.Priority.HIGH,
+					"Import bin full", "Haul it out to keep buying", bay_trade.owner_module,
+					&"stores")
 			continue
 		if not bay_trade.import_storage.deposit(resource, amount):
 			continue

@@ -171,7 +171,9 @@ func _check_alerts() -> void:
 		elif partial < alert_o2_partial:
 			_low_o2_alerted[module] = true
 			var module_name: String = module.module_data.name if module.module_data != null else "module"
-			SignalBus.station_alert.emit("Low oxygen in %s!" % module_name)
+			AlertManager.raise_alert(AlertRules.make_id(&"low_o2", module),
+				AlertData.Priority.HIGH, "Low oxygen", module_name, module, &"",
+				"%d modules are low on oxygen")
 
 ## Station-average O2 partial pressure across completed pressurized modules, as
 ## the percentage the OXYGEN vitals chip reads (WI-52).

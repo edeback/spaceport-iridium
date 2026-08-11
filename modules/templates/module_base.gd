@@ -334,7 +334,8 @@ func _trigger_breakdown() -> void:
 	else:
 		_broken_down = true
 		_apply_breakdown_modifier()
-	SignalBus.station_alert.emit("%s has broken down!" % _display_name())
+	AlertManager.raise_alert(AlertRules.make_id(&"breakdown", self), AlertData.Priority.HIGH,
+		"Module broken down", _display_name(), self, &"", "%d modules have broken down")
 
 func _apply_breakdown_modifier() -> void:
 	stat_modifiers.set_single_modifier(&"power_output", StatModifiers.Op.MULT, BREAKDOWN_EFFICIENCY, BREAKDOWN_SOURCE)

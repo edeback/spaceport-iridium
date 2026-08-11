@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://ui/theme/readout_panel.tscn" id="1_frame"]
+[ext_resource type="Script" path="res://ui/alerts/alert_feed.gd" id="2_feed"]
+
+[node name="AlertFeed" instance=ExtResource("1_frame")]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -364.0
+offset_top = 280.0
+offset_right = -20.0
+offset_bottom = 314.0
+grow_horizontal = 0
+script = ExtResource("2_feed")

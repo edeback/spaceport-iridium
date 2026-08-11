@@ -63,7 +63,9 @@ func begin() -> void:
 	var dock: Vector2 = DockingBay.dock_position_for(_bay)
 	_ship.setup(dock, dock + Vector2(DockingBay.approach_sign_for(_bay) * SHIP_APPROACH_DISTANCE, 0.0))
 	_ship.docked.connect(_on_ship_docked, CONNECT_ONE_SHOT)
-	SignalBus.station_alert.emit("An ARC inspection vessel is approaching the docking bay.")
+	AlertManager.raise_alert(&"inspection_arriving", AlertData.Priority.HIGH,
+		"ARC inspection inbound", "An inspection vessel is approaching the docking bay",
+		_bay, &"comms")
 
 func _on_ship_docked() -> void:
 	if not is_instance_valid(_bay):
@@ -73,7 +75,9 @@ func _on_ship_docked() -> void:
 	Global.world_manager.pawn_layer.add_child(_inspector)
 	_inspector.current_module = _bay
 	_inspector.global_position = Global.cell_to_world(_bay.module_cell, true)
-	SignalBus.station_alert.emit("The ARC inspector has come aboard for a tour.")
+	AlertManager.resolve_alert(&"inspection_arriving")
+	AlertManager.raise_alert(&"inspection_aboard", AlertData.Priority.HIGH,
+		"ARC inspector aboard", "Touring the station now", _inspector, &"comms")
 	_start_next_leg()
 
 func _process(delta: float) -> void:
@@ -167,7 +171,10 @@ func _pass() -> void:
 	if _resolved:
 		return
 	_resolved = true
-	SignalBus.station_alert.emit("The ARC inspector is satisfied. Promotion approved!")
+	AlertManager.resolve_alert(&"inspection_aboard")
+	AlertManager.raise_alert(&"inspection_result", AlertData.Priority.HIGH,
+		"ARC inspection passed", "The inspector is satisfied · promotion approved",
+		null, &"comms")
 	if Global.unlock_manager != null:
 		Global.unlock_manager.on_inspection_passed()
 	_send_inspector_home()
@@ -176,7 +183,9 @@ func _fail(reason: String) -> void:
 	if _resolved:
 		return
 	_resolved = true
-	SignalBus.station_alert.emit("ARC inspection failed: %s. The inspector is leaving." % reason)
+	AlertManager.resolve_alert(&"inspection_aboard")
+	AlertManager.raise_alert(&"inspection_result", AlertData.Priority.HIGH,
+		"ARC inspection failed", "%s · the inspector is leaving" % reason, null, &"comms")
 	if Global.unlock_manager != null:
 		Global.unlock_manager.on_inspection_failed(reason)
 	_send_inspector_home()

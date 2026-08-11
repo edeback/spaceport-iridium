@@ -83,7 +83,10 @@ func _advance_stages(sim_hours: float) -> void:
 			state["stage"] = stage_idx + 1
 			state["stage_hours"] = 0.0
 			advanced = true
-			SignalBus.station_alert.emit("%s's %s has worsened" % [_pawn_label(), disease.display_name])
+			AlertManager.raise_alert(AlertRules.make_id(&"disease_worse", owner_pawn),
+				AlertData.Priority.HIGH, "Illness worsening",
+				"%s · %s" % [_pawn_label(), disease.display_name], owner_pawn, &"crew",
+				"%d crew are getting sicker")
 		_active[disease_id] = state
 	if advanced:
 		_refresh_effects()
@@ -101,7 +104,10 @@ func infect(disease_id: StringName) -> bool:
 		return false
 	_active[disease_id] = {"stage": 0, "stage_hours": 0.0, "treat_progress": 0.0}
 	_refresh_effects()
-	SignalBus.station_alert.emit("%s has caught %s" % [_pawn_label(), disease.display_name])
+	AlertManager.raise_alert(AlertRules.make_id(&"disease_caught", owner_pawn),
+		AlertData.Priority.HIGH, "Crew has fallen ill",
+		"%s · %s" % [_pawn_label(), disease.display_name], owner_pawn, &"crew",
+		"%d crew have fallen ill")
 	diseases_changed.emit()
 	_maybe_seek_treatment()
 	return true
@@ -290,6 +296,10 @@ func apply_treatment(progress_hours: float) -> void:
 		diseases_changed.emit()
 	else:
 		cure(disease_id)
+		# The illness alerts were about a condition that has now ended (WI-53).
+		AlertManager.resolve_alert(AlertRules.make_id(&"disease_caught", owner_pawn))
+		AlertManager.resolve_alert(AlertRules.make_id(&"disease_worse", owner_pawn))
+		AlertManager.resolve_alert(AlertRules.make_id(&"no_medbay", owner_pawn))
 		SignalBus.station_alert.emit("%s has recovered from %s" % [_pawn_label(), disease.display_name])
 
 ## True while an injured or diseased pawn should be at a Medical Bay.
@@ -334,7 +344,10 @@ func _on_treatment_end(job: Job) -> void:
 	if wants_treatment():
 		_retry_cooldown = retry_cooldown_seconds
 		if not _stranded_alerted:
-			SignalBus.station_alert.emit("%s needs treatment but no Medical Bay is available" % _pawn_label())
+			AlertManager.raise_alert(AlertRules.make_id(&"no_medbay", owner_pawn),
+				AlertData.Priority.HIGH, "No Medical Bay available",
+				"%s needs treatment" % _pawn_label(), owner_pawn, &"build",
+				"%d crew need treatment with no Medical Bay")
 			_stranded_alerted = true
 	else:
 		_stranded_alerted = false

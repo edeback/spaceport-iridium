@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://nwr8gusqocd6" path="res://scripts/managers/main.gd" id="1_lvssd"]
 [ext_resource type="Script" uid="uid://5jorwo0v8kof" path="res://scripts/managers/save_manager.gd" id="1_savemgr"]
 [ext_resource type="Script" uid="uid://dc6gfiufy3aj4" path="res://scripts/managers/time_manager.gd" id="1_timemgr"]
+[ext_resource type="Script" uid="uid://bi8my03k0hi1b" path="res://scripts/managers/alert_manager.gd" id="1_alertmgr"]
 [ext_resource type="Script" uid="uid://dcanuqi7bdrfp" path="res://scripts/managers/camera.gd" id="3_055fr"]
 [ext_resource type="Script" uid="uid://kmc2dujsj6ap" path="res://scripts/managers/atmosphere_manager.gd" id="3_atmomgr"]
 [ext_resource type="PackedScene" uid="uid://dytaqheck3ddv" path="res://ui/windows/atmosphere_component_ui.tscn" id="3_atmoui"]
@@ -7601,6 +7602,9 @@ structure_tile_map = NodePath("ForegroundLayers/ModuleLayer/StructureTileMap")
 
 [node name="TimeManager" type="Node" parent="Managers" unique_id=593433451]
 script = ExtResource("1_timemgr")
+
+[node name="AlertManager" type="Node" parent="Managers" unique_id=593433452]
+script = ExtResource("1_alertmgr")
 
 [node name="WorldManager" type="Node" parent="Managers" unique_id=1880931306 node_paths=PackedStringArray("module_layers", "pawn_layer")]
 script = ExtResource("6_i5kyc")

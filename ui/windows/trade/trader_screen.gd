@@ -9,22 +9,27 @@ extends Control
 ## committing. The sim pauses while open so the trader can't leave mid-trade
 ## (UI stays real-time by design, so the screen keeps working).
 
+## This screen's entry in [TimeManager]'s hold set (WI-53). WI-53 §edge-cases
+## names this exact collision as its most likely bug: a critical alert and a
+## docked trader both stopping the sim, each restoring "the state before I
+## opened", and whichever closes second handing the game back to a holder that
+## still wants it stopped. Named holds compose instead.
+const PAUSE_HOLD: StringName = &"trader_screen"
+
 var _rows: Array[Dictionary] = []
-var _was_paused: bool = false
 
 func open() -> void:
 	var manager: TraderManager = Global.trader_manager
 	if manager == null or not manager.visit_active:
 		return
-	_was_paused = Global.time_manager.paused
-	Global.time_manager.paused = true
+	Global.time_manager.hold_pause(PAUSE_HOLD)
 	%TraderNameLabel.text = manager.trader.trader_name
 	_build_rows()
 	visible = true
 
 func close() -> void:
 	visible = false
-	Global.time_manager.paused = _was_paused
+	Global.time_manager.release_pause(PAUSE_HOLD)
 	for child: Node in %TradeRows.get_children():
 		child.queue_free()
 

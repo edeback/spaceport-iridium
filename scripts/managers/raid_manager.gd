@@ -129,7 +129,12 @@ func start_raid(strength: float = -1.0) -> bool:
 		# Nothing could be spawned at all (no variants and no fallback scene).
 		active = false
 		return false
-	SignalBus.station_alert.emit("Raiders inbound! %d hostile ship(s) closing on the station." % ship_count)
+	# CRITICAL (WI-53): combat starts now and the payoff price is already
+	# shrinking, so a raid that begins while the player is reading the build menu
+	# is exactly the "you will lose something irreversible if you look away" case.
+	# The alert is dropped again on `raid_ended`, whichever way it resolves.
+	AlertManager.raise_alert(&"raid", AlertData.Priority.CRITICAL, "Raiders inbound",
+		"%d hostile ship(s) closing on the station" % ship_count)
 	SignalBus.raid_started.emit(_strength)
 	SignalBus.raid_state_changed.emit()
 	return true

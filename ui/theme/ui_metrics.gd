@@ -131,25 +131,69 @@ const SCREEN_GUTTER: int = 20
 ## sets, not a single readout.
 const INSPECTOR_WIDTH: int = 420
 
-## Y the inspector's top edge may never cross (WI-51). The inspector is
-## bottom-anchored and grows *upward* with its content, so a module with eight
-## component tabs would otherwise climb into the readouts above it. Today that is
-## the station map (20px gutter + its 240px box) plus one more gutter; WI-53's
-## alert feed stacks below the map and this grows with it.
-const INSPECTOR_TOP_LIMIT: int = 280
+## Height of the station map readout, the first thing in the right column.
+const STATION_MAP_HEIGHT: int = 240
+
+## Y the inspector's top edge may never cross (WI-51), when the readouts above it
+## are at their shortest. The inspector is bottom-anchored and grows *upward*
+## with its content, so a module with eight component tabs would otherwise climb
+## into the readouts above.
+##
+## This is the **floor**, not the answer. WI-53 stacked a second readout under
+## the map and a third (the raid readout) that comes and goes, so the live limit
+## is whatever the column's bottom edge currently is - [UIMain] measures the
+## stack and pushes it into [member InspectorPanel.top_limit]. Baking a worst
+## case into the constant instead would have cost the inspector 300px
+## permanently, on a station that mostly has an empty alert feed.
+const INSPECTOR_TOP_LIMIT: int = SCREEN_GUTTER + STATION_MAP_HEIGHT + SCREEN_GUTTER
 
 ## Side of the subject block's icon.
 const INSPECTOR_ICON_SIZE: int = 50
 
 ## Tallest the inspector may become before its tab content starts scrolling
 ## inside itself instead of pushing the panel further up the screen.
-static func inspector_max_height(screen_height: int = SCREEN_SIZE.y) -> int:
-	return maxi(0, screen_height - CONSOLE_HEIGHT - SCREEN_GUTTER - INSPECTOR_TOP_LIMIT)
+static func inspector_max_height(screen_height: int = SCREEN_SIZE.y,
+		top_limit: int = INSPECTOR_TOP_LIMIT) -> int:
+	return maxi(0, screen_height - CONSOLE_HEIGHT - SCREEN_GUTTER - top_limit)
 
 ## The same, less the 34px readout header - the budget the tab set's content
 ## region actually has to fit into.
-static func inspector_max_content_height(screen_height: int = SCREEN_SIZE.y) -> int:
-	return maxi(0, inspector_max_height(screen_height) - READOUT_HEADER_HEIGHT)
+static func inspector_max_content_height(screen_height: int = SCREEN_SIZE.y,
+		top_limit: int = INSPECTOR_TOP_LIMIT) -> int:
+	return maxi(0, inspector_max_height(screen_height, top_limit) - READOUT_HEADER_HEIGHT)
+
+# --- alerts (WI-53) -------------------------------------------------------------
+
+## Tallest the alert feed may become. Bounded because the feed shares the right
+## column with the inspector: an unbounded feed on a bad cycle would squeeze the
+## selection surface to nothing exactly when the player most wants to click
+## something.
+##
+## Sized to hold [constant AlertRules.FEED_CAP] rows plus the `+ n more` line
+## without an inner scrollbar. The two limits must agree; see that constant.
+const ALERT_FEED_MAX_HEIGHT: int = 400
+
+## The live-raid readout that replaced WI-32's top-centre banner. Fixed, because
+## it appears and disappears mid-fight and a box that also *resized* under the
+## player's cursor would be worse than the banner it replaces.
+const ALERT_RAID_HEIGHT: int = 96
+
+## The history flyout, opened from the feed's HISTORY action. It sits to the left
+## of the right column and never over it - the same rule
+## [constant LEDGER_RIGHT_INSET] encodes for the console's flyouts.
+const ALERT_HISTORY_WIDTH: int = 480
+const ALERT_HISTORY_MAX_HEIGHT: int = 560
+## Distance from the right edge the flyout must stop at: the right column plus
+## its own gutter plus one more.
+const ALERT_HISTORY_RIGHT_INSET: int = RIGHT_COLUMN_WIDTH + SCREEN_GUTTER * 2
+
+## Tallest the feed's content region may become.
+static func alert_feed_max_content_height() -> int:
+	return maxi(0, ALERT_FEED_MAX_HEIGHT - READOUT_HEADER_HEIGHT)
+
+## Tallest the history flyout's content region may become.
+static func alert_history_max_content_height() -> int:
+	return maxi(0, ALERT_HISTORY_MAX_HEIGHT - READOUT_HEADER_HEIGHT)
 
 # --- shared spacing -----------------------------------------------------------
 

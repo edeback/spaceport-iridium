@@ -24,6 +24,7 @@ var contract_manager: ContractManager
 var raid_manager: RaidManager
 var visitor_manager: VisitorManager
 var atmosphere_manager: AtmosphereManager
+var alert_manager: AlertManager
 var ui_in_game: UIInGame
 var ui_main: UIMain
 var tilemap: TileMapLayer

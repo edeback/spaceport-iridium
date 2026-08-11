@@ -8,8 +8,12 @@ extends Control
 ## card is resolved through a choice, and authored events are validated to
 ## always keep at least one cost-free choice.
 
+## This card's entry in [TimeManager]'s hold set (WI-53). A named hold rather
+## than the old remembered-prior-state flag, so an event card and a critical
+## alert can stop the sim at the same time without un-pausing each other.
+const PAUSE_HOLD: StringName = &"event_card"
+
 var _event: EventData = null
-var _was_paused: bool = false
 
 func _ready() -> void:
 	visible = false
@@ -26,11 +30,10 @@ func _show_next() -> void:
 	if next == null:
 		if visible:
 			visible = false
-			Global.time_manager.paused = _was_paused
+			Global.time_manager.release_pause(PAUSE_HOLD)
 		return
 	if not visible:
-		_was_paused = Global.time_manager.paused
-		Global.time_manager.paused = true
+		Global.time_manager.hold_pause(PAUSE_HOLD)
 		visible = true
 	_event = next
 	_populate()

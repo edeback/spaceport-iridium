@@ -39,13 +39,36 @@ signal calendar_restored(cycle: int, hour: int)
 signal pause_state_changed(paused: bool)
 signal speed_changed(new_speed: float)
 
+## The **player's own** pause flag - the console's pause button, and the value
+## that is saved. A modal that needs the sim stopped must not write this; it
+## takes a hold instead (see [method hold_pause]).
 var paused: bool = false:
 	set(new_paused):
 		if paused != new_paused:
 			paused = new_paused
-			if paused:
-				sim_delta = 0.0
-			pause_state_changed.emit(paused)
+			_apply_pause_state()
+
+## Systems currently holding the sim stopped, as a **set** keyed by owner (WI-53).
+##
+## Before this there were four independent holders - the pause menu, the event
+## card, the trader screen and the game-over screen - each of which recorded "was
+## it paused before I opened?" and restored that on close. Two of them open at
+## once and the pattern breaks: whichever closes second restores a state the
+## first one has since changed, and a game the other holder still wants paused
+## starts running underneath it. WI-53's critical alerts would have been a fifth.
+##
+## A set, not a counter: one owner is one hold, so a double `hold_pause` cannot
+## leak a hold that never releases. An owner that genuinely needs re-entrancy
+## uses two names.
+##
+## Never saved. It is session state by construction - a scene reload builds a
+## fresh manager with no holds, and the player's own [member paused] flag is what
+## the save carries.
+var _pause_holds: Dictionary[StringName, bool] = {}
+
+## Effective state as last announced, so [signal pause_state_changed] fires on
+## changes to the *combined* answer rather than on every write to either half.
+var _announced_paused: bool = false
 
 var speed: float = 1.0:
 	set(new_speed):
@@ -99,10 +122,59 @@ func _process(delta: float) -> void:
 
 ## Convert a real _process delta into sim-seconds (0 while paused).
 func scale(delta: float) -> float:
-	return 0.0 if paused else delta * speed
+	return 0.0 if is_paused() else delta * speed
 
 func toggle_paused() -> void:
 	paused = not paused
+
+# --- pause holds (WI-53) ------------------------------------------------------
+
+## Whether the sim is stopped, by the player or by anything holding it. This is
+## the question every consumer means; [member paused] is only the player's half.
+func is_paused() -> bool:
+	return paused or not _pause_holds.is_empty()
+
+## Stops the sim on `owner`'s behalf. Idempotent, and composes: the sim runs
+## again only when every holder has released and the player is not paused.
+##
+## The critical-alert latch, the trader screen, the event card, the pause menu
+## and the game-over screen are the holders. Use a distinct, greppable name.
+func hold_pause(owner: StringName) -> void:
+	if _pause_holds.has(owner):
+		return
+	_pause_holds[owner] = true
+	_apply_pause_state()
+
+## Releases `owner`'s hold. Safe to call when it holds nothing, so a close path
+## does not have to track whether its open path ran.
+func release_pause(owner: StringName) -> void:
+	if not _pause_holds.erase(owner):
+		return
+	_apply_pause_state()
+
+func is_holding_pause(owner: StringName) -> bool:
+	return _pause_holds.has(owner)
+
+## Who is currently holding the sim - the probe's assertion, and what a
+## "why won't it un-pause" bug report needs.
+func pause_holders() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for owner: StringName in _pause_holds:
+		out.append(owner)
+	return out
+
+## Announces a change in the *combined* state. Both halves route through here, so
+## a hold taken while the player is already paused emits nothing and a player
+## un-pause under a live hold emits nothing either - which is what stops the
+## console's pause button from flickering between the two sources.
+func _apply_pause_state() -> void:
+	var effective: bool = is_paused()
+	if effective:
+		sim_delta = 0.0
+	if effective == _announced_paused:
+		return
+	_announced_paused = effective
+	pause_state_changed.emit(effective)
 
 ## Await helper: suspends for `duration` sim-seconds. While paused, no
 ## sim_ticks fire, so the wait stretches automatically.
@@ -115,7 +187,7 @@ func sim_seconds(duration: float) -> void:
 ## sim speed, 0 while paused - so no animation finishes "for free" during a
 ## pause, and door time scales with fast-forward like everything else (WI-20).
 func animation_speed() -> float:
-	return 0.0 if paused else speed
+	return 0.0 if is_paused() else speed
 
 ## Register a gameplay AnimatedSprite2D whose playback must track sim speed.
 ## Group-based so freed sprites drop out automatically. Sprites that reparent

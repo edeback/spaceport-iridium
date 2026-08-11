@@ -96,7 +96,10 @@ func _go_to_exit() -> void:
 		_stranded_alerted = false
 	elif not _stranded_alerted:
 		_stranded_alerted = true
-		SignalBus.station_alert.emit("%s cannot find a way to leave the station." % _label())
+		AlertManager.raise_alert(AlertRules.make_id(&"visitor_stuck", self),
+			AlertData.Priority.HIGH, "Visitor cannot leave",
+			"%s has no route out of the station" % _label(), self, &"",
+			"%d visitors cannot leave")
 
 func _exit_reachable() -> bool:
 	for node: Node in get_tree().get_nodes_in_group(Groups.CREW_RECRUITMENT):

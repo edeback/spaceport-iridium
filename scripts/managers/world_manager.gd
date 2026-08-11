@@ -162,7 +162,9 @@ func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 	if structure_check and module.structure_check_before_delete:
 		if not Global.structure_manager.can_remove_module(module):
 			var module_name: String = module.module_data.name if module.module_data != null else module.name
-			SignalBus.station_alert.emit("Can't remove %s: it would split the station into disconnected pieces." % module_name)
+			AlertManager.raise_alert(AlertRules.make_id(&"cut_vertex", module),
+				AlertData.Priority.HIGH, "Cannot remove %s" % module_name,
+				"Removing it would split the station into disconnected pieces", module)
 			return false
 	var replacement_location: Vector2i = module.module_cell
 	var replacement_points: Array[Vector2i] = []

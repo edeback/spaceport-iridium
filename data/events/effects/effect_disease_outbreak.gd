@@ -33,7 +33,8 @@ func apply(_event: EventData) -> void:
 	var count: int = clampi(randi_range(min_infections, max_infections), 0, mini(candidates.size(), cap))
 	if count <= 0:
 		return
-	SignalBus.station_alert.emit("An outbreak of %s is spreading through the station!" % disease.display_name)
+	AlertManager.raise_alert(&"outbreak", AlertData.Priority.HIGH, "Disease outbreak",
+		"%s is spreading through the station" % disease.display_name, null, &"crew")
 	for i: int in count:
 		candidates[i].infect(disease.id)
 

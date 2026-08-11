@@ -52,11 +52,16 @@ func _on_speed_changed(new_speed: float) -> void:
 	for index: int in _preset_buttons.size():
 		_preset_buttons[index].set_pressed_no_signal(is_equal_approx(TimeManager.SPEED_PRESETS[index], new_speed))
 
+## The button drives the player's own pause flag; what it *shows* is the combined
+## state ([method TimeManager.is_paused]). Un-pausing while something else holds
+## the sim therefore snaps straight back to pressed - which is honest, and reads
+## as "not right now" rather than as a button that silently did nothing.
 func _on_pause_toggled(toggled_on: bool) -> void:
 	Global.time_manager.paused = toggled_on
+	pause_button.set_pressed_no_signal(Global.time_manager.is_paused())
 
-## Keeps the button honest if something else (the pause menu, an event card)
-## pauses the sim.
+## Keeps the button honest if something else (the pause menu, an event card, an
+## outstanding critical alert) is holding the sim.
 func _on_pause_state_changed(paused: bool) -> void:
 	pause_button.set_pressed_no_signal(paused)
 

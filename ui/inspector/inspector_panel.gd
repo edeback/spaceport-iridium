@@ -52,6 +52,22 @@ const CARET_PERIOD: float = 0.55
 ## of polling.
 signal selection_changed(kind: SelectionKind)
 
+## Y the panel's top edge may not cross, pushed in by [UIMain] as the readouts
+## above it change height (WI-53).
+##
+## The inspector shares the right column with the station map, the alert feed and
+## the live-raid readout, and two of those three come and go. A constant would
+## have to encode the worst case, which costs the inspector three hundred pixels
+## on the ordinary station where the feed is empty - so the column measures
+## itself and tells the inspector where it currently ends.
+var top_limit: int = UIMetrics.INSPECTOR_TOP_LIMIT:
+	set(value):
+		var clamped: int = maxi(value, 0)
+		if top_limit == clamped:
+			return
+		top_limit = clamped
+		_queue_refit()
+
 var _kind: SelectionKind = SelectionKind.NONE
 var _subject: Variant = null
 var _set: InspectorTabSet = null
@@ -374,7 +390,8 @@ func _refit() -> void:
 	var page: Control = _visible_page()
 	var page_min: float = page.get_combined_minimum_size().y if page != null else 0.0
 	var chrome: float = _chrome_height()
-	var budget: float = float(UIMetrics.inspector_max_content_height())
+	var budget: float = float(UIMetrics.inspector_max_content_height(
+		UIMetrics.SCREEN_SIZE.y, top_limit))
 	var page_height: float = minf(page_min, maxf(0.0, budget - chrome))
 	_scroll.custom_minimum_size.y = page_height
 	content_height = int(ceilf(minf(chrome + page_height, budget)))

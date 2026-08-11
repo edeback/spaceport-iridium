@@ -8,6 +8,12 @@ extends Control
 ## Pause semantics: opening pauses the sim, closing restores the pause state the
 ## player had *before* opening. A game the player had manually paused stays
 ## paused when they close the menu; a running game resumes at its old speed.
+##
+## WI-53 replaced the hand-rolled "remember whether it was paused" flag with a
+## named hold on [TimeManager]. Same behaviour from the player's side, and the
+## player's own pause flag is now genuinely untouched by this menu - which is
+## what lets a critical alert or a docked trader hold the sim at the same time
+## without the two of them fighting over whose "prior state" wins.
 
 signal opened
 signal closed
@@ -15,7 +21,8 @@ signal closed
 const MAIN_MENU_SCENE: String = "res://ui/menus/main_menu.tscn"
 const MAIN_SCENE: String = "res://main.tscn"
 
-var _was_paused: bool = false
+## This menu's entry in [TimeManager]'s hold set.
+const PAUSE_HOLD: StringName = &"pause_menu"
 var _settings_menu: SettingsMenu
 var _save_load_menu: SaveLoadMenu
 var _confirm: ConfirmationDialog
@@ -33,8 +40,7 @@ func _ready() -> void:
 func open() -> void:
 	if visible:
 		return
-	_was_paused = Global.time_manager.paused
-	Global.time_manager.paused = true
+	Global.time_manager.hold_pause(PAUSE_HOLD)
 	visible = true
 	_panel.visible = true
 	opened.emit()
@@ -47,9 +53,9 @@ func close() -> void:
 	if _save_load_menu != null and _save_load_menu.visible:
 		_save_load_menu.close()
 	visible = false
-	# Restore, don't unpause: the player may have paused the game themselves
-	# before pressing Esc.
-	Global.time_manager.paused = _was_paused
+	# Release, don't unpause: the player may have paused the game themselves
+	# before pressing Esc, and their flag was never touched.
+	Global.time_manager.release_pause(PAUSE_HOLD)
 	closed.emit()
 
 func toggle() -> void:
@@ -158,36 +164,25 @@ func _open_slots(mode: SaveLoadMenu.Mode) -> void:
 
 func _on_slot_chosen(slot: String) -> void:
 	if _save_load_menu.mode == SaveLoadMenu.Mode.SAVE:
-		_save_with_players_pause_state(slot)
+		Global.save_manager.save_slot(slot)
 		_save_load_menu.close()
 		return
 	# Loading a different slot drops the current run, so confirm before the
 	# scene reload takes it away.
+	# No unpause on the way out: this menu's pause is a named hold on a TimeManager
+	# the scene swap is about to destroy, and the player's own flag - the one the
+	# save carries and the reloaded scene restores - was never touched (WI-53).
 	_ask("Load '%s'?" % slot, "Unsaved progress on this station will be lost.", func() -> void:
-		# Unpause first: the reloaded scene keeps whatever pause state the save
-		# carries, and leaving the menu's forced pause set would stick.
-		Global.time_manager.paused = false
 		Global.save_manager.load_slot(slot))
-
-## TimeManager serializes `paused`, and this menu forces a pause while it's open -
-## so a save written from here would reload every game frozen. Record the pause
-## state the player actually had, then put the menu's pause straight back.
-func _save_with_players_pause_state(slot: String) -> void:
-	var menu_pause: bool = Global.time_manager.paused
-	Global.time_manager.paused = _was_paused
-	Global.save_manager.save_slot(slot)
-	Global.time_manager.paused = menu_pause
 
 ## New Game from a live run: clear any staged load (otherwise the fresh scene
 ## would restore the very game we're leaving) and re-enter main.tscn.
 func _start_new_game() -> void:
 	SaveManager.clear_pending_load()
-	Global.time_manager.paused = false
 	get_tree().change_scene_to_file(MAIN_SCENE)
 
 func quit_to_menu() -> void:
 	SaveManager.clear_pending_load()
-	Global.time_manager.paused = false
 	get_tree().change_scene_to_file(MAIN_MENU_SCENE)
 
 # --- confirmation -------------------------------------------------------------

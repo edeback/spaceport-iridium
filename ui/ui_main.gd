@@ -20,6 +20,9 @@ const CONTRACTS_SCREEN_SCENE: PackedScene = preload("res://ui/windows/contracts_
 const EVENT_CARD_SCENE: PackedScene = preload("res://ui/windows/event_card.tscn")
 const TRADER_SCREEN_SCENE: PackedScene = preload("res://ui/windows/trade/trader_screen.tscn")
 const MINIMAP_SCENE: PackedScene = preload("res://ui/minimap.tscn")
+const ALERT_FEED_SCENE: PackedScene = preload("res://ui/alerts/alert_feed.tscn")
+const ALERT_HISTORY_SCENE: PackedScene = preload("res://ui/alerts/alert_history.tscn")
+const RAID_READOUT_SCENE: PackedScene = preload("res://ui/alerts/raid_readout.tscn")
 const LEDGER_SCENE: PackedScene = preload("res://ui/console/resource_ledger.tscn")
 const INSPECTOR_SCENE: PackedScene = preload("res://ui/inspector/inspector_panel.tscn")
 const GAME_OVER_SCENE: PackedScene = preload("res://ui/game_over_screen.tscn")
@@ -45,8 +48,6 @@ var _build_menu: BuildMenu
 func _ready() -> void:
 	Global.ui_main = self
 	SignalBus.game_over.connect(_on_game_over)
-	_setup_alerts_strip()
-	_setup_raid_ui()
 	_setup_console()
 	_setup_overlay_ui()
 	_setup_modes()
@@ -55,11 +56,14 @@ func _ready() -> void:
 	console.bind(mode_manager)
 	console.bind_overlay(overlay_controller)
 	mode_manager.mode_changed.connect(_on_mode_changed)
-	_setup_minimap_ui()
+	_setup_right_column()
 	_setup_inspector_ui()
 	_setup_trader_ui()
 	_setup_event_ui()
 	_setup_pause_menu()
+	# Last, once every readout and the inspector exist: the column measures itself
+	# and hands the inspector its ceiling.
+	_layout_right_column()
 
 # --- console & modes ----------------------------------------------------------
 
@@ -191,6 +195,13 @@ func _setup_pause_menu() -> void:
 ## levels: seven of those claims collapsed into one `has_open_mode()` check,
 ## because the layout now guarantees there is at most one panel to close. The
 ## remaining selection block is WI-51's to collapse the same way.
+##
+## **An outstanding critical alert is deliberately not on this ladder** (WI-53).
+## Acknowledging one is a click on the alert and only that: the player hammers
+## Esc, and an acknowledgement Esc can satisfy is an acknowledgement that gets
+## satisfied without being read - which would leave the tier that stops the game
+## with nothing to show for it. This is the one considered exception to WI-36's
+## "Esc is always an exit" invariant, and it belongs here rather than in a doc.
 func esc_claimed() -> bool:
 	return _topmost_esc_claim() != &""
 
@@ -219,6 +230,9 @@ func _topmost_esc_claim() -> StringName:
 	# (WI-52), so Esc must take it away before the panel it is sitting over.
 	if ledger != null and is_instance_valid(ledger) and ledger.is_open():
 		return &"ledger"
+	# The alert log is the third, on the same terms (WI-53).
+	if _alert_history != null and is_instance_valid(_alert_history) and _alert_history.is_open():
+		return &"alert_log"
 	# The trader screen is a modal that pauses the sim; it is not a mode and
 	# outranks one. WI-55 folds it into the Trade panel and this level goes.
 	if _trader_screen != null and _trader_screen.visible:
@@ -248,6 +262,8 @@ func _close_esc_claim(claim: StringName) -> void:
 			_build_menu.close_flyout()
 		&"ledger":
 			ledger.close()
+		&"alert_log":
+			_alert_history.close()
 		&"trader":
 			_trader_screen.close()
 		&"mode":
@@ -257,113 +273,99 @@ func _close_esc_claim(claim: StringName) -> void:
 		&"overlay":
 			overlay_controller.set_mode(OverlayController.Mode.NONE)
 
-## Minimal alerts strip (WI-05): critical pawn needs surface as brief
-## top-center messages. Informational only - no forced job interrupts, the
-## pawn keeps handling its own queue (see PawnNeedsComponent).
+# --- the right column (WI-34, WI-51, WI-53) -----------------------------------
+
+## Station map, alert feed, live-raid readout, and the inspector under them.
+## Invariant 3: left is doing, right is watching - these own the right edge
+## permanently and never move sideways.
 ##
-## WI-53 replaces this with the severity-ranked alert feed in the right column.
-var _alerts_box: VBoxContainer
-var _active_alerts: Dictionary[String, Label] = {}
+## What replaced the old alerts strip: `_setup_alerts_strip()` built a top-centre
+## column of red [Label]s and `_spawn_alert()` added one per message, deduped by
+## text and freed by a fifteen-second timer. Every alert was the same colour, the
+## same size, in the same place, for the same fifteen seconds, and then gone
+## forever. All five of the signals it handled are [AlertManager]'s now, which is
+## where they can be given a tier and a subject.
+var _map_readout: ReadoutPanel
+var _alert_feed: AlertFeed
+var _raid_readout: RaidReadout
 
-func _setup_alerts_strip() -> void:
-	_alerts_box = VBoxContainer.new()
-	_alerts_box.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	_alerts_box.offset_top = 8
-	_alerts_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	_alerts_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_alerts_box)
-	SignalBus.pawn_critical_need.connect(_on_pawn_critical_need)
-	SignalBus.station_alert.connect(_on_station_alert)
-	SignalBus.crew_resigning.connect(_on_crew_resigning)
-	SignalBus.crew_resignation_cancelled.connect(_on_crew_resignation_cancelled)
-	SignalBus.crew_departed.connect(_on_crew_departed)
+func _setup_right_column() -> void:
+	# Minimap (WI-34): the top of the column. It manages its own redraw and
+	# collapse, so mounting is just an add_child.
+	_map_readout = MINIMAP_SCENE.instantiate() as ReadoutPanel
+	add_child(_map_readout)
 
-func _pawn_label(pawn: PawnBase) -> String:
-	return pawn.pawn_name if not pawn.pawn_name.is_empty() else "A crew member"
+	_alert_feed = ALERT_FEED_SCENE.instantiate() as AlertFeed
+	add_child(_alert_feed)
+	_alert_feed.history_requested.connect(_on_history_requested)
 
-func _on_pawn_critical_need(pawn: PawnBase, need: StringName) -> void:
-	_spawn_alert("%s|%s" % [_pawn_label(pawn), need], "%s: %s critical!" % [_pawn_label(pawn), String(need)])
+	# The raid readout is only mounted while a raid is on (it hides itself), so
+	# it is the reason the column has to be re-stacked rather than laid out once.
+	_raid_readout = RAID_READOUT_SCENE.instantiate() as RaidReadout
+	add_child(_raid_readout)
 
-func _on_station_alert(message: String) -> void:
-	_spawn_alert(message, message)
+	_alert_history = ALERT_HISTORY_SCENE.instantiate() as AlertHistory
+	add_child(_alert_history)
 
-func _on_crew_resigning(pawn: PawnBase, grace_hours: float) -> void:
-	_spawn_alert("resign|" + _pawn_label(pawn),
-		"%s is fed up and will leave in %d hours unless things improve!" % [_pawn_label(pawn), int(grace_hours)])
+	for readout: ReadoutPanel in _column_readouts():
+		readout.minimum_size_changed.connect(_queue_column_layout)
+		readout.visibility_changed.connect(_queue_column_layout)
 
-func _on_crew_resignation_cancelled(pawn: PawnBase) -> void:
-	_spawn_alert("stay|" + _pawn_label(pawn), "%s decided to stay." % _pawn_label(pawn))
+## Top to bottom. Order is the layout.
+func _column_readouts() -> Array[ReadoutPanel]:
+	return [_map_readout, _raid_readout, _alert_feed] as Array[ReadoutPanel]
 
-func _on_crew_departed(pawn: PawnBase) -> void:
-	_spawn_alert("depart|" + _pawn_label(pawn), "%s has left the station." % _pawn_label(pawn))
+var _laying_out_column: bool = false
 
-## Dedupe-keyed transient alert label (shared by every alert source).
-func _spawn_alert(key: String, text: String) -> void:
-	if _active_alerts.has(key):
-		return
-	var label := Label.new()
-	label.text = text
-	label.add_theme_color_override("font_color", UIPalette.ATTENTION)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_alerts_box.add_child(label)
-	_active_alerts[key] = label
-	# UI runs on wall-clock by design (TimeManager rule: UI stays real-time),
-	# so a plain scene-tree timer is correct here, not sim_seconds().
-	if get_tree():
-		get_tree().create_timer(15.0).timeout.connect(func() -> void:
-			_active_alerts.erase(key)
-			if is_instance_valid(label):
-				label.queue_free()
-		)
-
-# --- raid banner (WI-32) ------------------------------------------------------
-
-## Top-strip banner shown while a pirate raid is on: ship count + a "Hail" button
-## that pays the shrinking ransom to end the raid. It refreshes off
-## raid_state_changed (ships lost, price moved).
+## Stacks the right column from the top and tells the inspector where it ends.
 ##
-## WI-50's cleanup list says this goes; it stays because its replacement doesn't
-## exist yet. The banner is the only way to reach `pay_off()`, so deleting it now
-## would remove a real action from the game for the length of three work items.
-## WI-53 turns it into a critical alert and WI-57 gives ARC its own surface.
-var _raid_banner: PanelContainer
-var _raid_label: Label
-var _raid_pay_btn: Button
-
-func _setup_raid_ui() -> void:
-	_raid_banner = PanelContainer.new()
-	_raid_banner.visible = false
-	_raid_banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-	_raid_banner.offset_top = 40
-	_raid_banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	_raid_banner.add_child(row)
-	_raid_label = Label.new()
-	_raid_label.add_theme_color_override("font_color", UIPalette.ATTENTION)
-	row.add_child(_raid_label)
-	_raid_pay_btn = Button.new()
-	_raid_pay_btn.pressed.connect(_on_raid_hail_pressed)
-	row.add_child(_raid_pay_btn)
-	add_child(_raid_banner)
-	SignalBus.raid_started.connect(func(_strength: float) -> void: _refresh_raid_banner())
-	SignalBus.raid_ended.connect(func(_outcome: StringName) -> void: _refresh_raid_banner())
-	SignalBus.raid_state_changed.connect(_refresh_raid_banner)
-
-func _on_raid_hail_pressed() -> void:
-	if Global.raid_manager != null:
-		Global.raid_manager.pay_off()
-
-func _refresh_raid_banner() -> void:
-	var mgr: RaidManager = Global.raid_manager
-	if mgr == null or not mgr.active:
-		_raid_banner.visible = false
+## The column has to be a stack rather than three anchored constants because two
+## of the three readouts change height: the map folds, and the alert feed grows
+## with its rows (and the raid readout appears and disappears entirely). Baking a
+## worst case into [constant UIMetrics.INSPECTOR_TOP_LIMIT] instead would cost
+## the inspector three hundred pixels on the ordinary station where the feed is
+## empty and no raid is on - so the measurement is live and the constant is only
+## the floor.
+func _layout_right_column() -> void:
+	if _laying_out_column:
 		return
-	_raid_banner.visible = true
-	_raid_label.text = "⚠ RAID — %d hostile ship(s)" % mgr.ship_count()
-	var price: int = mgr.current_payoff()
-	_raid_pay_btn.text = "Hail: pay off (%d cr)" % price
-	_raid_pay_btn.disabled = not mgr.can_pay_off()
+	_laying_out_column = true
+	var y: float = float(UIMetrics.SCREEN_GUTTER)
+	for readout: ReadoutPanel in _column_readouts():
+		if readout == null or not is_instance_valid(readout) or not readout.visible:
+			continue
+		readout.offset_top = y
+		readout.fit_height()
+		y = readout.offset_bottom + float(UIMetrics.SCREEN_GUTTER)
+	if _alert_history != null and is_instance_valid(_alert_history):
+		# The flyout hangs off the feed's header, so it tracks the feed rather
+		# than the bottom of the stack.
+		_alert_history.offset_top = _alert_feed.offset_top if _alert_feed != null else y
+		_alert_history.fit_height()
+	if inspector != null and is_instance_valid(inspector):
+		inspector.top_limit = int(y)
+	_laying_out_column = false
+
+## Deferred so a burst of size changes in one frame settles into one stack, and
+## so the stack never runs inside the notification that caused it.
+func _queue_column_layout() -> void:
+	if _laying_out_column:
+		return
+	_layout_right_column.call_deferred()
+
+## The alert log (WI-53). Owned here rather than by the feed for the same reason
+## the resource ledger is: a flyout has to sit beside the column, and a child of
+## a 344px readout would be clipped by it.
+##
+## It is the **second** deliberate exception to invariant 1's one-panel rule
+## (the ledger was the first, WI-52). Same argument: it is a readout raised from
+## a permanent readout rather than a workspace, and closing Build to read what
+## just happened is exactly the interruption the invariant exists to prevent.
+var _alert_history: AlertHistory
+
+func _on_history_requested() -> void:
+	if _alert_history != null:
+		_alert_history.toggle()
 
 # --- game over (WI-07) --------------------------------------------------------
 
@@ -392,7 +394,6 @@ func _setup_trader_ui() -> void:
 	_trader_screen = TRADER_SCREEN_SCENE.instantiate() as TraderScreen
 	_trader_screen.visible = false
 	add_child(_trader_screen)
-	SignalBus.trader_arrived.connect(_on_trader_arrived)
 	SignalBus.trader_departed.connect(_on_trader_departed)
 
 func open_trader_screen() -> void:
@@ -402,14 +403,13 @@ func open_trader_screen() -> void:
 ## incoming trader force-closing the player's open Build panel mid-placement is
 ## hostile, so arrival raises an alert and lights TRADE's readiness dot (the
 ## console listens to the same signal) instead of stealing the screen. The trade
-## itself is still one click away, from the docking bay's own panel.
-func _on_trader_arrived(trader: TraderData) -> void:
-	_spawn_alert("trader_arrived", "%s has docked - open the docking bay to trade." % trader.trader_name)
-
-func _on_trader_departed(trader: TraderData) -> void:
+## itself is still one click away, from the docking bay's own panel - and since
+## WI-53 the arrival alert's subject *is* the docking bay, so its JUMP lands
+## there. Both alerts are [AlertManager]'s now; this handler only has to close a
+## screen the departing trader has left nobody to trade with.
+func _on_trader_departed(_trader: TraderData) -> void:
 	if _trader_screen.visible:
 		_trader_screen.close()
-	_spawn_alert("trader_departed", "%s has departed." % trader.trader_name)
 
 # --- events (WI-13) -------------------------------------------------------------
 
@@ -418,18 +418,6 @@ func _on_trader_departed(trader: TraderData) -> void:
 ## ModeManager.
 func _setup_event_ui() -> void:
 	add_child(EVENT_CARD_SCENE.instantiate())
-
-## Minimap (WI-34): the top of the permanent right column. It anchors itself and
-## manages its own redraw/collapse, so mounting is just an add_child.
-func _setup_minimap_ui() -> void:
-	var minimap: ReadoutPanel = MINIMAP_SCENE.instantiate() as ReadoutPanel
-	add_child(minimap)
-	_map_readout = minimap
-
-## The station map's collapse toggle, so the printed `M` on its header does
-## something. The action exists in its own right (the program doc settles M for
-## the map and G for Comms); wiring it here is what keeps the two from drifting.
-var _map_readout: ReadoutPanel
 
 ## The two readout hotkeys that are not modes: M folds the station map, L opens
 ## the resource ledger. Both go through the same text-focus guard every other HUD

@@ -1,8 +1,45 @@
 # WI-53 — Alerts: Priority, Acknowledgement & History
 
-> **STATUS: planned, not started.** Fifth item of the [[04_UI_Rework_Program]]. Depends on [[WI-49_UI_Design_System]] (`ReadoutPanel`, `ListRow`) and [[WI-51_Inspector]] (`select()` for jump-to).
+> **STATUS: COMPLETE 2026-08-10.** Fifth item of the [[04_UI_Rework_Program]]. Built on [[WI-49_UI_Design_System]] (`ReadoutPanel`, `ListRow`) and [[WI-51_Inspector]] (`select()` / `camera_target()` for jump-to).
 >
 > **This is the one item in the program with real gameplay consequence** — critical alerts pause the sim. Everything else in the rework changes how things look; this changes what the game does to you.
+>
+> **901 GUT green** (was 866; +35 in `test_alert_rules`) and a **60-check headless probe**, plus windowed screenshots of the feed and the log. Save-compatible: `alerts` is a new absent-key-means-empty section and `SAVE_VERSION` did not move.
+>
+> **Nine deviations from the design below, each recorded where it belongs and summarised here:**
+>
+> 1. **The pause is a refcounted hold on `TimeManager`, not a saved "was it paused before" flag.** §5 asked for WI-36's prior-pause-restore pattern; §edge-cases then asked for the trader-screen collision to be reference-counted. Those are the same requirement and the second one wins, because a saved-prior-flag *cannot* compose. `TimeManager.hold_pause(owner)` / `release_pause(owner)` / `is_paused()` is now the mechanism, and **all four pre-existing holders were converted with it** — the pause menu, the event card, the trader screen and the game-over screen already had this bug with *each other*, and now do not. The player's own `paused` flag is what saves, and is never written by a modal. `pause_menu._save_with_players_pause_state()` deleted as unnecessary.
+> 2. **The feed caps at 4 rows, not ~8.** §6's eight predates the right column having three tenants. Four rows plus the `+ n more` line is what fits above the inspector without squeezing the selection surface to nothing on a bad cycle. `AlertRules.FEED_CAP` and `UIMetrics.ALERT_FEED_MAX_HEIGHT` are the same limit twice and say so.
+> 3. **`INSPECTOR_TOP_LIMIT` became a floor, not the answer.** WI-51's constant anticipated "WI-53's alert feed stacks below the map and this grows with it" — but a constant has to encode the worst case, which costs the inspector 300px on the ordinary station where the feed is empty. `UIMain` stacks the right column and pushes the live value into `InspectorPanel.top_limit` instead.
+> 4. **Only `history` is saved, not `outstanding`.** §8's two-block schema turns out to be the same rows twice: an alert is logged the moment it is raised, so every outstanding HIGH/CRITICAL is *already* a history entry. Live alerts are not restored; live systems re-raise what is still true, which is §8's own "safe implementation" without the de-duplication pass.
+> 5. **One press does everything.** §5 wanted a click to acknowledge, §7 wanted `ListRow.pressed` to jump. It does both, in that order, which is exactly what verification #4 describes ("clicking it must jump to the module, and the sim must resume").
+> 6. **An outstanding critical's action verb is `RESUME ▸`, not `JUMP ▸`.** The meta line is ellipsed on a 344px readout and the one thing a row that stopped the game must not lose is how to start it again.
+> 7. **The raid banner became a right-column readout, not a deleted panel.** §Files allowed "a minimal live raid readout if playtesting says the banner is load-bearing" — it is, because it is the only route to `pay_off()`. `ui/alerts/raid_readout.gd`, visible only during a raid, stacked into the column.
+> 8. **No `alert_row.tscn` body of its own** — it is an inherited scene over `list_row.tscn` with `AlertRow` swapped in, which is the same trick `minimap.tscn` plays over `readout_panel.tscn`. The alert vocabulary (treatment, verb, meta) lives in the script so the feed and the log cannot drift.
+> 9. **The ARC inspection *offer* raises no alert.** It already fires an `EventManager` card, and §edge-cases forbids an event that fires a card from also raising an alert about the same thing. Everything else on §4's ARC list migrated.
+
+## What shipped
+
+| File | What it is |
+| --- | --- |
+| `scripts/utility/alert_data.gd` (`AlertData`) | The record: `Priority`, id, title/detail, subject, route, cycle/hour, `raised_at`, `sequence`, `count`, `acknowledged`, `suppress_pause`, `group_title`. `subject_node()` answers "never had one / not a node / since freed" in one call, through `typeof` rather than a cast. `to_dict`/`from_dict`; the subject is never saved. |
+| `scripts/utility/alert_rules.gd` (`AlertRules`) | Pure: the tier table (`is_sticky` / `pauses` / `is_logged` / `ages_out`), `make_id` / `family_of`, `is_outstanding` / `is_clearable` / `is_actionable` / `holds_pause`, `order`, `expired`, `survives_clear`, `trim_history`, `filter_priority`, the `Group` coalescer, `visible` / `overflow`. 35 tests. |
+| `scripts/managers/alert_manager.gd` (`AlertManager`) | The node in `main.tscn` under `Managers/`, **after `TimeManager`** and long before `SaveManager`. The live queue, the log, the pause latch, the legacy shim, the ten signal subscriptions, and the `alerts` save section. `AlertManager.raise_alert(...)` is the static every emit site calls. |
+| `TimeManager.hold_pause` / `release_pause` / `is_paused` / `pause_holders` | See deviation 1. `scale()` and `animation_speed()` now consult the combined state. |
+| `ui/alerts/alert_row.tscn` + `.gd` (`AlertRow`) | The row vocabulary: treatment (amber sticky / cyan actionable / inert), verb (`RESUME` / `JUMP` / `OPEN` / `DISMISS`), meta, and the three priority glyphs. |
+| `ui/alerts/alert_feed.tscn` + `.gd` (`AlertFeed`) | The 344px readout under the station map. `LOG` + `CLEAR` in the header, the count in the label, the `+ n more` line, and the jump/route follow. |
+| `ui/alerts/alert_history.tscn` + `.gd` (`AlertHistory`) | The log flyout: ALL / CRITICAL / HIGH filter, cycle-stamped inert rows, opened left of the right column. Esc level 2, beside the ledger. |
+| `ui/alerts/raid_readout.tscn` + `.gd` (`RaidReadout`) | See deviation 7. |
+| `ui/icons/alerts/{critical,high,low}.svg` | Authored, not `_draw()` — the WI-50 rule, because `_draw()` is the one thing headless verification cannot see. |
+| `ListRow.set_icon_color()`, ellipsis on the name/meta labels | The second is load-bearing: a non-autowrapping `Label` reports its **full text width** as its minimum, and `list_row.tscn`'s inner `Row` grows *both* ways — so a long alert detail did not overflow to the right, it grew out of both sides of the panel. Found by screenshot, invisible to the probe. |
+| `Cheats.fire_alert` / `clear_alerts` / `dump_alerts` | Criticals are otherwise hard to provoke on demand, and "why is the game frozen" needs an answer that is not "read the feed". |
+
+**Traps worth remembering:**
+
+- `subject as Object` is a **hard engine error** for a Variant holding a non-object *and* for one holding a freed object — the two cases a subject accessor exists to handle. `typeof(x) == TYPE_OBJECT` then `is_instance_valid(x)` is the only safe order.
+- A subclass may not shadow a parent's `const`, so `AlertRow` cannot declare `SCENE_PATH` over `ListRow`'s.
+- `TabStrip.set_tabs` takes `{"id":…, "text":…}`, not `"label"` — a wrong key renders the id.
+- A new `.svg` is not loadable by `preload` until an import pass has run; the first `--headless --import` after adding one reports "no resource loaders" and the second succeeds.
 
 ## Goal
 

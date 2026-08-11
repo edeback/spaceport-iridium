@@ -7,7 +7,9 @@ extends ModuleBase
 ## keeps its StructureManager connection, and its damage modifier makes EVA
 ## across it crawl (via traversal_speed_mult) until a repair job restores it.
 func _on_hp_zero(_source: StringName) -> void:
-	SignalBus.station_alert.emit("Truss wreckage at %s - structure holding, but barely." % str(module_cell))
+	AlertManager.raise_alert(AlertRules.make_id(&"wreckage", self), AlertData.Priority.HIGH,
+		"Truss wreckage", "%s · structure holding, but barely" % str(module_cell), self,
+		&"", "%d trusses are wreckage")
 
 func pre_delete() -> void:
 	super()

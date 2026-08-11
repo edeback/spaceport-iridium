@@ -93,9 +93,27 @@ signal economy_changed
 ## (deterministic tests, loading screens) instead of guessing at boot timing.
 @warning_ignore("unused_signal")
 signal game_bootstrapped
-## Generic station-wide alert text for the UI alerts strip.
+## Generic station-wide alert text (WI-05). Fifty-odd emit sites, and it stays:
+## "something happened, mention it" is the correct interface for most of them,
+## a modded system (WI-47) emitting it still gets an alert, and the cheat
+## console's "CHEAT: ..." messages are exactly what it is for.
+##
+## [AlertManager] subscribes and wraps each message as an [AlertData] at
+## [constant AlertData.Priority.LOW]; sites that deserve a higher tier were
+## migrated deliberately in WI-53 §4 rather than by a mechanical rename.
 @warning_ignore("unused_signal")
 signal station_alert(message: String)
+## A classified alert was raised or refreshed (WI-53) - the typed form of the
+## above, carrying a severity, a title/detail split, and the pawn or module it is
+## about. Emitted by [AlertManager] for *every* alert, including the ones the
+## legacy signal wrapped, so a listener only needs one of the two.
+@warning_ignore("unused_signal")
+signal station_alert_raised(alert: AlertData)
+## The live alert set changed in any way - raised, refreshed, acknowledged,
+## resolved, aged out or cleared. The feed re-renders off this one signal rather
+## than off six.
+@warning_ignore("unused_signal")
+signal alerts_changed
 @warning_ignore("unused_signal")
 signal trader_arrived(trader: TraderData)
 @warning_ignore("unused_signal")

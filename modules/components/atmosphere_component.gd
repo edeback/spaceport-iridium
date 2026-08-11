@@ -105,7 +105,14 @@ func start_breach(duration_hours: float) -> void:
 	breach_remaining_hours = maxf(breach_remaining_hours, duration_hours)
 	if not was_breached and is_breached():
 		SignalBus.module_breach_started.emit(owner_module)
-		SignalBus.station_alert.emit("Hull breach in %s! Emergency bulkheads will seal in %.1f hours." % [_module_name(), breach_remaining_hours])
+		# CRITICAL (WI-53): a timer is running toward suffocation and bulkhead
+		# loss, and it is running whether or not the player is looking at this
+		# part of the station. [AlertManager] drops the alert again when
+		# `module_breach_sealed` fires, by either seal path.
+		AlertManager.raise_alert(AlertRules.make_id(&"breach", owner_module),
+			AlertData.Priority.CRITICAL, "Hull breach",
+			"%s · seals in %.1fh" % [_module_name(), breach_remaining_hours], owner_module,
+			&"", "%d hull breaches are open")
 
 ## Accelerated sealing driven by a repair worker (WI-24). A pawn patching the
 ## hull closes the breach far faster than the emergency-bulkhead self-seal (the

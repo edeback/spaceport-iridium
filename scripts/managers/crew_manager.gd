@@ -292,7 +292,8 @@ func _arrive(hire: Dictionary) -> void:
 func _refund_hire(candidate: HireCandidate) -> void:
 	var amount: int = candidate.price if candidate != null else hire_cost
 	Global.resource_manager.credit_resource.change_global_total(amount)
-	SignalBus.station_alert.emit("Recruit had nowhere to dock — fee refunded")
+	AlertManager.raise_alert(&"hire_refunded", AlertData.Priority.HIGH,
+		"Recruit turned back", "No docking bay · %d cr fee refunded" % amount, null, &"crew")
 
 func _on_shuttle_docked(shuttle: ArrivalShuttle, bay: ModuleBase, candidate: HireCandidate) -> void:
 	if is_instance_valid(bay):

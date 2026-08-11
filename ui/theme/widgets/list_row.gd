@@ -13,6 +13,15 @@ extends Button
 ## The left accent bar is a child rather than the style box's left border,
 ## because Godot draws one border colour per box and the design's accent is
 ## brighter than the row's other three edges. See [method UIPalette.row_accent].
+##
+## The name and meta labels are authored with `text_overrun_behavior` set to
+## ellipsis, and that is load-bearing rather than cosmetic (found in WI-53): a
+## non-autowrapping [Label] reports its **full text width** as its minimum size,
+## which propagates up to the inner `Row` - and that `Row` is anchored with
+## `grow_horizontal = BOTH`, so an over-long row does not merely overflow to the
+## right, it grows out of *both* sides of its own panel. Setting an overrun
+## behaviour drops the reported minimum width to 1 while leaving the height
+## intact, which is what keeps a long alert detail inside a 344px readout.
 
 const SCENE_PATH: String = "res://ui/theme/widgets/list_row.tscn"
 
@@ -104,6 +113,14 @@ func set_icon(texture: Texture2D) -> void:
 	_icon.visible = texture != null
 	if _icon.visible and _swatch != null:
 		_swatch.visible = false
+
+## Tints the row's glyph. The authored icons are white strokes (the console
+## convention, WI-50), so anything that wants a coloured one recolours it here
+## rather than shipping a second SVG per colour. Call after [method set_icon].
+func set_icon_color(color: Color) -> void:
+	_ensure_refs()
+	if _icon != null:
+		_icon.modulate = color
 
 ## Recolours the right-hand slot on its own, for the rows whose metric carries a
 ## sign - the ledger's per-cycle rate, the trade table's margin, the economy

@@ -288,7 +288,8 @@ func advance_tier() -> void:
 	var data: TierData = current_tier_data()
 	var label: String = data.display_name if data != null and data.display_name != "" else str(current_tier)
 	SignalBus.station_tier_changed.emit(current_tier)
-	SignalBus.station_alert.emit("Station promoted to Tier %d: %s" % [current_tier, label])
+	AlertManager.raise_alert(&"tier_promoted", AlertData.Priority.HIGH,
+		"Station promoted to Tier %d" % current_tier, label, null, &"comms")
 	# Nudge every listener that gates on tier (unlock cards, tier panel).
 	SignalBus.station_tier_progress_changed.emit()
 
@@ -329,7 +330,9 @@ func begin_inspection() -> void:
 		return
 	var bay: ModuleBase = Global.trader_manager.find_trade_bay() if Global.trader_manager != null else null
 	if bay == null:
-		SignalBus.station_alert.emit("The ARC inspector found no docking bay to receive them. They'll return later.")
+		AlertManager.raise_alert(&"inspection_no_bay", AlertData.Priority.HIGH,
+			"ARC inspection postponed",
+			"No docking bay to receive the inspector · they will return later", null, &"comms")
 		_inspection_cooldown_cycles = inspection_reoffer_cooldown_cycles
 		SignalBus.station_tier_progress_changed.emit()
 		return
@@ -350,7 +353,8 @@ func begin_inspection() -> void:
 func decline_inspection() -> void:
 	_inspection_offer_pending = false
 	_inspection_cooldown_cycles = inspection_reoffer_cooldown_cycles
-	SignalBus.station_alert.emit("You declined the ARC inspection. They'll offer another in a few cycles.")
+	AlertManager.raise_alert(&"inspection_declined", AlertData.Priority.HIGH,
+		"ARC inspection declined", "They will offer another in a few cycles", null, &"comms")
 	SignalBus.station_tier_progress_changed.emit()
 
 ## Called by InspectionRunner when the tour completes successfully.

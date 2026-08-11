@@ -150,7 +150,8 @@ func enable_recurring_costs() -> void:
 	wages_enabled = true
 	upkeep_enabled = true
 	levy_enabled = true
-	SignalBus.station_alert.emit("ARC now levies wages, upkeep, and a profit tax on your promoted station.")
+	AlertManager.raise_alert(&"levy_enabled", AlertData.Priority.HIGH, "ARC levy is now in force",
+		"Wages, upkeep and a profit tax on your promoted station", null, &"comms")
 	_emit_changed()
 
 # --- income routing (called by trade/contract payouts) ------------------------
@@ -295,7 +296,8 @@ func _announce_settlement(balance_before: int) -> void:
 			parts.append("%s %d" % [_category_label(category), value])
 	if total <= 0:
 		return
-	SignalBus.station_alert.emit("ARC settlement: -%d cr (%s)" % [total, ", ".join(parts)])
+	AlertManager.raise_alert(&"arc_settlement", AlertData.Priority.HIGH, "ARC settlement",
+		"-%d cr · %s" % [total, ", ".join(parts)], null, &"comms")
 
 func _finalize_current(new_cycle: int) -> void:
 	_history.append(_current)
@@ -322,8 +324,12 @@ func _update_insolvency() -> void:
 	if not warning_issued:
 		if insolvent_cycles >= warning_cycles:
 			warning_issued = true
-			SignalBus.station_alert.emit(
-				"ARC DEMANDS PAYMENT: clear your debt within %d cycles or the station is repossessed." % grace_cycles)
+			# CRITICAL (WI-53): this is the step before `game_over`, and the whole
+			# grace window can elapse while the player is doing something else.
+			AlertManager.raise_alert(&"bankruptcy", AlertData.Priority.CRITICAL,
+				"ARC demands payment",
+				"Clear your debt within %d cycles or the station is repossessed" % grace_cycles,
+				null, &"comms")
 			_offer_insolvency_card()
 	elif insolvent_cycles >= warning_cycles + grace_cycles:
 		_game_over_fired = true
@@ -355,8 +361,9 @@ func take_loan(principal: int) -> bool:
 	loan_payments_left = maxi(loan_term_cycles, 1)
 	loan_payment = int(ceil(float(loan_remaining) / float(loan_payments_left)))
 	Global.resource_manager.credit_resource.change_global_total(principal)
-	SignalBus.station_alert.emit("ARC loan approved: +%d cr now, repaying %d cr over %d cycles." %
-		[principal, loan_remaining, loan_payments_left])
+	AlertManager.raise_alert(&"loan_approved", AlertData.Priority.HIGH, "ARC loan approved",
+		"+%d cr now · repaying %d cr over %d cycles" % [principal, loan_remaining, loan_payments_left],
+		null, &"comms")
 	_emit_changed()
 	return true
 
@@ -368,7 +375,8 @@ func repay_loan_early() -> bool:
 	if owed > 0:
 		_charge(&"loan_payment", owed)
 	_clear_loan()
-	SignalBus.station_alert.emit("ARC loan repaid in full (-%d cr)." % owed)
+	AlertManager.raise_alert(&"loan_repaid", AlertData.Priority.HIGH, "ARC loan repaid",
+		"Cleared in full · -%d cr" % owed, null, &"comms")
 	_emit_changed()
 	return true
 

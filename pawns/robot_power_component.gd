@@ -146,7 +146,10 @@ func _on_recharge_end(job: Job) -> void:
 	if energy_percent() < seek_threshold_percent:
 		_retry_cooldown = retry_cooldown_seconds
 		if energy <= 0.0 and not _stranded_alerted:
-			SignalBus.station_alert.emit("%s is out of power with no reachable charger" % _robot_label())
+			AlertManager.raise_alert(AlertRules.make_id(&"robot_stranded", owner_pawn),
+				AlertData.Priority.HIGH, "Robot out of power",
+				"%s · no reachable charger" % _robot_label(), owner_pawn, &"",
+				"%d robots are out of power")
 			_stranded_alerted = true
 	else:
 		_stranded_alerted = false
