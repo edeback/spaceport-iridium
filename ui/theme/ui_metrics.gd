@@ -87,6 +87,18 @@ const PANEL_OVERLAYS_WIDTH: int = 360
 const PANEL_BUILD_WIDTH: int = 356
 ## The Build panel's flyout sits beside the rail, not inside it (696 total).
 const PANEL_BUILD_FLYOUT_WIDTH: int = 340
+## X the flyout's own frame starts at: flush against the rail panel's right edge,
+## so the two borders read as one seam and the pair measures exactly 696.
+const PANEL_BUILD_FLYOUT_LEFT: int = PANEL_BUILD_WIDTH
+
+## Build's four icon sizes, all square by construction. The rail and the row
+## icons differ because a rail entry is a heading and a module row is a line
+## item; the selected row's is larger again because it heads its own block.
+const BUILD_RAIL_ICON: int = 34
+const BUILD_ROW_ICON: int = 38
+const BUILD_SELECTED_ICON: int = 44
+## The recent strip is icon-only, so its square is the whole control.
+const BUILD_RECENT_ICON: int = 40
 const PANEL_COMMS_WIDTH: int = 620
 const PANEL_CREW_WIDTH: int = 660
 const PANEL_STORES_WIDTH: int = 1080
@@ -98,6 +110,13 @@ const PANEL_RD_WIDTH: int = 1400
 ## `ReadoutPanel` is not `ConsolePanel` with a parameter.
 const PANEL_HEADER_HEIGHT: int = 56
 const READOUT_HEADER_HEIGHT: int = 34
+
+## Padding inside the full-bleed footer strip some panels carry (WI-54) - the
+## "CLICK TO HOLD · ESC CANCEL" line under Build's flyout and the "the overlay
+## keeps painting" line under Overlays. Tighter vertically than the content pad
+## because it is one line of meta text, not a region.
+const PANEL_FOOTER_PAD_H: int = 16
+const PANEL_FOOTER_PAD_V: int = 13
 
 ## Horizontal padding inside each header.
 const PANEL_HEADER_PAD: int = 16

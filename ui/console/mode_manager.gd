@@ -282,6 +282,15 @@ const HOTKEY_ABBREVIATIONS: Dictionary[String, String] = {
 	"MIDDLE MOUSE BUTTON": "MMB",
 	"LEFT MOUSE BUTTON": "LMB",
 	"RIGHT MOUSE BUTTON": "RMB",
+	# Build's category cycle prints inside a section label (WI-54), where
+	# "BRACELEFT/BRACERIGHT" would be wider than the panel. Godot names keycodes
+	# 91/93 "BraceLeft"/"BraceRight" rather than the bracket spelling its own
+	# `KEY_BRACKETLEFT` constant suggests, so both are listed - which one
+	# `get_keycode_string` returns is not a promise worth relying on.
+	"BRACELEFT": "[",
+	"BRACERIGHT": "]",
+	"BRACKETLEFT": "[",
+	"BRACKETRIGHT": "]",
 }
 
 ## What to print as `mode`'s hotkey - read from the live [InputMap] rather than

@@ -63,6 +63,16 @@ static func create() -> ConsolePanel:
 		panel_width = value
 		_apply_layout()
 
+## X the frame starts at. Zero for every mode panel - they weld to the left edge
+## - and [constant UIMetrics.PANEL_BUILD_FLYOUT_LEFT] for the one frame that does
+## not: Build's flyout is a second panel parked against the rail's right edge
+## (WI-54). It stays a frame property rather than the flyout positioning itself,
+## so the pair still measures exactly what the geometry table says it does.
+@export var panel_offset_left: int = 0:
+	set(value):
+		panel_offset_left = value
+		_apply_layout()
+
 ## Padding inside the content region. Zero by default because the panels that
 ## run edge-to-edge lists (Build's rail, Stores' rows) are the common case.
 @export var content_padding: int = 0:
@@ -77,6 +87,24 @@ static func create() -> ConsolePanel:
 		active = value
 		_apply_active()
 
+## A full-bleed strip welded to the foot of the panel, above the console. It
+## carries the one standing instruction a panel has - "CLICK TO HOLD · ESC
+## CANCEL", "the chosen overlay keeps painting the station after this panel
+## closes" - which is a property of the *panel*, not of whatever is scrolled into
+## view inside it. Empty hides the strip entirely.
+@export var footer_text: String = "":
+	set(value):
+		footer_text = value
+		_apply_footer()
+
+## Which type variation the footer line wears. Meta by default (the caps,
+## tracked, mono line Build uses); a panel whose footer is a sentence rather than
+## an instruction sets [constant UIType.BODY].
+@export var footer_variation: StringName = UIType.META_LINE:
+	set(value):
+		footer_variation = value
+		_apply_footer()
+
 var _body: Panel
 var _highlight: ColorRect
 var _header: Control
@@ -90,6 +118,9 @@ var _hotkey_label: Label
 var _header_edge: ColorRect
 var _content: MarginContainer
 var _gradient: TextureRect
+var _footer: PanelContainer
+var _footer_pad: MarginContainer
+var _footer_label: Label
 
 func _ready() -> void:
 	_ensure_refs()
@@ -118,6 +149,9 @@ func _ensure_refs() -> void:
 	_hotkey_label = get_node_or_null("Column/Header/Row/Hotkey") as Label
 	_header_edge = get_node_or_null("Column/Header/Edge") as ColorRect
 	_content = get_node_or_null("Column/Content") as MarginContainer
+	_footer = get_node_or_null("Column/Footer") as PanelContainer
+	_footer_pad = get_node_or_null("Column/Footer/Pad") as MarginContainer
+	_footer_label = get_node_or_null("Column/Footer/Pad/Label") as Label
 
 # --- public -------------------------------------------------------------------
 
@@ -154,6 +188,7 @@ func _apply_all() -> void:
 	_apply_hotkey()
 	_apply_padding()
 	_apply_active()
+	_apply_footer()
 	_apply_static_colors()
 
 ## The colours that never change. Set in code rather than in the scene so the
@@ -182,9 +217,9 @@ func _apply_layout() -> void:
 	if _body == null:
 		return
 	set_anchors_preset(Control.PRESET_LEFT_WIDE, true)
-	offset_left = 0.0
+	offset_left = float(panel_offset_left)
 	offset_top = 0.0
-	offset_right = float(panel_width)
+	offset_right = float(panel_offset_left + panel_width)
 	offset_bottom = -float(UIMetrics.CONSOLE_HEIGHT)
 	custom_minimum_size = Vector2(float(panel_width), 0.0)
 	if _header != null:
@@ -239,6 +274,38 @@ func _apply_padding() -> void:
 		return
 	for side: String in ["left", "top", "right", "bottom"]:
 		_content.add_theme_constant_override("margin_" + side, content_padding)
+
+## The footer is darker than the panel it sits under and carries a single top
+## rule, so it reads as welded to the frame rather than as the last row of the
+## content. Its style is built here rather than authored in the scene for the
+## same reason every other colour is: a scene-authored [Color] stops tracking
+## [UIPalette].
+func _apply_footer() -> void:
+	_ensure_refs()
+	if _footer == null or _footer_label == null:
+		return
+	var has_footer: bool = not footer_text.strip_edges().is_empty()
+	_footer.visible = has_footer
+	if not has_footer:
+		return
+	var box := StyleBoxFlat.new()
+	# Darker than PANEL rather than a tint of it: the strip has to read as
+	# *outside* the content region even when the content ends flush against it.
+	box.bg_color = UIPalette.VOID
+	box.border_color = UIPalette.EDGE
+	box.set_border_width_all(0)
+	box.border_width_top = UIMetrics.BORDER_WIDTH
+	box.set_corner_radius_all(0)
+	_footer.add_theme_stylebox_override("panel", box)
+	if _footer_pad != null:
+		_footer_pad.add_theme_constant_override("margin_left", UIMetrics.PANEL_FOOTER_PAD_H)
+		_footer_pad.add_theme_constant_override("margin_right", UIMetrics.PANEL_FOOTER_PAD_H)
+		_footer_pad.add_theme_constant_override("margin_top", UIMetrics.PANEL_FOOTER_PAD_V)
+		_footer_pad.add_theme_constant_override("margin_bottom", UIMetrics.PANEL_FOOTER_PAD_V)
+	_footer_label.theme_type_variation = footer_variation
+	# Caps only for the meta weight; a footer that is a sentence stays a sentence.
+	_footer_label.text = footer_text.to_upper() if footer_variation == UIType.META_LINE else footer_text
+	_footer_label.add_theme_color_override("font_color", UIPalette.TEXT_META)
 
 ## The active panel's right edge and header underline go cyan; an inactive one
 ## wears the inert EDGE. This is the only place the two states differ, which is

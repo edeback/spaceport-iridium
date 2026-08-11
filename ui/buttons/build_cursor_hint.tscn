@@ -1,0 +1,21 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/buttons/build_cursor_hint.gd" id="1_hint"]
+
+[node name="BuildCursorHint" type="PanelContainer"]
+mouse_filter = 2
+script = ExtResource("1_hint")
+
+[node name="Pad" type="MarginContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 7
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 7
+
+[node name="Label" type="Label" parent="Pad"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"Metric"
+text = "MODULE"

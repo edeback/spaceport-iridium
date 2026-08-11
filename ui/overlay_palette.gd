@@ -93,3 +93,85 @@ static func logistics_color(priority: int, ref: float = LOGISTICS_REF) -> Color:
 	else:
 		rgb = _NEUTRAL.lerp(_COOL, -t)
 	return Color(rgb.r, rgb.g, rgb.b, TINT)
+
+# --- legend (WI-54) -----------------------------------------------------------
+
+## Stable key for one overlay mode. The controller's `Mode` enum is a property of
+## a [Control]; these are what the pure side keys on, so the legend table can be
+## tested without a node and so a saved/printed mode name is never an enum
+## ordinal.
+const MODE_POWER: StringName = &"power"
+const MODE_O2: StringName = &"o2"
+const MODE_INTEGRITY: StringName = &"integrity"
+const MODE_VIBRATION: StringName = &"vibration"
+const MODE_LOGISTICS: StringName = &"logistics"
+
+## One entry in an overlay's legend: the swatch the player sees beside a phrase.
+class LegendStop extends RefCounted:
+	var label: String
+	var color: Color
+
+	func _init(stop_label: String, stop_color: Color) -> void:
+		label = stop_label
+		# The mode functions return the *tint strength* in alpha, which is not an
+		# opacity a UI swatch should inherit - a 0.82-alpha square over a dark
+		# panel reads as a different colour from the module it is explaining.
+		color = Color(stop_color.r, stop_color.g, stop_color.b, 1.0)
+
+## The legend for one mode, low reading to high.
+##
+## Every stop is produced by calling that mode's own colour function at a
+## representative value rather than by naming a colour, which is the whole point:
+## the swatch beside "breathable" is *the tint a breathable module gets*, so the
+## legend cannot drift from the paint when a gradient is retuned. An unknown key
+## (a mode with nothing to explain, or NONE) returns empty.
+static func legend_stops(mode_key: StringName) -> Array[LegendStop]:
+	match mode_key:
+		MODE_POWER:
+			return [
+				LegendStop.new("Powered", power_color(true)),
+				LegendStop.new("No power", power_color(false)),
+			] as Array[LegendStop]
+		MODE_O2:
+			return [
+				LegendStop.new("Suffocating", o2_color(O2_RED_AT)),
+				LegendStop.new("Marginal", o2_color((O2_RED_AT + O2_GREEN_AT) * 0.5)),
+				LegendStop.new("Breathable", o2_color(O2_GREEN_AT)),
+			] as Array[LegendStop]
+		MODE_INTEGRITY:
+			return [
+				LegendStop.new("Critical", integrity_color(0.0, false)),
+				LegendStop.new("Damaged", integrity_color(0.5, false)),
+				LegendStop.new("Intact", integrity_color(1.0, false)),
+				LegendStop.new("Wreckage", integrity_color(0.5, true)),
+			] as Array[LegendStop]
+		MODE_VIBRATION:
+			# `ref` is the controller's calibration export, so the stops are stated
+			# as *fractions* of it - a legend that hardcoded absolute field levels
+			# would stop matching the station the moment that export is retuned.
+			# Zero is deliberately not a stop: no field means no tint at all, and
+			# a swatch for "transparent" is a black square. The note says so.
+			return [
+				LegendStop.new("Quiet", vibration_color(0.1, 1.0)),
+				LegendStop.new("Noticeable", vibration_color(0.5, 1.0)),
+				LegendStop.new("Loud", vibration_color(1.0, 1.0)),
+			] as Array[LegendStop]
+		MODE_LOGISTICS:
+			return [
+				LegendStop.new("Source", logistics_color(-int(LOGISTICS_REF))),
+				LegendStop.new("Neutral", logistics_color(0)),
+				LegendStop.new("Sink", logistics_color(int(LOGISTICS_REF))),
+			] as Array[LegendStop]
+	return [] as Array[LegendStop]
+
+## One-line footnote under a mode's ramp, for the parts of a mode that are not a
+## colour: the O2 breach pulse, the logistics arrows the flow layer draws.
+static func legend_note(mode_key: StringName) -> String:
+	match mode_key:
+		MODE_O2:
+			return "A pulsing module is breached."
+		MODE_LOGISTICS:
+			return "Arrows are active hauls; numbers are storage priority."
+		MODE_VIBRATION:
+			return "Modules with no vibration field are left untinted."
+	return ""

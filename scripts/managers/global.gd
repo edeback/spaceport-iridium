@@ -78,6 +78,12 @@ const REMAPPABLE_ACTIONS: Array[StringName] = [
 	&"mode_comms",
 	&"mode_overlays",
 	&"toggle_map",
+	# Build's category cycle (WI-54). Bracket keys rather than the design's Q/E:
+	# E is already `mode_stores`, and a key that both opens Stores and steps the
+	# rail is the collision WI-50's hotkey scan exists to catch. The hint the
+	# panel prints comes from the live InputMap, so it follows a rebind here.
+	&"build_category_prev",
+	&"build_category_next",
 	&"overlay_power",
 	&"overlay_o2",
 	&"overlay_integrity",
@@ -114,6 +120,8 @@ const ACTION_LABELS: Dictionary[StringName, String] = {
 	&"mode_overlays": "Overlays panel",
 	&"toggle_map": "Collapse station map",
 	&"toggle_ledger": "Resource ledger",
+	&"build_category_prev": "Previous build category",
+	&"build_category_next": "Next build category",
 	&"overlay_power": "Power overlay",
 	&"overlay_o2": "Oxygen overlay",
 	&"overlay_integrity": "Integrity overlay",

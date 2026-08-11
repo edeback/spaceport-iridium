@@ -1,6 +1,6 @@
 # 04 — UI Rework Program (WI-49 … WI-57)
 
-> **STATUS: in progress — WI-49, WI-50, WI-51, WI-52 and WI-53 shipped 2026-08-10, WI-54…57 not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
+> **STATUS: in progress — WI-49 … WI-54 shipped 2026-08-10, WI-55…57 not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
 >
 > The source design is **`assets/external/spaceport-iridium-ui-layout/project/Iridium Console UI Spec.dc.html`**, a Claude Design handoff bundle: ten reference screens at 1920×1080 plus the rules that produce them. Read it before implementing any child WI. Numbers in this doc are transcribed from it and are authoritative for implementation; where this doc and the mockup disagree, **this doc wins** (it carries the gameplay corrections from [[New Work for Phase 4]] that the mockup predates).
 >
@@ -127,7 +127,7 @@ Every existing UI file and where it goes. Nothing in this table may be silently 
 
 **Becomes a mode panel (WI-54 … WI-57):**
 
-`buttons/build_menu.tscn`; `overlay_controller.gd`'s toolbar + legend; `trade/trade_screen.tscn`; `trade/trader_screen.tscn`; `windows/contracts_screen.tscn`; `unlocks/unlock_panel.gd` + `unlock_node_card.gd`; `windows/economy_screen.gd`; `windows/jobs_screen.gd`; `windows/ui_crew_recruitment.tscn` (the Crew panel's HIRE action).
+✅ `buttons/build_menu.tscn` and ✅ `overlay_controller.gd`'s toolbar + legend (WI-54; `buttons/module_resource_cost_ui.*` deleted with them, `module_button_tooltip` demoted to the recent strip's hover card). Still to go: `trade/trade_screen.tscn`; `trade/trader_screen.tscn`; `windows/contracts_screen.tscn`; `unlocks/unlock_panel.gd` + `unlock_node_card.gd`; `windows/economy_screen.gd`; `windows/jobs_screen.gd`; `windows/ui_crew_recruitment.tscn` (the Crew panel's HIRE action).
 
 **Untouched by this program:** `menus/main_menu.tscn`, `settings_menu.gd`, `save_load_menu.gd`, `keybind_row.gd`, `pause_menu.gd`, `game_over_screen.tscn` (WI-36's out-of-game flow — it has its own consistent look and no console). `event_card.tscn` is untouched here because the Phase-4 **Dialogue** item is going to rewrite it against Dialogue Manager; it should adopt the new theme for free and otherwise be left alone. `preview_module`, `selection_brackets`, `overlay_flow_layer`, `click_cycler` are world-space, not chrome.
 
@@ -156,7 +156,7 @@ The mockup's own suggested build order, split finer so no work item touches more
 | [[WI-51_Inspector]] ✅ | One bottom-right surface, swapped tab sets, nothing-selected line | The largest single reduction in surface count; also where the mood-modifier breakdown lands |
 | [[WI-52_Vitals_And_Ledger]] ✅ | Pinned strip + ledger flyout + per-cycle rates + pin persistence | "Do this before adding more resources, not after" |
 | [[WI-53_Alerts]] ✅ | Severity model, sticky/critical alerts, jump-to-subject, history log | The one item with real gameplay consequence (critical alerts pause the sim) |
-| [[WI-54_Panels_Build_And_Overlays]] | The two narrow panels that already exist | Cheapest panel conversions; proves the frame at two widths |
+| [[WI-54_Panels_Build_And_Overlays]] ✅ | The two narrow panels that already exist | Cheapest panel conversions; proves the frame at two widths |
 | [[WI-55_Panels_Trade_And_RD]] | The two widest panels, reflowed in place | Existing content, new layout, plus the Contracts tab merge |
 | [[WI-56_Panels_Crew_And_Stores]] | Two genuinely new panels | Crew roster and the station-wide storage view have no predecessor |
 | [[WI-57_Panel_Comms_And_Retirement]] | Comms panel, ARC contact, and deleting the last legacy windows | The closer: nothing may be left mounted outside the console |
@@ -262,6 +262,30 @@ Shipped 2026-08-10. Details, the nine deviations and the four traps found are in
 4. **A panel that wants to be reachable from an alert declares a route id**, and `AlertFeed.ROUTES` maps it to a `ModeManager.Mode`. `build` / `crew` / `stores` / `trade` / `research` / `comms` are already wired, including for the modes whose panels do not exist yet.
 5. **The alert log is the second (and last chartered) exception to invariant 1**, at Esc level 2 beside the resource ledger.
 6. `ListRow`'s name and meta labels are ellipsed, and that is load-bearing rather than cosmetic — see the trap in [[WI-53_Alerts]]. Any new list built on `ListRow` inherits the fix; any list that hand-rolls its own row will rediscover the bug.
+
+## What WI-54 landed (the frame additions and the two shipped panels)
+
+Shipped 2026-08-10. Details, the ten deviations and the five traps found are in [[WI-54_Panels_Build_And_Overlays]].
+
+| File | What it is |
+| --- | --- |
+| `ConsolePanel.panel_offset_left` / `footer_text` / `footer_variation` | Two additive frame properties. The first exists for Build's flyout — the one frame that does not weld to the left edge. The second is the full-bleed instruction strip at a panel's foot, which the design draws as part of the frame rather than as the last row of the content. |
+| `SectionLabel.hint`, `ListRow.set_icon(texture, size)` | A trailing hotkey hint on a section rule (`CATEGORIES ——— [/]`), and an icon size override for a row that is a *heading* rather than a line item. |
+| `ui/buttons/build_menu.gd` (`BuildMenu`) | The 356px body: full-bleed search, the recent strip, `CATEGORIES`, and a `ListRow` rail whose entries carry name / count / caret. `open_category()`, `close_flyout()`, `flyout_open()`, `flyout_panel()`, `facts_for()`. Owns the flyout. |
+| `ui/buttons/module_button.gd` (`ModuleButton`) | The flyout row in three states — buildable, selected-and-expanded (description + facts line), locked-and-dimmed (gating tech + lock glyph) — plus the `compact` icon-only tile the recent strip uses. |
+| `ui/buttons/module_facts.gd` (`ModuleFacts`) | Reads the numbers a module scene **declares** — power draw, power output, storage capacity, crew seats, footprint — once per `PackedScene`, cached on the menu. Nothing here simulates; see deviation 2. |
+| `BuildMenuModel.sort_bucket` / `gating_unlock` / `gating_label` / `format_cost` / `format_footprint` / `format_facts` / `fact_is_a_cost` | The new pure rules, all tested. Locked-after-unlocked ordering, gate resolution by walking `UnlockData.effects` (no `required_unlock` back-reference), and the row/hint text. |
+| `ui/buttons/build_cursor_hint.gd` (`BuildCursorHint`) | The held module's attached label, mounted on the HUD by `UIMain` so it outlives the Build panel. A real `Control`, not `_draw()` output — deliberately, so a probe can read it. |
+| `OverlayPalette.MODE_*` / `LegendStop` / `legend_stops()` / `legend_note()` | The legend table, keyed by `StringName`. Every stop is produced by that mode's own colour function, so the swatch beside a phrase **is** the tint the station is painted with. |
+| `build_category_prev` / `build_category_next` | Two real, remappable actions on `[` / `]`. See deviation 1 for why not `Q`/`E`. |
+
+**The contract for WI-55 … WI-57:**
+
+1. **A panel's standing instruction is `ConsolePanel.footer_text`, not a row at the bottom of the content.** It is full-bleed and welded to the frame; a list that scrolls must not be able to push it off.
+2. **Locked is a state, not an absence.** Build renders un-researched modules dimmed with the tech that grants them, and the rail no longer hides a category because everything in it is locked. R&D (WI-55) is the other half of that story and should assume the player arrives already knowing what they are missing.
+3. **Never invent a rate.** `ModuleFacts` reports only what a scene declares. A panel that wants a produced-per-cycle figure needs a real source for it, the way `ResourceRateTracker` is one — not a formula in the view.
+4. **`ui_category` groups the rail and nothing else.** The rail is built from discovered category ids, so a modded category appears with no core edit; nothing in the panel gates gameplay on it, and nothing groups on `tags`.
+5. **A screenshot is part of the verification, and it has to be driven into the state under test.** Two defects in this item passed every probe check and were visible only in a capture — and the first capture proved the frame while proving nothing about the item's one behaviour change.
 
 ## Cross-cutting risks
 

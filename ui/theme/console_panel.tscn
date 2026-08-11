@@ -113,6 +113,26 @@ text = "ESC"
 layout_mode = 2
 size_flags_vertical = 3
 
+[node name="Footer" type="PanelContainer" parent="Column"]
+layout_mode = 2
+visible = false
+mouse_filter = 2
+
+[node name="Pad" type="MarginContainer" parent="Column/Footer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 13
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 13
+
+[node name="Label" type="Label" parent="Column/Footer/Pad"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"MetaLine"
+autowrap_mode = 3
+text = "FOOTER"
+
 [node name="Highlight" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 10

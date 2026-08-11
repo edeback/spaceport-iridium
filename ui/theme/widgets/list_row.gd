@@ -104,12 +104,16 @@ func set_swatch(color: Color) -> void:
 	if _swatch.visible and _icon != null:
 		_icon.visible = false
 
-func set_icon(texture: Texture2D) -> void:
+## `size` overrides the list-item square for a row that is a *heading* rather
+## than a line item - Build's category rail is the motivating case, where the
+## design gives each entry a 34px tile. The row grows to fit it, because
+## [method _refit] measures the content.
+func set_icon(texture: Texture2D, size: int = SWATCH_SIZE) -> void:
 	_ensure_refs()
 	if _icon == null:
 		return
 	_icon.texture = texture
-	_icon.custom_minimum_size = Vector2(float(SWATCH_SIZE), float(SWATCH_SIZE))
+	_icon.custom_minimum_size = Vector2(float(size), float(size))
 	_icon.visible = texture != null
 	if _icon.visible and _swatch != null:
 		_swatch.visible = false

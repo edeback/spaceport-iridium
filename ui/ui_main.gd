@@ -16,6 +16,7 @@ var skip_emit: bool = false
 
 const CONSOLE_BAR_SCENE: PackedScene = preload("res://ui/console/console_bar.tscn")
 const BUILD_MENU_SCENE: PackedScene = preload("res://ui/buttons/build_menu.tscn")
+const BUILD_CURSOR_HINT_SCENE: PackedScene = preload("res://ui/buttons/build_cursor_hint.tscn")
 const CONTRACTS_SCREEN_SCENE: PackedScene = preload("res://ui/windows/contracts_screen.tscn")
 const EVENT_CARD_SCENE: PackedScene = preload("res://ui/windows/event_card.tscn")
 const TRADER_SCREEN_SCENE: PackedScene = preload("res://ui/windows/trade/trader_screen.tscn")
@@ -50,6 +51,7 @@ func _ready() -> void:
 	SignalBus.game_over.connect(_on_game_over)
 	_setup_console()
 	_setup_overlay_ui()
+	_setup_build_cursor_hint()
 	_setup_modes()
 	# Bound after registration so the console can render STORES disabled from the
 	# first frame rather than one refresh later.
@@ -112,14 +114,15 @@ func _setup_modes() -> void:
 	mode_manager.register(ModeManager.Mode.COMMS, _make_comms_panel)
 	mode_manager.register(ModeManager.Mode.OVERLAY, overlay_controller.panel)
 
-## BUILD: the WI-43 rail + flyout, lifted out of the old left column into the
-## frame. The menu is unchanged apart from being told what to park its flyout
-## beside.
+## BUILD: the rail + flyout (WI-43, reframed in WI-54). The panel carries **no**
+## content padding: the menu's search block runs full-bleed with its own rule
+## under it, which a padded content region would inset by sixteen pixels and
+## leave floating.
 func _make_build_panel() -> Control:
 	var panel: ConsolePanel = ConsolePanel.create()
 	panel.title = "Build"
 	panel.panel_width = UIMetrics.PANEL_BUILD_WIDTH
-	panel.content_padding = UIMetrics.CONTENT_PAD
+	panel.content_padding = 0
 	panel.hotkey = ModeManager.hotkey_label(ModeManager.Mode.BUILD)
 	_build_menu = BUILD_MENU_SCENE.instantiate() as BuildMenu
 	_build_menu.flyout_anchor = panel
@@ -173,6 +176,17 @@ func _on_mode_changed(new_mode: ModeManager.Mode, _previous: ModeManager.Mode) -
 func _setup_overlay_ui() -> void:
 	overlay_controller = OverlayController.new()
 	add_child(overlay_controller)
+
+## The held module's attached label (WI-54). Mounted here rather than by the
+## Build panel because closing Build while holding a module deliberately keeps
+## the ghost - so its instruction has to outlive the panel that started it. It
+## follows the cursor, ignores the mouse, and is invisible unless something is
+## actually held.
+var _build_cursor_hint: BuildCursorHint
+
+func _setup_build_cursor_hint() -> void:
+	_build_cursor_hint = BUILD_CURSOR_HINT_SCENE.instantiate() as BuildCursorHint
+	add_child(_build_cursor_hint)
 
 ## Pause menu (WI-36). Added last so it sits on top of every other HUD panel;
 ## it claims Esc only when esc_claimed() says nothing else wants it.

@@ -18,6 +18,11 @@ extends Control
 ## reports. So the digit hotkeys moved off the buttons' [Shortcut]s (which only
 ## fire while their button is visible) and into this node's `_unhandled_input`,
 ## where they keep working with the panel shut - the stated design.
+##
+## WI-54 gave the panel its final body: six [ListRow]s that print their own
+## number key, and a legend for the active mode only. The legend swatches are
+## produced by [OverlayPalette]'s own mode functions rather than named here, so
+## the square beside "breathable" is the tint a breathable module actually gets.
 
 enum Mode { NONE, POWER, O2, INTEGRITY, VIBRATION, LOGISTICS }
 
@@ -51,6 +56,25 @@ const HOTKEY_ACTIONS: Dictionary[StringName, Mode] = {
 	&"overlay_logistics": Mode.LOGISTICS,
 }
 
+## Mode -> the pure key [OverlayPalette] tables its legend under. Two spellings
+## of the same identity, but the pure side must not reach into a [Control] for an
+## enum, and the enum must not become a string the sim could persist.
+const LEGEND_KEYS: Dictionary[Mode, StringName] = {
+	Mode.POWER: OverlayPalette.MODE_POWER,
+	Mode.O2: OverlayPalette.MODE_O2,
+	Mode.INTEGRITY: OverlayPalette.MODE_INTEGRITY,
+	Mode.VIBRATION: OverlayPalette.MODE_VIBRATION,
+	Mode.LOGISTICS: OverlayPalette.MODE_LOGISTICS,
+}
+
+## The panel's standing instruction. The one thing about this panel a player has
+## to be told, because it is the one thing that does not behave like every other
+## mode: closing it does not undo it.
+const FOOTER_LINE: String = "The chosen overlay keeps painting the station after this panel closes."
+
+## Side of a legend swatch. Matches the design's 12px chip square.
+const LEGEND_SWATCH: int = 12
+
 var _mode: Mode = Mode.NONE
 var _flow_layer: OverlayFlowLayer
 ## Currently-breached modules, refreshed on each full pass; only these are
@@ -58,8 +82,13 @@ var _flow_layer: OverlayFlowLayer
 var _pulse_modules: Array[ModuleBase] = []
 var _pulse_time: float = 0.0
 
-var _button_group := ButtonGroup.new()
-var _legend: Label
+## Mode -> its row, so a mode set from a hotkey (or from Esc) can repaint the
+## list without the rows having to watch anything. NONE has a row too - the
+## "Clear overlay" line is a real entry, not a footnote.
+var _rows: Dictionary[Mode, ListRow] = {}
+var _legend_section: VBoxContainer
+var _legend_rows: VBoxContainer
+var _legend_note: Label
 var _panel: ConsolePanel
 
 func _ready() -> void:
@@ -81,28 +110,52 @@ func panel() -> ConsolePanel:
 	_panel.panel_width = UIMetrics.PANEL_OVERLAYS_WIDTH
 	_panel.content_padding = UIMetrics.CONTENT_PAD
 	_panel.hotkey = ModeManager.hotkey_label(ModeManager.Mode.OVERLAY)
+	# The footer is the frame's, not a last row of the list: it is a property of
+	# the panel (this mode outlives its panel) rather than of what is scrolled
+	# into view inside it.
+	_panel.footer_text = FOOTER_LINE
+	_panel.footer_variation = UIType.BODY
+
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_panel.content().add_child(scroll)
 
 	var column := VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", UIMetrics.SECTION_GAP)
-	_panel.content().add_child(column)
+	scroll.add_child(column)
 
 	var modes := VBoxContainer.new()
 	modes.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
-	modes.add_child(SectionLabel.create("Station view"))
-	_button_group.allow_unpress = true
 	# Order + hotkeys: 1..5 down the panel, 0 clears. The printed key comes from
-	# the live InputMap, so a rebind shows up on the button.
-	_add_mode_button(modes, Mode.POWER, "Power", &"overlay_power")
-	_add_mode_button(modes, Mode.O2, "O₂", &"overlay_o2")
-	_add_mode_button(modes, Mode.INTEGRITY, "Integrity", &"overlay_integrity")
-	_add_mode_button(modes, Mode.VIBRATION, "Vibration", &"overlay_vibration")
-	_add_mode_button(modes, Mode.LOGISTICS, "Logistics", &"overlay_logistics")
+	# the live InputMap, so a rebind shows up on the row.
+	_add_mode_row(modes, Mode.POWER, "Power", &"overlay_power")
+	_add_mode_row(modes, Mode.O2, "Oxygen", &"overlay_o2")
+	_add_mode_row(modes, Mode.INTEGRITY, "Integrity", &"overlay_integrity")
+	_add_mode_row(modes, Mode.VIBRATION, "Vibration", &"overlay_vibration")
+	_add_mode_row(modes, Mode.LOGISTICS, "Logistics", &"overlay_logistics")
+	# Clear is the same kind of thing as picking one - it is how you get back to
+	# no overlay with the mouse - so it is a row in the same list rather than a
+	# button somewhere else. It never takes the live treatment: "no overlay" is
+	# the absence of a state, not a state.
+	_add_mode_row(modes, Mode.NONE, "Clear overlay", &"overlay_clear")
 	column.add_child(modes)
 
-	_legend = Label.new()
-	_legend.theme_type_variation = UIType.META_LINE
-	_legend.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(_legend)
+	# The legend for the ACTIVE mode only. Five ramps will not fit in 360px, and
+	# four of them would be explaining something the station is not showing.
+	_legend_section = VBoxContainer.new()
+	_legend_section.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	_legend_section.add_child(SectionLabel.create("Legend"))
+	_legend_rows = VBoxContainer.new()
+	_legend_rows.add_theme_constant_override("separation", 4)
+	_legend_section.add_child(_legend_rows)
+	_legend_note = Label.new()
+	_legend_note.theme_type_variation = UIType.BODY
+	_legend_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_legend_note.add_theme_color_override("font_color", UIPalette.TEXT_META)
+	_legend_section.add_child(_legend_note)
+	column.add_child(_legend_section)
 
 	# The corridor-display toggle is a real feature the console design has no slot
 	# for, and it is the same category of thing as an overlay - a way of looking at
@@ -120,24 +173,22 @@ func panel() -> ConsolePanel:
 	column.add_child(extras)
 
 	_refresh_legend()
-	_sync_buttons()
+	_sync_rows()
 	return _panel
 
-func _add_mode_button(parent: Node, mode: Mode, label: String, action: StringName) -> void:
+## One overlay row: the mode's name, its number key right-aligned, and the live
+## treatment while it is the painted mode.
+func _add_mode_row(parent: Node, mode: Mode, label: String, action: StringName) -> void:
 	var key: String = ModeManager.action_hotkey_label(action)
-	var button: ActionButton = ActionButton.create("%s   %s" % [key, label])
-	button.toggle_mode = true
-	button.button_group = _button_group
-	button.focus_mode = Control.FOCUS_NONE
-	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.tooltip_text = "%s overlay (%s)" % [label, key]
-	button.set_meta("overlay_mode", mode)
-	# Reconcile after the toggle settles: with a radio ButtonGroup, switching
-	# fires the old button's toggled(false) and the new one's toggled(true) in an
-	# order we don't want to depend on, so we read the group's pressed button once
-	# the dust settles rather than reacting to each edge.
-	button.toggled.connect(func(_on: bool) -> void: _reconcile_mode.call_deferred())
-	parent.add_child(button)
+	var row: ListRow = ListRow.create()
+	row.configure(label, "", key)
+	row.tooltip_text = "%s (%s)" % [label, key] if key != "" else label
+	# A plain press, not a toggle: the mode is owned by this controller (the
+	# hotkeys set it with the panel shut), so the rows report it rather than
+	# holding it. A radio ButtonGroup would have been a second source of truth.
+	row.pressed.connect(set_mode.bind(mode))
+	parent.add_child(row)
+	_rows[mode] = row
 
 func _on_corridor_display_toggled(toggled_on: bool) -> void:
 	if Global.world_manager == null:
@@ -166,20 +217,16 @@ func _unhandled_input(event: InputEvent) -> void:
 func has_active_mode() -> bool:
 	return _mode != Mode.NONE
 
-func _reconcile_mode() -> void:
-	var pressed: BaseButton = _button_group.get_pressed_button()
-	var new_mode: Mode = Mode.NONE
-	if pressed != null and pressed.has_meta("overlay_mode"):
-		new_mode = pressed.get_meta("overlay_mode")
-	set_mode(new_mode)
-
-## Keep the toolbar's pressed state honest when the mode is set programmatically
-## (Esc, a future hotkey path). set_pressed_no_signal avoids re-entering the
-## toggled -> reconcile loop.
-func _sync_buttons() -> void:
-	for button: Button in _button_group.get_buttons():
-		var is_mine: bool = button.has_meta("overlay_mode") and button.get_meta("overlay_mode") == _mode
-		button.set_pressed_no_signal(is_mine)
+## Keeps the row list honest when the mode is set from anywhere but a click - a
+## number key with the panel shut, Esc, `0`. The rows hold no state of their own,
+## so this is a repaint rather than a reconciliation.
+func _sync_rows() -> void:
+	for mode: Mode in _rows:
+		var row: ListRow = _rows[mode]
+		if not is_instance_valid(row):
+			continue
+		var live: bool = mode == _mode and mode != Mode.NONE
+		row.set_kind(UIPalette.Row.LIVE if live else UIPalette.Row.INERT)
 
 # --- mode lifecycle -----------------------------------------------------------
 
@@ -189,7 +236,7 @@ func set_mode(new_mode: Mode) -> void:
 	_deactivate()
 	_mode = new_mode
 	_activate()
-	_sync_buttons()
+	_sync_rows()
 	_refresh_legend()
 	overlay_mode_changed.emit(_mode)
 
@@ -395,21 +442,38 @@ func _build_flow_layer() -> void:
 	# it draws in world coordinates on top of the station, not on the HUD.
 	Global.world_manager.pawn_layer.add_child(_flow_layer)
 
+## Rebuilds the legend for whatever is painted now. The whole section disappears
+## with the overlay rather than showing an empty ramp: with nothing painted there
+## is nothing to decode, and a legend for a mode the player is not in is four
+## rows of noise in the narrowest panel in the game.
 func _refresh_legend() -> void:
-	if _legend == null:
+	if _legend_rows == null or not is_instance_valid(_legend_rows):
 		return
-	_legend.text = _legend_text()
+	for child: Node in _legend_rows.get_children():
+		_legend_rows.remove_child(child)
+		child.queue_free()
+	var key: StringName = LEGEND_KEYS.get(_mode, &"")
+	var stops: Array[OverlayPalette.LegendStop] = OverlayPalette.legend_stops(key)
+	_legend_section.visible = not stops.is_empty()
+	for stop: OverlayPalette.LegendStop in stops:
+		_legend_rows.add_child(_make_legend_row(stop))
+	var note: String = OverlayPalette.legend_note(key)
+	_legend_note.text = note
+	_legend_note.visible = not note.is_empty()
 
-func _legend_text() -> String:
-	match _mode:
-		Mode.POWER:
-			return "  green = powered · red = no power"
-		Mode.O2:
-			return "  green = breathable · red = suffocating · pulsing = breach"
-		Mode.INTEGRITY:
-			return "  green = full HP · red = critical · orange = wreckage"
-		Mode.VIBRATION:
-			return "  clear = quiet · red = high vibration"
-		Mode.LOGISTICS:
-			return "  warm = sinks · cool = sources · arrows = active hauls"
-	return "  Overlays: pick a mode (1-5), Esc to clear"
+func _make_legend_row(stop: OverlayPalette.LegendStop) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", UIMetrics.READOUT_HEADER_GAP)
+	var swatch := ColorRect.new()
+	swatch.color = stop.color
+	swatch.custom_minimum_size = Vector2(float(LEGEND_SWATCH), float(LEGEND_SWATCH))
+	swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(swatch)
+	var label := Label.new()
+	# Caps happens where the label is owned (WI-49 §3), not in the palette - the
+	# stop names are data, and data does not know it is being rendered as a meta
+	# line.
+	label.text = stop.label.to_upper()
+	label.theme_type_variation = UIType.META_LINE
+	row.add_child(label)
+	return row

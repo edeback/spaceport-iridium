@@ -26,9 +26,18 @@ const SCENE_PATH: String = "res://ui/theme/widgets/section_label.tscn"
 		accent_color = value
 		_apply()
 
+## A hotkey hint parked at the far end of the rule ("CATEGORIES ——— Q/E"). Same
+## slot and the same weight as a panel header's hotkey, because it means the same
+## thing: this block has a key. Empty hides it.
+@export var hint: String = "":
+	set(value):
+		hint = value
+		_apply()
+
 var _accent: ColorRect
 var _label: Label
 var _rule: TextureRect
+var _hint: Label
 
 static func create(section_text: String = "") -> SectionLabel:
 	var section: SectionLabel = load(SCENE_PATH).instantiate() as SectionLabel
@@ -46,6 +55,7 @@ func _ensure_refs() -> void:
 	_accent = get_node_or_null("Accent") as ColorRect
 	_label = get_node_or_null("Label") as Label
 	_rule = get_node_or_null("Rule") as TextureRect
+	_hint = get_node_or_null("Hint") as Label
 
 func _apply() -> void:
 	_ensure_refs()
@@ -56,3 +66,6 @@ func _apply() -> void:
 	_accent.custom_minimum_size = Vector2(
 		float(UIMetrics.ACCENT_BAR_WIDTH), float(UIMetrics.READOUT_ACCENT_HEIGHT))
 	_rule.texture = UIPalette.section_rule_gradient()
+	if _hint != null:
+		_hint.text = hint
+		_hint.visible = not hint.is_empty()

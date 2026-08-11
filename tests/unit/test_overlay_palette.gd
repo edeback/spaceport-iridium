@@ -103,3 +103,77 @@ func test_logistics_neutral_is_greyish() -> void:
 	var neutral := OverlayPalette.logistics_color(0)
 	assert_almost_eq(neutral.r, neutral.b, 0.1, "zero priority is roughly neutral grey (not strongly warm or cool)")
 	assert_gt(neutral.a, 0.0, "storage is still tinted at neutral priority")
+
+# --- the legend (WI-54) -------------------------------------------------------
+# The Overlays panel prints the active mode's ramp. Every swatch is produced by
+# that mode's own colour function rather than named in the legend table, which is
+# the whole point: retuning a gradient cannot leave the legend explaining a
+# colour the station no longer paints.
+
+const _MODE_KEYS: Array[StringName] = [
+	OverlayPalette.MODE_POWER, OverlayPalette.MODE_O2, OverlayPalette.MODE_INTEGRITY,
+	OverlayPalette.MODE_VIBRATION, OverlayPalette.MODE_LOGISTICS,
+]
+
+func test_every_mode_has_a_legend() -> void:
+	for key: StringName in _MODE_KEYS:
+		assert_gt(OverlayPalette.legend_stops(key).size(), 1,
+			"%s explains itself with more than one stop" % key)
+
+func test_every_legend_stop_is_labelled() -> void:
+	for key: StringName in _MODE_KEYS:
+		for stop: OverlayPalette.LegendStop in OverlayPalette.legend_stops(key):
+			assert_ne(stop.label, "", "%s has no unlabelled swatch" % key)
+
+## The mode functions return the *tint strength* in alpha. A swatch that
+## inherited it would render as a different colour from the module it explains.
+func test_legend_swatches_are_opaque() -> void:
+	for key: StringName in _MODE_KEYS:
+		for stop: OverlayPalette.LegendStop in OverlayPalette.legend_stops(key):
+			assert_eq(stop.color.a, 1.0, "%s / %s is a solid swatch" % [key, stop.label])
+
+## The load-bearing property: a stop is the paint, not a lookalike.
+func test_the_breathable_swatch_is_the_breathable_tint() -> void:
+	var stops := OverlayPalette.legend_stops(OverlayPalette.MODE_O2)
+	var breathable: OverlayPalette.LegendStop = stops[stops.size() - 1]
+	var painted := OverlayPalette.o2_color(OverlayPalette.O2_GREEN_AT)
+	assert_almost_eq(breathable.color.r, painted.r, 0.001)
+	assert_almost_eq(breathable.color.g, painted.g, 0.001)
+	assert_almost_eq(breathable.color.b, painted.b, 0.001)
+
+func test_the_integrity_legend_distinguishes_wreckage_from_a_damaged_module() -> void:
+	var stops := OverlayPalette.legend_stops(OverlayPalette.MODE_INTEGRITY)
+	var damaged: Color = stops[1].color
+	var wreck: Color = stops[stops.size() - 1].color
+	assert_ne(damaged, wreck, "wreckage never reads as a low-HP real module")
+
+## Zero field is untinted, so a "silent" stop would be a black square. The note
+## covers it instead - see the comment on the vibration branch.
+func test_no_legend_stop_is_a_transparent_tint_rendered_solid() -> void:
+	for stop: OverlayPalette.LegendStop in OverlayPalette.legend_stops(OverlayPalette.MODE_VIBRATION):
+		assert_gt(stop.color.r + stop.color.g + stop.color.b, 0.1,
+			"%s is a real colour, not an untinted black" % stop.label)
+
+func test_an_unknown_mode_key_has_no_legend() -> void:
+	assert_eq(OverlayPalette.legend_stops(&"").size(), 0, "NONE explains nothing")
+	assert_eq(OverlayPalette.legend_stops(&"nonsense").size(), 0)
+
+## The two modes whose story is not entirely a colour ramp say the rest in a
+## note; the ones that are pure ramps must not carry a stray sentence.
+func test_only_the_modes_with_something_left_to_say_carry_a_note() -> void:
+	assert_ne(OverlayPalette.legend_note(OverlayPalette.MODE_O2), "", "the breach pulse is not a colour")
+	assert_ne(OverlayPalette.legend_note(OverlayPalette.MODE_LOGISTICS), "", "the flow arrows are not a colour")
+	assert_eq(OverlayPalette.legend_note(OverlayPalette.MODE_POWER), "", "powered/unpowered is the whole story")
+	assert_eq(OverlayPalette.legend_note(&""), "")
+
+## The controller maps its enum onto these keys. A mode missing from that table
+## renders with no legend at all, which looks like a mode with nothing to explain
+## rather than like a bug.
+func test_every_painted_overlay_mode_maps_to_a_legend_key() -> void:
+	for mode: OverlayController.Mode in OverlayController.Mode.values():
+		if mode == OverlayController.Mode.NONE:
+			continue
+		assert_true(OverlayController.LEGEND_KEYS.has(mode),
+			"overlay mode %d names a legend key" % mode)
+		assert_gt(OverlayPalette.legend_stops(OverlayController.LEGEND_KEYS[mode]).size(), 0,
+			"overlay mode %d resolves to a real legend" % mode)

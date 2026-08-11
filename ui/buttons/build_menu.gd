@@ -1,73 +1,80 @@
 class_name BuildMenu
 extends VBoxContainer
 
-## Station build menu (WI-43): a fixed category rail that opens a floating,
-## internally-scrolling icon-grid flyout, plus a live name search and a recently-built
-## strip. Replaces the old per-tag FoldableContainer accordion, whose single open
-## section could grow taller than the screen and bury every other category with no
-## scroll to reach them. The rail's height is bounded by the category count, so it can
-## never overflow no matter how many modules unlock.
+## The body of the BUILD mode panel: a search field, the recently-built strip,
+## and a fixed category rail that opens a 340px flyout beside the panel.
 ##
-## Grouping/ordering/search/MRU are pure and tested in BuildMenuModel; this node owns
-## only the view - button instancing, unlock-driven visibility, and flyout placement.
-## It keys on ModuleData.category_id, never tags (tags stay reserved for gameplay).
+## WI-43 replaced the old per-tag `FoldableContainer` accordion (whose single
+## open section could grow taller than the screen and bury every other category)
+## with a rail plus a floating icon grid. WI-54 finished the job against the
+## design: the rail entries are [ListRow]s carrying a name, a count and a
+## disclosure caret; the flyout is a second [ConsolePanel] welded to the rail's
+## right edge with its own 56px header; and **locked modules render** - dimmed,
+## with the tech that grants them - instead of being hidden until unlocked.
 ##
-## WI-50 moved this out of `ui_main.tscn`'s left column and into the BUILD mode's
-## [ConsolePanel]. The only functional change is [member flyout_anchor]: the flyout
-## has to park beside the *panel*, not beside this VBox, or it would open on top of
-## the panel's own right border.
+## Two stage, not a drilldown: picking a category never takes the rail away, so
+## the player keeps their place and can hop categories without a back step.
+##
+## Grouping / ordering / search / MRU / locked ordering / gate resolution are all
+## pure and tested in [BuildMenuModel]; this node owns only the view. It keys on
+## [member ModuleData.category_id], never on tags - tags stay reserved for
+## gameplay.
 
-const MODULE_BUTTON: PackedScene = preload("res://ui/buttons/module_button.tscn")
 const RECENT_CAP: int = 5
-## Rail category icons are pinned to this square; recent-strip icons to the smaller one.
-const RAIL_ICON_PX: int = 64
-const RECENT_ICON_PX: int = 40
-## Flyout geometry. Width comes from the design system (356 rail + 340 flyout = the
-## program doc's 696 total); height fits content up to the cap, past which the grid
-## scrolls inside instead of pushing off-screen.
-const FLYOUT_WIDTH: float = float(UIMetrics.PANEL_BUILD_FLYOUT_WIDTH)
-const FLYOUT_MAX_HEIGHT: float = 440.0
-## Zero: the flyout butts against the panel's right edge, so the two borders read as
-## one seam and the pair measures exactly the width the design says it does.
-const FLYOUT_GAP: float = 0.0
 
-## What the flyout parks beside. Null means this node - the case when the menu is
-## used outside a panel. The BUILD factory sets it to the [ConsolePanel].
-var flyout_anchor: Control = null
+## Side of the flyout header's `◀` collapse control.
+const COLLAPSE_CONTROL_SIZE: int = 22
 
-## Every non-hidden module, scanned once - the source of truth for grouping, search,
-## recent lookups, and unlock reactivity.
+## What the flyout parks beside, and the panel whose active border it takes over
+## while it is open. Null means this menu is mounted outside a panel (a probe);
+## the flyout then anchors itself at the design's x anyway. The BUILD factory
+## sets it to the rail's [ConsolePanel].
+var flyout_anchor: ConsolePanel = null
+
+## Every non-hidden module, scanned once - the source of truth for grouping,
+## search, recent lookups, and unlock reactivity.
 var _modules: Array[ModuleData] = []
 var _by_id: Dictionary[StringName, ModuleData] = {}
-## category id -> Array[ModuleData] (name-sorted), straight from BuildMenuModel.
+## category id -> Array[ModuleData], straight from BuildMenuModel.
 var _groups: Dictionary = {}
-## category id -> its rail Button, so unlock changes can retoggle rail visibility.
-var _rail_buttons: Dictionary[StringName, Button] = {}
+## Rail order, so the cycle keys have something to step through.
+var _categories: Array[StringName] = []
+## category id -> its rail row, so a category change can repaint the live one.
+var _rail_rows: Dictionary[StringName, ListRow] = {}
 var _recent_ids: Array[StringName] = []
 ## The category whose flyout is open, or &"" for search results / closed.
 var _open_category: StringName = &""
+## The rows currently in the flyout, so the held module's row can be re-marked
+## without repopulating the list.
+var _module_rows: Array[ModuleButton] = []
+
+## Scene-read module numbers, shared by every row this menu builds and freed with
+## it. See [ModuleFacts] for why it is not a static.
+var facts_cache: Dictionary[PackedScene, ModuleFacts] = {}
 
 var _search: LineEdit
-var _recent_label: Label
+var _recent_section: SectionLabel
 var _recent_row: HFlowContainer
 var _rail: VBoxContainer
-var _flyout: PanelContainer
-var _scroll: ScrollContainer
-var _flyout_grid: VBoxContainer
+var _flyout: ConsolePanel
+var _flyout_list: VBoxContainer
+var _flyout_scroll: ScrollContainer
+var _flyout_collapse: Button
 
 func _ready() -> void:
-	add_theme_constant_override("separation", 6)
+	add_theme_constant_override("separation", 0)
 	_scan_modules()
 	_build_search()
-	_build_recent()
-	_build_rail()
+	_build_body()
 	_build_flyout()
 	SignalBus.module_added.connect(_on_module_added)
-	# One shared zero-arg handler recomputes everything cheaply; module count is small
-	# and unlocks are rare, so fine-grained per-button maps aren't worth it.
+	# One shared zero-arg handler recomputes everything cheaply; module count is
+	# small and unlocks are rare, so fine-grained per-button maps aren't worth it.
 	for module_data: ModuleData in _modules:
 		module_data.module_lock_changed.connect(_on_module_lock_changed.unbind(1))
-	_refresh_rail_visibility()
+	if Global.ui_in_game != null:
+		Global.ui_in_game.input_mode_changed.connect(_on_input_mode_changed)
+	_refresh_rail()
 
 func _scan_modules() -> void:
 	_modules.clear()
@@ -84,90 +91,116 @@ func _scan_modules() -> void:
 		_modules.append(module_data)
 		_by_id[module_data.id] = module_data
 	_groups = BuildMenuModel.group_modules(_modules)
+	_categories.assign(_groups.keys())
+	_categories = BuildMenuModel.category_order(_categories)
 
 # --- construction --------------------------------------------------------------
 
+## The search field is its own full-bleed block with a rule under it, matching
+## the design - it is a control that acts on everything below it, not the first
+## row of the category list.
 func _build_search() -> void:
+	var block := PanelContainer.new()
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color(0.0, 0.0, 0.0, 0.0)
+	box.border_color = UIPalette.DIVIDER
+	box.set_border_width_all(0)
+	box.border_width_bottom = UIMetrics.BORDER_WIDTH
+	box.set_corner_radius_all(0)
+	block.add_theme_stylebox_override("panel", box)
+	add_child(block)
+
+	var pad := MarginContainer.new()
+	pad.add_theme_constant_override("margin_left", UIMetrics.CONTENT_PAD)
+	pad.add_theme_constant_override("margin_right", UIMetrics.CONTENT_PAD)
+	pad.add_theme_constant_override("margin_top", 14)
+	pad.add_theme_constant_override("margin_bottom", 14)
+	block.add_child(pad)
+
 	_search = LineEdit.new()
-	_search.placeholder_text = "Search modules"
+	_search.placeholder_text = "Search all modules…"
 	_search.clear_button_enabled = true
 	_search.text_changed.connect(_on_search_changed)
-	add_child(_search)
+	pad.add_child(_search)
 
-func _build_recent() -> void:
-	_recent_label = Label.new()
-	_recent_label.text = "RECENT"
-	_recent_label.theme_type_variation = UIType.READOUT_LABEL
-	_recent_label.visible = false
-	add_child(_recent_label)
+func _build_body() -> void:
+	var pad := MarginContainer.new()
+	pad.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	for side: String in ["left", "top", "right", "bottom"]:
+		pad.add_theme_constant_override("margin_" + side, UIMetrics.CONTENT_PAD)
+	add_child(pad)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", UIMetrics.SECTION_GAP)
+	pad.add_child(column)
+
+	# Recent sits above CATEGORIES: it is the shortcut past the rail, so it has to
+	# be reachable before the rail is.
+	_recent_section = SectionLabel.create("Recent")
+	_recent_section.visible = false
+	column.add_child(_recent_section)
 	_recent_row = HFlowContainer.new()
 	_recent_row.visible = false
-	add_child(_recent_row)
+	_recent_row.add_theme_constant_override("h_separation", UIMetrics.ROW_GAP)
+	_recent_row.add_theme_constant_override("v_separation", UIMetrics.ROW_GAP)
+	column.add_child(_recent_row)
 
-func _build_rail() -> void:
+	var categories: SectionLabel = SectionLabel.create("Categories")
+	categories.hint = _cycle_hint()
+	column.add_child(categories)
+
+	# The rail scrolls inside itself rather than the panel scrolling, so the
+	# search field and the section labels never leave the screen.
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(scroll)
+
 	_rail = VBoxContainer.new()
-	_rail.add_theme_constant_override("separation", 2)
-	add_child(_rail)
-	var categories: Array[StringName] = []
-	categories.assign(_groups.keys())
-	for category: StringName in BuildMenuModel.category_order(categories):
-		_rail.add_child(_make_rail_button(category))
+	_rail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_rail.add_theme_constant_override("separation", 5)
+	scroll.add_child(_rail)
+	for category: StringName in _categories:
+		_rail.add_child(_make_rail_row(category))
 
-## A rail button: a fixed RAIL_ICON_PX square icon + the category name. Composed from a
-## TextureRect rather than Button.icon so the icon is an exact square regardless of the
-## source texture - Button.icon/expand_icon can't pin a size while text is present.
-func _make_rail_button(category: StringName) -> Button:
-	var button := Button.new()
-	button.custom_minimum_size = Vector2(0, RAIL_ICON_PX + 8)
-	button.clip_text = true
-	button.pressed.connect(_on_rail_pressed.bind(category))
-	var row := HBoxContainer.new()
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_theme_constant_override("separation", 6)
-	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	row.offset_left = 6
-	row.offset_right = -6
-	var icon := TextureRect.new()
-	icon.texture = _category_icon(category)
-	icon.custom_minimum_size = Vector2(RAIL_ICON_PX, RAIL_ICON_PX)
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(icon)
-	var label := Label.new()
-	label.text = BuildMenuModel.category_name(category)
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(label)
-	button.add_child(row)
-	_rail_buttons[category] = button
-	return button
+## What the CATEGORIES section prints as its hotkey hint. Read from the live
+## [InputMap] rather than hardcoded, so a rebind shows up here and so an unbound
+## pair prints nothing at all - a printed hint for a key that does nothing is
+## worse than no hint (WI-54 edge case).
+func _cycle_hint() -> String:
+	var prev: String = ModeManager.action_hotkey_label(&"build_category_prev")
+	var next: String = ModeManager.action_hotkey_label(&"build_category_next")
+	if prev.is_empty() or next.is_empty():
+		return ""
+	return "%s/%s" % [prev, next]
 
-func _build_flyout() -> void:
-	# top_level positions the panel in global space and detaches it from this VBox's
-	# layout, so it can float over the game view to the right of the rail.
-	_flyout = PanelContainer.new()
-	_flyout.top_level = true
-	_flyout.visible = false
-	var margin := MarginContainer.new()
-	for side: String in ["left", "top", "right", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 6)
-	_flyout.add_child(margin)
-	_scroll = ScrollContainer.new()
-	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_scroll.custom_minimum_size = Vector2(FLYOUT_WIDTH, 0)
-	margin.add_child(_scroll)
-	_flyout_grid = VBoxContainer.new()
-	# Reserve room for the scrollbar so buttons never sit under it once a tall
-	# category scrolls.
-	_flyout_grid.custom_minimum_size = Vector2(FLYOUT_WIDTH - 16.0, 0)
-	_scroll.add_child(_flyout_grid)
-	add_child(_flyout)
+## A rail entry: category icon, name, the number of modules the flyout will show,
+## and a disclosure caret. The count is what is *shown*, locked entries included,
+## because that is what the player finds when they open it.
+##
+## Count and caret share [ListRow]'s one right-hand slot rather than the count
+## going on the row's meta line: the design has them inline beside each other,
+## and the meta line sits *under* the name.
+func _make_rail_row(category: StringName) -> ListRow:
+	var row: ListRow = ListRow.create()
+	row.set_icon(_category_icon(category), UIMetrics.BUILD_RAIL_ICON)
+	row.pressed.connect(_on_rail_pressed.bind(category))
+	_rail_rows[category] = row
+	_paint_rail_row(category, row)
+	return row
+
+func _paint_rail_row(category: StringName, row: ListRow) -> void:
+	var live: bool = category == _open_category
+	var label: String = BuildMenuModel.category_name(category)
+	var count: int = _bucket(category).size()
+	row.configure(label, "", "%d  ▸" % count,
+		UIPalette.Row.LIVE if live else UIPalette.Row.INERT)
+	row.set_icon(_category_icon(category), UIMetrics.BUILD_RAIL_ICON)
+	row.set_action_color(UIPalette.LIVE if live else UIPalette.TEXT_META)
+	row.tooltip_text = "%s · %d modules" % [label, count]
 
 ## Rail icon for a category: the BuildCategoryData's own cat_icon, or a
 ## representative module's icon as a fallback for a category that declares none.
-## Used to be an inspector dict on this node keyed by the enum - which a mod could
-## not add to, and which put display data for scanned content in a scene (WI-47 M5).
 func _category_icon(category: StringName) -> Texture2D:
 	var icon: Texture2D = BuildCategoryData.icon_of(category)
 	if icon != null:
@@ -177,34 +210,95 @@ func _category_icon(category: StringName) -> Texture2D:
 			return module_data.icon
 	return null
 
+## The flyout is a second [ConsolePanel], not a floating popup: it carries the
+## same 56px header (the category's name, its count and a collapse control) and
+## the same foot as the rail beside it, so 356 + 340 reads as one two-stage
+## surface rather than as a panel with a menu on top of it.
+##
+## `top_level` is what lets it do that from inside the rail's content region: a
+## top-level Control resolves its anchors against the viewport, so the frame's
+## own [member ConsolePanel.panel_offset_left] lands it at exactly x=356. It
+## stays a child of this node, though, because `top_level` detaches the transform
+## and *not* the visibility - closing the Build panel has to take the flyout with
+## it.
+func _build_flyout() -> void:
+	_flyout = ConsolePanel.create()
+	_flyout.top_level = true
+	_flyout.visible = false
+	_flyout.panel_offset_left = UIMetrics.PANEL_BUILD_FLYOUT_LEFT
+	_flyout.panel_width = UIMetrics.PANEL_BUILD_FLYOUT_WIDTH
+	_flyout.content_padding = 14
+	_flyout.hotkey = ""
+	_flyout.footer_text = "Click to hold · Esc cancel"
+	add_child(_flyout)
+
+	_flyout_collapse = Button.new()
+	_flyout_collapse.text = "◀"
+	_flyout_collapse.focus_mode = Control.FOCUS_NONE
+	_flyout_collapse.custom_minimum_size = Vector2(
+		float(COLLAPSE_CONTROL_SIZE), float(COLLAPSE_CONTROL_SIZE))
+	_flyout_collapse.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_flyout_collapse.tooltip_text = "Close this category"
+	_flyout_collapse.pressed.connect(close_flyout)
+	_flyout.add_header_control(_flyout_collapse)
+
+	_flyout_scroll = ScrollContainer.new()
+	_flyout_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_flyout_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_flyout.content().add_child(_flyout_scroll)
+
+	_flyout_list = VBoxContainer.new()
+	_flyout_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_flyout_list.add_theme_constant_override("separation", 7)
+	_flyout_scroll.add_child(_flyout_list)
+
 # --- rail / flyout interaction -------------------------------------------------
 
 func _on_rail_pressed(category: StringName) -> void:
-	if _open_category == category and _flyout.visible:
+	if _open_category == category and flyout_open():
 		close_flyout()
+		return
+	open_category(category)
+
+## Opens one category's flyout. Public because the cycle keys drive it too.
+func open_category(category: StringName) -> void:
+	if not _groups.has(category):
 		return
 	_search.text = "" # a rail pick overrides any active search
 	_open_category = category
-	_populate_grid(_bucket(category))
-	_flyout.visible = true
-	_fit_and_place_flyout.call_deferred()
+	_flyout.title = BuildMenuModel.category_name(category)
+	_flyout_collapse.visible = true
+	_populate_list(_bucket(category))
+	_show_flyout()
 
 func _on_search_changed(text: String) -> void:
 	var query: String = text.strip_edges()
 	if query.is_empty():
 		close_flyout() # clearing search dismisses the results flyout
 		return
-	_open_category = &"" # search results have no rail anchor
-	_populate_grid(BuildMenuModel.filter_by_name(_modules, query))
-	_flyout.visible = true
-	_fit_and_place_flyout.call_deferred()
+	# Search results have no rail anchor, so nothing in the rail goes live and
+	# the rail itself never scrolls away - the player keeps their place.
+	_open_category = &""
+	_flyout.title = "Results"
+	_flyout_collapse.visible = false
+	_populate_list(BuildMenuModel.filter_by_name(_modules, query))
+	_show_flyout()
 
-## `is_visible_in_tree`, not `visible`: `top_level` detaches the flyout's transform
-## but not its visibility, so closing the Build panel hides the flyout while leaving
-## its own `visible` true. Esc's "close the flyout first" level would otherwise claim
-## the key for a flyout nobody can see.
+func _show_flyout() -> void:
+	_flyout.visible = true
+	# The active border belongs to the outermost edge on screen, so while the
+	# flyout is out it wears the cyan and the rail beside it goes inert. That is
+	# the design's own detail and it is what makes the pair read as one surface.
+	if flyout_anchor != null and is_instance_valid(flyout_anchor):
+		flyout_anchor.active = false
+	_refresh_rail()
+
+## `is_visible_in_tree`, not `visible`: `top_level` detaches the flyout's
+## transform but not its visibility, so closing the Build panel hides the flyout
+## while leaving its own `visible` true. Esc's "close the flyout first" level
+## would otherwise claim the key for a flyout nobody can see.
 func flyout_open() -> bool:
-	return _flyout.is_visible_in_tree()
+	return _flyout != null and _flyout.is_visible_in_tree()
 
 ## The other half of that: the menu puts its own flyout away whenever it stops
 ## being visible, so reopening Build does not reopen a category the player
@@ -217,44 +311,84 @@ func _notification(what: int) -> void:
 		close_flyout()
 
 func close_flyout() -> void:
+	if _flyout == null:
+		return
 	_flyout.visible = false
 	_open_category = &""
+	if flyout_anchor != null and is_instance_valid(flyout_anchor):
+		flyout_anchor.active = true
+	_refresh_rail()
 
-## Fits the flyout to its content (capped, then scrolls) and parks it just right of
-## the rail, clamped inside the viewport. Deferred so the grid has laid out and
-## reported a real minimum size first.
-func _fit_and_place_flyout() -> void:
-	if not _flyout.visible:
-		return
-	var content_height: float = _flyout_grid.get_combined_minimum_size().y
-	_scroll.custom_minimum_size.y = clampf(content_height, 0.0, FLYOUT_MAX_HEIGHT)
-	# top_level means no parent container ever resizes the panel, and a Control's size
-	# only ever grows to meet its minimum - it never shrinks back. Without this, a tall
-	# category leaves the panel permanently stretched and later, shorter categories sit
-	# in a box of empty space.
-	_flyout.reset_size()
-	var anchor: Button = _rail_buttons.get(_open_category)
-	var y: float = anchor.global_position.y if anchor != null else _search.global_position.y
-	var viewport_height: float = get_viewport_rect().size.y
-	y = clampf(y, 0.0, maxf(0.0, viewport_height - _scroll.custom_minimum_size.y - 12.0))
-	var side: Control = flyout_anchor if flyout_anchor != null else self
-	_flyout.global_position = Vector2(side.global_position.x + side.size.x + FLYOUT_GAP, y)
-
-## Fills the flyout grid with a category's (or search's) modules. Buttons here keep the
-## full ModuleButton look (icon + name); only the rail and recent strip use bare icons.
-func _populate_grid(modules: Array[ModuleData]) -> void:
-	for child: Node in _flyout_grid.get_children():
-		_flyout_grid.remove_child(child)
+## Fills the flyout with a category's (or a search's) modules. Locked entries are
+## rendered dimmed, after the buildable ones, with the tech that grants them -
+## the only behaviour change in WI-54, and the one that makes the tech tree
+## legible from the build menu.
+func _populate_list(modules: Array[ModuleData]) -> void:
+	for child: Node in _flyout_list.get_children():
+		_flyout_list.remove_child(child)
 		child.queue_free()
-	for module_data: ModuleData in modules:
-		var button := MODULE_BUTTON.instantiate() as ModuleButton
-		button.set_moduledata(module_data)
-		button.custom_minimum_size = Vector2(0, 40)
-		button.visible = module_data.is_unlocked()
-		# Picking a module drops into placement mode - dismiss the menu so it stops
-		# covering the build area (ModuleButton._on_pressed still runs first).
-		button.pressed.connect(close_flyout)
-		_flyout_grid.add_child(button)
+	_module_rows.clear()
+	var unlocks: Array[UnlockData] = _all_unlocks()
+	var ordered: Array[ModuleData] = BuildMenuModel.sort_bucket(modules, _is_locked)
+	for module_data: ModuleData in ordered:
+		var row: ModuleButton = ModuleButton.create()
+		_flyout_list.add_child(row)
+		row.set_moduledata(module_data)
+		if _is_locked.call(module_data):
+			row.set_locked(true, BuildMenuModel.gating_label(module_data, unlocks))
+		else:
+			# Picking a module drops into placement mode - dismiss the flyout so it
+			# stops covering the build area. The rail stays.
+			row.pressed.connect(close_flyout)
+		_module_rows.append(row)
+	# Count what is shown, locked entries included, so the header agrees with the
+	# list under it.
+	_flyout.subtitle = str(ordered.size())
+	_mark_held_module()
+
+func _is_locked(module_data: ModuleData) -> bool:
+	return module_data != null and not module_data.is_unlocked()
+
+func _all_unlocks() -> Array[UnlockData]:
+	if Global.unlock_manager == null:
+		return [] as Array[UnlockData]
+	return Global.unlock_manager.get_all_unlocks()
+
+## Typed view into the (untyped-valued) _groups dictionary.
+func _bucket(category: StringName) -> Array[ModuleData]:
+	var bucket: Array[ModuleData] = _groups.get(category, [] as Array[ModuleData])
+	return bucket
+
+# --- category cycling -----------------------------------------------------------
+
+## Steps the open category one place along the rail, wrapping. With nothing open
+## it opens the first (or last) category rather than doing nothing, so the key is
+## a way *into* the rail as well as through it.
+##
+## `_shortcut_input` rather than `_unhandled_input`: the rail rows are focusable
+## [Button]s, and a focused button consumes arrow-style navigation before
+## unhandled input ever sees it. The text-focus guard is the shared one every HUD
+## hotkey uses (WI-50 contract point 6) - typing "steel" into the search box must
+## not cycle the rail.
+func _shortcut_input(event: InputEvent) -> void:
+	if not is_visible_in_tree() or _categories.is_empty():
+		return
+	if ModeManager.text_entry_has_focus(get_viewport()):
+		return
+	var step: int = 0
+	if event.is_action_pressed(&"build_category_next"):
+		step = 1
+	elif event.is_action_pressed(&"build_category_prev"):
+		step = -1
+	if step == 0:
+		return
+	get_viewport().set_input_as_handled()
+	var index: int = _categories.find(_open_category)
+	if index < 0:
+		index = 0 if step > 0 else _categories.size() - 1
+	else:
+		index = posmod(index + step, _categories.size())
+	open_category(_categories[index])
 
 # --- recently built ------------------------------------------------------------
 
@@ -262,8 +396,8 @@ func _on_module_added(module: ModuleBase) -> void:
 	if module == null or module.module_data == null:
 		return
 	var data: ModuleData = module.module_data
-	# Truss is auto-placed whenever a real module is removed - never a player choice,
-	# so it must not pollute the recent list.
+	# Truss is auto-placed whenever a real module is removed - never a player
+	# choice, so it must not pollute the recent list.
 	if data.hidden or data.id == &"truss_mdata":
 		return
 	_recent_ids = BuildMenuModel.push_recent(_recent_ids, data.id, RECENT_CAP)
@@ -271,42 +405,72 @@ func _on_module_added(module: ModuleBase) -> void:
 
 func _rebuild_recent_row() -> void:
 	for child: Node in _recent_row.get_children():
+		_recent_row.remove_child(child)
 		child.queue_free()
 	for id: StringName in _recent_ids:
 		var data: ModuleData = _by_id.get(id)
 		if data == null:
 			continue
-		var button := MODULE_BUTTON.instantiate() as ModuleButton
-		button.set_moduledata(data)
-		# Icon-only fixed square: the strip was eating far too much height as full
-		# icon+name buttons. The name still shows on hover via the module tooltip.
-		button.text = ""
-		button.expand_icon = true
-		button.custom_minimum_size = Vector2(RECENT_ICON_PX, RECENT_ICON_PX)
-		_recent_row.add_child(button)
+		var tile: ModuleButton = ModuleButton.create()
+		_recent_row.add_child(tile)
+		tile.compact = true
+		tile.set_moduledata(data)
+		if _is_locked.call(data):
+			# A module can be un-granted again on load (UnlockManager clears state
+			# before re-applying it), and the recent list outlives that.
+			tile.set_locked(true, BuildMenuModel.gating_label(data, _all_unlocks()))
 	var has_recent: bool = not _recent_ids.is_empty()
-	_recent_label.visible = has_recent
+	_recent_section.visible = has_recent
 	_recent_row.visible = has_recent
 
-# --- unlock reactivity ---------------------------------------------------------
+# --- reactivity ---------------------------------------------------------------
 
 func _on_module_lock_changed() -> void:
-	_refresh_rail_visibility()
-	if _flyout.visible and _open_category != &"":
-		_populate_grid(_bucket(_open_category))
-		_fit_and_place_flyout.call_deferred()
+	_refresh_rail()
+	_rebuild_recent_row()
+	if flyout_open() and _open_category != &"":
+		_populate_list(_bucket(_open_category))
 
-func _refresh_rail_visibility() -> void:
-	for category: StringName in _rail_buttons:
-		_rail_buttons[category].visible = _category_has_unlocked(category)
+## Repaints the rail: the open category takes the live treatment, and every entry
+## restates its count. Unlike WI-43's version this never *hides* a category -
+## locked modules are rendered now, so a category whose modules are all
+## un-researched has something to show, and the rail stops changing length under
+## the player as the tech tree opens up.
+func _refresh_rail() -> void:
+	for category: StringName in _rail_rows:
+		var row: ListRow = _rail_rows[category]
+		if is_instance_valid(row):
+			_paint_rail_row(category, row)
 
-func _category_has_unlocked(category: StringName) -> bool:
-	for module_data: ModuleData in _bucket(category):
-		if module_data.is_unlocked():
-			return true
-	return false
+## The held module's row takes the live treatment and expands, so the list agrees
+## with the ghost already on the station.
+func _on_input_mode_changed(_mode: UIInGame.InputMode) -> void:
+	_mark_held_module()
 
-## Typed view into the (untyped-valued) _groups dictionary.
-func _bucket(category: StringName) -> Array[ModuleData]:
-	var bucket: Array[ModuleData] = _groups.get(category, [] as Array[ModuleData])
-	return bucket
+func _mark_held_module() -> void:
+	var held: ModuleData = Global.ui_in_game.cur_module if Global.ui_in_game != null else null
+	for row: ModuleButton in _module_rows:
+		if is_instance_valid(row):
+			row.selected = held != null and row.module_data == held
+
+## The scene-read numbers behind one module's facts line, built on first ask and
+## cached for the life of this menu. Rows go through here rather than caching
+## their own so switching categories back and forth does not re-instantiate a
+## module scene each time.
+func facts_for(scene: PackedScene) -> ModuleFacts:
+	if scene == null:
+		return null
+	var cached: ModuleFacts = facts_cache.get(scene)
+	if cached == null:
+		cached = ModuleFacts.from_scene(scene)
+		facts_cache[scene] = cached
+	return cached
+
+## Live count of modules shown in a category, for the probe and for tests of the
+## header/rail agreement.
+func category_count(category: StringName) -> int:
+	return _bucket(category).size()
+
+## The flyout frame, so the mount can measure it. Never null once `_ready` ran.
+func flyout_panel() -> ConsolePanel:
+	return _flyout
