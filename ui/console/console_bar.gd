@@ -361,13 +361,10 @@ func _trader_is_docked() -> bool:
 	return Global.trader_manager != null and Global.trader_manager.visit_active
 
 func _an_unlock_is_affordable() -> bool:
+	# The predicate lives on the manager (WI-55): the R&D panel's own header asks
+	# the same question, and the console must not be the place it is defined.
 	var manager: UnlockManager = Global.unlock_manager
-	if manager == null:
-		return false
-	for unlock: UnlockData in manager.get_all_unlocks():
-		if manager.can_unlock(unlock):
-			return true
-	return false
+	return manager != null and manager.has_affordable_unlock()
 
 ## "There is something here you can do now": somebody is idle, or somebody has
 ## given notice. Both are things the player can act on from the Crew panel.

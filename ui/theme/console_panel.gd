@@ -36,6 +36,11 @@ const SCENE_PATH: String = "res://ui/theme/console_panel.tscn"
 ## default rather than a per-panel decision.
 const DEFAULT_HOTKEY: String = "ESC"
 
+## Asks [ModeManager] to close this mode (WI-50 contract point 4). Re-emitted on
+## behalf of the body mounted in the content region, which is where a panel's own
+## close control actually lives - see [method _adopt_content_signals].
+signal close_requested
+
 ## Panels are code-built (program decision 8), so the frame needs a one-call
 ## instantiation path like the widgets have.
 static func create() -> ConsolePanel:
@@ -105,6 +110,16 @@ static func create() -> ConsolePanel:
 		footer_variation = value
 		_apply_footer()
 
+## Whether the inspector hides while this panel is open (WI-55). True for Trade
+## and R&D: both run to 1180/1400px and selection means nothing in either, so the
+## design gives them the whole screen.
+##
+## A **declaration**, not a list of special cases in [UIMain] - that file reads it
+## duck-typed, the same way [ModeManager] finds the open/closed hooks, so a panel
+## that says nothing leaves the inspector alone. That is the right default for the
+## five narrow modes.
+@export var hides_inspector: bool = false
+
 var _body: Panel
 var _highlight: ColorRect
 var _header: Control
@@ -125,6 +140,7 @@ var _footer_label: Label
 func _ready() -> void:
 	_ensure_refs()
 	_apply_all()
+	_adopt_content_signals()
 
 ## Node lookups are lazy rather than `@onready` because the exported setters run
 ## during scene load, before the children exist, and because a caller may
@@ -178,6 +194,55 @@ func clear_header_controls() -> void:
 		return
 	for child: Node in _header_slot.get_children():
 		child.queue_free()
+
+# --- mode hooks ---------------------------------------------------------------
+#
+# [ModeManager] calls `on_opened` / `on_closed` on the Control its factory
+# returned, which for a code-built panel is this frame rather than the body
+# mounted inside it. Forwarding them means a body implements the hooks exactly as
+# the WI-50 contract describes, without every factory having to build a
+# frame-shaped shim first. Build's menu, Trade's table and R&D's trees all take
+# this route.
+#
+# Duck-typed on the way down for the same reason the manager duck-types on the
+# way in: a body with no live subscription implements neither hook.
+
+func on_opened() -> void:
+	_notify_content(&"on_opened")
+
+func on_closed() -> void:
+	_notify_content(&"on_closed")
+
+func _notify_content(hook: StringName) -> void:
+	_ensure_refs()
+	if _content == null:
+		return
+	for child: Node in _content.get_children():
+		if child.has_method(hook):
+			child.call(hook)
+
+## Re-emits the body's `close_requested` as the frame's own.
+##
+## [ModeManager] connects that signal on the Control the factory returned, which
+## for a code-built panel is this frame - but the control that actually asks to be
+## closed is the body inside it (Trade's `CONFIRM` commits and then wants the
+## panel gone). Without the bridge the body's signal goes nowhere and the panel
+## stays open with the manager none the wiser, which is the same stale-`current()`
+## failure the contract's "never set your own `visible`" rule exists to prevent.
+##
+## Runs in `_ready`, which the mount's `add_child` fires *before* the manager
+## connects - so the chain is complete by the time anything can emit.
+func _adopt_content_signals() -> void:
+	_ensure_refs()
+	if _content == null:
+		return
+	for child: Node in _content.get_children():
+		if child.has_signal(&"close_requested") and not child.is_connected(
+				&"close_requested", _on_content_close_requested):
+			child.connect(&"close_requested", _on_content_close_requested)
+
+func _on_content_close_requested() -> void:
+	close_requested.emit()
 
 # --- appearance ---------------------------------------------------------------
 

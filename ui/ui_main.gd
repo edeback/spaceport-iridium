@@ -17,9 +17,7 @@ var skip_emit: bool = false
 const CONSOLE_BAR_SCENE: PackedScene = preload("res://ui/console/console_bar.tscn")
 const BUILD_MENU_SCENE: PackedScene = preload("res://ui/buttons/build_menu.tscn")
 const BUILD_CURSOR_HINT_SCENE: PackedScene = preload("res://ui/buttons/build_cursor_hint.tscn")
-const CONTRACTS_SCREEN_SCENE: PackedScene = preload("res://ui/windows/contracts_screen.tscn")
 const EVENT_CARD_SCENE: PackedScene = preload("res://ui/windows/event_card.tscn")
-const TRADER_SCREEN_SCENE: PackedScene = preload("res://ui/windows/trade/trader_screen.tscn")
 const MINIMAP_SCENE: PackedScene = preload("res://ui/minimap.tscn")
 const ALERT_FEED_SCENE: PackedScene = preload("res://ui/alerts/alert_feed.tscn")
 const ALERT_HISTORY_SCENE: PackedScene = preload("res://ui/alerts/alert_history.tscn")
@@ -60,7 +58,6 @@ func _ready() -> void:
 	mode_manager.mode_changed.connect(_on_mode_changed)
 	_setup_right_column()
 	_setup_inspector_ui()
-	_setup_trader_ui()
 	_setup_event_ui()
 	_setup_pause_menu()
 	# Last, once every readout and the inspector exist: the column measures itself
@@ -133,13 +130,14 @@ func _make_build_panel() -> Control:
 func _make_crew_panel() -> Control:
 	return JobsScreen.new()
 
-## TRADE: the contracts board temporarily *is* the Trade mode. WI-55 merges the
-## two trade screens into the real panel and makes this a tab of it.
+## TRADE: the order sheet, the docked confirmation and the contracts board, merged
+## into one 1180px panel (WI-55). It builds its own frame, so this is one call.
 func _make_trade_panel() -> Control:
-	return CONTRACTS_SCREEN_SCENE.instantiate() as ContractsScreen
+	return TradePanel.create()
 
+## R&D: the tech tree at 1400px, one tab per tree (WI-55).
 func _make_research_panel() -> Control:
-	return UnlockPanel.new()
+	return UnlockPanel.create()
 
 ## COMMS: the economy page, until WI-57 makes it a tab of the ARC panel.
 func _make_comms_panel() -> Control:
@@ -153,10 +151,11 @@ func _on_sys_pressed() -> void:
 ## behind Trade and R&D on the grounds that selection means nothing there.
 ##
 ## That is a **per-panel declaration**, never a list of special cases here: a
-## panel that wants it exposes a `hides_inspector` property, which is read
-## duck-typed exactly the way [ModeManager] finds `on_opened` / `on_closed`. A
-## panel that declares nothing leaves the inspector alone, which is the right
-## default for the five narrow modes.
+## panel that wants it exposes a `hides_inspector` property - which since WI-55 is
+## [member ConsolePanel.hides_inspector], set by Trade and R&D - read duck-typed
+## exactly the way [ModeManager] finds `on_opened` / `on_closed`. A panel that
+## declares nothing leaves the inspector alone, which is the right default for the
+## five narrow modes.
 func _on_mode_changed(new_mode: ModeManager.Mode, _previous: ModeManager.Mode) -> void:
 	if inspector == null or not is_instance_valid(inspector):
 		return
@@ -247,10 +246,10 @@ func _topmost_esc_claim() -> StringName:
 	# The alert log is the third, on the same terms (WI-53).
 	if _alert_history != null and is_instance_valid(_alert_history) and _alert_history.is_open():
 		return &"alert_log"
-	# The trader screen is a modal that pauses the sim; it is not a mode and
-	# outranks one. WI-55 folds it into the Trade panel and this level goes.
-	if _trader_screen != null and _trader_screen.visible:
-		return &"trader"
+	# WI-55 removed the fourth level here. The trader screen was a modal that
+	# paused the sim and therefore outranked a mode; folded into the Trade panel it
+	# *is* a mode, and its docked pause is a named hold that the panel releases on
+	# close - so Esc closing the mode releases it, with no separate claim.
 	# 3. The open mode. One check, not seven.
 	if mode_manager != null and mode_manager.has_open_mode():
 		return &"mode"
@@ -278,8 +277,6 @@ func _close_esc_claim(claim: StringName) -> void:
 			ledger.close()
 		&"alert_log":
 			_alert_history.close()
-		&"trader":
-			_trader_screen.close()
 		&"mode":
 			mode_manager.close()
 		&"selection":
@@ -399,31 +396,6 @@ func _on_game_over(reason: String) -> void:
 	if reason != "":
 		screen.configure(reason)
 	add_child(screen)
-
-# --- trader screen (WI-08) ------------------------------------------------------
-
-var _trader_screen: TraderScreen
-
-func _setup_trader_ui() -> void:
-	_trader_screen = TRADER_SCREEN_SCENE.instantiate() as TraderScreen
-	_trader_screen.visible = false
-	add_child(_trader_screen)
-	SignalBus.trader_departed.connect(_on_trader_departed)
-
-func open_trader_screen() -> void:
-	_trader_screen.open()
-
-## WI-50 deliberately dropped the auto-open. Under exclusive mounting, an
-## incoming trader force-closing the player's open Build panel mid-placement is
-## hostile, so arrival raises an alert and lights TRADE's readiness dot (the
-## console listens to the same signal) instead of stealing the screen. The trade
-## itself is still one click away, from the docking bay's own panel - and since
-## WI-53 the arrival alert's subject *is* the docking bay, so its JUMP lands
-## there. Both alerts are [AlertManager]'s now; this handler only has to close a
-## screen the departing trader has left nobody to trade with.
-func _on_trader_departed(_trader: TraderData) -> void:
-	if _trader_screen.visible:
-		_trader_screen.close()
 
 # --- events (WI-13) -------------------------------------------------------------
 

@@ -338,6 +338,15 @@ func total_stored_by_resource(resource: ResourceData) -> int:
 	if data:
 		return data.stored
 	return 0
+
+## What this bin holds that nobody has claimed a withdrawal against (WI-55).
+## Zero for a resource this storage does not handle, same as
+## [method total_stored_by_resource].
+func available_to_withdraw(resource: ResourceData) -> int:
+	var data: StorageData = storage_data.get(resource)
+	if data:
+		return data.available_to_withdraw()
+	return 0
 	
 func is_empty() -> bool:
 	for data: StorageData in storage_data.values():

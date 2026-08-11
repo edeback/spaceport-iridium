@@ -42,6 +42,16 @@ func set_job_priority(new_priority: int) -> void:
 func autodump_amount() -> int:
 	return maxi(stored - desired - reserved_withdraw, 0)
 
+## Stock nobody has already spoken for - the `AVAIL` column of the Trade panel
+## (WI-55), and the amount-form of [method can_withdraw] with use_reserve false.
+##
+## Clamped at zero rather than allowed to go negative: `reserved_withdraw` can
+## legitimately exceed `stored` for a moment while a job holds a claim against
+## stock a second path already removed, and a negative "available" would read as
+## a debt the player owes rather than as "nothing spare".
+func available_to_withdraw() -> int:
+	return maxi(stored - reserved_withdraw, 0)
+
 func can_withdraw(quantity: int, use_reserve: bool) -> bool:
 	var available: int = stored
 	if not use_reserve:

@@ -1,6 +1,6 @@
 # 04 — UI Rework Program (WI-49 … WI-57)
 
-> **STATUS: in progress — WI-49 … WI-54 shipped 2026-08-10, WI-55…57 not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
+> **STATUS: in progress — WI-49 … WI-54 shipped 2026-08-10, WI-55 shipped 2026-08-11, WI-56…57 not started.** This is the umbrella doc for the Phase-4 UI rework. It holds the things all nine work items share — the design-system tables, the invariants, the port inventory, the sequencing, and the decisions taken up front — so each WI can cite one authority instead of re-deriving the palette nine times.
 >
 > The source design is **`assets/external/spaceport-iridium-ui-layout/project/Iridium Console UI Spec.dc.html`**, a Claude Design handoff bundle: ten reference screens at 1920×1080 plus the rules that produce them. Read it before implementing any child WI. Numbers in this doc are transcribed from it and are authoritative for implementation; where this doc and the mockup disagree, **this doc wins** (it carries the gameplay corrections from [[New Work for Phase 4]] that the mockup predates).
 >
@@ -127,7 +127,7 @@ Every existing UI file and where it goes. Nothing in this table may be silently 
 
 **Becomes a mode panel (WI-54 … WI-57):**
 
-✅ `buttons/build_menu.tscn` and ✅ `overlay_controller.gd`'s toolbar + legend (WI-54; `buttons/module_resource_cost_ui.*` deleted with them, `module_button_tooltip` demoted to the recent strip's hover card). Still to go: `trade/trade_screen.tscn`; `trade/trader_screen.tscn`; `windows/contracts_screen.tscn`; `unlocks/unlock_panel.gd` + `unlock_node_card.gd`; `windows/economy_screen.gd`; `windows/jobs_screen.gd`; `windows/ui_crew_recruitment.tscn` (the Crew panel's HIRE action).
+✅ `buttons/build_menu.tscn` and ✅ `overlay_controller.gd`'s toolbar + legend (WI-54; `buttons/module_resource_cost_ui.*` deleted with them, `module_button_tooltip` demoted to the recent strip's hover card). ✅ `trade/trade_screen.tscn`, ✅ `trade/trader_screen.tscn` and ✅ `windows/contracts_screen.tscn` — all three **deleted**, merged into `trade/trade_panel.gd` + `trade/contracts_tab.gd` (WI-55); ✅ `unlocks/unlock_panel.gd` + `unlock_node_card.gd` reframed (WI-55). Still to go: `windows/economy_screen.gd`; `windows/jobs_screen.gd`; `windows/ui_crew_recruitment.tscn` (the Crew panel's HIRE action).
 
 **Untouched by this program:** `menus/main_menu.tscn`, `settings_menu.gd`, `save_load_menu.gd`, `keybind_row.gd`, `pause_menu.gd`, `game_over_screen.tscn` (WI-36's out-of-game flow — it has its own consistent look and no console). `event_card.tscn` is untouched here because the Phase-4 **Dialogue** item is going to rewrite it against Dialogue Manager; it should adopt the new theme for free and otherwise be left alone. `preview_module`, `selection_brackets`, `overlay_flow_layer`, `click_cycler` are world-space, not chrome.
 
@@ -157,7 +157,7 @@ The mockup's own suggested build order, split finer so no work item touches more
 | [[WI-52_Vitals_And_Ledger]] ✅ | Pinned strip + ledger flyout + per-cycle rates + pin persistence | "Do this before adding more resources, not after" |
 | [[WI-53_Alerts]] ✅ | Severity model, sticky/critical alerts, jump-to-subject, history log | The one item with real gameplay consequence (critical alerts pause the sim) |
 | [[WI-54_Panels_Build_And_Overlays]] ✅ | The two narrow panels that already exist | Cheapest panel conversions; proves the frame at two widths |
-| [[WI-55_Panels_Trade_And_RD]] | The two widest panels, reflowed in place | Existing content, new layout, plus the Contracts tab merge |
+| [[WI-55_Panels_Trade_And_RD]] ✅ | The two widest panels, reflowed in place | Existing content, new layout, plus the Contracts tab merge |
 | [[WI-56_Panels_Crew_And_Stores]] | Two genuinely new panels | Crew roster and the station-wide storage view have no predecessor |
 | [[WI-57_Panel_Comms_And_Retirement]] | Comms panel, ARC contact, and deleting the last legacy windows | The closer: nothing may be left mounted outside the console |
 
@@ -200,7 +200,7 @@ Shipped 2026-08-10. Details and the six traps found are in [[WI-50_Console_And_M
 5. Take the panel width from `UIMetrics`, and the printed hotkey from `ModeManager.hotkey_label(mode)` so a rebind follows.
 6. **Every HUD hotkey is a real input action** in `Global.REMAPPABLE_ACTIONS` — including the overlay digits, which WI-50 converted. `ModeManager.text_entry_has_focus(viewport)` is the one place that decides whether the player is typing; call it, do not re-write it.
 
-Esc is now five levels in `ui_main.gd`: game-over latch → held preview → console flyout *(build flyout, then the resource ledger, then the alert log)* → *(trader modal)* → the open mode → the selection → an active overlay. WI-51 collapsed the selection chain to one check; WI-52 added the ledger beside the build flyout and WI-53 the alert log; WI-55 removes the trader level. **An outstanding critical alert is deliberately not on the ladder** (WI-53): the player hammers Esc, and an acknowledgement Esc can satisfy is one that gets satisfied without being read.
+Esc is now four levels in `ui_main.gd`: game-over latch → held preview → console flyout *(build flyout, then the resource ledger, then the alert log)* → the open mode → the selection → an active overlay. WI-51 collapsed the selection chain to one check; WI-52 added the ledger beside the build flyout and WI-53 the alert log; **WI-55 removed the trader-modal level** — folded into the Trade panel it *is* a mode, and its docked pause is a named hold the panel releases on close. **An outstanding critical alert is deliberately not on the ladder** (WI-53): the player hammers Esc, and an acknowledgement Esc can satisfy is one that gets satisfied without being read.
 
 ## What WI-51 landed (the selection API everything else consumes)
 
@@ -287,9 +287,35 @@ Shipped 2026-08-10. Details, the ten deviations and the five traps found are in 
 4. **`ui_category` groups the rail and nothing else.** The rail is built from discovered category ids, so a modded category appears with no core edit; nothing in the panel gates gameplay on it, and nothing groups on `tags`.
 5. **A screenshot is part of the verification, and it has to be driven into the state under test.** Two defects in this item passed every probe check and were visible only in a capture — and the first capture proved the frame while proving nothing about the item's one behaviour change.
 
+## What WI-55 landed (the frame bridge and the two widest panels)
+
+Shipped 2026-08-11. Details, the ten deviations and the four traps found are in [[WI-55_Panels_Trade_And_RD]].
+
+| File | What it is |
+| --- | --- |
+| `ConsolePanel.hides_inspector` / `close_requested` / the content bridge | Three additive frame properties. The first is the design's flag, set by Trade and R&D. The other two are the **body bridge**: the frame forwards `on_opened`/`on_closed` down to whatever is mounted in `content()` and re-emits that body's `close_requested` as its own. |
+| `scripts/utility/trade_offer.gd` (`TradeOffer`) | Pure: `sell_limit` / `buy_limit` / `clamp_amount`, `is_sell` / `is_buy`, `unit_price`, the `Line` record and the totals, plus `sell_orders` / `buy_orders` in the shape `commit_trades` takes. 30 tests. |
+| `ResourceData.available_unreserved()`, `StorageComponent.available_to_withdraw()`, `StorageData.available_to_withdraw()` | The station-wide `AVAIL` figure and the two accessors under it. Re-derived per call, never cached — reservations move on every claim and release and none of them touch `needs_recalc`. |
+| `ui/windows/trade/trade_panel.gd` (`TradePanel`) | The 1180px merged panel: `ORDERS` + `CONTRACTS`, one signed stepper per commodity, the summary bar, and the docked `PAUSE_HOLD`. |
+| `ui/windows/trade/trade_resource_row.gd` (`TradeResourceRow`) | `COMMODITY · BUY @ · SELL @ · HELD · AVAIL · TRADE`, plus `make_header()` so the captions come from the same constants as the columns. |
+| `ui/windows/trade/contracts_tab.gd` (`ContractsTab`) | Offers, active contracts and capped history, with `accept_block_reason()` shown inline as well as on the button. |
+| `ui/windows/unlocks/unlock_panel.gd` (`UnlockPanel`) | The 1400px tech tree: one tab per tree, depth columns with hairline connectors, the credit chip in the header, `select_tree()`. |
+| `UnlockNodeCard.State` / `state_of()` | The four treatments as a state rather than four call sites, and the cost-in-place-of-the-state-label rule. |
+| `UnlockManager.has_affordable_unlock()` / `tree_progress()` | The R&D readiness-dot predicate and the per-tab progress headline, both on the manager rather than recomputed in a view. |
+| `Stepper.editable` / `is_editing()` | A read-only stepper for a control the player can see but may not use yet, and the guard a tick-driven refresh needs so it cannot snatch a number mid-drag. |
+
+**The contract for WI-56 and WI-57:**
+
+1. **A code-built panel's body gets the mode hooks and can ask to be closed** — implement `on_opened()` / `on_closed()` / `signal close_requested` on the *body*, mount it in `content()`, and the frame does the rest. Do not reach for `ModeManager` from inside a panel, and never set your own `visible`.
+2. **`hides_inspector` is a declaration, not a list.** Only a panel that genuinely owns the whole screen sets it; the narrow modes leave the inspector alone.
+3. **`AVAIL` ≠ `HELD`, and Stores wants the same distinction.** `ResourceData.available_unreserved()` is the station-wide figure and `StorageComponent.available_to_withdraw()` the per-bin one. Anything that lets the player commit stock must show what is unreserved, not what is stored.
+4. **A cap that a control's own value *causes* has to add that value back.** The sell limit is `AVAIL + this line`; without it a standing order ratchets itself to zero one haul at a time. Any Stores control that drives hauling will hit the same shape.
+5. **Two things called "tier" is a real hazard.** R&D's columns are prerequisite depth and its node gates say `NEEDS STATION TIER n`. Comms owns the station tier outright from WI-57, at which point R&D's promotion block moves there and this stops being ambiguous.
+6. **A screenshot is part of the verification, still.** Three of this item's four defects were invisible to a 92-check probe — a hairline too dim to see, a tab strip painted on the wrong tab, and a probe stocking a bin that silently stocked nothing.
+
 ## Cross-cutting risks
 
-- **`ui_main.gd` is the choke point.** All nine items touch it, and it is 491 lines of hand-wired `_setup_*` calls. WI-50 should reduce it to a mount table plus the mode registry; if it is still growing by WI-55, stop and refactor.
+- **`ui_main.gd` is the choke point.** All nine items touch it, and it was 491 lines of hand-wired `_setup_*` calls. WI-50 reduced it to a mount table plus the mode registry; the check was "if it is still growing by WI-55, stop and refactor", and it is not — **478 lines after WI-55**, which deleted the trader-screen mount, its departure handler and an Esc level while adding two one-line factories. No refactor needed.
 - **MCP has been unreliable since the back half of Phase 3, and this is a UI program.** Headless probes cannot verify `_draw()`, shaders, or layout. Every panel WI needs a **windowed screenshot** in its verification, and the WI-48 lesson applies hard: *a probe must replicate the caller's exact call order*, because building a control in-tree hides layout bugs that the real mount path exposes. "Did the data arrive?" checks pass while a panel renders at zero height.
 - **Pure logic must be extracted to be testable.** GUT covers pure classes only. Anything with a rule in it — alert severity classification, resource rate smoothing, ledger grouping, tab-set selection, panel geometry — belongs in a static/pure class with its own suite, exactly as `BuildMenuModel`, `MinimapTransform` and `OverlayPalette` already are.
 - **Save compatibility.** Only two items add save state: WI-52 (pinned resources) and WI-53 (alert history). Both are new absent-key-means-default sections; `SAVE_VERSION` should not need to move. WI-52's `vitals` section shipped this way and `SAVE_VERSION` did not move.

@@ -1,127 +1,55 @@
-[gd_scene format=3 uid="uid://tn1loj0n48w6"]
+[gd_scene load_steps=2 format=3 uid="uid://tn1loj0n48w6"]
 
-[ext_resource type="Texture2D" uid="uid://ck5fpgwnd5vuw" path="res://ui/icons/carbon.svg" id="1_a86bf"]
 [ext_resource type="Script" uid="uid://d1ac84rxqxx26" path="res://ui/windows/trade/trade_resource_row.gd" id="1_gyl7q"]
-[ext_resource type="Texture2D" uid="uid://cc0ns2prdb577" path="res://ui/icons/credit_symbol.svg" id="2_wuwin"]
 
-[node name="TradeResourceRow" type="MarginContainer" unique_id=1724672236]
-custom_minimum_size = Vector2(500, 0)
+[node name="TradeResourceRow" type="PanelContainer"]
+offset_right = 558.0
+offset_bottom = 34.0
 script = ExtResource("1_gyl7q")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=626538517]
+[node name="Row" type="HBoxContainer" parent="."]
 layout_mode = 2
-color = Color(0.23921569, 0.23921569, 0.23921569, 0.5137255)
+theme_override_constants/separation = 8
 
-[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1102376778]
+[node name="Icon" type="TextureRect" parent="Row"]
+custom_minimum_size = Vector2(20, 20)
 layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 4
-
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1600669822]
-layout_mode = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=904265554]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="ResourceContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1625736855]
-custom_minimum_size = Vector2(200, 0)
-layout_mode = 2
-
-[node name="ResourceIcon" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer/ResourceContainer" unique_id=246954742]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-size_flags_horizontal = 4
 size_flags_vertical = 4
-texture = ExtResource("1_a86bf")
-expand_mode = 3
+expand_mode = 1
+stretch_mode = 5
 
-[node name="ResourceName" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ResourceContainer" unique_id=189157906]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Resource Name"
-
-[node name="TopSeparator" type="VSeparator" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=846999651]
-custom_minimum_size = Vector2(15, 0)
-layout_mode = 2
-
-[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=950566194]
+[node name="Name" type="Label" parent="Row"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 2.0
+size_flags_vertical = 4
+theme_type_variation = &"EntityName"
+text = "Commodity"
+text_overrun_behavior = 3
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer2" unique_id=1281920334]
-custom_minimum_size = Vector2(60, 0)
+[node name="Buy" type="Label" parent="Row"]
 layout_mode = 2
-text = "Buy"
+size_flags_vertical = 4
+theme_type_variation = &"Metric"
+text = "0"
+horizontal_alignment = 2
 
-[node name="BuyAmountSpinBox" type="SpinBox" parent="MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer2" unique_id=1909481979]
-unique_name_in_owner = true
+[node name="Sell" type="Label" parent="Row"]
 layout_mode = 2
-rounded = true
+size_flags_vertical = 4
+theme_type_variation = &"Metric"
+text = "0"
+horizontal_alignment = 2
 
-[node name="At" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer2" unique_id=1614166275]
+[node name="Held" type="Label" parent="Row"]
 layout_mode = 2
-size_flags_horizontal = 10
-text = "@"
+size_flags_vertical = 4
+theme_type_variation = &"Metric"
+text = "0"
+horizontal_alignment = 2
 
-[node name="CreditIcon" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer2" unique_id=1769688985]
-custom_minimum_size = Vector2(32, 32)
+[node name="Avail" type="Label" parent="Row"]
 layout_mode = 2
-texture = ExtResource("2_wuwin")
-expand_mode = 3
-
-[node name="BuyPriceLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer2" unique_id=1912816972]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(60, 0)
-layout_mode = 2
-text = "456"
-
-[node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=61420051]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-size_flags_stretch_ratio = 2.0
-
-[node name="Control" type="Control" parent="MarginContainer/VBoxContainer/HBoxContainer3" unique_id=524832070]
-custom_minimum_size = Vector2(200, 0)
-layout_mode = 2
-
-[node name="BottomSeparator" type="VSeparator" parent="MarginContainer/VBoxContainer/HBoxContainer3" unique_id=1572580655]
-custom_minimum_size = Vector2(15, 0)
-layout_mode = 2
-
-[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer3" unique_id=359379570]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_stretch_ratio = 2.0
-
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer3/HBoxContainer2" unique_id=659987523]
-custom_minimum_size = Vector2(60, 0)
-layout_mode = 2
-text = "Sell"
-
-[node name="SellAmountSpinBox" type="SpinBox" parent="MarginContainer/VBoxContainer/HBoxContainer3/HBoxContainer2" unique_id=203469735]
-unique_name_in_owner = true
-layout_mode = 2
-rounded = true
-
-[node name="At" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer3/HBoxContainer2" unique_id=1899613145]
-layout_mode = 2
-size_flags_horizontal = 10
-text = "@"
-
-[node name="CreditIcon" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer3/HBoxContainer2" unique_id=1005576565]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-texture = ExtResource("2_wuwin")
-expand_mode = 3
-
-[node name="SellPriceLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer3/HBoxContainer2" unique_id=93546985]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(60, 0)
-layout_mode = 2
-text = "456"
+size_flags_vertical = 4
+theme_type_variation = &"Metric"
+text = "0"
+horizontal_alignment = 2

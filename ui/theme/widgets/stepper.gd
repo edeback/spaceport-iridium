@@ -60,6 +60,15 @@ signal value_previewed(value: int)
 		sign_colored = new_value
 		_apply_value()
 
+## False renders the stepper as a read-only readout: the number still shows, both
+## buttons are dead. For a control the player can see but may not use yet - the
+## Trade table with no docking bay built (WI-55). Locked is a state, not an
+## absence (WI-54), so the row is dimmed rather than removed.
+@export var editable: bool = true:
+	set(new_value):
+		editable = new_value
+		_apply_value()
+
 var _minus: Button
 var _plus: Button
 var _value_label: Label
@@ -105,6 +114,14 @@ func configure(current: int, minimum: int, maximum: int, step_size: int = 1,
 	sign_colored = signed
 	value = current
 	_dirty = false
+
+## True between the player's first step and the commit that follows it. A caller
+## that repaints on a tick asks this before pushing a new value, because a
+## refresh landing mid-drag would snatch the number back to whatever the sim last
+## agreed with - and the commit that arrives a moment later would then write
+## *that* value back out as if the player had chosen it.
+func is_editing() -> bool:
+	return _held != 0 or _dirty
 
 # --- interaction --------------------------------------------------------------
 
@@ -165,5 +182,5 @@ func _apply_value() -> void:
 	_value_label.add_theme_color_override("font_color",
 		UIPalette.sign_color(float(value)) if sign_colored else UIPalette.LIVE_BRIGHT)
 	if _minus != null:
-		_minus.disabled = value <= min_value
-		_plus.disabled = value >= max_value
+		_minus.disabled = not editable or value <= min_value
+		_plus.disabled = not editable or value >= max_value

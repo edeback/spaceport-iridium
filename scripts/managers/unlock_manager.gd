@@ -190,6 +190,33 @@ func can_unlock(unlock: UnlockData) -> bool:
 		return false
 	return meets_tier(unlock) and prerequisites_met(unlock) and unlock.can_afford()
 
+## Is there anything the player could buy right now? The predicate behind the R&D
+## console button's readiness dot (WI-50), which the console used to recompute
+## from `can_unlock` over the whole catalog itself.
+##
+## It belongs here rather than in the console: it is a question about the tech
+## tree, the manager already owns every term in it, and a second consumer - the
+## panel's own header - would otherwise write the same loop again.
+func has_affordable_unlock() -> bool:
+	for unlock: UnlockData in _unlocks.values():
+		if can_unlock(unlock):
+			return true
+	return false
+
+## How many of a tree's nodes are researched, as `[done, total]`. The R&D panel's
+## per-tab subtitle; here because "which unlocks are in this tree" is catalog
+## state and the panel should not have to re-scan for a headline.
+func tree_progress(tree_id: StringName) -> Vector2i:
+	var done: int = 0
+	var total: int = 0
+	for unlock: UnlockData in _unlocks.values():
+		if unlock.tree_id != tree_id:
+			continue
+		total += 1
+		if is_unlocked(unlock):
+			done += 1
+	return Vector2i(done, total)
+
 # --- mutation -------------------------------------------------------------
 
 func try_unlock(unlock: UnlockData) -> bool:

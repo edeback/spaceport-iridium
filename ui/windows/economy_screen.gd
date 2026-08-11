@@ -16,7 +16,8 @@ const COST_ORDER: Array[StringName] = [
 ]
 const INCOME_ORDER: Array[StringName] = [&"trade", &"contract", &"shops", &"hotels", &"dining", &"event"]
 
-## Asks [ModeManager] to close this mode - see [ContractsScreen].
+## Asks [ModeManager] to close this mode (WI-50 contract point 4) - a panel that
+## set its own `visible` would leave the manager believing it is still open.
 signal close_requested
 
 var _content: VBoxContainer

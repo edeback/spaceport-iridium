@@ -149,6 +149,30 @@ func average_instance_value() -> float:
 		return -1.0
 	return weighted / float(units)
 
+## Station-wide stock nobody has already claimed a withdrawal against - the
+## Trade panel's `AVAIL` column (WI-55).
+##
+## The distinction from [method get_total] is the whole reason the column exists:
+## HELD is stock, AVAIL is what is not reserved, and **selling into a reservation
+## is the mistake the table exists to prevent**. A hauler that has claimed 40 ore
+## for a construction site has not moved it yet, so the old order sheet - which
+## showed only the total - would happily let the player commit that same ore to a
+## trader.
+##
+## Deliberately re-derived on every call rather than cached like `cached_total`:
+## reservations move on every claim and release, none of which go through
+## `needs_recalc`, and a stale AVAIL is worse than no AVAIL. The panel that reads
+## it refreshes on `slow_tick`, not per frame.
+func available_unreserved() -> int:
+	# A global store has no physical location and therefore nothing to reserve
+	# against, so all of it is available. Only credits carry one today, and
+	# credits are not tradable - this is here so the accessor is honest for any
+	# resource rather than only for the ones the trade table lists.
+	var total: int = global_total if has_global_store else 0
+	for component: StorageComponent in registered_storage:
+		total += component.available_to_withdraw(self)
+	return total
+
 func register_component(component: StorageComponent) -> void:
 	if not registered_storage.has(component):
 		registered_storage.append(component)

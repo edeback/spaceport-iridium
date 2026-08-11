@@ -2,14 +2,6 @@
 
 [ext_resource type="Script" uid="uid://q053d1884qx3" path="res://ui/windows/component_ui_panels/trade_component_ui.gd" id="1_bumyk"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2611u"]
-draw_center = false
-border_width_left = 5
-border_width_top = 5
-border_width_right = 5
-border_width_bottom = 5
-border_color = Color(0.7059392, 3.5376102e-06, 3.85046e-07, 1)
-
 [node name="Trade" type="PanelContainer" unique_id=111337165]
 offset_left = 2.0
 offset_top = 2.0
@@ -26,10 +18,4 @@ theme_override_constants/margin_bottom = 4
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1497388617]
 layout_mode = 2
-
-[node name="OpenTradeScreenButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=1560312603]
-layout_mode = 2
-theme_override_styles/pressed = SubResource("StyleBoxFlat_2611u")
-text = "Order Sheet"
-
-[connection signal="pressed" from="MarginContainer/VBoxContainer/OpenTradeScreenButton" to="." method="on_open_trade_screen"]
+theme_override_constants/separation = 6

@@ -1,146 +1,206 @@
 class_name UnlockNodeCard
 extends PanelContainer
 
-## One card in the global tech-tree panel, representing a single UnlockData.
-## Fully code-generated (no scene) so the panel can lay these out dynamically.
+## One node in the R&D panel's tech tree. Code-generated (no scene) so the panel
+## can lay a whole tree out from the graph.
+##
+## **Four states, four treatments** (WI-55). The states were always here; what was
+## missing was a vocabulary that told them apart at a glance across a 1400px
+## panel:
+##
+## | State | Treatment |
+## | --- | --- |
+## | Researched | GROWTH edge, `RESEARCHED` |
+## | Available, affordable | LIVE edge, **the cost in place of the state label** |
+## | Available, unaffordable | dimmed LIVE edge, the cost in meta grey |
+## | Locked | dashed edge, dimmed, showing the gate |
+##
+## "Cost renders in place of the state label when a tech is purchasable" is the
+## rule that keeps a card to one line of secondary text: a node never needs to say
+## both what it costs and what it is, because a purchasable node's state *is* its
+## price.
+##
+## Costs are **credits and materials**, never research points (program decision
+## 5). [member UnlockData.cost] is a `Dictionary[ResourceData, int]` and stays
+## that way; the mockup's `120 RP` presumes an income stream this game does not
+## have, and inventing one inside a UI rework is not the job.
+##
+## A locked node shows **one** gate, not both. A node behind an unmet prerequisite
+## *and* an unmet station tier prints the prerequisite - the nearer of the two -
+## because the second line a card would need to print both is the line that makes
+## a grid of these unreadable.
+
+## Card width. Every card and every empty cell is pinned to it so depth columns
+## line up down a tree.
+const CARD_WIDTH: int = 210
+const ICON_SIZE: int = 40
+
+## Godot's [StyleBoxFlat] has no dashed border, so a locked card's edge is drawn
+## as the inert EDGE at reduced alpha instead. Same "this one is not for you yet"
+## reading, and - unlike a `_draw()` dash pattern - a headless probe can see it.
+const LOCKED_EDGE_ALPHA: float = 0.55
+## How much of its colour an unaffordable card's edge keeps. Available but out of
+## reach is a *dimmer* version of available, not a different state.
+const UNAFFORDABLE_EDGE_ALPHA: float = 0.45
 
 var unlock: UnlockData
 
 var _icon: TextureRect
 var _name_label: Label
-var _cost_label: Label
-var _status_label: Label
-var _button: Button
-
-const COLOR_UNLOCKED := UIPalette.GROWTH
-const COLOR_AVAILABLE := UIPalette.LIVE
-const COLOR_LOCKED := UIPalette.DIVIDER
-const COLOR_UNAFFORDABLE := UIPalette.ATTENTION
-## Tier-locked (WI-26): the station hasn't earned this node yet, which is ARC
-## business - so it wears the ARC edge rather than a colour of its own.
-const COLOR_TIER_LOCKED := UIPalette.ATTENTION_BORDER
+var _state_label: Label
+var _button: ActionButton
 
 func setup(u: UnlockData) -> void:
 	unlock = u
-	custom_minimum_size = Vector2(210, 0)
-	# Fixed width (don't expand to fill the row) so depth columns line up.
+	custom_minimum_size = Vector2(float(CARD_WIDTH), 0.0)
+	# Fixed width (never expand to fill the row) so depth columns line up.
 	size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 
 	var margin := MarginContainer.new()
-	for side in ["left", "top", "right", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 8)
+	for side: String in ["left", "top", "right", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 10)
 	add_child(margin)
 
-	var hbox := HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 8)
-	margin.add_child(hbox)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 6)
+	margin.add_child(column)
+
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 10)
+	column.add_child(head)
 
 	_icon = TextureRect.new()
-	_icon.custom_minimum_size = Vector2(48, 48)
+	_icon.custom_minimum_size = Vector2(float(ICON_SIZE), float(ICON_SIZE))
 	_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	if unlock.icon != null:
-		_icon.texture = unlock.icon
-	hbox.add_child(_icon)
+	_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_icon.texture = unlock.icon
+	head.add_child(_icon)
 
-	var vbox := VBoxContainer.new()
-	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.add_theme_constant_override("separation", 2)
-	hbox.add_child(vbox)
+	var text := VBoxContainer.new()
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	text.add_theme_constant_override("separation", 3)
+	head.add_child(text)
 
 	_name_label = Label.new()
 	_name_label.text = unlock.name
 	_name_label.theme_type_variation = UIType.ENTITY_NAME
-	vbox.add_child(_name_label)
+	_name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text.add_child(_name_label)
 
-	_cost_label = Label.new()
-	_cost_label.theme_type_variation = UIType.METRIC
-	vbox.add_child(_cost_label)
+	# The one line of secondary text: a cost, a gate, or `RESEARCHED`.
+	_state_label = Label.new()
+	_state_label.theme_type_variation = UIType.META_LINE
+	_state_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text.add_child(_state_label)
 
-	_status_label = Label.new()
-	_status_label.theme_type_variation = UIType.META_LINE
-	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vbox.add_child(_status_label)
-
-	_button = Button.new()
-	_button.text = "Research"
+	_button = ActionButton.create("Research", ActionButton.Weight.PRIMARY)
 	_button.pressed.connect(_on_pressed)
-	vbox.add_child(_button)
+	column.add_child(_button)
 
-	# Show the description on hover. Inner display controls are made transparent
-	# to the mouse so hovering anywhere on the card surfaces the card's tooltip;
-	# the button keeps its own tooltip (and stays clickable).
+	# The description is the hover, not a fourth line. Inner controls go
+	# transparent to the mouse so hovering anywhere on the card surfaces it; the
+	# button keeps its own copy so it works while the button has the cursor.
 	if unlock.description != "":
 		tooltip_text = unlock.description
 		_button.tooltip_text = unlock.description
-	for c: Control in [margin, hbox, vbox, _icon, _name_label, _cost_label, _status_label]:
-		c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for control: Control in [margin, head, text, _icon, _name_label, _state_label]:
+		control.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	refresh()
 
 func _on_pressed() -> void:
-	# The panel listens to global_unlock_changed and refreshes every card, so we
-	# don't need to update ourselves here.
+	# The panel listens to global_unlock_changed and repaints every card, so this
+	# does not update itself.
 	Global.unlock_manager.try_unlock(unlock)
 
+## The four treatments, as a state rather than as four call sites that each
+## remember to set five properties. [method state_of] is what the panel reads when
+## it wants to know what a card is without asking the card.
+enum State { RESEARCHED, AFFORDABLE, UNAFFORDABLE, LOCKED }
+
+## Which of the four this node is in right now. Order matters: researched first
+## (nothing else can be true of it), then the two gates, then affordability.
+static func state_of(node: UnlockData) -> State:
+	var manager: UnlockManager = Global.unlock_manager
+	if manager.is_unlocked(node):
+		return State.RESEARCHED
+	if not manager.prerequisites_met(node) or not manager.meets_tier(node):
+		return State.LOCKED
+	return State.AFFORDABLE if node.can_afford() else State.UNAFFORDABLE
+
+func state() -> State:
+	return state_of(unlock)
+
 func refresh() -> void:
-	var mgr := Global.unlock_manager
-	var border_color := COLOR_LOCKED
+	var manager: UnlockManager = Global.unlock_manager
+	match state():
+		State.RESEARCHED:
+			_apply(State.RESEARCHED, UIPalette.GROWTH, 1.0, "Researched", UIPalette.GROWTH)
+		State.LOCKED:
+			if not manager.prerequisites_met(unlock):
+				# The nearer gate wins: a node behind both an unmet prerequisite
+				# and an unmet station tier says only that its prerequisite is
+				# missing, because the second line it would take to say both is
+				# the line that makes a grid of these unreadable.
+				_apply(State.LOCKED, UIPalette.EDGE, LOCKED_EDGE_ALPHA,
+					"Needs " + _prereq_names(), UIPalette.TEXT_META)
+			else:
+				# **Station** tier, spelled out. This panel's columns are
+				# prerequisite depth and the design labels those "TIER" too; two
+				# things called tier in one panel is how a bug gets written, so the
+				# one that is ARC's business says which it is.
+				_apply(State.LOCKED, UIPalette.ATTENTION_BORDER, LOCKED_EDGE_ALPHA,
+					"Needs station tier %d" % unlock.min_tier, UIPalette.ATTENTION_META)
+		State.AFFORDABLE:
+			# The cost renders in place of the state label, so a purchasable node
+			# never needs two lines.
+			_apply(State.AFFORDABLE, UIPalette.LIVE, 1.0, cost_text(), UIPalette.TEXT)
+		_:
+			_apply(State.UNAFFORDABLE, UIPalette.LIVE, UNAFFORDABLE_EDGE_ALPHA,
+				cost_text(), UIPalette.TEXT_META)
 
-	if mgr.is_unlocked(unlock):
-		_cost_label.visible = false
-		_button.visible = false
-		_status_label.text = "Unlocked"
-		_status_label.add_theme_color_override("font_color", UIPalette.GROWTH)
-		border_color = COLOR_UNLOCKED
-	else:
-		_cost_label.visible = true
-		_cost_label.text = _cost_text()
-		_button.visible = true
-		if not mgr.meets_tier(unlock):
-			# Tier lock takes precedence: until the station is promoted the node
-			# can't be earned regardless of prereqs or credits (WI-26).
-			_button.disabled = true
-			_status_label.text = "Requires Station Tier %d" % unlock.min_tier
-			_status_label.add_theme_color_override("font_color", UIPalette.ATTENTION_META)
-			border_color = COLOR_TIER_LOCKED
-		elif not mgr.prerequisites_met(unlock):
-			_button.disabled = true
-			_status_label.text = "Requires: " + _prereq_names()
-			_status_label.add_theme_color_override("font_color", UIPalette.TEXT_META)
-			border_color = COLOR_LOCKED
-		elif not unlock.can_afford():
-			_button.disabled = true
-			_status_label.text = "Can't afford"
-			_status_label.add_theme_color_override("font_color", UIPalette.ATTENTION_TEXT)
-			border_color = COLOR_UNAFFORDABLE
-		else:
-			_button.disabled = false
-			_status_label.text = ""
-			border_color = COLOR_AVAILABLE
-
-	add_theme_stylebox_override("panel", _make_style(border_color))
+func _apply(kind: State, edge: Color, edge_alpha: float, state_text: String,
+		state_color: Color) -> void:
+	add_theme_stylebox_override("panel", _make_style(UIPalette.tinted(edge, edge_alpha)))
+	_state_label.text = state_text.to_upper()
+	_state_label.add_theme_color_override("font_color", state_color)
+	var dim: bool = kind == State.LOCKED or kind == State.UNAFFORDABLE
+	# A researched node has nothing left to buy, so it loses its button entirely
+	# rather than wearing a dead one.
+	_button.visible = kind != State.RESEARCHED
+	_button.disabled = dim
+	_button.weight = ActionButton.Weight.SECONDARY if dim else ActionButton.Weight.PRIMARY
+	# Dimming the whole card is what makes a locked column read as a block at
+	# 1400px, where a border colour alone does not.
+	modulate = Color(1.0, 1.0, 1.0, 0.62 if dim else 1.0)
+	_name_label.add_theme_color_override("font_color",
+		UIPalette.TEXT_META if dim else UIPalette.TEXT_EMPHASIS)
 
 func _make_style(border_color: Color) -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = UIPalette.CONTROL_FILL
-	sb.set_border_width_all(UIMetrics.BORDER_WIDTH)
-	sb.border_color = border_color
-	sb.set_corner_radius_all(0)
-	sb.set_content_margin_all(2)
-	return sb
+	var box := StyleBoxFlat.new()
+	box.bg_color = UIPalette.CONTROL_FILL
+	box.set_border_width_all(UIMetrics.BORDER_WIDTH)
+	box.border_color = border_color
+	box.set_corner_radius_all(0)
+	box.set_content_margin_all(2.0)
+	return box
 
-func _cost_text() -> String:
+## The node's price, as its real resource costs. Public so the panel can print
+## the same figure in a tooltip without re-deriving the format.
+func cost_text() -> String:
 	if unlock.cost.is_empty():
 		return "Free"
 	var parts: Array[String] = []
 	for resource: ResourceData in unlock.cost:
 		parts.append("%d %s" % [unlock.cost[resource], resource.name])
-	return ", ".join(parts)
+	return " · ".join(parts)
 
 func _prereq_names() -> String:
 	var parts: Array[String] = []
 	for prereq: UnlockData in unlock.prerequisites:
-		if prereq != null:
+		if prereq != null and not Global.unlock_manager.is_unlocked(prereq):
 			parts.append(prereq.name)
 	return ", ".join(parts)

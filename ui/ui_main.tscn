@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://ce6npnqw8s3mu"]
 
 [ext_resource type="Script" uid="uid://de484prd4xlyv" path="res://ui/ui_main.gd" id="1_2bqpn"]
-[ext_resource type="PackedScene" uid="uid://mroynql4rcbs" path="res://ui/windows/trade/trade_screen.tscn" id="19_xyc40"]
 
 [node name="UiMain" type="Control" unique_id=2019768832]
 layout_mode = 3
@@ -12,11 +11,3 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_2bqpn")
-
-[node name="TradeScreen" parent="." unique_id=1329679237 instance=ExtResource("19_xyc40")]
-visible = false
-layout_mode = 1
-offset_left = -503.0
-offset_top = -301.0
-offset_right = 503.0
-offset_bottom = 301.0
