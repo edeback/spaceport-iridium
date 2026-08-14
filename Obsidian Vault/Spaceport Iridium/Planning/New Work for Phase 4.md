@@ -68,9 +68,13 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 - Needs dialogue work implemented first
 
 **Starting Flow:**
+- Goal: Give some more personalization to the beginning of the game
 - Select 2 pawns from a pool of candidates to start with (instead of starting completely randomly)
 	- Each candidate in the pool has their Name, Traits, and Skills displayed so the player can make appropriate choices
-- Each pawn can be separately randomized any number of times
+	- Each pawn can be separately randomized any number of times
+- Give the station a name
+	- Name becomes default save file name
+	- Name is displayed at the top of the minimap(?)
 
 **Star and Planet Variations:**
 - Use Deep-Fold's Pixel Planet generator to create planets and stars instead of creating sprite sheets

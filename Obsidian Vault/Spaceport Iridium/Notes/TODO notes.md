@@ -18,6 +18,10 @@ Give them categories? So ore can be shown together, tier one/two/three materials
 
 Pawn issues should be promoted to the alerts section of the pawn screen too
 
+Officers?
+- Promote pawns to certain positions
+- Get bonuses to certain skills or for certain modules
+
 Transient visitors SHOULD save - both ARC inspection as well as tourists
 
 ctrl should also show pawn names, and should probably be cleaned up for modules as well (currently messy/confusing)
@@ -39,6 +43,7 @@ Get capacitators on power_consumption_components working and move shields/weapon
 
 Trade order screen - show current supplies for validation
 
+Salvage? Derelicts drifting in that can be deconstructed for resources
 
 Ice should get quality and that should matter for ice purifier
 Introduce comets which are asteroids except mostly ice and some carbon
@@ -55,7 +60,13 @@ Station "Prestige"
 	- When you gain a level, "ARC has granted you a Class II Station Charter"
 - Also consider scale words
 	- Outpost, Station, Port, Hub, Metropolis
-	- Harder to connect many words to scale, though, and not having "Spaceport" be the final tier (which it wouldn't, "port" isn't a very large word) would negate some of the idea of "Spaceport Iridium"
+		- Harder to connect many words to scale, though, and not having "Spaceport" be the final tier (which it wouldn't, "port" isn't a very large word) would negate some of the idea of "Spaceport Iridium"
+	- Outpost, Waystation, Station, Complex, Spaceport
+
+Station name!
+- Give your station a name at the start
+- Then display it with station scale word (above) somewhere like the top of the minimap
+	- Name: Alpha -> "Outpost Alpha", "Station Alpha", etc
 
 Room info at a glance
 - For example, show that it is iron ore being processed and how much time
