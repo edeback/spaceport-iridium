@@ -202,7 +202,7 @@ Current sections: `difficulty` (a bare id, not a manager section — chosen once
 
 ### 1.18 UI & shell (WI-34, WI-35, WI-36, WI-43, WI-49 … WI-57)
 
-The HUD is **one console UI**, delivered by the nine-item program in [[04_UI_Rework_Program]] and **complete as of WI-57 (2026-08-11)**. Roughly twenty independent surfaces over an empty `Theme` became: navigation in a console welded to the bottom edge, **one** panel open at a time on the left, **one** inspector on the bottom right, and persistent readouts (map, alerts, vitals, clock) that never move.
+The HUD is **one console UI**, delivered by the nine-item program in [[Spaceport Iridium/Planning/04_UI_Rework_Program]] and **complete as of WI-57 (2026-08-11)**. Roughly twenty independent surfaces over an empty `Theme` became: navigation in a console welded to the bottom edge, **one** panel open at a time on the left, **one** inspector on the bottom right, and persistent readouts (map, alerts, vitals, clock) that never move.
 
 **The shape of the whole thing, for anyone touching `ui/`:** `UIMain` is a mount table plus the Esc ladder and nothing else. `ModeManager` holds the only mutable "what is open" state and builds each panel from a lazy factory. Every panel is a `ConsolePanel` frame with a code-built body mounted in `content()`; the frame forwards the mode hooks down and re-emits the body's `close_requested`. Every colour comes from `UIPalette`, every number from `UIMetrics`, every type variation from `UIType`. Selection goes through `InspectorPanel.select()` and nowhere else. Notifications go through `AlertManager`. Pure rules live in `scripts/utility/` with a GUT suite each, because GUT covers pure classes only.
 

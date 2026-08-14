@@ -39,12 +39,12 @@ Consumer Goods are the important one: they turn commerce from an abstract credit
 
 ### 1c. Bio loop — finally gives **biowaste** a job
 
-| Resource | Made from | Made by | Consumed by |
-|---|---|---|---|
-| Fertilizer | biowaste + water | Bioreactor | Hydroponics/Vertical Farm yield boost |
-| Methane | biowaste | Bioreactor | Combustion Generator, Polymer Reactor feedstock |
-| Medigel | biomass + polymer | Pharmacy | Medical Bay treatment speed, disease cure rate |
-| Prepared Meal | biomass (+ quality) | Galley | eaten directly; carries cook skill into food quality |
+| Resource      | Made from           | Made by    | Consumed by                                          |
+| ------------- | ------------------- | ---------- | ---------------------------------------------------- |
+| Fertilizer    | biowaste + water    | Bioreactor | Hydroponics/Vertical Farm yield boost                |
+| Methane       | biowaste            | Bioreactor | Combustion Generator, Polymer Reactor feedstock      |
+| Medigel       | biomass + polymer   | Pharmacy   | Medical Bay treatment speed, disease cure rate       |
+| Prepared Meal | biomass (+ quality) | Galley     | eaten directly; carries cook skill into food quality |
 
 Closing the waste loop is the classic satisfying colony-sim beat, and `biowaste` already exists as a resource with no consumer — this is the cheapest big win on the list.
 

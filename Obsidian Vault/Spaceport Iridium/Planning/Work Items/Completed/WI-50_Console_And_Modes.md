@@ -1,6 +1,6 @@
 # WI-50 — Console Bar & One-Panel Mode System
 
-> **STATUS: COMPLETE, 2026-08-10.** Second item of the [[04_UI_Rework_Program]]. Built on [[WI-49_UI_Design_System]]'s `ConsolePanel` and theme.
+> **STATUS: COMPLETE, 2026-08-10.** Second item of the [[Spaceport Iridium/Planning/04_UI_Rework_Program]]. Built on [[WI-49_UI_Design_System]]'s `ConsolePanel` and theme.
 >
 > **768 GUT tests green** (was 739; +29 in `test_mode_manager`). **104-check headless probe green** against the real `main.tscn`, a 23-check re-verification after the cleanup pass, and windowed 1920×1080 screenshots captured for the console at rest, Build (with and without its flyout), Crew, R&D, Overlays, and all four button states together. Save-neutral — this item adds no save state.
 >
@@ -191,7 +191,7 @@ The corridor-display checkbox (`_on_check_button_toggled` → `WorldManager.show
 
 ## Related
 
-- [[04_UI_Rework_Program]] — the mode inventory table and the console geometry.
+- [[Spaceport Iridium/Planning/04_UI_Rework_Program]] — the mode inventory table and the console geometry.
 - [[WI-49_UI_Design_System]] — `ConsolePanel`, `UIMetrics`, and the two pilot conversions this builds on.
 - [[WI-36_Main_UI_Flow]] — the Esc arbitration this replaces, and the keybind remapper the new actions must appear in.
 - [[WI-51_Inspector]] — Esc level 4; this item leaves the existing info panels alone.

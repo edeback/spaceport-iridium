@@ -1,6 +1,6 @@
 # WI-57 — Comms Panel & Legacy Retirement
 
-> **STATUS: DONE 2026-08-11.** Ninth and closing item of the [[04_UI_Rework_Program]], which is now **complete**.
+> **STATUS: DONE 2026-08-11.** Ninth and closing item of the [[Spaceport Iridium/Planning/04_UI_Rework_Program]], which is now **complete**.
 >
 > **1060 GUT tests green** (was 1033; +27 in `test_transmission_log`). **108-check headless probe green** against the real `main.tscn`, plus a separate **16-check two-phase save probe** that writes a slot, reloads it through the real `SaveManager` path, and then strips the new section out to prove a pre-WI-57 save still loads. Four windowed 1920×1080 screenshots. **Save-additive and backward-compatible**: one new absent-key-means-default `transmissions` section; `SAVE_VERSION` stays at 2.
 >
@@ -170,7 +170,7 @@ With every panel in the new frame, look at all nine side by side and fix what on
 
 ## Related
 
-- [[04_UI_Rework_Program]] — decisions 1 and 6; the port inventory this item empties.
+- [[Spaceport Iridium/Planning/04_UI_Rework_Program]] — decisions 1 and 6; the port inventory this item empties.
 - [[New Work for Phase 4]] — the Contact-ARC requirement.
 - [[WI-26_Station_Tiers]] — the inspection lifecycle being changed, and the tier section being moved.
 - [[WI-25_Economic_Sinks]] — the economy page becoming a tab, and the `record_income` net rule.

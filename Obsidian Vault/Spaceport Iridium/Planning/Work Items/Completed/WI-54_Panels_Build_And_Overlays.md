@@ -1,6 +1,6 @@
 # WI-54 — Mode Panels: Build & Overlays
 
-> **STATUS: COMPLETE, 2026-08-10.** Sixth item of the [[04_UI_Rework_Program]]. Depends on [[WI-49_UI_Design_System]] and [[WI-50_Console_And_Modes]].
+> **STATUS: COMPLETE, 2026-08-10.** Sixth item of the [[Spaceport Iridium/Planning/04_UI_Rework_Program]]. Depends on [[WI-49_UI_Design_System]] and [[WI-50_Console_And_Modes]].
 >
 > **935 GUT tests green** (was 901; +34 across `test_build_menu_model` and `test_overlay_palette`). **64-check headless probe green** against the real `main.tscn`. Windowed 1920×1080 screenshots captured of Build with a category open (buildable rows, a selected row explaining itself inline, three dimmed locked rows with their gating tech, the cursor ghost hint) and of Overlays with the O₂ ramp live. **Save-neutral** — this item adds no save state.
 >
@@ -134,7 +134,7 @@ Not touched: `OverlayFlowLayer`, module shaders, `ModuleData` (the `required_unl
 
 ## Related
 
-- [[04_UI_Rework_Program]] — the mode inventory and panel widths.
+- [[Spaceport Iridium/Planning/04_UI_Rework_Program]] — the mode inventory and panel widths.
 - [[WI-43_Build_Menu]] — the rail/flyout/search/recent this reframes, and `BuildMenuModel`.
 - [[WI-35_UI_Overlays]] — the controller, palette and flow layer being reframed.
 - [[WI-42_Preview_Metadata_Cache]] — `PreviewModule`, and the flip-with-nothing-selected crash it fixed.

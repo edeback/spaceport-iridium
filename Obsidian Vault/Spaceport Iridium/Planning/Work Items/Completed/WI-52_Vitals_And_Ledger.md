@@ -1,6 +1,6 @@
 # WI-52 — Vitals Strip & Resource Ledger
 
-> **STATUS: COMPLETE, 2026-08-10.** Fourth item of the [[04_UI_Rework_Program]]. Depends on [[WI-49_UI_Design_System]] and [[WI-50_Console_And_Modes]] (this item fills the console's middle zone).
+> **STATUS: COMPLETE, 2026-08-10.** Fourth item of the [[Spaceport Iridium/Planning/04_UI_Rework_Program]]. Depends on [[WI-49_UI_Design_System]] and [[WI-50_Console_And_Modes]] (this item fills the console's middle zone).
 >
 > **866 GUT tests green** (was 823; +18 in `test_resource_rate_tracker`, +25 in `test_ledger_grouping`). **52-check headless probe green** against the real `main.tscn`. Windowed 1920×1080 screenshots captured of the console strip with a falling amber vital, the open ledger, pin mode, the ledger coexisting with Build, and the HUD at rest. **Save adds one new section (`vitals`); absent key = the designed default six, so `SAVE_VERSION` did not move and pre-WI-52 saves load unchanged.** Closes **C13**.
 >
@@ -153,7 +153,7 @@ Two open questions to settle during implementation, both defaulting to "no": sho
 
 ## Related
 
-- [[04_UI_Rework_Program]] — invariant 4, and decision 9 on hotkeys (`L` for the ledger).
+- [[Spaceport Iridium/Planning/04_UI_Rework_Program]] — invariant 4, and decision 9 on hotkeys (`L` for the ledger).
 - [[WI-50_Console_And_Modes]] — the flex zone this fills, and Esc level 2.
 - [[03_Bugs_and_Improvements]] — **C13**, fixed here.
 - [[WI-38_Bug_Fix_Pass_2]] — A8, the shared-`ResourceData`-survives-a-scene-swap trap the rate tracker must not walk into.

@@ -1,6 +1,6 @@
 # WI-53 — Alerts: Priority, Acknowledgement & History
 
-> **STATUS: COMPLETE 2026-08-10.** Fifth item of the [[04_UI_Rework_Program]]. Built on [[WI-49_UI_Design_System]] (`ReadoutPanel`, `ListRow`) and [[WI-51_Inspector]] (`select()` / `camera_target()` for jump-to).
+> **STATUS: COMPLETE 2026-08-10.** Fifth item of the [[Spaceport Iridium/Planning/04_UI_Rework_Program]]. Built on [[WI-49_UI_Design_System]] (`ReadoutPanel`, `ListRow`) and [[WI-51_Inspector]] (`select()` / `camera_target()` for jump-to).
 >
 > **This is the one item in the program with real gameplay consequence** — critical alerts pause the sim. Everything else in the rework changes how things look; this changes what the game does to you.
 >
@@ -208,7 +208,7 @@ Absent key = empty, so pre-WI-53 saves load fine and `SAVE_VERSION` stays put. `
 
 ## Related
 
-- [[04_UI_Rework_Program]] — invariant 5 (amber is budgeted; alerts are its main consumer).
+- [[Spaceport Iridium/Planning/04_UI_Rework_Program]] — invariant 5 (amber is budgeted; alerts are its main consumer).
 - [[New Work for Phase 4]] — the source brief for the three tiers, jump-to, and the history log.
 - [[WI-51_Inspector]] — `select()`, consumed by jump-to.
 - [[WI-50_Console_And_Modes]] — the trader auto-open this replaces with an alert plus a readiness dot.

@@ -1,6 +1,6 @@
 # WI-55 — Mode Panels: Trade & R&D
 
-> **STATUS: DONE, shipped 2026-08-11.** Seventh item of the [[04_UI_Rework_Program]]. Depended on [[WI-49_UI_Design_System]], [[WI-50_Console_And_Modes]], [[WI-52_Vitals_And_Ledger]] (`Stepper`, `sign_color`) and [[WI-53_Alerts]] (the reference-counted pause).
+> **STATUS: DONE, shipped 2026-08-11.** Seventh item of the [[Spaceport Iridium/Planning/04_UI_Rework_Program]]. Depended on [[WI-49_UI_Design_System]], [[WI-50_Console_And_Modes]], [[WI-52_Vitals_And_Ledger]] (`Stepper`, `sign_color`) and [[WI-53_Alerts]] (the reference-counted pause).
 >
 > **965 GUT tests green** (was 935; +30 in `test_trade_offer`). **92-check headless probe green** against the real `main.tscn`. Windowed 1920×1080 screenshots captured of Trade/ORDERS undocked, Trade/ORDERS docked, Trade/CONTRACTS and R&D. **Save-neutral** — this item adds no save state and reads none that moved.
 >
@@ -175,7 +175,7 @@ The auto-open on trader arrival is already gone (WI-50 edge case): arrival raise
 
 ## Related
 
-- [[04_UI_Rework_Program]] — decisions 1, 2, 3 and 5.
+- [[Spaceport Iridium/Planning/04_UI_Rework_Program]] — decisions 1, 2, 3 and 5.
 - [[WI-08_Traders_and_Docking]] — the order sheet and the docked-visit snapshot pricing being merged.
 - [[WI-14_Contracts]] — the contracts board becoming a tab.
 - [[WI-26_Station_Tiers]] — `min_tier` gating, and the tier/promotion section moving to Comms.

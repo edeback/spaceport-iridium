@@ -1,6 +1,6 @@
 # WI-51 — The Inspector
 
-> **STATUS: COMPLETE, 2026-08-10.** Third item of the [[04_UI_Rework_Program]]. Built on [[WI-49_UI_Design_System]]'s `ReadoutPanel`/`TabStrip`/`StatBar` and [[WI-50_Console_And_Modes]]' Esc ladder.
+> **STATUS: COMPLETE, 2026-08-10.** Third item of the [[Spaceport Iridium/Planning/04_UI_Rework_Program]]. Built on [[WI-49_UI_Design_System]]'s `ReadoutPanel`/`TabStrip`/`StatBar` and [[WI-50_Console_And_Modes]]' Esc ladder.
 >
 > **823 GUT tests green** (was 768; +30 in `test_mood_catalog`, +25 in `test_inspector_tab_plan`). **73-check headless probe green** against the real `main.tscn` — including a sweep that builds **all 45 modules** and opens **every one of their 135 tabs**, asserting each renders at real height. Windowed 1920×1080 screenshots captured for all five tab sets, four module tabs, and the inspector with Build open. Save-neutral — this item adds no save state.
 >
@@ -182,7 +182,7 @@ Not touched: `ClickCycler`, `SelectionBrackets`, `GameCamera`, and every compone
 
 ## Related
 
-- [[04_UI_Rework_Program]] — invariant 2, and the port inventory this item drains.
+- [[Spaceport Iridium/Planning/04_UI_Rework_Program]] — invariant 2, and the port inventory this item drains.
 - [[WI-49_UI_Design_System]] — `ReadoutPanel`, `TabStrip`, `StatBar`, and why `TabStrip` is not `TabContainer`.
 - [[WI-50_Console_And_Modes]] — Esc level 4 and the panel that must not shift when a mode opens.
 - [[WI-53_Alerts]] — consumes `select()` for jump-to.

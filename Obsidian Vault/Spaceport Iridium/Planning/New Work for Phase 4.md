@@ -19,7 +19,7 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 - New UI panel on the Pawn Inspect window
 	- Lists each other crewmember and their opinion of that crewmember (no robots)
 
-**UI Rework:** (Written up as [[04_UI_Rework_Program]] — nine work items, WI-49 … WI-57)
+**UI Rework:** (Written up as [[Spaceport Iridium/Planning/04_UI_Rework_Program]] — nine work items, WI-49 … WI-57)
 - Goal: Merge UI panels into one larger system, and give them a unified look
 - This was designed in Claude Design and that project is exported at assets/external/spaceport-iridium-ui-layout
 	- The implementation is in `Iridium Console UI Spec.dc.html`
@@ -41,6 +41,7 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 		- The mockup describes research points, but that is for a not-yet-designed system, continue to use credits as the resource to spend to unlock technology
 	- **Comms:**
 		- Instead of the Inspection event firing randomly, the "Contact ARC" button allows the player to pick when they are ready for an inspection.
+
 
 **Audio:**
 - Goal: Add sounds for feedback and immersion

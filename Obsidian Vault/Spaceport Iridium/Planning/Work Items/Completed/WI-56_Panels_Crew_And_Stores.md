@@ -1,6 +1,6 @@
 # WI-56 — Mode Panels: Crew & Stores
 
-> **STATUS: DONE, shipped 2026-08-11.** Eighth item of the [[04_UI_Rework_Program]]. Depended on [[WI-49_UI_Design_System]], [[WI-50_Console_And_Modes]] and [[WI-51_Inspector]] (row clicks route to `select()`), plus [[WI-55_Panels_Trade_And_RD]]'s content bridge and `Stepper.is_editing()`.
+> **STATUS: DONE, shipped 2026-08-11.** Eighth item of the [[Spaceport Iridium/Planning/04_UI_Rework_Program]]. Depended on [[WI-49_UI_Design_System]], [[WI-50_Console_And_Modes]] and [[WI-51_Inspector]] (row clicks route to `select()`), plus [[WI-55_Panels_Trade_And_RD]]'s content bridge and `Stepper.is_editing()`.
 >
 > **1033 GUT tests green** (was 965; +44 in `test_pawn_status`, +24 in `test_stores_panel_model`). **81-check headless probe green** against the real `main.tscn`. Windowed 1920×1080 screenshots captured of the Crew roster, the job-board view and the Stores panel. **Save-neutral** — this item adds no save state and reads none that moved.
 >
@@ -192,7 +192,7 @@ Not touched: `JobManager`, `StorageQuery`, job drivers, the hauling rules, `Crew
 
 ## Related
 
-- [[04_UI_Rework_Program]] — decision 4.
+- [[Spaceport Iridium/Planning/04_UI_Rework_Program]] — decision 4.
 - [[WI-12_Storage_QoL]] — the storage features this panel must surface in full.
 - [[WI-44_Job_System_Refactor]] — the job board and `JobDriver.explain_block()` behind `SHOW ALL JOBS`.
 - [[WI-45_Save_System_Audit]] — A5, the `update_priority()` rule this panel must not break.

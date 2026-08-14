@@ -1,6 +1,6 @@
 # WI-49 — UI Design System & Panel Frame
 
-> **STATUS: COMPLETE, 2026-08-10.** First item of the [[04_UI_Rework_Program]]. Palette, type and geometry values come from that doc, which is the single authority — do not re-transcribe them from the mockup here.
+> **STATUS: COMPLETE, 2026-08-10.** First item of the [[Spaceport Iridium/Planning/04_UI_Rework_Program]]. Palette, type and geometry values come from that doc, which is the single authority — do not re-transcribe them from the mockup here.
 >
 > **739 GUT tests green** (was 683; +56 across `test_ui_palette` and `test_ui_theme`). Save-neutral — this item adds no save state. Verified with windowed 1920×1080 screenshots of the main menu, difficulty picker, settings, save/load, the in-game HUD, the converted minimap and jobs panel, and a full regression walk of research, contracts, economy, pause, module info and pawn info.
 >
@@ -156,7 +156,7 @@ Not touched: `menus/*` (the out-of-game flow adopts the theme for free and is ot
 
 ## Related
 
-- [[04_UI_Rework_Program]] — palette, type and geometry tables; the invariants this frame implements.
+- [[Spaceport Iridium/Planning/04_UI_Rework_Program]] — palette, type and geometry tables; the invariants this frame implements.
 - [[WI-50_Console_And_Modes]] — the immediate consumer; every mode mounts a `ConsolePanel`.
 - [[WI-35_UI_Overlays]] — `OverlayPalette` stays separate; the distinction between gameplay colour and chrome colour.
 - [[WI-36_Main_UI_Flow]] — the out-of-game menus that inherit the theme without being redesigned.
