@@ -521,9 +521,13 @@ func get_save_data() -> Dictionary:
 			"stacks": SaveManager.stacks_to_dicts(data.stacks),
 			"autodump": data.autodump,
 		}
-	# Priority is a player setting (the panel's spinbox is live on every bin, not
-	# just player_configurable ones) and it IS the routing language - a hand-tuned
-	# station that reloads at scene defaults silently re-routes every haul.
+	# Priority is a player setting and it IS the routing language - a hand-tuned
+	# station that reloads at scene defaults silently re-routes every haul. Saved
+	# on every bin, not just the editable ones: a construction site sits at +99 and
+	# a processor bay at whatever its scene set, and those have to come back too.
+	# (`player_configurable` gates the bin's *contents* - what it accepts, the
+	# desired amounts, dumping - and never its priority; see
+	# [method StoresModel.contents_editable]. That is a UI rule, not a save one.)
 	return {"priority": priority, "resources": resources}
 
 ## Restores contents on top of whatever the ready pass configured. Adds

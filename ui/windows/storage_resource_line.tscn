@@ -1,87 +1,79 @@
-[gd_scene format=3 uid="uid://dprv5w0bvxvvb"]
+[gd_scene load_steps=4 format=3 uid="uid://dprv5w0bvxvvb"]
 
 [ext_resource type="Script" uid="uid://8o5roogmn3fd" path="res://ui/windows/storage_resource_line.gd" id="1_b4rr0"]
-[ext_resource type="Texture2D" uid="uid://ct3m5xg41ptib" path="res://assets/external/kenney_ui/PNG/Grey/Default/icon_cross.png" id="2_nlufw"]
-[ext_resource type="Texture2D" uid="uid://dtddmta7qm6au" path="res://assets/external/kenney_ui/PNG/Grey/Default/icon_outline_cross.png" id="3_ovn6y"]
-[ext_resource type="Texture2D" uid="uid://cbjmsmhra0t83" path="res://assets/sprites/trash-can.png" id="5_nlufw"]
-[ext_resource type="Texture2D" uid="uid://baq1qvi3o8jpm" path="res://assets/external/kenney_ui/Vector/Red/button_square_flat.svg" id="5_ovn6y"]
-[ext_resource type="Texture2D" uid="uid://cnmw40urhhtm1" path="res://assets/external/kenney_ui/Vector/Extra/icon_repeat_light.svg" id="7_jh508"]
+[ext_resource type="PackedScene" path="res://ui/theme/widgets/action_button.tscn" id="2_action"]
+[ext_resource type="PackedScene" path="res://ui/theme/widgets/stepper.tscn" id="3_stepper"]
 
-[node name="HBoxContainer" type="HBoxContainer" unique_id=229822206 node_paths=PackedStringArray("stored_resource_name", "stored_resource_value", "remove_resource_button", "desired_resources_spinbox", "debug_add_button", "dump_button", "autodump_indicator")]
+[node name="HBoxContainer" type="HBoxContainer" node_paths=PackedStringArray("stored_resource_name", "stored_resource_value", "remove_resource_button", "desired_stepper", "debug_add_button", "dump_button", "autodump_indicator")]
+theme_override_constants/separation = 6
 script = ExtResource("1_b4rr0")
 stored_resource_name = NodePath("NameBox/StoredName")
 stored_resource_value = NodePath("ContentsBox/StoredValue")
 remove_resource_button = NodePath("NameBox/RemoveResourceButton")
-desired_resources_spinbox = NodePath("ContentsBox/DesiredResourcesSpinbox")
+desired_stepper = NodePath("ContentsBox/DesiredStepper")
 debug_add_button = NodePath("DebugAddButton")
-dump_button = NodePath("ContentsBox/CenterContainer/DumpButton")
-autodump_indicator = NodePath("AutodumpIndicator")
+dump_button = NodePath("ContentsBox/DumpButton")
+autodump_indicator = NodePath("ContentsBox/AutodumpIndicator")
 
-[node name="NameBox" type="HBoxContainer" parent="." unique_id=1590424296]
-layout_mode = 2
-size_flags_horizontal = 2
-
-[node name="RemoveResourceButton" type="TextureButton" parent="NameBox" unique_id=810353350]
-custom_minimum_size = Vector2(12, 12)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-texture_normal = ExtResource("2_nlufw")
-texture_pressed = ExtResource("3_ovn6y")
-texture_hover = ExtResource("3_ovn6y")
-ignore_texture_size = true
-stretch_mode = 0
-
-[node name="StoredName" type="Label" parent="NameBox" unique_id=927352583]
+[node name="NameBox" type="HBoxContainer" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 16
+theme_override_constants/separation = 6
+
+[node name="RemoveResourceButton" parent="NameBox" instance=ExtResource("2_action")]
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "Stop stocking this resource here. Anything held moves to this module's overflow pile."
+text = "✕"
+weight = 2
+
+[node name="StoredName" type="Label" parent="NameBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_type_variation = &"EntityName"
 text = "Water"
+text_overrun_behavior = 3
 
-[node name="DebugAddButton" type="Button" parent="." unique_id=1244710171]
-layout_mode = 2
-text = "+"
-
-[node name="ContentsBox" type="HBoxContainer" parent="." unique_id=1076321897]
-layout_mode = 2
-size_flags_horizontal = 10
-
-[node name="StoredValue" type="Label" parent="ContentsBox" unique_id=637850201]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "4"
-
-[node name="SlashLabel" type="Label" parent="ContentsBox" unique_id=684790310]
-layout_mode = 2
-text = "/"
-
-[node name="DesiredResourcesSpinbox" type="SpinBox" parent="ContentsBox" unique_id=251591680]
+[node name="ContentsBox" type="HBoxContainer" parent="."]
 layout_mode = 2
 size_flags_horizontal = 8
+theme_override_constants/separation = 6
+
+[node name="StoredValue" type="Label" parent="ContentsBox"]
+layout_mode = 2
 size_flags_vertical = 4
-rounded = true
-alignment = 2
+theme_type_variation = &"Metric"
+text = "4"
 
-[node name="CenterContainer" type="CenterContainer" parent="ContentsBox" unique_id=323939780]
+[node name="SlashLabel" type="Label" parent="ContentsBox"]
 layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"MetaLine"
+text = "/"
 
-[node name="TextureRect" type="TextureRect" parent="ContentsBox/CenterContainer" unique_id=385402199]
-custom_minimum_size = Vector2(20, 25)
+[node name="DesiredStepper" parent="ContentsBox" instance=ExtResource("3_stepper")]
 layout_mode = 2
-texture = ExtResource("5_ovn6y")
-expand_mode = 4
+size_flags_vertical = 4
+max_value = 9999
 
-[node name="DumpButton" type="TextureButton" parent="ContentsBox/CenterContainer" unique_id=1076756348]
-custom_minimum_size = Vector2(20, 20)
+[node name="DumpButton" parent="ContentsBox" instance=ExtResource("2_action")]
 layout_mode = 2
-texture_normal = ExtResource("5_nlufw")
-ignore_texture_size = true
-stretch_mode = 5
+size_flags_vertical = 4
+tooltip_text = "Desired amount, a one-off vent, and auto-dump"
+text = "Dump"
+weight = 2
 
-[node name="AutodumpIndicator" type="TextureRect" parent="." unique_id=1842600417]
+[node name="AutodumpIndicator" type="Label" parent="ContentsBox"]
 visible = false
-self_modulate = Color(0.7363442, 0, 0.12181855, 1)
 layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"Metric"
 tooltip_text = "Autodump is ON: any resource above the desired amount is automatically vented to space (destroyed)"
-texture = ExtResource("7_jh508")
-expand_mode = 3
+text = "⌦"
+
+[node name="DebugAddButton" parent="." instance=ExtResource("2_action")]
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "Debug: deposit one unit"
+text = "+"

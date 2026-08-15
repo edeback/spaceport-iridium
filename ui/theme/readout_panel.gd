@@ -36,6 +36,25 @@ extends Control
 		panel_width = value
 		_apply_layout()
 
+## Distance from the **right edge of the screen** to this readout's right edge.
+##
+## The right column sits one gutter in; the two flyouts (the resource ledger and
+## the alert log) stop short of the column entirely, which is what
+## [constant UIMetrics.LEDGER_RIGHT_INSET] and
+## [constant UIMetrics.ALERT_HISTORY_RIGHT_INSET] encode.
+##
+## It exists because [member panel_width] used to be **cosmetic** for a
+## right-anchored readout (WI-58): the frame reported the width as a minimum size
+## but never wrote the offsets, so the real geometry was a hand-typed `-364` in
+## six separate scene files. All six agreed with the design table, and all six
+## would have silently stopped agreeing the moment
+## [constant UIMetrics.RIGHT_COLUMN_WIDTH] moved. [ConsolePanel] has always
+## written its own offsets; this is the readout half of that.
+@export var right_inset: int = UIMetrics.SCREEN_GUTTER:
+	set(value):
+		right_inset = value
+		_apply_layout()
+
 ## Fixed height of the content region. Zero means "as tall as the content asks
 ## for", which is what a list-shaped readout (the alert feed) wants; the map
 ## wants a fixed square.
@@ -203,8 +222,24 @@ func _apply_layout() -> void:
 	# inside a container has nobody to give it a height, so it takes its own.
 	# The stretched and container-laid-out cases are somebody else's business
 	# and must not be overridden here.
-	if not (get_parent() is Container) and is_equal_approx(anchor_top, anchor_bottom):
+	if get_parent() is Container:
+		return
+	_apply_horizontal_offsets()
+	if is_equal_approx(anchor_top, anchor_bottom):
 		fit_height()
+
+## Writes the horizontal offsets a right-anchored readout implies, so
+## [member panel_width] and [member right_inset] are the geometry rather than a
+## description of it (WI-58).
+##
+## Only the right-anchored case, which is every readout in the design: the right
+## column and the two flyouts. A readout anchored some other way was positioned
+## deliberately by whoever anchored it, and this must not fight them.
+func _apply_horizontal_offsets() -> void:
+	if not (is_equal_approx(anchor_left, 1.0) and is_equal_approx(anchor_right, 1.0)):
+		return
+	offset_right = -float(right_inset)
+	offset_left = -float(right_inset + panel_width)
 
 func _apply_label() -> void:
 	_ensure_refs()

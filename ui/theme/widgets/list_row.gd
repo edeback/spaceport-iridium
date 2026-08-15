@@ -22,6 +22,11 @@ extends Button
 ## right, it grows out of *both* sides of its own panel. Setting an overrun
 ## behaviour drops the reported minimum width to 1 while leaving the height
 ## intact, which is what keeps a long alert detail inside a 344px readout.
+##
+## The **action** label got the same treatment plus a reserved width in WI-58,
+## for the mirror-image reason: it had no overrun behaviour, so it reported its
+## full text as its minimum and took that room out of the expanding name/meta
+## block first. See [constant UIMetrics.LIST_ROW_ACTION_WIDTH].
 
 const SCENE_PATH: String = "res://ui/theme/widgets/list_row.tscn"
 
@@ -63,6 +68,10 @@ func _refit() -> void:
 	if _row == null:
 		return
 	var box: StyleBoxFlat = UIPalette.row_style(_kind)
+	if _action_label != null:
+		# The scene authors the structure; the number comes from [UIMetrics], so a
+		# row's action slot cannot drift to 64px in one list and 80 in another.
+		_action_label.custom_minimum_size.x = float(UIMetrics.LIST_ROW_ACTION_WIDTH)
 	custom_minimum_size.y = _row.get_combined_minimum_size().y \
 		+ box.content_margin_top + box.content_margin_bottom
 

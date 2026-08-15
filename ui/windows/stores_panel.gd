@@ -270,7 +270,10 @@ func _make_entry(module: ModuleBase, storage: StorageComponent,
 	entry.priority = storage.priority
 	entry.stored = storage.max_stored - storage.space_available()
 	entry.capacity = storage.max_stored
-	entry.configurable = storage.player_configurable
+	# Through the model, not off the flag: the inspector's storage tab and the chip
+	# dialog read the same call, so "may I change what this bin holds?" has one
+	# answer (WI-58). Priority is a separate question and is never gated on it.
+	entry.contents_configurable = StoresModel.contents_editable(storage)
 	entry.under_construction = not module.is_complete()
 	return entry
 

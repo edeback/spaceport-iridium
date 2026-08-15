@@ -14,6 +14,10 @@ var atmosphere_component: AtmosphereComponent
 func set_atmosphere_component(component: AtmosphereComponent) -> void:
 	name = "Atmosphere"
 	atmosphere_component = component
+	# A breach is one of amber's four sanctioned spends (invariant 5), so it takes
+	# the palette's amber rather than the scene-authored `Color(1, 0.35, 0.3, 1)`
+	# it wore until WI-58 - which was neither the palette's red nor its amber.
+	breach_label.add_theme_color_override("font_color", UIPalette.ATTENTION_TEXT)
 	_refresh()
 
 func _process(_delta: float) -> void:

@@ -350,10 +350,10 @@ Shipped 2026-08-11. Details, the eight deviations and the five traps found are i
 | `ui/windows/comms/quota_tab.gd` (`QuotaTab`) | WI-26's promotion block, moved out of Research. Export gauges, the facility checklist, and a closing line that says what the *button* will do next. |
 | `ui/windows/comms/finance_tab.gd` (`FinanceTab`) | `economy_screen` with its window, title bar, close button and Esc handler deleted. Content unchanged. |
 | `UnlockManager.InspectionBlock` / `inspection_block()` / `can_request_inspection()` / `export_goal_progress()` / `missing_inspection_tag()` / `inspection_cooldown_remaining()` | The readiness checks the deleted per-cycle roll used to make, now producing a sentence for a button instead of gating a random number. |
-| `ListRow.set_swatch(color, size)`, `UnlockPanel.FOOTER`, `SignalBus.transmissions_changed` | The three additive bits: an avatar-sized swatch, the footer the one panel without one was missing, and the signal both the feed and the console badge re-derive from. |
+| `ListRow.set_swatch(color, size)`, `UnlockPanel.FOOTER`, `SignalBus.transmissions_changed` | The three additive bits: an avatar-sized swatch, the footer R&D was missing (Build was also missing one - see WI-58), and the signal both the feed and the console badge re-derive from. |
 | **Deleted** | `ui/windows/economy_screen.gd`, `data/events/arc_inspection_offer.tres`, `data/events/effects/effect_inspection_response.gd`, `ui/windows/module_info_panel.tscn`, `ui/windows/popup_panel.tscn`, the empty `ui/data/` and `ui/windows/storage/`. |
 
-**What the retirement sweep actually found:** almost nothing, which is the point — eight prior items had each cleaned up after themselves. `UIMain` is 481 lines and its runtime child list is exactly the allowed set. There were no stray `PRESET_TOP_WIDE` / `PRESET_CENTER_TOP` anchors, no hardcoded left offsets, and no `_add_side_button` remnant. The re-run of WI-49 §7's override sweep found **zero** `add_theme_font_size_override` calls anywhere in the console UI; the nine that remain are all in `ui/menus/` and `event_card.gd`, both explicitly untouched by this program.
+**What the retirement sweep actually found:** almost nothing, which is the point — eight prior items had each cleaned up after themselves. `UIMain` is 481 lines and its runtime child list is exactly the allowed set. There were no stray `PRESET_TOP_WIDE` / `PRESET_CENTER_TOP` anchors, no hardcoded left offsets, and no `_add_side_button` remnant. The re-run of WI-49 §7's override sweep found **zero** `add_theme_font_size_override` calls anywhere in the console UI; the nine that remain are all in `ui/menus/` and `event_card.gd`, both explicitly untouched by this program. **That sweep was code-only** and therefore structurally blind to the 28 *scene-authored* `theme_override_font_sizes` sitting in `.tscn` files at the same moment - see WI-58, which fixed them and added the scene half of the drift guard.
 
 **The rules this leaves behind** (they are in CLAUDE.md's UI section too):
 
@@ -362,6 +362,34 @@ Shipped 2026-08-11. Details, the eight deviations and the five traps found are i
 3. **A blocked action names its blocker on its own control.** Six of the seven `InspectionBlock` states print a sentence on the button. This is WI-54's "locked is a state, not an absence" applied to an action rather than to content.
 4. **A row that repaints on a signal it can itself emit must not rebuild.** Expanding a transmission marks it read, which fires `transmissions_changed`, which lands back in the feed — an unconditional rebuild frees the row mid-signal. WI-53 learned this as a nuisance; here it is a crash.
 5. **`register_unavailable` now has no users.** Every console mode has a real panel. It stays for a future slot declared ahead of its panel, and a mode that was never registered at all is still a loud error.
+
+## What WI-58 corrected
+
+Shipped 2026-08-14. The program is complete, so this is an **appendix rather than a tenth item**: an audit of the nine against their own invariants, and the fixes it produced. Details, the ten deviations and the six traps are in [[WI-58_UI_Rework_Fix_Pass]].
+
+The audit's verdict on the program itself was good — the port inventory is genuinely empty, all eleven deleted files are gone, there are no dangling `res://ui/…` references, and four of the six invariants were airtight. What it found clustered in one place and one theme.
+
+**The place: the seam WI-51 deviations 7-8 left.** Sixteen component UIs and five pawn tab scenes stayed pre-rework `.tscn`, so the design system stopped at the surface the player touches most. They are converted now — both `SpinBox`es are `Stepper`s (there were no `SpinBox/*` entries in the theme at all, so Godot resolved their arrows from its default *light* theme inside a dark console), the Kenney placeholder art and the 12×12 destructive `TextureButton` are `ActionButton`s, and the two dead sub-panels WI-56 deviation 9 deferred are deleted.
+
+**The theme: the verification sweeps were code-only.** WI-57 §8's "zero `add_theme_font_size_override` calls" was true and could not see 28 scene-authored ones, six of them at 10px. `test_ui_theme.gd` now sweeps `ui/**.tscn` as text for authored sizes, authored colours and undeclared type variations.
+
+| Area | What changed |
+| --- | --- |
+| **The right column's budget** | `ALERT_FEED_MAX_HEIGHT` (a fixed 400, chosen before the raid readout existed) → `UIMetrics.alert_feed_max_height(raid_visible, screen_height)`, derived from the screen minus the console, the readouts and a new `INSPECTOR_MIN_CONTENT_HEIGHT`. **The feed is the tenant that yields**: it has an overflow row and a history flyout, the inspector has nowhere. A raid over a full feed used to give the inspector a **zero-height** content region with its chrome rendering outside its own rect. |
+| **Contrast** | `TEXT_META` 3.44:1 → 4.99:1 and `TEXT_SECONDARY` 4.37:1 → 5.59:1 on `PANEL`; a new `TEXT_DISABLED` token for every `font_disabled_color`, because a disabled control is exactly where WI-57's "a blocked action names its blocker" rule puts a sentence — and on the `ActionPrimary` disabled fill that sentence was at **3.01:1**. `test_ui_palette.gd` computes WCAG ratios and pins the whole ladder. |
+| **`ReadoutPanel` geometry** | `panel_width` was **cosmetic** for a right-anchored readout: the real offsets were a hand-typed `-364` in six scenes, all correct and all silently stale the moment `RIGHT_COLUMN_WIDTH` moved. `_apply_layout` writes them now, from `panel_width` and a new `right_inset`, the way `ConsolePanel` always has. |
+| **One answer per question** | `StoresModel.contents_editable()` / `priority_editable()` / `locked_reason()` — the Stores card, the inspector's storage tab and the dump dialog gave three answers to "what may I change on this bin?", and the third let the player rewrite a live blueprint's build requirements and vent its delivered materials. The split matters: `player_configurable` says whether the **contents** are the player's (a Storage module's are, a Forge's are not), while **priority** is the player's on every bin because it is how the whole hauling system is steered. `UIPalette.shift_cell()` — the Crew rota and the schedule editor painted the same on/off-shift fact in two colour languages, one keypress apart. |
+| **The amber budget** | Locked R&D nodes and locked module tooltips go inert (a tree of fifteen tier-gated nodes was fifteen amber pixels at rest); a pile, a designated asteroid and any gauge merely under full go cyan; the alert feed's accent goes by state and the log's is cyan. `UIPalette.gauge_tint()` / `GAUGE_LOW` is the rule for a gauge with no real predicate; a drone uses `wants_repair()`, which is better. |
+| **The pause** | `TimeManager.pause_holders()` existed since WI-53 with exactly one consumer — a cheat. Pressing resume under a hold snapped the button back and said nothing. The console's cycle line now names the holder in amber, with the sentence on its tooltip. |
+| **Coverage** | Build's footer (the ninth panel, not the eighth); HIRE and SHIFT ROTA naming their blockers on the button rather than in a tooltip; `M`, `L` and `show_details` printed from the live `InputMap`; rebind conflict detection widened past the remap screen's display list, with a test that parses `project.godot` to keep the classification complete; `ui/buttons/structure_button.*` deleted. |
+
+**The rules this leaves behind** (they are in CLAUDE.md's UI section too):
+
+1. **A `.tscn` form of a font size, a colour or a type variation is the same violation as its code form.** A sweep that greps `.gd` is half a drift guard.
+2. **A page wider than its panel widens the panel.** An anchored `Control` clamps its size *up* to its combined minimum, so an over-wide inspector tab does not clip or scroll — the whole 420px selection surface grows. The probe sweeps the seam for it.
+3. **An overrun behaviour without a reserved width collapses a label rather than capping it.** A `Label` with overrun reports a minimum width of ~1, and a `BoxContainer` with no expanding child hands every child exactly its minimum.
+4. **When the sim will not resume, the console says who is holding it.** The pause/speed controls are the one place a player meets a blocked action with no panel to explain it.
+5. **The feed yields; the inspector does not.** Any future tenant of the right column has to say which of those it is.
 
 ## Cross-cutting risks
 
@@ -374,7 +402,8 @@ Shipped 2026-08-11. Details, the eight deviations and the five traps found are i
 ## Related
 
 - [[New Work for Phase 4]] — the source brief, including the alert, crew, R&D and Comms corrections folded into this doc.
-- [[01_Technical_Specification]] — needs a UI section once WI-50 lands; there is currently no architectural description of the HUD at all.
+- [[WI-58_UI_Rework_Fix_Pass]] — the correction pass over all nine; see §"What WI-58 corrected".
+- [[01_Technical_Specification]] — §1.18 is the HUD's architectural description. ✅ The flag this line carried from WI-50 ("needs a UI section; there is currently no architectural description of the HUD at all") was **stale**: WI-50 through WI-57 each wrote their own paragraph into §1.18 as they landed, and WI-58 confirmed it is current and added its own.
 - [[02_Roadmap]] — Phase 4 ordering.
 - [[03_Bugs_and_Improvements]] — **C13** (`force_withdraw` doesn't emit `total_changed`, so the credit HUD lags a slow tick) ✅ fixed in WI-52.
 - [[WI-48_Pawn_Interactions]] — its §9 Social tab is superseded by WI-51's inspector tab set.

@@ -24,11 +24,12 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="MarginContainer/ContentsBox/PressureRow" unique_id=1754000621]
 layout_mode = 2
+theme_type_variation = &"ReadoutLabel"
 text = "Pressure: "
 
 [node name="PressureLabel" type="Label" parent="MarginContainer/ContentsBox/PressureRow" unique_id=1894729340]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_type_variation = &"Metric"
 text = "100 kPa"
 
 [node name="O2Row" type="HBoxContainer" parent="MarginContainer/ContentsBox" unique_id=1881771187]
@@ -40,7 +41,7 @@ text = "Oxygen: "
 
 [node name="O2Label" type="Label" parent="MarginContainer/ContentsBox/O2Row" unique_id=1186486274]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_type_variation = &"Metric"
 text = "100 kPa"
 
 [node name="CO2Row" type="HBoxContainer" parent="MarginContainer/ContentsBox" unique_id=390284293]
@@ -52,13 +53,13 @@ text = "CO2: "
 
 [node name="CO2Label" type="Label" parent="MarginContainer/ContentsBox/CO2Row" unique_id=1962739963]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_type_variation = &"Metric"
 text = "0 kPa"
 
 [node name="BreachLabel" type="Label" parent="MarginContainer/ContentsBox" unique_id=741697027]
 visible = false
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.35, 0.3, 1)
+theme_type_variation = &"MetaLine"
 text = "BREACHED"
 
 [node name="BreachButton" type="Button" parent="MarginContainer/ContentsBox" unique_id=2114198886]

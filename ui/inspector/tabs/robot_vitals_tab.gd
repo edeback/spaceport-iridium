@@ -56,8 +56,12 @@ func _refresh() -> void:
 	if _integrity != null and integrity != null:
 		var fraction: float = clampf(integrity.integrity / integrity.integrity_max, 0.0, 1.0) \
 			if integrity.integrity_max > 0.0 else 0.0
+		# `wants_repair()` for the same reason the line above uses
+		# `wants_recharge()` (WI-58): it is the test the drone itself acts on, so
+		# the bar goes amber exactly when the robot decides it needs a bay - not on
+		# every point of wear.
 		_integrity.configure("Integrity", fraction, "%d%%" % int(round(fraction * 100.0)),
-			UIPalette.LIVE if fraction >= 1.0 else UIPalette.ATTENTION)
+			UIPalette.ATTENTION if integrity.wants_repair() else UIPalette.LIVE)
 	if _state != null:
 		_state.text = state_text(_robot).to_upper()
 

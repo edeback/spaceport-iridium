@@ -32,6 +32,13 @@ const MAX_CONTENT_HEIGHT: float = 260.0
 ## Taken from the chrome palette rather than hand-mixed (WI-49: nothing in `ui/`
 ## names a colour of its own). Growth for a friendship, destructive for a feud,
 ## body text for indifference, and meta grey for a crewmate they have not met.
+##
+## These are applied as `font_color` overrides, **never** as `modulate` (WI-58).
+## `modulate` multiplies the theme's own colour rather than replacing it, so
+## `TEXT_META x TEXT` rendered "Not met" at 2.22:1 and `DESTRUCTIVE x TEXT`
+## rendered a feud at 2.62:1 - three of these four failed the contrast floor
+## while naming the right colour. It is WI-49's documented `self_modulate` trap
+## in its `modulate` form.
 const POSITIVE_COLOUR := UIPalette.GROWTH
 const NEGATIVE_COLOUR := UIPalette.DESTRUCTIVE
 const NEUTRAL_COLOUR := UIPalette.TEXT
@@ -109,20 +116,24 @@ func _make_row(other: PawnBase) -> HBoxContainer:
 	name_label.text = _display_name(other)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(name_label)
+	var tint: Color = _opinion_colour(value) if met else UNMET_COLOUR
 	var status := Label.new()
 	status.custom_minimum_size = Vector2(72, 0)
 	status.text = SocialMath.opinion_label(value) if met else "Not met"
-	status.modulate = _opinion_colour(value) if met else UNMET_COLOUR
+	status.add_theme_color_override("font_color", tint)
 	row.add_child(status)
 	# Length = how strongly they feel, colour = which way. Empty for an
 	# unmet crewmate, so the column still lines up without claiming a reading.
-	var bar := ProgressBar.new()
-	bar.custom_minimum_size = Vector2(80, 10)
-	bar.min_value = 0.0
-	bar.max_value = SocialMath.OPINION_MAX
-	bar.value = absf(value) if met else 0.0
-	bar.show_percentage = false
-	bar.modulate = _opinion_colour(value) if met else UNMET_COLOUR
+	#
+	# A [HatchBar] rather than a tinted [ProgressBar]: `modulate` on a bar
+	# multiplies its *track* as well as its fill, so a feud used to darken the
+	# groove it sat in. The design's bar takes a fill colour and leaves the track
+	# alone (WI-58).
+	var bar := HatchBar.new()
+	bar.custom_minimum_size = Vector2(80, 0)
+	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bar.fraction = (absf(value) / SocialMath.OPINION_MAX) if met else 0.0
+	bar.fill_color = tint
 	row.add_child(bar)
 	return row
 
@@ -162,7 +173,7 @@ func _build_log(container: VBoxContainer) -> void:
 func _muted_label(text: String, colour: Color) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.modulate = colour
+	label.add_theme_color_override("font_color", colour)
 	return label
 
 func _display_name(target: PawnBase) -> String:

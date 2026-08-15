@@ -104,6 +104,9 @@ func toggle() -> void:
 ## 8), so no hand-edited layout can drift out of sync with the four columns.
 func _build_body() -> void:
 	panel_width = UIMetrics.LEDGER_WIDTH
+	# A console flyout stops short of the right column entirely, rather than one
+	# gutter in like the readouts that live there.
+	right_inset = UIMetrics.LEDGER_RIGHT_INSET
 	content_padding = UIMetrics.READOUT_CONTENT_PAD
 	drop_shadow = true
 	label = "Resource Ledger"
@@ -118,11 +121,15 @@ func _build_body() -> void:
 	_pin_button.toggled.connect(_set_pin_mode)
 	add_action(_pin_button)
 
-	var esc := Label.new()
-	esc.theme_type_variation = UIType.HOTKEY
-	esc.text = "ESC"
-	esc.add_theme_color_override("font_color", UIPalette.TEXT_META)
-	add_action(esc)
+	# Both keys, not just Esc (WI-58). `toggle_ledger` is bound, is the fastest way
+	# in and out of this flyout, and was printed nowhere - so the panel taught the
+	# player how to leave it and not how to come back.
+	var keys := Label.new()
+	keys.theme_type_variation = UIType.HOTKEY
+	var open_key: String = ModeManager.action_hotkey_label(&"toggle_ledger")
+	keys.text = ("%s · ESC" % open_key) if open_key != "" else "ESC"
+	keys.add_theme_color_override("font_color", UIPalette.TEXT_META)
+	add_action(keys)
 
 	_column = VBoxContainer.new()
 	_column.name = "Column"

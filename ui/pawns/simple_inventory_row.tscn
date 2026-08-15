@@ -9,11 +9,11 @@ stored_value = NodePath("StoredValue")
 
 [node name="StoredName" type="Label" parent="." unique_id=1576742834]
 layout_mode = 2
+theme_type_variation = &"EntityName"
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 16
 text = "Water"
 
 [node name="StoredValue" type="Label" parent="." unique_id=723039331]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_type_variation = &"Metric"
 text = "4"

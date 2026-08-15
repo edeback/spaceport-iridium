@@ -37,8 +37,29 @@ extends RefCounted
 ## Emitted through the callbacks rather than as signals: these are static builders,
 ## and a caller that wants to know something changed already knows - it asked.
 
-const DIALOG_MIN := Vector2i(460, 380)
-const DUMP_MIN := Vector2i(420, 240)
+## Both dialogs open at a **fixed** size and scroll their bodies.
+##
+## Not a minimum, a size (WI-58 follow-up). A [Window] takes the larger of the
+## size it is popped at and `get_contents_minimum_size()`, and that measurement
+## happens **once**, before any child has been given a width - which is exactly
+## the case an autowrapped [Label] answers worst. `Label.get_minimum_size()` under
+## `AUTOWRAP_WORD_SMART` reports the height of its text *at its current width*,
+## and at that moment its width is zero, so it asks for one line per word. Four
+## such notes drove the accepted-resources dialog off the bottom of the screen and
+## took its `APPLY` and `CANCEL` buttons with it - the dialog was unusable, not
+## merely ugly.
+##
+## The fix is structural rather than a tuned number: everything goes inside a
+## [ScrollContainer], whose own vertical minimum is zero, so the contents minimum
+## is the frame's fixed size and nothing inside can push it. This is WI-51's
+## "measuring once is not enough" trap in the one place where re-measuring is not
+## an option, because a Window sizes itself at popup.
+const DIALOG_SIZE := Vector2i(520, 560)
+const DUMP_SIZE := Vector2i(520, 460)
+
+## Kept clear of the screen edges, so a dialog on a small display still shows its
+## button bar.
+const SCREEN_MARGIN: int = 80
 
 # --- the accepted-resource checklist ------------------------------------------------
 
@@ -57,27 +78,30 @@ const DUMP_MIN := Vector2i(420, 240)
 static func open_edit(host: Node, component: StorageComponent, on_applied: Callable) -> void:
 	if host == null or component == null:
 		return
-	var editable: bool = component.player_configurable and not component.allow_any_resource
+	var editable: bool = StoresModel.contents_editable(component) and not component.allow_any_resource
 	var dialog := ConfirmationDialog.new()
-	dialog.title = "Accepted resources"
+	dialog.title = "Accepted resources · %s" % component.name
 	dialog.ok_button_text = "Apply" if editable else "Close"
-	dialog.min_size = DIALOG_MIN
 
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
-	column.add_child(_note(_edit_note(component)))
+	var column: VBoxContainer = _dialog_body(dialog, DIALOG_SIZE)
+	_section(column, "This bin", _edit_note(component))
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.custom_minimum_size.y = 240.0
-	column.add_child(scroll)
+	# The fill-meter toggle lives here rather than on the card: it is a display
+	# preference, and putting it on a row of forty cards would spend a control slot
+	# on the least interesting setting in the panel.
+	#
+	# **Never disabled**, whatever the bin's editability says: it is a preference
+	# about the player's own screen, not a property of the bin. It also sits
+	# *above* the resource list rather than under it, because the list is eighteen
+	# rows and scrolls - a control that is always available must not be the one
+	# below the fold.
+	_section(column, "Display")
+	var meter := CheckBox.new()
+	meter.text = "Show the fill meter on the station"
+	meter.button_pressed = component.display_storage_ui
+	column.add_child(meter)
 
-	var grid := VBoxContainer.new()
-	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.add_theme_constant_override("separation", 2)
-	scroll.add_child(grid)
-
+	_section(column, "Resources")
 	var boxes: Dictionary[ResourceData, CheckBox] = {}
 	for resource: ResourceData in _storable_resources():
 		var box := CheckBox.new()
@@ -86,18 +110,9 @@ static func open_edit(host: Node, component: StorageComponent, on_applied: Calla
 		box.add_theme_constant_override("icon_max_width", 24)
 		box.button_pressed = component.storage_data.has(resource)
 		box.disabled = not editable
-		grid.add_child(box)
+		column.add_child(box)
 		boxes[resource] = box
 
-	# The fill-meter toggle lives here rather than on the card: it is a display
-	# preference, and putting it on a row of forty cards would spend a control slot
-	# on the least interesting setting in the panel.
-	var meter := CheckBox.new()
-	meter.text = "Show the fill meter on the station"
-	meter.button_pressed = component.display_storage_ui
-	column.add_child(meter)
-
-	dialog.add_child(column)
 	dialog.confirmed.connect(func() -> void:
 		if is_instance_valid(component):
 			component.display_storage_ui = meter.button_pressed
@@ -107,14 +122,13 @@ static func open_edit(host: Node, component: StorageComponent, on_applied: Calla
 			on_applied.call()
 		dialog.queue_free())
 	dialog.canceled.connect(dialog.queue_free)
-	host.add_child(dialog)
-	dialog.popup_centered()
+	_show(host, dialog, DIALOG_SIZE)
 
 static func _edit_note(component: StorageComponent) -> String:
 	if component.allow_any_resource:
 		return "This bay accepts anything, so its list is not editable."
-	if not component.player_configurable:
-		return "This bin's contents are set by the module it belongs to."
+	if not StoresModel.contents_editable(component):
+		return StoresModel.locked_reason(component)
 	return "Unchecking a stocked resource moves it to this module's overflow pile — it is not destroyed."
 
 ## Reconciles the component's stored-resource set with the boxes. Removals dump to
@@ -181,19 +195,31 @@ static func open_resource(host: Node, component: StorageComponent, resource: Res
 	if data == null:
 		return
 	var ventable: int = data.available_to_withdraw()
+	# The bin's own rule, not this dialog's (WI-58). It used to ask nothing, so the
+	# Stores card - which disables its stepper and prints "set by the module" -
+	# nonetheless wired every content chip straight into a dialog that writes
+	# `desired` and destroys stock. Because [method StoresModel.lists] deliberately
+	# keeps live construction sites, that reached a blueprint's construction import
+	# bin, where it let the player rewrite the build's requirements and vent its
+	# delivered materials. Read-only here means the contents and the averages are
+	# still worth opening for; only the writes are gone.
+	var editable: bool = StoresModel.contents_editable(component)
 
 	var dialog := ConfirmationDialog.new()
 	dialog.title = "%s in %s" % [resource.name, component.name]
-	dialog.ok_button_text = "Apply"
-	dialog.min_size = DUMP_MIN
+	dialog.ok_button_text = "Apply" if editable else "Close"
 
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	var column: VBoxContainer = _dialog_body(dialog, DUMP_SIZE)
+	if not editable:
+		# Named, not merely greyed: a blocked control says what blocks it (WI-57).
+		var locked: Label = _note(StoresModel.locked_reason(component))
+		locked.add_theme_color_override("font_color", UIPalette.ATTENTION_TEXT)
+		column.add_child(locked)
 
+	_section(column, "Held")
 	var held := Label.new()
-	held.theme_type_variation = UIType.META_LINE
-	held.add_theme_color_override("font_color", UIPalette.TEXT_META)
-	held.text = "HELD %d · UNRESERVED %d" % [data.stored, ventable]
+	held.theme_type_variation = UIType.METRIC
+	held.text = "%d STORED · %d UNRESERVED" % [data.stored, ventable]
 	column.add_child(held)
 	if ventable < data.stored:
 		column.add_child(_note(
@@ -203,48 +229,18 @@ static func open_resource(host: Node, component: StorageComponent, resource: Res
 	# Desired is the *routing* half of this dialog and comes first: it is what
 	# posts pull jobs (below it) and push jobs (above it), so it decides whether
 	# there is ever a surplus for the two dump controls to act on.
-	var desired_row := HBoxContainer.new()
-	desired_row.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
-	column.add_child(desired_row)
-	var desired_caption := Label.new()
-	desired_caption.text = "KEEP"
-	desired_caption.theme_type_variation = UIType.READOUT_LABEL
-	desired_caption.add_theme_color_override("font_color", UIPalette.TEXT_META)
-	desired_caption.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	desired_row.add_child(desired_caption)
+	_section(column, "Keep", "Haulers top this bin up to here and carry the surplus away.")
 	var desired: Stepper = Stepper.create()
 	desired.configure(data.desired, 0, component.max_stored, 1, false)
-	desired_row.add_child(desired)
-	desired_row.add_child(_note("Haulers top this bin up to here and carry the surplus away."))
+	desired.editable = editable
+	column.add_child(desired)
 
-	var amount_row := HBoxContainer.new()
-	amount_row.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
-	column.add_child(amount_row)
-	var amount_caption := Label.new()
-	amount_caption.text = "VENT NOW"
-	amount_caption.theme_type_variation = UIType.READOUT_LABEL
-	amount_caption.add_theme_color_override("font_color", UIPalette.TEXT_META)
-	amount_caption.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	amount_row.add_child(amount_caption)
+	_section(column, "Vent now",
+		"Vented resources are destroyed. Only the unreserved stock can go.")
 	var amount: Stepper = Stepper.create()
 	amount.configure(0, 0, ventable, 1, false)
-	amount.editable = ventable > 0
-	amount_row.add_child(amount)
-
-	var autodump := CheckBox.new()
-	autodump.text = "Keep dumping the surplus automatically"
-	autodump.button_pressed = data.autodump
-	column.add_child(autodump)
-
-	# The warning is built up front and shown reactively rather than re-queried on
-	# each toggle: it is a station scan, and the answer cannot change while a modal
-	# is up (the sim keeps running, but a reactor is not built in that window).
-	var warning: Label = _note(component.autodump_warning(resource))
-	warning.add_theme_color_override("font_color", UIPalette.ATTENTION_TEXT)
-	warning.visible = data.autodump and not warning.text.is_empty()
-	column.add_child(warning)
-	autodump.toggled.connect(func(pressed: bool) -> void:
-		warning.visible = pressed and not warning.text.is_empty())
+	amount.editable = editable and ventable > 0
+	column.add_child(amount)
 
 	var destroyed: Label = _note("")
 	destroyed.add_theme_color_override("font_color", UIPalette.ATTENTION_TEXT)
@@ -259,9 +255,29 @@ static func open_resource(host: Node, component: StorageComponent, resource: Res
 	amount.value_previewed.connect(restate)
 	amount.value_changed.connect(restate)
 
-	dialog.add_child(column)
+	_section(column, "Automatically")
+	var autodump := CheckBox.new()
+	autodump.text = "Keep dumping the surplus automatically"
+	autodump.button_pressed = data.autodump
+	autodump.disabled = not editable
+	column.add_child(autodump)
+
+	# The warning is built up front and shown reactively rather than re-queried on
+	# each toggle: it is a station scan, and the answer cannot change while a modal
+	# is up (the sim keeps running, but a reactor is not built in that window).
+	var warning: Label = _note(component.autodump_warning(resource))
+	warning.add_theme_color_override("font_color", UIPalette.ATTENTION_TEXT)
+	warning.visible = data.autodump and not warning.text.is_empty()
+	column.add_child(warning)
+	autodump.toggled.connect(func(pressed: bool) -> void:
+		warning.visible = pressed and not warning.text.is_empty())
+
 	dialog.confirmed.connect(func() -> void:
-		if is_instance_valid(component) and component.storage_data.has(resource):
+		# The editability check is repeated here rather than relying on the disabled
+		# controls: OK is still a real button on the read-only dialog (it says CLOSE),
+		# and a write path that is only guarded by a widget's `disabled` flag is one
+		# input-synthesis bug away from firing anyway.
+		if editable and is_instance_valid(component) and component.storage_data.has(resource):
 			component.storage_data[resource].desired = desired.value
 			if amount.value > 0:
 				# Gone forever - the explicit action that loses resources.
@@ -278,8 +294,7 @@ static func open_resource(host: Node, component: StorageComponent, resource: Res
 			on_applied.call()
 		dialog.queue_free())
 	dialog.canceled.connect(dialog.queue_free)
-	host.add_child(dialog)
-	dialog.popup_centered()
+	_show(host, dialog, DUMP_SIZE)
 
 # --- shared bits ----------------------------------------------------------------------
 
@@ -290,3 +305,63 @@ static func _note(text: String) -> Label:
 	label.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
 	label.text = text
 	return label
+
+## Builds a dialog's body and returns the column callers fill.
+##
+## The shape is fixed frame → scroll → column, for the reason
+## [constant DIALOG_SIZE] documents: it is what stops an autowrapped note from
+## sizing the window. Callers add rows to the column and never think about it
+## again.
+static func _dialog_body(dialog: ConfirmationDialog, size: Vector2i) -> VBoxContainer:
+	var frame := VBoxContainer.new()
+	frame.name = "Frame"
+	frame.custom_minimum_size = Vector2(float(size.x), float(size.y))
+	dialog.add_child(frame)
+
+	var scroll := ScrollContainer.new()
+	scroll.name = "Body"
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	frame.add_child(scroll)
+
+	var column := VBoxContainer.new()
+	column.name = "Column"
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	scroll.add_child(column)
+	return column
+
+## Pops the dialog at the size it asked for, clamped to the viewport so its button
+## bar is always reachable.
+static func _show(host: Node, dialog: ConfirmationDialog, size: Vector2i) -> void:
+	host.add_child(dialog)
+	# A read-only dialog's OK button says CLOSE, which leaves CANCEL standing
+	# beside it as a second control that does the same nothing.
+	if dialog.get_cancel_button() != null:
+		dialog.get_cancel_button().visible = dialog.ok_button_text != "Close"
+	var screen: Vector2i = UIMetrics.SCREEN_SIZE
+	var viewport: Viewport = host.get_viewport()
+	if viewport != null:
+		screen = Vector2i(viewport.get_visible_rect().size)
+	dialog.popup_centered(Vector2i(
+		mini(size.x, maxi(screen.x - SCREEN_MARGIN, 320)),
+		mini(size.y, maxi(screen.y - SCREEN_MARGIN, 240))))
+
+## A labelled block: the section rule, then whatever the block is about, then its
+## explanation underneath.
+##
+## Stacked rather than laid out as caption-control-note in a row, which is what
+## the dump dialog did and why it read as malformed: an autowrapped note sharing
+## an [HBoxContainer] with a [Stepper] gets whatever width is left after the
+## stepper's fixed 106px, wraps to five or six lines, and drags the row's height
+## up around a control sitting centred in the middle of it.
+static func _section(column: VBoxContainer, title: String, note: String = "") -> void:
+	if column.get_child_count() > 0:
+		var spacer := Control.new()
+		spacer.custom_minimum_size.y = float(UIMetrics.ROW_GAP)
+		spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		column.add_child(spacer)
+	column.add_child(SectionLabel.create(title))
+	if not note.is_empty():
+		column.add_child(_note(note))

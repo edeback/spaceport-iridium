@@ -39,8 +39,8 @@ layout_mode = 2
 
 [node name="FreeSpaceName" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3" unique_id=1574959070]
 layout_mode = 2
+theme_type_variation = &"ReadoutLabel"
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 16
 text = "Free Space"
 
 [node name="ContentsBox" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3" unique_id=450870235]
@@ -50,15 +50,16 @@ size_flags_horizontal = 10
 [node name="FreeSpaceAvailableLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/ContentsBox" unique_id=952666546]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_type_variation = &"Metric"
 text = "4"
 
 [node name="SlashLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/ContentsBox" unique_id=1243478731]
 layout_mode = 2
+theme_type_variation = &"MetaLine"
 text = "/"
 
 [node name="FreeSpaceMaxLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/ContentsBox" unique_id=15816693]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_type_variation = &"Metric"
 text = "4"

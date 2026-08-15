@@ -133,5 +133,29 @@ func _apply_selection() -> void:
 		var tab: Button = child as Button
 		if tab == null:
 			continue
-		tab.theme_type_variation = (UIType.TAB_ACTIVE if StringName(tab.name) == _selected
+		var variation: StringName = (UIType.TAB_ACTIVE if StringName(tab.name) == _selected
 			else UIType.TAB_INACTIVE)
+		tab.theme_type_variation = variation
+		_nudge_tracking(tab, variation)
+
+## A tab's label is tracked and centred, so its glyphs sit half a tracking unit
+## left of the tab's own centre (WI-58). The shift goes through the tab's style
+## boxes rather than a position write, because a [Button] has no text offset -
+## which is why the variation's boxes are read and *duplicated* rather than
+## replaced: the active tab's LIVE fill and its missing bottom edge live in them.
+##
+## **The override has to be cleared before the box is read.**
+## [method Control.get_theme_stylebox] consults the control's own overrides
+## whenever the type it is asked for is the one the control is currently wearing -
+## so on the second call it hands back the box this function wrote last time
+## instead of the new variation's, and the tab keeps the fill it had. That shipped
+## briefly as "the tab text changes but the highlight stays where it was", which
+## is the whole visible state of a tab strip failing to move.
+func _nudge_tracking(tab: Button, variation: StringName) -> void:
+	for state: StringName in [&"normal", &"hover", &"pressed", &"disabled", &"focus"]:
+		tab.remove_theme_stylebox_override(state)
+		var box: StyleBox = tab.get_theme_stylebox(state, variation)
+		if box == null:
+			continue
+		tab.add_theme_stylebox_override(state,
+			UIMetrics.nudge_content_box(box, UIMetrics.TRACKING_TAB_LABEL))

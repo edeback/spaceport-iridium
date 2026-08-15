@@ -21,30 +21,33 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="MarginContainer/ContentsBox" unique_id=1830721862]
 layout_mode = 2
+theme_type_variation = &"ReadoutLabel"
 text = "Meals available: "
 
 [node name="MealsAvailableLabel" type="Label" parent="MarginContainer/ContentsBox" unique_id=506565524]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_type_variation = &"Metric"
 text = "4"
 
 [node name="SlashLabel" type="Label" parent="MarginContainer/ContentsBox" unique_id=1283415345]
 layout_mode = 2
+theme_type_variation = &"MetaLine"
 text = "/"
 
 [node name="MealsMaxLabel" type="Label" parent="MarginContainer/ContentsBox" unique_id=1069582293]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_type_variation = &"Metric"
 text = "4"
 
 [node name="QualityCaption" type="Label" parent="MarginContainer/ContentsBox" unique_id=1500000001]
 layout_mode = 2
+theme_type_variation = &"ReadoutLabel"
 text = "   Quality: "
 
 [node name="QualityLabel" type="Label" parent="MarginContainer/ContentsBox" unique_id=1500000002]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_type_variation = &"Metric"
 text = "50%"

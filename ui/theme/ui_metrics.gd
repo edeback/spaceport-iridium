@@ -42,16 +42,42 @@ const CONSOLE_TILE_HEIGHT: int = 52
 ## number gained a digit would re-lay the whole strip out several times a second
 ## and visibly jitter. The number gets a compact form instead
 ## ([method LedgerModel.format_compact]).
-const VITALS_CHIP_WIDTH: int = 108
+## Widened from 108 in WI-58: at the old width a two-reactor station's energy
+## chip ("3200" over "/4000") measured past the tile and the chip - a
+## [PanelContainer], so its minimum is `max(custom_minimum_size, children)` -
+## grew and re-laid the whole strip out. Exactly the jitter this constant and
+## `vitals_chip.gd`'s class docs both assert cannot happen.
+const VITALS_CHIP_WIDTH: int = 124
 const VITALS_CHIP_GAP: int = 6
+
+## Room reserved inside a chip for the value itself. The suffix takes what is
+## left, so there is one number to retune rather than two that have to add up.
+##
+## Reserving it is what makes the fixed chip width structural rather than
+## aspirational: both labels carry an overrun behaviour, which drops a [Label]'s
+## reported minimum width to ~1, and a [BoxContainer] with no expanding child
+## hands every child exactly its minimum - so without a reserve the numbers
+## would collapse instead of the tile growing. Wide enough for four mono digits
+## at [constant UIType.METRIC_LARGE]; past that
+## [method LedgerModel.format_compact] shortens the number rather than the tile
+## widening.
+const VITALS_VALUE_WIDTH: int = 42
 ## The fixed right-hand `LEDGER · 18 ▸` control. Wider than a vitals chip because
 ## it carries a word rather than a number.
 const LEDGER_CHIP_WIDTH: int = 132
 
 ## The ledger flyout: four columns above the console, stopping short of the right
 ## column.
-const LEDGER_WIDTH: int = 760
-const LEDGER_COLUMN_WIDTH: int = 176
+##
+## Widened in WI-58. At 760 the arithmetic left each column 178px, and a
+## [ListRow] spends 25 of that on its content margins, 24 on the icon, 20 on two
+## separators and the rest of its slack on the right-hand rate - which left the
+## name and its meta line about **72px**, against roughly 78 for "Iridium Ore"
+## alone. Every resource name in the ledger was ellipsed. There is room: the only
+## hard constraint is [constant LEDGER_RIGHT_INSET], and the flyout is allowed to
+## float over an open mode panel (it already did).
+const LEDGER_WIDTH: int = 1080
+const LEDGER_COLUMN_WIDTH: int = 254
 const LEDGER_COLUMN_GAP: int = 8
 ## Distance from the right edge of the screen the flyout must stop at, so it
 ## never opens over the map, the alert feed or the inspector: the right column
@@ -169,6 +195,22 @@ const INSPECTOR_TOP_LIMIT: int = SCREEN_GUTTER + STATION_MAP_HEIGHT + SCREEN_GUT
 ## Side of the subject block's icon.
 const INSPECTOR_ICON_SIZE: int = 50
 
+## The floor the selection surface may never be squeezed under (WI-58).
+##
+## Sized to the inspector's own chrome - subject block, tab strip, footer - plus
+## roughly two rows of whatever tab is open. It exists because the right column
+## has three tenants and only the inspector has nowhere to overflow to: the feed
+## has a `+ n more` row and a history flyout, the map folds, and the raid readout
+## is temporary, but a squeezed inspector simply stops showing the thing the
+## player just clicked.
+##
+## What it fixes: with the feed's old fixed 400px cap plus the 96px raid readout
+## above it, the inspector's budget computed to 98px against 152px of its own
+## chrome, so the tab content region resolved to exactly **zero** and the subject
+## block, strip and footer overflowed the frame's rect. The feed yields to this
+## instead - see [method alert_feed_max_height].
+const INSPECTOR_MIN_CONTENT_HEIGHT: int = 220
+
 ## Tallest the inspector may become before its tab content starts scrolling
 ## inside itself instead of pushing the panel further up the screen.
 static func inspector_max_height(screen_height: int = SCREEN_SIZE.y,
@@ -182,15 +224,6 @@ static func inspector_max_content_height(screen_height: int = SCREEN_SIZE.y,
 	return maxi(0, inspector_max_height(screen_height, top_limit) - READOUT_HEADER_HEIGHT)
 
 # --- alerts (WI-53) -------------------------------------------------------------
-
-## Tallest the alert feed may become. Bounded because the feed shares the right
-## column with the inspector: an unbounded feed on a bad cycle would squeeze the
-## selection surface to nothing exactly when the player most wants to click
-## something.
-##
-## Sized to hold [constant AlertRules.FEED_CAP] rows plus the `+ n more` line
-## without an inner scrollbar. The two limits must agree; see that constant.
-const ALERT_FEED_MAX_HEIGHT: int = 400
 
 ## The live-raid readout that replaced WI-32's top-centre banner. Fixed, because
 ## it appears and disappears mid-fight and a box that also *resized* under the
@@ -206,9 +239,41 @@ const ALERT_HISTORY_MAX_HEIGHT: int = 560
 ## its own gutter plus one more.
 const ALERT_HISTORY_RIGHT_INSET: int = RIGHT_COLUMN_WIDTH + SCREEN_GUTTER * 2
 
-## Tallest the feed's content region may become.
-static func alert_feed_max_content_height() -> int:
-	return maxi(0, ALERT_FEED_MAX_HEIGHT - READOUT_HEADER_HEIGHT)
+## Tallest the alert feed may become, with the raid readout stacked above it or
+## not (WI-58).
+##
+## Derived rather than a constant, because the feed is the readout that **yields**.
+## The right column is map / raid / feed / inspector, and the raid readout comes
+## and goes mid-fight - so a fixed feed cap has to be right for both stacks or
+## wrong for one. WI-53's 400px was chosen for the two-readout column and never
+## revisited when the raid readout landed above it, which is how the inspector
+## ended up with a zero-height content region during a raid.
+##
+## The subtraction runs bottom-up from the screen: the console, the gutter above
+## it, the inspector's floor plus its own 34px header, the gutter above the
+## inspector, then the readouts stacked above the feed and their gutters. What is
+## left is the feed's.
+##
+## **This and [constant AlertRules.FEED_CAP] must still agree** in the ordinary
+## no-raid column: the cap is 4 rows plus the `+ n more` line, and the height
+## returned here has to render them without an inner scrollbar or the two
+## disagree about how many rows are hidden. During a raid the feed deliberately
+## drops below that and scrolls - it is the tenant with somewhere to put the
+## overflow, and the inspector is not.
+static func alert_feed_max_height(raid_visible: bool,
+		screen_height: int = SCREEN_SIZE.y) -> int:
+	# Everything the column owes the tenants above and below the feed.
+	var used: int = SCREEN_GUTTER + STATION_MAP_HEIGHT + SCREEN_GUTTER
+	if raid_visible:
+		used += ALERT_RAID_HEIGHT + SCREEN_GUTTER
+	used += SCREEN_GUTTER + READOUT_HEADER_HEIGHT + INSPECTOR_MIN_CONTENT_HEIGHT
+	return maxi(0, screen_height - CONSOLE_HEIGHT - SCREEN_GUTTER - used)
+
+## Tallest the feed's content region may become - the same budget less its own
+## 34px header.
+static func alert_feed_max_content_height(raid_visible: bool,
+		screen_height: int = SCREEN_SIZE.y) -> int:
+	return maxi(0, alert_feed_max_height(raid_visible, screen_height) - READOUT_HEADER_HEIGHT)
 
 ## Tallest the history flyout's content region may become.
 static func alert_history_max_content_height() -> int:
@@ -223,6 +288,17 @@ const CONTENT_PAD: int = 16
 const READOUT_CONTENT_PAD: int = 10
 ## Vertical gap between rows in a list.
 const ROW_GAP: int = 6
+
+## Width reserved for a [ListRow]'s right-hand action slot - "JUMP ▸", "+12.4/C",
+## "RESUME ▸".
+##
+## Both halves matter (WI-58). Without a *reserved* width the slot is laid out at
+## its text's own minimum, so a long verb eats the expanding name/meta block
+## before anything else gives; without an *overrun behaviour* on the same label
+## that minimum is the full string, so the slot could not be capped at all. The
+## pair is why a resource name now gets the column's slack and a long verb
+## ellipses instead.
+const LIST_ROW_ACTION_WIDTH: int = 72
 ## Vertical gap between sections in a panel.
 const SECTION_GAP: int = 14
 
@@ -252,6 +328,40 @@ const TRACKING_BUTTON: int = 1
 ## every caller nudging its own label.
 static func tracking_center_nudge(tracking: int) -> float:
 	return float(tracking) * 0.5
+
+## Applies [method tracking_center_nudge] to a control's content box.
+##
+## Godot gives a [Label] and a [Button] no text-offset property at all, so the
+## style box's content margins are the only lever. Adding to **one** side moves
+## a centred text by half what you added - so the whole tracking goes on the
+## left, and the resulting shift is exactly the half-tracking the nudge is. The
+## symmetry is not a coincidence; it is the same "one trailing gap, split two
+## ways" arithmetic in both directions.
+##
+## A negative right margin would be the other obvious way to do it and does not
+## work: [StyleBox] reads a negative content margin as "unset" and falls back to
+## the style's own, so the value is silently discarded.
+##
+## Callers hand in the box because a tab's fill and border live in that same box
+## and have to survive the nudge.
+static func nudge_content_box(box: StyleBox, tracking: int) -> StyleBox:
+	var shifted: StyleBox = box.duplicate() as StyleBox
+	shifted.content_margin_left = box.get_content_margin(SIDE_LEFT) + float(tracking)
+	shifted.content_margin_right = box.get_content_margin(SIDE_RIGHT)
+	shifted.content_margin_top = box.get_content_margin(SIDE_TOP)
+	shifted.content_margin_bottom = box.get_content_margin(SIDE_BOTTOM)
+	return shifted
+
+## The nudge for a control with no box of its own - a bare centred [Label]. An
+## empty box carries nothing but the margins, so overriding `normal` with it
+## costs the label no appearance.
+static func tracking_center_box(tracking: int) -> StyleBoxEmpty:
+	var box := StyleBoxEmpty.new()
+	box.content_margin_left = float(tracking)
+	box.content_margin_right = 0.0
+	box.content_margin_top = 0.0
+	box.content_margin_bottom = 0.0
+	return box
 
 # --- derived ------------------------------------------------------------------
 

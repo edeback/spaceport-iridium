@@ -1,14 +1,7 @@
-[gd_scene format=3 uid="uid://c4ivhcp0iejjd"]
+[gd_scene load_steps=3 format=3 uid="uid://c4ivhcp0iejjd"]
 
 [ext_resource type="Script" uid="uid://duy02gma7kks3" path="res://ui/windows/power_consumption_component_ui.gd" id="1_2611u"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2611u"]
-draw_center = false
-border_width_left = 5
-border_width_top = 5
-border_width_right = 5
-border_width_bottom = 5
-border_color = Color(0.7059392, 3.5376102e-06, 3.85046e-07, 1)
+[ext_resource type="PackedScene" path="res://ui/theme/widgets/action_button.tscn" id="2_action"]
 
 [node name="Power Stats" type="PanelContainer" unique_id=1584266289 node_paths=PackedStringArray("power_consumption_label", "force_shutdown_button")]
 offset_left = 2.0
@@ -33,10 +26,10 @@ layout_mode = 2
 layout_mode = 2
 text = "Consumes 100 power"
 
-[node name="ForceShutdownButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=225833052]
+[node name="ForceShutdownButton" parent="MarginContainer/VBoxContainer" instance=ExtResource("2_action") unique_id=225833052]
 layout_mode = 2
-theme_override_styles/pressed = SubResource("StyleBoxFlat_2611u")
 toggle_mode = true
 text = "Force Shutdown"
+weight = 2
 
 [connection signal="toggled" from="MarginContainer/VBoxContainer/ForceShutdownButton" to="." method="_on_button_toggled"]

@@ -117,6 +117,15 @@ func _make_build_panel() -> Control:
 	panel.panel_width = UIMetrics.PANEL_BUILD_WIDTH
 	panel.content_padding = 0
 	panel.hotkey = ModeManager.hotkey_label(ModeManager.Mode.BUILD)
+	# Build's own standing instruction (WI-58). WI-54 §1 and its deviation 5 both
+	# say every panel carries one, and WI-57's audit believed R&D was the last one
+	# missing - but only Build's *flyout* had a footer, and Build opens with the
+	# flyout closed, so the ninth panel opened with none at all.
+	# `show_details` (Tab by default) is the third bound hotkey the HUD never
+	# printed anywhere. Read from the live InputMap so a rebind follows.
+	panel.footer_text = "Pick a category, then a module · %s holds the station's labels open" % (
+		ModeManager.action_hotkey_label(&"show_details"))
+	panel.footer_variation = UIType.BODY
 	_build_menu = BUILD_MENU_SCENE.instantiate() as BuildMenu
 	_build_menu.flyout_anchor = panel
 	panel.content().add_child(_build_menu)
@@ -307,6 +316,13 @@ func _setup_right_column() -> void:
 	# Minimap (WI-34): the top of the column. It manages its own redraw and
 	# collapse, so mounting is just an add_child.
 	_map_readout = MINIMAP_SCENE.instantiate() as ReadoutPanel
+	# The map's height and its fold hotkey, from code rather than from the scene
+	# (WI-58). `content_height = 206` was authored in `minimap.tscn` as a hand-typed
+	# restatement of this subtraction, which left STATION_MAP_HEIGHT with no runtime
+	# consumer at all; and `toggle_map` was bound, documented in WI-49 as a
+	# readout-header action, and printed nowhere.
+	_map_readout.content_height = UIMetrics.STATION_MAP_HEIGHT - UIMetrics.READOUT_HEADER_HEIGHT
+	_map_readout.add_action(_hotkey_hint(&"toggle_map"))
 	add_child(_map_readout)
 
 	_alert_feed = ALERT_FEED_SCENE.instantiate() as AlertFeed
@@ -324,6 +340,18 @@ func _setup_right_column() -> void:
 	for readout: ReadoutPanel in _column_readouts():
 		readout.minimum_size_changed.connect(_queue_column_layout)
 		readout.visibility_changed.connect(_queue_column_layout)
+
+## The hotkey chip a readout header carries. Read from the live [InputMap] through
+## the same helper the console's mode buttons use, so a rebind follows.
+func _hotkey_hint(action: StringName) -> Label:
+	var hint := Label.new()
+	hint.name = "Hotkey"
+	hint.theme_type_variation = UIType.HOTKEY
+	hint.text = ModeManager.action_hotkey_label(action)
+	hint.add_theme_color_override("font_color", UIPalette.TEXT_META)
+	hint.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hint.visible = not hint.text.is_empty()
+	return hint
 
 ## Top to bottom. Order is the layout.
 func _column_readouts() -> Array[ReadoutPanel]:
@@ -344,6 +372,16 @@ func _layout_right_column() -> void:
 	if _laying_out_column:
 		return
 	_laying_out_column = true
+	# The feed's cap depends on whether the raid readout is currently stacked above
+	# it, so it is handed in before the stack is measured rather than baked into a
+	# constant (WI-58). The feed is the tenant that yields: it has a `+ n more` row
+	# and a history flyout to overflow into, and the inspector below it has
+	# nowhere - which is how a raid plus a full feed used to leave the selection
+	# surface with a zero-height content region.
+	if _alert_feed != null and is_instance_valid(_alert_feed):
+		var raid_up: bool = (_raid_readout != null and is_instance_valid(_raid_readout)
+			and _raid_readout.visible)
+		_alert_feed.height_budget = UIMetrics.alert_feed_max_height(raid_up)
 	var y: float = float(UIMetrics.SCREEN_GUTTER)
 	for readout: ReadoutPanel in _column_readouts():
 		if readout == null or not is_instance_valid(readout) or not readout.visible:

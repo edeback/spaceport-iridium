@@ -40,8 +40,12 @@ func meta_text() -> String:
 	return "%d item%s · %d kind%s" % [total, "" if total == 1 else "s",
 		kinds, "" if kinds == 1 else "s"]
 
+## Cyan, not amber (WI-58). A pile is loose stock waiting to be swept up - it is
+## the ordinary result of a deconstruction and of any cancelled haul, and it is
+## never "look at this now". Amber on *every* pile, unconditionally, was the
+## single largest unbudgeted spend in the HUD.
 func icon_color() -> Color:
-	return UIPalette.tinted(UIPalette.ATTENTION, 0.5) if is_alive() else Color(0.0, 0.0, 0.0, 0.0)
+	return UIPalette.tinted(UIPalette.LIVE, 0.5) if is_alive() else Color(0.0, 0.0, 0.0, 0.0)
 
 func tabs() -> Array[Dictionary]:
 	return [{"id": TAB_CONTENTS, "text": "Contents"}]

@@ -224,22 +224,30 @@ func _build_summary_bar() -> PanelContainer:
 	box.set_content_margin_all(float(UIMetrics.CONTENT_PAD))
 	bar.add_theme_stylebox_override("panel", box)
 
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
-	bar.add_child(row)
+	# The problem line above the actions rather than beside them (WI-58). It shared
+	# the row until the blocked HIRE button started carrying its reason as a label
+	# - "NO FREE SLEEPING PODS" is three times the width of "HIRE", and it ellipsed
+	# the summary to `2 BUNKS…` on the panel whose whole job is that count.
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	bar.add_child(column)
 
 	_summary_label = Label.new()
 	_summary_label.theme_type_variation = UIType.META_LINE
 	_summary_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_summary_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_summary_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	row.add_child(_summary_label)
+	_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(_summary_label)
 
-	_rota_button = ActionButton.create("Shift rota", ActionButton.Weight.SECONDARY)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_END
+	row.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	column.add_child(row)
+
+	_rota_button = ActionButton.create(ROTA_LABEL, ActionButton.Weight.SECONDARY)
 	_rota_button.pressed.connect(_on_rota_pressed)
 	row.add_child(_rota_button)
 
-	_hire_button = ActionButton.create("Hire", ActionButton.Weight.PRIMARY)
+	_hire_button = ActionButton.create(HIRE_LABEL, ActionButton.Weight.PRIMARY)
 	_hire_button.pressed.connect(_on_hire_pressed)
 	row.add_child(_hire_button)
 	return bar
@@ -437,22 +445,45 @@ func _empty_line(no_crew: bool) -> Label:
 		else "NO CREW MATCH THIS FILTER")
 	return label
 
-## `HIRE` is disabled with its reason on the button rather than hidden:
-## [method CrewManager.hire_block_reason] already produces the sentence, and
-## making the player guess why a button is missing is the failure mode this
-## replaces.
+## `HIRE` is disabled with its reason **on the button** rather than hidden or
+## merely tooltipped: [method CrewManager.hire_block_reason] already produces the
+## sentence, and making the player guess why a button is missing is the failure
+## mode this replaces.
+##
+## WI-58 moved the sentence out of `tooltip_text` and into the label. Crew was the
+## outlier - [CommsPanel] writes its `InspectionBlock` reason into `CONTACT ARC`'s
+## own caption - and it is the panel whose blocked state a new player meets first,
+## on a station with no docking bay. `SHIFT ROTA` was disabled with no reason at
+## all.
+const HIRE_LABEL: String = "Hire"
+const ROTA_LABEL: String = "Shift rota"
+const NO_CREW_REASON: String = "No crew to schedule"
+
 func _refresh_actions() -> void:
 	var manager: CrewManager = Global.crew_manager
 	if manager == null:
-		_hire_button.disabled = true
+		_apply_action(_hire_button, HIRE_LABEL, "Crew roster unavailable")
+		_apply_action(_rota_button, ROTA_LABEL, NO_CREW_REASON)
 		return
 	var reason: String = manager.hire_block_reason()
-	var bay: Node = _recruitment_bay()
-	if bay == null:
+	if _recruitment_bay() == null:
 		reason = "No docking bay with crew quarters"
-	_hire_button.disabled = reason != ""
-	_hire_button.tooltip_text = reason if reason != "" else "Recruit a new crew member"
-	_rota_button.disabled = manager.crew_count() == 0
+	_apply_action(_hire_button, HIRE_LABEL, reason, "Recruit a new crew member")
+	_apply_action(_rota_button, ROTA_LABEL,
+		NO_CREW_REASON if manager.crew_count() == 0 else "",
+		"Every crew member's duty hours on one grid")
+
+## A blocked action wears its blocker as its caption; an available one wears its
+## verb. The tooltip keeps the sentence too, because the label ellipses on a
+## 660px panel and the tooltip does not.
+func _apply_action(button: ActionButton, verb: String, reason: String,
+		ready_tooltip: String = "") -> void:
+	if button == null or not is_instance_valid(button):
+		return
+	var blocked: bool = reason != ""
+	button.disabled = blocked
+	button.set_label(reason if blocked else verb)
+	button.tooltip_text = reason if blocked else ready_tooltip
 
 # --- interaction ---------------------------------------------------------------------
 
@@ -608,12 +639,9 @@ func _rota_row(pawn: PawnBase) -> HBoxContainer:
 		# A pawn with no schedule (never happens for crew today, but a modded pawn
 		# kind can ship one) is always on duty - the same answer is_on_shift gives.
 		var working: bool = pawn.schedule == null or pawn.schedule.is_work_hour(hour)
-		cell.color = UIPalette.tinted(UIPalette.LIVE, 0.55) if working \
-			else UIPalette.tinted(UIPalette.EDGE, 0.9)
-		if hour == current_hour:
-			# The now-marker: the one cell that says where in the cycle we are, so
-			# a grid of two shifts is legible without reading the ruler.
-			cell.color = UIPalette.LIVE if working else UIPalette.CONTROL_BORDER
+		# Through the palette since WI-58, so this grid and the inspector's schedule
+		# editor - the same fact, one keypress apart - cannot drift apart.
+		cell.color = UIPalette.shift_cell(working, hour == current_hour)
 		row.add_child(cell)
 	return row
 

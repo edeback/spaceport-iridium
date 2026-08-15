@@ -62,6 +62,11 @@ func _apply_layout() -> void:
 		_swatch.custom_minimum_size = Vector2(float(SWATCH_SIZE), float(SWATCH_SIZE))
 	if _icon != null:
 		_icon.custom_minimum_size = Vector2(float(SWATCH_SIZE) + 2.0, float(SWATCH_SIZE) + 2.0)
+	if _value != null:
+		# The scene authors the structure; the number is [UIMetrics]'. See that
+		# constant for why the reserve exists rather than the labels simply being
+		# allowed to ask for what they need.
+		_value.custom_minimum_size.x = float(UIMetrics.VITALS_VALUE_WIDTH)
 
 # --- public -------------------------------------------------------------------
 

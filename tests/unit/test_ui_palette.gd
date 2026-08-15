@@ -47,6 +47,95 @@ func test_tinted_does_not_mutate_the_source_constant() -> void:
 	var _ignored: Color = UIPalette.tinted(UIPalette.LIVE, 0.5)
 	assert_eq(UIPalette.LIVE, before, "the palette constant is untouched")
 
+# --- contrast (WI-58) ----------------------------------------------------------
+
+## WCAG 2.1 relative luminance. Local to the suite rather than on [UIPalette],
+## because nothing in the game computes a contrast ratio at runtime - this is a
+## drift guard over a hand-picked table, and the table is what has to hold.
+func _luminance(color: Color) -> float:
+	var channels: Array[float] = [color.r, color.g, color.b]
+	var weights: Array[float] = [0.2126, 0.7152, 0.0722]
+	var total: float = 0.0
+	for index: int in 3:
+		var channel: float = channels[index]
+		var linear: float = (channel / 12.92 if channel <= 0.03928
+			else pow((channel + 0.055) / 1.055, 2.4))
+		total += linear * weights[index]
+	return total
+
+func _contrast(a: Color, b: Color) -> float:
+	var la: float = _luminance(a)
+	var lb: float = _luminance(b)
+	return (maxf(la, lb) + 0.05) / (minf(la, lb) + 0.05)
+
+## `over` composites a translucent fill onto an opaque surface, which is what a
+## tinted row or a disabled button fill actually is.
+func _over(fill: Color, surface: Color) -> Color:
+	return Color(
+		fill.r * fill.a + surface.r * (1.0 - fill.a),
+		fill.g * fill.a + surface.g * (1.0 - fill.a),
+		fill.b * fill.a + surface.b * (1.0 - fill.a))
+
+## The floor. 4.5:1 is WCAG AA for body text, and every one of these styles is
+## body-sized or smaller.
+const MIN_RATIO: float = 4.5
+
+## Every text token has to clear the floor on every surface it actually lands on.
+## TEXT_META is the one that motivated the item - it was 3.44:1, at 11px, on the
+## most-used style in the HUD.
+func test_text_tokens_clear_the_contrast_floor_on_every_surface() -> void:
+	var surfaces: Dictionary[String, Color] = {
+		"PANEL": UIPalette.PANEL,
+		"CONSOLE": UIPalette.CONSOLE,
+		"CONTROL_FILL": UIPalette.CONTROL_FILL,
+	}
+	var tokens: Dictionary[String, Color] = {
+		"TEXT": UIPalette.TEXT,
+		"TEXT_EMPHASIS": UIPalette.TEXT_EMPHASIS,
+		"TEXT_SECONDARY": UIPalette.TEXT_SECONDARY,
+		"TEXT_META": UIPalette.TEXT_META,
+		"TEXT_DISABLED": UIPalette.TEXT_DISABLED,
+	}
+	for token: String in tokens:
+		for surface: String in surfaces:
+			assert_gte(_contrast(tokens[token], surfaces[surface]), MIN_RATIO,
+				"%s on %s" % [token, surface])
+
+## The disabled label is where WI-57's "a blocked action names its blocker on its
+## own control" rule lands, so it has to be readable on the *filled* primary
+## button as well as on the flat ones.
+func test_disabled_label_is_readable_on_the_primary_button_fill() -> void:
+	var fill: Color = _over(UIPalette.tinted(UIPalette.LIVE, 0.088), UIPalette.PANEL)
+	assert_gte(_contrast(UIPalette.TEXT_DISABLED, fill), MIN_RATIO,
+		"a disabled ActionPrimary still reads its own sentence")
+
+## A tinted row's text and meta line have to clear the floor over the wash, not
+## just over the bare panel.
+func test_row_text_clears_the_floor_over_its_own_wash() -> void:
+	var washes: Dictionary[UIPalette.Row, Color] = {
+		UIPalette.Row.INERT: UIPalette.PANEL,
+		UIPalette.Row.LIVE: _over(UIPalette.tinted(UIPalette.LIVE, UIPalette.ROW_LIVE_ALPHA),
+			UIPalette.PANEL),
+		UIPalette.Row.AMBER: _over(UIPalette.tinted(UIPalette.ATTENTION, UIPalette.ROW_AMBER_ALPHA),
+			UIPalette.PANEL),
+	}
+	for kind: UIPalette.Row in washes:
+		assert_gte(_contrast(UIPalette.row_text(kind), washes[kind]), MIN_RATIO,
+			"row %d name" % kind)
+		assert_gte(_contrast(UIPalette.row_meta(kind), washes[kind]), MIN_RATIO,
+			"row %d meta" % kind)
+
+## The dim ladder has to stay in order, or lifting one token to fix its contrast
+## silently makes "meta" brighter than "secondary".
+func test_the_text_dimness_ladder_stays_ordered() -> void:
+	var meta: float = _contrast(UIPalette.TEXT_META, UIPalette.PANEL)
+	var secondary: float = _contrast(UIPalette.TEXT_SECONDARY, UIPalette.PANEL)
+	var body: float = _contrast(UIPalette.TEXT, UIPalette.PANEL)
+	var emphasis: float = _contrast(UIPalette.TEXT_EMPHASIS, UIPalette.PANEL)
+	assert_lt(meta, secondary, "meta is dimmer than secondary")
+	assert_lt(secondary, body, "secondary is dimmer than body")
+	assert_lt(body, emphasis, "body is dimmer than emphasis")
+
 # --- row treatments -----------------------------------------------------------
 
 func test_the_three_row_treatments_are_distinct() -> void:
@@ -92,6 +181,48 @@ func test_row_text_and_meta_differ_within_a_row() -> void:
 	for kind: UIPalette.Row in [UIPalette.Row.INERT, UIPalette.Row.LIVE, UIPalette.Row.AMBER]:
 		assert_ne(UIPalette.row_text(kind), UIPalette.row_meta(kind),
 			"a row's name and its meta line are not the same colour")
+
+# --- the amber budget (WI-58) --------------------------------------------------
+
+## Invariant 5 charters amber for four things: a breach, a falling vital, an
+## unread transmission, and ARC. It only holds if there is one place to check how
+## many things spend it - which is what these pin. The same shape WI-56 gave
+## `PawnStatus`'s tone set (contract 1).
+
+## A gauge under full is a *level*, not an alarm. "Anything below 1.0" was the
+## rule in three places, and it meant a module one point down from full, a drone
+## that had done a day's work, and every progress bar in the inspector all read
+## as emergencies.
+func test_a_nearly_full_gauge_is_not_an_alarm() -> void:
+	assert_eq(UIPalette.gauge_tint(1.0), UIPalette.LIVE, "full is live")
+	assert_eq(UIPalette.gauge_tint(0.99), UIPalette.LIVE, "a scratch is not a falling vital")
+	assert_eq(UIPalette.gauge_tint(0.5), UIPalette.LIVE, "half is a level")
+
+func test_a_genuinely_low_gauge_still_earns_amber() -> void:
+	assert_eq(UIPalette.gauge_tint(0.1), UIPalette.ATTENTION, "nearly gone is a falling vital")
+	assert_eq(UIPalette.gauge_tint(0.0), UIPalette.ATTENTION, "gone certainly is")
+
+## The threshold has to be a real minority of the bar, or "low" means "most of
+## the time" and the budget is spent again by another name.
+func test_the_gauge_threshold_is_a_minority_of_the_bar() -> void:
+	assert_lt(UIPalette.GAUGE_LOW, 0.5, "amber is the exception, not the default")
+	assert_gt(UIPalette.GAUGE_LOW, 0.0, "and it is reachable")
+
+## A schedule cell is on-duty or off-duty. Neither is an alarm, so neither may
+## spend amber - and the two surfaces that paint this grid now share the rule.
+func test_no_shift_cell_spends_amber() -> void:
+	for working: bool in [true, false]:
+		for is_now: bool in [true, false]:
+			var cell: Color = UIPalette.shift_cell(working, is_now)
+			assert_ne(Color(cell.r, cell.g, cell.b), UIPalette.ATTENTION,
+				"a duty roster is not an emergency")
+
+func test_a_shift_cell_distinguishes_on_duty_from_off_and_now_from_later() -> void:
+	assert_ne(UIPalette.shift_cell(true), UIPalette.shift_cell(false), "on and off differ")
+	assert_ne(UIPalette.shift_cell(true, true), UIPalette.shift_cell(true, false),
+		"the now-marker reads")
+	assert_ne(UIPalette.shift_cell(false, true), UIPalette.shift_cell(false, false),
+		"and it reads off-shift too")
 
 # --- gradients ----------------------------------------------------------------
 
@@ -177,3 +308,65 @@ func test_nine_mode_buttons_fit_the_console_zone() -> void:
 func test_mode_button_fits_inside_the_console() -> void:
 	assert_lt(UIMetrics.MODE_BUTTON.y, float(UIMetrics.CONSOLE_HEIGHT),
 		"a 74px button inside a 112px console leaves room to breathe")
+
+# --- UIMetrics: the right column budget (WI-58) --------------------------------
+
+## The whole point of the item. Reconstructs the worst realistic stack - map,
+## raid readout, feed at its cap - and asserts the inspector still has room for
+## its own chrome plus a page, rather than the zero it used to compute.
+func _top_limit_for(raid_visible: bool) -> int:
+	var y: int = UIMetrics.SCREEN_GUTTER + UIMetrics.STATION_MAP_HEIGHT + UIMetrics.SCREEN_GUTTER
+	if raid_visible:
+		y += UIMetrics.ALERT_RAID_HEIGHT + UIMetrics.SCREEN_GUTTER
+	return y + UIMetrics.alert_feed_max_height(raid_visible) + UIMetrics.SCREEN_GUTTER
+
+func test_inspector_survives_a_raid_with_a_full_alert_feed() -> void:
+	var top: int = _top_limit_for(true)
+	var content: int = UIMetrics.inspector_max_content_height(UIMetrics.SCREEN_SIZE.y, top)
+	assert_gte(content, UIMetrics.INSPECTOR_MIN_CONTENT_HEIGHT,
+		"a raid plus a capped feed still leaves the inspector its floor")
+
+func test_inspector_survives_a_full_alert_feed_with_no_raid() -> void:
+	var top: int = _top_limit_for(false)
+	var content: int = UIMetrics.inspector_max_content_height(UIMetrics.SCREEN_SIZE.y, top)
+	assert_gte(content, UIMetrics.INSPECTOR_MIN_CONTENT_HEIGHT,
+		"the ordinary column leaves the inspector its floor too")
+
+## The floor has to clear a realistic crew subject's chrome (~152px) with room
+## left for content, or it is a floor that still renders an empty box.
+func test_the_inspector_floor_clears_its_own_chrome() -> void:
+	assert_gt(UIMetrics.INSPECTOR_MIN_CONTENT_HEIGHT, 160,
+		"the floor is chrome plus content, not chrome alone")
+
+## The raid readout takes room out of the feed and not out of the inspector.
+func test_the_feed_is_the_readout_that_yields_to_a_raid() -> void:
+	var quiet: int = UIMetrics.alert_feed_max_height(false)
+	var raiding: int = UIMetrics.alert_feed_max_height(true)
+	assert_lt(raiding, quiet, "the raid readout comes out of the feed's budget")
+	assert_eq(quiet - raiding, UIMetrics.ALERT_RAID_HEIGHT + UIMetrics.SCREEN_GUTTER,
+		"exactly the raid readout and its gutter, nothing else")
+
+## `AlertRules.FEED_CAP` rows plus the `+ n more` line have to render in the
+## ordinary column without an inner scrollbar - the agreement WI-53 wrote down
+## and WI-58 turned from a constant into a derivation.
+func test_the_quiet_feed_budget_still_renders_the_row_cap() -> void:
+	# A ListRow is its two text lines plus the style box's 11px content margins;
+	# 59px is the measured height at the design's type scale. FEED_CAP rows, the
+	# overflow row, the gaps between them and the readout's own padding and header.
+	var row: int = 59
+	var needed: int = (AlertRules.FEED_CAP + 1) * row \
+		+ AlertRules.FEED_CAP * UIMetrics.ROW_GAP \
+		+ UIMetrics.READOUT_CONTENT_PAD * 2 + UIMetrics.READOUT_HEADER_HEIGHT
+	assert_gte(UIMetrics.alert_feed_max_height(false), needed,
+		"four rows plus the overflow line fit the quiet column")
+
+## A smaller screen must not produce a negative budget that a caller then uses as
+## a height.
+func test_feed_budget_never_goes_negative() -> void:
+	assert_gte(UIMetrics.alert_feed_max_height(true, 600), 0, "clamped at zero")
+	assert_gte(UIMetrics.alert_feed_max_content_height(true, 480), 0, "content clamped too")
+
+func test_feed_content_budget_excludes_its_own_header() -> void:
+	assert_eq(UIMetrics.alert_feed_max_content_height(false),
+		UIMetrics.alert_feed_max_height(false) - UIMetrics.READOUT_HEADER_HEIGHT,
+		"the content region is the budget less the 34px header")

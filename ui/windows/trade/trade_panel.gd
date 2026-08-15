@@ -101,7 +101,7 @@ func _ready() -> void:
 		{"id": TAB_ORDERS, "text": "Orders"},
 		{"id": TAB_CONTRACTS, "text": "Contracts"},
 	])
-	_show_tab(_tabs.selected())
+	show_tab(_tabs.selected())
 
 # --- construction --------------------------------------------------------------
 
@@ -112,7 +112,7 @@ func _build_tabs() -> void:
 	pad.add_theme_constant_override("margin_top", UIMetrics.CONTENT_PAD)
 	add_child(pad)
 	_tabs = TabStrip.create()
-	_tabs.tab_selected.connect(_show_tab)
+	_tabs.tab_selected.connect(show_tab)
 	pad.add_child(_tabs)
 
 func _build_pages() -> void:
@@ -484,8 +484,19 @@ func _on_confirm_pressed() -> void:
 	Global.trader_manager.commit_trades(TradeOffer.buy_orders(lines), TradeOffer.sell_orders(lines))
 	close_requested.emit()
 
-func _show_tab(id: StringName) -> void:
+## Public and re-routing, matching [method CommsPanel.show_tab] (WI-58).
+##
+## The guard is the shape of WI-55's own tab-strip defect: a caller that swaps the
+## page directly leaves the strip painted on the old tab, and the panel then shows
+## one thing under another thing's name. Harmless today - the only caller is the
+## strip itself - but a probe or a screenshot driver reaching past the strip is
+## exactly how that defect was found in the first place, and closing it is three
+## lines.
+func show_tab(id: StringName) -> void:
 	if _orders_page == null:
+		return
+	if _tabs != null and is_instance_valid(_tabs) and _tabs.selected() != id:
+		_tabs.select(id) # emits tab_selected, which lands back here
 		return
 	var orders: bool = id == TAB_ORDERS
 	_orders_page.visible = orders

@@ -152,8 +152,13 @@ func refresh() -> void:
 				# prerequisite depth and the design labels those "TIER" too; two
 				# things called tier in one panel is how a bug gets written, so the
 				# one that is ARC's business says which it is.
-				_apply(State.LOCKED, UIPalette.ATTENTION_BORDER, LOCKED_EDGE_ALPHA,
-					"Needs station tier %d" % unlock.min_tier, UIPalette.ATTENTION_META)
+				#
+				# Inert, like the other locked branch (WI-58). It wore amber, which
+				# put fifteen amber pixels at rest into a tree of fifteen tier-gated
+				# nodes - and WI-54's rule is "locked is a state, not an absence",
+				# which is about *rendering* it, not about alarming on it.
+				_apply(State.LOCKED, UIPalette.EDGE, LOCKED_EDGE_ALPHA,
+					"Needs station tier %d" % unlock.min_tier, UIPalette.TEXT_META)
 		State.AFFORDABLE:
 			# The cost renders in place of the state label, so a purchasable node
 			# never needs two lines.

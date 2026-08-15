@@ -81,9 +81,27 @@ const TEXT := Color("9db9c9")
 ## Emphasis: entity names, metrics, the value the row is about.
 const TEXT_EMPHASIS := Color("eaf6fb")
 ## Secondary: labels beside a value, inactive tabs.
-const TEXT_SECONDARY := Color("5f7d94")
+const TEXT_SECONDARY := Color("738fa5")
 ## Meta: hotkey hints, timestamps, units, "N MIN AGO".
-const TEXT_META := Color("4a6d85")
+##
+## The most-used style in the HUD - every [ListRow] meta line, every timestamp,
+## every panel `footer_text`, every hotkey hint - and at 11px it has to be read,
+## not merely noticed. WI-58 lifted it (and TEXT_SECONDARY with it, so the
+## dim/dimmer ladder does not invert): the pair used to compute 3.44:1 and 4.37:1
+## against [constant PANEL], both under the 4.5:1 floor. They now clear it on
+## PANEL, on CONSOLE and on CONTROL_FILL, which are the three surfaces meta text
+## actually lands on. `test_ui_palette.gd` pins the ratios.
+const TEXT_META := Color("5e88a5")
+## The label on a **disabled** control.
+##
+## Its own token rather than TEXT_META (WI-58), because a disabled control is
+## where the design deliberately puts a sentence the player must read: WI-57's
+## rule is "a blocked action names its blocker on its own control", so CONTACT
+## ARC, HIRE and a contract's ACCEPT all render their reason *as the disabled
+## label*. Sharing TEXT_META put that sentence at 3.01:1 on the ActionPrimary
+## disabled fill - the least readable text in the build, in the one place the
+## design most needs read. Dim enough to still say "you cannot press this".
+const TEXT_DISABLED := Color("6d93ad")
 ## Emphasis text sitting on a LIVE-tinted fill (active tab, selected row).
 const TEXT_ON_LIVE := Color("dff1f8")
 ## Secondary text sitting on a LIVE-tinted fill.
@@ -246,6 +264,45 @@ static func _make_row(kind: Row) -> StyleBoxFlat:
 	# different colour from the other three sides in the design - is drawn by the
 	# widget as a child ColorRect. `row_accent()` is that colour.
 	return box
+
+# --- gauges (WI-58) -------------------------------------------------------------
+
+## Where a gauge stops being a *level* and starts being a falling vital.
+##
+## Amber is a budget (invariant 5), and "anything under 1.0" is not a spend of
+## it - it is every module that has ever been scratched, every drone that has
+## done a day's work, every bar in the inspector. A module at 99% integrity is
+## not an alarm; one at 20% is.
+const GAUGE_LOW: float = 0.35
+
+## The tint a gauge fill takes for `fraction`, and the only place that rule
+## lives.
+##
+## Callers with a **real predicate** for "this needs attention" should use it
+## instead and pass the answer to [StatBar] directly -
+## `RobotPowerComponent.wants_recharge()` and
+## `RobotIntegrityComponent.wants_repair()` are both better than a threshold,
+## because they are the same test the pawn itself acts on. This is for the gauges
+## that have no such predicate to borrow.
+static func gauge_tint(fraction: float) -> Color:
+	return ATTENTION if fraction < GAUGE_LOW else LIVE
+
+# --- shift grids (WI-58) --------------------------------------------------------
+
+## A schedule cell: on duty, off duty, and the now-marker for each.
+##
+## One vocabulary for one fact. The Crew panel's SHIFT ROTA and the inspector's
+## per-pawn schedule editor paint the identical on/off-shift grid one keypress
+## apart, and until WI-58 they did it in two different colour languages - the
+## editor named `Color(0.29, 0.55, 0.85)` and `Color(0.22, 0.22, 0.28)` as raw
+## floats, which is the palette's own rule broken in the file the player is most
+## likely to compare against the panel next door.
+static func shift_cell(working: bool, is_now: bool = false) -> Color:
+	if is_now:
+		# The one cell that says where in the cycle we are, so a grid of two shifts
+		# is legible without reading the ruler.
+		return LIVE if working else CONTROL_BORDER
+	return tinted(LIVE, 0.55) if working else tinted(EDGE, 0.9)
 
 ## The colour of a row's left accent bar, which is brighter than the row's other
 ## three borders and therefore cannot live in the StyleBox.

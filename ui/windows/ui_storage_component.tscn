@@ -1,300 +1,111 @@
-[gd_scene format=3 uid="uid://bfsvbpnemihue"]
+[gd_scene load_steps=6 format=3 uid="uid://bfsvbpnemihue"]
 
 [ext_resource type="Script" uid="uid://bqpuv7wysl1nf" path="res://ui/windows/ui_storage_component.gd" id="1_6j2gs"]
 [ext_resource type="PackedScene" uid="uid://dprv5w0bvxvvb" path="res://ui/windows/storage_resource_line.tscn" id="2_4o4nm"]
-[ext_resource type="Texture2D" uid="uid://bkb1dr2qo71j1" path="res://ui/icons/ore.svg" id="4_w6hf2"]
+[ext_resource type="PackedScene" path="res://ui/theme/widgets/action_button.tscn" id="3_action"]
+[ext_resource type="PackedScene" path="res://ui/theme/widgets/stepper.tscn" id="4_stepper"]
+[ext_resource type="PackedScene" path="res://ui/theme/widgets/section_label.tscn" id="5_section"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4o4nm"]
-content_margin_left = 0.0
-content_margin_top = 0.0
-content_margin_right = 0.0
-content_margin_bottom = 0.0
-bg_color = Color(0.12955844, 0.1295585, 0.12955838, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
-corner_detail = 5
-
-[node name="Storage" type="PanelContainer" unique_id=1597534492 node_paths=PackedStringArray("resource_container", "priority_value", "edit_resources_button")]
-custom_minimum_size = Vector2(400, 0)
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_right = -1714.0
-offset_bottom = -958.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="Storage" type="PanelContainer" node_paths=PackedStringArray("resource_container", "priority_stepper", "priority_caption", "edit_resources_button", "locked_note")]
+custom_minimum_size = Vector2(360, 0)
 script = ExtResource("1_6j2gs")
-resource_container = NodePath("MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/ResourceContainer")
+resource_container = NodePath("Column/ResourceContainer")
 resource_line = ExtResource("2_4o4nm")
-priority_value = NodePath("MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer/HBoxContainer/PriorityValue")
-edit_resources_button = NodePath("MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer/PanelContainer/EditResourcesButton")
+priority_stepper = NodePath("Column/PriorityRow/PriorityStepper")
+priority_caption = NodePath("Column/PriorityRow/PriorityCaption")
+edit_resources_button = NodePath("Column/Header/EditResourcesButton")
+locked_note = NodePath("Column/LockedNote")
 
-[node name="MarginContainer" type="MarginContainer" parent="." unique_id=99127212]
+[node name="Column" type="VBoxContainer" parent="."]
 layout_mode = 2
-theme_override_constants/margin_left = 2
-theme_override_constants/margin_top = 2
-theme_override_constants/margin_right = 2
-theme_override_constants/margin_bottom = 2
+theme_override_constants/separation = 6
 
-[node name="VSplitContainer" type="VBoxContainer" parent="MarginContainer" unique_id=763593596]
+[node name="Header" type="HBoxContainer" parent="Column"]
 layout_mode = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VSplitContainer" unique_id=871007350]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/margin_left = 2
-theme_override_constants/margin_top = 2
-theme_override_constants/margin_right = 2
-theme_override_constants/margin_bottom = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer" unique_id=1782993780]
-layout_mode = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer" unique_id=1007175849]
-layout_mode = 2
-
-[node name="PanelContainer" type="PanelContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=583741807]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_4o4nm")
-
-[node name="EditResourcesButton" type="Button" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer/PanelContainer" unique_id=1785318346]
-layout_mode = 2
-text = "Edit Stored Resources"
-
-[node name="AvailableAndDesiredLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1120317562]
-layout_mode = 2
-size_flags_horizontal = 10
-text = "Available / Desired"
-
-[node name="ResourceContainer" type="VBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer" unique_id=1778224836]
-layout_mode = 2
-theme_override_constants/separation = 0
-
-[node name="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/ResourceContainer" unique_id=2104872855 instance=ExtResource("2_4o4nm")]
-layout_mode = 2
-
-[node name="HBoxContainer2" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/ResourceContainer" unique_id=2045258698 instance=ExtResource("2_4o4nm")]
-layout_mode = 2
-
-[node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer" unique_id=858988727]
-layout_mode = 2
-
-[node name="NameBox" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3" unique_id=1212081692]
-layout_mode = 2
-size_flags_horizontal = 2
-
-[node name="FreeSpaceName" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/NameBox" unique_id=1014648599]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 16
-text = "Free Space"
-
-[node name="ContentsBox" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3" unique_id=1339721231]
-layout_mode = 2
-size_flags_horizontal = 10
-
-[node name="FreeSpaceAvailableLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/ContentsBox" unique_id=198627751]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "4"
-
-[node name="SlashLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/ContentsBox" unique_id=1833426597]
-layout_mode = 2
-text = "/"
-
-[node name="FreeSpaceMaxLabel" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer/VBoxContainer/HBoxContainer3/ContentsBox" unique_id=1319466790]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "4"
-
-[node name="MarginContainer2" type="MarginContainer" parent="MarginContainer/VSplitContainer" unique_id=967253758]
-layout_mode = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer2" unique_id=1203632883]
-layout_mode = 2
-
-[node name="DisplayFillMeterCheckbox" type="CheckBox" parent="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer" unique_id=300810451]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Display Fill Meter"
-
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer" unique_id=1950057496]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer/HBoxContainer" unique_id=213800905]
-layout_mode = 2
-text = "Priority: "
-
-[node name="PriorityValue" type="SpinBox" parent="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer/HBoxContainer" unique_id=1305261179]
-layout_mode = 2
-min_value = -100.0
-value = 1.0
-rounded = true
-alignment = 2
-
-[node name="DumpResourcePanel" type="PanelContainer" parent="." unique_id=1396915978]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="DumpResourcePanel" unique_id=181595976]
-layout_mode = 2
-size_flags_vertical = 4
-
-[node name="Label" type="Label" parent="DumpResourcePanel/VBoxContainer" unique_id=828649545]
-layout_mode = 2
-text = "Dump Resource"
-horizontal_alignment = 1
-
-[node name="Label2" type="Label" parent="DumpResourcePanel/VBoxContainer" unique_id=766746218]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.29696628, 0, 0.11984318, 1)
-theme_override_font_sizes/font_size = 12
-text = "Warning: This will PERMANENTLY DESTROY dumped resources"
-horizontal_alignment = 1
-
-[node name="MarginContainer" type="MarginContainer" parent="DumpResourcePanel/VBoxContainer" unique_id=778677883]
-layout_mode = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 5
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 5
-
-[node name="HBoxContainer" type="HBoxContainer" parent="DumpResourcePanel/VBoxContainer/MarginContainer" unique_id=2055561865]
-layout_mode = 2
-size_flags_horizontal = 4
-
-[node name="ResourceToDumpLabel" type="Label" parent="DumpResourcePanel/VBoxContainer/MarginContainer/HBoxContainer" unique_id=246436608]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Water"
-
-[node name="Control" type="Control" parent="DumpResourcePanel/VBoxContainer/MarginContainer/HBoxContainer" unique_id=1747765167]
-custom_minimum_size = Vector2(10, 0)
-layout_mode = 2
-
-[node name="ResourceToDumpAmount" type="SpinBox" parent="DumpResourcePanel/VBoxContainer/MarginContainer/HBoxContainer" unique_id=1157880498]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="DumpResourcePanel/VBoxContainer" unique_id=1641127031]
-layout_mode = 2
-size_flags_horizontal = 4
-
-[node name="ConfirmDumpButton" type="Button" parent="DumpResourcePanel/VBoxContainer/HBoxContainer" unique_id=196652912]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Confirm"
-
-[node name="CancelDumpButton" type="Button" parent="DumpResourcePanel/VBoxContainer/HBoxContainer" unique_id=1994364669]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Cancel"
-
-[node name="AutodumpButton" type="CheckBox" parent="DumpResourcePanel/VBoxContainer" unique_id=1479354128]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 12
-text = "Auto-dump all resources above Desired level (until unchecked)"
-
-[node name="EditResourcesPanel" type="PanelContainer" parent="." unique_id=612000001]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_4o4nm")
-
-[node name="MarginContainer" type="MarginContainer" parent="EditResourcesPanel" unique_id=612000002]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
-
-[node name="VBoxContainer" type="VBoxContainer" parent="EditResourcesPanel/MarginContainer" unique_id=612000003]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="EditResourcesPanel/MarginContainer/VBoxContainer" unique_id=612000004]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "Edit Stored Resources"
-horizontal_alignment = 1
-
-[node name="Label2" type="Label" parent="EditResourcesPanel/MarginContainer/VBoxContainer" unique_id=612000005]
-custom_minimum_size = Vector2(50, 0)
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "Check the resources this storage should hold. Unchecked resources with stock are dumped to a pile."
-horizontal_alignment = 1
-autowrap_mode = 2
-
-[node name="CenterContainer" type="PanelContainer" parent="EditResourcesPanel/MarginContainer/VBoxContainer" unique_id=1346512500]
-layout_mode = 2
-
-[node name="ColorRect" type="ColorRect" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer" unique_id=1794972628]
-layout_mode = 2
-color = Color(0, 0.48226744, 0.57925403, 1)
-
-[node name="CenterContainer" type="CenterContainer" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer" unique_id=1861089702]
-layout_mode = 2
-
-[node name="ResourceChecklistContainer" type="GridContainer" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer/CenterContainer" unique_id=275988871]
-unique_name_in_owner = true
-layout_mode = 2
-columns = 4
-
-[node name="CheckBox" type="CheckBox" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer/CenterContainer/ResourceChecklistContainer" unique_id=1968354425]
-layout_mode = 2
-theme_override_constants/icon_max_width = 30
-text = "Resource1!"
-icon = ExtResource("4_w6hf2")
-
-[node name="CheckBox2" type="CheckBox" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer/CenterContainer/ResourceChecklistContainer" unique_id=721545790]
-layout_mode = 2
-theme_override_constants/icon_max_width = 30
-text = "Resource1!"
-icon = ExtResource("4_w6hf2")
-
-[node name="CheckBox3" type="CheckBox" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer/CenterContainer/ResourceChecklistContainer" unique_id=304089231]
-layout_mode = 2
-theme_override_constants/icon_max_width = 30
-text = "Resource1!"
-icon = ExtResource("4_w6hf2")
-
-[node name="CheckBox4" type="CheckBox" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer/CenterContainer/ResourceChecklistContainer" unique_id=1761985334]
-layout_mode = 2
-theme_override_constants/icon_max_width = 30
-text = "Resource1!"
-icon = ExtResource("4_w6hf2")
-
-[node name="CheckBox5" type="CheckBox" parent="EditResourcesPanel/MarginContainer/VBoxContainer/CenterContainer/CenterContainer/ResourceChecklistContainer" unique_id=569968520]
-layout_mode = 2
-theme_override_constants/icon_max_width = 30
-text = "Resource1!"
-icon = ExtResource("4_w6hf2")
-
-[node name="HBoxContainer" type="HBoxContainer" parent="EditResourcesPanel/MarginContainer/VBoxContainer" unique_id=612000008]
-layout_mode = 2
-size_flags_horizontal = 4
 theme_override_constants/separation = 10
 
-[node name="ConfirmEditButton" type="Button" parent="EditResourcesPanel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=612000009]
+[node name="Contents" parent="Column/Header" instance=ExtResource("5_section")]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+text = "Contents"
+
+[node name="EditResourcesButton" parent="Column/Header" instance=ExtResource("3_action")]
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "Which resources this bin accepts, and the fill meter on the station"
+text = "Accepted"
+
+[node name="ResourceContainer" type="VBoxContainer" parent="Column"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="FreeSpaceRow" type="HBoxContainer" parent="Column"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="FreeSpaceName" type="Label" parent="Column/FreeSpaceRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_type_variation = &"ReadoutLabel"
+text = "Free space"
+
+[node name="FreeSpaceAvailableLabel" type="Label" parent="Column/FreeSpaceRow"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Confirm"
+size_flags_vertical = 4
+theme_type_variation = &"Metric"
+text = "4"
 
-[node name="CancelEditButton" type="Button" parent="EditResourcesPanel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=612000010]
+[node name="SlashLabel" type="Label" parent="Column/FreeSpaceRow"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"MetaLine"
+text = "/"
+
+[node name="FreeSpaceMaxLabel" type="Label" parent="Column/FreeSpaceRow"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Cancel"
+size_flags_vertical = 4
+theme_type_variation = &"Metric"
+text = "4"
 
-[connection signal="toggled" from="MarginContainer/VSplitContainer/MarginContainer2/HBoxContainer/DisplayFillMeterCheckbox" to="." method="_on_display_fill_meter_changed"]
+[node name="PriorityRow" type="HBoxContainer" parent="Column"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="PriorityName" type="Label" parent="Column/PriorityRow"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"ReadoutLabel"
+text = "Priority"
+
+[node name="PriorityStepper" parent="Column/PriorityRow" instance=ExtResource("4_stepper")]
+layout_mode = 2
+size_flags_vertical = 4
+min_value = -100
+show_sign = true
+sign_colored = true
+
+[node name="PriorityCaption" type="Label" parent="Column/PriorityRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_type_variation = &"MetaLine"
+text = "NEUTRAL"
+text_overrun_behavior = 3
+
+[node name="DisplayFillMeterCheckbox" type="CheckBox" parent="Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Show the fill meter on the station"
+
+[node name="LockedNote" type="Label" parent="Column"]
+visible = false
+layout_mode = 2
+theme_type_variation = &"MetaLine"
+text = "SET BY THE MODULE"
+autowrap_mode = 2
+
+[connection signal="toggled" from="Column/DisplayFillMeterCheckbox" to="." method="_on_display_fill_meter_changed"]

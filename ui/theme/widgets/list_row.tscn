@@ -66,8 +66,11 @@ text = "META"
 text_overrun_behavior = 3
 
 [node name="Action" type="Label" parent="Row"]
+custom_minimum_size = Vector2(72, 0)
 layout_mode = 2
 size_flags_vertical = 4
 visible = false
 theme_type_variation = &"TabLabel"
 text = "OPEN"
+horizontal_alignment = 2
+text_overrun_behavior = 3

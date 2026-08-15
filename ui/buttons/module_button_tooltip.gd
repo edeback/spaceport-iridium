@@ -46,8 +46,13 @@ func set_module_data(module_data: ModuleData, locked: bool = false,
 		child.queue_free()
 	if locked:
 		# A locked module has no cost worth quoting - what it has is a gate.
+		#
+		# Inert, matching the row this tooltip belongs to (WI-58). The row already
+		# dims and prints its gate in TEXT_META; the tooltip alone wore amber, so
+		# hovering a locked entry raised an alarm about a module the player has
+		# simply not researched yet.
 		var gate: Chip = Chip.create()
-		gate.configure(gating_label, "", Color(0.0, 0.0, 0.0, 0.0), UIPalette.Row.AMBER)
+		gate.configure(gating_label, "", Color(0.0, 0.0, 0.0, 0.0), UIPalette.Row.INERT)
 		_costs.add_child(gate)
 		return
 	# One chip per resource, in the same descending-amount order the row's meta

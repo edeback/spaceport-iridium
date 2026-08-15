@@ -304,8 +304,13 @@ func _refresh_derived_chip(id: StringName, chip: VitalsChip) -> void:
 			# Headroom over capacity, exactly what the retired energy_display_ui
 			# showed: a negative headroom is a brownout, which is a breach-class
 			# event and therefore one of amber's sanctioned spends.
+			# Through `format_compact` like every resource chip, not a raw "%d"
+			# (WI-58). Two fusion reactors put "3200" over "/4000" into a tile that
+			# had room for neither, and a chip that outgrows its tile re-lays the
+			# whole strip out - the one thing the fixed chip width exists to stop.
 			var headroom: float = _power_generated - _power_desired
-			chip.set_value("%d" % roundi(headroom), "/%d" % roundi(_power_generated),
+			chip.set_value(LedgerModel.format_compact(roundi(headroom)),
+				"/" + LedgerModel.format_compact(roundi(_power_generated)),
 				UIPalette.Row.AMBER if headroom < 0.0 else UIPalette.Row.INERT)
 		LedgerModel.DERIVED_OXYGEN:
 			var partial: float = 0.0
@@ -322,7 +327,8 @@ func _refresh_derived_chip(id: StringName, chip: VitalsChip) -> void:
 			# Amber when somebody has nowhere to sleep. That is a real early
 			# warning (unrested crew resign) and it is the only crew state the
 			# player can act on from a glance.
-			chip.set_value("%d" % crew, "/%d" % bunks,
+			chip.set_value(LedgerModel.format_compact(crew),
+				"/" + LedgerModel.format_compact(bunks),
 				UIPalette.Row.AMBER if crew > bunks else UIPalette.Row.INERT)
 
 # --- persistence --------------------------------------------------------------

@@ -226,12 +226,47 @@ func get_default_events(action: StringName) -> Array[InputEvent]:
 		out.append(event)
 	return out
 
-## Remappable actions (other than `exclude_action`) that `event` would collide
-## with. The remap screen uses this to offer a swap instead of silently creating
-## two actions on one key.
+## The project's own actions that are **not** offered in the remap screen: the
+## AIDE key and the two debug hotkeys.
+##
+## They are listed rather than left out, because a key that is bound is a key a
+## rebind can collide with, whether or not the player is allowed to move it.
+## [constant REMAPPABLE_ACTIONS] plus this is every action the project declares,
+## and `test_keybinds.gd` sweeps `project.godot` to keep that true - a new action
+## added to neither list fails there rather than silently escaping conflict
+## detection (WI-58).
+const NON_REMAPPABLE_ACTIONS: Array[StringName] = [
+	&"ui_aide",
+	&"debug_fire_event",
+	&"debug_offer_contract",
+]
+
+## Every action **the project itself declares** - the set a rebind can actually
+## collide with.
+##
+## Deliberately not [constant REMAPPABLE_ACTIONS] alone (WI-58). That array is the
+## remap screen's *display list*, curated to keep Godot's `ui_*` built-ins and the
+## debug hotkeys out of a player-facing menu - a reasonable thing for a list and
+## the wrong thing for a conflict scan. Answering "what would this key collide
+## with" from the display list left three real bindings invisible to it, so
+## rebinding a mode onto F6 silently double-fired with no swap offered.
+##
+## Godot's own `ui_*` set stays out, and cannot be detected at runtime:
+## `ProjectSettings.has_setting("input/ui_cancel")` is **true** for a built-in the
+## project never touched, because the engine registers every one of them with a
+## default. Hence the explicit pair of lists.
+func bindable_actions() -> Array[StringName]:
+	var out: Array[StringName] = []
+	out.append_array(REMAPPABLE_ACTIONS)
+	out.append_array(NON_REMAPPABLE_ACTIONS)
+	return out
+
+## Actions (other than `exclude_action`) that `event` would collide with. The
+## remap screen uses this to offer a swap instead of silently creating two
+## actions on one key.
 func find_binding_conflicts(event: InputEvent, exclude_action: StringName) -> Array[StringName]:
 	var out: Array[StringName] = []
-	for action: StringName in REMAPPABLE_ACTIONS:
+	for action: StringName in bindable_actions():
 		if action == exclude_action or not InputMap.has_action(action):
 			continue
 		for bound: InputEvent in get_effective_events(action):

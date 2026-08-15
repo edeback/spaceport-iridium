@@ -61,6 +61,30 @@ func test_panel_surface_and_edge_come_from_the_palette() -> void:
 		assert_eq(panel.bg_color, UIPalette.PANEL, "%s surface is PANEL" % type)
 		assert_eq(panel.border_color, UIPalette.EDGE, "%s border is EDGE" % type)
 
+## The two dim text styles are the theme's copies of [UIPalette]'s tokens, and
+## WI-58 retuned both - a `.tres` that kept the old values would silently undo
+## the contrast lift for every meta line and every inactive tab.
+func test_dim_text_styles_match_the_palette() -> void:
+	assert_eq(_theme.get_color(&"font_color", UIType.META_LINE), UIPalette.TEXT_META,
+		"the meta line is TEXT_META")
+	assert_eq(_theme.get_color(&"font_color", UIType.HOTKEY), UIPalette.TEXT_META,
+		"a hotkey hint is TEXT_META")
+	assert_eq(_theme.get_color(&"font_color", UIType.TAB_INACTIVE), UIPalette.TEXT_SECONDARY,
+		"an inactive tab is TEXT_SECONDARY")
+
+## A disabled control carries a sentence the player has to read (WI-57's "a
+## blocked action names its blocker on its own control"), so the disabled label
+## has its own token rather than sharing the dimmest one in the palette.
+func test_disabled_labels_use_the_disabled_token_everywhere() -> void:
+	for type: StringName in [&"Button", &"CheckBox", &"CheckButton", UIType.ACTION_PRIMARY,
+			UIType.ACTION_SECONDARY, UIType.ACTION_DESTRUCTIVE]:
+		assert_eq(_theme.get_color(&"font_disabled_color", type), UIPalette.TEXT_DISABLED,
+			"%s disables to TEXT_DISABLED" % type)
+
+func test_the_disabled_token_is_not_the_meta_token() -> void:
+	assert_ne(UIPalette.TEXT_DISABLED, UIPalette.TEXT_META,
+		"they were the same colour, and that is the defect WI-58 fixed")
+
 func test_gauge_track_and_fill_come_from_the_palette() -> void:
 	var back: StyleBoxFlat = _theme.get_stylebox(&"background", &"ProgressBar") as StyleBoxFlat
 	var fill: StyleBoxFlat = _theme.get_stylebox(&"fill", &"ProgressBar") as StyleBoxFlat
@@ -192,3 +216,114 @@ func test_focusable_controls_have_a_focus_style() -> void:
 func test_scroll_container_panel_is_invisible() -> void:
 	var box: StyleBoxFlat = _theme.get_stylebox(&"panel", &"ScrollContainer") as StyleBoxFlat
 	assert_null(box, "a scroll container is a viewport, not a surface")
+
+# --- the scene sweep (WI-58) ---------------------------------------------------
+
+## The missing half of the drift guard.
+##
+## Everything above reads the theme *resource*, which makes it structurally blind
+## to the scenes. WI-57 §8's sweep found "zero `add_theme_font_size_override`
+## calls in the console UI" and was literally true - while 28 scene-authored
+## `theme_override_font_sizes` sat in `.tscn` files, six of them at 10px, under
+## the design's own 11px floor, on live inspector tabs. A `.tscn` form of a font
+## size, a colour or a type variation is the same violation as its code form; the
+## code form was the only one anything checked.
+##
+## `ui/` is scanned as text rather than by loading each scene: a `.tscn` is the
+## authoring surface, and reading the file is what catches a value that a loaded
+## scene would have already resolved away.
+
+## Scenes allowed their own type and colour. Three are deliberately outside the
+## console's design system - the main menu predates it, the event card is a
+## faction-tinted modal, the game-over screen is a full-bleed takeover - and
+## `preview_module` draws in world space, not on the HUD.
+const OVERRIDE_EXEMPT: Array[String] = [
+	"res://ui/menus/", "res://ui/windows/event_card.tscn",
+	"res://ui/game_over_screen.tscn", "res://ui/preview_module.tscn",
+]
+
+func _scene_paths() -> PackedStringArray:
+	var out := PackedStringArray()
+	_collect_scenes("res://ui", out)
+	return out
+
+func _collect_scenes(dir_path: String, out: PackedStringArray) -> void:
+	var dir: DirAccess = DirAccess.open(dir_path)
+	if dir == null:
+		return
+	dir.list_dir_begin()
+	var entry: String = dir.get_next()
+	while entry != "":
+		var full: String = dir_path.path_join(entry)
+		if dir.current_is_dir():
+			_collect_scenes(full, out)
+		elif entry.ends_with(".tscn"):
+			out.append(full)
+		entry = dir.get_next()
+	dir.list_dir_end()
+
+func _is_exempt(path: String) -> bool:
+	for prefix: String in OVERRIDE_EXEMPT:
+		if path.begins_with(prefix):
+			return true
+	return false
+
+func test_the_sweep_actually_finds_scenes() -> void:
+	# A guard whose scan silently returned nothing would pass every test below.
+	assert_gt(_scene_paths().size(), 20, "the scene sweep sees the ui/ tree")
+
+## Every size in the HUD comes from a [UIType] variation. A scene-authored size
+## is the same violation as `add_theme_font_size_override`, and it is the one the
+## code-only sweep could not see.
+func test_no_scene_authors_a_font_size() -> void:
+	for path: String in _scene_paths():
+		if _is_exempt(path):
+			continue
+		var text: String = FileAccess.get_file_as_string(path)
+		assert_false(text.contains("theme_override_font_sizes"),
+			"%s takes its size from a UIType variation" % path)
+
+## Nothing in `ui/` may name a hex literal (WI-49). A `Color(...)` in a `.tscn`
+## is exactly that, spelled as floats.
+func test_no_scene_authors_a_colour() -> void:
+	for path: String in _scene_paths():
+		if _is_exempt(path):
+			continue
+		var text: String = FileAccess.get_file_as_string(path)
+		for needle: String in ["theme_override_colors/", "= Color(", "self_modulate"]:
+			assert_false(text.contains(needle),
+				"%s takes its colour from UIPalette, not from `%s`" % [path, needle])
+
+## A type variation is a bare string on both sides of a contract, so a
+## misspelling renders the control as its plain base type and nobody notices
+## until a screenshot. Every name a scene assigns has to be one [UIType] declares.
+func test_every_scene_type_variation_is_a_declared_ui_type() -> void:
+	var declared: Array[String] = []
+	for name: StringName in _all_variations():
+		declared.append(String(name))
+	var pattern := RegEx.create_from_string('theme_type_variation = &"([^"]*)"')
+	var seen: int = 0
+	for path: String in _scene_paths():
+		var text: String = FileAccess.get_file_as_string(path)
+		for match: RegExMatch in pattern.search_all(text):
+			var variation: String = match.get_string(1)
+			if variation.is_empty():
+				continue # explicitly cleared, which is the base type on purpose
+			seen += 1
+			assert_true(declared.has(variation),
+				"%s assigns `%s`, which UIType does not declare" % [path, variation])
+	assert_gt(seen, 30, "the sweep actually read the assignments")
+
+## `SpinBox extends Range`, not `LineEdit`, so it inherits **nothing** from this
+## theme - its arrows come from Godot's default *light* theme. Two of them were
+## the only un-skinned controls in the HUD until WI-58 replaced both with
+## [Stepper]. If one ever comes back, the theme owes it a skin.
+func test_no_spinbox_survives_without_the_theme_skinning_it() -> void:
+	var offenders: Array[String] = []
+	for path: String in _scene_paths():
+		if _is_exempt(path):
+			continue
+		if FileAccess.get_file_as_string(path).contains('type="SpinBox"'):
+			offenders.append(path)
+	assert_true(offenders.is_empty() or _theme.has_stylebox(&"normal", &"SpinBox"),
+		"a SpinBox survives in %s, so the theme has to skin it" % ", ".join(offenders))

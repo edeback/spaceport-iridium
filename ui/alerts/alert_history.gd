@@ -72,10 +72,16 @@ func toggle() -> void:
 
 func _build_body() -> void:
 	panel_width = UIMetrics.ALERT_HISTORY_WIDTH
+	# Same rule as the resource ledger: a flyout sits beside the right column and
+	# never over it.
+	right_inset = UIMetrics.ALERT_HISTORY_RIGHT_INSET
 	content_padding = UIMetrics.READOUT_CONTENT_PAD
 	drop_shadow = true
 	label = "Alert Log"
-	accent_color = UIPalette.ATTENTION
+	# Cyan, not amber (WI-58). The log is a record of things that have already
+	# happened and been dealt with; the amber budget is for "look at this now", and
+	# a permanently amber accent on a history flyout spends it on nothing.
+	accent_color = UIPalette.LIVE
 
 	_count = Label.new()
 	_count.theme_type_variation = UIType.META_LINE

@@ -144,7 +144,10 @@ func subject_bars() -> Array[Dictionary]:
 		"label": "Integrity",
 		"fraction": fraction,
 		"value": "%d%%" % int(round(fraction * 100.0)),
-		"tint": UIPalette.LIVE if fraction >= 1.0 else UIPalette.ATTENTION,
+		# Through the palette's threshold, not `< 1.0` (WI-58): a module one point
+		# down from full is not a falling vital, and amber that fires on every
+		# scratch stops meaning "look at this now" anywhere else.
+		"tint": UIPalette.gauge_tint(fraction),
 	}]
 
 ## DECONSTRUCT recovers materials; DEMOLISH does not. Both are destructive, so

@@ -16,6 +16,7 @@ theme_override_constants/separation = 10
 
 [node name="ClockBlock" type="VBoxContainer" parent="Column/TopRow"]
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 4
 theme_override_constants/separation = 0
 
@@ -30,11 +31,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"ReadoutLabel"
 text = "CYCLE 1"
-
-[node name="Spacer" type="Control" parent="Column/TopRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-mouse_filter = 2
+text_overrun_behavior = 3
 
 [node name="PauseButton" type="Button" parent="Column/TopRow"]
 unique_name_in_owner = true

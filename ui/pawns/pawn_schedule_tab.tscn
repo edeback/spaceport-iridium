@@ -1,72 +1,70 @@
-[gd_scene format=3 uid="uid://duujjj8ycp78l"]
+[gd_scene load_steps=2 format=3 uid="uid://duujjj8ycp78l"]
 
 [ext_resource type="Script" uid="uid://djh3cj1bwbmt1" path="res://ui/pawns/pawn_schedule_tab.gd" id="1_sched"]
 
-[node name="Schedule" type="PanelContainer" unique_id=842692179]
+[node name="Schedule" type="PanelContainer"]
 script = ExtResource("1_sched")
 
-[node name="MarginContainer" type="MarginContainer" parent="." unique_id=778621999]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 2
-theme_override_constants/margin_left = 4
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 4
-theme_override_constants/margin_bottom = 4
+theme_override_constants/separation = 6
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1365587971]
-layout_mode = 2
-
-[node name="NoScheduleLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1997651911]
+[node name="NoScheduleLabel" type="Label" parent="VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "No schedule - always on duty."
+theme_type_variation = &"MetaLine"
+text = "NO SCHEDULE — ALWAYS ON DUTY"
+autowrap_mode = 2
 
-[node name="ScheduleRows" type="VBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1970854711]
+[node name="ScheduleRows" type="VBoxContainer" parent="VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_override_constants/separation = 4
 
-[node name="Header" type="Label" parent="MarginContainer/VBoxContainer/ScheduleRows" unique_id=789293978]
+[node name="Header" type="Label" parent="VBoxContainer/ScheduleRows"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "Duty schedule (click / drag to paint)"
+theme_type_variation = &"ReadoutLabel"
+text = "Duty schedule"
 
-[node name="CellRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/ScheduleRows" unique_id=64320186]
+[node name="CellRow" type="HBoxContainer" parent="VBoxContainer/ScheduleRows"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 1
 
-[node name="TickRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/ScheduleRows" unique_id=976284050]
+[node name="TickRow" type="HBoxContainer" parent="VBoxContainer/ScheduleRows"]
 layout_mode = 2
 
-[node name="Tick0" type="Label" parent="MarginContainer/VBoxContainer/ScheduleRows/TickRow" unique_id=236055290]
+[node name="Tick0" type="Label" parent="VBoxContainer/ScheduleRows/TickRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 10
+theme_type_variation = &"MetaLine"
 text = "00"
 
-[node name="Tick6" type="Label" parent="MarginContainer/VBoxContainer/ScheduleRows/TickRow" unique_id=1981532642]
+[node name="Tick6" type="Label" parent="VBoxContainer/ScheduleRows/TickRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 10
+theme_type_variation = &"MetaLine"
 text = "06"
 
-[node name="Tick12" type="Label" parent="MarginContainer/VBoxContainer/ScheduleRows/TickRow" unique_id=1687923689]
+[node name="Tick12" type="Label" parent="VBoxContainer/ScheduleRows/TickRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 10
+theme_type_variation = &"MetaLine"
 text = "12"
 
-[node name="Tick18" type="Label" parent="MarginContainer/VBoxContainer/ScheduleRows/TickRow" unique_id=661044309]
+[node name="Tick18" type="Label" parent="VBoxContainer/ScheduleRows/TickRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 10
+theme_type_variation = &"MetaLine"
 text = "18"
 
-[node name="Tick24" type="Label" parent="MarginContainer/VBoxContainer/ScheduleRows/TickRow" unique_id=215855486]
+[node name="Tick24" type="Label" parent="VBoxContainer/ScheduleRows/TickRow"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
+theme_type_variation = &"MetaLine"
 text = "24"
 
-[node name="Legend" type="Label" parent="MarginContainer/VBoxContainer/ScheduleRows" unique_id=745154773]
+[node name="Legend" type="Label" parent="VBoxContainer/ScheduleRows"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
-text = "Blue = on duty, dark = rest"
+theme_type_variation = &"MetaLine"
+text = "CLICK OR DRAG TO PAINT · CYAN IS ON DUTY, DARK IS REST"
+autowrap_mode = 2

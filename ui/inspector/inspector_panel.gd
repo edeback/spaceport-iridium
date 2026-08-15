@@ -394,7 +394,13 @@ func _refit() -> void:
 		UIMetrics.SCREEN_SIZE.y, top_limit))
 	var page_height: float = minf(page_min, maxf(0.0, budget - chrome))
 	_scroll.custom_minimum_size.y = page_height
-	content_height = int(ceilf(minf(chrome + page_height, budget)))
+	# The frame must always contain its own chrome, even if the budget handed down
+	# is hostile (WI-58). Capping at the budget alone let the subject block, tab
+	# strip and footer render *outside* the panel's rect on a column where the
+	# readouts above had eaten the room - a frame that does not contain its
+	# contents is worse than a frame that overhangs its budget by a few pixels.
+	# The page region is what absorbs the shortfall, by scrolling.
+	content_height = int(ceilf(maxf(chrome, minf(chrome + page_height, budget))))
 	_refitting = false
 
 ## Everything in the column except the scrolling page region, plus the gaps

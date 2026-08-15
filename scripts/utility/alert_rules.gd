@@ -45,10 +45,16 @@ const LOW_TTL_SECONDS: float = 15.0
 ## the feed shares it with the station map above and the inspector below, and a
 ## feed tall enough for eight rows squeezes the selection surface to nothing
 ## exactly when a bad cycle makes the player most want to click something.
-## [constant UIMetrics.ALERT_FEED_MAX_HEIGHT] is the same limit expressed in
+## [method UIMetrics.alert_feed_max_height] is the same limit expressed in
 ## pixels and the two have to agree - a cap the panel is too short to render is
 ## a scrollbar plus a "+ n more" line that disagree about how many rows are
 ## hidden.
+##
+## That agreement holds for the **ordinary** column (WI-58). While a raid is on,
+## the raid readout takes 96px out of the column and the feed's pixel budget
+## drops below four rows on purpose: the feed is the tenant with an overflow row
+## and a history flyout to spill into, and it yields the room rather than letting
+## the inspector below it collapse. The cap stays 4 there and the rows scroll.
 const FEED_CAP: int = 4
 
 ## Entries the history log retains. Bounded because it is saved, and a log that

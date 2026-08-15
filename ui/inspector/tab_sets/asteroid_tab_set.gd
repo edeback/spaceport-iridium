@@ -40,10 +40,13 @@ func meta_text() -> String:
 	return "%s · %d / %d chunks" % [
 		_asteroid.get_richness_descriptor(), _asteroid.cur_resources, _asteroid.max_resources]
 
+## "Designated for mining" is the definition of *selected*, and selected is cyan
+## everywhere else in the design - so it is cyan here too (WI-58). It was amber,
+## which made a working mining operation read as a problem.
 func icon_color() -> Color:
 	if not is_alive():
 		return Color(0.0, 0.0, 0.0, 0.0)
-	return UIPalette.ATTENTION if _asteroid.designated else UIPalette.tinted(UIPalette.TEXT, 0.5)
+	return UIPalette.LIVE if _asteroid.designated else UIPalette.tinted(UIPalette.TEXT, 0.5)
 
 func subject_bars() -> Array[Dictionary]:
 	if not is_alive() or _asteroid.max_resources <= 0:

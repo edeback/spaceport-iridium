@@ -174,6 +174,11 @@ func _build_priority_block() -> VBoxContainer:
 	# so the words move with the number under the player's thumb.
 	_priority_caption = _label(UIType.META_LINE)
 	_priority_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# Tracked and centred, so it needs the same nudge the mode buttons and the tab
+	# strip take (WI-58) - here it is the more visible of the three, because the
+	# caption has to read as sitting under the stepper's number.
+	_priority_caption.add_theme_stylebox_override("normal",
+		UIMetrics.tracking_center_box(UIMetrics.TRACKING_META))
 	priority.add_child(_priority_caption)
 	return priority
 
@@ -206,7 +211,9 @@ func bind(entry: StoresModel.Entry) -> void:
 	# `0` out of reach from the scene default of 1. The hold-repeat covers the
 	# distance and the commit rule covers the cost of crossing it.
 	_stepper.configure(entry.priority, StoresModel.PRIORITY_MIN, StoresModel.PRIORITY_MAX, 1, true)
-	_stepper.editable = entry.configurable
+	# Live on every card, including the ones whose contents the module owns:
+	# priority is the routing language and it is the player's on every bin.
+	_stepper.editable = StoresModel.priority_editable(entry.component)
 	refresh(entry)
 
 ## Repaints everything that moves. Called on the panel's slow tick as well as on
@@ -239,12 +246,10 @@ func _meta_text(entry: StoresModel.Entry) -> String:
 		parts.append("Under construction")
 	return " · ".join(parts)
 
+## Through the model since WI-58, so the card, the inspector's storage tab and the
+## chip dialog all name the same reason for the same bin.
 func _locked_text(entry: StoresModel.Entry) -> String:
-	if entry.configurable:
-		return ""
-	if entry.under_construction:
-		return "Construction site — the build sets what it imports"
-	return "Set by the module — readable here, edited where it is produced"
+	return StoresModel.locked_reason(entry.component)
 
 ## One chip per stored resource: amount against desired, and for a
 ## variance-carrying resource the bin's average richness or quality - the same
@@ -262,7 +267,8 @@ func _rebuild_chips() -> void:
 		if shown >= MAX_CHIPS:
 			hidden += 1
 			continue
-		_chips.add_child(_make_chip(resource, component.storage_data[resource]))
+		_chips.add_child(_make_chip(resource, component.storage_data[resource],
+			StoresModel.contents_editable(component)))
 		shown += 1
 	if hidden > 0:
 		var more: Chip = Chip.create()
@@ -281,15 +287,22 @@ func _rebuild_chips() -> void:
 ## Auto-dump is a visible per-chip state (amber, with a glyph) rather than a
 ## setting buried in a modal about something else: a *silently destroying* setting
 ## must be visible from the overview.
-func _make_chip(resource: ResourceData, data: StorageData) -> Button:
+##
+## On a bin whose contents the module owns the chip becomes a **readout**: the
+## dialog behind it has nothing left it may change, so the chip is disabled and
+## says what it is instead of offering an action it cannot perform. It keeps its
+## normal look - the disabled state is deliberately styled identically - so a
+## locked card reads as information rather than as a row of greyed-out failures.
+func _make_chip(resource: ResourceData, data: StorageData, editable: bool) -> Button:
 	var kind: UIPalette.Row = UIPalette.Row.AMBER if data.autodump else UIPalette.Row.INERT
 	var button := Button.new()
 	button.focus_mode = Control.FOCUS_NONE
 	button.text = "%s  %s" % [resource.name, _chip_value(resource, data)]
 	button.icon = resource.icon
 	button.add_theme_constant_override("icon_max_width", CHIP_ICON)
-	button.tooltip_text = "%s — keep %d · click to set the desired amount, dump or auto-dump" % [
-		resource.name, data.desired]
+	button.tooltip_text = ("%s — keep %d · click to set the desired amount, dump or auto-dump"
+		if editable else "%s — keep %d · this bin's contents are set by the module") % [
+			resource.name, data.desired]
 	var style: StyleBoxFlat = Chip.chip_style(kind)
 	button.add_theme_stylebox_override("normal", style)
 	button.add_theme_stylebox_override("disabled", style)
@@ -299,7 +312,9 @@ func _make_chip(resource: ResourceData, data: StorageData) -> Button:
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", hover)
 	button.add_theme_color_override("font_color", UIPalette.row_text(kind))
-	button.pressed.connect(_on_chip_pressed.bind(resource))
+	button.disabled = not editable
+	if editable:
+		button.pressed.connect(_on_chip_pressed.bind(resource))
 	return button
 
 func _chip_value(resource: ResourceData, data: StorageData) -> String:

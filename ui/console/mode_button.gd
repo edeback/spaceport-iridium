@@ -163,6 +163,12 @@ func _apply_layout() -> void:
 		_badge_panel.add_theme_stylebox_override("panel", _badge_style())
 	if _badge_count != null:
 		_badge_count.add_theme_color_override("font_color", UIPalette.ATTENTION_TEXT)
+	if _label != null:
+		# The caption is tracked and centred, so without this it sits half a
+		# tracking unit left of the glyph above it (WI-58) - visible on a 70px
+		# button because nine of them are in a row and the misalignment repeats.
+		_label.add_theme_stylebox_override("normal",
+			UIMetrics.tracking_center_box(UIMetrics.TRACKING_MODE_LABEL))
 
 func _apply_glyph() -> void:
 	_ensure_refs()

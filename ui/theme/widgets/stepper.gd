@@ -60,10 +60,17 @@ signal value_previewed(value: int)
 		sign_colored = new_value
 		_apply_value()
 
-## False renders the stepper as a read-only readout: the number still shows, both
-## buttons are dead. For a control the player can see but may not use yet - the
-## Trade table with no docking bay built (WI-55). Locked is a state, not an
-## absence (WI-54), so the row is dimmed rather than removed.
+## False renders the stepper as a **read-only readout**: the number still shows,
+## and the buttons and their separators are *hidden*. For a control the player can
+## see but may not use - the Trade table with no docking bay built (WI-55), a bin
+## whose contents the module decides (WI-58).
+##
+## Hidden rather than merely disabled, which is a correction to WI-58's first
+## pass. "Locked is a state, not an absence" (WI-54) is about the **value**, and
+## the value is exactly what stays: a dead `−` and `+` either side of it are two
+## controls that look like controls and do nothing, and after WI-58 lifted
+## `font_disabled_color` for readability they no longer even read as dim. What is
+## left is the number, which is the thing the player came to read.
 @export var editable: bool = true:
 	set(new_value):
 		editable = new_value
@@ -72,6 +79,7 @@ signal value_previewed(value: int)
 var _minus: Button
 var _plus: Button
 var _value_label: Label
+var _separators: Array[ColorRect] = []
 
 ## Which button is held (-1, 0, +1) and how long for, so repeat and commit are
 ## driven from one real-time clock rather than two timers that can disagree.
@@ -102,6 +110,16 @@ func _ensure_refs() -> void:
 	_minus = get_node_or_null("Row/Minus") as Button
 	_plus = get_node_or_null("Row/Plus") as Button
 	_value_label = get_node_or_null("Row/Value") as Label
+	# The two hairlines between the buttons and the number. Painted here rather
+	# than authored in the scene, because a `.tscn` colour is a hex literal that no
+	# longer tracks [UIPalette] - and these two were EDGE spelled out as floats, in
+	# the WI-49 widget library itself (WI-58).
+	_separators.clear()
+	for path: String in ["Row/SepLeft", "Row/SepRight"]:
+		var rect: ColorRect = get_node_or_null(path) as ColorRect
+		if rect != null:
+			rect.color = UIPalette.EDGE
+			_separators.append(rect)
 
 ## Sets the range and the current value without emitting - for a panel wiring a
 ## stepper up to state it just read.
@@ -182,5 +200,11 @@ func _apply_value() -> void:
 	_value_label.add_theme_color_override("font_color",
 		UIPalette.sign_color(float(value)) if sign_colored else UIPalette.LIVE_BRIGHT)
 	if _minus != null:
-		_minus.disabled = not editable or value <= min_value
-		_plus.disabled = not editable or value >= max_value
+		_minus.visible = editable
+		_plus.visible = editable
+		_minus.disabled = value <= min_value
+		_plus.disabled = value >= max_value
+	# The hairlines belong to the buttons; a read-only stepper is a bare number,
+	# not a number in an empty frame.
+	for separator: ColorRect in _separators:
+		separator.visible = editable

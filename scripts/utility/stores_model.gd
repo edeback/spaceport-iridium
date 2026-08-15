@@ -55,9 +55,11 @@ class Entry extends RefCounted:
 	var priority: int = 0
 	var stored: int = 0
 	var capacity: int = 0
-	## False for a processor bay or a construction site: the card renders with its
-	## stepper disabled and its contents readable, and says why.
-	var configurable: bool = false
+	## False for a processor bay or a construction site: the card renders its
+	## contents readable, its dump controls gone, and says why. Named for what it
+	## gates - the bin's **priority stepper stays live either way**
+	## ([method priority_editable]).
+	var contents_configurable: bool = false
 	## True while the owning module is still a blueprint.
 	var under_construction: bool = false
 
@@ -157,6 +159,64 @@ static func lists(component: StorageComponent) -> bool:
 	if module.build_state == ModuleBase.BuildState.Preview:
 		return false
 	return not (component.construction_storage and module.is_complete())
+
+## May the player edit **what this bin holds** - its accepted-resource list, the
+## desired amount of each, and the dump controls?
+##
+## This is what `player_configurable` means and the only thing it means: a
+## multipurpose bin (a Storage module, a Docking Bay) holds whatever the player
+## says, while a Forge always takes iron and carbon and always emits steel, and
+## a construction site holds exactly what its build requires. Those contents are
+## the *module's* decision, so the controls that change them are not offered.
+##
+## **One rule, one place (WI-58).** Three surfaces used to answer it three
+## different ways for the same field. The Stores card disabled its stepper on
+## `player_configurable`; the inspector's storage tab commented *"desired amounts
+## are always configurable"*; and [method StorageOverlays.open_resource] asked
+## nothing at all, so its chip dialog wrote `desired` and destroyed stock on any
+## bin it was handed. Because [method lists] deliberately keeps live construction
+## sites, that third answer reached **a blueprint's construction import bin** -
+## where it let the player rewrite the build's requirements and vent its
+## delivered materials.
+##
+## **Priority is deliberately not on this list** - see [method priority_editable].
+static func contents_editable(component: StorageComponent) -> bool:
+	if component == null or not is_instance_valid(component):
+		return false
+	return component.player_configurable
+
+## May the player edit this bin's **haul priority**?
+##
+## Always, for any bin that still exists, and that is a rule rather than an
+## oversight. Priority **is** the routing language of the whole hauling system -
+## construction imports sit at +99, deconstruction exports at −99, and a sink must
+## out-priority its source ([StorageQuery]) - so it is the player's main lever for
+## deciding where stock goes. A refinery's input bay holding only ore is the
+## module's business; whether that bay out-bids the smelter for the ore is the
+## player's.
+##
+## It is a function rather than nothing at all so that the asymmetry with
+## [method contents_editable] is stated once, in the model, instead of as a
+## comment in each of the surfaces that would otherwise be tempted to "fix" it.
+static func priority_editable(component: StorageComponent) -> bool:
+	return component != null and is_instance_valid(component)
+
+## Why a bin's **contents** are not editable, in words - the sentence a locked
+## control has to carry beside it (WI-54: locked is a state, not an absence).
+## Empty for a bin the player configures.
+##
+## Shared with the Stores card so the inspector, the card and the dump dialog say
+## the same thing about the same bin. Both sentences are careful not to claim the
+## *whole* bin is locked, because its priority is not.
+static func locked_reason(component: StorageComponent) -> String:
+	if contents_editable(component):
+		return ""
+	if component == null or not is_instance_valid(component):
+		return "This bin is gone"
+	var module: ModuleBase = component.owner_module
+	if module != null and is_instance_valid(module) and not module.is_complete():
+		return "Construction site — the build decides what it imports"
+	return "Contents set by the module — its priority is still yours"
 
 ## How many of `entries` are actually holding something - the subtitle's
 ## `n MODULES HOLDING STOCK`.

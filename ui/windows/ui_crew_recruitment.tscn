@@ -20,7 +20,7 @@ theme_override_constants/separation = 4
 
 [node name="StatusLabel" type="Label" parent="MarginContainer/ContentsBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
+theme_type_variation = &"MetaLine"
 text = "Crew 0 / 0 beds"
 
 [node name="CandidateList" type="VBoxContainer" parent="MarginContainer/ContentsBox"]

@@ -19,7 +19,7 @@ func _entry(title: String, priority: int, stored: int, capacity: int = 100) -> S
 	entry.priority = priority
 	entry.stored = stored
 	entry.capacity = capacity
-	entry.configurable = true
+	entry.contents_configurable = true
 	return entry
 
 func _titles(entries: Array) -> Array[String]:
@@ -178,6 +178,100 @@ func test_a_construction_bin_on_a_blueprint_is_still_listed() -> void:
 func test_a_component_with_no_module_is_not_listed() -> void:
 	assert_false(StoresModel.lists(autofree(StorageComponent.new())))
 	assert_false(StoresModel.lists(null))
+
+# --- editability (WI-58) --------------------------------------------------------------------
+
+## `player_configurable` gates the bin's **contents** and nothing else: what it
+## accepts, how much of each it wants, and whether the player may dump it. The
+## Stores card, the inspector's storage tab and the dump dialog all read this;
+## three surfaces used to answer it three ways for the same field.
+func test_a_player_configurable_bin_has_editable_contents() -> void:
+	var module: ModuleBase = autofree(ModuleBase.new())
+	module.build_state = ModuleBase.BuildState.Built
+	var component: StorageComponent = _component(module)
+	component.player_configurable = true
+	assert_true(StoresModel.contents_editable(component),
+		"a multipurpose bin holds what the player says")
+
+func test_a_module_owned_bin_does_not() -> void:
+	var module: ModuleBase = autofree(ModuleBase.new())
+	module.build_state = ModuleBase.BuildState.Built
+	var component: StorageComponent = _component(module)
+	component.player_configurable = false
+	assert_false(StoresModel.contents_editable(component),
+		"a forge always takes iron and carbon and always emits steel")
+
+## The asymmetry, and the point of having two functions: priority is the routing
+## language of the whole hauling system, so it is the player's on **every** bin,
+## including the ones whose contents the module owns.
+func test_priority_is_editable_whatever_the_contents_rule_says() -> void:
+	var module: ModuleBase = autofree(ModuleBase.new())
+	module.build_state = ModuleBase.BuildState.Built
+	var component: StorageComponent = _component(module)
+	for configurable: bool in [true, false]:
+		component.player_configurable = configurable
+		assert_true(StoresModel.priority_editable(component),
+			"priority stays the player's with player_configurable = %s" % configurable)
+
+## Even on a live construction site, whose contents are the build's.
+func test_priority_is_editable_on_a_construction_site() -> void:
+	var module: ModuleBase = autofree(ModuleBase.new())
+	module.build_state = ModuleBase.BuildState.Blueprint
+	var component: StorageComponent = _component(module)
+	component.construction_storage = true
+	assert_true(StoresModel.priority_editable(component),
+		"a blueprint's import bin can still be out-bid or prioritised")
+
+## The case with teeth: `lists()` deliberately keeps a live construction site, and
+## the chip dialog used to let the player rewrite its build requirements and vent
+## the materials already delivered to it.
+func test_a_live_construction_bin_is_listed_but_its_contents_are_not_editable() -> void:
+	var module: ModuleBase = autofree(ModuleBase.new())
+	module.build_state = ModuleBase.BuildState.Blueprint
+	var component: StorageComponent = _component(module)
+	component.construction_storage = true
+	assert_true(StoresModel.lists(component), "still listed - it answers a real question")
+	assert_false(StoresModel.contents_editable(component),
+		"but the build decides what it imports, and nothing may vent it")
+
+func test_a_missing_component_is_editable_in_neither_sense() -> void:
+	assert_false(StoresModel.contents_editable(null), "null holds nothing")
+	assert_false(StoresModel.priority_editable(null), "and routes nothing")
+
+## Locked is a state, not an absence - so a bin whose contents the module owns
+## owes the player a sentence, and a configurable one must not print a reason that
+## does not exist.
+func test_every_locked_bin_names_its_reason_and_no_editable_one_does() -> void:
+	var module: ModuleBase = autofree(ModuleBase.new())
+	module.build_state = ModuleBase.BuildState.Built
+	var component: StorageComponent = _component(module)
+	component.player_configurable = true
+	assert_eq(StoresModel.locked_reason(component), "", "an editable bin says nothing")
+	component.player_configurable = false
+	assert_ne(StoresModel.locked_reason(component), "", "a locked bin says why")
+
+## A construction site and a processor bay are locked for different reasons, and
+## the player can act on one of those and not the other.
+func test_a_construction_site_and_a_module_bin_give_different_reasons() -> void:
+	var site: ModuleBase = autofree(ModuleBase.new())
+	site.build_state = ModuleBase.BuildState.Blueprint
+	var built: ModuleBase = autofree(ModuleBase.new())
+	built.build_state = ModuleBase.BuildState.Built
+	assert_ne(StoresModel.locked_reason(_component(site)),
+		StoresModel.locked_reason(_component(built)),
+		"a half-built module and a finished one are locked for different reasons")
+
+## Neither sentence may claim the *whole* bin is locked, because its priority is
+## not - the reason the two questions are separate in the first place.
+func test_no_locked_reason_claims_the_priority_is_locked() -> void:
+	var site: ModuleBase = autofree(ModuleBase.new())
+	site.build_state = ModuleBase.BuildState.Blueprint
+	var built: ModuleBase = autofree(ModuleBase.new())
+	built.build_state = ModuleBase.BuildState.Built
+	for component: StorageComponent in [_component(site), _component(built)]:
+		var reason: String = StoresModel.locked_reason(component)
+		assert_false(reason.to_lower().contains("readable here"),
+			"\"%s\" no longer describes a bin the player can still route" % reason)
 
 # --- the priority vocabulary ----------------------------------------------------------------
 

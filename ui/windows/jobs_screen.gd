@@ -177,29 +177,60 @@ func _build_waiting(waiting: Array[Job]) -> void:
 	var shown: int = mini(waiting.size(), MAX_ROWS)
 	for i: int in shown:
 		var job: Job = waiting[i]
-		section.add_child(_row(job.report(), _detail_for(job),
-			"%s p%d" % [job.get_category_name(), job.priority], UIPalette.Row.INERT))
+		var row: ListRow = _row(job.report(), _detail_for(job),
+			"%s p%d" % [job.get_category_name(), job.priority], UIPalette.Row.INERT)
+		section.add_child(_with_block_line(row, job))
 	if waiting.size() > shown:
 		section.add_child(_muted("... and %d more" % (waiting.size() - shown)))
 	_content.add_child(section)
 
-## The second line under a waiting job: how long it has sat there, its workspace
-## gate, and - when a pawn is selected - whether that pawn could take it, and if
-## not, why. This is the only place explain_block() is ever called, and only for
-## the rows actually on screen.
+## The row's own meta line: how long the job has sat on the board and whether it
+## is gated to a workspace. Short and bounded, so it is safe to ellipse.
+##
+## The block *reason* deliberately does not go here - see
+## [method _with_block_line].
 func _detail_for(job: Job) -> String:
 	var parts: Array[String] = []
 	if job.age > 0.0:
 		parts.append("waiting %s" % _age_text(job.age))
 	if job.workspace != null and is_instance_valid(job.workspace) and not job.workspace.is_open():
 		parts.append("assigned workspace")
-	if _selected != null and is_instance_valid(_selected):
-		if job.can_do_job(_selected):
-			parts.append("%s can take this" % _pawn_name(_selected))
-		else:
-			var reason: String = job.explain_block(_selected)
-			parts.append(reason if not reason.is_empty() else "%s cannot take this" % _pawn_name(_selected))
-	return " - ".join(parts)
+	return " · ".join(parts)
+
+## A waiting row plus, when a pawn is selected, whether that pawn can take the
+## job and if not why - on **its own wrapped line** under the row (WI-58).
+##
+## This is the only place `explain_block()` is ever called, and only for the rows
+## actually on screen. It used to be appended to the row's meta line, where a
+## realistic sentence ("WAITING 3H · ASSIGNED WORKSPACE · NO BATCH READY AND NO
+## MATERIALS TO START ONE", ~78 characters, ~593px) was ellipsed into a ~513px
+## column - so the one thing this view exists to say was the part being cut off.
+## It also goes on the row's tooltip, for a player scanning with the mouse.
+func _with_block_line(row: ListRow, job: Job) -> Control:
+	if _selected == null or not is_instance_valid(_selected):
+		return row
+	var takeable: bool = job.can_do_job(_selected)
+	var sentence: String = ""
+	if takeable:
+		sentence = "%s can take this" % _pawn_name(_selected)
+	else:
+		sentence = job.explain_block(_selected)
+		if sentence.is_empty():
+			sentence = "%s cannot take this" % _pawn_name(_selected)
+	row.tooltip_text = sentence
+	var entry := VBoxContainer.new()
+	entry.add_theme_constant_override("separation", 2)
+	entry.add_child(row)
+	# Indented so the sentence reads as belonging to the row above it rather than
+	# as the next item in the list.
+	var indent := MarginContainer.new()
+	indent.add_theme_constant_override("margin_left", UIMetrics.CONTENT_PAD)
+	entry.add_child(indent)
+	var line: Label = _muted(sentence)
+	line.add_theme_color_override("font_color",
+		UIPalette.LIVE if takeable else UIPalette.TEXT_META)
+	indent.add_child(line)
+	return entry
 
 ## Board age is in sim-seconds; hours are what the player thinks in.
 func _age_text(seconds: float) -> String:

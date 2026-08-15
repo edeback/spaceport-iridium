@@ -13,7 +13,6 @@ offset_right = -20.0
 offset_bottom = 260.0
 grow_horizontal = 0
 label = "Station Map"
-content_height = 206
 collapsible = true
 
 [node name="Minimap" type="Control" parent="Column/Content"]
