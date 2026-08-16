@@ -42,6 +42,35 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 	- **Comms:**
 		- Instead of the Inspection event firing randomly, the "Contact ARC" button allows the player to pick when they are ready for an inspection.
 
+**Starting Flow:** (Complete, WI-59 — [[WI-59_Starting_Flow]])
+- Goal: Give some more personalization to the beginning of the game
+- Select 2 pawns from a pool of candidates to start with (instead of starting completely randomly)
+	- Each candidate in the pool has their Name, Traits, and Skills displayed so the player can make appropriate choices
+	- Each pawn can be separately randomized any number of times
+- Give the station a name
+	- Name becomes default save file name
+	- Name is displayed at the top of the minimap
+
+**Heat System:** (Written up as [[WI-60_Heat_System]])
+- Goal: Add heat, a new station-wide adjacency system for modules to hook into. This will give station layout more meaning, and add new module possibilities
+- Modules can (optionally) produce or consume Heat
+	- A Forge would produce a lot of heat.
+	- An Ore Processor produces a moderate amount of heat.
+	- A Radiator (new module) eliminates (consumes) heat, based on the number of free spaces around it (like how a Solar Panel produces power)
+- Modules exchange heat with other modules that surround them
+	- This is a decently quick process - hours, not cycles
+	- Modules that have sides open to empty space also radiate a small amount of heat to space based on the amount of heat they have and how exposed to space they are. This allows them to slowly come to equilibrium instead of heating up forever
+- Modules are also affected by heat
+	- High temperatures will throttle the production rate of some modules
+		- This also throttles the heat production of those modules - the Forge should produce heat proportional to how much is produces, and also only produce heat while working
+	- Extreme (high or low) temperatures will also impact the effectiveness of some modules, like sleeping pods
+- Pawns prefer habitable temperatures (40-90F to start, to give a decent amount of leeway)
+	- Slightly outside the habitable range (20-39F, 91-110F) gives a mood penalty (too cold, too hot)
+	- Far outside the habitable range starts to hurt the pawn
+	- Droids are immune
+	- Pawns in space are immune (due to being in a spacesuit)
+	- Due to this, the starting module will produce some heat so the pawns don't immediately freeze
+- An overlay showing the current heat values of modules is needed
 
 **Audio:**
 - Goal: Add sounds for feedback and immersion
@@ -67,14 +96,7 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 	- Option when creating a game to "Skip Onboarding"
 - Needs dialogue work implemented first
 
-**Starting Flow:** (Written up as [[WI-59_Starting_Flow]])
-- Goal: Give some more personalization to the beginning of the game
-- Select 2 pawns from a pool of candidates to start with (instead of starting completely randomly)
-	- Each candidate in the pool has their Name, Traits, and Skills displayed so the player can make appropriate choices
-	- Each pawn can be separately randomized any number of times
-- Give the station a name
-	- Name becomes default save file name
-	- Name is displayed at the top of the minimap(?)
+
 
 **Star and Planet Variations:**
 - Use Deep-Fold's Pixel Planet generator to create planets and stars instead of creating sprite sheets
@@ -86,6 +108,7 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 - Right now we only ever see one system, but in the future we will be travelling to different systems with different stars, planets, and optional other stations in the distance.
 - The system we are in should hold some data on the star (required), planet (optional), and other bodies (like stations, optional).
 	- Also ore type richness that feeds into the spawned asteroids
+	- Space temperature - hotter/colder solar systems, based on the local star, will require different station setups
 
 **New Combat Options**:
 - Pirates have new options for ships, difficulty level of pirate fleet increases as the station grows larger/richer

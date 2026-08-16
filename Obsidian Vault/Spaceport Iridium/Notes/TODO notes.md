@@ -60,6 +60,8 @@ Spread slow ticks around? Make even slower ticks? Ideally don't do heavy lifting
 
 Processor_component: in try_deposit_outputs() any excess should get dumped into a pile in the room. Full storage should stop a new job from starting, however.
 
+If heat doesn't radiate easily enough, try giving the denominator +module_area instead of +1, so larger modules have a higher radiation floor
+
 Station "Prestige"
 - Instead of "level"
 - Equivalent to "stars" in SimTower
