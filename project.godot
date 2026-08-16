@@ -47,6 +47,11 @@ gdscript/warnings/untyped_declaration=1
 gdscript/warnings/unsafe_property_access=1
 gdscript/warnings/unsafe_method_access=1
 
+[dialogue_manager]
+
+editor/advanced/custom_test_scene_path="uid://x7nevk3pah8p"
+runtime/balloon_path="res://ui/dialogue/balloon.tscn"
+
 [display]
 
 window/size/viewport_width=1920
@@ -249,6 +254,10 @@ overlay_logistics={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":53,"key_label":0,"unicode":53,"location":0,"echo":false,"script":null)
 ]
 }
+
+[internationalization]
+
+locale/translations_pot_files=PackedStringArray("res://tests/test_dialogue_script.dialogue")
 
 [layer_names]
 
