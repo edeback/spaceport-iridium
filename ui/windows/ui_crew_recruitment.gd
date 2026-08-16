@@ -68,15 +68,13 @@ func _make_card(candidate: HireCandidate) -> Control:
 	info.add_child(name_label)
 	var skills_label := Label.new()
 	skills_label.theme_type_variation = UIType.META_LINE
-	skills_label.text = _skills_text(candidate)
+	skills_label.text = candidate.skills_line()
 	info.add_child(skills_label)
-	var traits_text: String = _traits_text(candidate)
-	if traits_text != "":
-		var traits_label := Label.new()
-		traits_label.theme_type_variation = UIType.META_LINE
-		traits_label.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
-		traits_label.text = traits_text
-		info.add_child(traits_label)
+	# One hoverable label per trait, each carrying its .tres description (WI-59).
+	# A candidate with no traits still shows no line at all, as it always has.
+	var traits: Array[TraitData] = candidate.trait_data()
+	if not traits.is_empty():
+		info.add_child(TraitChips.build(traits, UIPalette.TEXT_SECONDARY, UIType.META_LINE))
 	row.add_child(info)
 	var button := Button.new()
 	button.text = "Hire\n%d cr" % candidate.price
@@ -85,25 +83,6 @@ func _make_card(candidate: HireCandidate) -> Control:
 	row.add_child(button)
 	_hire_buttons[button] = candidate
 	return card
-
-## Standout skills as "Construction 7, Mining 5"; a plain note when all low.
-func _skills_text(candidate: HireCandidate) -> String:
-	var parts: PackedStringArray = []
-	for id: StringName in candidate.standout_skills():
-		var def: SkillData = SkillData.by_id(id)
-		var skill_name: String = def.display_name if def != null else String(id)
-		parts.append("%s %d" % [skill_name, candidate.skills[id]])
-	if parts.is_empty():
-		return "No standout skills"
-	return ", ".join(parts)
-
-func _traits_text(candidate: HireCandidate) -> String:
-	var parts: PackedStringArray = []
-	for tid: StringName in candidate.trait_ids:
-		var td: TraitData = TraitData.by_id(tid)
-		if td != null:
-			parts.append(td.display_name)
-	return ", ".join(parts)
 
 func _on_hire_pressed(candidate: HireCandidate) -> void:
 	# request_hire emits hire_candidates_changed on success, which triggers

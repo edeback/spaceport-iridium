@@ -345,6 +345,47 @@ func difficulty_mood_offset() -> float:
 	var current: DifficultyData = get_difficulty()
 	return current.mood_offset if current != null else 0.0
 
+# --- station identity & founding crew (WI-59) ---------------------------------
+
+## What an unnamed station is called: a game booted straight into main.tscn from
+## the editor, and every pre-WI-59 save.
+const DEFAULT_STATION_NAME: String = "Spaceport Iridium"
+
+## The player's name for this station, typed on the New Game setup screen and
+## staged here for the same reason difficulty is: the scene swap is the only
+## moment before managers start reading it. Restored by SaveManager.stage_load.
+var station_name: String = ""
+
+## The two candidates the player picked to found the station with. Consumed once
+## by CrewManager and cleared - see take_staged_crew().
+var staged_crew: Array[HireCandidate] = []
+
+func set_station_name(new_name: String) -> void:
+	station_name = new_name.strip_edges()
+
+## Never empty: what the minimap header and the default save slot name render.
+func station_display_name() -> String:
+	return station_name if station_name != "" else DEFAULT_STATION_NAME
+
+func stage_crew(candidates: Array[HireCandidate]) -> void:
+	staged_crew = candidates.duplicate()
+
+## Hands the founding crew over and clears them in one step. Consume-once on
+## purpose: a staged roster that survived its spawn could be re-applied by any
+## later call into the starting-crew path, which would silently duplicate the
+## two pawns the player picked.
+func take_staged_crew() -> Array[HireCandidate]:
+	var out: Array[HireCandidate] = staged_crew
+	staged_crew = []
+	return out
+
+## Drops both staged values when a run ends or a save is about to be loaded, for
+## the same reason clear_difficulty() exists: nothing the player configured for a
+## run they abandoned should survive into the next one.
+func clear_staged_start() -> void:
+	station_name = ""
+	staged_crew = []
+
 func world_to_cell(position: Vector2) -> Vector2i:
 	return Vector2i(floor((position.x) / CELL_SIZE.x), floor((position.y) / CELL_SIZE.y))
 	

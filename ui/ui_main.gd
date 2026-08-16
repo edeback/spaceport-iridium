@@ -322,6 +322,11 @@ func _setup_right_column() -> void:
 	# consumer at all; and `toggle_map` was bound, documented in WI-49 as a
 	# readout-header action, and printed nowhere.
 	_map_readout.content_height = UIMetrics.STATION_MAP_HEIGHT - UIMetrics.READOUT_HEADER_HEIGHT
+	# The station's name is the map's header (WI-59) - the readout sits at the top
+	# of the right column, so it is the one piece of permanent HUD furniture the
+	# name can own. `minimap.tscn`'s authored "Station Map" stays as the label for
+	# a nameless save; ReadoutPanel upper-cases whatever it is given.
+	_map_readout.label = Global.station_display_name()
 	_map_readout.add_action(_hotkey_hint(&"toggle_map"))
 	add_child(_map_readout)
 

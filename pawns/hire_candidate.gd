@@ -37,6 +37,41 @@ func apply_to(pawn: PawnBase) -> void:
 				traits.append(td)
 		traits_comp.set_traits(traits)
 
+## A candidate's standout skills as one line - "Construction 7, Mining 5", or a
+## plain note when everything rolled low. Lives here rather than on a panel
+## because two surfaces render it (the recruitment window and WI-59's New Game
+## setup screen), and one candidate should read as one sentence in both.
+func skills_line() -> String:
+	var parts: PackedStringArray = []
+	for id: StringName in standout_skills():
+		var def: SkillData = SkillData.by_id(id)
+		var skill_name: String = def.display_name if def != null else String(id)
+		parts.append("%s %d" % [skill_name, skills[id]])
+	if parts.is_empty():
+		return "No standout skills"
+	return ", ".join(parts)
+
+## The candidate's rolled traits, resolved. Unknown ids are dropped here and
+## only here - a mod that declared a trait and was then uninstalled leaves one
+## behind on a saved candidate, and every surface should skip it the same way.
+func trait_data() -> Array[TraitData]:
+	var out: Array[TraitData] = []
+	for tid: StringName in trait_ids:
+		var td: TraitData = TraitData.by_id(tid)
+		if td != null:
+			out.append(td)
+	return out
+
+## The candidate's traits as one line; "" when they rolled none, which callers
+## use to skip the row entirely rather than print an empty label. A surface that
+## wants each trait separately (to hang a tooltip off it, say) walks trait_data()
+## instead - but both answers come from the same resolved list.
+func traits_line() -> String:
+	var parts: PackedStringArray = []
+	for td: TraitData in trait_data():
+		parts.append(td.display_name)
+	return ", ".join(parts)
+
 ## Standout skills (level >= threshold), highest first - what the card shows.
 func standout_skills(threshold: int = 3) -> Array[StringName]:
 	var out: Array[StringName] = []

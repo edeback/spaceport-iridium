@@ -19,7 +19,6 @@ signal opened
 signal closed
 
 const MAIN_MENU_SCENE: String = "res://ui/menus/main_menu.tscn"
-const MAIN_SCENE: String = "res://main.tscn"
 
 ## This menu's entry in [TimeManager]'s hold set.
 const PAUSE_HOLD: StringName = &"pause_menu"
@@ -175,11 +174,18 @@ func _on_slot_chosen(slot: String) -> void:
 	_ask("Load '%s'?" % slot, "Unsaved progress on this station will be lost.", func() -> void:
 		Global.save_manager.load_slot(slot))
 
-## New Game from a live run: clear any staged load (otherwise the fresh scene
-## would restore the very game we're leaving) and re-enter main.tscn.
+## New Game from a live run goes back through the menu's setup screen (WI-59),
+## not straight into main.tscn. Re-entering the game scene directly skipped every
+## choice the player is owed - it rolled a random founding crew, kept the difficulty
+## of the run being abandoned, and left the OLD station's name on the new station,
+## because all three are staged on Global before the swap and nothing re-staged them.
+##
+## The setup screen only exists in main_menu.tscn, so this hands the menu a flag
+## and swaps to it; MainMenu._ready clears the staged run and opens the screen.
 func _start_new_game() -> void:
 	SaveManager.clear_pending_load()
-	get_tree().change_scene_to_file(MAIN_SCENE)
+	MainMenu.request_new_game_setup()
+	get_tree().change_scene_to_file(MAIN_MENU_SCENE)
 
 func quit_to_menu() -> void:
 	SaveManager.clear_pending_load()

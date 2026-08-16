@@ -10,48 +10,39 @@ extends Node
 ## than a stored array - pawns enter via spawn_crew()/save-load and leave via
 ## queue_free, and a query can't drift out of sync with either.
 
+## How many crew a fresh station opens with. A const as well as an export
+## because the New Game setup screen (WI-59) has to know how many candidates the
+## player must pick before any CrewManager exists to ask.
+const STARTING_CREW: int = 2
+
 @export var crew_pawn_scene: PackedScene
 @export var shuttle_scene: PackedScene
-@export var starting_crew: int = 2
-@export var hire_cost: int = 400
+@export var starting_crew: int = STARTING_CREW
 @export var arrival_delay_hours: float = 4.0
 ## How far off to the side of the bay the shuttle spawns and exits, in px.
 @export var shuttle_approach_distance: float = 1200.0
-## Curated identity tints (WI-22) rolled per crew member at spawn. Deliberately
-## light and low-saturation: modulate multiplies the sprite art, so full-random
-## colours muddy it - these keep the pawn readable against module interiors.
-## Data, not a code constant, so the palette is tunable without a recompile.
-@export var crew_tint_palette: PackedColorArray = PackedColorArray([
-	Color(1.0, 0.76, 0.72),   # salmon
-	Color(0.98, 0.85, 0.68),  # tan
-	Color(0.98, 0.92, 0.70),  # gold
-	Color(0.86, 0.94, 0.70),  # chartreuse
-	Color(0.78, 0.94, 0.76),  # sage
-	Color(0.72, 0.92, 0.86),  # aqua
-	Color(0.74, 0.90, 0.98),  # sky
-	Color(0.78, 0.82, 0.98),  # periwinkle
-	Color(0.87, 0.79, 0.97),  # lavender
-	Color(0.98, 0.80, 0.92),  # rose
-	Color(0.88, 0.85, 0.80),  # warm grey
-	Color(0.74, 0.83, 0.88),  # slate
-])
-## Upper bound on traits rolled per crew member (WI-22); the actual count is a
-## uniform 0..this. roll_set never picks two conflicting traits.
-@export var max_traits_per_crew: int = 2
 
-# --- hire candidates (WI-22) --------------------------------------------------
+# --- hire candidates (WI-22, rolled by CandidateRoller since WI-59) -----------
 ## How many candidates stand on offer at once (WI spec: 3-5).
 @export var candidate_pool_size: int = 4
-## Price = hire_cost x (1 + total_skill_levels * this) x trait price modifiers.
-## Monotonic in total skill so a two-standout roll is never cheaper than one.
-@export var skill_premium_per_level: float = 0.08
-## Candidate skill roll: every skill starts a low 0..base_max, then a few
-## standouts are bumped into the standout band.
-@export var candidate_base_skill_max: int = 2
-@export var candidate_standout_min: int = 1
-@export var candidate_standout_max: int = 2
-@export var candidate_standout_min_level: int = 4
-@export var candidate_standout_max_level: int = 9
+## The roll knobs. These initialise from [CandidateRoller]'s consts rather than
+## restating the numbers: WI-59 moved the roll itself off this manager so the New
+## Game screen could show a pool before main.tscn exists, and two copies of the
+## band would be free to drift the moment anyone tuned one. The exports stay so
+## main.tscn can still tune the in-game pool.
+@export var hire_cost: int = CandidateRoller.DEFAULT_HIRE_COST
+@export var skill_premium_per_level: float = CandidateRoller.DEFAULT_SKILL_PREMIUM_PER_LEVEL
+## Upper bound on traits rolled per crew member; the actual count is a uniform
+## 0..this. roll_set never picks two conflicting traits.
+@export var max_traits_per_crew: int = CandidateRoller.DEFAULT_MAX_TRAITS
+@export var candidate_base_skill_max: int = CandidateRoller.DEFAULT_BASE_SKILL_MAX
+@export var candidate_standout_min: int = CandidateRoller.DEFAULT_STANDOUT_MIN
+@export var candidate_standout_max: int = CandidateRoller.DEFAULT_STANDOUT_MAX
+@export var candidate_standout_min_level: int = CandidateRoller.DEFAULT_STANDOUT_MIN_LEVEL
+@export var candidate_standout_max_level: int = CandidateRoller.DEFAULT_STANDOUT_MAX_LEVEL
+## Curated identity tints rolled per crew member at spawn. Data, not a code
+## constant, so the palette is tunable without a recompile.
+@export var crew_tint_palette: Array[Color] = CandidateRoller.DEFAULT_TINTS
 
 ## Pending hires: {"remaining": sim-hours left, "bay": module ref Dictionary
 ## (layer+cell, JSON-safe - resolved at arrival so a deconstructed bay can
@@ -95,10 +86,20 @@ func _on_module_added_for_start(module: ModuleBase) -> void:
 	# module's cell, and spawn positions derive from it.
 	_spawn_starting_crew.call_deferred(module)
 
+## The founding crew. The New Game setup screen (WI-59) stages the two the player
+## picked; take_staged_crew() hands them over and clears them, so nothing can
+## re-apply a stale founding roster later in the run.
+##
+## The top-up afterwards is not defensive padding: it is the path that keeps
+## playing main.tscn directly from the editor working, which stages nothing at
+## all. An empty staged list reproduces the pre-WI-59 behaviour exactly.
 func _spawn_starting_crew(home: ModuleBase) -> void:
 	if not is_instance_valid(home):
 		return
-	for i: int in starting_crew:
+	var picked: Array[HireCandidate] = Global.take_staged_crew()
+	for candidate: HireCandidate in picked:
+		spawn_crew(home, candidate)
+	for i: int in maxi(starting_crew - picked.size(), 0):
 		spawn_crew(home)
 
 # --- roster -------------------------------------------------------------------
@@ -209,57 +210,24 @@ func _on_trader_arrived(_trader: TraderData) -> void:
 	_pool_generated = true
 	_fill_pool()
 
+## A roller carrying this manager's tuning (WI-59). Built per call rather than
+## cached: the exports are editor-tunable and a cached roller would keep serving
+## the values the manager readied with.
+func make_roller() -> CandidateRoller:
+	var roller := CandidateRoller.new()
+	roller.hire_cost = hire_cost
+	roller.skill_premium_per_level = skill_premium_per_level
+	roller.max_traits_per_crew = max_traits_per_crew
+	roller.base_skill_max = candidate_base_skill_max
+	roller.standout_min = candidate_standout_min
+	roller.standout_max = candidate_standout_max
+	roller.standout_min_level = candidate_standout_min_level
+	roller.standout_max_level = candidate_standout_max_level
+	roller.tint_palette = crew_tint_palette
+	return roller
+
 func _generate_candidate() -> HireCandidate:
-	var candidate := HireCandidate.new()
-	# Rolled up front so the price below can account for the kind's band, and so
-	# the offer the player sees is the one that actually turns up (WI-47 M10).
-	var kind: PawnData = PawnData.roll_for_role(PawnData.Role.CREW)
-	if kind != null:
-		candidate.pawn_id = kind.id
-	candidate.pawn_name = NameGenerator.random_name()
-	candidate.tint = roll_tint()
-	candidate.skills = _roll_candidate_skills()
-	for trait_data: TraitData in TraitData.roll_set(randi_range(0, max_traits_per_crew)):
-		candidate.trait_ids.append(trait_data.id)
-	candidate.price = _compute_price(candidate)
-	return candidate
-
-## Every skill low (0..base_max), then 1-2 standouts bumped high - "mostly low
-## with a couple of strengths".
-func _roll_candidate_skills() -> Dictionary[StringName, int]:
-	var out: Dictionary[StringName, int] = {}
-	var all_skills: Array[SkillData] = SkillData.all()
-	for skill: SkillData in all_skills:
-		out[skill.id] = randi_range(0, candidate_base_skill_max)
-	var pool: Array[SkillData] = all_skills.duplicate()
-	pool.shuffle()
-	var standouts: int = randi_range(candidate_standout_min, candidate_standout_max)
-	for i: int in mini(standouts, pool.size()):
-		out[pool[i].id] = randi_range(candidate_standout_min_level, candidate_standout_max_level)
-	return out
-
-## Base cost scaled by a skill premium (monotonic in total levels) and the
-## product of the candidate's trait price modifiers (good up, bad down).
-func _compute_price(candidate: HireCandidate) -> int:
-	var trait_mod: float = 1.0
-	for tid: StringName in candidate.trait_ids:
-		var trait_data: TraitData = TraitData.by_id(tid)
-		if trait_data != null:
-			trait_mod *= trait_data.price_modifier
-	# The pawn kind's band folds into the same multiplier chain as traits (WI-47
-	# M10), so a cheap contractor or a pricey specialist needs no separate rule.
-	var kind: PawnData = PawnData.by_id(candidate.pawn_id) if candidate.pawn_id != &"" else null
-	if kind != null:
-		trait_mod *= kind.hire_price_mult
-	return compute_price(hire_cost, candidate.total_skill_levels(), trait_mod, skill_premium_per_level)
-
-## Pure pricing arithmetic (WI-22), extracted so it can be unit-tested without
-## Global. Strictly increasing in total_skill_levels for a fixed trait modifier,
-## which guarantees a higher-skilled roll is never cheaper (the "no elite for
-## free" edge case).
-static func compute_price(base_cost: int, total_skill_levels: int, trait_price_mod: float, premium_per_level: float) -> int:
-	var skill_premium: float = 1.0 + float(total_skill_levels) * premium_per_level
-	return int(round(float(base_cost) * skill_premium * trait_price_mod))
+	return make_roller().roll()
 
 func _process(delta: float) -> void:
 	var sim_hours: float = Global.time_manager.scale(delta) / TimeManager.SECONDS_PER_HOUR
@@ -362,9 +330,7 @@ func spawn_crew(at_module: ModuleBase, candidate: HireCandidate = null) -> PawnB
 ## Random tint from the curated palette (WI-22). Public so save-load migration
 ## of pre-identity crew can reuse the same roll.
 func roll_tint() -> Color:
-	if crew_tint_palette.is_empty():
-		return Color.WHITE
-	return crew_tint_palette[randi() % crew_tint_palette.size()]
+	return make_roller().roll_tint()
 
 # --- departure & lose condition -------------------------------------------------
 

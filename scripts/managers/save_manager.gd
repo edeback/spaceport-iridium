@@ -405,6 +405,10 @@ func _collect_sections() -> Dictionary:
 		# Written here as well as in meta because meta is a display summary - this is
 		# the authoritative field the load path restores from.
 		"difficulty": String(Global.difficulty_id()),
+		# The station's name (WI-59) has exactly that shape too - chosen at setup,
+		# never mutated by any system - so it travels the same way rather than
+		# inventing a section with one string in it.
+		"station": Global.station_name,
 	}
 	for section: SaveSection in sections_in_order():
 		out[String(section.id)] = section.collect.call()
@@ -415,7 +419,11 @@ func _collect_sections() -> Dictionary:
 
 ## Hands each registered section its block, in order, and remembers the rest.
 func _apply_sections(sections: Dictionary) -> void:
-	var claimed: Dictionary[String, bool] = {"difficulty": true}
+	# Both envelope-level fields must be claimed here even though no section owns
+	# them: anything unclaimed is filed as a disabled mod's data and handed back
+	# untouched on the next save, so an unclaimed "station" would round-trip
+	# forever while the game ran nameless, and nothing would error.
+	var claimed: Dictionary[String, bool] = {"difficulty": true, "station": true}
 	for section: SaveSection in sections_in_order():
 		var key: String = String(section.id)
 		claimed[key] = true
@@ -438,6 +446,9 @@ func _get_meta() -> Dictionary:
 		"tier": Global.unlock_manager.current_tier if Global.unlock_manager != null else 1,
 		# WI-37: the slot list labels each save with the difficulty it was played at.
 		"difficulty": String(Global.difficulty_id()),
+		# WI-59: so the slot browser can show the station's name without parsing
+		# the (large) sections block.
+		"station": Global.station_name,
 		# WI-47 M11: which mods wrote this. In meta rather than a section because the
 		# slot browser has to be able to mark a mismatched save BEFORE the player
 		# commits to loading it, and meta exists precisely so a row can render
@@ -693,6 +704,11 @@ static func stage_load(slot: String) -> bool:
 	# at read time also overwrites whatever the main menu's picker left behind, so
 	# loading a Hard save after a Peaceful run can't inherit the menu leftover.
 	Global.set_difficulty(read_difficulty(data))
+	# The station name rides along (WI-59), and the founding crew is dropped: a
+	# save restores its crew from the pawn section, so a roster left staged by a
+	# half-configured New Game must not survive into the loaded game.
+	Global.clear_staged_start()
+	Global.set_station_name(read_station_name(data))
 	return true
 
 ## The difficulty a parsed envelope was played at. Prefers the authoritative
@@ -705,6 +721,18 @@ static func read_difficulty(data: Dictionary) -> StringName:
 		return StringName(from_section)
 	var meta: Dictionary = data.get("meta", {})
 	return StringName(String(meta.get("difficulty", String(DifficultyData.DEFAULT_ID))))
+
+## The station name a parsed envelope was saved with (WI-59). Same precedence as
+## read_difficulty: authoritative sections field, then the meta summary, then ""
+## - which is what every pre-WI-59 save (neither key present) resolves to, and
+## which Global.station_display_name() renders as the default name.
+static func read_station_name(data: Dictionary) -> String:
+	var sections: Dictionary = data.get("sections", {})
+	var from_section: String = String(sections.get("station", ""))
+	if from_section != "":
+		return from_section
+	var meta: Dictionary = data.get("meta", {})
+	return String(meta.get("station", ""))
 
 ## Parses a slot file into its envelope dictionary. Returns {} for anything
 ## missing, unopenable or malformed - callers treat that as "no such save".

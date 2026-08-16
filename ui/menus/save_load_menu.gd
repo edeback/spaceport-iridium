@@ -36,7 +36,13 @@ func open(new_mode: Mode) -> void:
 	visible = true
 	refresh()
 	if mode == Mode.SAVE and _new_slot_edit != null:
+		# Pre-fill with the station's name (WI-59) so the common case is one
+		# keypress. Selected rather than just filled: grab_focus below puts the
+		# caret in a field the player may want to replace wholesale, and typing
+		# should overwrite the suggestion rather than append to it.
+		_new_slot_edit.text = SaveManager.sanitize_slot_name(Global.station_display_name())
 		_new_slot_edit.grab_focus()
+		_new_slot_edit.select_all()
 
 func close() -> void:
 	visible = false

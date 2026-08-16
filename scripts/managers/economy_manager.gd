@@ -31,7 +31,14 @@ var levy_enabled: bool = false
 # --- wages --------------------------------------------------------------------
 ## Per-cycle wage for a crew pawn = its hire_price * this. Drones/robots (no
 ## needs, excluded by CrewManager.get_crew) never draw a wage.
-@export var wage_fraction: float = 0.05
+##
+## A const as well as an export because WI-59's New Game setup screen quotes each
+## candidate's wage on its card, and it runs in the menu scene where no
+## EconomyManager exists to read the export off. main.tscn does not override the
+## export, so the const is the truth; anything that tunes it should tune the
+## const so both sides move together.
+const DEFAULT_WAGE_FRACTION: float = 0.05
+@export var wage_fraction: float = DEFAULT_WAGE_FRACTION
 ## One-time severance when firing a pawn = its hire_price * this. Only charged
 ## while wages are active (no economy yet = firing is free).
 @export var severance_fraction: float = 0.2
