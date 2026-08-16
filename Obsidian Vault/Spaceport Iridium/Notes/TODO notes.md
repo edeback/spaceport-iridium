@@ -1,20 +1,28 @@
-Run a test of actual vs mockup, list deviations (if any).
+Selected box probably connect right to bottom console, gives a few more pixels of space? Looks good like this though...
 
 StringNames are cropping back up, should move them to a consts file again.
 
 Hire moves to Crew tab from docking bay
 
+"desired" should have "strict" mode - absolutely won't accept more than that amount, as opposed to simply not requesting more.
+
 R&D -> "Tech" (early game isn't research, it's bought)
 
 Modules should have a list of present pawns so you can go module.get_present() (or something like that) to figure out who is there without looking through every pawn
 
+Rename modules! And be able to reset them to their default, too. Maybe give the default the droid treatment and name them Module + ID (Hallway 36, etc) so things can specify them exactly.
+
 When pawns wander, pick a random inner node (if it has one) instead of just flipping between the boundary of two modules
 - They now pick a "stand" target so maybe that's good enough?
+
+Storage rework?
+Merge storages input/output, instead "configure" each storage bit to be import, export, or import/export
 
 For resources:
 Show relationships between resources in the UI
 Give them categories? So ore can be shown together, tier one/two/three materials etc
 
+Power, air, (future heat), should all be combined into one panel. (Current setup was good for prototyping, but the more components, less ideal it looks)
 
 Pawn issues should be promoted to the alerts section of the pawn screen too
 

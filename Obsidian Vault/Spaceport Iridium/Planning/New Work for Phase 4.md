@@ -67,7 +67,7 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 	- Option when creating a game to "Skip Onboarding"
 - Needs dialogue work implemented first
 
-**Starting Flow:**
+**Starting Flow:** (Written up as [[WI-59_Starting_Flow]])
 - Goal: Give some more personalization to the beginning of the game
 - Select 2 pawns from a pool of candidates to start with (instead of starting completely randomly)
 	- Each candidate in the pool has their Name, Traits, and Skills displayed so the player can make appropriate choices
