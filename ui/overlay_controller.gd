@@ -4,7 +4,7 @@ extends Control
 ## WI-35 station overlays. A UI-side (pure view) controller owned by UIMain:
 ## while a mode is active it writes each visible module's OVERLAY_COLOR shader
 ## param so the whole station reads one system at a time - power, O2, integrity,
-## vibration, or logistics. NOT a game manager: it never mutates sim state, only
+## vibration, logistics, or heat. NOT a game manager: it never mutates sim state, only
 ## tints. All state is session-only (never saved); a scene reload starts every
 ## mode off, and fresh module instances default to an alpha-0 (untinted) param.
 ##
@@ -24,7 +24,7 @@ extends Control
 ## produced by [OverlayPalette]'s own mode functions rather than named here, so
 ## the square beside "breathable" is the tint a breathable module actually gets.
 
-enum Mode { NONE, POWER, O2, INTEGRITY, VIBRATION, LOGISTICS }
+enum Mode { NONE, POWER, O2, INTEGRITY, VIBRATION, LOGISTICS, HEAT }
 
 ## Fires whenever the painted overlay changes, so the console can light or clear
 ## the OVERLAY button's bar. The mode registry is no use for this: the bar means
@@ -54,6 +54,7 @@ const HOTKEY_ACTIONS: Dictionary[StringName, Mode] = {
 	&"overlay_integrity": Mode.INTEGRITY,
 	&"overlay_vibration": Mode.VIBRATION,
 	&"overlay_logistics": Mode.LOGISTICS,
+	&"overlay_heat": Mode.HEAT,
 }
 
 ## Mode -> the pure key [OverlayPalette] tables its legend under. Two spellings
@@ -65,6 +66,7 @@ const LEGEND_KEYS: Dictionary[Mode, StringName] = {
 	Mode.INTEGRITY: OverlayPalette.MODE_INTEGRITY,
 	Mode.VIBRATION: OverlayPalette.MODE_VIBRATION,
 	Mode.LOGISTICS: OverlayPalette.MODE_LOGISTICS,
+	Mode.HEAT: OverlayPalette.MODE_HEAT,
 }
 
 ## The panel's standing instruction. The one thing about this panel a player has
@@ -128,13 +130,14 @@ func panel() -> ConsolePanel:
 
 	var modes := VBoxContainer.new()
 	modes.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
-	# Order + hotkeys: 1..5 down the panel, 0 clears. The printed key comes from
+	# Order + hotkeys: 1..6 down the panel, 0 clears. The printed key comes from
 	# the live InputMap, so a rebind shows up on the row.
 	_add_mode_row(modes, Mode.POWER, "Power", &"overlay_power")
 	_add_mode_row(modes, Mode.O2, "Oxygen", &"overlay_o2")
 	_add_mode_row(modes, Mode.INTEGRITY, "Integrity", &"overlay_integrity")
 	_add_mode_row(modes, Mode.VIBRATION, "Vibration", &"overlay_vibration")
 	_add_mode_row(modes, Mode.LOGISTICS, "Logistics", &"overlay_logistics")
+	_add_mode_row(modes, Mode.HEAT, "Heat", &"overlay_heat")
 	# Clear is the same kind of thing as picking one - it is how you get back to
 	# no overlay with the mouse - so it is a row in the same list rather than a
 	# button somewhere else. It never takes the live treatment: "no overlay" is
@@ -274,6 +277,12 @@ func _setup_signals() -> void:
 		Mode.VIBRATION:
 			if Global.adjacency_manager != null:
 				_connect(Global.adjacency_manager.fields_changed, _on_field_changed)
+		Mode.HEAT:
+			# One repaint per exchange pass, not per module: every module's
+			# temperature moves on every pass, so a per-module signal would be a
+			# few hundred refreshes describing one frame's worth of change.
+			if Global.heat_manager != null:
+				_connect(Global.heat_manager.heat_pass_completed, refresh_all)
 
 func _teardown_signals() -> void:
 	if Global.time_manager != null:
@@ -285,6 +294,8 @@ func _teardown_signals() -> void:
 	_disconnect(SignalBus.module_repaired, _on_module_hp_changed)
 	if Global.adjacency_manager != null:
 		_disconnect(Global.adjacency_manager.fields_changed, _on_field_changed)
+	if Global.heat_manager != null:
+		_disconnect(Global.heat_manager.heat_pass_completed, refresh_all)
 
 func _connect(sig: Signal, callable: Callable) -> void:
 	if not sig.is_connected(callable):
@@ -364,6 +375,8 @@ func _color_for(module: ModuleBase) -> Color:
 			return _vibration_color(module)
 		Mode.LOGISTICS:
 			return _logistics_color(module)
+		Mode.HEAT:
+			return _heat_color(module)
 	return OverlayPalette.untinted()
 
 func _power_color(module: ModuleBase) -> Color:
@@ -411,6 +424,18 @@ func _logistics_color(module: ModuleBase) -> Color:
 	if not found:
 		return OverlayPalette.untinted()
 	return OverlayPalette.logistics_color(best_priority)
+
+## Every placed module has a thermal body, so unlike the other modes this one has
+## something to say about all of them - truss included, which is exactly where a
+## lot of the station's heat is going.
+func _heat_color(module: ModuleBase) -> Color:
+	if Global.heat_manager == null:
+		return OverlayPalette.untinted()
+	var component: HeatComponent = Global.heat_manager.get_component(module)
+	if component == null:
+		# A blueprint or a teardown site: no thermal body, nothing to report.
+		return OverlayPalette.untinted()
+	return OverlayPalette.heat_color(component.temperature_f)
 
 func _is_breached(module: ModuleBase) -> bool:
 	var atmo: AtmosphereComponent = module.get_atmosphere()

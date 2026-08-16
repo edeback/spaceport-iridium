@@ -39,6 +39,15 @@ extends ComponentBase
 @export var greenery_rest_bonus_k: float = 0.15
 @export var greenery_desirability_k: float = 1.0
 
+## Heat tuning (WI-60). A room outside this band rests crew badly: the multiplier
+## is 1.0 across the whole band and falls off as 1/(1 + k * degrees_outside/10)
+## beyond it - the same shape vibration already uses, so the two read as one
+## rule. Authored here rather than on ModuleData because SleepComponent is a
+## scene component and a hotel suite may well want to be fussier than a bunk.
+@export var comfort_low_f: float = HeatMath.DEFAULT_HABITABLE_LOW_F
+@export var comfort_high_f: float = HeatMath.DEFAULT_HABITABLE_HIGH_F
+@export var temperature_penalty_k: float = 1.0
+
 ## Occupancy for this component, and the object a job takes its SLOT claim
 ## against. Reach it through claim_pool(), which syncs capacity first.
 var _slots := SlotPool.new()
@@ -123,22 +132,47 @@ func complete_stay(pawn: PawnBase) -> int:
 		Global.resource_manager.credit_resource.change_global_total(Global.economy_manager.record_income(charge, &"hotels"))
 	return charge
 
-## Adjacency modifier on rest effectiveness (WI-30): vibration divides it,
-## greenery gives a small bonus. 1.0 when nothing is nearby (or the manager
-## isn't up yet), so an isolated pod restores exactly its authored rate.
+## Environment modifier on rest effectiveness: vibration divides it, greenery
+## gives a small bonus (WI-30), and a room outside the comfort band divides it
+## again (WI-60). 1.0 when nothing is nearby and the room is comfortable (or the
+## managers aren't up yet), so an isolated pod in a warm station restores exactly
+## its authored rate.
+##
+## The temperature term joins this function rather than becoming a second one:
+## this is already the single place that answers "what do my surroundings do to
+## rest", and a caller should not have to know how many things are in that answer.
 func environment_rest_multiplier() -> float:
-	if Global.adjacency_manager == null or owner_module == null:
+	if owner_module == null:
 		return 1.0
-	var vibration: float = Global.adjacency_manager.get_field(owner_module, &"vibration")
-	var greenery: float = Global.adjacency_manager.get_field(owner_module, &"greenery")
-	return (1.0 / (1.0 + vibration * vibration_penalty_k)) * (1.0 + greenery * greenery_rest_bonus_k)
+	var multiplier: float = 1.0
+	if Global.adjacency_manager != null:
+		var vibration: float = Global.adjacency_manager.get_field(owner_module, &"vibration")
+		var greenery: float = Global.adjacency_manager.get_field(owner_module, &"greenery")
+		multiplier *= (1.0 / (1.0 + vibration * vibration_penalty_k)) * (1.0 + greenery * greenery_rest_bonus_k)
+	return multiplier * temperature_comfort_multiplier()
+
+## The heat half of the environment, on its own so the Environment tab can name
+## the cause rather than only the combined number.
+func temperature_comfort_multiplier() -> float:
+	if Global.heat_manager == null or owner_module == null:
+		return 1.0
+	return HeatMath.comfort_multiplier(Global.heat_manager.temperature_at(owner_module),
+		comfort_low_f, comfort_high_f, temperature_penalty_k)
 
 ## Desirability score for choosing among free bunks (WI-30): greener is nicer,
 ## noisier is worse. Only a tie-break between comparably-close pods - see
 ## the old sleep job's _find_pod.
 func desirability() -> float:
-	if Global.adjacency_manager == null or owner_module == null:
+	if owner_module == null:
 		return 0.0
-	var vibration: float = Global.adjacency_manager.get_field(owner_module, &"vibration")
-	var greenery: float = Global.adjacency_manager.get_field(owner_module, &"greenery")
-	return greenery * greenery_desirability_k - vibration * vibration_penalty_k
+	var score: float = 0.0
+	if Global.adjacency_manager != null:
+		var vibration: float = Global.adjacency_manager.get_field(owner_module, &"vibration")
+		var greenery: float = Global.adjacency_manager.get_field(owner_module, &"greenery")
+		score += greenery * greenery_desirability_k - vibration * vibration_penalty_k
+	# A cold or stifling bunk is a worse bunk (WI-60). Expressed as the rest
+	# penalty it actually causes, so the tie-break agrees with the consequence
+	# instead of being a second opinion about it - and so the player's insulation
+	# decisions are legible from watching where crew choose to sleep.
+	score -= 1.0 - temperature_comfort_multiplier()
+	return score

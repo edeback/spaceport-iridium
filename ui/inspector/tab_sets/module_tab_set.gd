@@ -222,8 +222,16 @@ func _gather() -> void:
 			continue
 		_keys.append(_class_name_of(component))
 		_builders.append(component)
-	if Global.adjacency_manager != null \
-			and not Global.adjacency_manager.get_all_fields(_module).is_empty():
+	# Environment covers the adjacency fields AND the module's temperature (WI-60).
+	# The gate used to ask only about fields, which was right when fields were the
+	# tab's whole content - but every module now has a thermal body, so a module
+	# sitting in no field at all still has something to report. Without the second
+	# clause the temperature is unreachable in the UI for most of the station.
+	var has_fields: bool = Global.adjacency_manager != null \
+		and not Global.adjacency_manager.get_all_fields(_module).is_empty()
+	var has_heat: bool = Global.heat_manager != null \
+		and Global.heat_manager.get_component(_module) != null
+	if has_fields or has_heat:
 		_keys.append(InspectorTabPlan.SYNTHETIC_ENVIRONMENT)
 		_builders.append(null)
 	if Global.unlock_manager != null \

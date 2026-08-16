@@ -25,6 +25,22 @@ const O2_GREEN_AT: float = 60.0
 ## band runs roughly -99 (deconstruction source) .. +99 (construction sink).
 const LOGISTICS_REF: float = 99.0
 
+## Temperatures that read as full blue and full red (WI-60).
+##
+## These are the two DANGEROUS thresholds, not the physical extremes of the
+## station, and that is deliberate. Calibrating the ramp to the real range
+## (space at -60 F, a worked forge past 200 F) puts the entire habitable band
+## inside a few percent of the gradient - a screenshot of that version showed a
+## freezing module, a comfortable one and a legend of five identical green
+## squares. The ramp exists to answer "is this room all right", so it spends its
+## whole range on the band where that question has an answer, and saturates on
+## either side where the answer is just "no".
+##
+## Their midpoint is 65 F, which is HeatMath.NEUTRAL_TEMPERATURE_F - so a station
+## sitting at its neutral seed reads as exactly the middle of the ramp.
+const HEAT_COLD_AT: float = HeatMath.DEFAULT_DANGEROUS_LOW_F
+const HEAT_HOT_AT: float = HeatMath.DEFAULT_DANGEROUS_HIGH_F
+
 # --- gradient endpoints (rgb; alpha filled in per call) -----------------------
 const _GOOD := Color(0.24, 0.86, 0.36)   # healthy / powered / breathable
 const _WARN := Color(0.95, 0.82, 0.22)   # marginal
@@ -80,6 +96,18 @@ static func vibration_color(field: float, ref: float) -> Color:
 	# Reuse the 3-stop blend but reversed: low field -> good (green), high -> bad.
 	return gradient3(1.0 - t, _BAD, _WARN, _GOOD)
 
+## Heat: a DIVERGING ramp, unlike every other mode here. Cold reads blue, the
+## habitable band reads green, hot reads red - because too cold and too hot are
+## two different problems with two different fixes, and a single-ended ramp
+## would paint a freezing corridor and a comfortable one the same shade of
+## "fine". The midpoint of the two reference temperatures is the comfortable
+## middle, which is what puts green where the crew are happy.
+static func heat_color(temp_f: float, cold_at: float = HEAT_COLD_AT, hot_at: float = HEAT_HOT_AT) -> Color:
+	if hot_at <= cold_at:
+		return untinted()
+	var t: float = (temp_f - cold_at) / (hot_at - cold_at)
+	return gradient3(t, _COOL, _GOOD, _BAD)
+
 ## Logistics: diverging by priority sign. Sinks (positive, imports/construction)
 ## run warm; sources (negative, exports/deconstruction) run cool; zero is
 ## neutral grey. Magnitude scales saturation toward `ref`.
@@ -105,6 +133,7 @@ const MODE_O2: StringName = &"o2"
 const MODE_INTEGRITY: StringName = &"integrity"
 const MODE_VIBRATION: StringName = &"vibration"
 const MODE_LOGISTICS: StringName = &"logistics"
+const MODE_HEAT: StringName = &"heat"
 
 ## One entry in an overlay's legend: the swatch the player sees beside a phrase.
 class LegendStop extends RefCounted:
@@ -162,6 +191,19 @@ static func legend_stops(mode_key: StringName) -> Array[LegendStop]:
 				LegendStop.new("Neutral", logistics_color(0)),
 				LegendStop.new("Sink", logistics_color(int(LOGISTICS_REF))),
 			] as Array[LegendStop]
+		MODE_HEAT:
+			# Stops are named by the temperatures they stand for, and produced by
+			# calling heat_color at those temperatures - so a retune of the ramp
+			# moves the legend with it. The two habitable bounds are stops in
+			# their own right because they are the numbers the player is actually
+			# managing toward.
+			return [
+				LegendStop.new("Freezing", heat_color(HeatMath.DEFAULT_DANGEROUS_LOW_F)),
+				LegendStop.new("Cool", heat_color(HeatMath.DEFAULT_HABITABLE_LOW_F)),
+				LegendStop.new("Habitable", heat_color(HeatMath.NEUTRAL_TEMPERATURE_F)),
+				LegendStop.new("Warm", heat_color(HeatMath.DEFAULT_HABITABLE_HIGH_F)),
+				LegendStop.new("Scorching", heat_color(HeatMath.DEFAULT_DANGEROUS_HIGH_F)),
+			] as Array[LegendStop]
 	return [] as Array[LegendStop]
 
 ## One-line footnote under a mode's ramp, for the parts of a mode that are not a
@@ -174,4 +216,8 @@ static func legend_note(mode_key: StringName) -> String:
 			return "Arrows are active hauls; numbers are storage priority."
 		MODE_VIBRATION:
 			return "Modules with no vibration field are left untinted."
+		MODE_HEAT:
+			return "Crew are comfortable between %s and %s." % [
+				HeatMath.format_temperature(HeatMath.DEFAULT_HABITABLE_LOW_F),
+				HeatMath.format_temperature(HeatMath.DEFAULT_HABITABLE_HIGH_F)]
 	return ""

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EventData" format=3]
+[gd_resource type="Resource" script_class="EventData" format=3 uid="uid://c3jauujxiluwr"]
 
 [ext_resource type="Script" uid="uid://p3ck66sptlw8" path="res://data/events/event_data.gd" id="1_evdata"]
 [ext_resource type="Script" uid="uid://c22hiw2cjh3o" path="res://data/events/event_choice.gd" id="2_choice"]
@@ -6,17 +6,10 @@
 [ext_resource type="Script" uid="uid://crby7y3cmmsfa" path="res://data/events/event_condition.gd" id="4_cond"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="5_rdata"]
 [ext_resource type="Resource" uid="uid://bwm1nd0ra2f1x" path="res://data/resources/credits.tres" id="6_credits"]
-[ext_resource type="Script" path="res://data/events/effects/effect_pirate_raid.gd" id="7_raid"]
+[ext_resource type="Script" uid="uid://cg0lere1wsm4f" path="res://data/events/effects/effect_pirate_raid.gd" id="7_raid"]
 [ext_resource type="Script" uid="uid://bgky26a16q1sw" path="res://data/events/conditions/condition_min_credits.gd" id="8_mincred"]
 [ext_resource type="Script" uid="uid://dfisauhtobwoj" path="res://data/events/conditions/condition_min_crew.gd" id="9_mincrew"]
-[ext_resource type="Script" path="res://data/events/conditions/condition_difficulty_allows_raids.gd" id="10_diffraids"]
-
-[sub_resource type="Resource" id="Resource_cond_diffraids"]
-script = ExtResource("10_diffraids")
-
-[sub_resource type="Resource" id="Resource_raid"]
-script = ExtResource("7_raid")
-strength_override = -1.0
+[ext_resource type="Script" uid="uid://dy70hmg33p44q" path="res://data/events/conditions/condition_difficulty_allows_raids.gd" id="10_diffraids"]
 
 [sub_resource type="Resource" id="Resource_pay"]
 script = ExtResource("2_choice")
@@ -25,7 +18,9 @@ description = "Buy them off. It stings, but the station stays whole."
 cost = Dictionary[ExtResource("5_rdata"), int]({
 ExtResource("6_credits"): 600
 })
-effects = Array[ExtResource("3_effect")]([])
+
+[sub_resource type="Resource" id="Resource_raid"]
+script = ExtResource("7_raid")
 
 [sub_resource type="Resource" id="Resource_refuse"]
 script = ExtResource("2_choice")
@@ -40,6 +35,9 @@ min_credits = 400
 [sub_resource type="Resource" id="Resource_cond_crew"]
 script = ExtResource("9_mincrew")
 min_crew = 2
+
+[sub_resource type="Resource" id="Resource_cond_diffraids"]
+script = ExtResource("10_diffraids")
 
 [resource]
 script = ExtResource("1_evdata")

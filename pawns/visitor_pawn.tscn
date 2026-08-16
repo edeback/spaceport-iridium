@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://pawns/pawn_health_component.tscn" id="4_health"]
 [ext_resource type="PackedScene" path="res://pawns/pawn_breathing_component.tscn" id="5_breath"]
 [ext_resource type="Script" path="res://pawns/pawn_disease_component.gd" id="6_disease"]
+[ext_resource type="Script" uid="uid://bdwmqub12ii6e" path="res://pawns/pawn_temperature_component.gd" id="7_heattemp"]
 
 [node name="VisitorPawn" node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_base")]
 script = ExtResource("2_visitor")
@@ -36,3 +37,6 @@ has_recreation_need = true
 
 [node name="PawnDiseaseComponent" type="Node2D" parent="." index="4"]
 script = ExtResource("6_disease")
+
+[node name="PawnTemperatureComponent" type="Node2D" parent="." index="5"]
+script = ExtResource("7_heattemp")

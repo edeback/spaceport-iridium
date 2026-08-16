@@ -13,6 +13,7 @@
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="11_wjy4w"]
 [ext_resource type="PackedScene" path="res://modules/components/adjacency_emitter_component.tscn" id="12_adjem"]
 [ext_resource type="Script" uid="uid://b2cqiums4fmk0" path="res://modules/components/adjacency_effect_spec.gd" id="13_adjsp"]
+[ext_resource type="PackedScene" path="res://modules/components/heat_emitter_component.tscn" id="14_heatem"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_oklni"]
 shader = ExtResource("3_f8t3n")
@@ -73,3 +74,6 @@ power_generation_component = NodePath("../PowerGenerationComponent")
 
 [node name="AdjacencyEmitterComponent" parent="." instance=ExtResource("12_adjem")]
 effects = Array[ExtResource("13_adjsp")]([SubResource("Resource_vibration")])
+
+[node name="HeatEmitterComponent" parent="." instance=ExtResource("14_heatem")]
+idle_heat_per_hour = 90.0

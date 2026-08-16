@@ -45,6 +45,21 @@ const DEFAULT_RICHNESS: float = 0.5
 var processing: bool = false
 var current_process_time: float = 0
 
+## Work done since something last asked, measured in BATCH FRACTIONS (WI-60):
+## 1.0 means one whole batch's worth of progress advanced, however long that
+## took. HeatEmitterComponent drains it to bill waste heat.
+##
+## Fractions rather than seconds is the load-bearing part. A heat throttle
+## multiplies get_process_time() up, so the same second of work buys a smaller
+## fraction - which is exactly "heat proportional to how much it produces", and
+## it makes the throttle self-limiting with no code that knows it is a loop.
+## Counting seconds would keep billing full heat for a machine crawling at a
+## quarter rate.
+##
+## Not saved: it is drained every heat pass, so at most a fraction of a game-hour
+## of billing exists at any moment, and heat is not a resource the player owns.
+var _work_accumulated: float = 0.0
+
 ## Weighted-average richness of the variant inputs consumed by the batch
 ## currently processing; -1 when the batch has no variant inputs, in which
 ## case outputs stay exactly recipe-sized.
@@ -346,6 +361,7 @@ func _stepwise_processing(delta: float) -> void:
 	if processing:
 		var effective_time: float = get_process_time()
 		current_process_time += delta
+		_accumulate_work(delta, effective_time)
 		processor_progress_changed.emit(current_process_time / effective_time)
 		if current_process_time >= effective_time:
 			if not _try_deposit_outputs():
@@ -387,6 +403,20 @@ func _manned_processing(_delta: float) -> void:
 		_ensure_work_job()
 		if not worked:
 			last_error = "Waiting for worker"
+
+## Bank progress as a fraction of a batch (WI-60). Called from both processing
+## paths, so a manned forge and an unmanned refinery bill heat identically.
+func _accumulate_work(advanced: float, effective_time: float) -> void:
+	if effective_time > 0.0:
+		_work_accumulated += advanced / effective_time
+
+## Work done since the last call, in batch fractions, and reset. Drained rather
+## than read so the same progress can never be billed twice - HeatEmitterComponent
+## is the only caller.
+func take_work_fraction() -> float:
+	var done: float = _work_accumulated
+	_work_accumulated = 0.0
+	return done
 
 ## True when a fresh batch could be readied right now (inputs present, output
 ## room). Used by the work driver's batch loop to decide whether to keep going.
@@ -454,6 +484,7 @@ func advance_work(amount: float) -> bool:
 	last_error = ""
 	var effective_time: float = get_process_time()
 	current_process_time += amount
+	_accumulate_work(amount, effective_time)
 	processor_progress_changed.emit(current_process_time / effective_time)
 	if current_process_time < effective_time:
 		return false

@@ -11,14 +11,13 @@ func _ready() -> void:
 	connections_changed(structure_component.module_connections)
 	structure_component.module_connections_changed.connect(connections_changed)
 	
-func connections_changed(new_connections: Dictionary[ModuleBase, bool]) -> void:
-	var possible_connections: int = structure_component.connection_points.size() + 1
-	var current_connections: float = 0
-	for connection_type: bool in new_connections.values():
-		# Basically if it's not a cross-layer connection
-		if not connection_type:
-			current_connections += 1
-	power_scaling = (possible_connections - current_connections) / possible_connections
+## The panel is shaded by whatever is bolted to its sides. The arithmetic moved to
+## StructureComponent.open_face_fraction() in WI-60, where the heat system's
+## radiation term needs the identical answer - including the implicit back face
+## that keeps a fully boxed-in panel generating something rather than nothing.
+## The signal hands us its own dictionary, so this reads the component directly.
+func connections_changed(_new_connections: Dictionary[ModuleBase, bool]) -> void:
+	power_scaling = structure_component.open_face_fraction()
 		
 func get_power_output()  -> float:
 	# super() reads the effective (damage/upgrade-scaled) base output; the

@@ -1,16 +1,15 @@
-[gd_resource type="Resource" script_class="EventData" format=3]
+[gd_resource type="Resource" script_class="EventData" format=3 uid="uid://d0ytha354msn8"]
 
 [ext_resource type="Script" uid="uid://p3ck66sptlw8" path="res://data/events/event_data.gd" id="1_evdata"]
 [ext_resource type="Script" uid="uid://dcwi3tudyit34" path="res://data/events/event_effect.gd" id="2_effect"]
-[ext_resource type="Script" path="res://data/events/effects/effect_disease_outbreak.gd" id="3_outbreak"]
+[ext_resource type="Script" uid="uid://c22hiw2cjh3o" path="res://data/events/event_choice.gd" id="3_k3x5f"]
+[ext_resource type="Script" uid="uid://p2u101kqbhxv" path="res://data/events/effects/effect_disease_outbreak.gd" id="3_outbreak"]
 [ext_resource type="Script" uid="uid://crby7y3cmmsfa" path="res://data/events/event_condition.gd" id="4_condition"]
 [ext_resource type="Script" uid="uid://dfisauhtobwoj" path="res://data/events/conditions/condition_min_crew.gd" id="5_mincrew"]
-[ext_resource type="Script" path="res://data/events/conditions/condition_disease_unlocked.gd" id="6_unlocked"]
+[ext_resource type="Script" uid="uid://nnw6lklon7r6" path="res://data/events/conditions/condition_disease_unlocked.gd" id="6_unlocked"]
 
 [sub_resource type="Resource" id="Resource_outbreak"]
 script = ExtResource("3_outbreak")
-min_infections = 1
-max_infections = 3
 
 [sub_resource type="Resource" id="Resource_mincrew"]
 script = ExtResource("5_mincrew")

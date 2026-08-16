@@ -41,6 +41,27 @@ var _connections_made: bool = false
 
 signal module_connections_changed(new_connections: Dictionary[ModuleBase, bool])
 
+## The fraction of this module's faces touching nothing: 1.0 out in the open,
+## falling toward a nonzero floor as neighbours box it in.
+##
+## Two systems ask this question - solar output scales by it (WI-27) and heat
+## radiation to space scales by it (WI-60) - so it is answered once here rather
+## than computed twice. The arithmetic (including the implicit back face that
+## puts a floor under the result) lives in [HeatMath.exposure_fraction]; this
+## method owns only what counts as a covered face.
+##
+## Cross-layer connections are deliberately NOT covering: a corridor sharing this
+## module's cell sits inside the footprint rather than against a side of it, and
+## it neither shades a panel nor insulates a hull. That is the `if not
+## connection_type` filter the solar component has always applied, preserved
+## exactly.
+func open_face_fraction() -> float:
+	var covered: int = 0
+	for is_cross_layer: bool in module_connections.values():
+		if not is_cross_layer:
+			covered += 1
+	return HeatMath.exposure_fraction(connection_points.size(), covered)
+
 func can_connect_to(world_cell: Vector2i) -> bool:
 	var local_cell: Vector2i = world_cell - owner_module.module_cell
 	return connection_points.has(local_cell) or internal_points.has(local_cell)

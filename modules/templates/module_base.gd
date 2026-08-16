@@ -87,6 +87,12 @@ const BREAKDOWN_SOURCE := &"breakdown"
 ## Facility lowering breakdown_chance). Owns its own source so it refreshes
 ## independently of damage/breakdown when the module's maintenance field moves.
 const ADJACENCY_SOURCE := &"adjacency"
+## StatModifiers source id for the WI-60 heat throttle (a hot module slowing its
+## own process_time). Its own source so it stacks with damage and breakdowns -
+## all three write process_time, which is precisely why they are three sources
+## and not one - and so it clears the moment the module cools without disturbing
+## them. HeatComponent owns every write to it.
+const HEAT_SOURCE := &"heat"
 ## Output multiplier a broken-down module runs at until a repair job clears it.
 const BREAKDOWN_EFFICIENCY := 0.5
 

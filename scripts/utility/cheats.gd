@@ -87,6 +87,47 @@ func dump_adjacency(cell: Vector2i) -> String:
 		parts.append("%s=%.3f" % [effect_id, fields[effect_id]])
 	return _report("%s fields: %s" % [module._display_name(), ", ".join(parts)])
 
+# --- heat (WI-60) -------------------------------------------------------------
+
+## Forces the temperature of the module at `cell`, in degrees Fahrenheit.
+func set_temperature(cell: Vector2i, degrees_f: float) -> String:
+	var module: ModuleBase = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, cell)
+	if module == null:
+		return _report("set_temperature found no MODULE-layer module at %s" % cell)
+	if Global.heat_manager == null:
+		return _report("heat manager unavailable")
+	var component: HeatComponent = Global.heat_manager.get_component(module)
+	if component == null:
+		return _report("%s has no thermal body (not built?)" % module._display_name())
+	component.temperature_f = degrees_f
+	component.mark_temperature_known()
+	component.refresh_throttle()
+	return _report("set %s to %s" % [module._display_name(), HeatMath.format_temperature(degrees_f)])
+
+## Sets EVERY registered module's temperature at once - for reaching an extreme
+## without waiting for the station to get there on its own.
+func heat_station(degrees_f: float) -> String:
+	if Global.heat_manager == null:
+		return _report("heat manager unavailable")
+	var count: int = 0
+	for module: ModuleBase in Global.world_manager.id_to_module.values():
+		var component: HeatComponent = Global.heat_manager.get_component(module)
+		if component == null:
+			continue
+		component.temperature_f = degrees_f
+		component.mark_temperature_known()
+		component.refresh_throttle()
+		count += 1
+	return _report("set %d modules to %s" % [count, HeatMath.format_temperature(degrees_f)])
+
+## Prints the whole thermal network: temperature, mass, exposure, radiation
+## multiplier and throttle per module, plus the station's total energy above
+## space - which is what makes an equilibrium claim checkable by eye.
+func dump_heat() -> String:
+	if Global.heat_manager == null:
+		return _report("heat manager unavailable")
+	return _report("heat:\n" + Global.heat_manager.debug_dump())
+
 ## Forces a breakdown on the module at `cell` (WI-24), ignoring the hourly roll.
 func break_module(cell: Vector2i) -> String:
 	var module: ModuleBase = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, cell)

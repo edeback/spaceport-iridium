@@ -67,6 +67,31 @@ extends Resource
 ## can_break_down.
 @export var maintenance_breakdown_k: float = 1.0
 
+## --- heat (WI-60) -----------------------------------------------------------
+## Energy it takes to move ONE CELL of this module one degree Fahrenheit. The
+## module's total thermal mass is this times its footprint, so a big armoured
+## module changes temperature slowly and a corridor cell whips around. Lives here
+## rather than on HeatComponent because that component is runtime-attached and
+## therefore has nowhere to carry per-module-type tuning.
+const DEFAULT_THERMAL_MASS_PER_CELL: float = 4.0
+@export var heat_thermal_mass_per_cell: float = DEFAULT_THERMAL_MASS_PER_CELL
+## How good this module is at shedding heat to space, per unit of exposed face.
+## 1.0 is ordinary hull. The Radiator is nothing but this number turned up - the
+## exposure scaling it needs is the same term every module already runs.
+@export var heat_radiation_mult: float = 1.0
+## Does this module slow down when it gets hot? Off for the ninety-odd modules
+## that don't care, so they carry one unchecked box rather than three meaningless
+## numbers. The three below only matter when this is true.
+@export var throttles_when_hot: bool = false
+## Temperature at which the throttle begins, and the one at which it reaches
+## heat_throttle_max_mult. A lerp between them - never a step, because a hard
+## cutoff plus work-proportional heat production is an oscillator.
+@export var heat_throttle_start_f: float = 250.0
+@export var heat_throttle_full_f: float = 450.0
+## Worst-case process_time multiplier. Finite on purpose: a machine that stops
+## dead gives the player no gradient to read.
+@export var heat_throttle_max_mult: float = 4.0
+
 ## --- economy (WI-25) --------------------------------------------------------
 ## Credits this module costs per cycle in upkeep once EconomyManager's upkeep
 ## toggle is on (WI-26's first ARC inspection). 0 for most modules; industrial

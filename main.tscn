@@ -16,6 +16,7 @@
 [ext_resource type="Resource" uid="uid://dutod605eq6sx" path="res://data/modules/core/hallway_mdata.tres" id="5_b1qrp"]
 [ext_resource type="PackedScene" uid="uid://ce6npnqw8s3mu" path="res://ui/ui_main.tscn" id="5_uwp6h"]
 [ext_resource type="Script" uid="uid://csa0pk5oc8wc8" path="res://scripts/managers/adjacency_manager.gd" id="6_adjmgr"]
+[ext_resource type="Script" uid="uid://c6q8ipndr2xrp" path="res://scripts/managers/heat_manager.gd" id="6_heatmgr"]
 [ext_resource type="Script" uid="uid://6mx2qi4ecq8b" path="res://scripts/managers/turbolift_manager.gd" id="6_dg77c"]
 [ext_resource type="Script" uid="uid://bsy2db6ssn3vt" path="res://scripts/managers/world_manager.gd" id="6_i5kyc"]
 [ext_resource type="Script" uid="uid://cyou4qqxr66bq" path="res://scripts/managers/structure_manager.gd" id="6_ryguw"]
@@ -7633,6 +7634,9 @@ script = ExtResource("6_ryguw")
 
 [node name="AdjacencyManager" type="Node" parent="Managers" unique_id=1933613656]
 script = ExtResource("6_adjmgr")
+
+[node name="HeatManager" type="Node" parent="Managers" unique_id=1933613657]
+script = ExtResource("6_heatmgr")
 
 [node name="PowerManager" type="Node" parent="Managers" unique_id=1129733551]
 script = ExtResource("4_deici")

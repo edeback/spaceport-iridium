@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://bq43tqtyycblj" path="res://modules/components/oxygen_generator_component.tscn" id="15_m0sbv"]
 [ext_resource type="PackedScene" path="res://modules/components/oxygen_scrubber_component.tscn" id="15_scrub"]
 [ext_resource type="Resource" uid="uid://tf727fx7vlah" path="res://data/resources/oxygen.tres" id="16_4oiqu"]
+[ext_resource type="PackedScene" path="res://modules/components/heat_emitter_component.tscn" id="16_heatem"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_m0sbv"]
 shader = ExtResource("2_gm7c8")
@@ -22,8 +23,10 @@ shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/DAMAGE = 0.0
+shader_parameter/OVERLAY_COLOR = Vector4(0, 0, 0, 0)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_4oiqu"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_m0sbv"]
 resource_local_to_scene = true
 size = Vector2(192, 128)
 
@@ -51,7 +54,7 @@ resource_data = ExtResource("16_4oiqu")
 stored = 10
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
-[node name="Module" unique_id=1483217976 instance=ExtResource("1_gv2ro")]
+[node name="Module2" unique_id=1483217976 instance=ExtResource("1_gv2ro")]
 can_delete = false
 structure_check_before_delete = true
 
@@ -65,7 +68,7 @@ scale = Vector2(3, 2)
 power_generation_component = NodePath("../../../PowerGenerationComponent")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_4oiqu")
+shape = SubResource("RectangleShape2D_m0sbv")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 path_points = Array[Vector2i]([Vector2i(96, 96)])
@@ -92,3 +95,6 @@ ExtResource("16_4oiqu"): SubResource("Resource_4oiqu")
 [node name="OxygenGeneratorComponent" parent="." index="7" unique_id=34724177 node_paths=PackedStringArray("storage_bay") instance=ExtResource("15_m0sbv")]
 release_rate_per_hour = 100.0
 storage_bay = NodePath("../Storage Bay")
+
+[node name="HeatEmitterComponent" parent="." index="8" unique_id=433922942 instance=ExtResource("16_heatem")]
+idle_heat_per_hour = 300.0

@@ -1,0 +1,50 @@
+[gd_scene format=3 uid="uid://b3rd8k1qxhw7n"]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_radbase"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_radshad"]
+[ext_resource type="PackedScene" uid="uid://cq34q4cbroavg" path="res://modules/components/sprite_selection_component.tscn" id="3_radsel"]
+[ext_resource type="Texture2D" uid="uid://cs0ht0ea12qtx" path="res://assets/sprites/solar_panel_tilemap.png" id="4_radtex"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_rad"]
+frequency = 0.0668
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_rad"]
+width = 64
+height = 64
+generate_mipmaps = false
+noise = SubResource("FastNoiseLite_rad")
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rad"]
+atlas = ExtResource("4_radtex")
+region = Rect2(0, 128, 64, 64)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rad"]
+shader = ExtResource("2_radshad")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
+shader_parameter/DAMAGE = 0.0
+shader_parameter/gradient_texture = SubResource("NoiseTexture2D_rad")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rad"]
+resource_local_to_scene = true
+size = Vector2(62, 62)
+
+[node name="Module" unique_id=1933614001 instance=ExtResource("1_radbase")]
+has_atmosphere = false
+
+[node name="SpriteSelectionComponent" parent="Offset" index="0" node_paths=PackedStringArray("sprite") instance=ExtResource("3_radsel")]
+sprite = NodePath("../Sprite")
+
+[node name="Sprite" parent="Offset" index="1"]
+material = SubResource("ShaderMaterial_rad")
+texture = SubResource("AtlasTexture_rad")
+
+[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
+shape = SubResource("RectangleShape2D_rad")
+
+[node name="PathComponent" parent="." index="1"]
+path_points = Array[Vector2i]([])
+door_connections = Dictionary[int, int]({})
+door_required = false

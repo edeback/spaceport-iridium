@@ -8,6 +8,7 @@ var world_manager: WorldManager
 var path_manager: PathManager
 var structure_manager: StructureManager
 var adjacency_manager: AdjacencyManager
+var heat_manager: HeatManager
 var power_manager: PowerManager
 var job_manager: JobManager
 var claim_registry: ClaimRegistry
@@ -89,6 +90,7 @@ const REMAPPABLE_ACTIONS: Array[StringName] = [
 	&"overlay_integrity",
 	&"overlay_vibration",
 	&"overlay_logistics",
+	&"overlay_heat",
 	&"overlay_clear",
 	&"toggle_ledger",
 	&"quick_save",
@@ -127,6 +129,7 @@ const ACTION_LABELS: Dictionary[StringName, String] = {
 	&"overlay_integrity": "Integrity overlay",
 	&"overlay_vibration": "Vibration overlay",
 	&"overlay_logistics": "Logistics overlay",
+	&"overlay_heat": "Heat overlay",
 	&"overlay_clear": "Clear overlay",
 	&"quick_save": "Quicksave",
 	&"quick_load": "Quickload",

@@ -51,6 +51,8 @@ const CAUSE_OUTSIDE: String = "while outside"
 const CAUSE_EXHAUSTED: String = "while exhausted"
 const CAUSE_COMPANY: String = "who's nearby"
 const CAUSE_EVENT: String = "event"
+const CAUSE_COLD: String = "while cold"
+const CAUSE_HOT: String = "while hot"
 
 ## Every id that is fixed in code, with its label, its one-line explanation, and
 ## the cause that holds it (empty for a finite modifier, which prints a duration
@@ -109,6 +111,20 @@ const STATIC_ENTRIES: Dictionary[StringName, Dictionary] = {
 		"label": "Poor meal",
 		"blurb": "Ate something well below the station's usual standard.",
 		"cause": "",
+	},
+	# WI-60. The ids are HeatMath.MOOD_TOO_COLD / MOOD_TOO_HOT, spelled out here
+	# because a const Dictionary's keys must be literals. Both are permanent
+	# while the pawn stays in the room, so both print a cause rather than a
+	# countdown - "while cold" is the thing the player can actually act on.
+	&"too_cold": {
+		"label": "Too cold",
+		"blurb": "This room is below the temperature crew are comfortable in.",
+		"cause": CAUSE_COLD,
+	},
+	&"too_hot": {
+		"label": "Too hot",
+		"blurb": "This room is above the temperature crew are comfortable in.",
+		"cause": CAUSE_HOT,
 	},
 }
 

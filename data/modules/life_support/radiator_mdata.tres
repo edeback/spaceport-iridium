@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3 uid="uid://ck2rd8h1twq4v"]
+
+[ext_resource type="Texture2D" uid="uid://cs0ht0ea12qtx" path="res://assets/sprites/solar_panel_tilemap.png" id="1_radicon"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_radres"]
+[ext_resource type="PackedScene" uid="uid://b3rd8k1qxhw7n" path="res://modules/life_support/radiator.tscn" id="3_radscene"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="4_radscript"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="5_radsteel"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_radicon"]
+atlas = ExtResource("1_radicon")
+region = Rect2(0, 128, 64, 64)
+
+[resource]
+script = ExtResource("4_radscript")
+id = &"radiator_mdata"
+name = "Radiator"
+description = "Sheds waste heat into space. The fewer modules surrounding it, the more heat it can dump - a radiator buried inside the station is nearly useless."
+scene = ExtResource("3_radscene")
+icon = SubResource("AtlasTexture_radicon")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_radres"), int]({
+ExtResource("5_radsteel"): 3
+})
+tags = Array[String](["Life Support", "Thermal"])
+category_id = &"life_support"
+unlocked_by_default = false
+max_hp = 40.0
+upkeep_per_cycle = 2
+heat_radiation_mult = 12.0

@@ -37,6 +37,8 @@ func setup(module: ModuleBase) -> void:
 	add_theme_constant_override("separation", UIMetrics.ROW_GAP)
 	if Global.adjacency_manager != null:
 		Global.adjacency_manager.fields_changed.connect(_on_fields_changed)
+	if Global.heat_manager != null:
+		Global.heat_manager.heat_pass_completed.connect(refresh)
 	refresh()
 
 func _on_fields_changed(module: ModuleBase) -> void:
@@ -47,7 +49,10 @@ func refresh() -> void:
 	for child: Node in get_children():
 		remove_child(child)
 		child.queue_free()
-	if _module == null or not is_instance_valid(_module) or Global.adjacency_manager == null:
+	if _module == null or not is_instance_valid(_module):
+		return
+	_add_temperature()
+	if Global.adjacency_manager == null:
 		return
 	var fields: Dictionary[StringName, float] = Global.adjacency_manager.get_all_fields(_module)
 	if fields.is_empty():
@@ -71,6 +76,49 @@ func refresh() -> void:
 		var percent: int = int(round((sleep.environment_rest_multiplier() - 1.0) * 100.0))
 		if percent != 0:
 			add_child(_line("Rest quality: %+d%%" % percent, UIPalette.sign_color(float(percent))))
+
+## Temperature, above the adjacency rows and rendered differently from them on
+## purpose (WI-60).
+##
+## The fields below print a severity word because their level is a propagation
+## strength with no units a player could interpret. Temperature is the opposite
+## case - degrees Fahrenheit is a unit everyone already owns - so this prints the
+## real number, and the band word beside it is the interpretation rather than a
+## substitute for it.
+func _add_temperature() -> void:
+	if Global.heat_manager == null:
+		return
+	var component: HeatComponent = Global.heat_manager.get_component(_module)
+	if component == null:
+		# A blueprint or a teardown site has no thermal body. Saying nothing is
+		# right: "0°F" would be a lie about a module that has no temperature.
+		return
+	var temperature: float = component.temperature_f
+	var band: HeatMath.Band = HeatMath.band(temperature, HeatMath.ComfortTuning.new())
+	# The throttle rides on the temperature row rather than sitting on a line
+	# below it. A module with eight tabs has tall chrome, and WI-58's rule is that
+	# the page region absorbs the shortfall by scrolling - so on exactly the
+	# modules that throttle (forges, refineries: the ones with the most tabs) a
+	# separate line lands below the fold, which a screenshot caught. The first row
+	# is the only place always visible, so the consequence goes in it.
+	var description: String = HeatMath.band_label(band).to_lower()
+	var throttle: float = component.throttle_penalty()
+	if throttle > 0.0:
+		description += " · work rate %+d%%" % int(round(-throttle * 100.0))
+	var row: ListRow = ListRow.create()
+	row.disabled = true
+	row.focus_mode = Control.FOCUS_NONE
+	add_child(row)
+	# Amber only for the two bands that are actively harming crew - the same
+	# "falling vital" category the budget reserves it for, and strictly more
+	# urgent than the vibration row beside it that already spends one.
+	row.configure("Temperature", description, HeatMath.format_temperature(temperature),
+		UIPalette.Row.AMBER if band == HeatMath.Band.FREEZING or band == HeatMath.Band.SCORCHING
+			else UIPalette.Row.LIVE)
+	# Rest quality is deliberately NOT printed here: it is already printed once at
+	# the bottom of this tab as the COMBINED environment multiplier, and
+	# temperature is now part of that number. Saying it twice in two framings
+	# reads as two separate effects.
 
 ## Level -> qualitative severity word. The underlying float is a propagation
 ## strength with no units the player could interpret, so it is never printed.

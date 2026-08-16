@@ -22,3 +22,6 @@ category_id = &"industry"
 upkeep_per_cycle = 8
 can_break_down = true
 breakdown_chance_per_hour = 0.006
+throttles_when_hot = true
+heat_throttle_start_f = 150.0
+heat_throttle_full_f = 350.0

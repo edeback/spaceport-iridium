@@ -39,6 +39,7 @@ var _was_critical: bool = false
 var _needs: PawnNeedsComponent = null
 var _breathing: PawnBreathingComponent = null
 var _disease: PawnDiseaseComponent = null
+var _temperature: PawnTemperatureComponent = null
 
 func _process(delta: float) -> void:
 	var sim_hours: float = Global.time_manager.scale(delta) / TimeManager.SECONDS_PER_HOUR
@@ -50,6 +51,8 @@ func _process(delta: float) -> void:
 		_breathing = owner_pawn.get_component_by_type(PawnBreathingComponent) as PawnBreathingComponent
 	if _disease == null:
 		_disease = owner_pawn.get_component_by_type(PawnDiseaseComponent) as PawnDiseaseComponent
+	if _temperature == null:
+		_temperature = owner_pawn.get_component_by_type(PawnTemperatureComponent) as PawnTemperatureComponent
 	var starving: bool = _needs != null and _needs.has_hunger_need and _needs.hunger_value <= 0.0
 	var suffocating: bool = _breathing != null and _breathing.is_suffocating
 	# Disease drain (WI-31) joins starvation/suffocation as a third decay source;
@@ -57,10 +60,16 @@ func _process(delta: float) -> void:
 	# The Medical Bay treatment job restores health directly on top of this, so a
 	# treated patient still nets positive despite the suppressed passive regen.
 	var disease_drain: float = _disease.total_health_drain_per_hour() if _disease != null else 0.0
-	if starving or suffocating or disease_drain > 0.0:
+	# Temperature (WI-60) is the fourth decay source, and it obeys the same two
+	# rules the other three do: it stacks with them, and its presence suppresses
+	# passive regen. A pawn with no temperature component (every robot) reports
+	# zero here without a type check.
+	var temperature_drain: float = _temperature.damage_per_hour if _temperature != null else 0.0
+	if starving or suffocating or disease_drain > 0.0 or temperature_drain > 0.0:
 		# Multiple sources at once stack their decay; regen never applies while any
-		# is active (the exclusivity rule, extended for disease in WI-31).
-		var decay: float = disease_drain
+		# is active (the exclusivity rule, extended for disease in WI-31 and for
+		# temperature in WI-60).
+		var decay: float = disease_drain + temperature_drain
 		if starving:
 			decay += starvation_decay_per_hour
 		if suffocating:

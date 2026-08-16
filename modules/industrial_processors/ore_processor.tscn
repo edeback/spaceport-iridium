@@ -23,6 +23,7 @@
 [ext_resource type="Script" uid="uid://d4aeiirm7ox7s" path="res://modules/components/workspace_component.gd" id="21_wksp"]
 [ext_resource type="PackedScene" path="res://modules/components/adjacency_emitter_component.tscn" id="22_adjem"]
 [ext_resource type="Script" uid="uid://b2cqiums4fmk0" path="res://modules/components/adjacency_effect_spec.gd" id="23_adjsp"]
+[ext_resource type="PackedScene" path="res://modules/components/heat_emitter_component.tscn" id="24_heatem"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_lqugb"]
 shader = ExtResource("2_gtfxg")
@@ -109,3 +110,7 @@ script = ExtResource("21_wksp")
 
 [node name="AdjacencyEmitterComponent" parent="." instance=ExtResource("22_adjem")]
 effects = Array[ExtResource("23_adjsp")]([SubResource("Resource_vibration")])
+
+[node name="HeatEmitterComponent" parent="." node_paths=PackedStringArray("processor") instance=ExtResource("24_heatem")]
+heat_per_batch = 170.0
+processor = NodePath("../ProcessorComponent")
