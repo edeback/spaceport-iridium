@@ -1,68 +1,10 @@
-[gd_scene format=3 uid="uid://0pwhtbre5n3v"]
+[gd_scene load_steps=8 format=3 uid="uid://0pwhtbre5n3v"]
 
 [ext_resource type="Script" uid="uid://ff1towrc5unq" path="res://ui/dialogue/balloon.gd" id="1_36de5"]
 [ext_resource type="PackedScene" uid="uid://ckvgyvclnwggo" path="res://addons/dialogue_manager/nodes/dialogue_label/dialogue_label.tscn" id="2_a8ve6"]
 [ext_resource type="Texture2D" uid="uid://cbugbjqwul2hh" path="res://assets/external/thirstsector_portraits/portrait_league06.png" id="2_hb2hh"]
 [ext_resource type="Script" uid="uid://bb52rsfwhkxbn" path="res://addons/dialogue_manager/nodes/responses_menu/dialogue_responses_menu.gd" id="3_72ixx"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_spyqn"]
-bg_color = Color(0, 0, 0, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.329412, 0.329412, 0.329412, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ri4m3"]
-bg_color = Color(0.121569, 0.121569, 0.121569, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e0njw"]
-bg_color = Color(0, 0, 0, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.6, 0.6, 0.6, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qkmqt"]
-bg_color = Color(0, 0, 0, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
-
-[sub_resource type="Theme" id="Theme_qq3yp"]
-default_font_size = 20
-Button/styles/disabled = SubResource("StyleBoxFlat_spyqn")
-Button/styles/focus = SubResource("StyleBoxFlat_ri4m3")
-Button/styles/hover = SubResource("StyleBoxFlat_e0njw")
-Button/styles/normal = SubResource("StyleBoxFlat_e0njw")
-MarginContainer/constants/margin_bottom = 15
-MarginContainer/constants/margin_left = 30
-MarginContainer/constants/margin_right = 30
-MarginContainer/constants/margin_top = 15
-PanelContainer/styles/panel = SubResource("StyleBoxFlat_qkmqt")
+[ext_resource type="PackedScene" path="res://ui/theme/widgets/action_button.tscn" id="4_resp"]
 
 [sub_resource type="Animation" id="Animation_nlsx6"]
 length = 0.001
@@ -100,12 +42,11 @@ _data = {
 &"progress": SubResource("Animation_qkmqt")
 }
 
-[node name="ExampleBalloon" type="CanvasLayer" unique_id=1434168376 node_paths=PackedStringArray("portrait")]
+[node name="ExampleBalloon" type="CanvasLayer"]
 layer = 100
 script = ExtResource("1_36de5")
-portrait = NodePath("Balloon/MarginContainer/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/Portrait")
 
-[node name="Balloon" type="Control" parent="." unique_id=359403728]
+[node name="Balloon" type="Control" parent="."]
 unique_name_in_owner = true
 layout_mode = 3
 anchors_preset = 15
@@ -113,105 +54,88 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = SubResource("Theme_qq3yp")
 
-[node name="MarginContainer" type="MarginContainer" parent="Balloon" unique_id=1011109179]
-custom_minimum_size = Vector2(800, 0)
+[node name="Frame" type="PanelContainer" parent="Balloon"]
+unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 8
 anchor_left = 0.5
-anchor_top = 0.5
+anchor_top = 1.0
 anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -400.0
-offset_top = -161.5
-offset_right = 400.0
-offset_bottom = 32.5
+anchor_bottom = 1.0
 grow_horizontal = 2
-grow_vertical = 2
-
-[node name="PanelContainer" type="PanelContainer" parent="Balloon/MarginContainer" unique_id=810051587]
-clip_children = 2
-layout_mode = 2
+grow_vertical = 0
 mouse_filter = 1
 
-[node name="MarginContainer" type="MarginContainer" parent="Balloon/MarginContainer/PanelContainer" unique_id=1030936092]
-layout_mode = 2
-theme_override_constants/margin_left = 15
-theme_override_constants/margin_right = 15
-
-[node name="VBoxContainer" type="VBoxContainer" parent="Balloon/MarginContainer/PanelContainer/MarginContainer" unique_id=350444287]
-layout_mode = 2
-
-[node name="HBoxContainer2" type="HBoxContainer" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=1693471287]
-layout_mode = 2
-
-[node name="Portrait" type="TextureRect" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=141631243]
+[node name="Highlight" type="ColorRect" parent="Balloon/Frame"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(128, 128)
-custom_maximum_size = Vector2(128, 128)
+layout_mode = 2
+size_flags_vertical = 0
+mouse_filter = 2
+
+[node name="Pad" type="MarginContainer" parent="Balloon/Frame"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Column" type="VBoxContainer" parent="Balloon/Frame/Pad"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Body" type="HBoxContainer" parent="Balloon/Frame/Pad/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Portrait" type="TextureRect" parent="Balloon/Frame/Pad/Column/Body"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 texture = ExtResource("2_hb2hh")
 
-[node name="VSeparator" type="VSeparator" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=1998911556]
-custom_minimum_size = Vector2(10, 0)
-layout_mode = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=1428277592]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="VBoxContainer" type="VBoxContainer" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/HBoxContainer" unique_id=1624289611]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="CharacterLabel" type="RichTextLabel" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/HBoxContainer/VBoxContainer" unique_id=507199029]
+[node name="Text" type="VBoxContainer" parent="Balloon/Frame/Pad/Column/Body"]
 unique_name_in_owner = true
-modulate = Color(1, 1, 1, 0.501961)
 layout_mode = 2
-mouse_filter = 1
-bbcode_enabled = true
-text = "Character"
-fit_content = true
-scroll_active = false
+size_flags_horizontal = 3
 
-[node name="DialogueLabel" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/HBoxContainer/VBoxContainer" unique_id=1225160028 instance=ExtResource("2_a8ve6")]
+[node name="CharacterLabel" type="Label" parent="Balloon/Frame/Pad/Column/Body/Text"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"EntityName"
+text = "Character"
+
+[node name="DialogueLabel" parent="Balloon/Frame/Pad/Column/Body/Text" instance=ExtResource("2_a8ve6")]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 text = "Dialogue..."
 
-[node name="Control" type="Control" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/HBoxContainer" unique_id=1162966119]
-custom_minimum_size = Vector2(20, 10)
+[node name="Indicator" type="Control" parent="Balloon/Frame/Pad/Column/Body"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 8
 
-[node name="Progress" type="Polygon2D" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/HBoxContainer/Control" unique_id=821575988]
+[node name="Progress" type="Polygon2D" parent="Balloon/Frame/Pad/Column/Body/Indicator"]
 unique_name_in_owner = true
-polygon = PackedVector2Array(0, 0, 10, 10, 20, 0)
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer2/HBoxContainer/Control" unique_id=452325722]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Balloon/Frame/Pad/Column/Body/Indicator"]
 libraries/ = SubResource("AnimationLibrary_1337t")
 autoplay = &"progress"
 
-[node name="ResponsesMenu" type="VBoxContainer" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=966297223 node_paths=PackedStringArray("response_template")]
+[node name="ResponsesMenu" type="VBoxContainer" parent="Balloon/Frame/Pad/Column" node_paths=PackedStringArray("response_template")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 size_flags_vertical = 8
-theme_override_constants/separation = 2
 alignment = 1
 script = ExtResource("3_72ixx")
 response_template = NodePath("ResponseExample")
 
-[node name="ResponseExample" type="Button" parent="Balloon/MarginContainer/PanelContainer/MarginContainer/VBoxContainer/ResponsesMenu" unique_id=914537232]
+[node name="ResponseExample" parent="Balloon/Frame/Pad/Column/ResponsesMenu" instance=ExtResource("4_resp")]
 layout_mode = 2
+caps = false
 text = "Response example"
 
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=1116280512]
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
 unique_name_in_owner = true
 
 [connection signal="gui_input" from="Balloon" to="." method="_on_balloon_gui_input"]
-[connection signal="response_selected" from="Balloon/MarginContainer/PanelContainer/MarginContainer/VBoxContainer/ResponsesMenu" to="." method="_on_responses_menu_response_selected"]
+[connection signal="response_selected" from="Balloon/Frame/Pad/Column/ResponsesMenu" to="." method="_on_responses_menu_response_selected"]

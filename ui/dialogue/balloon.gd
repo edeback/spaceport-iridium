@@ -1,7 +1,17 @@
 extends CanvasLayer
 ## A basic dialogue balloon for use with Dialogue Manager.
-
-@export var portrait: TextureRect
+##
+## The balloon is neither a [ConsolePanel] nor a [ReadoutPanel]: it is a modal
+## overlay, the same third kind of surface as the event card and the pause menu.
+## What it does share is the console's frame language - PANEL at panel alpha, an
+## EDGE border, the 1px inner highlight that makes a surface read as lit from
+## above, and the drop shadow that separates it from the station behind it.
+##
+## The scene authors structure and nothing else: every colour, size, gap and type
+## variation comes from [UIPalette] / [UIMetrics] / [UIType], the same split
+## [ConsolePanel] uses. A `Color` or a font size authored in `balloon.tscn` is a
+## hex literal that stops tracking the palette the moment anyone retunes it, and
+## `test_ui_theme.gd` sweeps the scenes for exactly that.
 
 ## The dialogue resource
 @export var dialogue_resource: DialogueResource
@@ -59,8 +69,26 @@ var mutation_cooldown: Timer = Timer.new()
 ## The base balloon anchor
 @onready var balloon: Control = %Balloon
 
+## The bordered surface itself, positioned and skinned in [method _apply_theme].
+@onready var frame: PanelContainer = %Frame
+
+## The 1px inner top highlight every surface in the console UI carries.
+@onready var highlight: ColorRect = %Highlight
+
+## Content padding inside the frame.
+@onready var pad: MarginContainer = %Pad
+
+## Portrait / text / indicator, left to right.
+@onready var body: HBoxContainer = %Body
+
+## The body above the responses.
+@onready var column: VBoxContainer = %Column
+
+## The speaking character's portrait
+@onready var portrait: TextureRect = %Portrait
+
 ## The label showing the name of the currently speaking character
-@onready var character_label: RichTextLabel = %CharacterLabel
+@onready var character_label: Label = %CharacterLabel
 
 ## The label showing the currently spoken dialogue
 @onready var dialogue_label: DialogueLabel = %DialogueLabel
@@ -68,11 +96,15 @@ var mutation_cooldown: Timer = Timer.new()
 ## The menu of responses
 @onready var responses_menu: DialogueResponsesMenu = %ResponsesMenu
 
+## The slot holding the progress chevron.
+@onready var indicator: Control = %Indicator
+
 ## Indicator to show that player can progress dialogue.
 @onready var progress: Polygon2D = %Progress
 
 
 func _ready() -> void:
+	_apply_theme()
 	balloon.hide()
 	Engine.get_singleton("DialogueManager").mutated.connect(_on_mutated)
 
@@ -108,6 +140,75 @@ func _notification(what: int) -> void:
 		dialogue_line = await dialogue_resource.get_next_dialogue_line(dialogue_line.id)
 		if visible_ratio < 1:
 			dialogue_label.skip_typing()
+
+
+#region Design system
+
+
+func _apply_theme() -> void:
+	_apply_layout()
+	_apply_surface()
+	_apply_indicator()
+
+
+## Bottom-centred, one gutter above the console - the same budget the inspector
+## takes, so the balloon never covers the console strip.
+##
+## The frame grows *upward* with its content (`grow_vertical` is BEGIN in the
+## scene) because an anchored [Control] clamps its rect up to its combined
+## minimum: a zero-height rect at the bottom edge would otherwise expand down
+## over the console rather than up into the station.
+func _apply_layout() -> void:
+	var half: float = float(UIMetrics.DIALOGUE_WIDTH) * 0.5
+	frame.offset_left = -half
+	frame.offset_right = half
+	frame.offset_bottom = -float(UIMetrics.CONSOLE_HEIGHT + UIMetrics.SCREEN_GUTTER)
+	frame.offset_top = frame.offset_bottom
+	for side: String in ["left", "top", "right", "bottom"]:
+		pad.add_theme_constant_override("margin_" + side, UIMetrics.CONTENT_PAD)
+	body.add_theme_constant_override("separation", UIMetrics.CONTENT_PAD)
+	column.add_theme_constant_override("separation", UIMetrics.SECTION_GAP)
+	responses_menu.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	var portrait_size := Vector2(
+		float(UIMetrics.DIALOGUE_PORTRAIT), float(UIMetrics.DIALOGUE_PORTRAIT))
+	portrait.custom_minimum_size = portrait_size
+	portrait.custom_maximum_size = portrait_size
+	highlight.custom_minimum_size.y = float(UIMetrics.BORDER_WIDTH)
+
+
+## The surface [ConsolePanel] and [ReadoutPanel] build, less the header: PANEL at
+## panel alpha so the station reads faintly through it, and all four EDGE borders
+## - unlike a mode panel, the balloon floats free of the viewport edges, so it
+## wears the whole frame rather than one seam.
+func _apply_surface() -> void:
+	var box := StyleBoxFlat.new()
+	box.bg_color = UIPalette.tinted(UIPalette.PANEL, UIMetrics.PANEL_ALPHA)
+	box.border_color = UIPalette.EDGE
+	box.set_border_width_all(UIMetrics.BORDER_WIDTH)
+	box.set_corner_radius_all(0)
+	# Children sit exactly inside the border - `Pad` owns the content padding - so
+	# the highlight lands on the first row of pixels within the edge rather than
+	# a content-pad's distance in from it.
+	box.set_content_margin_all(float(UIMetrics.BORDER_WIDTH))
+	box.shadow_size = UIMetrics.PANEL_SHADOW_SIZE
+	box.shadow_color = Color(0.0, 0.0, 0.0, 0.55)
+	frame.add_theme_stylebox_override("panel", box)
+	highlight.color = UIPalette.INNER_HIGHLIGHT
+
+
+## The continue chevron: a downward triangle built from the one constant that
+## also sizes the slot it sits in, so the glyph and its reserved space cannot
+## disagree. LIVE, because "ready for you" is what cyan means everywhere else in
+## the console.
+func _apply_indicator() -> void:
+	var size: Vector2 = UIMetrics.DIALOGUE_INDICATOR
+	indicator.custom_minimum_size = size
+	progress.polygon = PackedVector2Array([
+		Vector2.ZERO, Vector2(size.x * 0.5, size.y), Vector2(size.x, 0.0)])
+	progress.color = UIPalette.LIVE
+
+
+#endregion
 
 
 ## Start some dialogue

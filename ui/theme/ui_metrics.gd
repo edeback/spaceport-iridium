@@ -279,6 +279,22 @@ static func alert_feed_max_content_height(raid_visible: bool,
 static func alert_history_max_content_height() -> int:
 	return maxi(0, ALERT_HISTORY_MAX_HEIGHT - READOUT_HEADER_HEIGHT)
 
+# --- dialogue -----------------------------------------------------------------
+
+## The dialogue balloon (`ui/dialogue/balloon.tscn`). Fixed width for the same
+## reason every panel width here is fixed: the balloon is a reading surface, and
+## prose reflowed to the width of an ultrawide is a worse read, not a better one.
+const DIALOGUE_WIDTH: int = 800
+
+## Side of the speaker portrait. Square by construction - the portrait art is
+## square, and a rect that is not would letterbox it.
+const DIALOGUE_PORTRAIT: int = 128
+
+## The "press to continue" chevron under the text. One constant for both the
+## triangle the balloon builds and the space reserved for it, so the glyph and
+## its slot cannot disagree.
+const DIALOGUE_INDICATOR := Vector2(20, 10)
+
 # --- shared spacing -----------------------------------------------------------
 
 const BORDER_WIDTH: int = 1
