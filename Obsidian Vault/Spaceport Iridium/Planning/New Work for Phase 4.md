@@ -72,6 +72,24 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 	- Due to this, the starting module will produce some heat so the pawns don't immediately freeze
 - An overlay showing the current heat values of modules is needed
 
+**Comets:** (Written up as [[WI-61_Comets]])
+- Goal: Add comets, a new type of asteroid with different movement patterns and different resources
+- Instead of being in a specific zone, like asteroids, a comet spawns a ways external from the station (in any direction), moves across the play area (it can go "behind" the station), and despawns some ways away on the other side
+- Comets spawn more occasionally than asteroids - there should be 0-2 spawned at any one time
+- Comets have a different spread of resources than asteroids. They contain:
+	- Ice (always, a lot)
+	- Carbon (always, a moderate amount)
+	- Silicon Ore (sometimes, a little)
+- Otherwise, comets work very similarly to asteroids
+	- You can click on them to view their resources
+	- They can be prioritized
+	- Mining drones will mine them and return their resources to the station
+	- When their resources are exhausted, they disintegrate
+- Uses assets/external/blue_comet.png as the graphic
+	- The "forward" position is at the bottom-left
+	- The comet should always be pointing in the direction of motion
+	- They don't rotate, unlike asteroids
+
 **Audio:**
 - Goal: Add sounds for feedback and immersion
 - Create a system to easily play sounds at positions
