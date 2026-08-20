@@ -1,0 +1,61 @@
+{
+	"_comment": "Designed-but-unimplemented chains, drawn dashed by tools/gen_resource_flow.gd. Delete an entry the moment its .tres lands - the generator picks the real one up automatically, and leaving it here would draw it twice. Resource names must match ResourceData.name exactly; a module name that matches an existing producer merges into that producer's box.",
+
+	"sources": [
+		{ "name": "Asteroid", "resources": ["Uranium Ore"] }
+	],
+
+	"modules": [
+		{
+			"name": "Ice Processor",
+			"recipes": [
+				{ "name": "Purify Ice", "inputs": { "Ice": 2 }, "outputs": { "Water": 2, "Carbon": 1 } }
+			]
+		},
+		{
+			"name": "Isotope Separator",
+			"recipes": [
+				{ "name": "Enrich Uranium", "inputs": { "Uranium Ore": 4 }, "outputs": { "Enriched Uranium": 1 } }
+			]
+		},
+		{
+			"name": "Nuclear Fission Plant",
+			"recipes": [
+				{ "name": "Fission Cycle", "inputs": { "Enriched Uranium": 1 }, "outputs": { "Stored Energy": 100, "Depleted Uranium": 1 } }
+			]
+		},
+		{
+			"name": "Electronics Assembler",
+			"recipes": [
+				{ "name": "Assemble Electronics", "inputs": { "Silicon": 2, "Gold": 1 }, "outputs": { "Electronics": 1 } }
+			]
+		},
+		{
+			"name": "Advanced Circuitry Fabricator",
+			"recipes": [
+				{ "name": "Fabricate Data Core", "inputs": { "Electronics": 2, "Iridium": 1 }, "outputs": { "Data Core": 1 } }
+			]
+		},
+		{
+			"name": "Kiln",
+			"recipes": [
+				{ "name": "Fire Ceramics", "inputs": { "Silicon": 2, "Carbon": 1 }, "outputs": { "Ceramics": 2 } }
+			]
+		},
+		{
+			"name": "Chemical Plant",
+			"recipes": [
+				{ "name": "Synthesise Polymer", "inputs": { "Carbon": 2, "Hydrogen": 1 }, "outputs": { "Polymer": 2 } },
+				{ "name": "Mix Coolant", "inputs": { "Water": 2, "Polymer": 1 }, "outputs": { "Coolant": 2 } },
+				{ "name": "Compound Fuel", "inputs": { "Hydrogen": 2, "Oxygen": 1 }, "outputs": { "Fuel": 2 } }
+			]
+		},
+		{
+			"name": "Fabricator",
+			"recipes": [
+				{ "name": "Make Consumer Goods", "inputs": { "Polymer": 1, "Steel": 2 }, "outputs": { "Consumer Goods": 1 } },
+				{ "name": "Make Luxury Goods", "inputs": { "Polymer": 1, "Gold": 2 }, "outputs": { "Luxury Goods": 1 } }
+			]
+		}
+	]
+}
