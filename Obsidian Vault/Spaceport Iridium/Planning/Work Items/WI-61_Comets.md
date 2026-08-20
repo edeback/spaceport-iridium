@@ -61,7 +61,6 @@ fixed_ores: Array[BodyOreEntry]   # FIXED_LIST only
 richness_band: Vector2
 richness_spread: float
 richness_skew: float
-renders_behind_station: bool      # false = asteroid layer, true = comet layer (§5)
 dispersal_dust: Color             # §9
 # CROSSING only:
 entry_margin: Vector2             # px beyond the station bounds to appear
@@ -109,15 +108,18 @@ with `sprite_forward_offset_deg = 135.0` authored on `comet.tscn`, `rotation_spe
 
 A note for whoever reads this later and reaches for physics: a real comet's tail points away from the sun, not backwards along its path. The brief asks for nose-along-motion and that is what ships; it is a deliberate call, not an oversight.
 
-### 5 — Comets need their own `CanvasLayer`
+### 5 — One line in `main.tscn`: `AsteroidLayer` moves to `layer = -1`
 
-"It can go behind the station" cannot be done with `z_index`. `BackgroundLayers/AsteroidLayer` is a `CanvasLayer` with **no `layer` set, so it is Godot's default `1`** — *above* `ForegroundLayers/ModuleLayer`, which is explicitly `0`. Asteroids draw in front of the station today; nobody noticed because the belt sits off to the left at x ≈ −200 and never overlaps it. `CanvasLayer` ordering dominates `z_index`, so no per-node value can push a comet on `AsteroidLayer` behind a module.
+"It can go behind the station" cannot be done with `z_index`. `BackgroundLayers/AsteroidLayer` is a `CanvasLayer` with **no `layer` set, so it is Godot's default `1`** — *above* `ForegroundLayers/ModuleLayer`, which is explicitly `0`. Asteroids draw in front of the station today; nobody noticed because the belt sits off to the left at x ≈ −200 and never overlaps it. `CanvasLayer` ordering dominates `z_index`, so no per-node value can push a body on `AsteroidLayer` behind a module.
 
-Add `BackgroundLayers/CometLayer`, a `CanvasLayer` with `layer = -1` and `follow_viewport_enabled = true` (the flag that keeps `AsteroidLayer`'s contents in world space, which is what lets drones fly to them). That sits between the parallax background (`-10`) and the modules (`0`).
+**Set `AsteroidLayer.layer = -1`.** That is the whole change: it lands between the parallax background (`-10`) and the modules (`0`), keeps `follow_viewport_enabled = true` so its contents stay in world space (which is what lets drones fly to them), and needs no second layer, no second `@export` on the manager, and no per-profile depth field. Comets spawn into the same layer asteroids already use.
 
-This also settles click-picking for free: the viewport picks per canvas layer, highest first, so a module in front of a comet takes the click and the comet behind it does not — which is the behaviour you want, and it is a property of the layer rather than of `set_input_as_handled()` ordering.
+Two knock-on effects, both accepted deliberately:
 
-`AsteroidManager` gains a second `@export var comet_layer: CanvasLayer` and picks between the two on `profile.renders_behind_station`. A bool rather than a dictionary of layers: there are exactly two depths in the game, and a third one needs a `main.tscn` edit regardless.
+- **Asteroids move behind the station too.** Invisible today, since the belt never overlaps the modules. It becomes visible only if the player builds out over the belt, and a rock passing behind the hull is the correct reading of that picture anyway.
+- **Click-picking flips for the same overlap.** The viewport picks per canvas layer, highest first, so a module in front of a body now takes the click and the body behind it does not. That is the behaviour you want for a comet crossing the station, and it is a property of the layer rather than of `set_input_as_handled()` ordering. For an asteroid under a module built over the belt it is a change from today — the same acceptable one.
+
+The alternative considered and rejected was a separate `CometLayer` at `-1` alongside `AsteroidLayer` at `1`, which buys the ability to keep asteroids in front at the cost of a second layer, a `renders_behind_station` flag on every profile, and a second manager export. Nothing wants asteroids in front, so none of that carries its weight.
 
 ### 6 — The yield, and the two ways it does not currently fit the station
 
@@ -199,9 +201,9 @@ Each emits its `station_alert` "CHEAT: …", per the standing rule:
 **Changed**
 - `objects/asteroid_base.gd` — the five new fields, `has_variable_yield()`, the orientation apply, three new save keys
 - `objects/asteroid_dispersal.gd` — dust colour (and `GRID`) as parameters
-- `scripts/managers/asteroid_manager.gd` — profile scan + per-profile population/cadence/trajectory/despawn/layer, `spawnable_yields()`, the migrated save block
+- `scripts/managers/asteroid_manager.gd` — profile scan + per-profile population/cadence/trajectory/despawn, `spawnable_yields()`, the migrated save block
 - `scripts/mods/content_paths.gd` — the `SPACE_BODIES` kind
-- `main.tscn` — `BackgroundLayers/CometLayer` at `layer = -1`, and the manager's `comet_layer` export
+- `main.tscn` — one line: `BackgroundLayers/AsteroidLayer` gains `layer = -1` (§5)
 - `modules/resource_gathering/mining_bay.tscn` — a `carbon` storage slot (§6a)
 - `ui/windows/mining_component_ui.gd` — the dropdown reads `spawnable_yields()`
 - `ui/inspector/inspector_panel.gd` — caption from `kind_label()`
@@ -219,7 +221,7 @@ Run `filesystem_manage(op="scan")` after the new `class_name` files, or `SpaceBo
 1. **`SpaceGeometry` + `test_comets.gd` first**, including the extraction from `effect_spawn_salvage.gd` with its pinning test written *before* the move. Pure, no comets in it yet, game identical.
 2. **`SpaceBodyProfile` + the asteroid profile**, and `AsteroidManager` refactored to run the belt *through* it. **The game must be indistinguishable at this step** — same cap, same cadence, same speeds, same mixes, same despawns. This is the step that can regress something that works, so it is done alone and verified alone.
 3. **`despawn_anchor` / `despawn_distance`**, still asteroid-only and still identical (§3).
-4. **The comet: scene, profile, `CometLayer`, crossing trajectory, orientation.** It flies and it disintegrates; nothing mines it yet.
+4. **The comet: scene, profile, the `AsteroidLayer` depth change, crossing trajectory, orientation.** It flies and it disintegrates; nothing mines it yet.
 5. **The yield and its two misfits** — the fixed mix, the mining bay's carbon slot, `spawnable_yields()`. Now a drone completes a full trip, and this is the step to prove the §6a soft-lock cannot happen.
 6. **Save**, including a pre-WI-61 load.
 7. **UI** — the caption fix, `body_name`, the minimap contacts, the arrival alert.
@@ -231,6 +233,7 @@ Run `filesystem_manage(op="scan")` after the new `class_name` files, or `SpaceBo
 - **A comet despawning under a working drone** is handled and free: `Finder_Asteroid._target` sets `fail_on_lost = false`, `Action_GotoTarget` reads a lost-but-survivable target as `DONE`, and `Action_Mine` returns `DONE` on a null asteroid so `JobDriver_Mine.next_index_after` sends the drone to another body or home with a partial load. **Verify it rather than assume it** — it is the only place a comet's transience touches the job system.
 - **A drone still glued to a comet at despawn.** `Action_Mine` writes `job.pawn.position = asteroid.position` every tick, so a drone can be sitting several thousand pixels out when its rock vanishes. Its route home is a fresh `pathfind_to_node_in_space` from wherever it is — the same call it already makes, but a much longer walk than the belt ever produced. Watch for a drone running its energy down on the trip back; WI-28's zero-energy crawl at 0.25× speed would make it much worse.
 - **A comet crossing the station's cells** overlaps modules visually and is behind them (§5). It has no collision — nothing in the belt does — so it passes through with no physical interaction, which is intended.
+- **A station built out over the asteroid belt** now draws its rocks behind the hull and lets the module take the click, because `AsteroidLayer` moved with the comets (§5). Accepted, not a regression to fix — but it is the one existing behaviour this item changes, so it belongs in the item's own notes rather than being discovered later as a mystery.
 - **Two comets at once, both designated.** `Finder_Asteroid` returns the first designated body its shuffled scan finds, so drones split across them arbitrarily. Same as two designated asteroids today; no change needed.
 - **A comet spawning inside the asteroid belt's corridor** is possible and harmless — they are the same kind of object on different layers.
 - **Zero placed modules** — no bounds, no centre; skip the spawn (§3).
@@ -238,7 +241,7 @@ Run `filesystem_manage(op="scan")` after the new `class_name` files, or `SpaceBo
 - **`asteroid_id = -1`.** `EventEffectSpawnSalvage` deliberately spawns `ResourcePile`s rather than asteroids to bypass the population cap, so nothing today creates an unregistered body — but `AsteroidBase` still documents the case, and the new profile field must default sanely for a bare instance (`tests/unit/test_goto_lost_target.gd` constructs `AsteroidBase.new()` directly).
 - **Pause.** The manager and the body both early-return on `Global.time_manager.scale(delta) <= 0`, so comets freeze with the sim. Nothing here may write `TimeManager.paused`.
 - **Speed vs drone speed** (§3): a profile authored above ~40 px/s turns mining into a chase the drone barely wins. Worth an assert, or at least a comment on `speed_range`.
-- **Modded profiles** join by scan at their `.tres` defaults and land on one of the two canvas layers. A mod cannot add a *third* depth without a `main.tscn` edit; note it rather than building for it.
+- **Modded profiles** join by scan at their `.tres` defaults and share the one body layer. A mod cannot pick its own render depth without a `main.tscn` edit; note it rather than building for it.
 
 ## Verification
 
@@ -260,7 +263,7 @@ Run `filesystem_manage(op="scan")` after the new `class_name` files, or `SpaceBo
    - Save with one comet mid-crossing and one asteroid, reload, and assert both come back as the **right scene**, at the same position, heading, contents, designation and remaining despawn distance. Then load a **pre-WI-61 save** and assert every body restores as an asteroid with the belt's anchor and 2000px.
    - The belt itself, before and after step 2, over a long run: same population ceiling, same ore-type distribution, same despawn behaviour.
 3. **Screenshots, driven into the state under test** — every panel item since WI-49 found defects a headless probe could not see, and this item has four things only a picture can settle:
-   - a comet **passing behind the station** (the `CanvasLayer` claim in §5 is either true or embarrassingly false, and nothing headless can tell you which),
+   - a comet **passing behind the station** (the `CanvasLayer` claim in §5 is either true or embarrassingly false, and nothing headless can tell you which) — and, in the same pass, the belt still drawn where it always was, since §5 moved its layer too,
    - the comet's nose pointing along travel for at least two very different headings — the 135° offset is the single most likely thing to be wrong by a quarter turn,
    - the inspector on a selected comet: the caption reading `Selected · Comet`, the Contents tab's three rows, the meta line with **and** without the richness clause, and the designate button,
    - the minimap with a comet far out (a rim contact, station still at full scale) and the same comet close in (an ordinary dot), plus the dispersal puff on a comet mined dry.
