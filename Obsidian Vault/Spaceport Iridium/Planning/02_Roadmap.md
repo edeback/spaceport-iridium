@@ -133,6 +133,9 @@
 
 *From the audit, the section B design debt was chiefly the `can_remove_module` structure check, disabled since Phase 0. That decision is now made and shipped as WI-46 — the "fix the blueprint connectivity accounting" fork, not "delete the flag." Anything else lingering in section B is minor and doesn't block Phase 4.*
 
+
+**Phase 4 progress note (2026-08-20):** beyond the UI rework, Phase 4 has shipped [[WI-48_Pawn_Interactions]], [[WI-59_Starting_Flow]], [[WI-60_Heat_System]] and [[WI-61_Comets]]. WI-61 added a second kind of mineable body — a comet crossing the play area behind the station with an ice/carbon/silicon yield — and in doing so turned `AsteroidManager`'s per-kind knobs into scanned `SpaceBodyProfile` data, which is the hook **Stars, Planets and Other Stations** will need for per-system ore richness. Phase 4's ordering is still not settled, so the tables below are unchanged.
+
 ## Phase 4 — Horizon (design only, no commitments)
 
 ARC relationship arc & independence (turns the WI-25 levy off); expeditions; observatory and research; foreign relations/other stations; pawn factions (faction-styled name generation — WI-22's generator is wrapped for this); module quality tiers (unlocks the deferred Conceited trait); per-pawn sprite variants (asset work); pawn death done properly; crises framework; station warp travel; New Game+ corporations; exotic elements; tutorial (SAI); audio pass (WI-36 creates the Music/Effects buses).

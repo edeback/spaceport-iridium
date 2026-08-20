@@ -1,0 +1,47 @@
+[gd_resource type="Resource" script_class="SpaceBodyProfile" format=3]
+
+[ext_resource type="Script" path="res://data/space_bodies/space_body_profile.gd" id="1_profile"]
+[ext_resource type="Script" path="res://data/space_bodies/body_ore_entry.gd" id="2_entry"]
+[ext_resource type="PackedScene" path="res://objects/comet.tscn" id="3_scene"]
+[ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="4_ice"]
+[ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="5_carbon"]
+[ext_resource type="Resource" uid="uid://cns3lrfd8jekj" path="res://data/resources/silicon_ore.tres" id="6_silicon"]
+
+[sub_resource type="Resource" id="Resource_ice"]
+script = ExtResource("2_entry")
+resource = ExtResource("4_ice")
+weight = 6.0
+chance = 1.0
+
+[sub_resource type="Resource" id="Resource_carbon"]
+script = ExtResource("2_entry")
+resource = ExtResource("5_carbon")
+weight = 3.0
+chance = 1.0
+
+[sub_resource type="Resource" id="Resource_silicon"]
+script = ExtResource("2_entry")
+resource = ExtResource("6_silicon")
+weight = 1.0
+chance = 0.35
+
+[resource]
+script = ExtResource("1_profile")
+id = &"comet"
+display_name = "Comet"
+scene = ExtResource("3_scene")
+max_population = 2
+spawn_gap_hours = Vector2(18, 60)
+speed_range = Vector2(15, 28)
+trajectory = 1
+belt_despawn_distance = 2000.0
+belt_jitter = 200.0
+entry_margin = Vector2(800, 1600)
+exit_margin = 800.0
+lateral_spread = 0.9
+mix_mode = 1
+fixed_ores = Array[ExtResource("2_entry")]([SubResource("Resource_ice"), SubResource("Resource_carbon"), SubResource("Resource_silicon")])
+richness_band = Vector2(0.35, 0.8)
+richness_spread = 0.08
+richness_skew = 1.0
+dispersal_dust = Color(0.62, 0.76, 0.92, 0.12)

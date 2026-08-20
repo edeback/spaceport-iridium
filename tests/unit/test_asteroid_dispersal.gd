@@ -31,7 +31,7 @@ func test_sprite_is_cut_into_a_full_grid() -> void:
 	var effect := AsteroidDispersal.new()
 	var sprite := _sprite()
 	effect.setup(sprite, Vector2.ZERO)
-	assert_eq(effect._shards.size(), AsteroidDispersal.GRID * AsteroidDispersal.GRID,
+	assert_eq(effect._shards.size(), AsteroidDispersal.DEFAULT_GRID * AsteroidDispersal.DEFAULT_GRID,
 		"every cell of the grid becomes a shard - no gaps in the rock")
 	sprite.free()
 	effect.free()
@@ -55,11 +55,11 @@ func test_shards_start_laid_out_as_the_intact_sprite() -> void:
 	var effect := AsteroidDispersal.new()
 	var sprite := _sprite()
 	effect.setup(sprite, Vector2.ZERO)
-	var step: float = TEX_SIZE / float(AsteroidDispersal.GRID)
+	var step: float = TEX_SIZE / float(AsteroidDispersal.DEFAULT_GRID)
 	# A 3x3 grid of cell centres around the sprite's own position.
 	var expected: Array[Vector2] = []
-	for x: int in AsteroidDispersal.GRID:
-		for y: int in AsteroidDispersal.GRID:
+	for x: int in AsteroidDispersal.DEFAULT_GRID:
+		for y: int in AsteroidDispersal.DEFAULT_GRID:
 			var cell := Vector2(x - 1, y - 1) * step
 			expected.append(sprite.position + cell)
 	var actual: Array[Vector2] = _offsets(effect)
@@ -79,7 +79,7 @@ func test_layout_follows_the_sprites_rotation() -> void:
 	var effect := AsteroidDispersal.new()
 	var sprite := _sprite(PI * 0.5)
 	effect.setup(sprite, Vector2.ZERO)
-	var step: float = TEX_SIZE / float(AsteroidDispersal.GRID)
+	var step: float = TEX_SIZE / float(AsteroidDispersal.DEFAULT_GRID)
 	var corner: Vector2 = sprite.position + (Vector2(-step, -step)).rotated(PI * 0.5)
 	var found: bool = false
 	for offset: Vector2 in _offsets(effect):
@@ -94,7 +94,7 @@ func test_shard_draw_size_follows_sprite_scale() -> void:
 	var effect := AsteroidDispersal.new()
 	var sprite := _sprite(0.0, Vector2(2.0, 2.0))
 	effect.setup(sprite, Vector2.ZERO)
-	var step: float = TEX_SIZE / float(AsteroidDispersal.GRID)
+	var step: float = TEX_SIZE / float(AsteroidDispersal.DEFAULT_GRID)
 	assert_almost_eq(effect._shard_size.x, step * 2.0, 0.01, "a scaled-up rock breaks into scaled-up shards")
 	sprite.free()
 	effect.free()

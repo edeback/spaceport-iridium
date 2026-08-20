@@ -1,0 +1,35 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://cbikuxxna03ab" path="res://objects/asteroid_base.gd" id="1_body"]
+[ext_resource type="Texture2D" uid="uid://usq7ckfwu31v" path="res://assets/external/blue_comet.png" id="2_tex"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="3_resdata"]
+[ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="4_ice"]
+[ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="5_carbon"]
+[ext_resource type="Resource" uid="uid://cns3lrfd8jekj" path="res://data/resources/silicon_ore.tres" id="6_silicon"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_comet_click"]
+radius = 22.0
+
+[node name="Comet" type="Node2D" node_paths=PackedStringArray("sprite")]
+script = ExtResource("1_body")
+sprite = NodePath("Sprite2D")
+resource_weighted_values = Dictionary[ExtResource("3_resdata"), float]({
+ExtResource("4_ice"): 6.0,
+ExtResource("5_carbon"): 3.0,
+ExtResource("6_silicon"): 1.0
+})
+max_resources = 28
+body_name = "Comet"
+rotation_speed_deg_per_sec = 0.0
+faces_travel_direction = true
+sprite_forward_offset_deg = 135.0
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.5, 1.5)
+texture = ExtResource("2_tex")
+offset = Vector2(14, -11)
+
+[node name="ClickArea" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ClickArea"]
+shape = SubResource("CircleShape2D_comet_click")

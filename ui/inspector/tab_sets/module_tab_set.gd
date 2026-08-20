@@ -31,7 +31,7 @@ var _tabs: Array[Dictionary] = []
 var _errors: Dictionary[ComponentBase, String] = {}
 
 func kind_label() -> String:
-	return "MODULE"
+	return "Module"
 
 func bind(subject: Variant) -> void:
 	_module = subject as ModuleBase

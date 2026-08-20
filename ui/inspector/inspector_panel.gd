@@ -31,15 +31,11 @@ const SCENE_PATH: String = "res://ui/inspector/inspector_panel.tscn"
 ## whatever components they carry, which needs no special case.
 enum SelectionKind { NONE, CREW, MODULE, ASTEROID, PILE, TURBOSHAFT }
 
-## Header caption per kind, after `SELECTED · `.
-const KIND_CAPTIONS: Dictionary[SelectionKind, String] = {
-	SelectionKind.NONE: "Nothing",
-	SelectionKind.CREW: "Crew",
-	SelectionKind.MODULE: "Module",
-	SelectionKind.ASTEROID: "Asteroid",
-	SelectionKind.PILE: "Debris",
-	SelectionKind.TURBOSHAFT: "Turboshaft",
-}
+## Header caption with nothing selected. Every other caption comes from the
+## mounted tab set's kind_label(), which is what that method was always
+## documented to be for - a static table here could not say "Comet" for a body
+## that resolves as ASTEROID (WI-61).
+const EMPTY_CAPTION: String = "Nothing"
 
 const EMPTY_TEXT: String = "NOTHING SELECTED — CLICK A MODULE OR CREW MEMBER"
 ## Real seconds between caret blinks. Wall-clock, like everything else in the
@@ -231,7 +227,7 @@ func _apply_selection() -> void:
 		return
 	var empty: bool = _kind == SelectionKind.NONE or _set == null
 	set_process(not empty)
-	label = "Selected · " + KIND_CAPTIONS.get(_kind, "Selection")
+	label = "Selected · " + (EMPTY_CAPTION if empty else _set.kind_label())
 	accent_color = UIPalette.TEXT_META if empty else UIPalette.LIVE
 	_empty_label.visible = empty
 	_subject_block.visible = not empty

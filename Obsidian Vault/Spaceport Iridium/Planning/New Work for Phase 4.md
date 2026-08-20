@@ -72,7 +72,7 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 	- Due to this, the starting module will produce some heat so the pawns don't immediately freeze
 - An overlay showing the current heat values of modules is needed
 
-**Comets:** (Written up as [[WI-61_Comets]])
+**Comets:** (Complete, WI-61 — [[WI-61_Comets]])
 - Goal: Add comets, a new type of asteroid with different movement patterns and different resources
 - Instead of being in a specific zone, like asteroids, a comet spawns a ways external from the station (in any direction), moves across the play area (it can go "behind" the station), and despawns some ways away on the other side
 - Comets spawn more occasionally than asteroids - there should be 0-2 spawned at any one time

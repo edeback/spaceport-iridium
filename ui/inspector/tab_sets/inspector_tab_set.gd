@@ -38,7 +38,7 @@ signal tabs_changed
 ## The header caption, after `SELECTED · `. It is how the player knows the tab
 ## strip changed under them.
 func kind_label() -> String:
-	return "SELECTION"
+	return "Selection"
 
 ## Takes the subject. Called once, before the panel reads anything else.
 func bind(_subject: Variant) -> void:

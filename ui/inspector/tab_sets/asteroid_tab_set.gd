@@ -1,8 +1,12 @@
 class_name AsteroidTabSet
 extends InspectorTabSet
 
-## The ASTEROID tab set (WI-51). A single-tab set, ported from
+## The tab set for a mineable body (WI-51). A single-tab set, ported from
 ## `component_ui_panels/asteroid_info_panel.tscn`.
+##
+## Covers comets as well as asteroids (WI-61): both are AsteroidBase instances,
+## so the only thing that varies is the noun, which comes off the body rather
+## than being written here.
 ##
 ## Asteroids drift constantly, which is why the old panel repositioned itself
 ## every frame. Fixing the panel's position is exactly what makes that
@@ -14,7 +18,7 @@ const TAB_CONTENTS: StringName = &"contents"
 var _asteroid: AsteroidBase = null
 
 func kind_label() -> String:
-	return "ASTEROID"
+	return subject_name()
 
 func bind(subject: Variant) -> void:
 	_asteroid = subject as AsteroidBase
@@ -31,14 +35,21 @@ func is_alive() -> bool:
 func camera_target() -> Node2D:
 	return _asteroid
 
+## The one place a body becomes a word: [member AsteroidBase.body_name], set
+## from its SpaceBodyProfile at spawn.
 func subject_name() -> String:
-	return "Asteroid"
+	return _asteroid.body_name if is_alive() else "Asteroid"
 
+## Richness is dropped for a body whose mix carries no variance-bearing
+## resource (WI-61) - a comet of ice and carbon yields one fixed quality, so a
+## "Rich (72%)" readout there would be describing nothing at all.
 func meta_text() -> String:
 	if not is_alive():
 		return ""
-	return "%s · %d / %d chunks" % [
-		_asteroid.get_richness_descriptor(), _asteroid.cur_resources, _asteroid.max_resources]
+	var remaining: String = "%d / %d chunks" % [_asteroid.cur_resources, _asteroid.max_resources]
+	if not _asteroid.has_variable_yield():
+		return remaining
+	return "%s · %s" % [_asteroid.get_richness_descriptor(), remaining]
 
 ## "Designated for mining" is the definition of *selected*, and selected is cyan
 ## everywhere else in the design - so it is cyan here too (WI-58). It was amber,

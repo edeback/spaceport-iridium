@@ -56,6 +56,9 @@ const BOUNDS_SHRINK_RATIO: float = 1.6
 @export var damage_color: Color = Color(1.0, 0.24, 0.18)
 @export var asteroid_color: Color = Color(0.55, 0.5, 0.42)
 @export var asteroid_designated_color: Color = Color(1.0, 0.85, 0.45)
+## Crossing bodies (comets), so a transient prize is distinguishable from the
+## standing belt at a glance. Pale blue against the belt's grey-brown.
+@export var comet_color: Color = Color(0.55, 0.78, 0.95)
 @export var friendly_ship_color: Color = Color(0.45, 0.85, 0.95)
 @export var pirate_ship_color: Color = Color(1.0, 0.4, 0.35)
 @export var viewport_rect_color: Color = Color(1.0, 1.0, 1.0, 0.85)
@@ -146,6 +149,12 @@ func _recompute_bounds() -> void:
 		for asteroid: AsteroidBase in Global.asteroid_manager.asteroids:
 			if not is_instance_valid(asteroid):
 				continue
+			# A crossing body (WI-61) enters thousands of pixels outside the
+			# station and would drag the fit out with it for its whole crossing,
+			# shrinking the station to a smudge and back. It is drawn clamped to
+			# the map edge instead - see _draw_asteroids.
+			if asteroid.map_edge_contact:
+				continue
 			var p: Vector2 = asteroid.global_position
 			min_p = Vector2(minf(min_p.x, p.x), minf(min_p.y, p.y))
 			max_p = Vector2(maxf(max_p.x, p.x), maxf(max_p.y, p.y))
@@ -221,14 +230,28 @@ func _module_color(module: ModuleBase, world: WorldManager) -> Color:
 			return tag_colors[tag]
 	return hull_color
 
+## Belt rocks are plain dots at their real position. A crossing body outside the
+## fitted box becomes a rim contact: clamped to the map edge, in the direction it
+## lies, and drawn a little larger so it reads as "off the map that way" rather
+## than as a rock parked on the border. Once it crosses into the box it is an
+## ordinary dot again, with no special case for the transition.
 func _draw_asteroids() -> void:
 	if Global.asteroid_manager == null:
 		return
+	var map_rect: Rect2 = _map_rect()
 	for asteroid: AsteroidBase in Global.asteroid_manager.asteroids:
 		if not is_instance_valid(asteroid):
 			continue
 		var p: Vector2 = _transform.world_to_map(asteroid.global_position)
-		draw_circle(p, 1.6, asteroid_designated_color if asteroid.designated else asteroid_color)
+		var tint: Color = asteroid_color
+		if asteroid.designated:
+			tint = asteroid_designated_color
+		elif asteroid.map_edge_contact:
+			tint = comet_color
+		if asteroid.map_edge_contact and MinimapTransform.is_outside(p, map_rect):
+			draw_circle(MinimapTransform.clamp_to_map(p, map_rect), 2.4, tint)
+			continue
+		draw_circle(p, 1.6, tint)
 
 func _draw_ships() -> void:
 	for node: Node in get_tree().get_nodes_in_group(Groups.MINIMAP_TRACKED):

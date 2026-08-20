@@ -76,3 +76,28 @@ static func _padded(box: Rect2, slack: float) -> Rect2:
 		return box
 	var pad: Vector2 = box.size * slack
 	return box.grow_individual(pad.x, pad.y, pad.x, pad.y)
+
+# --- edge contacts ------------------------------------------------------------
+
+## True when `point` (map space) falls outside `rect`. Paired with
+## [method clamp_to_map] to decide whether a marker is a real position or a
+## direction-only contact on the rim.
+static func is_outside(point: Vector2, rect: Rect2) -> bool:
+	return point.x < rect.position.x or point.y < rect.position.y \
+			or point.x > rect.end.x or point.y > rect.end.y
+
+## `point` pulled onto `rect`, unchanged if it was already inside (WI-61).
+##
+## Crossing bodies spawn thousands of world-pixels outside the station and are
+## deliberately kept out of the fitted box - including them would zoom the whole
+## station down to a smudge for a comet's entire crossing. They are drawn on the
+## map edge instead, in the direction they lie, which is the radar-contact idiom
+## and keeps an approaching comet discoverable.
+##
+## Returned as a plain Vector2 with the inside/outside test as its own function,
+## rather than as a {position, on_edge} dictionary: two typed statics beat one
+## untyped dictionary access in a project that has unsafe_property_access on.
+static func clamp_to_map(point: Vector2, rect: Rect2) -> Vector2:
+	return Vector2(
+		clampf(point.x, rect.position.x, rect.end.x),
+		clampf(point.y, rect.position.y, rect.end.y))

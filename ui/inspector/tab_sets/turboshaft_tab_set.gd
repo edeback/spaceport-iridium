@@ -24,7 +24,7 @@ var _lift: ModuleTurbolift = null
 var _shaft: TurboliftShaft = null
 
 func kind_label() -> String:
-	return "TURBOSHAFT"
+	return "Turboshaft"
 
 func bind(subject: Variant) -> void:
 	_lift = subject as ModuleTurbolift

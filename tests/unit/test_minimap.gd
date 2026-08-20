@@ -147,3 +147,36 @@ func test_resize_does_not_trigger_its_own_opposite() -> void:
 	var once := _settle(Rect2(Vector2.ZERO, Vector2(6000.0, 6000.0)), desired)
 	var twice := _settle(once, desired)
 	assert_eq(twice, once, "second pass on the same content is a no-op")
+
+# --- edge contacts (WI-61) ---------------------------------------------------
+
+func test_a_point_inside_the_map_is_not_an_edge_contact() -> void:
+	var inside := Vector2(100.0, 120.0)
+	assert_false(MinimapTransform.is_outside(inside, DRAW), "well within the map")
+	assert_eq(MinimapTransform.clamp_to_map(inside, DRAW), inside, "and left exactly where it is")
+
+func test_a_point_on_the_border_counts_as_inside() -> void:
+	# The transition case: a comet crossing the boundary must not flicker between
+	# a rim contact and an ordinary dot.
+	for corner: Vector2 in [DRAW.position, DRAW.end,
+			Vector2(DRAW.position.x, DRAW.end.y), Vector2(DRAW.end.x, DRAW.position.y)]:
+		assert_false(MinimapTransform.is_outside(corner, DRAW), "exactly on the edge is inside")
+		assert_eq(MinimapTransform.clamp_to_map(corner, DRAW), corner, "so it does not move")
+
+func test_far_contacts_are_pulled_onto_the_rim_in_every_direction() -> void:
+	var centre: Vector2 = DRAW.get_center()
+	for offset: Vector2 in [Vector2(5000.0, 0.0), Vector2(-5000.0, 0.0),
+			Vector2(0.0, 5000.0), Vector2(0.0, -5000.0),
+			Vector2(5000.0, 5000.0), Vector2(-5000.0, -5000.0)]:
+		var far: Vector2 = centre + offset
+		assert_true(MinimapTransform.is_outside(far, DRAW), "a comet thousands of px out")
+		var clamped: Vector2 = MinimapTransform.clamp_to_map(far, DRAW)
+		assert_true(DRAW.has_point(clamped) or _on_border(clamped),
+				"lands on the map rather than off it")
+		# The contact has to keep its bearing, or it is pointing at the wrong sky.
+		assert_eq(signf(clamped.x - centre.x), signf(offset.x), "keeps its x bearing")
+		assert_eq(signf(clamped.y - centre.y), signf(offset.y), "keeps its y bearing")
+
+func _on_border(point: Vector2) -> bool:
+	return is_equal_approx(point.x, DRAW.position.x) or is_equal_approx(point.x, DRAW.end.x) \
+			or is_equal_approx(point.y, DRAW.position.y) or is_equal_approx(point.y, DRAW.end.y)

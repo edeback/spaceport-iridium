@@ -31,28 +31,21 @@ func describe() -> String:
 		return ""
 	return "salvage: ~%d %s adrift nearby" % [(min_amount + max_amount) / 2, resource.name]
 
+## The bounds math moved to SpaceGeometry in WI-61, where comets need the same
+## answer; this is the gather that feeds it. Kept here rather than in that file
+## because it needs the SceneTree and Global, and SpaceGeometry is pure.
 func _station_bounds() -> Rect2:
-	var bounds := Rect2()
-	var first: bool = true
+	var positions: Array[Vector2] = []
 	for node: Node in Global.world_manager.get_tree().get_nodes_in_group(Groups.MODULE):
 		var module: ModuleBase = node as ModuleBase
 		if module == null:
 			continue
-		var world_pos: Vector2 = Global.cell_to_world(module.module_cell, true)
-		if first:
-			bounds = Rect2(world_pos, Vector2.ZERO)
-			first = false
-		else:
-			bounds = bounds.expand(world_pos)
-	return bounds
+		positions.append(Global.cell_to_world(module.module_cell, true))
+	return SpaceGeometry.station_bounds(positions)
 
 ## Random point offset outward from a random edge point of the station's
 ## bounding box, so piles land in open space rather than inside modules.
 func _roll_position(bounds: Rect2) -> Vector2:
-	var angle: float = randf() * TAU
-	var direction := Vector2.from_angle(angle)
-	var center: Vector2 = bounds.get_center()
-	# Push out past the box along the rolled direction, then add the band.
-	var half_extent: float = absf(direction.x) * bounds.size.x * 0.5 + absf(direction.y) * bounds.size.y * 0.5
-	var distance: float = half_extent + randf_range(spawn_distance.x, spawn_distance.y)
-	return center + direction * distance
+	var direction := Vector2.from_angle(randf() * TAU)
+	return SpaceGeometry.outward_point(bounds, direction,
+			randf_range(spawn_distance.x, spawn_distance.y))

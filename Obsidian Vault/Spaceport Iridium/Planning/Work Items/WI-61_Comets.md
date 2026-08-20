@@ -1,5 +1,32 @@
 # WI-61 — Comets
 
+> **STATUS: COMPLETE (2026-08-20).** Shipped as designed apart from the eight deviations below. Twenty-seven files touched, seven new. **1214 GUT tests, all green** (+37: `test_comets.gd` at 34, plus three in `test_minimap.gd`) — the whole suite was green at 1177 before this item, so nothing regressed. Verified further by a **66-check headless probe** green on repeated runs, and **thirteen screenshots** driven into each state. Save is backward-compatible and `SAVE_VERSION` did not move: a body with no `profile` key restores as a belt asteroid with the old 2000px-from-the-marker despawn rule.
+>
+> **The probe proves the whole chain end to end**, not just the parts: a drone leaves a mining bay, flies out to a designated comet, mines it, returns, and deposits ice and carbon into the bay's own storage — which is the §6a soft-lock, live.
+>
+> **Deviations from the design below:**
+> 1. **The comet sprite needed a `Sprite2D.offset`, which the design did not anticipate, and it is load-bearing.** `blue_comet.png`'s head sits at texture (18, 43) of 64×64 and `Sprite2D.rotation` pivots on the sprite's own origin — so with the texture centred, the head would *orbit* the node's position every time the heading changed. Worse, the node's position is what `Action_Mine` glues the mining drone to and what `should_despawn()` measures, so it would have been a point in the middle of the tail. `offset = Vector2(14, -11)` puts the head on the origin. Measured by decoding the PNG, not by eye.
+> 2. **The art's measured forward axis is 137°, and 135° ships anyway.** The brief's "bottom-left" reading is right to within two degrees, which is invisible in play; a measured-to-the-decimal number in the data would imply a precision the sprite does not have.
+> 3. **`MinimapTransform` got two statics, not one dictionary.** §8 specified `clamp_to_map(point, rect) -> {position, on_edge}`. Shipped as `clamp_to_map()` plus `is_outside()`: an untyped `Dictionary` access is exactly what this project's `unsafe_property_access` warning exists to catch, and two typed functions are individually testable.
+> 4. **`spawn_gap_hours` is re-rolled after every spawn *attempt*, not every spawn.** A CROSSING profile declines when nothing is built yet (§3); without the re-roll it would retry every single frame for the whole opening of a run.
+> 5. **The comet's entry/exit margins were widened after measurement**, from (600–1200)/600 to (800–1600)/800. The first probe run showed a two-module station producing crossings *shorter* than the belt's own 2000px despawn radius, which made the comet's arrival read as barely outside the play area.
+> 6. **`AsteroidDispersal.GRID` became a parameter that nothing uses.** The design flagged the 3×3 shatter of a mostly-transparent tail as a cosmetic risk and named `grid` as the lever. The screenshots say it reads fine — the shards are recognisable pieces of comet, not empty squares — so the lever ships unused at its default, and the dust colour is the only thing the comet profile actually overrides.
+> 7. **`_process` skips the rotation write entirely when `rotation_speed_deg_per_sec` is 0.** Not in the design and behaviourally a no-op (`+= 0`), but it makes it explicit that a non-tumbling body's rotation belongs to `_apply_orientation()` alone.
+> 8. **One profile resource covers both trajectories, so each shipped `.tres` carries the other's inert knobs** (`belt_jitter` on the comet, `entry_margin` on the belt). Left that way deliberately: an enum plus a few unused fields is cheaper to read than the two-resource-type hierarchy the standing rule tells us not to build.
+>
+> **What the screenshots caught that the probe could not:**
+> - **The first "comet behind the station" shot was blank**, and that was the *feature working* — a comet posed at the station centre is covered completely by the hull, which is pixel-identical to not rendering at all. The shot had to be re-posed against a hull **corner**, where the tail is visibly sliced off at the hull line, plus a fully-occluded/open-space pair so "hidden" cannot be misread as "broken". A screenshot that cannot distinguish success from total failure is not verification.
+> - The belt still draws exactly where it always did after its layer moved to −1.
+> - The inspector's grey subject-icon swatch is identical on a comet and an asteroid, i.e. pre-existing and not a regression from `body_name`.
+>
+> **Three probe checks were wrong, not the code**, and all three the same way: they asserted a comet's route is longer than the belt's 2000px. On a two-module station a crossing is legitimately ~1700–2500px. Replaced with "the route carries it past the far side" and "the restored route equals the saved route" — a threshold that happens to hold on the station you tested is not the property you meant.
+>
+> **What the probe found that has nothing to do with comets:** a bare starting station **cannot mine anything at all**, comet or asteroid, because it has no airlock — so `PathManager.is_space_reachable()` is false and `JobDriver_Mine.can_do()` refuses every trip. Pre-existing and correct; noted because it cost an hour of chasing a comet bug that was not one, and because any future mining probe has to build an airlock first.
+>
+> **Balance left open on purpose:** an 18–60 game-hour gap against a crossing of roughly ten game-hours puts a comet in the sky about 20% of the time — measured on the *starting* station, and both the crossing length and therefore that fraction scale with the station's bounds. Re-measure on a large station before tuning. The yield split (ice 6 / carbon 3 / silicon 1 at 0.35, 28 chunks) has not been played against the economy at all.
+>
+> The roadmap and [[01_Technical_Specification]] are updated for this item; note the spec still has no section for [[WI-60_Heat_System]], which that item deferred.
+
 ## Goal
 
 Add **comets**: a second kind of mineable body that arrives from anywhere, crosses the whole play area on a straight line, and leaves. Where the asteroid belt is a standing supply of metals off to one side of the station, a comet is a **transient volatiles delivery** — mostly ice, some carbon, occasionally a little silicon — that the player has one crossing to exploit before it is gone.

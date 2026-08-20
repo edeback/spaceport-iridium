@@ -33,7 +33,7 @@ var _needs: PawnNeedsComponent = null
 var _tabs: Array[Dictionary] = []
 
 func kind_label() -> String:
-	return "CREW"
+	return "Crew"
 
 func bind(subject: Variant) -> void:
 	_pawn = subject as PawnBase

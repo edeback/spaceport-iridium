@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="SpaceBodyProfile" format=3]
+
+[ext_resource type="Script" path="res://data/space_bodies/space_body_profile.gd" id="1_profile"]
+[ext_resource type="PackedScene" uid="uid://cvrcrbshj8cre" path="res://objects/asteroid_base.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_profile")
+id = &"asteroid"
+display_name = "Asteroid"
+scene = ExtResource("2_scene")
+max_population = 15
+spawn_gap_hours = Vector2(0.5, 0.5)
+speed_range = Vector2(10, 30)
+trajectory = 0
+belt_despawn_distance = 2000.0
+belt_jitter = 200.0
+mix_mode = 0
+weighted_type_count = Vector2i(1, 3)
+richness_band = Vector2(0.15, 1)
+richness_spread = 0.1
+richness_skew = 1.6
+dispersal_dust = Color(0, 0, 0, 0)

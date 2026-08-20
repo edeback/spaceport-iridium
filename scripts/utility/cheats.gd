@@ -308,6 +308,57 @@ func spawn_pawn(cell: Vector2i) -> String:
 	Global.crew_manager.spawn_crew(module)
 	return _report("spawned a crew pawn at %s" % module.module_cell)
 
+# --- mineable bodies (WI-61) --------------------------------------------------
+
+## Force a comet in now, ignoring both its spawn gap and its population cap.
+## The one this work item lives on: the natural gap is 18-60 game-hours.
+func spawn_comet() -> String:
+	return spawn_body(&"comet")
+
+## Force one body of any profile. Ignores the cap, so this can push a kind past
+## its normal population - which is the point of a cheat.
+func spawn_body(profile_id: StringName) -> String:
+	var manager: AsteroidManager = Global.asteroid_manager
+	if manager == null:
+		return _report("no asteroid manager")
+	var profile: SpaceBodyProfile = manager.profile_by_id(profile_id)
+	if profile == null:
+		return _report("no such space body profile: %s" % profile_id)
+	var body: AsteroidBase = manager.spawn_body(profile)
+	if body == null:
+		# The only way a spawn declines: a CROSSING profile with nothing built to
+		# cross. Say which, or this reads as a broken cheat.
+		return _report("%s declined to spawn - the station has no modules to cross"
+				% profile.display_name)
+	return _report("spawned %s #%d at %s heading %s"
+			% [profile.display_name, body.asteroid_id, body.position.round(),
+			body.direction.round()])
+
+## Every live body: kind, id, where it is, how far through its route, what is
+## left in it. The debugging tool this work item actually runs on.
+func dump_bodies() -> String:
+	var manager: AsteroidManager = Global.asteroid_manager
+	if manager == null:
+		return _report("no asteroid manager")
+	var lines: Array[String] = []
+	for body: AsteroidBase in manager.asteroids:
+		if not is_instance_valid(body):
+			continue
+		var travelled: float = body.position.distance_to(body.despawn_anchor)
+		var contents: Array[String] = []
+		for resource: ResourceData in body.resource_weighted_values:
+			if resource != null:
+				contents.append("%s %.1f" % [resource.id, body.resource_weighted_values[resource]])
+		lines.append("%s #%d %s  %.0f/%.0f px  %d/%d chunks  [%s]%s"
+				% [body.profile_id, body.asteroid_id, body.position.round(),
+				travelled, body.despawn_distance, body.cur_resources, body.max_resources,
+				", ".join(contents), "  DESIGNATED" if body.designated else ""])
+	if lines.is_empty():
+		return _report("no mineable bodies alive")
+	print("
+".join(lines))
+	return _report("%d bodies (listed in the console)" % lines.size())
+
 # --- economy & unlocks --------------------------------------------------------
 
 ## Adds (or, negative, removes) credits from the global store.

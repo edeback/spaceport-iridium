@@ -12,6 +12,7 @@
 [ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="7_2l5du"]
 [ext_resource type="Resource" uid="uid://cnje5k2redpx0" path="res://data/resources/gold_ore.tres" id="7_krpv1"]
 [ext_resource type="Resource" uid="uid://c8o0o81ej48mp" path="res://data/resources/carbon_ore.tres" id="8_0tx88"]
+[ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="16_carbon"]
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="9_wt5jo"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="11_0tx88"]
 [ext_resource type="Resource" uid="uid://cns3lrfd8jekj" path="res://data/resources/silicon_ore.tres" id="11_avr65"]
@@ -67,6 +68,12 @@ script = ExtResource("7_2l5du")
 resource_data = ExtResource("14_2l5du")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
+[sub_resource type="Resource" id="Resource_carbon"]
+resource_local_to_scene = true
+script = ExtResource("7_2l5du")
+resource_data = ExtResource("16_carbon")
+metadata/_custom_type_script = "uid://b75b02hdqaib1"
+
 [node name="Module" unique_id=1936147960 instance=ExtResource("1_4oagm")]
 
 [node name="Sprite" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=1530003366]
@@ -97,7 +104,8 @@ ExtResource("8_0tx88"): SubResource("Resource_25qps"),
 ExtResource("9_wt5jo"): SubResource("Resource_delo2"),
 ExtResource("7_krpv1"): SubResource("Resource_l11el"),
 ExtResource("11_avr65"): SubResource("Resource_jb6fk"),
-ExtResource("14_2l5du"): SubResource("Resource_d3svm")
+ExtResource("14_2l5du"): SubResource("Resource_d3svm"),
+ExtResource("16_carbon"): SubResource("Resource_carbon")
 })
 
 [node name="LightingComponent" parent="." index="5" unique_id=1895651030 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("14_5m057")]

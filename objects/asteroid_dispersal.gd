@@ -15,8 +15,12 @@ extends Node2D
 ## in the belt.
 
 ## How finely the sprite is cut up. 3x3 keeps the shards big enough to still read
-## as rock at the game's normal zoom.
-const GRID: int = 3
+## as rock at the game's normal zoom. Settable (WI-61) because a comet's sprite is
+## mostly transparent tail, so its corner shards are nearly empty - this is the
+## lever if that reads badly, rather than a bespoke comet effect. Set before
+## setup(), which is what consumes it.
+const DEFAULT_GRID: int = 3
+var grid: int = DEFAULT_GRID
 ## Sim-seconds from intact to gone.
 const DURATION: float = 1.2
 ## Fraction of DURATION the shards stay fully opaque, so the shatter is readable
@@ -35,8 +39,11 @@ const SPIN_MAX_DEG: float = 220.0
 const END_SCALE: float = 0.55
 ## Dust bloom colour, sampled to sit near the asteroid sprite's own grey-brown.
 ## Deliberately faint: it is a hint of dust between the shards, not a puff of
-## smoke replacing the rock.
-const DUST_COLOR: Color = Color(0.62, 0.56, 0.48, 0.1)
+## smoke replacing the rock. Settable since WI-61 so a comet can break up in its
+## own pale blue; the const is the one place the default is written down, and a
+## SpaceBodyProfile that authors nothing leaves it alone.
+const DEFAULT_DUST_COLOR: Color = Color(0.62, 0.56, 0.48, 0.1)
+var dust_color: Color = DEFAULT_DUST_COLOR
 ## How far the bloom expands over the effect's life, as a multiple of its start.
 const DUST_GROWTH: float = 3.0
 
@@ -67,7 +74,7 @@ func setup(sprite: Sprite2D, drift: Vector2) -> void:
 	if sprite == null or sprite.texture == null:
 		return
 	_texture = sprite.texture
-	var cell: Vector2 = _texture.get_size() / float(GRID)
+	var cell: Vector2 = _texture.get_size() / float(grid)
 	_shard_size = cell * sprite.scale
 	# Smaller than a single shard, so the bloom is completely hidden behind the
 	# intact rock on frame one and only emerges through the widening cracks.
@@ -75,9 +82,9 @@ func setup(sprite: Sprite2D, drift: Vector2) -> void:
 	var speed_min: float = _shard_size.length() * SPEED_MIN_FACTOR
 	var speed_max: float = _shard_size.length() * SPEED_MAX_FACTOR
 	var spin_max: float = deg_to_rad(SPIN_MAX_DEG)
-	var center_index: float = (GRID - 1) * 0.5
-	for x: int in GRID:
-		for y: int in GRID:
+	var center_index: float = (grid - 1) * 0.5
+	for x: int in grid:
+		for y: int in grid:
 			var shard := Shard.new()
 			shard.region = Rect2(Vector2(x, y) * cell, cell)
 			# Cell centre relative to the sprite's centre, then into the
@@ -124,7 +131,7 @@ func _draw() -> void:
 	# Bloom first, so it is hidden behind the intact rock on frame one and only
 	# shows through as the shards spread apart. It also thins out ahead of the
 	# shards - dust disperses faster than rubble does.
-	var dust: Color = DUST_COLOR
+	var dust: Color = dust_color
 	dust.a *= alpha * (1.0 - t)
 	var radius: float = lerpf(_dust_radius, _dust_radius * DUST_GROWTH, t)
 	# Stacked rings instead of one disc: a single flat circle reads as a hard-edged

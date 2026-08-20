@@ -7788,6 +7788,7 @@ frame_progress = 0.024863733
 centered = false
 
 [node name="AsteroidLayer" type="CanvasLayer" parent="BackgroundLayers" unique_id=1072719870]
+layer = -1
 follow_viewport_enabled = true
 
 [node name="AsteroidStart" type="Marker2D" parent="BackgroundLayers/AsteroidLayer" unique_id=640708919]

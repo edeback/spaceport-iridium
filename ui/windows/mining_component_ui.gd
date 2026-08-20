@@ -12,7 +12,7 @@ func set_mining_component(component: MiningComponent) -> void:
 	priority_ore_selector.clear()
 	# Index 0 = no preference; ore N sits at index N + 1.
 	priority_ore_selector.add_item("None")
-	var ores: Array[ResourceData] = Global.asteroid_manager.ore_types_available
+	var ores: Array[ResourceData] = _selectable_ores()
 	for ore: ResourceData in ores:
 		priority_ore_selector.add_item(ore.name)
 	var current: int = ores.find(component.priority_ore)
@@ -28,5 +28,16 @@ func _refresh_drones_label() -> void:
 	drones_label.text = "Mining drones: %d / %d" % [mining_component.drones.size(), mining_component.max_drones]
 
 func _on_priority_ore_selected(index: int) -> void:
-	var ores: Array[ResourceData] = Global.asteroid_manager.ore_types_available
+	var ores: Array[ResourceData] = _selectable_ores()
 	mining_component.priority_ore = null if index <= 0 else ores[index - 1]
+
+## Everything any kind of mineable body can yield (WI-61), not the belt's
+## authored ore list this used to read. That list silently omitted a comet-only
+## resource - and, a latent WI-47 gap, any mod ore that had joined the belt
+## through ResourceData.asteroid_spawn_weight rather than through the export.
+##
+## Built the same way in both places rather than cached: the list is short, it
+## is only walked when the panel opens or the player picks, and a cached copy is
+## one more thing to invalidate when a mod loads.
+func _selectable_ores() -> Array[ResourceData]:
+	return Global.asteroid_manager.spawnable_yields()
