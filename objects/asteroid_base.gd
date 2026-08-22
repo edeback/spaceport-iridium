@@ -164,8 +164,11 @@ func get_richness_descriptor() -> String:
 ## Whether richness means anything for this body (WI-61). Action_Mine only
 ## attaches an OreInstanceData when the mined resource has_variance, so a comet
 ## carrying only ice and carbon has a richness band that describes nothing - and
-## the inspector must not print a quality readout for it. Every asteroid mix
-## contains a variance ore, so the belt is unaffected.
+## the inspector must not print a quality readout for it. Since carbon became a
+## directly mined resource with no variance of its own, a *belt* asteroid can
+## roll an all-carbon (or carbon + ice) mix too, so this is no longer a
+## comet-only case - which is exactly why it is asked per body rather than
+## per body kind.
 func has_variable_yield() -> bool:
 	for resource: ResourceData in resource_weighted_values:
 		if resource != null and resource.has_variance:

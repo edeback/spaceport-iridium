@@ -111,13 +111,13 @@ func test_every_real_resource_lands_in_exactly_one_column() -> void:
 			placed += 1
 	var expected: int = _listed_resources().size()
 	assert_eq(placed, expected, "every ledger-visible resource is in a column")
-	assert_eq(expected, 18, "the base game ships 18 player-facing resources")
+	assert_eq(expected, 17, "the base game ships 17 player-facing resources")
 
 func test_the_ore_and_goods_columns_are_authored() -> void:
 	var all: Array[ResourceData] = _real_resources()
 	assert_eq(_ids_in(LedgerModel.in_category(all, ResourceData.Category.RAW_ORE)),
-		[&"carbon_ore", &"gold_ore", &"iridium_ore", &"iron_ore", &"silicon_ore"] as Array[StringName],
-		"the five mined ores")
+		[&"gold_ore", &"iridium_ore", &"iron_ore", &"silicon_ore"] as Array[StringName],
+		"the four mined ores")
 	assert_eq(_ids_in(LedgerModel.in_category(all, ResourceData.Category.GOODS)),
 		[&"credits"] as Array[StringName],
 		"credits is the only good, and it takes the GOODS default")

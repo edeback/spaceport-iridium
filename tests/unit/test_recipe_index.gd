@@ -94,8 +94,10 @@ func test_every_vanilla_recipe_declares_a_processor() -> void:
 			untagged.append(path.get_file())
 	assert_eq(untagged, [] as Array[String], "untagged recipes: %s" % str(untagged))
 
-func test_the_refinery_offers_its_five_ores_in_the_authored_order() -> void:
+func test_the_refinery_offers_its_four_ores_in_the_authored_order() -> void:
+	# Four, not five: carbon stopped being an ore, so there is nothing to refine
+	# it from - it is mined as `carbon` and its recipe is gone.
 	RecipeData.clear_for_test()
 	var names: Array[String] = _names(RecipeData.for_tags(["Industrial", "Refinery"]))
-	assert_eq(names.size(), 5, "five refining recipes: %s" % str(names))
+	assert_eq(names.size(), 4, "four refining recipes: %s" % str(names))
 	assert_true(names[0].to_lower().contains("iron"), "iron still leads the selector: %s" % str(names))

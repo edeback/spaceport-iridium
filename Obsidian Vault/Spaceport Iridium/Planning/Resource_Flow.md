@@ -15,7 +15,7 @@ flowchart LR
     direction TB
     r_iron_ore(["Iron Ore"]):::res
     r_gold_ore(["Gold Ore"]):::res
-    r_carbon_ore(["Carbon Ore"]):::res
+    r_carbon(["Carbon"]):::res
     r_iridium_ore(["Iridium Ore"]):::res
     r_silicon_ore(["Silicon Ore"]):::res
     r_ice(["Ice"]):::res
@@ -43,7 +43,6 @@ flowchart LR
   subgraph g_ore_processor["Ore Processor"]
     direction TB
     p_ore_processor_refine_iron["Refine Iron"]:::proc
-    p_ore_processor_refine_carbon["Refine Carbon"]:::proc
     p_ore_processor_refine_silicon["Refine Silicon"]:::proc
     p_ore_processor_refine_gold["Refine Gold"]:::proc
     p_ore_processor_refine_iridium["Refine Iridium"]:::proc
@@ -100,8 +99,6 @@ flowchart LR
   p_ice_processor_purify_ice -. 1 .-> r_carbon(["Carbon"]):::res
   r_iron_ore(["Iron Ore"]):::res -->|2| p_ore_processor_refine_iron
   p_ore_processor_refine_iron -->|1| r_iron(["Iron"]):::res
-  r_carbon_ore(["Carbon Ore"]):::res -->|2| p_ore_processor_refine_carbon
-  p_ore_processor_refine_carbon -->|1| r_carbon(["Carbon"]):::res
   r_silicon_ore(["Silicon Ore"]):::res -->|2| p_ore_processor_refine_silicon
   p_ore_processor_refine_silicon -->|1| r_silicon(["Silicon"]):::res
   r_gold_ore(["Gold Ore"]):::res -->|2| p_ore_processor_refine_gold

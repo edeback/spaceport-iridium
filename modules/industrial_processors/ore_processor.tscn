@@ -15,7 +15,6 @@
 [ext_resource type="Resource" uid="uid://bdtv1cjftf2g1" path="res://data/resources/iron.tres" id="13_iron"]
 [ext_resource type="Script" uid="uid://by2n6rwcttgyx" path="res://data/recipes/recipe_data.gd" id="14_rcpd"]
 [ext_resource type="Resource" path="res://data/recipes/refining/iron_refining_recipe.tres" id="15_rfiron"]
-[ext_resource type="Resource" path="res://data/recipes/refining/carbon_refining_recipe.tres" id="16_rfcarbon"]
 [ext_resource type="Resource" path="res://data/recipes/refining/silicon_refining_recipe.tres" id="17_rfsilicon"]
 [ext_resource type="Resource" path="res://data/recipes/refining/gold_refining_recipe.tres" id="18_rfgold"]
 [ext_resource type="Resource" path="res://data/recipes/refining/iridium_refining_recipe.tres" id="19_rfiridium"]

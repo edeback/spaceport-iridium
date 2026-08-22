@@ -5,7 +5,7 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="4_iee0s"]
 [ext_resource type="Resource" uid="uid://bj04ftawqiwko" path="res://data/resources/iridium_ore.tres" id="4_j8ppu"]
 [ext_resource type="Resource" uid="uid://cnje5k2redpx0" path="res://data/resources/gold_ore.tres" id="5_mx1br"]
-[ext_resource type="Resource" uid="uid://c8o0o81ej48mp" path="res://data/resources/carbon_ore.tres" id="6_2upad"]
+[ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="6_carbon"]
 [ext_resource type="Resource" uid="uid://dehke1gpjsfdn" path="res://data/resources/ice.tres" id="7_d4a3e"]
 [ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="8_wnbub"]
 [ext_resource type="Resource" uid="uid://cns3lrfd8jekj" path="res://data/resources/silicon_ore.tres" id="9_164ux"]
@@ -17,7 +17,7 @@ radius = 28.01785
 script = ExtResource("1_gwhge")
 sprite = NodePath("Sprite2D")
 resource_weighted_values = Dictionary[ExtResource("4_iee0s"), float]({
-ExtResource("6_2upad"): 2.0,
+ExtResource("6_carbon"): 2.0,
 ExtResource("7_d4a3e"): 4.0,
 ExtResource("4_j8ppu"): 1.0,
 ExtResource("5_mx1br"): 1.0,
