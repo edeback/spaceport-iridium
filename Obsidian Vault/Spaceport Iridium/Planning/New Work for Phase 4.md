@@ -122,10 +122,43 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 				- Pirates are seen disabling the engines and boarding the ship. Major rep hit with local faction.
 				- Local authorities are seen disabling the engines and boarding the ship. You receive a message indicating they captured a fugitive. No effect.
 
-**Tutorial/Onboarding:** (Unblocked — [[WI-62_Dialogue]] shipped 2026-08-22. SAI exists as a `SpeakerData` with a placeholder portrait and nothing to say; `DialogueRunner.run()` is the entry point.)
+**Tutorial/Onboarding:** (Written up as [[WI-63_Tutorial]] — the brief below is its input. SAI already exists as a `SpeakerData` with a real portrait and nothing to say, and `StoryFlags.DECLARED` already carries the `sai_introduced` flag WI-62 left for this item to set. The design's load-bearing call is a third dialogue alias, `guide`, whose verbs can *block* a conversation until the player acts — plus a coach mark, the first surface in the console UI that can point at a piece of the interface, which is what finally turns AIDE on.)
+- Goal: Give the player a way to learn how to play the game.
+- Currently, the game has a pile of systems that the player has to manage, but the information on how to actually use those systems successfully is scant. There are certain things a player must do at the start to keep everyone alive and happy, but it is not obvious without a lot of trial and error, at which point you have probably already lost.
 - Automatically triggered when a game starts
 	- Option when creating a game to "Skip Onboarding"
-- Needs dialogue work implemented first
+- First introduces you to SAI, the Subprocess AI that has been charged with helping to inform you how to properly run the station.
+	- The game is paused at this point and cannot be unpaused until after the tutorial is completed, so you don't accidentally starve your crew while reading dialogue
+	- SAI explains that you have been charged with building a profitable spacestation by your parent company, the Astral Resource Corporation (ARC). A small core of a station has been towed here, but it's now up to you to develop and expand it while keeping your human resources safe.
+	- Your crew needs food, oxygen, a bed to sleep in and ways to relax, but it's up to you to build them. All modules also require power to run.
+	- You've been authorized to build a limited set of modules. Once you have proven that the station is established (by building some modules and shipping goods), ARC will authorize additional modules that can be constructed.
+- Then SAI directs you to your first task, adding a Mess Hall to the station.
+	- Highlight the "Build" option, tell the player they need to click it, and wait for it to be opened
+	- Highlight the "Crew" option, tell the player they need to click it, and wait for it to be opened
+	- Highlight the "Mess Hall" option, tell the player they need to click it, and wait for that
+	- Tell the player to place the Mess Hall adjacent to one of the sides of the station and click for it to be placed, wait for it to be placed
+	- Note that most modules need to be constructed by the crew out of materials, including the Mess Hall, and that the crew will automatically construct it
+	- Note that the modules in Core are prefabricated and are placed instantly. Mention that the crew will need to get to the Mess Hall after it is built, so they will need stairs or a corridor or both to get to its door
+	- All other placements are up to the player, but it should be a priority to build all the essentials
+	- After that is closed, the game unpauses
+- The rest of the SAI instructions happen when specifically triggered. They are mostly just informative, bringing up a dialogue box but not forcing any specific tasks
+- Help text is only triggered once for each kind of trigger:
+	- A module has no path to station
+		- SAI appears and the module is highlighted. SAI mentions that crew will not be able to get to this module until it is connected to the rest of the station by corridors and/or stairs. They are located in Build -> Core.
+	- A module has no power
+		- SAI appears and the module is highlighted. SAI mentions that a module will not work without power. Solar Panels are available in Build -> Power. They work most effectively when they are maximally exposed to sunlight, so don't build modules directly around them, including other solar panels.
+	- A trader arrives
+		-  SAI appears and the Trade button is highlighted. SAI notes that you can buy and sell resources from traders, which can be very important before all your industrial chains are set up. It's also important to ship enough iron ore to make ARC happy with your progress. Make sure you place your order early to ensure it gets fulfilled before the trader leaves - you can also set up trade orders early, before the trader arrives, so that they're ready to go as soon as one gets there.
+	- A comet appears
+		- SAI appears and notes that comets are important sources of ice and carbon, but aren't around very long, so take advantage of them while they last.
+	- A crewmember is unhappy enough to leave
+		- SAI appears and the specific crewmember is highlighted. SAI mentions that unhappy crew will leave the station after a short while, so make sure their needs are met. If everyone leaves and you can't afford a new hire, ARC will confiscate the station (and you lose).
+	- A crewmember has critically low recreation
+		- SAI appears and the specific crewmember is highlighted. SAI mentions that crew need to be able to relax - the mess hall is one place, make sure it is easily accessible. Placing other modules that are more effective recreation sources can help even more.
+	- A crewmember has critically low sleep
+		- SAI appears and the specific crewmember is highlighted. SAI mentions that crew need to be able to sleep, which means that they both need a bed available and a way to get to that bed. The number of crew vs available beds is located in the bottom console, make sure there are always enough beds for everyone.
+	- A crewmember has critically low hunger
+		- SAI appears and the specific crewmember is highlighted. SAI mentions that crew need to be able to eat - if they starve, they also become hurt and may eventually die. Make sure that there is a mess hall available with a way to get there, and that there is food available to be consumed there. If there is not enough, buy more from a trader or grow some.
 
 **Audio:**
 - Goal: Add sounds for feedback and immersion
