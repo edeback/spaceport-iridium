@@ -235,12 +235,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/Planning/Resource_Flow.md",
-                "mode": "preview",
+                "file": "Spaceport Iridium/Planning/New Work for Phase 4.md",
+                "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Resource_Flow"
+              "title": "New Work for Phase 4"
             }
           }
         ],
@@ -393,8 +393,15 @@
   },
   "active": "2792f8b57e1dba88",
   "lastOpenFiles": [
-    "Spaceport Iridium/Planning/Work Items/WI-61_Comets.md",
+    "Spaceport Iridium/Notes/TODO notes.md",
+    "Spaceport Iridium/Planning/New Work for Phase 4.md",
+    "Spaceport Iridium/Notes/Event Brainstorm.md",
+    "Spaceport Iridium/Planning/Work Items/Completed/WI-61_Comets.md",
+    "Spaceport Iridium/Notes/Pie in the Sky.md",
+    "Spaceport Iridium/Notes/Future Work.md",
+    "Spaceport Iridium/Notes/Module Brainstorm Continued.md",
     "Spaceport Iridium/Planning/Resource_Flow.md",
+    "Spaceport Iridium/Notes/Module Brainstorm.md",
     "Spaceport Iridium/Planning/Work Items/WI-61_Comets.md.tmp.76648.3b5f3bf7d0c2",
     "Spaceport Iridium/Planning/Work Items/WI-61_Comets.md.tmp.76648.0bf28f962168",
     "Spaceport Iridium/Planning/Work Items/WI-61_Comets.md.tmp.76648.d4cd0f58c7b4",
@@ -402,13 +409,8 @@
     "Spaceport Iridium/Planning/Work Items/WI-61_Comets.md.tmp.76648.e48d44bf91d6",
     "Spaceport Iridium/Planning/Work Items/WI-61_Comets.md.tmp.76648.df64b8223cfb",
     "Spaceport Iridium/Planning/Work Items/WI-61_Comets.md.tmp.76648.a090d848616b",
-    "Spaceport Iridium/Notes/Module Brainstorm.md",
     "Spaceport Iridium/Planning/sedwbwnOM",
     "Spaceport Iridium/Planning/Work Items/WI-61_Comets.md.tmp.76648.062f6380d33a",
-    "Spaceport Iridium/Planning/New Work for Phase 4.md",
-    "Spaceport Iridium/Notes/Module Brainstorm Continued.md",
-    "Spaceport Iridium/Notes/Future Work.md",
-    "Spaceport Iridium/Notes/TODO notes.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-60_Heat_System.md",
     "Spaceport Iridium/Planning/Work Items/WI-60_Heat_System.md.tmp.72684.d25211bd6e74",
     "Spaceport Iridium/Planning/00_Design_Document.md",
@@ -420,7 +422,6 @@
     "Spaceport Iridium/Planning/Work Items/Completed/WI-58_UI_Rework_Fix_Pass.md",
     "Spaceport Iridium/Planning/04_UI_Rework_Program.md",
     "Spaceport Iridium/Planning/Work Items/WI-58_UI_Rework_Fix_Pass.md",
-    "Spaceport Iridium/Notes/Pie in the Sky.md",
     "Spaceport Iridium/Game Research/Startopia.md",
     "Spaceport Iridium/Planning/Work Items/WI-57_Panel_Comms_And_Retirement.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-57_Panel_Comms_And_Retirement.md",
@@ -428,7 +429,6 @@
     "Spaceport Iridium/Planning/Work Items/WI-56_Panels_Crew_And_Stores.md",
     "Spaceport Iridium/Planning/Work Items/Completed/WI-55_Panels_Trade_And_RD.md",
     "Spaceport Iridium/Planning/Work Items/WI-55_Panels_Trade_And_RD.md",
-    "Spaceport Iridium/Planning/Work Items/WI-54_Panels_Build_And_Overlays.md",
     "references-1785814732017.png",
     "Pasted image 20260712204434.png",
     "Pasted image 20251208125343.png",

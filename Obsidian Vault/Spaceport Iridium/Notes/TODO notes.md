@@ -34,8 +34,6 @@ Transient visitors SHOULD save - both ARC inspection as well as tourists
 
 ctrl should also show pawn names, and should probably be cleaned up for modules as well (currently messy/confusing)
 
-Starting main UI flow - select 2 (or more?) pawns from a pool of candidates to start with (instead of starting completely randomly)
-
 Traits - something more general, like "quality" plus condition (flat/mult, attribute)?
 
 visitor_pawn looks for recruitment component instead of docking bay to leave
@@ -54,7 +52,6 @@ Trade order screen - show current supplies for validation
 Salvage? Derelicts drifting in that can be deconstructed for resources
 
 Ice should get quality and that should matter for ice purifier
-Introduce comets which are asteroids except mostly ice and some carbon
 
 Spread slow ticks around? Make even slower ticks? Ideally don't do heavy lifting all in one frame, even if "slow". Option: Global.time_manager.register_slow_tick(self).connect(...) and then time manager can batch those that connect to different frames? Probably won't break things?
 
@@ -74,8 +71,7 @@ Station "Prestige"
 	- Outpost, Waystation, Station, Complex, Spaceport
 
 Station name!
-- Give your station a name at the start
-- Then display it with station scale word (above) somewhere like the top of the minimap
+- Then display it with station scale word?
 	- Name: Alpha -> "Outpost Alpha", "Station Alpha", etc
 
 Room info at a glance

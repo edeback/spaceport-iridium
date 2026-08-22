@@ -90,6 +90,42 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 	- The comet should always be pointing in the direction of motion
 	- They don't rotate, unlike asteroids
 
+**Dialogue:**
+- Goal: Add more flavor and immersiveness to the game by allowing the player to interact with actual characters instead of just text boxes.
+	- This also sets up the ability to have a character ("SAI") to interact with for the tutorial/onboarding
+- Instead of interacting with passive descriptive text boxes (as in the current Event system), the player should interact with characters (when appropriate), such as a Pirate Captain when pirates attack, or a Trader when a trade contract is offered.
+- I've added and enabled the Dialogue Manager addon
+	- Documentation in https://github.com/nathanhoad/godot_dialogue_manager/blob/main/README.md
+	- Note that this is the newest Dialogue Manager, released only a few days ago, and so has some changes compared to older versions, so previous examples may not be completely accurate
+	- balloon.gd and balloon.tscn is the in-project starter dialogue balloon, copied mostly from the example but changed to fit this game's style
+	- Dialogue can call functions and set variables, so much of the current event structure should be usable
+- Events change to using this to display choices.
+- Events gain images to display, or portraits of whoever the player is talking to
+	- Such as a pirate or trader
+	- An image can be required but random - if so, the image should be stable over several lines of conversation
+- Events can now be written in .dialogue files
+- This also leads to chaining events, where the choices in one can affect the choices and outcomes in a future event
+- Example chaining event:
+	- **Damaged Ship Needs Help**
+		- A damaged ship is coming in at high burn from the outer system. They request docking permission but don't have time to give more information.
+			- Prerequisite: Docking bay exists and is free
+			- Permission granted. Possible results:
+				- Ship arrives and thanks you. They were a trader, and offload some random resources as payment.
+				- Ship arrives and gives a credit reward. However, they were being chased by pirates (triggers a pirate attack)
+				- Ship arrives, was being chased by local authorities. They demand you turn the captain over for a bounty. Captain responds that he'll double it to ignore them.
+					- Turn him in: positive reputation with local faction, small credit bounty
+					- Feign ignorance: negative reputation with local faction, large hush money payment
+			- Permission denied. Possible results:
+				- Ship alters course toward an inner planet. Minor rep hit with local faction.
+				- Ship attempts to alter course, engines explode. Minor damage to the station and scrap scattered around the station
+				- Pirates are seen disabling the engines and boarding the ship. Major rep hit with local faction.
+				- Local authorities are seen disabling the engines and boarding the ship. You receive a message indicating they captured a fugitive. No effect.
+
+**Tutorial/Onboarding:**
+- Automatically triggered when a game starts
+	- Option when creating a game to "Skip Onboarding"
+- Needs dialogue work implemented first
+
 **Audio:**
 - Goal: Add sounds for feedback and immersion
 - Create a system to easily play sounds at positions
@@ -100,21 +136,6 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 	- When an alert is triggered
 	- When the trader arrives
 	- Combat sounds (firing and when a target is hit)
-
-
-**Dialogue:**
-- Dialogue Manager
-	- Documentation in https://github.com/nathanhoad/godot_dialogue_manager/blob/main/README.md
-- Events change to using this to display choices.
-- Events gain images to display, or portraits of whoever the player is talking to
-	- Such as a pirate or trader
-
-**Tutorial/Onboarding:**
-- Automatically triggered when a game starts
-	- Option when creating a game to "Skip Onboarding"
-- Needs dialogue work implemented first
-
-
 
 **Star and Planet Variations:**
 - Use Deep-Fold's Pixel Planet generator to create planets and stars instead of creating sprite sheets

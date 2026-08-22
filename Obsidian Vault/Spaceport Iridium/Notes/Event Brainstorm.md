@@ -21,9 +21,23 @@ The Butterfly Effect
 			- Sticks around in the station boosting happiness
 			- Bonds with someone and gives them some unique positive modifiers
 
-
 Damaged Ship Needs Help
 - A damaged ship is coming in at high burn from the outer system. They request docking permission but don't have time to give more information.
+	- Prerequisite: Docking bay exists and is free
+	- Permission granted. Possible results:
+		- Ship arrives and gives a credit reward. However, they were being chased by pirates (triggers a pirate attack)
+		- Ship arrives, was being chased by local authorities. They demand you turn the captain over for a bounty. Captain responds that he'll double it to ignore them.
+			- Turn him in: positive reputation with local authorities, small credit bounty
+			- Feign ignorance: negative reputation with local authorities, large hush money payment
+	- Permission denied. Possible results:
+		- Ship alters course toward an inner planet. Minor rep hit with local faction.
+		- Ship attempts to alter course, engines explode. Minor damage to the station and scrap scattered around the station
+		- Pirates are seen disabling the engines and boarding the ship. Major rep hit with local faction.
+		- Local authorities are seen disabling the engines and boarding the ship. You receive a message indicating they captured a fugitive. No effect.
+
+Damaged Ship Needs Help (elaborated)
+- A damaged ship is coming in at high burn from the outer system. They request docking permission but don't have time to give more information.
+	- Prerequisite: Docking bay exists and is free
 	- Permission granted
 		- Ship arrives, needs fuel and spare parts, which they'll pay double for.
 		- Ship arrives, was being chased by pirates, who then attack. Ship gives reward (credits, resources, both?) 
