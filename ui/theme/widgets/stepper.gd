@@ -86,7 +86,9 @@ var _separators: Array[ColorRect] = []
 var _held: int = 0
 var _held_for: float = 0.0
 var _repeats: int = 0
-## Set when the value has moved but not yet been committed.
+## Set when the value has moved but not yet been committed. Only ever raised
+## through [method _mark_dirty], which keeps it paired with the clock that will
+## clear it.
 var _dirty: bool = false
 var _quiet_for: float = 0.0
 
@@ -179,9 +181,32 @@ func _apply_step(direction: int) -> void:
 	value = value + direction * step
 	if value == before:
 		return # already at the end of the range
+	_mark_dirty()
+	value_previewed.emit(value)
+
+## Uncommitted, with the clock that will commit it running. The two move
+## together, and that pairing is the whole point of the method.
+##
+## Assigning `value` in [method _apply_step] can run an entire commit behind that
+## method's back: the step that reaches the end of the range disables the button
+## under the player's finger, the press is dropped, and the `button_up` that
+## follows runs [method _end_hold] -> [method _commit], which stops `_process`.
+## Raising `_dirty` afterwards without restarting the clock left the widget
+## permanently mid-edit - nothing could ever commit it, and because
+## [method is_editing] then answered true forever, every refresh skipped the
+## control for the rest of the panel's life. A Trade line held to its cap stopped
+## repainting; so did a haul priority dragged to +/-100.
+##
+## The cost of re-arming is that the reentrant commit and this one both report
+## the same number, so a hold that ends *at* the range's end writes twice rather
+## than once. Two writes are not sixty, every consumer of [signal value_changed]
+## is a plain "the number is now X" setter, and the alternative - a latch on the
+## last value emitted - would go stale against the two callers that push `value`
+## in directly instead of through [method configure].
+func _mark_dirty() -> void:
 	_dirty = true
 	_quiet_for = 0.0
-	value_previewed.emit(value)
+	set_process(true)
 
 func _commit() -> void:
 	if not _dirty:

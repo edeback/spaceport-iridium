@@ -19,6 +19,12 @@
 > 9. **`UnlockManager` gained `tree_progress()` as well as the specified `has_affordable_unlock()`** — the per-tab `INDUSTRIAL · 1 OF 10 COMPLETE` subtitle is catalog state, and the panel should not re-scan for a headline.
 > 10. **`Stepper` gained `editable` and `is_editing()`.** The first renders the table dimmed-but-present when the station has no docking bay (WI-54: locked is a state, not an absence). The second is load-bearing: a `slow_tick` refresh landing mid-drag would snatch the number back, and the commit arriving a moment later would then write *that* value out as if the player had chosen it.
 >
+> **Corrected 2026-08-22 — three things this item got wrong.** They are recorded here because the rest of the block is what shipped, and these three no longer are.
+>
+> - **The sign was inverted.** Deviation 3 and the design both say "positive sells, negative buys", which signs the goods column like money in a table whose other four columns are counts. It now reads as stock: **positive buys in, negative sells out**, moving with HELD and AVAIL. NET still earns on a sell and is meant to disagree — the two live in different columns precisely so each can be read in its own units. `TradeOffer` carries the whole flip; the panel just passes the limits the other way up.
+> - **A docked line could not be edited at all.** Docked, a stepper is a proposal and is deliberately written nowhere until `CONFIRM` — but nothing held the proposal, so the refresh in the same handler read the line back off the orders it had not been written to and snatched it to zero. `TradePanel._pending` is where a proposal lives now, and `TradeOffer.displayed_amount()` is the three-source precedence that ranks it.
+> - **A docked line could not be cancelled.** `_on_confirm_pressed` wrote the standing orders from `_lines()`, which drops zeros — correct for a total or a commitment, wrong for the write, because a zeroed row is a *cancellation* and is exactly the row whose order most needs rewriting. The old order stayed on the sheet for the next refresh to read back, so every value stuck except zero. It now writes from `_rows`; `_write_order`'s existing no-change guard is what keeps that safe for the rows that were always zero.
+>
 > **Traps worth carrying forward:**
 >
 > - **A body's signals and hooks do not reach `ModeManager`.** See deviation 7. Every check about the *data* passed while `CONFIRM` did nothing; the probe caught it only because it asserted the panel had actually closed.

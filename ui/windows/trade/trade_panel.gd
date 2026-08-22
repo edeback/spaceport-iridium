@@ -30,6 +30,10 @@ extends VBoxContainer
 ## table there is one number, and it has to mean both things or a docked sell of
 ## sixty ore would commit sixty units that nothing would ever haul to the bay.
 ##
+## The number counts **goods**, signed the way the station's own stock moves:
+## positive buys in, negative sells out. [TradeOffer] argues that; the summary
+## bar's NET runs the other way (a sell earns) and is meant to.
+##
 ## ## The pause
 ##
 ## Opening this panel while a trader is docked stops the sim, so the trader cannot
@@ -51,8 +55,8 @@ const TAB_CONTRACTS: StringName = &"contracts"
 
 ## What the frame prints at its foot. The undocked line exists to answer the one
 ## question a table with no CONFIRM button raises.
-const FOOTER_UNDOCKED: String = "Positive sells · negative buys · standing orders save as you set them"
-const FOOTER_DOCKED: String = "Positive sells · negative buys · confirm to commit this visit"
+const FOOTER_UNDOCKED: String = "Positive buys in · negative sells out · standing orders save as you set them"
+const FOOTER_DOCKED: String = "Positive buys in · negative sells out · confirm to commit this visit"
 const FOOTER_NO_BAY: String = "No docking bay · build one to place orders"
 
 signal close_requested
@@ -73,6 +77,24 @@ var _summary_bar: PanelContainer
 ## Counted rather than listed: the rows themselves go amber, and the footer only
 ## has to say that it happened.
 var _clamped: int = 0
+
+## Docked lines the player has moved but has not confirmed, signed the way the
+## steppers are.
+##
+## Docked, a stepper is a [i]proposal[/i]: [method _on_row_changed] must not write
+## it to the bay's sheet, because the number is not real until `CONFIRM`. That
+## left it with nowhere at all to live, so the refresh in the same handler read
+## the line straight back off the orders it had deliberately not been written to
+## and snatched it to zero - the docked table could not be edited. This is where a
+## proposal lives in the meantime; [method TradeOffer.displayed_amount] is where
+## it ranks against the visit's commitments and the standing sheet.
+##
+## Cleared on every [signal TraderManager.visit_changed] - an arrival, a
+## departure, a commit and a fulfilment each make the manager's numbers the truth
+## again - and deliberately [i]not[/i] on close: a player who shuts the panel
+## mid-order during a visit comes back to the order, and the trader cannot have
+## left without the signal that empties this.
+var _pending: Dictionary[ResourceData, int] = {}
 
 ## Builds the frame and mounts this body in it. One call, like the widgets have -
 ## [UIMain] stays a mount table.
@@ -296,6 +318,9 @@ func _on_source_changed() -> void:
 ## being deconstructed can all end a visit anyway - and the panel must fall back
 ## to the undocked state rather than leave a `CONFIRM` that commits to nobody.
 func _on_visit_changed() -> void:
+	# Every emitter of this signal makes the manager authoritative again, so a
+	# proposal that outlived one is stale by definition.
+	_pending.clear()
 	_sync_pause()
 	if is_visible_in_tree():
 		refresh()
@@ -369,9 +394,10 @@ func _refresh_rows(docked: bool, bay_trade: TradeComponent) -> void:
 		row.refresh(buy_price, sell_price, held, avail, clamped_amount,
 			limit_buy, limit_sell, bay_trade != null, was_clamped)
 
-## What this line currently reads. Undocked that is the standing order; docked it
-## is whatever is already committed for this visit, falling back to the standing
-## order for a line the player has not touched yet.
+## What this line currently reads: the proposal, then the visit's commitment, then
+## the standing order. The precedence is [method TradeOffer.displayed_amount],
+## which is where it is argued and where it is tested - this end only gathers the
+## three dictionaries.
 ##
 ## A row the player is mid-drag on keeps its own number - [TradeResourceRow]
 ## ignores the push anyway, and feeding it back through the limits here would make
@@ -379,18 +405,14 @@ func _refresh_rows(docked: bool, bay_trade: TradeComponent) -> void:
 func _current_amount(row: TradeResourceRow, docked: bool, bay_trade: TradeComponent) -> int:
 	if bay_trade == null:
 		return 0
-	var resource: ResourceData = row.resource
-	if docked:
-		var manager: TraderManager = Global.trader_manager
-		if manager.committed_sells.has(resource):
-			return manager.committed_sells[resource]
-		if manager.committed_buys.has(resource):
-			return -manager.committed_buys[resource]
-	if bay_trade.sell_orders.has(resource):
-		return bay_trade.sell_orders[resource]
-	if bay_trade.buy_orders.has(resource):
-		return -bay_trade.buy_orders[resource]
-	return 0
+	var manager: TraderManager = Global.trader_manager
+	var committed_sells: Dictionary = {}
+	var committed_buys: Dictionary = {}
+	if manager != null:
+		committed_sells = manager.committed_sells
+		committed_buys = manager.committed_buys
+	return TradeOffer.displayed_amount(row.resource, docked, _pending,
+		committed_sells, committed_buys, bay_trade.sell_orders, bay_trade.buy_orders)
 
 func _refresh_summary(docked: bool, bay_trade: TradeComponent) -> void:
 	var lines: Array = _lines(docked)
@@ -424,10 +446,14 @@ func _lines(docked: bool) -> Array:
 # --- interaction ----------------------------------------------------------------
 
 ## A committed stepper move. Undocked this writes the standing order immediately -
-## the sheet has never had a commit step. Docked it only repaints, because the
-## number is a proposal until `CONFIRM`.
+## the sheet has never had a commit step. Docked it stages the number as a
+## proposal instead, because it is not real until `CONFIRM` - but it does have to
+## be staged somewhere, or the refresh below reads the line back off the orders it
+## was deliberately not written to and the move undoes itself.
 func _on_row_changed(row: TradeResourceRow) -> void:
-	if not _is_docked():
+	if _is_docked():
+		_pending[row.resource] = row.amount
+	else:
 		_write_order(row.resource, row.amount)
 	refresh()
 
@@ -440,8 +466,8 @@ func _write_order(resource: ResourceData, amount: int) -> void:
 	var bay_trade: TradeComponent = _bay_trade()
 	if bay_trade == null:
 		return
-	var sell: int = maxi(amount, 0)
-	var buy: int = maxi(-amount, 0)
+	var sell: int = maxi(-amount, 0)
+	var buy: int = maxi(amount, 0)
 	# Guarded rather than written unconditionally: set_sell_order(0) is
 	# clear_sell_order, which dumps staged stock to a pile at the bay - correct
 	# when the player cancels an order, wrong as a no-op on a line that never had
@@ -457,6 +483,9 @@ func _write_order(resource: ResourceData, amount: int) -> void:
 ## withdraws the visit's commitment too, or the manager would keep fulfilling
 ## numbers the table no longer shows.
 func _on_clear_pressed() -> void:
+	# Explicit rather than left to the `commit_trades` below: that call only
+	# happens while docked, and CLEAR must empty the table in both states.
+	_pending.clear()
 	for row: TradeResourceRow in _rows:
 		_write_order(row.resource, 0)
 		row.amount = 0
@@ -477,10 +506,15 @@ func _on_confirm_pressed() -> void:
 	var bay_trade: TradeComponent = _bay_trade()
 	if bay_trade == null or Global.trader_manager == null:
 		return
+	# Every row, not only the set ones. `_lines()` drops zeros - a zero is not a
+	# trade and has no business in a total or a commitment - but a row the player
+	# has just zeroed is the one row whose standing order most needs writing: it
+	# is a cancellation, and skipping it left the old order on the sheet for the
+	# next refresh to read straight back into the table. "Set it to anything but
+	# zero" was the shape of that bug.
+	for row: TradeResourceRow in _rows:
+		_write_order(row.resource, row.amount)
 	var lines: Array = _lines(true)
-	for entry: Variant in lines:
-		var line: TradeOffer.Line = entry as TradeOffer.Line
-		_write_order(line.resource, line.amount)
 	Global.trader_manager.commit_trades(TradeOffer.buy_orders(lines), TradeOffer.sell_orders(lines))
 	close_requested.emit()
 

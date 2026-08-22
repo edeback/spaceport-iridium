@@ -6,15 +6,19 @@ extends PanelContainer
 ##
 ## **One signed [Stepper], not two spin boxes.** WI-08's row carried a buy box
 ## and a sell box with nothing stopping both being non-zero, and a hand-written
-## "setting one zeroes the other" rule in two handlers to paper over it. Positive
-## sells and negative buys makes that state unrepresentable, which is also why
-## there are no buy/sell tabs or radio pairs to keep in sync.
+## "setting one zeroes the other" rule in two handlers to paper over it. One
+## signed number makes that state unrepresentable, which is also why there are no
+## buy/sell tabs or radio pairs to keep in sync.
+##
+## The sign counts **goods**: positive buys in, negative sells out, the same
+## direction the HELD and AVAIL columns beside it will move. Credits go the other
+## way and are totalled separately, in the summary bar.
 ##
 ## **`AVAIL` is the column that earns the table.** HELD is stock; AVAIL is what no
 ## hauler has already claimed ([method ResourceData.available_unreserved]).
 ## Selling into a reservation - committing ore a construction site is already
 ## waiting on - is the mistake this row exists to prevent, so the stepper's
-## positive limit comes from AVAIL rather than from HELD.
+## negative limit comes from AVAIL rather than from HELD.
 ##
 ## The row holds no rules: [TradeOffer] owns the caps and the arithmetic, and the
 ## panel owns which state (docked or not) is being shown. This is the view.
@@ -39,7 +43,7 @@ const COLUMN_GAP: int = 8
 signal amount_changed(row: TradeResourceRow)
 
 var resource: ResourceData = null
-## Signed: positive sells, negative buys.
+## Signed: positive buys, negative sells - goods, not credits.
 var amount: int = 0
 
 var _icon: TextureRect
@@ -119,11 +123,15 @@ func refresh(buy_price: int, sell_price: int, held: int, avail: int,
 	_stepper.editable = editable
 	if not _stepper.is_editing():
 		amount = new_amount
-		_stepper.configure(new_amount, -limit_buy, limit_sell, 1, true)
+		# Buy is the upper bound and sell the lower one: the number counts goods,
+		# so the end that adds stock is the positive end.
+		_stepper.configure(new_amount, -limit_sell, limit_buy, 1, true)
 	_apply_kind(clamped)
 
 ## The line's own treatment: cyan while it is set, amber while it has been
-## clamped by somebody else's claim, inert while it is not a trade.
+## clamped by somebody else's claim, inert while it is not a trade. Direction does
+## not enter into it - a sell is not a warning - which is why this is keyed on
+## `amount != 0` and not on its sign.
 func _apply_kind(clamped: bool) -> void:
 	if clamped:
 		set_kind(UIPalette.Row.AMBER)
