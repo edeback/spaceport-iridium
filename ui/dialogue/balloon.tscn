@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://0pwhtbre5n3v"]
+[gd_scene format=3 uid="uid://0pwhtbre5n3v"]
 
 [ext_resource type="Script" uid="uid://ff1towrc5unq" path="res://ui/dialogue/balloon.gd" id="1_36de5"]
 [ext_resource type="PackedScene" uid="uid://ckvgyvclnwggo" path="res://addons/dialogue_manager/nodes/dialogue_label/dialogue_label.tscn" id="2_a8ve6"]
@@ -42,11 +42,11 @@ _data = {
 &"progress": SubResource("Animation_qkmqt")
 }
 
-[node name="ExampleBalloon" type="CanvasLayer"]
+[node name="ExampleBalloon" type="CanvasLayer" unique_id=416777208]
 layer = 100
 script = ExtResource("1_36de5")
 
-[node name="Balloon" type="Control" parent="."]
+[node name="Balloon" type="Control" parent="." unique_id=1101766730]
 unique_name_in_owner = true
 layout_mode = 3
 anchors_preset = 15
@@ -55,9 +55,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Frame" type="PanelContainer" parent="Balloon"]
+[node name="Frame" type="PanelContainer" parent="Balloon" unique_id=939479324]
 unique_name_in_owner = true
 layout_mode = 1
+anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
@@ -66,61 +67,61 @@ grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 1
 
-[node name="Highlight" type="ColorRect" parent="Balloon/Frame"]
+[node name="Highlight" type="ColorRect" parent="Balloon/Frame" unique_id=251385574]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 0
 mouse_filter = 2
 
-[node name="Pad" type="MarginContainer" parent="Balloon/Frame"]
+[node name="Pad" type="MarginContainer" parent="Balloon/Frame" unique_id=1526516895]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="Column" type="VBoxContainer" parent="Balloon/Frame/Pad"]
+[node name="Column" type="VBoxContainer" parent="Balloon/Frame/Pad" unique_id=309831913]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="Body" type="HBoxContainer" parent="Balloon/Frame/Pad/Column"]
+[node name="Body" type="HBoxContainer" parent="Balloon/Frame/Pad/Column" unique_id=625106883]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="Portrait" type="TextureRect" parent="Balloon/Frame/Pad/Column/Body"]
+[node name="Portrait" type="TextureRect" parent="Balloon/Frame/Pad/Column/Body" unique_id=1712092326]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 texture = ExtResource("2_hb2hh")
 
-[node name="Text" type="VBoxContainer" parent="Balloon/Frame/Pad/Column/Body"]
+[node name="Text" type="VBoxContainer" parent="Balloon/Frame/Pad/Column/Body" unique_id=1516980463]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="CharacterLabel" type="Label" parent="Balloon/Frame/Pad/Column/Body/Text"]
+[node name="CharacterLabel" type="Label" parent="Balloon/Frame/Pad/Column/Body/Text" unique_id=1420189548]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"EntityName"
 text = "Character"
 
-[node name="DialogueLabel" parent="Balloon/Frame/Pad/Column/Body/Text" instance=ExtResource("2_a8ve6")]
+[node name="DialogueLabel" parent="Balloon/Frame/Pad/Column/Body/Text" unique_id=2019235366 instance=ExtResource("2_a8ve6")]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 text = "Dialogue..."
 
-[node name="Indicator" type="Control" parent="Balloon/Frame/Pad/Column/Body"]
+[node name="Indicator" type="Control" parent="Balloon/Frame/Pad/Column/Body" unique_id=1281377913]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 8
 
-[node name="Progress" type="Polygon2D" parent="Balloon/Frame/Pad/Column/Body/Indicator"]
+[node name="Progress" type="Polygon2D" parent="Balloon/Frame/Pad/Column/Body/Indicator" unique_id=505857134]
 unique_name_in_owner = true
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="Balloon/Frame/Pad/Column/Body/Indicator"]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Balloon/Frame/Pad/Column/Body/Indicator" unique_id=1006640716]
 libraries/ = SubResource("AnimationLibrary_1337t")
 autoplay = &"progress"
 
-[node name="ResponsesMenu" type="VBoxContainer" parent="Balloon/Frame/Pad/Column" node_paths=PackedStringArray("response_template")]
+[node name="ResponsesMenu" type="VBoxContainer" parent="Balloon/Frame/Pad/Column" unique_id=484781237 node_paths=PackedStringArray("response_template")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -129,12 +130,12 @@ alignment = 1
 script = ExtResource("3_72ixx")
 response_template = NodePath("ResponseExample")
 
-[node name="ResponseExample" parent="Balloon/Frame/Pad/Column/ResponsesMenu" instance=ExtResource("4_resp")]
+[node name="ResponseExample" parent="Balloon/Frame/Pad/Column/ResponsesMenu" unique_id=761385679 instance=ExtResource("4_resp")]
 layout_mode = 2
-caps = false
 text = "Response example"
+caps = false
 
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=700506037]
 unique_name_in_owner = true
 
 [connection signal="gui_input" from="Balloon" to="." method="_on_balloon_gui_input"]

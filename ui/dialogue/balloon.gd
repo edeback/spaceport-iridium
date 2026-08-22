@@ -232,6 +232,7 @@ func apply_dialogue_line() -> void:
 	balloon.focus_mode = Control.FOCUS_ALL
 	balloon.grab_focus()
 
+	# Temporary to test portraits - replace with a way to show stable portraits
 	character_label.visible = not dialogue_line.character.is_empty()
 	character_label.text = tr(dialogue_line.character, "dialogue")
 	var portrait_path: String = "res://assets/external/thirstsector_portraits/%s.png" % dialogue_line.character.to_lower()
