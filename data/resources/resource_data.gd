@@ -75,7 +75,12 @@ var needs_recalc: bool = true
 ## list and nothing may branch on it. `tags`-vs-`ui_category` is the same rule -
 ## gameplay reads gameplay fields. Nothing may group the ledger on `tradable` or
 ## `has_variance` either, which correlate with these columns today by accident.
-enum Category { RAW_ORE, REFINED, LIFE_SUPPORT, GOODS }
+##
+## BASIC was called RAW_ORE until carbon stopped being refined from an ore. The
+## column has always meant "what a mining trip puts in the bay", which the ores
+## no longer have to themselves - so it is named for the shelf, not its former
+## occupants. The ordinals are unchanged, so no .tres re-authoring was needed.
+enum Category { BASIC, REFINED, LIFE_SUPPORT, GOODS }
 
 @export var ledger_category: Category = Category.GOODS
 

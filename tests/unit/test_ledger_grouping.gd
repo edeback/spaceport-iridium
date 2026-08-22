@@ -54,8 +54,8 @@ func test_every_category_column_is_empty_for_an_empty_station() -> void:
 			"column %d is empty rather than missing" % category)
 
 func test_a_resource_lands_in_its_declared_column() -> void:
-	var only: Array[ResourceData] = [_resource(&"ore", "Ore", ResourceData.Category.RAW_ORE)]
-	assert_eq(LedgerModel.in_category(only, ResourceData.Category.RAW_ORE).size(), 1, "in RAW_ORE")
+	var only: Array[ResourceData] = [_resource(&"ore", "Ore", ResourceData.Category.BASIC)]
+	assert_eq(LedgerModel.in_category(only, ResourceData.Category.BASIC).size(), 1, "in BASIC")
 	assert_eq(LedgerModel.in_category(only, ResourceData.Category.REFINED).size(), 0,
 		"and nowhere else")
 
@@ -113,14 +113,23 @@ func test_every_real_resource_lands_in_exactly_one_column() -> void:
 	assert_eq(placed, expected, "every ledger-visible resource is in a column")
 	assert_eq(expected, 17, "the base game ships 17 player-facing resources")
 
-func test_the_ore_and_goods_columns_are_authored() -> void:
+func test_the_basic_and_goods_columns_are_authored() -> void:
 	var all: Array[ResourceData] = _real_resources()
-	assert_eq(_ids_in(LedgerModel.in_category(all, ResourceData.Category.RAW_ORE)),
-		[&"gold_ore", &"iridium_ore", &"iron_ore", &"silicon_ore"] as Array[StringName],
-		"the four mined ores")
+	# Carbon sits here rather than under REFINED because nothing refines it - it
+	# comes out of a rock as itself, which is the whole point of the column.
+	assert_eq(_ids_in(LedgerModel.in_category(all, ResourceData.Category.BASIC)),
+		[&"carbon", &"gold_ore", &"iridium_ore", &"iron_ore", &"silicon_ore"] as Array[StringName],
+		"the four mined ores plus carbon, by display name")
 	assert_eq(_ids_in(LedgerModel.in_category(all, ResourceData.Category.GOODS)),
 		[&"credits"] as Array[StringName],
 		"credits is the only good, and it takes the GOODS default")
+
+func test_every_column_has_a_label_and_the_first_one_is_not_about_ore() -> void:
+	for category: ResourceData.Category in LedgerModel.CATEGORY_ORDER:
+		assert_false(LedgerModel.category_label(category).is_empty(),
+			"column %d prints a header" % category)
+	assert_eq(LedgerModel.category_label(ResourceData.Category.BASIC), "Basic",
+		"the column stopped being called Raw Ore when carbon joined it")
 
 func test_the_default_pins_all_resolve_against_the_real_data() -> void:
 	# The strip's designed six must actually exist, or a new game boots with a

@@ -21,14 +21,14 @@ extends RefCounted
 
 ## Column order, left to right, in the ledger flyout.
 const CATEGORY_ORDER: Array[ResourceData.Category] = [
-	ResourceData.Category.RAW_ORE,
+	ResourceData.Category.BASIC,
 	ResourceData.Category.REFINED,
 	ResourceData.Category.LIFE_SUPPORT,
 	ResourceData.Category.GOODS,
 ]
 
 const CATEGORY_LABELS: Dictionary[ResourceData.Category, String] = {
-	ResourceData.Category.RAW_ORE: "Raw Ore",
+	ResourceData.Category.BASIC: "Basic",
 	ResourceData.Category.REFINED: "Refined",
 	ResourceData.Category.LIFE_SUPPORT: "Life Support",
 	ResourceData.Category.GOODS: "Goods",

@@ -4,6 +4,8 @@
 >
 > **866 GUT tests green** (was 823; +18 in `test_resource_rate_tracker`, +25 in `test_ledger_grouping`). **52-check headless probe green** against the real `main.tscn`. Windowed 1920×1080 screenshots captured of the console strip with a falling amber vital, the open ledger, pin mode, the ledger coexisting with Build, and the HUD at rest. **Save adds one new section (`vitals`); absent key = the designed default six, so `SAVE_VERSION` did not move and pre-WI-52 saves load unchanged.** Closes **C13**.
 >
+> **Superseded (2026-08-22): the first column is `Category.BASIC`, labelled `BASIC`, not `RAW_ORE`/`RAW ORE`.** When `carbon_ore` was deleted and carbon became a directly mined resource, it moved out of REFINED into that column and the old name stopped describing it. Ordinals are unchanged, so no `.tres` was re-authored; the column now holds carbon plus the four remaining ores. §5 and the §4 column list below still print the old name.
+>
 > **Deviations from the design below, and why:**
 >
 > 1. **Pins save as one ordered list, not the design's `{"pinned": […], "derived": […]}` pair.** Order is part of what the player curated, and two lists cannot express a derived chip sitting between two resource chips — while the verification the item asks for is literally "restores the same ids in the same order". Derived entries carry a `derived:` prefix, which no resource id can collide with: base-game ids are hand-authored and a mod's must begin with its own `modid.` prefix ([[WI-47_Modding_Support]] M1).
