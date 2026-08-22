@@ -1,0 +1,3 @@
+~ lightshow
+$> station.mood("meteor_lightshow", 0.08, 12.0)
+=> END

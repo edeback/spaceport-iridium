@@ -90,7 +90,7 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 	- The comet should always be pointing in the direction of motion
 	- They don't rotate, unlike asteroids
 
-**Dialogue:**
+**Dialogue:** (Complete, WI-62 — [[WI-62_Dialogue]])
 - Goal: Add more flavor and immersiveness to the game by allowing the player to interact with actual characters instead of just text boxes.
 	- This also sets up the ability to have a character ("SAI") to interact with for the tutorial/onboarding
 - Instead of interacting with passive descriptive text boxes (as in the current Event system), the player should interact with characters (when appropriate), such as a Pirate Captain when pirates attack, or a Trader when a trade contract is offered.
@@ -103,6 +103,7 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 - Events gain images to display, or portraits of whoever the player is talking to
 	- Such as a pirate or trader
 	- An image can be required but random - if so, the image should be stable over several lines of conversation
+	- Initial portraits for characters are in assets/external/thirstsector_portraits
 - Events can now be written in .dialogue files
 - This also leads to chaining events, where the choices in one can affect the choices and outcomes in a future event
 - Example chaining event:
@@ -121,7 +122,7 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 				- Pirates are seen disabling the engines and boarding the ship. Major rep hit with local faction.
 				- Local authorities are seen disabling the engines and boarding the ship. You receive a message indicating they captured a fugitive. No effect.
 
-**Tutorial/Onboarding:**
+**Tutorial/Onboarding:** (Unblocked — [[WI-62_Dialogue]] shipped 2026-08-22. SAI exists as a `SpeakerData` with a placeholder portrait and nothing to say; `DialogueRunner.run()` is the entry point.)
 - Automatically triggered when a game starts
 	- Option when creating a game to "Skip Onboarding"
 - Needs dialogue work implemented first

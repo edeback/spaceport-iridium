@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="PortraitPool" format=3]
+
+[ext_resource type="Script" path="res://data/portraits/portrait_pool.gd" id="1_pool"]
+
+[resource]
+script = ExtResource("1_pool")
+id = &"mercenary"
+description = "Guns for hire, on whichever side is paying."
+directory = "res://assets/external/thirstsector_portraits"
+prefix = "portrait_mercenary"
+extension = "png"

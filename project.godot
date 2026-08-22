@@ -262,7 +262,7 @@ overlay_heat={
 
 [internationalization]
 
-locale/translations_pot_files=PackedStringArray("res://tests/test_dialogue_script.dialogue")
+locale/translations_pot_files=PackedStringArray("res://tests/test_dialogue_script.dialogue", "res://data/dialogue/events/arc_levy.dialogue", "res://data/dialogue/events/damaged_ship.dialogue", "res://data/dialogue/events/insolvency_warning.dialogue", "res://data/dialogue/events/kestrel_pursuit.dialogue", "res://data/dialogue/events/market_glut_iron_ore.dialogue", "res://data/dialogue/events/market_shock_steel.dialogue", "res://data/dialogue/events/micrometeorite_strike.dialogue", "res://data/dialogue/events/morale_lightshow.dialogue", "res://data/dialogue/events/outbreak.dialogue", "res://data/dialogue/events/pirate_extortion.dialogue", "res://data/dialogue/events/pirate_raid.dialogue", "res://data/dialogue/events/rush_contract.dialogue", "res://data/dialogue/events/salvage_cluster.dialogue")
 
 [layer_names]
 

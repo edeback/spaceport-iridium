@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://xjqgpx2c3yy2"
+path="res://.godot/imported/insolvency_warning.dialogue-8ce83d73bcee6a08aa321a5aa5ccb333.tres"
+
+[deps]
+
+source_file="res://data/dialogue/events/insolvency_warning.dialogue"
+dest_files=["res://.godot/imported/insolvency_warning.dialogue-8ce83d73bcee6a08aa321a5aa5ccb333.tres"]
+
+[params]
+
+defaults=true

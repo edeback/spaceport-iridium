@@ -22,7 +22,7 @@ func _declared_holders() -> Array[StringName]:
 	return [
 		AlertManager.PAUSE_HOLD,
 		PauseMenu.PAUSE_HOLD,
-		EventCard.PAUSE_HOLD,
+		DialogueBalloon.PAUSE_HOLD,
 		TradePanel.PAUSE_HOLD,
 		GameOverScreen.PAUSE_HOLD,
 	] as Array[StringName]
@@ -75,9 +75,9 @@ func test_every_sentence_says_something_specific() -> void:
 			"%s names its blocker rather than reporting one" % holder)
 
 func test_the_first_holder_is_the_one_reported() -> void:
-	var two: Array[StringName] = [EventCard.PAUSE_HOLD, PauseMenu.PAUSE_HOLD] as Array[StringName]
+	var two: Array[StringName] = [DialogueBalloon.PAUSE_HOLD, PauseMenu.PAUSE_HOLD] as Array[StringName]
 	assert_eq(UITimeScaleSelect.hold_reason(two),
-		UITimeScaleSelect.HOLD_REASONS[EventCard.PAUSE_HOLD],
+		UITimeScaleSelect.HOLD_REASONS[DialogueBalloon.PAUSE_HOLD],
 		"one sentence the player can act on, not a list to parse")
 
 ## A mod, or a holder somebody added without a sentence. It must still name the

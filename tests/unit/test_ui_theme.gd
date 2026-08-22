@@ -233,13 +233,16 @@ func test_scroll_container_panel_is_invisible() -> void:
 ## authoring surface, and reading the file is what catches a value that a loaded
 ## scene would have already resolved away.
 
-## Scenes allowed their own type and colour. Three are deliberately outside the
-## console's design system - the main menu predates it, the event card is a
-## faction-tinted modal, the game-over screen is a full-bleed takeover - and
-## `preview_module` draws in world space, not on the HUD.
+## Scenes allowed their own type and colour. Two are deliberately outside the
+## console's design system - the main menu predates it, the game-over screen is a
+## full-bleed takeover - and `preview_module` draws in world space, not on the HUD.
+##
+## `event_card.tscn` was the fourth and is gone (WI-62): the dialogue balloon
+## replaced it, and `ui/dialogue/balloon.tscn` is **inside** the design system.
+## It is swept like everything else and must never be added here.
 const OVERRIDE_EXEMPT: Array[String] = [
-	"res://ui/menus/", "res://ui/windows/event_card.tscn",
-	"res://ui/game_over_screen.tscn", "res://ui/preview_module.tscn",
+	"res://ui/menus/", "res://ui/game_over_screen.tscn",
+	"res://ui/preview_module.tscn",
 ]
 
 func _scene_paths() -> PackedStringArray:

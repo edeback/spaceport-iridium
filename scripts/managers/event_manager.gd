@@ -1,14 +1,24 @@
 class_name EventManager
 extends Node
 
-## Random events (WI-13): loads EventData definitions from data/events/,
-## paces natural rolls off the game calendar, and owns the runtime state -
-## per-event cooldowns, the pending-card queue, and station-wide timed
+## Random events (WI-13, rewritten in WI-62): loads [EventData] definitions from
+## `data/events/`, paces natural rolls off the game calendar, and owns the runtime
+## state - per-event cooldowns, the pending queue, and station-wide timed
 ## happiness effects (so late hires get them and durations survive saves).
 ##
 ## Pacing runs on calendar signals (cycle_changed / hour_changed), which only
-## fire from TimeManager's sim loop - so events can't roll while paused by
+## fire from [TimeManager]'s sim loop - so events can't roll while paused by
 ## construction (WI-13 edge case: verified, no wall-clock timers here).
+##
+## **What WI-62 took out of this file:** the `choices.is_empty()` branch, the
+## resolve-a-choice entry point, and everything that knew what an event *does*.
+## An event now hands its dialogue to [DialogueRunner] and the conversation is the
+## whole of its behaviour. A cue with no dialogue lines runs headlessly, which is
+## why "notification event" needs no code here at all.
+##
+## **What WI-62 added:** the scheduled-event drain. `story.queue_event(id, hours)`
+## promises a follow-up, and it fires **bypassing the roll, the cooldown and
+## `min_cycle`** - it was already decided by a choice the player made.
 
 
 ## Average cycles between natural events. Rolls happen twice per cycle
@@ -21,8 +31,7 @@ extends Node
 var _events: Dictionary[StringName, EventData] = {}
 ## event id -> cycle it last fired (cooldown bookkeeping).
 var _fired_cycle: Dictionary[StringName, int] = {}
-## Events waiting to be shown as cards, front = current. Notification-only
-## events never enter this queue.
+## Events waiting to be run as conversations, front = current.
 var pending_events: Array[EventData] = []
 ## Station-wide happiness effects: id -> {"value": float, "remaining": float
 ## game-hours}. Mirrors the per-pawn modifiers so we can re-apply to new
@@ -61,8 +70,13 @@ func _load_events() -> void:
 			var event := res as EventData
 			if not ContentPaths.accept_id(event.id, file_path, "EventData"):
 				continue
-			if not event.has_free_choice():
-				push_warning("Event '%s' has no always-available choice - its card can soft-lock" % event.id)
+			# A typo'd cue is an event that fires and does nothing, forever,
+			# silently - the worst failure this design can produce. It is the one
+			# thing checked eagerly, so it surfaces on startup instead of never.
+			var problem: String = event.script_problem()
+			if not problem.is_empty():
+				push_warning("Event '%s' %s - it will never run" % [event.id, problem])
+				continue
 			_events[event.id] = event
 
 # --- pacing & selection ---------------------------------------------------------
@@ -72,6 +86,7 @@ func _on_cycle_changed(_cycle: int) -> void:
 	_natural_roll()
 
 func _on_hour_changed(hour: int) -> void:
+	_drain_scheduled()
 	if hour == _midcycle_roll_hour:
 		_midcycle_roll_hour = -1
 		_natural_roll()
@@ -82,7 +97,15 @@ func _roll_midcycle_hour() -> void:
 ## Two rolls per cycle, each with chance 1/(2 * expected interval) - long-run
 ## average of one event per expected_cycles_between_events. All-ineligible
 ## rolls are silent no-ops.
+##
+## **Not while a load is being applied** (WI-62, fixing a bug WI-38's audit
+## logged): [SaveManager] restores sections in order and events are section 130 of
+## 17, so a `cycle_changed` fired during restoration used to roll an event against
+## a cooldown table that had not come back yet. That was a stray card before; with
+## chaining it can drop a chapter-two event into a save that never saw chapter one.
 func _natural_roll() -> void:
+	if SaveManager.is_loading():
+		return
 	if Global.time_manager.cycle < first_event_cycle:
 		return
 	if expected_cycles_between_events <= 0.0:
@@ -120,6 +143,35 @@ func try_fire_random_event(_ignore_pacing: bool) -> bool:
 	fire_event(eligible.back())
 	return true
 
+# --- scheduled follow-ups (WI-62) -----------------------------------------------
+
+## Fires whatever a past conversation promised for now.
+##
+## The roll, the cooldown and `min_cycle` are all skipped: the player already
+## chose this, and re-litigating eligibility would drop chapter two on the floor.
+## The event's own `conditions` still apply, because those describe a world the
+## event needs in order to make sense - and when they fail the player is told the
+## moment passed rather than being left waiting for a follow-up that silently
+## evaporated.
+func _drain_scheduled() -> void:
+	if SaveManager.is_loading() or Global.story_state == null:
+		return
+	var time: TimeManager = Global.time_manager
+	var due: Array[StringName] = Global.story_state.schedule.drain_due(time.cycle, time.hour)
+	for event_id: StringName in due:
+		var event: EventData = _events.get(event_id)
+		if event == null:
+			# A mod was removed, or the id was a typo. Dropping it is the only
+			# option; saying so is the difference between a bug and a mystery.
+			push_warning("EventManager: scheduled event '%s' no longer exists" % event_id)
+			continue
+		if not event.conditions_met():
+			AlertManager.raise_alert(StringName("event_missed_%s" % event_id),
+				AlertData.Priority.LOW, "The moment passed",
+				"%s came to nothing." % event.title)
+			continue
+		fire_event(event)
+
 # --- firing & resolution ----------------------------------------------------------
 
 ## Debug/console entry point: fire a specific event now, ignoring pacing,
@@ -132,30 +184,29 @@ func fire_event_by_id(id: StringName) -> bool:
 	fire_event(event)
 	return true
 
-## The sender a notification-only event is logged under (WI-57). Events have no
-## authored issuer field, so this is honest rather than invented - the station's
-## own systems noticed something.
+## Every known event id, for the cheat console's completion and the content sweep.
+func event_ids() -> Array[StringName]:
+	return _events.keys()
+
+func event_by_id(id: StringName) -> EventData:
+	return _events.get(id)
+
+## The sender a logged event is filed under (WI-57). Events have no authored
+## issuer field, so this is honest rather than invented - the station's own
+## systems noticed something. A conversation that wants a *named* sender posts its
+## own transmission with `station.transmit(...)`.
 const EVENT_SENDER: String = "Station log"
 
 func fire_event(event: EventData) -> void:
 	_fired_cycle[event.id] = Global.time_manager.cycle
-	if event.choices.is_empty():
-		# Notification-only: apply immediately, no card - the alert and the Comms
-		# log entry are the whole of its UI.
-		for effect: EventEffect in event.auto_effects:
-			if effect != null:
-				effect.apply(event)
-		_log_event(event)
-		SignalBus.event_triggered.emit(event)
-		return
-	# Card events queue - two simultaneous fires show sequentially (edge case).
 	pending_events.append(event)
-	# **The card is not a transmission** (WI-57 edge case) and must not be routed
-	# through the log - it is a modal the player answers, not something to read
-	# later. The *record* that it happened is worth keeping, so a card event logs
-	# its title and body without the choices that only make sense in the card.
+	# **The conversation is not a transmission** (WI-57 edge case) and must not be
+	# routed through the log as one - it is a modal the player answers, not
+	# something to read later. The *record* that it happened is worth keeping, so
+	# every event logs its title and body the moment it fires.
 	_log_event(event)
 	SignalBus.event_triggered.emit(event)
+	_run_next()
 
 ## Both halves of an event's announcement (WI-57).
 ##
@@ -173,19 +224,22 @@ func _log_event(event: EventData) -> void:
 func peek_pending() -> EventData:
 	return pending_events.front() if not pending_events.is_empty() else null
 
-## The event card calls this with the picked choice; returns false if the
-## cost can't be paid (button should have been disabled, but re-check - the
-## sim may have spent credits while the card sat open unpaused... it can't,
-## the card pauses, but cheap insurance).
-func resolve_choice(event: EventData, choice: EventChoice) -> bool:
-	if choice == null or not choice.can_afford():
-		return false
-	choice.withdraw_cost()
-	for effect: EventEffect in choice.effects:
-		if effect != null:
-			effect.apply(event)
+## Hands the front of the queue to [DialogueRunner], which queues it behind
+## anything already talking. The event leaves `pending_events` only when its
+## conversation *ends*, so a save taken mid-conversation restores an event that
+## still needs answering.
+func _run_next() -> void:
+	var event: EventData = peek_pending()
+	if event == null or Global.dialogue_runner == null:
+		return
+	if Global.dialogue_runner.is_busy():
+		return
+	Global.dialogue_runner.run(event.dialogue, event.cue, [],
+		_on_conversation_finished.bind(event))
+
+func _on_conversation_finished(event: EventData) -> void:
 	pending_events.erase(event)
-	return true
+	_run_next()
 
 # --- station-wide happiness effects ----------------------------------------------
 
@@ -255,6 +309,10 @@ func load_save_data(data: Dictionary) -> void:
 		if event != null:
 			pending_events.append(event)
 			SignalBus.event_triggered.emit(event)
+	# Deferred: the load is still in flight, and re-opening the conversation the
+	# player was in the middle of has to wait until the rest of the station is
+	# back - the mutations it runs read live managers.
+	_run_next.call_deferred()
 	_happiness_effects.clear()
 	for entry: Dictionary in data.get("happiness_effects", []):
 		apply_station_happiness(StringName(String(entry.get("id", ""))),

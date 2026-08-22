@@ -1,8 +1,16 @@
 extends GutTest
 
 ## Unit tests for EventData eligibility rules (data/events/event_data.gd):
-## is_eligible (cycle gate + all conditions met) and has_free_choice (the
-## soft-lock guard - every card event must keep at least one cost-free choice).
+## is_eligible (the cycle gate plus every condition), and conditions_met on its
+## own - which is what a **scheduled** event checks, having already skipped the
+## roll, the cooldown and the cycle gate (WI-62 §5).
+##
+## The `has_free_choice` guard these tests used to carry is gone with
+## [EventChoice]: a conversation's options are decided line by line at runtime, so
+## the all-blocked case cannot be checked statically. Its replacement lives in
+## [DialogueBalloon] (an escape hatch plus a `push_error`), and the static half
+## that *can* be checked - that every event's cue exists - is
+## `script_problem()`, swept in `test_event_content.gd`.
 
 ## Controllable EventCondition stand-in, so we can drive is_eligible without any
 ## live game state behind the real condition subclasses.
@@ -51,28 +59,43 @@ func test_null_conditions_are_ignored() -> void:
 	event.conditions.append(null) # placeholder entry in authored data
 	assert_true(event.is_eligible(5), "null condition slots don't block eligibility")
 
-# --- free-choice soft-lock guard ---------------------------------------------
+# --- the condition half on its own (WI-62) ------------------------------------
+#
+# A scheduled follow-up bypasses `min_cycle`, so `conditions_met` is the gate it
+# is actually held to. The two must not drift into one another.
 
-func test_notification_event_has_free_choice() -> void:
+func test_conditions_met_ignores_the_cycle_gate() -> void:
+	var event := _event(999)
+	assert_false(event.is_eligible(5), "the cycle gate still blocks a natural roll")
+	assert_true(event.conditions_met(),
+		"but a scheduled follow-up only has to make sense in the world it lands in")
+
+func test_conditions_met_still_respects_conditions() -> void:
 	var event := _event(1)
-	assert_true(event.has_free_choice(), "an event with no choices can never soft-lock")
+	var cond := StubCondition.new()
+	cond.met = false
+	event.conditions.append(cond)
+	assert_false(event.conditions_met(),
+		"a follow-up whose prerequisite has gone away must not fire anyway")
 
-func test_event_with_a_costless_choice_is_free() -> void:
+# --- the runnability guard ----------------------------------------------------
+
+func test_an_event_with_no_dialogue_names_its_problem() -> void:
 	var event := _event(1)
-	event.choices.append(_paid_choice())
-	event.choices.append(EventChoice.new()) # empty cost = always takeable
-	assert_true(event.has_free_choice())
+	assert_string_contains(event.script_problem(), "dialogue",
+		"an event that names no script must say so at load rather than fire and do nothing")
 
-func test_event_with_only_paid_choices_is_not_free() -> void:
+func test_an_event_with_a_dialogue_but_no_cue_names_its_problem() -> void:
 	var event := _event(1)
-	event.choices.append(_paid_choice())
-	assert_false(event.has_free_choice(), "all-paid choices can soft-lock a broke player")
+	event.dialogue = DialogueResource.new()
+	assert_string_contains(event.script_problem(), "cue")
 
-func _paid_choice() -> EventChoice:
-	var choice := EventChoice.new()
-	var resource := ResourceData.new()
-	resource.id = &"credits"
-	var cost: Dictionary[ResourceData, int] = {}
-	cost[resource] = 50
-	choice.cost = cost
-	return choice
+func test_a_cue_that_is_not_in_the_resource_is_a_problem() -> void:
+	var event := _event(1)
+	event.dialogue = DialogueResource.new()
+	event.dialogue.cues = {"hail": "0"}
+	event.cue = "hale"
+	assert_false(event.script_problem().is_empty(),
+		"a typo would otherwise be an event that fires and does nothing, forever")
+	event.cue = "hail"
+	assert_eq(event.script_problem(), "", "and the correct cue is fine")

@@ -1,0 +1,3 @@
+~ strike
+$> station.breach(1, 2.0)
+=> END

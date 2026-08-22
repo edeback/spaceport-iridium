@@ -1,0 +1,12 @@
+~ hail
+
+freight_broker: Broker, out of the inner lanes. I have a client on a hard deadline and every licensed hauler is booked solid.
+freight_broker: Above-market rates for whatever you can commit. Interested?
+
+- Hear them out
+	$> station.offer_contract(0.2)
+	freight_broker: It is on your board. Read the terms before you sign anything.
+	=> END
+- Turn them away
+	freight_broker: Your loss. Somebody else's gain.
+	=> END

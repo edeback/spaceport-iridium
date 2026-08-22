@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://do5f732vpok4d"
+path="res://.godot/imported/micrometeorite_strike.dialogue-c16a2ab57ad118c9a0d6967963eac50a.tres"
+
+[deps]
+
+source_file="res://data/dialogue/events/micrometeorite_strike.dialogue"
+dest_files=["res://.godot/imported/micrometeorite_strike.dialogue-c16a2ab57ad118c9a0d6967963eac50a.tres"]
+
+[params]
+
+defaults=true

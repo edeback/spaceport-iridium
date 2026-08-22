@@ -1,0 +1,12 @@
+~ notice
+
+arc_officer: This is a formal notice. Your books have been in the red for some time and the Corporation is not a charity.
+arc_officer: Settle it within a few cycles or we move to repossess. We can advance you the money, at our usual terms.
+
+- Accept an ARC loan
+	$> station.loan(2500)
+	arc_officer: Twenty-five hundred, repaid at twenty per cent over the coming cycles. Try to enjoy it.
+	=> END
+- Weather it
+	arc_officer: Optimism. We will make a note of that.
+	=> END

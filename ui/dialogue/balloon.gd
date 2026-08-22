@@ -1,23 +1,59 @@
+class_name DialogueBalloon
 extends CanvasLayer
-## A basic dialogue balloon for use with Dialogue Manager.
+## The one surface in the game that shows somebody saying something (WI-62).
 ##
 ## The balloon is neither a [ConsolePanel] nor a [ReadoutPanel]: it is a modal
-## overlay, the same third kind of surface as the event card and the pause menu.
-## What it does share is the console's frame language - PANEL at panel alpha, an
-## EDGE border, the 1px inner highlight that makes a surface read as lit from
-## above, and the drop shadow that separates it from the station behind it.
+## overlay, the same third kind of surface as the pause menu and the game-over
+## screen. What it does share is the console's frame language - PANEL at panel
+## alpha, an EDGE border, the 1px inner highlight that makes a surface read as lit
+## from above, and the drop shadow that separates it from the station behind it.
 ##
 ## The scene authors structure and nothing else: every colour, size, gap and type
 ## variation comes from [UIPalette] / [UIMetrics] / [UIType], the same split
 ## [ConsolePanel] uses. A `Color` or a font size authored in `balloon.tscn` is a
 ## hex literal that stops tracking the palette the moment anyone retunes it, and
-## `test_ui_theme.gd` sweeps the scenes for exactly that.
+## `test_ui_theme.gd` sweeps the scenes for exactly that. This scene is **not** on
+## that sweep's exemption list and must not be added to it.
+##
+## ## Four rules it carries (WI-62 §1)
+##
+## 1. **The pause hold is taken late.** [constant PAUSE_HOLD] is claimed when the
+##    first real line renders, not in `_ready`. A cue that is nothing but
+##    mutations returns null before anything is shown, so it never stops the sim -
+##    which is how a notification event and a face-to-face event share one path
+##    with no branch in [EventManager].
+## 2. **`ui_cancel` is never swallowed.** Blocking all other input is what makes a
+##    modal modal, but taking Esc would take the pause menu away, and the event
+##    card this replaces never did that.
+## 3. **The balloon is not on the Esc ladder.** Same considered exception as an
+##    outstanding critical alert ([method UIMain._topmost_esc_claim]): a
+##    conversation is something you answer, and an Esc that dismisses it is an
+##    answer given without being read.
+## 4. **A blocked response names its blocker on itself.** `hide_failed_responses`
+##    stays false deliberately, so a response gated by an `[if …]` renders
+##    disabled with its reason - the console UI's standing rule, applied here.
+##
+## ## The speaker
+##
+## The character at the head of a line is a [SpeakerData] id, resolved through the
+## conversation's [SpeakerCast]. The cast is the whole of the brief's "the image
+## should be stable over several lines" requirement: a speaker is resolved **once
+## per conversation, not once per line**.
+
+## Emitted when the conversation ends, whether or not it ever showed a line.
+## [DialogueRunner] listens for it; nothing else should.
+signal finished
+
+## This balloon's entry in [TimeManager]'s hold set. A named hold rather than a
+## remembered-prior-state flag, so a conversation and a critical alert can stop
+## the sim at the same time without un-pausing each other.
+const PAUSE_HOLD: StringName = &"dialogue"
 
 ## The dialogue resource
 @export var dialogue_resource: DialogueResource
 
-## Start from a given title when using balloon as a [Node] in a scene.
-@export var start_from_title: String = ""
+## Start from a given cue when using balloon as a [Node] in a scene.
+@export var start_from_cue: String = ""
 
 ## If running as a [Node] in a scene then auto start the dialogue.
 @export var auto_start: bool = false
@@ -30,6 +66,11 @@ extends CanvasLayer
 
 ## The action to use to skip typing the dialogue
 @export var skip_action: StringName = &"ui_cancel"
+
+## Who is in this conversation. Handed in by [DialogueRunner] before `start`; a
+## balloon run standalone from the editor's Test Scene builds an empty one, which
+## makes every character fall back to printing verbatim.
+var cast: SpeakerCast = null
 
 ## A sound player for voice lines (if they exist).
 @onready var audio_stream_player: AudioStreamPlayer = %AudioStreamPlayer
@@ -47,6 +88,12 @@ var will_hide_balloon: bool = false
 var locals: Dictionary = {}
 
 var _locale: String = TranslationServer.get_locale()
+## Whether [constant PAUSE_HOLD] is currently ours. Rule 1: set by the first
+## rendered line, cleared exactly once on the way out.
+var _holding_pause: bool = false
+## Latched so `finished` fires once even if the conversation ends twice (a null
+## line and a `finish()` racing a game-over).
+var _ended: bool = false
 
 ## The current line
 var dialogue_line: DialogueLine:
@@ -56,10 +103,7 @@ var dialogue_line: DialogueLine:
 			apply_dialogue_line()
 		else:
 			# The dialogue has finished so close the balloon
-			if owner == null:
-				queue_free()
-			else:
-				hide()
+			finish()
 	get:
 		return dialogue_line
 
@@ -111,6 +155,16 @@ func _ready() -> void:
 	# If the responses menu doesn't have a next action set, use this one
 	if responses_menu.next_action.is_empty():
 		responses_menu.next_action = next_action
+	# Rule 4: a gated response renders, disabled, with its reason. Hiding it would
+	# leave the player with no way to learn that the option exists.
+	responses_menu.hide_failed_responses = false
+	# ...and focus is wired by hand, after [method _label_blocked_responses] has had
+	# its say. [DialogueResponsesMenu.configure_focus] indexes `get_menu_items()[0]`
+	# unguarded, and that list excludes every disallowed row - so an all-blocked
+	# line makes the addon throw "Out of bounds get index '0'" one frame before our
+	# escape hatch exists. Deferring the call until the hatch is in place is the
+	# whole fix, and it costs one line.
+	responses_menu.auto_configure_focus = false
 
 	mutation_cooldown.timeout.connect(_on_mutation_cooldown_timeout)
 	add_child(mutation_cooldown)
@@ -121,15 +175,27 @@ func _ready() -> void:
 		start()
 
 
-func _process(delta: float) -> void:
+func _exit_tree() -> void:
+	# Belt and braces: `finish()` releases the hold on every ordinary path, but a
+	# balloon freed by a scene swap mid-conversation would otherwise leave the sim
+	# stopped with nothing on screen to explain why.
+	_release_pause()
+
+
+func _process(_delta: float) -> void:
 	if is_instance_valid(dialogue_line):
 		progress.visible = not dialogue_label.is_typing and dialogue_line.responses.size() == 0 and not dialogue_line.has_tag("voice")
 
 
-func _unhandled_input(_event: InputEvent) -> void:
-	# Only the balloon is allowed to handle input while it's showing
-	if will_block_other_input:
-		get_viewport().set_input_as_handled()
+## Rule 2. Blocking all other input is what makes a modal modal - but `ui_cancel`
+## is the pause menu's, and taking it would leave a player mid-conversation unable
+## to reach save/quit. The event card this replaces never took it either.
+func _unhandled_input(event: InputEvent) -> void:
+	if not will_block_other_input:
+		return
+	if event.is_action(&"ui_cancel"):
+		return
+	get_viewport().set_input_as_handled()
 
 
 func _notification(what: int) -> void:
@@ -191,7 +257,7 @@ func _apply_surface() -> void:
 	# a content-pad's distance in from it.
 	box.set_content_margin_all(float(UIMetrics.BORDER_WIDTH))
 	box.shadow_size = UIMetrics.PANEL_SHADOW_SIZE
-	box.shadow_color = Color(0.0, 0.0, 0.0, 0.55)
+	box.shadow_color = UIPalette.PANEL_SHADOW
 	frame.add_theme_stylebox_override("panel", box)
 	highlight.color = UIPalette.INNER_HIGHLIGHT
 
@@ -212,41 +278,53 @@ func _apply_indicator() -> void:
 
 
 ## Start some dialogue
-func start(with_dialogue_resource: DialogueResource = null, title: String = "", extra_game_states: Array = []) -> void:
+func start(with_dialogue_resource: DialogueResource = null, cue: String = "", extra_game_states: Array = []) -> void:
 	temporary_game_states = [self] + extra_game_states
 	is_waiting_for_input = false
 	if is_instance_valid(with_dialogue_resource):
 		dialogue_resource = with_dialogue_resource
-	if not title.is_empty():
-		start_from_title = title
-	dialogue_line = await dialogue_resource.get_next_dialogue_line(start_from_title, temporary_game_states)
+	if not cue.is_empty():
+		start_from_cue = cue
+	# Every mutation before the first line runs inside this await. A cue that is
+	# nothing but mutations therefore completes here, having shown nothing and -
+	# rule 1 - having never taken the pause hold.
+	dialogue_line = await dialogue_resource.get_next_dialogue_line(start_from_cue, temporary_game_states)
 	show()
+
+
+## Ends the conversation now, releasing the sim and freeing the balloon. The one
+## exit; the null-line branch of `dialogue_line` and [DialogueRunner]'s game-over
+## handler both come through here.
+func finish() -> void:
+	if _ended:
+		return
+	_ended = true
+	_release_pause()
+	balloon.hide()
+	finished.emit()
+	queue_free()
 
 
 ## Apply any changes to the balloon given a new [DialogueLine].
 func apply_dialogue_line() -> void:
 	mutation_cooldown.stop()
 
+	# Rule 1: the first line the player actually sees is what stops the sim.
+	_hold_pause()
+
 	progress.hide()
 	is_waiting_for_input = false
 	balloon.focus_mode = Control.FOCUS_ALL
 	balloon.grab_focus()
 
-	# Temporary to test portraits - replace with a way to show stable portraits
-	character_label.visible = not dialogue_line.character.is_empty()
-	character_label.text = tr(dialogue_line.character, "dialogue")
-	var portrait_path: String = "res://assets/external/thirstsector_portraits/%s.png" % dialogue_line.character.to_lower()
-	if FileAccess.file_exists(portrait_path):
-		portrait.texture = load(portrait_path)
-	else:
-		# Pick a random one for now
-		portrait.texture = load("res://assets/external/thirstsector_portraits/portrait%d.png" % randi_range(12, 49))
+	_apply_speaker()
 
 	dialogue_label.hide()
 	dialogue_label.dialogue_line = dialogue_line
 
 	responses_menu.hide()
 	responses_menu.responses = dialogue_line.responses
+	_label_blocked_responses()
 
 	# Show our balloon
 	balloon.show()
@@ -268,6 +346,8 @@ func apply_dialogue_line() -> void:
 		responses_menu.show()
 	elif dialogue_line.time != "":
 		var time: float = dialogue_line.text.length() * 0.02 if dialogue_line.time == "auto" else dialogue_line.time.to_float()
+		# Real-time, not sim-time: the sim is held while a line is on screen, so
+		# `TimeManager.sim_seconds` would never come back.
 		await get_tree().create_timer(time).timeout
 		next(dialogue_line.next_id)
 	else:
@@ -276,10 +356,114 @@ func apply_dialogue_line() -> void:
 		balloon.grab_focus()
 
 
+## Name and face, from the conversation's cast (WI-62 §4).
+##
+## The cast resolves a character **once**, so a pool-drawn face holds still for
+## every line the speaker has. The placeholder this replaces rolled a new portrait
+## here, on every line.
+func _apply_speaker() -> void:
+	var character: String = tr(dialogue_line.character, "dialogue")
+	if cast == null:
+		# Standalone (the editor's Test Scene, a probe with no runner): print the
+		# character verbatim and show no face.
+		character_label.visible = not character.is_empty()
+		character_label.text = character
+		portrait.texture = null
+		portrait.visible = false
+		return
+	var member: SpeakerCast.Member = cast.resolve(character)
+	character_label.visible = not member.display_name.is_empty()
+	character_label.text = member.display_name
+	portrait.texture = member.portrait()
+	# The slot collapses rather than reserving 128px of nothing: narration is a
+	# legitimate line and it should read as full-width prose.
+	portrait.visible = portrait.texture != null
+
+
+## Rule 4, plus the all-blocked guard. The rules themselves are [ResponseRules],
+## where a GUT suite can reach them; this is the part that has to touch widgets.
+##
+## [DialogueResponsesMenu] has already disabled a failed response and suffixed its
+## node name with "Disallowed"; what it cannot do is say *why*, because only the
+## author knows.
+func _label_blocked_responses() -> void:
+	var responses: Array = dialogue_line.responses
+	if responses.is_empty():
+		return
+	for item: Node in responses_menu.get_children():
+		if not item.has_meta("response"):
+			continue
+		var response: DialogueResponse = item.get_meta("response") as DialogueResponse
+		if response == null or response.is_allowed:
+			continue
+		var button: Button = item as Button
+		if button == null:
+			continue
+		var label: String = ResponseRules.label_for(response)
+		if button is ActionButton:
+			(button as ActionButton).set_label(label)
+		else:
+			button.text = label
+	if ResponseRules.is_all_blocked(responses):
+		# Every option gated is an authoring mistake, not a game state: the player
+		# is looking at a modal with no way out. Say so loudly and give them the
+		# door - and do it *before* focus is wired, or the addon indexes an empty
+		# list (see `auto_configure_focus` in `_ready`).
+		push_error("DialogueBalloon: every response at line '%s' is blocked - the "
+			% dialogue_line.id + "conversation would have had no way forward")
+		responses_menu.add_child(_build_escape_hatch())
+	responses_menu.configure_focus()
+
+
+func _build_escape_hatch() -> Button:
+	var button: ActionButton = ActionButton.create(
+		ResponseRules.NO_OPTION_LABEL, ActionButton.Weight.SECONDARY)
+	button.name = "ResponseEscape"
+	button.caps = false
+	button.set_label(ResponseRules.NO_OPTION_LABEL)
+	# [DialogueResponsesMenu.configure_focus] reads `response` off every item it
+	# wires, so the hatch has to carry one - and it carries a **real** response
+	# pointing at END rather than a sentinel, so every path downstream (the click
+	# handler, the keyboard handler, `next()`) works unmodified.
+	#
+	# `set_meta(name, null)` would have been the obvious sentinel and is a trap:
+	# in Godot 4 a null value *deletes* the entry, so `get_meta("response")` then
+	# errors on the very item that was supposed to carry it.
+	var escape_response := DialogueResponse.new()
+	escape_response.text = ResponseRules.NO_OPTION_LABEL
+	escape_response.next_id = DMConstants.ID_END
+	button.set_meta("response", escape_response)
+	# Belt and braces alongside the menu's own click routing: `finish()` is latched,
+	# so the duplicate costs nothing and a mouse click works even if focus wiring
+	# did not happen.
+	button.pressed.connect(finish)
+	return button
+
+
 ## Go to the next line
 func next(next_id: String) -> void:
 	dialogue_line = await dialogue_resource.get_next_dialogue_line(next_id, temporary_game_states)
 
+
+#region Pause
+
+
+func _hold_pause() -> void:
+	if _holding_pause or Global.time_manager == null:
+		return
+	_holding_pause = true
+	Global.time_manager.hold_pause(PAUSE_HOLD)
+
+
+func _release_pause() -> void:
+	if not _holding_pause:
+		return
+	_holding_pause = false
+	if Global.time_manager != null and is_instance_valid(Global.time_manager):
+		Global.time_manager.release_pause(PAUSE_HOLD)
+
+
+#endregion
 
 #region Signals
 

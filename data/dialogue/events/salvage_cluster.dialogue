@@ -1,0 +1,12 @@
+~ sighting
+
+Long-range sensors flag a debris cluster tumbling past the station - what is left of an old freighter break-up. Hull plating and raw ore, free to whoever bothers to grab it.
+
+- Mark it for collection
+	$> station.salvage("steel", 15, 30, 2)
+	$> station.salvage("iron_ore", 10, 25, 1)
+	Crew suit up and start hauling debris in through the airlocks.
+	=> END
+- Let it drift
+	Nobody is pulled off shift. The cluster tumbles on into the dark.
+	=> END

@@ -1,0 +1,72 @@
+~ hail
+
+distress_captain: Station, this is the Kestrel. We are holed and running hot out of the outer system.
+distress_captain: Requesting emergency dock. There is no time to explain - yes or no.
+
+- Grant docking permission => granted
+- Deny the request => denied
+
+~ granted
+
+$> story.set_flag("kestrel_docked", true)
+$> story.bump("distress_hails_answered")
+
+%2 => granted_trader
+%2 => granted_chased
+%1 => granted_bounty
+
+~ granted_trader
+
+distress_captain: You just bought four people another year. Take what is in the hold - we are not carrying it anywhere now.
+$> station.grant_cargo("steel", 20, 40)
+$> station.grant_cargo("silicon_ore", 10, 25)
+$> story.shift_standing("traders", 0.1)
+=> END
+
+~ granted_chased
+
+distress_captain: Payment, and an apology. We were not running from the weather.
+$> station.credits(600)
+$> station.transmit("Kestrel", "Docked under fire", "The Kestrel paid for its berth and admitted it was being followed. Whatever was behind them knows where you are.")
+$> story.shift_standing("traders", 0.05)
+$> story.queue_event("kestrel_pursuit", 4)
+=> END
+
+~ granted_bounty
+
+patrol_officer: Station, the ship in your bay is carrying a wanted man. Hand him over and the bounty is yours.
+distress_captain: Whatever they are paying you, I will double it to have never seen me.
+
+- Hand him over
+	$> story.shift_standing("authority", 0.15)
+	$> story.shift_standing("pirates", -0.05)
+	$> station.credits(250)
+	patrol_officer: Sensible. The Patrol remembers this.
+	=> END
+- Feign ignorance
+	$> story.set_flag("kestrel_captain_hidden", true)
+	$> story.shift_standing("authority", -0.2)
+	$> station.credits(900)
+	distress_captain: You never saw us. We were never here.
+	=> END
+
+~ denied
+
+$> story.bump("distress_hails_answered")
+
+%2
+	Station sensors track the Kestrel bending onto a long, slow burn toward the inner planets.
+	$> story.shift_standing("authority", -0.05)
+%2
+	The Kestrel's drive flares white and comes apart. Debris rings the station for an hour.
+	$> station.damage_station(0.15)
+	$> station.salvage("steel", 10, 20, 3)
+%2
+	Two unlit hulls close on the Kestrel, kill its engines and match locks. The channel goes quiet.
+	$> story.shift_standing("authority", -0.15)
+	$> story.shift_standing("pirates", 0.05)
+%1
+	A patrol cutter disables the Kestrel and boards it. A commendation arrives an hour later, addressed to nobody.
+	$> station.transmit("System Patrol", "Fugitive detained", "Your refusal to harbour the Kestrel is noted with approval.")
+
+=> END

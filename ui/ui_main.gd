@@ -17,7 +17,6 @@ var skip_emit: bool = false
 const CONSOLE_BAR_SCENE: PackedScene = preload("res://ui/console/console_bar.tscn")
 const BUILD_MENU_SCENE: PackedScene = preload("res://ui/buttons/build_menu.tscn")
 const BUILD_CURSOR_HINT_SCENE: PackedScene = preload("res://ui/buttons/build_cursor_hint.tscn")
-const EVENT_CARD_SCENE: PackedScene = preload("res://ui/windows/event_card.tscn")
 const MINIMAP_SCENE: PackedScene = preload("res://ui/minimap.tscn")
 const ALERT_FEED_SCENE: PackedScene = preload("res://ui/alerts/alert_feed.tscn")
 const ALERT_HISTORY_SCENE: PackedScene = preload("res://ui/alerts/alert_history.tscn")
@@ -54,7 +53,6 @@ func _ready() -> void:
 	mode_manager.mode_changed.connect(_on_mode_changed)
 	_setup_right_column()
 	_setup_inspector_ui()
-	_setup_event_ui()
 	_setup_pause_menu()
 	# Last, once every readout and the inspector exist: the column measures itself
 	# and hands the inspector its ceiling.
@@ -443,13 +441,17 @@ func _on_game_over(reason: String) -> void:
 		screen.configure(reason)
 	add_child(screen)
 
-# --- events (WI-13) -------------------------------------------------------------
-
-## The card manages its own visibility/queue off SignalBus.event_triggered. It is
-## a modal, not a mode: it sits above the console and is not routed through
-## ModeManager.
-func _setup_event_ui() -> void:
-	add_child(EVENT_CARD_SCENE.instantiate())
+# --- conversations (WI-62) ------------------------------------------------------
+#
+# There is no mount call here, and that is the point. [DialogueRunner] builds a
+# [DialogueBalloon] when something has to be said and adds it to this node - so a
+# conversation lands above the mode panels and below the pause menu, in the slot
+# the WI-13 event card used to occupy, without the HUD having to know when one is
+# coming. The runner is also the only thing allowed to do it.
+#
+# The balloon is deliberately **not** on the Esc ladder below: a conversation is
+# something you answer, and an Esc that dismisses it is an answer given without
+# being read. Same considered exception as an outstanding critical alert.
 
 ## The two readout hotkeys that are not modes: M folds the station map, L opens
 ## the resource ledger. Both go through the same text-focus guard every other HUD

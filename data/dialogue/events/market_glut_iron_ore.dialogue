@@ -1,0 +1,3 @@
+~ glut
+$> station.market_shock("iron_ore", 2.5, 24.0)
+=> END

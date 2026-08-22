@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SpeakerData" format=3]
+
+[ext_resource type="Script" path="res://data/speakers/speaker_data.gd" id="1_speaker"]
+[ext_resource type="Texture2D" path="res://assets/external/thirstsector_portraits/portrait_corporate11.png" id="2_portrait"]
+
+[resource]
+script = ExtResource("1_speaker")
+id = &"sai"
+display_name = "SAI"
+portrait = ExtResource("2_portrait")
+faction = &"arc"

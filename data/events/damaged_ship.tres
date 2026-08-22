@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="EventData" format=3]
+
+[ext_resource type="Script" path="res://data/events/event_data.gd" id="1_evdata"]
+[ext_resource type="Script" path="res://data/events/event_condition.gd" id="2_cond"]
+[ext_resource type="Resource" path="res://data/dialogue/events/damaged_ship.dialogue" id="3_script"]
+[ext_resource type="Script" path="res://data/events/conditions/condition_dock_free.gd" id="4_c0"]
+[ext_resource type="Script" path="res://data/events/conditions/condition_min_crew.gd" id="4_c1"]
+
+[sub_resource type="Resource" id="Resource_c0"]
+script = ExtResource("4_c0")
+
+[sub_resource type="Resource" id="Resource_c1"]
+script = ExtResource("4_c1")
+min_crew = 2
+
+[resource]
+script = ExtResource("1_evdata")
+id = &"damaged_ship"
+title = "Damaged Ship Needs Help"
+body = "A ship is coming in at high burn from the outer system, holed and venting. They requested docking permission and did not have time to say why."
+dialogue = ExtResource("3_script")
+cue = "hail"
+weight = 0.8
+min_cycle = 4
+cooldown_cycles = 12
+conditions = Array[ExtResource("2_cond")]([SubResource("Resource_c0"), SubResource("Resource_c1")])

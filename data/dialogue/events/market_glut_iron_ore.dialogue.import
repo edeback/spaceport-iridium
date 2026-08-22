@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://wslhs2yu0o58"
+path="res://.godot/imported/market_glut_iron_ore.dialogue-806fbbc497fe2bc966d5fe193ca625ac.tres"
+
+[deps]
+
+source_file="res://data/dialogue/events/market_glut_iron_ore.dialogue"
+dest_files=["res://.godot/imported/market_glut_iron_ore.dialogue-806fbbc497fe2bc966d5fe193ca625ac.tres"]
+
+[params]
+
+defaults=true

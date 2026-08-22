@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://688wcerdi5fu"
+path="res://.godot/imported/kestrel_pursuit.dialogue-09e21284939cb5bc754b187237b49a06.tres"
+
+[deps]
+
+source_file="res://data/dialogue/events/kestrel_pursuit.dialogue"
+dest_files=["res://.godot/imported/kestrel_pursuit.dialogue-09e21284939cb5bc754b187237b49a06.tres"]
+
+[params]
+
+defaults=true

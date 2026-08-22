@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EventData" format=3]
+
+[ext_resource type="Script" path="res://data/events/event_data.gd" id="1_evdata"]
+[ext_resource type="Resource" path="res://data/dialogue/events/kestrel_pursuit.dialogue" id="3_script"]
+
+[resource]
+script = ExtResource("1_evdata")
+id = &"kestrel_pursuit"
+title = "Whoever Was Chasing the Kestrel"
+body = "Something followed the Kestrel in, and it wants to talk about what it is owed."
+dialogue = ExtResource("3_script")
+cue = "pursuit"
+weight = 0.0
+min_cycle = 999
+cooldown_cycles = 0

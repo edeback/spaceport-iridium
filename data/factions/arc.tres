@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FactionData" format=3]
+
+[ext_resource type="Script" path="res://data/factions/faction_data.gd" id="1_faction"]
+[ext_resource type="Resource" path="res://data/portraits/corporate.tres" id="2_pool"]
+
+[resource]
+script = ExtResource("1_faction")
+id = &"arc"
+display_name = "Astral Resource Corporation"
+description = "Your parent corporation. Standing with ARC is the tier ladder and the inspection that raises it - not a number kept here."
+portrait_pool = ExtResource("2_pool")
+scored = false
+sort_order = 40

@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://sg8mmk2m81km"
+path="res://.godot/imported/probe_blocked.dialogue-b563f95590440a911631ecdf53b9caa9.tres"
+
+[deps]
+
+source_file="res://tests/dialogue/probe_blocked.dialogue"
+dest_files=["res://.godot/imported/probe_blocked.dialogue-b563f95590440a911631ecdf53b9caa9.tres"]
+
+[params]
+
+defaults=true

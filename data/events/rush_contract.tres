@@ -1,30 +1,12 @@
 [gd_resource type="Resource" script_class="EventData" format=3 uid="uid://17qs1tyxfs38"]
 
-[ext_resource type="Script" uid="uid://p3ck66sptlw8" path="res://data/events/event_data.gd" id="1_evdata"]
-[ext_resource type="Script" uid="uid://c22hiw2cjh3o" path="res://data/events/event_choice.gd" id="2_choice"]
-[ext_resource type="Script" uid="uid://dcwi3tudyit34" path="res://data/events/event_effect.gd" id="3_effect"]
-[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="3_o07q2"]
-[ext_resource type="Script" uid="uid://crby7y3cmmsfa" path="res://data/events/event_condition.gd" id="4_condition"]
-[ext_resource type="Script" uid="uid://ck08ybyyoc0xk" path="res://data/events/effects/effect_offer_contract.gd" id="5_offer"]
-[ext_resource type="Script" uid="uid://c4c02lfx846ek" path="res://data/events/conditions/condition_has_module_tag.gd" id="6_tag"]
+[ext_resource type="Script" path="res://data/events/event_data.gd" id="1_evdata"]
+[ext_resource type="Script" path="res://data/events/event_condition.gd" id="2_cond"]
+[ext_resource type="Resource" path="res://data/dialogue/events/rush_contract.dialogue" id="3_script"]
+[ext_resource type="Script" path="res://data/events/conditions/condition_has_module_tag.gd" id="4_c0"]
 
-[sub_resource type="Resource" id="Resource_offer"]
-script = ExtResource("5_offer")
-premium_bonus = 0.2
-
-[sub_resource type="Resource" id="Resource_hear"]
-script = ExtResource("2_choice")
-label = "Hear them out"
-description = "The offer lands on the contracts board - accept it there if the terms look good."
-effects = Array[ExtResource("3_effect")]([SubResource("Resource_offer")])
-
-[sub_resource type="Resource" id="Resource_refuse"]
-script = ExtResource("2_choice")
-label = "Turn them away"
-description = "The station has enough on its plate."
-
-[sub_resource type="Resource" id="Resource_cond"]
-script = ExtResource("6_tag")
+[sub_resource type="Resource" id="Resource_c0"]
+script = ExtResource("4_c0")
 tag = "Dock"
 
 [resource]
@@ -32,6 +14,7 @@ script = ExtResource("1_evdata")
 id = &"rush_contract"
 title = "Rush Delivery Request"
 body = "A freight broker hails the station: a client further out needs goods on a hard deadline, and every licensed hauler is booked. They're offering above-market rates for whatever the station can commit."
+dialogue = ExtResource("3_script")
+cue = "hail"
 min_cycle = 3
-conditions = Array[ExtResource("4_condition")]([SubResource("Resource_cond")])
-choices = Array[ExtResource("2_choice")]([SubResource("Resource_hear"), SubResource("Resource_refuse")])
+conditions = Array[ExtResource("2_cond")]([SubResource("Resource_c0")])

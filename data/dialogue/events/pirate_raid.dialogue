@@ -1,0 +1,3 @@
+~ raid
+$> station.raid(-1.0)
+=> END

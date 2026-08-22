@@ -21,6 +21,13 @@ var unlock_manager: UnlockManager
 var crew_manager: CrewManager
 var trader_manager: TraderManager
 var event_manager: EventManager
+var dialogue_runner: DialogueRunner
+## The `story` half of the dialogue vocabulary (WI-62): flags, faction
+## standing and the scheduled-event queue. Owned by [DialogueRunner] as a
+## child node rather than mounted in main.tscn, because the two contexts are
+## registered and unregistered together and splitting them would let one
+## outlive the other.
+var story_state: StoryState
 var contract_manager: ContractManager
 var raid_manager: RaidManager
 var visitor_manager: VisitorManager

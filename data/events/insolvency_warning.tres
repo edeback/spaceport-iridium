@@ -1,32 +1,15 @@
 [gd_resource type="Resource" script_class="EventData" format=3]
 
-[ext_resource type="Script" uid="uid://p3ck66sptlw8" path="res://data/events/event_data.gd" id="1_evdata"]
-[ext_resource type="Script" uid="uid://c22hiw2cjh3o" path="res://data/events/event_choice.gd" id="2_choice"]
-[ext_resource type="Script" uid="uid://dcwi3tudyit34" path="res://data/events/event_effect.gd" id="3_effect"]
-[ext_resource type="Script" path="res://data/events/effects/effect_take_loan.gd" id="4_loan"]
-
-[sub_resource type="Resource" id="Resource_loan"]
-script = ExtResource("4_loan")
-principal = 2500
-
-[sub_resource type="Resource" id="Resource_accept"]
-script = ExtResource("2_choice")
-label = "Accept an ARC loan"
-description = "Take 2500 cr now, auto-repaid at 20% interest over the coming cycles."
-effects = Array[ExtResource("3_effect")]([SubResource("Resource_loan")])
-
-[sub_resource type="Resource" id="Resource_weather"]
-script = ExtResource("2_choice")
-label = "Weather it"
-description = "Refuse the loan and trust the books will balance before repossession."
-effects = Array[ExtResource("3_effect")]([])
+[ext_resource type="Script" path="res://data/events/event_data.gd" id="1_evdata"]
+[ext_resource type="Resource" path="res://data/dialogue/events/insolvency_warning.dialogue" id="3_script"]
 
 [resource]
 script = ExtResource("1_evdata")
 id = &"insolvency_warning"
 title = "ARC Repossession Notice"
-body = "The Astral Resource Corporation notes your station is running in the red. Settle the debt within a few cycles or ARC will move to repossess the station. They offer a loan — at their usual terms."
+body = "The Astral Resource Corporation notes your station is running in the red. Settle the debt within a few cycles or ARC will move to repossess the station. They offer a loan - at their usual terms."
+dialogue = ExtResource("3_script")
+cue = "notice"
 weight = 0.0
 min_cycle = 999
 cooldown_cycles = 0
-choices = Array[ExtResource("2_choice")]([SubResource("Resource_accept"), SubResource("Resource_weather")])

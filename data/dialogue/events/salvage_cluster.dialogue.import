@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://dyd4bqnqnydk4"
+path="res://.godot/imported/salvage_cluster.dialogue-46f72962c58afd71d7fc0e0582a3134b.tres"
+
+[deps]
+
+source_file="res://data/dialogue/events/salvage_cluster.dialogue"
+dest_files=["res://.godot/imported/salvage_cluster.dialogue-46f72962c58afd71d7fc0e0582a3134b.tres"]
+
+[params]
+
+defaults=true

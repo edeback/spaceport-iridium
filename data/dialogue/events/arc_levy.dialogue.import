@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://bq10v0tysxw3s"
+path="res://.godot/imported/arc_levy.dialogue-cdeb026959f9f2336d6c606a41ef7f32.tres"
+
+[deps]
+
+source_file="res://data/dialogue/events/arc_levy.dialogue"
+dest_files=["res://.godot/imported/arc_levy.dialogue-cdeb026959f9f2336d6c606a41ef7f32.tres"]
+
+[params]
+
+defaults=true

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FactionData" format=3]
+
+[ext_resource type="Script" path="res://data/factions/faction_data.gd" id="1_faction"]
+[ext_resource type="Resource" path="res://data/portraits/trader.tres" id="2_pool"]
+
+[resource]
+script = ExtResource("1_faction")
+id = &"traders"
+display_name = "Free Merchant League"
+description = "Independent haulers and brokers. They do not own anything out here, but they decide where the cargo goes."
+portrait_pool = ExtResource("2_pool")
+scored = true
+sort_order = 20

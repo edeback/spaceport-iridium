@@ -1,19 +1,14 @@
 [gd_resource type="Resource" script_class="EventData" format=3 uid="uid://cblg4s7k7qap7"]
 
-[ext_resource type="Script" uid="uid://p3ck66sptlw8" path="res://data/events/event_data.gd" id="1_evdata"]
-[ext_resource type="Script" uid="uid://dcwi3tudyit34" path="res://data/events/event_effect.gd" id="2_effect"]
-[ext_resource type="Script" uid="uid://8c1dr3iq5s8t" path="res://data/events/effects/effect_hull_breach.gd" id="3_breach"]
-[ext_resource type="Script" uid="uid://c22hiw2cjh3o" path="res://data/events/event_choice.gd" id="3_rcxyr"]
-[ext_resource type="Script" uid="uid://crby7y3cmmsfa" path="res://data/events/event_condition.gd" id="4_myx4x"]
-
-[sub_resource type="Resource" id="Resource_breach"]
-script = ExtResource("3_breach")
+[ext_resource type="Script" path="res://data/events/event_data.gd" id="1_evdata"]
+[ext_resource type="Resource" path="res://data/dialogue/events/micrometeorite_strike.dialogue" id="3_script"]
 
 [resource]
 script = ExtResource("1_evdata")
 id = &"micrometeorite_strike"
 title = "Micrometeorite Strike"
 body = "A micrometeorite has punched through the hull! The module is venting atmosphere - emergency bulkheads will take time to seal. Keep oxygen reserves flowing."
+dialogue = ExtResource("3_script")
+cue = "strike"
 min_cycle = 3
 cooldown_cycles = 6
-auto_effects = Array[ExtResource("2_effect")]([SubResource("Resource_breach")])

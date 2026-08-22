@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://cdtkiklrcldr0"
+path="res://.godot/imported/morale_lightshow.dialogue-60f17557c1c36b5a25e5d67e6420f317.tres"
+
+[deps]
+
+source_file="res://data/dialogue/events/morale_lightshow.dialogue"
+dest_files=["res://.godot/imported/morale_lightshow.dialogue-60f17557c1c36b5a25e5d67e6420f317.tres"]
+
+[params]
+
+defaults=true

@@ -27,7 +27,7 @@ extends MarginContainer
 const HOLD_REASONS: Dictionary[StringName, String] = {
 	&"critical_alert": "A critical alert is waiting — click it to resume",
 	&"pause_menu": "The menu is open",
-	&"event_card": "An event needs an answer",
+	&"dialogue": "Someone is waiting for an answer",
 	&"trade_panel": "A trader is docked",
 	&"game_over": "The run is over",
 }
@@ -42,7 +42,7 @@ const HOLD_REASONS: Dictionary[StringName, String] = {
 const HOLD_LABELS: Dictionary[StringName, String] = {
 	&"critical_alert": "Critical alert",
 	&"pause_menu": "Menu open",
-	&"event_card": "Event waiting",
+	&"dialogue": "In conversation",
 	&"trade_panel": "Trader docked",
 	&"game_over": "Run over",
 }

@@ -1,0 +1,15 @@
+~ hail
+
+pirate_captain: Nice station. Lot of soft places on it.
+pirate_captain: Six hundred credits and we go and be somebody else's problem. Call it insurance. Against us.
+
+- Pay the ransom [if station.credits_held() >= 600 /] [#blocked=You cannot raise 600 credits]
+	$> station.credits(-600)
+	$> story.shift_standing("pirates", 0.05)
+	pirate_captain: Sensible. We will come back when you are richer.
+	=> END
+- Refuse them
+	pirate_captain: Wrong answer.
+	$> story.shift_standing("pirates", -0.1)
+	$> station.raid(-1.0)
+	=> END

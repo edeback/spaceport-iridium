@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://ganf8rwmay1l"
+path="res://.godot/imported/outbreak.dialogue-5e658792fda908c8055fbe3439fc0191.tres"
+
+[deps]
+
+source_file="res://data/dialogue/events/outbreak.dialogue"
+dest_files=["res://.godot/imported/outbreak.dialogue-5e658792fda908c8055fbe3439fc0191.tres"]
+
+[params]
+
+defaults=true

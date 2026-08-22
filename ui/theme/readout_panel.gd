@@ -286,7 +286,7 @@ func _apply_surface() -> void:
 	box.set_corner_radius_all(0)
 	if drop_shadow:
 		box.shadow_size = UIMetrics.READOUT_SHADOW_SIZE
-		box.shadow_color = Color(0.0, 0.0, 0.0, 0.6)
+		box.shadow_color = UIPalette.READOUT_SHADOW
 	_body.add_theme_stylebox_override("panel", box)
 	if _header_edge != null:
 		_header_edge.color = box.border_color

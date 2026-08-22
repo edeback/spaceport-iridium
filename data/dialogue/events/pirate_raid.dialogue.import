@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://xw3g3i71bk5r"
+path="res://.godot/imported/pirate_raid.dialogue-1f4289e1a4221d8b4adbf7f4b31d0f54.tres"
+
+[deps]
+
+source_file="res://data/dialogue/events/pirate_raid.dialogue"
+dest_files=["res://.godot/imported/pirate_raid.dialogue-1f4289e1a4221d8b4adbf7f4b31d0f54.tres"]
+
+[params]
+
+defaults=true

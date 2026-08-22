@@ -37,6 +37,15 @@ const SHIPS: StringName = &"ships"
 const PAWNS: StringName = &"pawns"
 ## Kinds of mineable body - the asteroid belt, comets (WI-61).
 const SPACE_BODIES: StringName = &"space_bodies"
+## Who a conversation can be with (WI-62). A `.dialogue` file names a speaker by
+## id at the head of a line; anything else prints verbatim with no portrait.
+const SPEAKERS: StringName = &"speakers"
+## The powers the station has a standing with (WI-62).
+const FACTIONS: StringName = &"factions"
+## Sets of faces a speaker can be drawn from (WI-62). Scanned as a kind - rather
+## than only reached through the speakers that reference one - so a sweep can
+## assert every pool actually matched something.
+const PORTRAITS: StringName = &"portraits"
 
 ## Every kind there is. A scan for anything else is a typo, and a typo here would
 ## otherwise surface as "this mod added no content", which is invisible - so an
@@ -45,6 +54,7 @@ const KINDS: Array[StringName] = [
 	MODULES, RESOURCES, UNLOCKS, LOCAL_UPGRADES, TIERS, JOBS,
 	EVENTS, DISEASES, SKILLS, TRAITS, SHOPS, DIFFICULTY,
 	BUILD_CATEGORIES, RECIPES, SHIPS, PAWNS, SPACE_BODIES,
+	SPEAKERS, FACTIONS, PORTRAITS,
 ]
 
 ## Roots in load order, base game first. Static so the menus can scan content

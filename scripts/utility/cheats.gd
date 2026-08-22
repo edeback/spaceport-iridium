@@ -533,6 +533,89 @@ func fire_event(id: StringName) -> String:
 		return _report("fired event %s" % id)
 	return _report("no such event id: %s" % id)
 
+# --- dialogue (WI-62) -----------------------------------------------------------
+#
+# How stages 1-3 got driven before a single event was converted, and how a chain
+# gets tested without waiting four game-hours for its follow-up. Pass ids as plain
+# strings - Godot's Expression, which is what the REPL runs, rejects `&"..."`.
+
+## Runs any `.dialogue` file from anywhere, e.g.
+## start_dialogue("res://data/dialogue/events/damaged_ship.dialogue", "hail").
+func start_dialogue(path: String, cue: String = "") -> String:
+	if Global.dialogue_runner == null:
+		return _report("no dialogue runner")
+	var resource: DialogueResource = ResourceLoader.load(path) as DialogueResource
+	if resource == null:
+		return _report("no dialogue resource at %s" % path)
+	if not cue.is_empty() and not resource.get_cues().has(cue):
+		return _report("%s has no cue '%s' (has %s)" % [path, cue, str(resource.get_cues())])
+	Global.dialogue_runner.run(resource, cue)
+	return _report("running %s%s" % [path, "" if cue.is_empty() else " from " + cue])
+
+## Sets a declared story flag. Values are bools or ints, e.g. set_flag("kestrel_docked", true).
+func set_flag(id: String, value: Variant) -> String:
+	if Global.story_state == null:
+		return _report("no story state")
+	if not Global.story_state.flags.set_flag(StringName(id), value):
+		return _report("no such flag '%s' - declare it in StoryFlags.DECLARED" % id)
+	return _report("story flag %s = %s" % [id, str(value)])
+
+## Prints every declared flag and its current value, set or not.
+func dump_flags() -> String:
+	if Global.story_state == null:
+		return _report("no story state")
+	var flags: StoryFlags = Global.story_state.flags
+	var lines: Array[String] = []
+	for id: StringName in StoryFlags.DECLARED:
+		lines.append("%s = %s" % [id, str(flags.flag(id))])
+	_report("dumped %d story flags" % lines.size())
+	return "
+".join(lines)
+
+## Sets an absolute faction standing in -1..+1, e.g. set_standing("authority", -0.7).
+func set_standing(id: String, value: float) -> String:
+	if Global.story_state == null:
+		return _report("no story state")
+	if Global.story_state.faction(StringName(id)) == null:
+		return _report("no such faction '%s'" % id)
+	var landed: float = Global.story_state.standing.set_standing(StringName(id), value)
+	return _report("standing with %s = %+.2f (%s)" % [id, landed,
+		FactionStanding.band_name(FactionStanding.band_for(landed))])
+
+## Prints every faction, scored or not, with its standing and band.
+func dump_standing() -> String:
+	if Global.story_state == null:
+		return _report("no story state")
+	var lines: Array[String] = []
+	for faction: FactionData in Global.story_state.factions():
+		if not faction.scored:
+			lines.append("%s: not scored (tier ladder)" % faction.display_name)
+			continue
+		var value: float = Global.story_state.standing.standing(faction.id)
+		lines.append("%s: %+.2f (%s)" % [faction.display_name, value,
+			FactionStanding.band_name(FactionStanding.band_for(value))])
+	_report("dumped %d factions" % lines.size())
+	return "
+".join(lines)
+
+## Promises an event `delay_hours` from now, exactly as a conversation would.
+func queue_event(id: String, delay_hours: int) -> String:
+	if Global.story_state == null:
+		return _report("no story state")
+	Global.story_state.queue_event(id, delay_hours)
+	return _report("queued event %s in %d hours" % [id, delay_hours])
+
+## Prints the scheduled-event queue with each entry's due time.
+func dump_schedule() -> String:
+	if Global.story_state == null:
+		return _report("no story state")
+	var lines: Array[String] = []
+	for entry: EventSchedule.Entry in Global.story_state.schedule.entries():
+		lines.append(str(entry))
+	_report("dumped %d scheduled events" % lines.size())
+	return "
+".join(lines) if not lines.is_empty() else "(nothing scheduled)"
+
 ## Rolls one contract offer scaled to current station stores.
 func offer_contract() -> String:
 	var contract: ContractData = Global.contract_manager.generate_offer(0.0)

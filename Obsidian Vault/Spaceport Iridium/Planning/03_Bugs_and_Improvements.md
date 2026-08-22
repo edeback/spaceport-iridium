@@ -33,7 +33,7 @@ This defeats the stated WI-32 design goal: `RaidManager`'s header says a mid-rai
 
 Three do not:
 
-- **`EventManager._on_cycle_changed`** (`event_manager.gd:69`) calls `_roll_midcycle_hour()` and `_natural_roll()`. **Loading a save can immediately fire a random event** — and it fires *before* `EventManager.load_save_data` restores the manager's own state, since events are section 14 of 17.
+- ~~**`EventManager._on_cycle_changed`** calls `_roll_midcycle_hour()` and `_natural_roll()`. **Loading a save can immediately fire a random event** — and it fires *before* `EventManager.load_save_data` restores the manager's own state.~~ **Fixed by [[WI-62_Dialogue]]** (2026-08-22). Both the natural roll and WI-62's new scheduled-event drain now gate on `SaveManager.is_loading()`. It was a stray card before; with event chaining it could drop a chapter-two event into a save that never saw chapter one, which is what made it worth fixing rather than continuing to log.
 - `MarketManager._on_hour_changed` (`market_manager.gd:27`) ages every supply modifier by an hour and drifts all prices. Harmless *today* only because the market section loads afterward and overwrites it.
 - `ContractManager._on_cycle_changed` (`contract_manager.gd:197`) walks `active` for expiries. Harmless *today* only because `active` is still empty at that point in the section order.
 

@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://rhuco3thlrm1"
+path="res://.godot/imported/rush_contract.dialogue-95734725a03d98f5d7052a7cfbe6b320.tres"
+
+[deps]
+
+source_file="res://data/dialogue/events/rush_contract.dialogue"
+dest_files=["res://.godot/imported/rush_contract.dialogue-95734725a03d98f5d7052a7cfbe6b320.tres"]
+
+[params]
+
+defaults=true

@@ -50,6 +50,17 @@ const INERT_ACCENT := Color("2e4256")
 ## 1px inner top highlight every panel carries, so a surface reads as lit from
 ## above rather than as a flat hole.
 const INNER_HIGHLIGHT := Color(0.471, 0.745, 0.882, 0.07) # rgba(120,190,225,.07)
+## The drop shadow that separates a floating surface from the station behind it.
+## Two depths, because a readout sits closer to the edge than a panel does and
+## needs a slightly harder edge to stay legible over the nebula.
+##
+## These were `Color(0, 0, 0, 0.55)` and `Color(0, 0, 0, 0.6)` written inline in
+## [ConsolePanel] and [ReadoutPanel] - the only two colours left in `ui/` that
+## were not named here (WI-62). The scene sweep in `test_ui_theme.gd` never saw
+## them because they live in code, which is exactly the half-a-drift-guard
+## problem WI-58 fixed in the other direction.
+const PANEL_SHADOW := Color(0.0, 0.0, 0.0, 0.55)
+const READOUT_SHADOW := Color(0.0, 0.0, 0.0, 0.6)
 
 # --- states -------------------------------------------------------------------
 

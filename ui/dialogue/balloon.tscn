@@ -42,7 +42,7 @@ _data = {
 &"progress": SubResource("Animation_qkmqt")
 }
 
-[node name="ExampleBalloon" type="CanvasLayer" unique_id=416777208]
+[node name="DialogueBalloon" type="CanvasLayer" unique_id=416777208]
 layer = 100
 script = ExtResource("1_36de5")
 

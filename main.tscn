@@ -34,6 +34,7 @@
 [ext_resource type="Script" uid="uid://6xb1ct163od4" path="res://scripts/managers/market_manager.gd" id="12_d13ii"]
 [ext_resource type="Script" uid="uid://dkq3jwt2amjql" path="res://scripts/managers/economy_manager.gd" id="12_economymgr"]
 [ext_resource type="Script" uid="uid://7aklpgmttgh7" path="res://scripts/managers/event_manager.gd" id="12_eventmgr"]
+[ext_resource type="Script" path="res://scripts/managers/dialogue_runner.gd" id="12_dlgrunner"]
 [ext_resource type="PackedScene" path="res://objects/pirate_ship.tscn" id="12_pirateship"]
 [ext_resource type="Script" uid="uid://dmcs8civtaue8" path="res://scripts/managers/raid_manager.gd" id="12_raidmgr"]
 [ext_resource type="Texture2D" uid="uid://dmlscjahmhtu8" path="res://assets/sprites/planet_spritesheet.png" id="12_yaehf"]
@@ -7702,6 +7703,9 @@ trader_shuttle_scene = ExtResource("37_tradershuttle")
 
 [node name="EventManager" type="Node" parent="Managers" unique_id=1873220461]
 script = ExtResource("12_eventmgr")
+
+[node name="DialogueRunner" type="Node" parent="Managers" unique_id=1526834905]
+script = ExtResource("12_dlgrunner")
 
 [node name="ContractManager" type="Node" parent="Managers" unique_id=1526834902]
 script = ExtResource("12_contractmgr")

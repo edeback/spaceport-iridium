@@ -1,36 +1,12 @@
 [gd_resource type="Resource" script_class="EventData" format=3 uid="uid://c6ntlpw8lggdh"]
 
-[ext_resource type="Script" uid="uid://p3ck66sptlw8" path="res://data/events/event_data.gd" id="1_evdata"]
-[ext_resource type="Script" uid="uid://c22hiw2cjh3o" path="res://data/events/event_choice.gd" id="2_choice"]
-[ext_resource type="Script" uid="uid://dcwi3tudyit34" path="res://data/events/event_effect.gd" id="3_effect"]
-[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="3_esr14"]
-[ext_resource type="Script" uid="uid://crby7y3cmmsfa" path="res://data/events/event_condition.gd" id="4_condition"]
-[ext_resource type="Script" uid="uid://b0816wu7ptw7e" path="res://data/events/effects/effect_credit_delta.gd" id="5_credit"]
-[ext_resource type="Script" uid="uid://1qceeprbdwmm" path="res://data/events/effects/effect_happiness_modifier.gd" id="6_happy"]
-[ext_resource type="Script" uid="uid://bgky26a16q1sw" path="res://data/events/conditions/condition_min_credits.gd" id="7_mincred"]
+[ext_resource type="Script" path="res://data/events/event_data.gd" id="1_evdata"]
+[ext_resource type="Script" path="res://data/events/event_condition.gd" id="2_cond"]
+[ext_resource type="Resource" path="res://data/dialogue/events/arc_levy.dialogue" id="3_script"]
+[ext_resource type="Script" path="res://data/events/conditions/condition_min_credits.gd" id="4_c0"]
 
-[sub_resource type="Resource" id="Resource_levy"]
-script = ExtResource("5_credit")
-amount = -300
-
-[sub_resource type="Resource" id="Resource_pay"]
-script = ExtResource("2_choice")
-label = "Pay the levy"
-description = "Keep the Authority happy. It's only money."
-effects = Array[ExtResource("3_effect")]([SubResource("Resource_levy")])
-
-[sub_resource type="Resource" id="Resource_unrest"]
-script = ExtResource("6_happy")
-id = &"arc_levy_unrest"
-
-[sub_resource type="Resource" id="Resource_stall"]
-script = ExtResource("2_choice")
-label = "Stall the auditors"
-description = "The paperwork gets lost. The crew spends a day being interrogated instead of relaxing."
-effects = Array[ExtResource("3_effect")]([SubResource("Resource_unrest")])
-
-[sub_resource type="Resource" id="Resource_cond"]
-script = ExtResource("7_mincred")
+[sub_resource type="Resource" id="Resource_c0"]
+script = ExtResource("4_c0")
 min_credits = 500
 
 [resource]
@@ -38,7 +14,9 @@ script = ExtResource("1_evdata")
 id = &"arc_levy"
 title = "ARC Profit Levy"
 body = "An Astral Resource Corporation audit shuttle has docked without asking. They present a levy notice against the station's trading profits, effective immediately."
+dialogue = ExtResource("3_script")
+cue = "levy"
+mood_ids = PackedStringArray("arc_levy_unrest")
 min_cycle = 3
 cooldown_cycles = 8
-conditions = Array[ExtResource("4_condition")]([SubResource("Resource_cond")])
-choices = Array[ExtResource("2_choice")]([SubResource("Resource_pay"), SubResource("Resource_stall")])
+conditions = Array[ExtResource("2_cond")]([SubResource("Resource_c0")])

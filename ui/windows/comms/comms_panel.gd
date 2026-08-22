@@ -27,6 +27,7 @@ extends VBoxContainer
 ## ## Three tabs, one of which is the feed
 ##
 ## | `INCOMING` | Transmissions - a durable log existing systems post to |
+## | `STANDING` | How the station stands with the powers around it (WI-62 §5) |
 ## | `QUOTA` | WI-26's promotion block, moved out of Research (§5) |
 ## | `FINANCE` | `economy_screen`, reframed (§4) |
 ##
@@ -45,12 +46,14 @@ extends VBoxContainer
 ## A hull breach is never a transmission. A contract offer is both.
 
 const TAB_INCOMING: StringName = &"incoming"
+const TAB_STANDING: StringName = &"standing"
 const TAB_QUOTA: StringName = &"quota"
 const TAB_FINANCE: StringName = &"finance"
 
 ## The panel's standing instruction per tab, in the frame's footer strip (WI-54
 ## contract point 1) rather than as the last row of a list that scrolls.
 const FOOTER_INCOMING: String = "Click a transmission to read it · ARC is always one hail away"
+const FOOTER_STANDING: String = ("Standing moves when you answer a hail · it opens conversations, not prices yet")
 const FOOTER_QUOTA: String = "Meet the quota, then request the inspection above"
 const FOOTER_FINANCE: String = "ARC skims your income, lends against it, and audits the difference"
 
@@ -80,6 +83,7 @@ const LATER_INSPECTION_TOOLTIP: String = "Ask ARC to inspect the station for pro
 var _frame: ConsolePanel
 var _tabs: TabStrip
 var _incoming_page: Control
+var _standing_page: StandingTab
 var _quota_page: QuotaTab
 var _finance_page: FinanceTab
 
@@ -120,6 +124,7 @@ func _ready() -> void:
 	_connect_sources()
 	_tabs.set_tabs([
 		{"id": TAB_INCOMING, "text": "Incoming"},
+		{"id": TAB_STANDING, "text": "Standing"},
 		{"id": TAB_QUOTA, "text": "Quota"},
 		{"id": TAB_FINANCE, "text": "Finance"},
 	])
@@ -220,6 +225,8 @@ func _build_pages() -> void:
 
 	_incoming_page = _build_incoming_page()
 	pad.add_child(_incoming_page)
+	_standing_page = StandingTab.new()
+	pad.add_child(_standing_page)
 	_quota_page = QuotaTab.new()
 	pad.add_child(_quota_page)
 	_finance_page = FinanceTab.new()
@@ -297,10 +304,13 @@ func show_tab(id: StringName) -> void:
 		_tabs.select(id) # emits tab_selected, which lands back here
 		return
 	_incoming_page.visible = id == TAB_INCOMING
+	_standing_page.visible = id == TAB_STANDING
 	_quota_page.visible = id == TAB_QUOTA
 	_finance_page.visible = id == TAB_FINANCE
 	if _frame != null and is_instance_valid(_frame):
 		match id:
+			TAB_STANDING:
+				_frame.footer_text = FOOTER_STANDING
 			TAB_QUOTA:
 				_frame.footer_text = FOOTER_QUOTA
 			TAB_FINANCE:
@@ -331,6 +341,8 @@ func refresh() -> void:
 	_refresh_arc()
 	_refresh_feed()
 	_apply_header()
+	if _standing_page != null and _standing_page.visible:
+		_standing_page.refresh()
 	if _quota_page != null and _quota_page.visible:
 		_quota_page.refresh()
 	if _finance_page != null and _finance_page.visible:

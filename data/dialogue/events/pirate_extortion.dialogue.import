@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://bnt8qyl3vvhj8"
+path="res://.godot/imported/pirate_extortion.dialogue-2a37bd183e491723f7ea6114d0be6052.tres"
+
+[deps]
+
+source_file="res://data/dialogue/events/pirate_extortion.dialogue"
+dest_files=["res://.godot/imported/pirate_extortion.dialogue-2a37bd183e491723f7ea6114d0be6052.tres"]
+
+[params]
+
+defaults=true

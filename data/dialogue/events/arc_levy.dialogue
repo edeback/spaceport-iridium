@@ -1,0 +1,14 @@
+~ levy
+
+arc_auditor: Astral Resource Corporation, compliance division. We docked twenty minutes ago. You were not required to be notified.
+arc_auditor: There is a levy against this station's trading profits. Three hundred credits, effective immediately.
+
+- Pay the levy
+	$> station.credits(-300)
+	arc_auditor: Noted and filed. The Corporation appreciates a station that understands its position.
+	=> END
+- Stall the auditors
+	$> station.mood("arc_levy_unrest", -0.1, 24.0)
+	arc_auditor: Then we will need to interview your crew. All of them. Today.
+	The paperwork gets lost. The crew spend a shift being asked the same questions instead of resting.
+	=> END

@@ -1,0 +1,27 @@
+~ pursuit
+
+$> story.set_flag("kestrel_pursuit_seen", true)
+
+if story.flag("kestrel_captain_hidden")
+	pirate_captain: You are the station that hid a man from the Patrol. That makes you interesting to us.
+	pirate_captain: Interesting stations pay a retainer. Fifteen hundred, and we forget where you are.
+else
+	pirate_captain: The Kestrel went quiet somewhere near you and we would like to know where.
+	pirate_captain: Fifteen hundred credits buys the question going away.
+
+- Pay the retainer [if station.credits_held() >= 1500 /] [#blocked=You cannot raise 1500 credits]
+	$> station.credits(-1500)
+	$> story.shift_standing("pirates", 0.15)
+	pirate_captain: Pleasure. Genuinely.
+	=> END
+- Tell them where to go
+	$> story.shift_standing("pirates", -0.15)
+	pirate_captain: We were hoping you would say that.
+	$> station.raid(-1.0)
+	=> END
+- Report the contact to the Patrol [if story.flag("kestrel_captain_hidden") == false /] [#blocked=You have your own reasons not to call the Patrol]
+	$> story.shift_standing("authority", 0.2)
+	$> story.shift_standing("pirates", -0.2)
+	patrol_officer: Logged. We cannot get a cutter to you before they do, but it will be on the record.
+	$> station.raid(-1.0)
+	=> END

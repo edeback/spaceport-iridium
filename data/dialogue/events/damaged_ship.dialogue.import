@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://daolxnp2jmlff"
+path="res://.godot/imported/damaged_ship.dialogue-1528c8e1f7651fbb0401ee64f7e0de68.tres"
+
+[deps]
+
+source_file="res://data/dialogue/events/damaged_ship.dialogue"
+dest_files=["res://.godot/imported/damaged_ship.dialogue-1528c8e1f7651fbb0401ee64f7e0de68.tres"]
+
+[params]
+
+defaults=true

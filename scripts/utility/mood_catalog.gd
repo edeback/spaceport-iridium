@@ -33,8 +33,8 @@ extends RefCounted
 ## `PawnDiseaseComponent._mood_mod_id`.
 const DISEASE_PREFIX: String = "disease_"
 
-## Prefix [EventEffectHappinessModifier] falls back to when an effect declares no
-## id of its own. An effect that *does* declare one is found by scan instead -
+## Prefix a dialogue-applied station modifier may use to name its own event, so
+## the event is recoverable without an entry in [member EventData.mood_ids] -
 ## see [method _event_for].
 const EVENT_PREFIX: String = "event_"
 
@@ -232,11 +232,15 @@ static func _disease_for(id: StringName) -> DiseaseData:
 		return null
 	return DiseaseData.by_id(StringName(text.substr(DISEASE_PREFIX.length())))
 
-## Events are the awkward family: an [EventEffectHappinessModifier] carries its
-## own `id`, which need not resemble the event's ("meteor_lightshow" on
-## "morale_lightshow"), and only falls back to `event_<event id>` when left
-## blank. So both routes are tried: strip the prefix and ask by id, then consult
-## a scan of every authored effect id.
+## Events are the awkward family: a modifier id need not resemble the event's
+## ("meteor_lightshow" on "morale_lightshow"). So both routes are tried: strip the
+## `event_` prefix and ask by id, then consult a scan of every id an event
+## *declares* in [member EventData.mood_ids].
+##
+## Declared rather than discovered since WI-62: the modifier used to be an
+## authored `EventEffectHappinessModifier` resource that could be scanned for its
+## id, and events apply their mood through `station.mood(...)` in a `.dialogue`
+## file now, which nothing can read back.
 ##
 ## The scan is cached like [DiseaseData]'s and [TraitData]'s registries, and for
 ## the same reason - statics survive a scene reload, so it costs one directory
@@ -266,25 +270,9 @@ static func _ensure_events_scanned() -> void:
 		# Indexed by the event's own id too, so the `event_<id>` fallback form
 		# resolves without a second table.
 		_event_by_modifier[event.id] = event
-		for effect: EventEffect in _happiness_effects(event):
-			var modifier := effect as EventEffectHappinessModifier
-			if modifier != null and modifier.id != &"":
-				_event_by_modifier[modifier.id] = event
-
-## Every happiness effect an event can apply, from both the auto-effect list and
-## each choice - a choice-driven modifier is just as visible to the player.
-static func _happiness_effects(event: EventData) -> Array[EventEffect]:
-	var out: Array[EventEffect] = []
-	for effect: EventEffect in event.auto_effects:
-		if effect is EventEffectHappinessModifier:
-			out.append(effect)
-	for choice: EventChoice in event.choices:
-		if choice == null:
-			continue
-		for effect: EventEffect in choice.effects:
-			if effect is EventEffectHappinessModifier:
-				out.append(effect)
-	return out
+		for mood_id: String in event.mood_ids:
+			if not mood_id.is_empty():
+				_event_by_modifier[StringName(mood_id)] = event
 
 ## Drops the event scan, so a test (or a mod mount) can force it to run again.
 static func reset_event_cache() -> void:

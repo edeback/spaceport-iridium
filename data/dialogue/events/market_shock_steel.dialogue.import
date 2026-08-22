@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://oc8at7fmchd2"
+path="res://.godot/imported/market_shock_steel.dialogue-200ad415fe7e6fd3c7c3423e48637de8.tres"
+
+[deps]
+
+source_file="res://data/dialogue/events/market_shock_steel.dialogue"
+dest_files=["res://.godot/imported/market_shock_steel.dialogue-200ad415fe7e6fd3c7c3423e48637de8.tres"]
+
+[params]
+
+defaults=true

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SpeakerData" format=3]
+
+[ext_resource type="Script" path="res://data/speakers/speaker_data.gd" id="1_speaker"]
+[ext_resource type="Resource" path="res://data/portraits/trader.tres" id="2_pool"]
+
+[resource]
+script = ExtResource("1_speaker")
+id = &"distress_captain"
+display_name = ""
+portrait_pool = ExtResource("2_pool")
+faction = &"traders"
