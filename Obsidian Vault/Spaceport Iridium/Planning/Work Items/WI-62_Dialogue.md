@@ -12,6 +12,7 @@
 > 7. **`DialogueResponsesMenu.auto_configure_focus` is off and the balloon wires focus itself.** The addon indexes `get_menu_items()[0]` unguarded, and that list excludes every disallowed row — so an all-blocked line made it throw `Out of bounds get index '0'` one frame *before* the escape hatch existed. Only the probe found this.
 > 8. **The escape hatch carries a real `DialogueResponse` pointing at END**, not a sentinel. `set_meta(name, null)` looked like the obvious sentinel and is a trap: in Godot 4 a null value **deletes** the entry, so `get_meta("response")` then errors on the very item meant to carry it. A real response also means every path downstream works unmodified.
 > 9. **The addon registered the new `.dialogue` files into `locale/translations_pot_files` by itself.** §8 flagged this as a manual step to remember; it turns out not to be one.
+> 10. **The civilian portrait pool excludes one prefix, not seven.** `portrait` is a prefix of `portrait_pirate`, so the pool needs an exclusion — and the first draft listed the seven faction prefixes by name. `portrait_SAI.png` landed in the directory the same day and immediately leaked a robot into the civilian pool. One exclusion, `portrait_`, covers every faction prefix there is and every one there will ever be. A deny-list of names is a maintenance burden disguised as precision, and this one lasted a few hours.
 >
 > **What the screenshots caught that the probe could not:** the Standing tab printed each faction's name **twice** — once as the row's entity name and again as the `StatBar`'s label — and the honest "this is a record, not a lever" caveat sat as a row at the bottom of the panel body, which is the thing `ConsolePanel.footer_text` exists to prevent. Both fixed; the bar's label is the scale (`HOSTILE TO ALLIED`) now, which is information the row did not previously carry.
 >
@@ -301,7 +302,7 @@ One caveat to record now: `.dialogue` files that should be translatable must be 
 
 ### 9 — What this item deliberately does not build
 
-- **The tutorial.** SAI ships here as a `SpeakerData` with a fixed portrait and nothing to say. The onboarding flow, the "Skip Onboarding" option on the New Game screen, and whatever step-gating a tutorial needs are the next item. SAI's face is a **placeholder** drawn from the `corporate` pool — there is no robotic portrait in the set, and it wants its own art (same status as WI-60's Radiator sprite).
+- **The tutorial.** SAI ships here as a `SpeakerData` with a fixed portrait and nothing to say. The onboarding flow, the "Skip Onboarding" option on the New Game screen, and whatever step-gating a tutorial needs are the next item. SAI shipped against a `corporate`-pool placeholder and now points at real art (`portrait_SAI.png`, added in `a9199129` while this item was in flight).
 - **Standing consequences.** §5 names the three hooks and leaves them.
 - **Pawns talking in balloons.** WI-48's chats are a mood system with a signal, not conversation; giving them balloons would put a modal in front of the player every few minutes.
 - **Voice.** The balloon already honours a `#voice` tag; nothing authors one.

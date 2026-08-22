@@ -45,6 +45,15 @@ func _speaker(speaker_id: StringName, pool: PortraitPool = null,
 	speaker.portrait_pool = pool
 	return speaker
 
+## The shipped civilian pool, as `data/portraits/civilian.tres` declares it.
+##
+## One exclusion, not seven: `portrait_` covers every faction prefix there is and
+## every one there will ever be. The first draft listed the seven by name and was
+## broken within the day by a new `portrait_SAI.png` landing in the directory - a
+## deny-list of names is a maintenance burden disguised as precision.
+func _civilian() -> PortraitPool:
+	return _pool(&"civilian", "portrait", PackedStringArray(["portrait_"]))
+
 func _catalog(speakers: Array[SpeakerData]) -> Dictionary[StringName, SpeakerData]:
 	var out: Dictionary[StringName, SpeakerData] = {}
 	for speaker: SpeakerData in speakers:
@@ -146,9 +155,7 @@ func test_every_shipped_pool_matched_something() -> void:
 func test_the_civilian_pool_excludes_the_faction_prefixes() -> void:
 	# `portrait` is a prefix of `portrait_pirate`, so without the exclusion list
 	# the civilian pool would silently contain every face in the game.
-	var civilian: PortraitPool = _pool(&"civilian", "portrait", PackedStringArray([
-		"portrait_pirate", "portrait_luddic", "portrait_hegemony", "portrait_diktat",
-		"portrait_league", "portrait_corporate", "portrait_mercenary"]))
+	var civilian: PortraitPool = _civilian()
 	var everything: PortraitPool = _pool(&"everything", "portrait")
 	assert_gt(civilian.size(), 0)
 	assert_lt(civilian.size(), everything.size(),
@@ -162,9 +169,7 @@ func test_the_civilian_pool_excludes_the_faction_prefixes() -> void:
 ## a path from a numeric range asks for a missing file one time in thirty-seven;
 ## a directory listing cannot. This test exists so nobody reintroduces the range.
 func test_a_pool_with_a_hole_in_its_numbering_resolves_every_entry() -> void:
-	var pool: PortraitPool = _pool(&"civilian", "portrait", PackedStringArray([
-		"portrait_pirate", "portrait_luddic", "portrait_hegemony", "portrait_diktat",
-		"portrait_league", "portrait_corporate", "portrait_mercenary"]))
+	var pool: PortraitPool = _civilian()
 	var names: PackedStringArray = PackedStringArray()
 	for path: String in pool.paths():
 		names.append(path.get_file())

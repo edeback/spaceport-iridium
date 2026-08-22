@@ -8,5 +8,5 @@ id = &"civilian"
 description = "Station hands, dockers, passers-by - anyone with no flag on their sleeve."
 directory = "res://assets/external/thirstsector_portraits"
 prefix = "portrait"
-excluded_prefixes = PackedStringArray("portrait_pirate", "portrait_luddic", "portrait_hegemony", "portrait_diktat", "portrait_league", "portrait_corporate", "portrait_mercenary")
+excluded_prefixes = PackedStringArray("portrait_")
 extension = "png"
