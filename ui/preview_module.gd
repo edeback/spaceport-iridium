@@ -103,6 +103,13 @@ var can_place: bool = true:
 			can_place = new_value
 			_update_shader()
 
+## The three verdicts behind can_place, kept apart rather than folded together on
+## the spot because multiplacement re-decides the third one for a whole drag at
+## once (see [MultiplacementPlan]) while reusing the other two exactly as they are.
+var affordable: bool = true
+var footprint_clear: bool = true
+var world_connected: bool = true
+
 func update_from_module_data() -> void:
 	# The flipped setter reaches here too, and flip_module is bindable with no
 	# module selected - nothing to preview in that case.
@@ -111,10 +118,7 @@ func update_from_module_data() -> void:
 	var temp_scene: PackedScene =  module_data.scene
 	if flipped and module_data.flippable:
 		temp_scene = module_data.flipped_scene
-	var preview_data: ModulePreviewData = _preview_cache.get(temp_scene)
-	if preview_data == null:
-		preview_data = ModulePreviewData.from_scene(temp_scene)
-		_preview_cache[temp_scene] = preview_data
+	var preview_data: ModulePreviewData = _preview_data_for(temp_scene)
 	module_size = preview_data.module_size
 	# The point arrays are shared with every other preview of this scene; they
 	# are only ever read, never mutated.
@@ -136,40 +140,57 @@ func update_from_module_data() -> void:
 	%ErrorLabel.position.x = -offset.x
 	%ErrorLabel.position.y = -offset.y - 32
 
+## Cached geometry for one module scene, built on first sight. Multiplacement
+## duplicates share the dictionary by reference, and the truss a corridor drag
+## backfills is looked up through here too rather than instantiated per drag.
+func _preview_data_for(scene: PackedScene) -> ModulePreviewData:
+	var preview_data: ModulePreviewData = _preview_cache.get(scene)
+	if preview_data == null:
+		preview_data = ModulePreviewData.from_scene(scene)
+		_preview_cache[scene] = preview_data
+	return preview_data
+
 func _update_shader() -> void:
 	if (sprite && sprite.material != null):
 		sprite.material.set_shader_parameter(SHADER_PARAM_PLACEABLE, can_place)
 
 
-func update_placeable(module_cell: Vector2i, ignore_connections: bool = false) -> void:
+func update_placeable(module_cell: Vector2i) -> void:
+	last_cell = module_cell
+	# flip_module is bindable with nothing selected and revalidates on the spot,
+	# which reaches here with no module to judge (and used to crash on the cost
+	# check). The preview is hidden in that state, so there is nothing to light.
+	if module_data == null:
+		return
 	if Global.world_manager.debug_build_anything:
-		can_place = true
-		%ErrorLabel.visible = false
-		last_cell = module_cell
+		affordable = true
+		footprint_clear = true
+		world_connected = true
+		_show_verdict(true, true)
 		return
-	var any_blocked: bool = _update_cell_states(module_cell)
-	# Must be able to pay
-	if !module_data.can_afford():
-		%ErrorLabel.visible = true
+	# Order matters only for which reason gets named: cost, then footprint, then
+	# the neighbour test.
+	footprint_clear = not _update_cell_states(module_cell)
+	affordable = module_data.can_afford()
+	world_connected = has_world_connection(module_cell)
+	_show_verdict(world_connected, true)
+
+## Multiplacement's answer to the connection question, standing in for the live
+## neighbour test: a module in the middle of a drag is held up by the ones queued
+## in front of it, which do not exist yet. `show_reason` is spent on the first
+## refusal in the drag only - the cut is what the player needs named, and thirty
+## stacked labels down a corridor line name nothing.
+func apply_drag_verdict(connected: bool, show_reason: bool) -> void:
+	_show_verdict(connected, show_reason)
+
+func _show_verdict(connected: bool, show_reason: bool) -> void:
+	can_place = affordable and footprint_clear and connected
+	%ErrorLabel.visible = not can_place and show_reason
+	if not affordable:
 		%ErrorLabel.text = "Can't afford!"
-		can_place = false
-		return
-	# Footprint must not overlap
-	if any_blocked:
-		%ErrorLabel.visible = true
+	elif not footprint_clear:
 		%ErrorLabel.text = "Blocked!"
-		can_place = false
-		return
-	# Must be connected to at least one other module
-	if ignore_connections:
-		can_place = true
-	else:
-		can_place = _has_possible_connections(module_cell)
-	if can_place:
-		%ErrorLabel.visible = false
-		last_cell = module_cell
-	else:
-		%ErrorLabel.visible = true
+	elif not connected:
 		%ErrorLabel.text = "Not connected to anything!"
 
 ## Recompute per-cell validity for the footprint at module_cell. Returns true
@@ -199,7 +220,11 @@ func _draw_cell_overlay() -> void:
 		var rect := Rect2(Vector2(local_cell * Global.CELL_SIZE) - offset, Vector2(Global.CELL_SIZE))
 		_cell_overlay.draw_rect(rect, CELL_CLEAR_COLOR if _cell_states[local_cell] else CELL_BLOCKED_COLOR)
 
-func _has_possible_connections(module_cell: Vector2i) -> bool:
+## Would a module of this type at `module_cell` be touching built structure right
+## now? Public because multiplacement asks it twice: once per candidate while the
+## drag is on screen, and again between placements, when the modules it built a
+## moment ago are the answer.
+func has_world_connection(module_cell: Vector2i) -> bool:
 	# Explicit connection points
 	for point in connection_points:
 		var test_module: ModuleBase = Global.world_manager.get_module_by_cell(module_connection_layer, module_cell + point)
@@ -211,10 +236,39 @@ func _has_possible_connections(module_cell: Vector2i) -> bool:
 						return true
 	return false
 
+## This module's drag geometry: its own footprint, plus everything a placed copy
+## leaves in the world for the next module in the line to connect to. That second
+## part is not always the module itself - a corridor lands on the CORRIDOR layer
+## but connects through the MODULE layer, so a dragged corridor line is chained
+## together by the truss each corridor backfills under itself.
+func multiplacement_placement() -> MultiplacementPlan.Placement:
+	var placement := MultiplacementPlan.Placement.new()
+	placement.size = module_size
+	placement.connection_points = connection_points
+	placement.internal_points = internal_points
+	placement.connection_layer = module_connection_layer
+	placement.provisions.append(MultiplacementPlan.Provision.new(
+		module_layer, Vector2i.ZERO, module_size, connection_points, internal_points))
+	var backfill: ModuleData = Global.world_manager.replacement_module
+	if backfill == null or backfill.scene == null:
+		return placement
+	var backfill_data: ModulePreviewData = _preview_data_for(backfill.scene)
+	for point: Vector2i in ModuleBase.backfill_points(module_layer, internal_points):
+		placement.provisions.append(MultiplacementPlan.Provision.new(
+			backfill.interaction_layer, point, backfill_data.module_size,
+			backfill_data.connection_points, backfill_data.internal_points))
+	return placement
+
 func _ready() -> void:
 	sprite.texture = default_texture
 	if (sprite && sprite.material != null):
 		sprite.material = sprite.material.duplicate()
+	# The scene authors PLACEABLE = false while can_place defaults to true, and
+	# the setter only pushes the parameter when the value *changes* - so without
+	# this a preview that is placeable from its first frame draws refused-red.
+	# Multiplacement duplicates ready here too, which is where it showed: a copy
+	# whose verdict matches the one it was duplicated with never fires the setter.
+	_update_shader()
 	# Overlay node added last so per-cell tints draw over the sprite; a plain
 	# Node2D can't override _draw, so hook its draw signal instead. Multiplace
 	# duplicates this whole node (overlay child and remapped connection

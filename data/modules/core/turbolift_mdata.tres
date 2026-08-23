@@ -23,5 +23,4 @@ ExtResource("3_rns6g"): 50
 tags = Array[String](["Core"])
 category_id = &"core"
 multiplacement = 2
-ignore_multiplacement_connection_check = true
 interaction_layer = 2

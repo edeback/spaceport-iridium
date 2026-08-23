@@ -29,9 +29,12 @@ extends Resource
 ## mod cannot add to - so a modded module with a new tag silently drew in the
 ## fallback hull grey. Alpha 0 (the default) keeps the tag lookup.
 @export var minimap_color: Color = Color(0, 0, 0, 0)
-## Can you click-drag to place multiples?
+## Can you click-drag to place multiples, and along which axis? A drag is judged
+## as one line rather than cell by cell (see [MultiplacementPlan]), so there is no
+## companion flag to skip the connection check any more: a module halfway down a
+## drag is held up by the ones queued in front of it, and whether that holds all
+## the way along is something the plan works out, not something a module asserts.
 @export var multiplacement := WorldManager.Multiplacement.NONE
-@export var ignore_multiplacement_connection_check: bool = false
 ## If hidden, does not show in UI
 @export var hidden: bool = false
 

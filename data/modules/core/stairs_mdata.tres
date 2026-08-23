@@ -23,6 +23,5 @@ ExtResource("3_8sqwl"): 10
 tags = Array[String](["Core"])
 category_id = &"core"
 multiplacement = 2
-ignore_multiplacement_connection_check = true
 interaction_layer = 2
 metadata/_custom_type_script = "uid://vwmofdckg7hu"

@@ -45,12 +45,6 @@ func _ready() -> void:
 	)
 	Global.turbolift_manager.add_turbolift_module(self)
 
-func on_place() -> void:
-	super()
-	if Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, module_cell) == null:
-		# add a truss segment below
-		Global.world_manager.add_module(structural_backfill(), module_cell)
-
 func pre_delete() -> void:
 	super()
 	Global.turbolift_manager.remove_turbolift_module(self)

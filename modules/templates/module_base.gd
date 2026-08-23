@@ -22,6 +22,23 @@ func structural_backfill() -> ModuleData:
 		return null
 	return Global.world_manager.replacement_module
 
+## Which of a module's cells get a structural backfill under them when it lands.
+##
+## A module on a layer of its own - corridor, stairs, turbolift, airlock - is not
+## itself structure, so the MODULE cell it sits over would be empty space. Each of
+## the four used to fill it in its own `on_place()` override, four copies of the
+## same loop; [method on_place] runs it once for all of them now.
+##
+## Static because the build preview has to ask the same question about a module
+## that does not exist yet: a dragged line of corridors is chained together by the
+## truss under each corridor, never by the corridors, so [MultiplacementPlan]
+## cannot judge the drag without knowing this.
+static func backfill_points(interaction_layer: WorldManager.StructureLayer,
+		internal_points: Array[Vector2i]) -> Array[Vector2i]:
+	if interaction_layer == WorldManager.StructureLayer.MODULE:
+		return []
+	return internal_points
+
 @export var size: Vector2i = Vector2i(1, 1)
 @export var show_debug: bool = true:
 	set(new_show_debug):
@@ -575,13 +592,20 @@ func load_upgrade_save_data(data: Dictionary) -> void:
 				stat_modifiers.add_modifier(spec.stat, spec.op, spec.value, upgrade.id)
 
 func on_place() -> void:
-	if get_structure_component() != null and module_data.interaction_layer == WorldManager.StructureLayer.MODULE:
+	if get_structure_component() == null:
+		return
+	if module_data.interaction_layer == WorldManager.StructureLayer.MODULE:
 		var cells: Array[Vector2i] = []
 		for internal_point: Vector2i in get_structure_component().internal_points:
 			cells.append(module_cell + internal_point)
 		Global.tilemap.set_cells_terrain_connect(cells, 0, 0)
-	pass
-	
+		return
+	# Not structure ourselves: back the cell we sit over with truss, unless
+	# something already holds it. See backfill_points for why this lives here.
+	for point: Vector2i in backfill_points(module_data.interaction_layer, get_structure_component().internal_points):
+		if Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, module_cell + point) == null:
+			Global.world_manager.add_module(structural_backfill(), module_cell + point)
+
 func pre_delete() -> void:
 	_eject_stored_resources_as_debris()
 

@@ -2,10 +2,8 @@
 class_name AirlockModule
 extends ModuleBase
 
-
-func on_place() -> void:
-	super()
-	for point in get_structure_component().internal_points:
-		if Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, module_cell + point) == null:
-			# add a truss segment below
-			Global.world_manager.add_module(structural_backfill(), module_cell + point)
+## No behaviour of its own any more. The truss it used to lay under its inner cell
+## in on_place() is one rule on ModuleBase now (see ModuleBase.backfill_points),
+## shared with the corridor, the stairs and the turbolift - and read by the build
+## preview, which has to know what a module will leave behind before it exists.
+## Kept as the identity the two airlock scenes attach.

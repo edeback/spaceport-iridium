@@ -23,5 +23,4 @@ ExtResource("3_h8ter"): 10
 tags = Array[String](["Core"])
 category_id = &"core"
 multiplacement = 1
-ignore_multiplacement_connection_check = true
 interaction_layer = 1

@@ -13,12 +13,6 @@ func _ready() -> void:
 	get_path_component().door_disconnected.connect(door_disconnected_to)
 	set_sprite(null)
 	
-func on_place() -> void:
-	super()
-	if Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, module_cell) == null:
-		# add a truss segment below
-		Global.world_manager.add_module(structural_backfill(), module_cell)
-	
 func door_connected_to(_cell: Vector2i, from_layer: WorldManager.StructureLayer) -> void:
 	if from_layer == WorldManager.StructureLayer.MODULE:
 		door_sprite.region_rect.position.x = 0
