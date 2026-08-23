@@ -15,16 +15,18 @@ Rename modules! And be able to reset them to their default, too. Maybe give the 
 When pawns wander, pick a random inner node (if it has one) instead of just flipping between the boundary of two modules
 - They now pick a "stand" target so maybe that's good enough?
 
-Storage rework?
-Merge storages input/output, instead "configure" each storage bit to be import, export, or import/export
+Remove Pawn Layer, pawns get reparented constantly and don't need their own layer
 
 For resources:
 Show relationships between resources in the UI
 Give them categories? So ore can be shown together, tier one/two/three materials etc
 
-Power, air, (future heat), should all be combined into one panel. (Current setup was good for prototyping, but the more components, less ideal it looks)
-
 Pawn issues should be promoted to the alerts section of the pawn screen too
+
+Modules should hide truss beneath them
+- but also need to make sure to have them connect appropriately?
+
+Central place to set all schedules
 
 Officers?
 - Promote pawns to certain positions
