@@ -25,6 +25,11 @@ const RECENT_CAP: int = 5
 ## Side of the flyout header's `◀` collapse control.
 const COLLAPSE_CONTROL_SIZE: int = 22
 
+## Emitted whenever the flyout opens on a category, opens on a search, or closes
+## (WI-63). The coach mark's `await_category` gate needs a signal to re-test on,
+## and the flyout's open category was previously only readable by polling.
+signal flyout_changed
+
 ## What the flyout parks beside, and the panel whose active border it takes over
 ## while it is open. Null means this menu is mounted outside a panel (a probe);
 ## the flyout then anchors itself at the design's x anyway. The BUILD factory
@@ -286,6 +291,7 @@ func _on_search_changed(text: String) -> void:
 
 func _show_flyout() -> void:
 	_flyout.visible = true
+	flyout_changed.emit()
 	# The active border belongs to the outermost edge on screen, so while the
 	# flyout is out it wears the cyan and the rail beside it goes inert. That is
 	# the design's own detail and it is what makes the pair read as one surface.
@@ -315,6 +321,7 @@ func close_flyout() -> void:
 		return
 	_flyout.visible = false
 	_open_category = &""
+	flyout_changed.emit()
 	if flyout_anchor != null and is_instance_valid(flyout_anchor):
 		flyout_anchor.active = true
 	_refresh_rail()
@@ -474,3 +481,26 @@ func category_count(category: StringName) -> int:
 ## The flyout frame, so the mount can measure it. Never null once `_ready` ran.
 func flyout_panel() -> ConsolePanel:
 	return _flyout
+
+## The category whose flyout is open, or &"" for search results and for closed.
+## Pairs with [signal flyout_changed]; together they are what a tutorial gate
+## waits on.
+func open_category_id() -> StringName:
+	return _open_category
+
+## One category's row on the rail, for a caller that needs to point at it
+## (WI-63). Null for a category this menu has no row for.
+func rail_row(category: StringName) -> ListRow:
+	return _rail_rows.get(category)
+
+## One module's row in the open flyout, or null when the flyout is shut or shows
+## a different category. Deliberately not "the row it *would* have": a target
+## that is not on screen must resolve to nothing, so the coach mark hides its
+## ring rather than framing empty space.
+func list_row(module_id: StringName) -> ModuleButton:
+	for row: ModuleButton in _module_rows:
+		if row == null or not is_instance_valid(row):
+			continue
+		if row.module_data != null and row.module_data.id == module_id:
+			return row
+	return null

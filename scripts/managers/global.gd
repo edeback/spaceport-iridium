@@ -22,6 +22,7 @@ var crew_manager: CrewManager
 var trader_manager: TraderManager
 var event_manager: EventManager
 var dialogue_runner: DialogueRunner
+var tutorial_manager: TutorialManager
 ## The `story` half of the dialogue vocabulary (WI-62): flags, faction
 ## standing and the scheduled-event queue. Owned by [DialogueRunner] as a
 ## child node rather than mounted in main.tscn, because the two contexts are
@@ -85,6 +86,13 @@ const REMAPPABLE_ACTIONS: Array[StringName] = [
 	&"mode_research",
 	&"mode_comms",
 	&"mode_overlays",
+	# AIDE (WI-63). Authored in WI-50 as `ui_aide` and left out of this list while
+	# it was an inert stub. It opens a panel now, so it is rebindable like every
+	# other mode - and it was **renamed** to join them, because the conflict scan
+	# in `test_mode_manager.gd` skips every `ui_`-prefixed action as a Godot
+	# built-in. Under the old name a player who rebound another mode onto F1 would
+	# have collided with AIDE and been told nothing.
+	&"mode_aide",
 	&"toggle_map",
 	# Build's category cycle (WI-54). Bracket keys rather than the design's Q/E:
 	# E is already `mode_stores`, and a key that both opens Stores and steps the
@@ -127,6 +135,7 @@ const ACTION_LABELS: Dictionary[StringName, String] = {
 	&"mode_research": "R&D panel",
 	&"mode_comms": "Comms panel",
 	&"mode_overlays": "Overlays panel",
+	&"mode_aide": "SAI advisory panel",
 	&"toggle_map": "Collapse station map",
 	&"toggle_ledger": "Resource ledger",
 	&"build_category_prev": "Previous build category",
@@ -246,7 +255,6 @@ func get_default_events(action: StringName) -> Array[InputEvent]:
 ## added to neither list fails there rather than silently escaping conflict
 ## detection (WI-58).
 const NON_REMAPPABLE_ACTIONS: Array[StringName] = [
-	&"ui_aide",
 	&"debug_fire_event",
 	&"debug_offer_contract",
 ]
@@ -370,6 +378,11 @@ var station_name: String = ""
 ## by CrewManager and cleared - see take_staged_crew().
 var staged_crew: Array[HireCandidate] = []
 
+## Whether the player ticked "Skip Onboarding" on the New Game screen (WI-63 §7).
+## Staged for the same reason the other two are: [TutorialManager] reads it in
+## `_ready`, which is before anything could hand it over any other way.
+var skip_onboarding_requested: bool = false
+
 func set_station_name(new_name: String) -> void:
 	station_name = new_name.strip_edges()
 
@@ -379,6 +392,14 @@ func station_display_name() -> String:
 
 func stage_crew(candidates: Array[HireCandidate]) -> void:
 	staged_crew = candidates.duplicate()
+
+func set_skip_onboarding(skip: bool) -> void:
+	skip_onboarding_requested = skip
+
+## Not consume-once, unlike the crew: [TutorialManager] reads it during `_ready`
+## and a reload of the same run must reach the same answer.
+func skip_onboarding() -> bool:
+	return skip_onboarding_requested
 
 ## Hands the founding crew over and clears them in one step. Consume-once on
 ## purpose: a staged roster that survived its spawn could be re-applied by any
@@ -395,6 +416,7 @@ func take_staged_crew() -> Array[HireCandidate]:
 func clear_staged_start() -> void:
 	station_name = ""
 	staged_crew = []
+	skip_onboarding_requested = false
 
 func world_to_cell(position: Vector2) -> Vector2i:
 	return Vector2i(floor((position.x) / CELL_SIZE.x), floor((position.y) / CELL_SIZE.y))

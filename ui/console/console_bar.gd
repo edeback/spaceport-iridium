@@ -9,8 +9,8 @@ extends Control
 ## Three zones, separated by 1px EDGE dividers:
 ##
 ##   - [b]Modes, 715px, left.[/b] Seven mode buttons at 5px gaps, then a divider,
-##     then AIDE and SYS. Built from [constant ModeManager.ORDER], so adding a
-##     mode never means authoring a button.
+##     then AIDE and SYS. Built from [constant ModeManager.ORDER] plus [constant
+##     ModeManager.TRAILING], so adding a mode never means authoring a button.
 ##   - [b]Vitals, flex.[/b] Six pinned chips plus the LEDGER control ([VitalsStrip],
 ##     WI-52). The console builds it; [UIMain] owns the flyout it opens, because
 ##     a flyout has to sit *above* the console rather than inside it.
@@ -39,15 +39,11 @@ const GLYPHS: Dictionary[ModeManager.Mode, Texture2D] = {
 	ModeManager.Mode.RND: preload("res://ui/icons/console/research.svg"),
 	ModeManager.Mode.COMMS: preload("res://ui/icons/console/comms.svg"),
 	ModeManager.Mode.OVERLAY: preload("res://ui/icons/console/overlay.svg"),
+	# Past the divider, but a mode like any other since WI-63 gave it a panel.
+	ModeManager.Mode.AIDE: preload("res://ui/icons/console/aide.svg"),
 }
 
-const AIDE_GLYPH: Texture2D = preload("res://ui/icons/console/aide.svg")
 const SYS_GLYPH: Texture2D = preload("res://ui/icons/console/sys.svg")
-
-## AIDE is a deliberate stub (program decision 7). It renders and is disabled;
-## reserving the console slot now is free, and inventing a help system inside a
-## UI rework is not. It is the mount point for the Phase-4 onboarding item.
-const AIDE_REASON: String = "Assistance is not available yet"
 
 ## How often the adornments are recomputed, in real seconds.
 const ADORNMENT_INTERVAL: float = 1.0
@@ -199,24 +195,15 @@ func _build_buttons() -> void:
 	if _buttons_row == null:
 		return
 	for mode: ModeManager.Mode in ModeManager.ORDER:
-		var button: ModeButton = ModeButton.create()
-		button.caption = ModeManager.label_of(mode)
-		button.glyph = GLYPHS.get(mode)
-		button.hotkey = ModeManager.hotkey_label(mode)
-		button.tooltip_text = "%s (%s)" % [ModeManager.label_of(mode), button.hotkey]
-		button.pressed.connect(_on_mode_button_pressed.bind(mode))
-		_buttons_row.add_child(button)
-		_mode_buttons[mode] = button
-	# Seven modes, a divider, then the two utilities. The divider is what stops
-	# SYS from reading as an eighth mode.
+		_buttons_row.add_child(_make_mode_button(mode))
+	# Seven modes, a divider, then AIDE and SYS. The divider is what stops those
+	# two from reading as an eighth and ninth member of the group - AIDE is a mode
+	# (WI-63) but it is not one of the seven, which is why it is built from
+	# [constant ModeManager.TRAILING] rather than from ORDER.
 	_buttons_row.add_child(_make_divider())
 
-	var aide: ModeButton = ModeButton.create()
-	aide.caption = "Aide"
-	aide.glyph = AIDE_GLYPH
-	aide.hotkey = ModeManager.action_hotkey_label(&"ui_aide")
-	_buttons_row.add_child(aide)
-	aide.set_disabled_with_reason(AIDE_REASON)
+	for mode: ModeManager.Mode in ModeManager.TRAILING:
+		_buttons_row.add_child(_make_mode_button(mode))
 
 	var sys: ModeButton = ModeButton.create()
 	sys.caption = "Sys"
@@ -227,6 +214,16 @@ func _build_buttons() -> void:
 	_buttons_row.add_child(sys)
 
 	_assert_fits()
+
+func _make_mode_button(mode: ModeManager.Mode) -> ModeButton:
+	var button: ModeButton = ModeButton.create()
+	button.caption = ModeManager.label_of(mode)
+	button.glyph = GLYPHS.get(mode)
+	button.hotkey = ModeManager.hotkey_label(mode)
+	button.tooltip_text = "%s (%s)" % [ModeManager.label_of(mode), button.hotkey]
+	button.pressed.connect(_on_mode_button_pressed.bind(mode))
+	_mode_buttons[mode] = button
+	return button
 
 ## Warns when the mode row has outgrown its fixed zone. The zone is a fixed
 ## reserve; the buttons are what actually has to fit in it, and asserting the

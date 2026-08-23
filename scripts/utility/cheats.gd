@@ -624,6 +624,60 @@ func offer_contract() -> String:
 	return _report("offered contract: %d %s by cycle %d" %
 		[contract.amount, contract.resource.name, contract.deadline_cycle])
 
+# --- tutorial (WI-63) -----------------------------------------------------------
+
+## Runs SAI's introduction now, from any state. Does not touch the ledger - a
+## replay is not a first run.
+func start_onboarding() -> String:
+	if Global.tutorial_manager == null:
+		return _report("no tutorial manager")
+	Global.tutorial_manager.replay_onboarding()
+	return _report("running the onboarding")
+
+## Fires one advisory regardless of its trigger or whether it has already been
+## given, e.g. fire_hint("module_unpowered"). Spends it, exactly as the real
+## trigger would.
+func fire_hint(id: String) -> String:
+	var manager: TutorialManager = Global.tutorial_manager
+	if manager == null:
+		return _report("no tutorial manager")
+	var hint: TutorialHintData = manager.hint(StringName(id))
+	if hint == null:
+		return _report("no such hint '%s'" % id)
+	# A subject-carrying hint fired by hand still needs one, or its first line
+	# renders "that has not eaten". The nearest crew member is the honest guess;
+	# a module hint gets the module nearest the origin of the station.
+	var subject: Node = null
+	if hint.has_subject:
+		subject = _crew_at_or_near(Vector2i.ZERO)
+		if String(hint.trigger).begins_with("module_"):
+			subject = _module_at_or_near(Vector2i.ZERO)
+	manager.fire(hint.id, subject)
+	return _report("fired hint %s" % id)
+
+## Un-gives everything. The next new-game bootstrap would run the introduction
+## again, and every watcher re-arms on the next call to arm them.
+func reset_tutorial() -> String:
+	if Global.tutorial_manager == null:
+		return _report("no tutorial manager")
+	Global.tutorial_manager.ledger.clear()
+	return _report("tutorial ledger cleared")
+
+## What has been given, what is armed, and what the player is being waited on.
+func dump_tutorial() -> String:
+	if Global.tutorial_manager == null:
+		return _report("no tutorial manager")
+	_report("dumped tutorial state")
+	return Global.tutorial_manager.describe()
+
+## The skip path, from outside: ends any conversation, spends every hint, drops
+## every watcher.
+func skip_tutorial() -> String:
+	if Global.tutorial_manager == null:
+		return _report("no tutorial manager")
+	Global.tutorial_manager.skip_tutorial()
+	return _report("tutorial skipped")
+
 # --- alerts (WI-53) -----------------------------------------------------------
 
 ## Raises a test alert at `priority` (0 low, 1 high, 2 critical).

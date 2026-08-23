@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TutorialHintData" format=3]
+
+[ext_resource type="Script" path="res://data/tutorial/tutorial_hint_data.gd" id="1_hint"]
+[ext_resource type="Resource" path="res://data/dialogue/tutorial/hint_crew_resigning.dialogue" id="2_script"]
+
+[resource]
+script = ExtResource("1_hint")
+id = &"crew_resigning"
+trigger = &"crew_resigning"
+trigger_filter = &""
+dialogue = ExtResource("2_script")
+cue = "resigning"
+title = "Crew leave when they are unhappy"
+body = "An unhappy crew member waits out a short grace period and then takes the next ship; meet their needs inside that window and they withdraw the notice. If everyone leaves and you cannot afford a replacement, ARC confiscates the station."
+has_subject = true
+metadata/_custom_type_script = "res://data/tutorial/tutorial_hint_data.gd"

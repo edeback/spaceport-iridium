@@ -1,0 +1,9 @@
+~ sleep
+
+$> guide.point_at_subject("Has not slept")
+sai: {{ guide.subject_name() }} has not slept.
+sai: That takes two things, and people forget the second one. A bed that is free, and a route to walk to it.
+$> guide.point("vital:derived:crew", "Crew against available bunks")
+sai: This is the count that matters - people aboard against bunks available. Keep the second number ahead of the first.
+sai: When it goes amber, somebody is sleeping nowhere. Unrested crew get unhappy, and unhappy crew leave.
+=> END

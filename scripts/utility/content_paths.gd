@@ -46,6 +46,9 @@ const FACTIONS: StringName = &"factions"
 ## than only reached through the speakers that reference one - so a sweep can
 ## assert every pool actually matched something.
 const PORTRAITS: StringName = &"portraits"
+## What SAI teaches, and when (WI-63). One [TutorialHintData] per trigger; the
+## conversation itself is a `.dialogue` file the hint points at.
+const TUTORIAL: StringName = &"tutorial"
 
 ## Every kind there is. A scan for anything else is a typo, and a typo here would
 ## otherwise surface as "this mod added no content", which is invisible - so an
@@ -54,7 +57,7 @@ const KINDS: Array[StringName] = [
 	MODULES, RESOURCES, UNLOCKS, LOCAL_UPGRADES, TIERS, JOBS,
 	EVENTS, DISEASES, SKILLS, TRAITS, SHOPS, DIFFICULTY,
 	BUILD_CATEGORIES, RECIPES, SHIPS, PAWNS, SPACE_BODIES,
-	SPEAKERS, FACTIONS, PORTRAITS,
+	SPEAKERS, FACTIONS, PORTRAITS, TUTORIAL,
 ]
 
 ## Roots in load order, base game first. Static so the menus can scan content

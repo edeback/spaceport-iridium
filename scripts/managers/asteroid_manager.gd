@@ -211,6 +211,10 @@ func _place_body(body: AsteroidBase, profile: SpaceBodyProfile, direction: Vecto
 ## draws between the two. Keyed on the profile rather than the body, so two
 ## comets arriving refresh one row instead of stacking.
 func _announce_arrival(profile: SpaceBodyProfile) -> void:
+	# Both halves (WI-63). The signal is emitted first and unconditionally: a
+	# listener that wants to react to a comet must not depend on whether the
+	# alert manager happens to exist, and the alert is the optional half here.
+	SignalBus.space_body_arrived.emit(profile)
 	if Global.alert_manager == null:
 		return
 	var noun: String = profile.display_name

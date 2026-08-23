@@ -1,0 +1,9 @@
+~ trader
+
+$> guide.point("console:trade", "A trader is docked - open Trade")
+sai: A trader has docked. This is how you get things you cannot yet make.
+sai: Until your industrial chains are running, buying is faster than building the chain that would have made it. That is not a failure, it is a schedule.
+sai: Selling matters too. ARC wants iron ore shipped, and that is what your tier assessment measures.
+sai: One warning. A trader leaves whether or not you got around to it.
+sai: You can set an order up before anyone arrives - it sits waiting and fills the moment a ship docks. Do that, and you will stop missing them.
+=> END

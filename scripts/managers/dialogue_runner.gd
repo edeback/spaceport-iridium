@@ -112,6 +112,11 @@ func _build_contexts() -> void:
 func _validate_access(thing: Variant, member: StringName, kind: StringName) -> String:
 	if thing is DialogueBridge or thing is StoryState or thing is DialogueBalloon:
 		return ""
+	# The third alias (WI-63). `guide` is registered by [TutorialManager] rather
+	# than here - the runner has no business knowing the tutorial exists - but the
+	# filter is this file's and has to know what it is allowed to let through.
+	if thing is TutorialBridge:
+		return ""
 	# The addon's own objects: the resource is `self` inside a file, and lines and
 	# responses are what a balloon inspects.
 	if thing is DialogueResource or thing is DialogueLine or thing is DialogueResponse:
@@ -122,7 +127,7 @@ func _validate_access(thing: Variant, member: StringName, kind: StringName) -> S
 		thing_name = object.get_class()
 		if object is Node:
 			thing_name = String((object as Node).name)
-	return ("Dialogue may only reach `station` and `story` - refused %s `%s.%s`."
+	return ("Dialogue may only reach `station`, `story` and `guide` - refused %s `%s.%s`."
 		% [kind, thing_name, member])
 
 # --- running --------------------------------------------------------------------
@@ -197,12 +202,22 @@ func _on_conversation_finished(entry: Dictionary) -> void:
 	# balloon's own teardown.
 	_start_next.call_deferred()
 
-## The run is over. Whatever was about to be said no longer matters, and the
-## game-over screen owns the frame.
-func _on_game_over(_reason: String) -> void:
+## Ends whatever is on screen now and drops anything queued behind it.
+##
+## Not new behaviour - [method _on_game_over] has always done exactly this - but
+## naming it is what lets the tutorial's skip control end a conversation without
+## anything else in the game learning how to touch a balloon. The one-door rule
+## (§6, and [method InspectorPanel.select]'s twin) is about who may *open* one;
+## closing needs a door too, and this is it.
+func abandon() -> void:
 	_queue.clear()
 	if _balloon != null and is_instance_valid(_balloon):
 		_balloon.finish()
+
+## The run is over. Whatever was about to be said no longer matters, and the
+## game-over screen owns the frame.
+func _on_game_over(_reason: String) -> void:
+	abandon()
 
 # --- speakers -------------------------------------------------------------------
 

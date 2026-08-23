@@ -1,0 +1,72 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/tutorial/tutorial_coach.gd" id="1_coach"]
+
+[node name="TutorialCoach" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_coach")
+
+[node name="Ring" type="Panel" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+
+[node name="Plate" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_right = 320.0
+offset_bottom = 80.0
+
+[node name="Pad" type="MarginContainer" parent="Plate"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Row" type="HBoxContainer" parent="Plate/Pad"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Portrait" type="TextureRect" parent="Plate/Pad/Row"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_vertical = 0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Column" type="VBoxContainer" parent="Plate/Pad/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="Speaker" type="Label" parent="Plate/Pad/Row/Column"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"ReadoutLabel"
+text = "SAI"
+
+[node name="Caption" type="Label" parent="Plate/Pad/Row/Column"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"Body"
+text = "Caption"
+autowrap_mode = 3
+
+[node name="SkipRow" type="HBoxContainer" parent="Plate/Pad/Row/Column"]
+layout_mode = 2
+alignment = 2
+
+[node name="Highlight" type="ColorRect" parent="Plate"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 1.0
+offset_top = 1.0
+offset_right = -1.0
+offset_bottom = 2.0
+grow_horizontal = 2
+mouse_filter = 2

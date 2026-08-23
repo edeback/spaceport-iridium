@@ -97,7 +97,7 @@ Nine console buttons: seven modes, then a divider, then two utilities.
 | R&D | 1400 | R | `unlocks/unlock_panel.gd`, reflowed to tiers left-to-right | WI-55 |
 | COMMS | 620 | G | ✅ **New.** Transmissions + ARC; `economy_screen` becomes the FINANCE tab and the tier block the QUOTA tab | WI-57 |
 | OVERLAY | 360 | V | `overlay_controller.gd`'s toolbar strip becomes a panel | WI-54 |
-| AIDE | — | F1 | **Deferred stub.** See *Decisions* below | WI-50 |
+| AIDE | 620 | F1 | ✅ **New.** `aide_panel.gd`; SAI's introduction and every advisory she has given, replayable. Was the deferred stub decision 7 describes | WI-50, filled in by WI-63 |
 | SYS | — | Esc-at-rest | `menus/pause_menu.gd` (WI-36) | WI-50 |
 
 Plus two non-mode surfaces: the **ledger flyout** (console chip, allowed to coexist with a mode — it is a readout, not a workspace) and the **alert history log**.
@@ -141,7 +141,7 @@ Recorded here so the child WIs don't each re-litigate them.
 4. **Stores is presentation-only. WI-12 is already done** (2026-07-19; the roadmap, tech spec and bugs-doc D7 were corrected 2026-08-09). The Stores panel must therefore surface and edit **everything WI-12 shipped**: per-module haul priority, the per-resource desired amount, current contents, the accepted-resource checklist for `player_configurable` storages, manual dump (with amount), and the auto-dump toggle. Its two dropped tasks — the `draining` flag and mass-sell — stay dropped; see [[01_Technical_Specification]] §2.1. No new storage *mechanics* in this program.
 5. **R&D spends credits, not research points.** The mockup's `48 RP · +2.1/CYC` header and per-node `120 RP` costs are for an undesigned system. `UnlockData.cost` is a `Dictionary[ResourceData, int]` and stays that way — the header carries the credit balance, node costs render as their real resource costs, and affordability is the existing `can_unlock()`.
 6. **ARC inspections become player-initiated.** The `CONTACT ARC` button replaces `UnlockManager`'s per-cycle random offer roll. See WI-57.
-7. **SYS opens the existing pause menu. AIDE is a deferred stub** — it renders and is disabled with a "not yet" tooltip. It is the natural mount point for the Phase-4 **Tutorial/Onboarding** item, and reserving the console slot now is free; inventing a help system inside a UI rework is not.
+7. **SYS opens the existing pause menu. AIDE is a deferred stub** — it renders and is disabled with a "not yet" tooltip. It is the natural mount point for the Phase-4 **Tutorial/Onboarding** item, and reserving the console slot now is free; inventing a help system inside a UI rework is not. ✅ **Closed by [[WI-63_Tutorial]]** — AIDE is a live mode now. It is the one mode outside `ModeManager.ORDER`: it sits in a second list, `TRAILING`, because it belongs *past* the group divider beside SYS rather than inside the seven, and `test_mode_manager.gd` still accounts for every member of the enum exactly once across both. Its action was renamed `ui_aide` → `mode_aide` on the way, because the hotkey conflict scan skips every `ui_`-prefixed action as a Godot built-in and would have hidden a rebind collision on F1.
 8. **Panels are code-built; the frame and the repeated widgets are scenes.** The codebase is already split this way — `unlock_panel`, `economy_screen`, `jobs_screen` and `overlay_controller` are pure code, while `pawn_info_panel` and `build_menu` are `.tscn`. Code-built panels won because they compose the shared widgets without a scene author having to keep nine `.tscn` files in sync, and because the layouts are data-driven lists rather than fixed forms. The *frame* and the small repeated parts (readout panel, stat bar, chip, stepper, tab strip, list row) are `.tscn` + script so they can be authored and previewed once.
 9. **New input actions go in the input map, not hardcoded.** WI-36 shipped a keybind remapper reading `user://settings.cfg`; every mode hotkey must be a real action so it appears there. Hotkeys render in the panel header (right-aligned, Mono 11px, `#4a6d85`) and on the console buttons, so the UI teaches them.
 
@@ -390,6 +390,37 @@ The audit's verdict on the program itself was good — the port inventory is gen
 3. **An overrun behaviour without a reserved width collapses a label rather than capping it.** A `Label` with overrun reports a minimum width of ~1, and a `BoxContainer` with no expanding child hands every child exactly its minimum.
 4. **When the sim will not resume, the console says who is holding it.** The pause/speed controls are the one place a player meets a blocked action with no panel to explain it.
 5. **The feed yields; the inspector does not.** Any future tenant of the right column has to say which of those it is.
+
+## What WI-63 added (a fourth kind of surface)
+
+The program's three surfaces are the **mode panel** (`ConsolePanel`), the **readout**
+(`ReadoutPanel`) and the **modal overlay** (pause menu, game-over screen, dialogue balloon).
+[[WI-63_Tutorial]] needed something none of them can be: a thing that **points at chrome that
+already exists**. `TutorialCoach` is that, and it is written down here as a fourth kind rather
+than dressed up as a readout it is not.
+
+What it must obey, since it lives under `ui/` like everything else:
+
+- **It spends no amber.** The ring is `LIVE` — invariant 5 is intact, and the budget is still
+  breach / falling vital / unread transmission / ARC. What makes a tutorial pointer
+  unmistakable without a new colour is the **pulse**, which nothing else in the HUD does.
+- **The pulse is real time.** `TimeManager.animation_speed()` returns 0 while the sim is held,
+  and the tutorial runs entirely while it is. The coach must never join `sim_animation`.
+- **One mark at a time**, the same way there is one open mode and one selection.
+- **It re-resolves its target every frame** and keeps the caption plate when the target goes,
+  so a panel closing under it leaves an instruction rather than a paused game with nothing on
+  screen explaining why. It also takes itself down whenever no conversation is running.
+- **It never covers the thing it points at.** It *may* cover another panel — a mark on a
+  console vitals chip has the right column beside it and nowhere else to go at 1080p — and
+  that is the accepted trade.
+- **It names no colour, size or type variation**, and `tutorial_coach.tscn` is on
+  `test_ui_theme.gd`'s sweep like every other scene under `ui/`. It must never be exempted.
+
+Two defects here were **screenshot-only** and are worth remembering as a pair: a bare `Panel`
+reports a zero minimum height (so a frame authored that way never draws at all — use a
+`PanelContainer` when the surface has to size to its content), and the dialogue balloon is a
+`CanvasLayer`, so it draws over *every* ordinary child of `UIMain` — any overlay that shares
+the balloon's screen slot is invisible whenever anybody is talking.
 
 ## Cross-cutting risks
 

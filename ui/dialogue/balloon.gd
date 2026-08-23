@@ -22,9 +22,11 @@ extends CanvasLayer
 ##    mutations returns null before anything is shown, so it never stops the sim -
 ##    which is how a notification event and a face-to-face event share one path
 ##    with no branch in [EventManager].
-## 2. **`ui_cancel` is never swallowed.** Blocking all other input is what makes a
-##    modal modal, but taking Esc would take the pause menu away, and the event
-##    card this replaces never did that.
+## 2. **`ui_cancel` is never swallowed, and nothing is swallowed while the balloon
+##    is hidden.** Blocking all other input is what makes a modal modal, but taking
+##    Esc would take the pause menu away, and the event card this replaces never
+##    did that. The visibility half is WI-63's correction - see
+##    [method _unhandled_input].
 ## 3. **The balloon is not on the Esc ladder.** Same considered exception as an
 ##    outstanding critical alert ([method UIMain._topmost_esc_claim]): a
 ##    conversation is something you answer, and an Esc that dismisses it is an
@@ -190,8 +192,23 @@ func _process(_delta: float) -> void:
 ## Rule 2. Blocking all other input is what makes a modal modal - but `ui_cancel`
 ## is the pause menu's, and taking it would leave a player mid-conversation unable
 ## to reach save/quit. The event card this replaces never took it either.
+##
+## **And only while it is actually on screen** (WI-63). This node is a
+## [CanvasLayer]; `balloon.hide()` hides the [Control] inside it, not the node
+## running this handler, so without the guard a balloon goes on swallowing every
+## unhandled event while invisible - from `_ready` until the first line renders,
+## for the 0.1s after every non-inline mutation, and for the *entire* duration of
+## a tutorial gate, which is the one that made it visible. During a gate the
+## player is being asked in as many words to go and click something, and every
+## click was being marked handled before it reached [UIInGame].
+##
+## A modal blocks input because it is in front of the player. When it is not in
+## front of the player it is not a modal, and the rule should not survive the
+## thing it exists to protect.
 func _unhandled_input(event: InputEvent) -> void:
 	if not will_block_other_input:
+		return
+	if not balloon.visible:
 		return
 	if event.is_action(&"ui_cancel"):
 		return
@@ -493,6 +510,15 @@ func _on_balloon_gui_input(event: InputEvent) -> void:
 
 	if not is_waiting_for_input: return
 	if dialogue_line.responses.size() > 0: return
+	# Rule 2 again, on the other input path (WI-63). The balloon has focus while it
+	# is waiting, so it sees Esc as *GUI* input - which runs before
+	# `_unhandled_input` - and the blanket `set_input_as_handled()` below was
+	# eating it before [UIMain]'s Esc ladder ever ran. Guarding only the unhandled
+	# path left the guarantee half-kept: the pause menu was unreachable over any
+	# conversation, and WI-63 made that much worse by holding the simulation for
+	# the whole tutorial. Skipping the typewriter with Esc, above, is deliberate
+	# and stays.
+	if event.is_action(&"ui_cancel"): return
 
 	# When there are no response options the balloon itself is the clickable thing
 	get_viewport().set_input_as_handled()

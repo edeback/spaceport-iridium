@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://bwioay8so4eqj"
+path="res://.godot/imported/hint_need_recreation.dialogue-89ecca19bced170481b86d150b8d586a.tres"
+
+[deps]
+
+source_file="res://data/dialogue/tutorial/hint_need_recreation.dialogue"
+dest_files=["res://.godot/imported/hint_need_recreation.dialogue-89ecca19bced170481b86d150b8d586a.tres"]
+
+[params]
+
+defaults=true

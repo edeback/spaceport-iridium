@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TutorialHintData" format=3]
+
+[ext_resource type="Script" path="res://data/tutorial/tutorial_hint_data.gd" id="1_hint"]
+[ext_resource type="Resource" path="res://data/dialogue/tutorial/hint_module_unpowered.dialogue" id="2_script"]
+
+[resource]
+script = ExtResource("1_hint")
+id = &"module_unpowered"
+trigger = &"module_unpowered"
+trigger_filter = &""
+dialogue = ExtResource("2_script")
+cue = "unpowered"
+title = "Module without power"
+body = "A module with no power does not work and does not complain. Solar panels are in Build under Power, and they produce in proportion to the open space around them - do not build modules directly around a panel, including other panels."
+has_subject = true
+metadata/_custom_type_script = "res://data/tutorial/tutorial_hint_data.gd"

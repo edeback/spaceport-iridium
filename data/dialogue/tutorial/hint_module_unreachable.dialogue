@@ -1,0 +1,8 @@
+~ unreachable
+
+$> guide.point_at_subject("Nobody can reach this")
+sai: Administrator. Nobody can walk to the {{ guide.subject_name() }}.
+sai: A module is only useful if a crew member can get to its door. Right now that one is sealed off from the rest of the station.
+sai: Corridors and stairs are in Build, under Core. They are prefabricated - they land finished, no construction, no materials.
+sai: Run a line from something the crew already use, and it will start working.
+=> END

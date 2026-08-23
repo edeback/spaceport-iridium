@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TutorialHintData" format=3]
+
+[ext_resource type="Script" path="res://data/tutorial/tutorial_hint_data.gd" id="1_hint"]
+[ext_resource type="Resource" path="res://data/dialogue/tutorial/hint_module_unreachable.dialogue" id="2_script"]
+
+[resource]
+script = ExtResource("1_hint")
+id = &"module_unreachable"
+trigger = &"module_unreachable"
+trigger_filter = &""
+dialogue = ExtResource("2_script")
+cue = "unreachable"
+title = "Module cut off"
+body = "A module the crew cannot walk to does nothing. Corridors and stairs are in Build under Core; they are prefabricated and land finished, so run a line to it from somewhere the crew already go."
+has_subject = true
+metadata/_custom_type_script = "res://data/tutorial/tutorial_hint_data.gd"

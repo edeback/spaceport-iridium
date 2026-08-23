@@ -27,13 +27,31 @@ extends Node
 ## suite constructs one directly and drives the whole state machine without a
 ## scene. Only the hotkey handler needs a viewport, and it checks for one.
 
-enum Mode { NONE, BUILD, CREW, STORES, TRADE, RND, COMMS, OVERLAY }
+enum Mode { NONE, BUILD, CREW, STORES, TRADE, RND, COMMS, OVERLAY, AIDE }
 
-## Console order, left to right. The console builds its buttons from this list,
-## so adding a mode is one entry here rather than a button authored in a scene.
+## Console order, left to right, for the modes in the main group. The console
+## builds its buttons from this list, so adding a mode is one entry here rather
+## than a button authored in a scene.
 const ORDER: Array[Mode] = [
 	Mode.BUILD, Mode.CREW, Mode.STORES, Mode.TRADE, Mode.RND, Mode.COMMS, Mode.OVERLAY,
 ]
+
+## Modes that live **past the group divider**, beside SYS (WI-63 §8).
+##
+## AIDE is a mode - it opens a panel, and one-panel-at-a-time has to include it -
+## but it is not one of the seven the divider groups, and moving it into [constant
+## ORDER] would put it inside that group. Two lists rather than a weakened
+## invariant: `test_mode_manager.gd` still asserts the tables account for **every**
+## member of [enum Mode], it just knows the console has two zones now.
+##
+## SYS is deliberately absent. It is not a mode; it opens the pause menu.
+const TRAILING: Array[Mode] = [Mode.AIDE]
+
+## Every mode with a console button, in the order they are built.
+static func console_order() -> Array[Mode]:
+	var out: Array[Mode] = ORDER.duplicate()
+	out.append_array(TRAILING)
+	return out
 
 ## Console button captions and panel titles. Rendered in caps by the widgets that
 ## own the labels (never `.to_upper()` scattered through panel code).
@@ -45,6 +63,7 @@ const LABELS: Dictionary[Mode, String] = {
 	Mode.RND: "R&D",
 	Mode.COMMS: "Comms",
 	Mode.OVERLAY: "Overlay",
+	Mode.AIDE: "Aide",
 }
 
 ## Mode -> input action. Real actions, not hardcoded keycodes, so WI-36's remapper
@@ -62,6 +81,10 @@ const HOTKEY_ACTIONS: Dictionary[Mode, StringName] = {
 	Mode.RND: &"mode_research",
 	Mode.COMMS: &"mode_comms",
 	Mode.OVERLAY: &"mode_overlays",
+	# Authored in WI-50 as `ui_aide`, inert until WI-63 gave AIDE a panel, and
+	# renamed on the way - see [constant Global.REMAPPABLE_ACTIONS] for why the
+	# `ui_` prefix was a real hole rather than an aesthetic one. Still F1.
+	Mode.AIDE: &"mode_aide",
 }
 
 ## Emitted after the swap has happened, so a handler that reads `current()` sees

@@ -150,6 +150,13 @@ func _on_power_updated(desired: float, generated: float) -> void:
 
 # --- pins ---------------------------------------------------------------------
 
+## One pinned chip by id, or null when it is not on the strip. What a coach mark
+## points at (WI-63); the sleep advisory's whole content is "the crew-against-
+## bunks count is in the console", and pointing at it is the difference between
+## that being instruction and being trivia.
+func chip(id: StringName) -> VitalsChip:
+	return _chips.get(id)
+
 func pinned_ids() -> Array[StringName]:
 	return _pins.duplicate()
 

@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://dacs1ti1wj07s"
+path="res://.godot/imported/hint_trader_arrived.dialogue-8fbf3a2acad2151b1765b59a2eeb504f.tres"
+
+[deps]
+
+source_file="res://data/dialogue/tutorial/hint_trader_arrived.dialogue"
+dest_files=["res://.godot/imported/hint_trader_arrived.dialogue-8fbf3a2acad2151b1765b59a2eeb504f.tres"]
+
+[params]
+
+defaults=true

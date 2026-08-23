@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TutorialHintData" format=3]
+
+[ext_resource type="Script" path="res://data/tutorial/tutorial_hint_data.gd" id="1_hint"]
+[ext_resource type="Resource" path="res://data/dialogue/tutorial/hint_comet_arrived.dialogue" id="2_script"]
+
+[resource]
+script = ExtResource("1_hint")
+id = &"comet_arrived"
+trigger = &"space_body_arrived"
+trigger_filter = &"comet"
+dialogue = ExtResource("2_script")
+cue = "comet"
+title = "Comets are temporary"
+body = "Comets carry ice and carbon in quantities the belt does not, but they cross the envelope and keep going. Prioritise one while it is here or it leaves with everything you did not mine."
+has_subject = false
+metadata/_custom_type_script = "res://data/tutorial/tutorial_hint_data.gd"

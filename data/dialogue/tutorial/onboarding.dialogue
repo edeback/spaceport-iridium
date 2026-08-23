@@ -1,0 +1,36 @@
+~ intro
+
+sai: Station Administrator. I am SAI - Subprocess Artificial Intelligence, assigned to this posting by the Astral Resource Corporation.
+sai: ARC has towed you a station core and a debt. What you do with the first decides how you handle the second.
+sai: Your remit is a profitable station. Mine is making sure you still have a crew when you get there.
+sai: Four things keep a person alive and working out here. Air, food, a bed, and something to do that is not work. None of them are here yet. All of them are yours to build.
+sai: And everything you build draws power. Nothing runs without it.
+sai: You are authorised for a limited catalogue. Prove the station is established - build it out, ship ARC its ore - and they will licence you more.
+$> story.set_flag("sai_introduced", true)
+=> first_task
+
+~ first_task
+
+sai: Start with somewhere to eat. Follow along.
+$> guide.point("console:build", "Open the Build panel")
+$> guide.await_mode("build")
+
+sai: Modules are filed by what they are for.
+$> guide.point("category:crew", "Choose the Crew category")
+$> guide.await_category("crew")
+
+sai: There. Six steel, and it feeds four.
+$> guide.point("module:mess_hall_mdata", "Take the Mess Hall")
+$> guide.await_module_picked("mess_hall_mdata")
+
+sai: Put it against one side of the station. It does not have to be pretty.
+$> guide.point("screen", "Click a cell alongside the station to place it")
+$> guide.await_module_placed("mess_hall_mdata")
+$> guide.clear_point()
+
+sai: What you placed is a blueprint, not a building. Most modules are assembled on site out of materials, and your crew will start on it without being told.
+sai: The Core catalogue is the exception. Corridors, stairs and turbolifts arrive prefabricated and land finished.
+sai: You will want them. A crew member who cannot walk to that door will never eat at that table.
+sai: The rest is yours. Air, food, beds, somewhere to unwind - build them before you need them, because by the time you need one it is already too late to build it.
+sai: I will speak up when something goes wrong. Try not to make me.
+=> END

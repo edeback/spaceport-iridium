@@ -31,7 +31,8 @@ const MAX_STATION_NAME: int = 24
 const CARD_SIZE: Vector2 = Vector2(228, 0)
 const PANEL_SIZE: Vector2 = Vector2(768, 0)
 
-signal start_requested(difficulty_id: StringName, station_name: String, crew: Array[HireCandidate])
+signal start_requested(difficulty_id: StringName, station_name: String,
+		crew: Array[HireCandidate], skip_onboarding: bool)
 signal closed
 
 var _roller := CandidateRoller.new()
@@ -52,6 +53,10 @@ var _difficulty_group: ButtonGroup
 ## _difficulty_id disagree the second time the screen is opened.
 var _difficulty_buttons: Dictionary[StringName, Button] = {}
 var _begin: Button
+## "Skip Onboarding" (WI-63 §7). Default **off**: a first-time player who does
+## not read the checkbox gets the tutorial, which is the failure mode that costs
+## them nothing.
+var _skip_onboarding: CheckBox
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -372,6 +377,13 @@ func _build_footer(parent: Node) -> void:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer)
 
+	_skip_onboarding = CheckBox.new()
+	_skip_onboarding.text = "Skip Onboarding"
+	_skip_onboarding.tooltip_text = ("Start without SAI's introduction and without"
+		+ " the contextual advisories. Both stay replayable from the console's AIDE panel.")
+	_skip_onboarding.add_theme_color_override("font_color", UIPalette.TEXT)
+	row.add_child(_skip_onboarding)
+
 	_begin = Button.new()
 	_begin.custom_minimum_size = Vector2(200, 38)
 	_begin.pressed.connect(_on_begin_pressed)
@@ -384,7 +396,8 @@ func _on_begin_pressed() -> void:
 	var crew: Array[HireCandidate] = []
 	for index: int in _picks:
 		crew.append(_pool[index])
-	start_requested.emit(_difficulty_id, _name_edit.text, crew)
+	start_requested.emit(_difficulty_id, _name_edit.text, crew,
+		_skip_onboarding != null and _skip_onboarding.button_pressed)
 
 # --- state --------------------------------------------------------------------
 
@@ -396,6 +409,8 @@ func _reset() -> void:
 	if _name_edit != null:
 		_name_edit.text = ""
 	_difficulty_id = DifficultyData.DEFAULT_ID
+	if _skip_onboarding != null:
+		_skip_onboarding.button_pressed = false
 	if _difficulty_buttons.has(_difficulty_id):
 		_difficulty_buttons[_difficulty_id].button_pressed = true
 	_show_difficulty_detail(DifficultyData.resolve(_difficulty_id))

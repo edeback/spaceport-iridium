@@ -6,7 +6,8 @@ extends GutTest
 ## which is the remap screen's **display list** - deliberately curated to keep
 ## Godot's `ui_*` built-ins and the debug hotkeys out of a player-facing menu.
 ## Using it to answer "what would this key collide with" left three real bindings
-## invisible: `ui_aide`, `debug_fire_event` and `debug_offer_contract`. Rebinding
+## invisible: `ui_aide` (now `mode_aide`, and remappable since WI-63),
+## `debug_fire_event` and `debug_offer_contract`. Rebinding
 ## a mode onto one of their keys created two actions on one key with no swap
 ## offered and no warning.
 ##
@@ -71,9 +72,12 @@ func test_the_two_lists_do_not_overlap() -> void:
 		assert_false(Global.REMAPPABLE_ACTIONS.has(name),
 			"%s is in both lists" % name)
 
-## The three that motivated the item.
-func test_the_three_invisible_bindings_are_now_scanned() -> void:
-	for name: StringName in [&"ui_aide", &"debug_fire_event", &"debug_offer_contract"]:
+## The bindings that motivated the item. There were three; `ui_aide` became
+## `mode_aide` and moved into the player-facing list in WI-63, when AIDE stopped
+## being a stub - so the interesting assertion for it is now the opposite one, and
+## it lives in `test_mode_manager.gd` with the other seven modes.
+func test_the_invisible_bindings_are_now_scanned() -> void:
+	for name: StringName in [&"debug_fire_event", &"debug_offer_contract"]:
 		assert_true(Global.NON_REMAPPABLE_ACTIONS.has(name),
 			"%s is bound, so a rebind onto its key has to be a conflict" % name)
 		assert_false(Global.REMAPPABLE_ACTIONS.has(name),

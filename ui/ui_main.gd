@@ -104,6 +104,14 @@ func _setup_modes() -> void:
 	mode_manager.register(ModeManager.Mode.RND, _make_research_panel)
 	mode_manager.register(ModeManager.Mode.COMMS, _make_comms_panel)
 	mode_manager.register(ModeManager.Mode.OVERLAY, overlay_controller.panel)
+	mode_manager.register(ModeManager.Mode.AIDE, _make_aide_panel)
+
+## The Build panel's menu body, or null before BUILD has ever been opened - it is
+## built by a lazy factory like every other panel. A caller that needs a row out
+## of it (the coach mark, WI-63) therefore has to tolerate null, which is exactly
+## rule 3 of [TutorialCoach]: a target that is not on screen resolves to nothing.
+func build_menu() -> BuildMenu:
+	return _build_menu
 
 ## BUILD: the rail + flyout (WI-43, reframed in WI-54). The panel carries **no**
 ## content padding: the menu's search block runs full-bleed with its own rule
@@ -133,6 +141,11 @@ func _make_build_panel() -> Control:
 ## (WI-56). It builds its own frame, so this is one call.
 func _make_crew_panel() -> Control:
 	return CrewPanel.create()
+
+## AIDE: SAI's archive at 620px (WI-63), and the end of the disabled stub WI-50
+## left in the console.
+func _make_aide_panel() -> Control:
+	return AidePanel.create()
 
 ## STORES: every module holding stock, its haul priority and its contents, at
 ## 1080px (WI-56).

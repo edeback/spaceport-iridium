@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TutorialHintData" format=3]
+
+[ext_resource type="Script" path="res://data/tutorial/tutorial_hint_data.gd" id="1_hint"]
+[ext_resource type="Resource" path="res://data/dialogue/tutorial/hint_need_hunger.dialogue" id="2_script"]
+
+[resource]
+script = ExtResource("1_hint")
+id = &"need_hunger"
+trigger = &"need_critical"
+trigger_filter = &"hunger"
+dialogue = ExtResource("2_script")
+cue = "hunger"
+title = "Starving crew take damage"
+body = "Hunger does more than lower a mood - a starving crew member takes damage and can eventually die. A mess hall has to exist, be reachable, and have food in it. Buy food from a trader or grow it in hydroponics."
+has_subject = true
+metadata/_custom_type_script = "res://data/tutorial/tutorial_hint_data.gd"

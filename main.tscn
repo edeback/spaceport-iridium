@@ -35,6 +35,7 @@
 [ext_resource type="Script" uid="uid://dkq3jwt2amjql" path="res://scripts/managers/economy_manager.gd" id="12_economymgr"]
 [ext_resource type="Script" uid="uid://7aklpgmttgh7" path="res://scripts/managers/event_manager.gd" id="12_eventmgr"]
 [ext_resource type="Script" path="res://scripts/managers/dialogue_runner.gd" id="12_dlgrunner"]
+[ext_resource type="Script" path="res://scripts/managers/tutorial_manager.gd" id="12_tutormgr"]
 [ext_resource type="PackedScene" path="res://objects/pirate_ship.tscn" id="12_pirateship"]
 [ext_resource type="Script" uid="uid://dmcs8civtaue8" path="res://scripts/managers/raid_manager.gd" id="12_raidmgr"]
 [ext_resource type="Texture2D" uid="uid://dmlscjahmhtu8" path="res://assets/sprites/planet_spritesheet.png" id="12_yaehf"]
@@ -7719,6 +7720,9 @@ salvage_resource = ExtResource("17_b1qrp")
 script = ExtResource("34_vismgr")
 visitor_pawn_scene = ExtResource("34_vispawn")
 shuttle_scene = ExtResource("34_shuttle")
+
+[node name="TutorialManager" type="Node" parent="Managers" unique_id=1526834906]
+script = ExtResource("12_tutormgr")
 
 [node name="SaveManager" type="Node" parent="Managers" unique_id=118411891]
 script = ExtResource("1_savemgr")

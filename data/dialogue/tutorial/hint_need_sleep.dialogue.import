@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://dds6rcjxhcudb"
+path="res://.godot/imported/hint_need_sleep.dialogue-2609ccc41964904e2252a2528ac4e714.tres"
+
+[deps]
+
+source_file="res://data/dialogue/tutorial/hint_need_sleep.dialogue"
+dest_files=["res://.godot/imported/hint_need_sleep.dialogue-2609ccc41964904e2252a2528ac4e714.tres"]
+
+[params]
+
+defaults=true

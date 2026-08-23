@@ -1,0 +1,8 @@
+~ hunger
+
+$> guide.point_at_subject("Has not eaten")
+sai: {{ guide.subject_name() }} has not eaten.
+sai: Hunger is the one that does more than lower a mood. A starving crew member takes damage, and damage that is not treated eventually kills them.
+sai: Three things have to be true at once. A mess hall exists, they can walk to it, and there is food in it.
+sai: If there is no food, buy some from the next trader. If you would rather not depend on traders, grow it - hydroponics turns water and power into something people can eat.
+=> END

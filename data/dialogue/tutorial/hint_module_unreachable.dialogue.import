@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://hren0503yfu"
+path="res://.godot/imported/hint_module_unreachable.dialogue-09357c7d64bc8b9a953c127d058770f9.tres"
+
+[deps]
+
+source_file="res://data/dialogue/tutorial/hint_module_unreachable.dialogue"
+dest_files=["res://.godot/imported/hint_module_unreachable.dialogue-09357c7d64bc8b9a953c127d058770f9.tres"]
+
+[params]
+
+defaults=true

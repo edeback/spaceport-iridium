@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://dqsiba4mihk14"
+path="res://.godot/imported/hint_module_unpowered.dialogue-485856bc5fd454d31810d37e9f7f42ae.tres"
+
+[deps]
+
+source_file="res://data/dialogue/tutorial/hint_module_unpowered.dialogue"
+dest_files=["res://.godot/imported/hint_module_unpowered.dialogue-485856bc5fd454d31810d37e9f7f42ae.tres"]
+
+[params]
+
+defaults=true

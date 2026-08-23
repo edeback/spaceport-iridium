@@ -1,0 +1,8 @@
+~ unpowered
+
+$> guide.point_at_subject("This is drawing nothing")
+sai: The {{ guide.subject_name() }} is dark. A module without power does not work - it does not fail loudly, it simply sits there.
+sai: Solar panels are in Build, under Power.
+sai: They earn their keep from open sky. The more empty space around a panel, the more it makes - so do not wall them in, and that includes walling them in with other panels.
+sai: A row of panels crammed shoulder to shoulder produces less than half of them would spread out.
+=> END

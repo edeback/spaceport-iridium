@@ -137,15 +137,17 @@ func _build_submenus() -> void:
 ## previously-loaded save staged, so a Peaceful run followed by New Game can't
 ## inherit Peaceful - and the same for the old station's name.
 ##
-## All three are staged here rather than by the setup screen, which only reports
+## All four are staged here rather than by the setup screen, which only reports
 ## the choices: staging is the menu's job, and keeping it in one function is what
 ## makes "did this run inherit anything?" answerable by reading one place.
 func start_new_game(difficulty_id: StringName = DifficultyData.DEFAULT_ID,
-		station_name: String = "", crew: Array[HireCandidate] = []) -> void:
+		station_name: String = "", crew: Array[HireCandidate] = [],
+		skip_onboarding: bool = false) -> void:
 	SaveManager.clear_pending_load()
 	Global.set_difficulty(difficulty_id)
 	Global.set_station_name(station_name)
 	Global.stage_crew(crew)
+	Global.set_skip_onboarding(skip_onboarding)
 	get_tree().change_scene_to_file(MAIN_SCENE)
 
 ## Stage first, then enter the game scene: main.tscn's SaveManager sees the

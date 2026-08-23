@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TutorialHintData" format=3]
+
+[ext_resource type="Script" path="res://data/tutorial/tutorial_hint_data.gd" id="1_hint"]
+[ext_resource type="Resource" path="res://data/dialogue/tutorial/hint_trader_arrived.dialogue" id="2_script"]
+
+[resource]
+script = ExtResource("1_hint")
+id = &"trader_arrived"
+trigger = &"trader_arrived"
+trigger_filter = &""
+dialogue = ExtResource("2_script")
+cue = "trader"
+title = "Trading with visiting ships"
+body = "Traders let you buy what your industry cannot make yet, and shipping iron ore is what ARC measures your tier against. Place orders early - an order set up before a ship docks fills the moment one arrives, and a trader leaves whether or not you got to it."
+has_subject = false
+metadata/_custom_type_script = "res://data/tutorial/tutorial_hint_data.gd"

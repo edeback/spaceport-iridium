@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://dgii7b350nwhc"
+path="res://.godot/imported/hint_crew_resigning.dialogue-bafd9691173f0aacc4aaea44c3d45c45.tres"
+
+[deps]
+
+source_file="res://data/dialogue/tutorial/hint_crew_resigning.dialogue"
+dest_files=["res://.godot/imported/hint_crew_resigning.dialogue-bafd9691173f0aacc4aaea44c3d45c45.tres"]
+
+[params]
+
+defaults=true

@@ -251,20 +251,34 @@ func test_a_panel_without_hooks_is_fine() -> void:
 
 # --- the mode table -----------------------------------------------------------
 
-## The console builds its buttons from ORDER, the panels take their titles from
-## LABELS and their printed hotkey from HOTKEY_ACTIONS. A mode missing from any
-## of the three renders as a blank button or an unreachable panel.
+## The console builds its buttons from ORDER and TRAILING, the panels take their
+## titles from LABELS and their printed hotkey from HOTKEY_ACTIONS. A mode missing
+## from any of them renders as a blank button or an unreachable panel.
+##
+## Two zones since WI-63, not one: AIDE is a mode (it opens a panel, and
+## one-panel-at-a-time has to include it) but it sits past the group divider
+## beside SYS, so putting it in ORDER would move it inside the group of seven.
+## The invariant is unchanged - **every** member of the enum is accounted for
+## exactly once - it just spans two lists now.
 func test_every_mode_appears_exactly_once_in_the_console_order() -> void:
+	var slots: Array[ModeManager.Mode] = ModeManager.console_order()
 	for value: int in ModeManager.Mode.values():
 		if value == ModeManager.Mode.NONE:
 			continue
-		assert_eq(ModeManager.ORDER.count(value), 1,
+		assert_eq(slots.count(value), 1,
 			"mode %d has exactly one console slot" % value)
-	assert_eq(ModeManager.ORDER.size(), ModeManager.Mode.size() - 1,
-		"ORDER covers every mode but NONE")
+	assert_eq(slots.size(), ModeManager.Mode.size() - 1,
+		"ORDER plus TRAILING covers every mode but NONE")
+
+## The two zones are disjoint. A mode in both would build two buttons, and the
+## second would silently win the `_mode_buttons` entry.
+func test_the_two_console_zones_do_not_overlap() -> void:
+	for mode: ModeManager.Mode in ModeManager.TRAILING:
+		assert_false(ModeManager.ORDER.has(mode),
+			"mode %d is in exactly one console zone" % mode)
 
 func test_every_mode_has_a_label_and_a_hotkey_action() -> void:
-	for mode: ModeManager.Mode in ModeManager.ORDER:
+	for mode: ModeManager.Mode in ModeManager.console_order():
 		assert_false(ModeManager.label_of(mode).is_empty(), "mode %d has a label" % mode)
 		assert_true(ModeManager.HOTKEY_ACTIONS.has(mode), "mode %d has a hotkey action" % mode)
 

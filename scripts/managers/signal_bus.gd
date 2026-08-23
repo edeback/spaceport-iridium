@@ -125,6 +125,13 @@ signal transmissions_changed
 signal trader_arrived(trader: TraderData)
 @warning_ignore("unused_signal")
 signal trader_departed(trader: TraderData)
+## A mineable body has entered the envelope (WI-63). Emitted beside the LOW
+## arrival alert [AsteroidManager] already raises, because an alert is a thing to
+## look at and this is a thing to react to. Carries the profile rather than the
+## body so a listener can filter on the *kind* - comet, asteroid, a mod's own -
+## without reaching into the instance.
+@warning_ignore("unused_signal")
+signal space_body_arrived(profile: SpaceBodyProfile)
 ## A random event fired (WI-13). Card events queue on EventManager; the UI
 ## shows them sequentially. Notification-only events already applied.
 @warning_ignore("unused_signal")

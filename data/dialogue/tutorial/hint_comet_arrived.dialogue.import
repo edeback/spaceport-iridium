@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://bt8r03wnjfmj2"
+path="res://.godot/imported/hint_comet_arrived.dialogue-165c7b0210b336764fbf7ae98712b5f3.tres"
+
+[deps]
+
+source_file="res://data/dialogue/tutorial/hint_comet_arrived.dialogue"
+dest_files=["res://.godot/imported/hint_comet_arrived.dialogue-165c7b0210b336764fbf7ae98712b5f3.tres"]
+
+[params]
+
+defaults=true

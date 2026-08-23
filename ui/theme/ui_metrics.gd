@@ -126,6 +126,10 @@ const BUILD_SELECTED_ICON: int = 44
 ## The recent strip is icon-only, so its square is the whole control.
 const BUILD_RECENT_ICON: int = 40
 const PANEL_COMMS_WIDTH: int = 620
+## AIDE (WI-63). The same 620 as Comms, deliberately: both are lists of things
+## somebody said, and two reading surfaces of different widths in the same console
+## would read as an accident rather than a decision.
+const PANEL_AIDE_WIDTH: int = PANEL_COMMS_WIDTH
 const PANEL_CREW_WIDTH: int = 660
 const PANEL_STORES_WIDTH: int = 1080
 const PANEL_TRADE_WIDTH: int = 1180
@@ -294,6 +298,40 @@ const DIALOGUE_PORTRAIT: int = 128
 ## triangle the balloon builds and the space reserved for it, so the glyph and
 ## its slot cannot disagree.
 const DIALOGUE_INDICATOR := Vector2(20, 10)
+
+# --- the coach mark -----------------------------------------------------------
+# WI-63 §3. The overlay that points at a piece of the interface - the fourth kind
+# of surface, after the mode panel, the readout and the modal.
+
+## Width of the instruction plate. Narrower than the balloon on purpose: the
+## plate carries one imperative sentence, and a wide plate would read as prose
+## and cover the control it is pointing at.
+const COACH_PLATE_WIDTH: int = 320
+
+## Side of SAI's face on the plate. A quarter of [constant DIALOGUE_PORTRAIT] -
+## the plate identifies the speaker, it does not present them.
+const COACH_PORTRAIT: int = 48
+
+## Border of the ring drawn around the marked control. Two pixels rather than
+## [constant BORDER_WIDTH]: the ring sits on top of controls that already carry a
+## 1px edge, and a ring the same weight as the thing under it does not read.
+const COACH_RING_WIDTH: int = 2
+
+## How far outside the marked control the ring sits, so it frames rather than
+## overlaps.
+const COACH_RING_PAD: int = 4
+
+## Gap between the ring and the plate beside it.
+const COACH_PLATE_GAP: int = 12
+
+## Seconds for one full pulse of the ring, and the alpha range it travels.
+##
+## **Real seconds, not sim seconds.** The tutorial runs entirely while the sim is
+## held, and [method TimeManager.animation_speed] returns 0 while paused - a pulse
+## driven off sim time would sit frozen for the whole onboarding.
+const COACH_PULSE_PERIOD: float = 1.6
+const COACH_PULSE_MIN_ALPHA: float = 0.35
+const COACH_PULSE_MAX_ALPHA: float = 1.0
 
 # --- shared spacing -----------------------------------------------------------
 

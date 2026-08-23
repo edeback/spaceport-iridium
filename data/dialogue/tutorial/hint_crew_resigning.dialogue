@@ -1,0 +1,7 @@
+~ resigning
+
+$> guide.point_at_subject("Leaving unless something changes")
+sai: {{ guide.subject_name() }} has given notice.
+sai: Unhappy crew do not sulk indefinitely. They wait out a short grace period and then they take the next ship. Meet their needs inside that window and they will withdraw it.
+sai: I will be blunt about the arithmetic. If everyone leaves and you cannot afford a replacement, the station stops. ARC confiscates a station that cannot crew itself, and that is the end of the run.
+=> END
