@@ -19,6 +19,17 @@ extends RefCounted
 ## the labels - and leaves a component it has never heard of (a mod's, WI-47)
 ## with a legible capitalised name in a band of its own rather than dropping it.
 ##
+## **The Status fold (WI-64).** Three of those pages answer the same question -
+## "what condition is this module in?" - and each was costing a tab: Power from
+## the generation or draw component, Air from the atmosphere component, and the
+## synthetic Environment page. On a refinery that is three of eight tabs spent
+## before the module has said what it makes. They now fold into **one Status
+## tab** whose sections are stacked in a fixed order, which is why a tab carries
+## a `sources` list rather than a single `source`: merging is a property of the
+## plan, so a module that happens to carry only one of the three still lands on
+## Status rather than on a differently-named tab per module. See
+## [constant STATUS_MEMBERS].
+##
 ## **Crew tabs.** The three pawn specialisations differ by *which components they
 ## carry*, which is exactly what the tab set should be derived from. Asking for
 ## the component rather than testing `is RobotPawnBase` means a modded pawn kind
@@ -32,13 +43,18 @@ extends RefCounted
 
 ## What the module makes - processing, mining, growing, selling.
 const BAND_PRODUCTION: int = 10
-## What it costs or supplies to run - generation, draw, batteries, shields.
+## The module's live condition - power, air, temperature, the fields it sits in.
+## One fixed slot rather than the band of whichever member happens to be present,
+## so Status is in the same place on every module that has one (WI-64).
+const BAND_STATUS: int = 15
+## The systems that hang off the power budget without being it - weapons and
+## shields. Generation and draw used to sort here too; they fold into Status now.
 const BAND_POWER: int = 20
 ## What it holds - storage, conveyors, logistics.
 const BAND_STORAGE: int = 30
 ## Who works it, and who visits it.
 const BAND_CREW: int = 40
-## The hull itself - atmosphere, construction progress.
+## The hull itself - construction progress, and whatever a mod puts here.
 const BAND_STRUCTURE: int = 50
 ## Anything this table has never heard of. After the known bands so a mod's tab
 ## does not land between two vanilla ones and look like a reordering bug, before
@@ -62,8 +78,6 @@ const MODULE_TABS: Dictionary[String, Dictionary] = {
 	"SustenanceComponent": {"label": "Meals", "band": BAND_PRODUCTION},
 	"ShopComponent": {"label": "Shop", "band": BAND_PRODUCTION},
 	"TradeComponent": {"label": "Trade", "band": BAND_PRODUCTION},
-	"PowerGenerationComponent": {"label": "Power", "band": BAND_POWER},
-	"PowerConsumptionComponent": {"label": "Power", "band": BAND_POWER},
 	"WeaponComponent": {"label": "Weapon", "band": BAND_POWER},
 	"ShieldComponent": {"label": "Shield", "band": BAND_POWER},
 	"StorageComponent": {"label": "Stores", "band": BAND_STORAGE},
@@ -71,7 +85,6 @@ const MODULE_TABS: Dictionary[String, Dictionary] = {
 	"LogisticsBayComponent": {"label": "Drones", "band": BAND_STORAGE},
 	"WorkspaceComponent": {"label": "Crew", "band": BAND_CREW},
 	"CrewRecruitmentComponent": {"label": "Hire", "band": BAND_CREW},
-	"AtmosphereComponent": {"label": "Air", "band": BAND_STRUCTURE},
 	"ConstructionComponent": {"label": "Build", "band": BAND_STRUCTURE},
 }
 
@@ -80,17 +93,79 @@ const SYNTHETIC_ENVIRONMENT: String = "Environment"
 const SYNTHETIC_UPGRADES: String = "Upgrades"
 
 const SYNTHETIC_TABS: Dictionary[String, Dictionary] = {
-	SYNTHETIC_ENVIRONMENT: {"label": "Environment", "band": BAND_STRUCTURE},
 	# Always last, because it is about the module's future rather than its present.
 	SYNTHETIC_UPGRADES: {"label": "Upgrades", "band": BAND_UPGRADES},
 }
+
+# --- the Status fold -----------------------------------------------------------
+
+## The one merged tab's label and id. Not in [constant SYNTHETIC_TABS]: it is not
+## a page the module set builds from a single source, it is several sources
+## stacked, and giving it an entry there would imply a `make_page` that maps it
+## back to one component.
+const SYNTHETIC_STATUS: String = "Status"
+const TAB_STATUS: StringName = &"status"
+
+## Every key that folds into Status, with the heading it takes inside the tab and
+## where it sorts there.
+##
+## `order` is the *section* order, and it is deliberately not the band order: the
+## sections are read top to bottom in one page, so what matters is that power
+## comes before air comes before the surroundings on every module, not where the
+## component sat in the scene. Two members sharing a heading ("Power" from a
+## generator and from a draw) print it once - see [ModuleStatusTab].
+##
+## Weapons and shields are NOT here. They are things the module *does*, they each
+## carry their own controls, and folding them in would make Status the tab that
+## means everything and therefore nothing.
+const STATUS_MEMBERS: Dictionary[String, Dictionary] = {
+	"PowerGenerationComponent": {"heading": "Power", "order": 10},
+	"PowerConsumptionComponent": {"heading": "Power", "order": 20},
+	"AtmosphereComponent": {"heading": "Air", "order": 30},
+	SYNTHETIC_ENVIRONMENT: {"heading": "Environment", "order": 40},
+}
+
+## True when `key` contributes a section to Status rather than a tab of its own.
+static func folds_into_status(key: String) -> bool:
+	return STATUS_MEMBERS.has(key)
+
+## The key a component contributes, given `chain` - its `class_name` and those of
+## its base scripts, most-derived first.
+##
+## The first name either table recognises wins, so **a subclass inherits its
+## base's tab**. `SolarPowerComponent extends PowerGenerationComponent` and does
+## not override `get_ui()`, so a solar panel's power page is the power page - and
+## keying on the exact class name put it under a tab of its own called "Solar
+## Power", in the band reserved for things the plan has never heard of. It has
+## been that way since WI-51 and only became loud when WI-64 folded Power into
+## Status and left the panel with a Status tab that had no power in it.
+##
+## A chain nothing recognises keeps its most-derived name, which is what
+## [method fallback_label] renders - so a mod's genuinely new component still
+## gets its own legible tab, while a mod's `extends PowerGenerationComponent`
+## lands in Status for free.
+static func resolve_key(chain: Array[String]) -> String:
+	for candidate: String in chain:
+		if MODULE_TABS.has(candidate) or STATUS_MEMBERS.has(candidate):
+			return candidate
+	return chain[0] if not chain.is_empty() else ""
+
+## The heading `key`'s section prints inside the Status tab, or "" for a key that
+## does not belong to it.
+static func status_heading(key: String) -> String:
+	return String(STATUS_MEMBERS.get(key, {}).get("heading", ""))
 
 # --- module tabs ---------------------------------------------------------------
 
 ## Turns `keys` - the class name of each thing that contributes a page, in the
 ## order the module's components were walked - into tab definitions in the shape
-## [TabStrip.set_tabs] takes, plus the `band` they sorted on and the `source`
-## index the caller maps back to the component.
+## [TabStrip.set_tabs] takes, plus the `band` they sorted on and the `sources`
+## indices the caller maps back to the components.
+##
+## `sources` is a list on **every** tab, not only on Status. A caller that had to
+## ask which kind of tab it was holding before it knew how to read the field
+## would be the merge leaking back out of here; `source` is kept beside it as the
+## first index, because it is also the within-band sort tiebreak.
 ##
 ## Duplicate labels are numbered rather than deduplicated. A module really can
 ## carry two storages - a deconstruction site grows a second one for its
@@ -99,8 +174,23 @@ const SYNTHETIC_TABS: Dictionary[String, Dictionary] = {
 static func module_tabs(keys: Array[String]) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var seen: Dictionary[String, int] = {}
+	var status: Array[int] = status_sections(keys)
+	if not status.is_empty():
+		# Claims the label before the walk, so a mod component that renders as
+		# "Status" is numbered against it rather than colliding with it - two tabs
+		# sharing one id is two tabs the strip cannot tell apart.
+		seen[SYNTHETIC_STATUS] = 1
+		out.append({
+			"id": TAB_STATUS,
+			"text": SYNTHETIC_STATUS,
+			"band": BAND_STATUS,
+			"source": status[0],
+			"sources": status,
+		})
 	for index: int in keys.size():
 		var key: String = keys[index]
+		if folds_into_status(key):
+			continue
 		var entry: Dictionary = MODULE_TABS.get(key, SYNTHETIC_TABS.get(key, {}))
 		var label: String = String(entry.get("label", "")) if not entry.is_empty() \
 			else fallback_label(key)
@@ -109,6 +199,7 @@ static func module_tabs(keys: Array[String]) -> Array[Dictionary]:
 		seen[label] = count
 		if count > 1:
 			label = "%s %d" % [label, count]
+		var sources: Array[int] = [index]
 		out.append({
 			"id": StringName(label.to_lower().replace(" ", "_")),
 			"text": label,
@@ -116,11 +207,33 @@ static func module_tabs(keys: Array[String]) -> Array[Dictionary]:
 			# The walk index, so the sort below is stable within a band and the
 			# caller can map a tab back to the component it came from.
 			"source": index,
+			"sources": sources,
 		})
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		if int(a["band"]) == int(b["band"]):
 			return int(a["source"]) < int(b["source"])
 		return int(a["band"]) < int(b["band"]))
+	return out
+
+## The walk indices that fold into Status, in the order their sections stack.
+## Empty when the module carries none of them, which is what leaves such a module
+## with no Status tab at all rather than an empty one.
+##
+## Sorted by [constant STATUS_MEMBERS]'s `order`, ties broken by the walk index -
+## so the page reads Power, then Air, then Environment on every module regardless
+## of where those components sat in the scene, and two members sharing an order
+## keep the module author's ordering.
+static func status_sections(keys: Array[String]) -> Array[int]:
+	var out: Array[int] = []
+	for index: int in keys.size():
+		if folds_into_status(keys[index]):
+			out.append(index)
+	out.sort_custom(func(a: int, b: int) -> bool:
+		var rank_a: int = int(STATUS_MEMBERS[keys[a]]["order"])
+		var rank_b: int = int(STATUS_MEMBERS[keys[b]]["order"])
+		if rank_a == rank_b:
+			return a < b
+		return rank_a < rank_b)
 	return out
 
 ## A component this table has never seen - a mod's (WI-47). The trailing

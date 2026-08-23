@@ -330,18 +330,11 @@ func _show_page(id: StringName) -> void:
 	_pages[id].visible = true
 	_refit()
 
-## Makes a page fit the inspector regardless of how it was authored.
-##
-## The component UIs (and the pawn tabs) are [PanelContainer]s that used to sit
-## inside a [TabContainer], so each draws its own surface. Stacked inside the
-## inspector's surface that reads as a box in a box, and there are seventeen of
-## them plus whatever a mod supplies - so the flattening happens once, here,
-## rather than as an edit to every one of them.
+## Makes a page fit the inspector and hooks up the one signal a page may raise.
+## The flattening itself is [method InspectorTabSet.flatten_page] - the tab sets
+## need it too, for the pages WI-64 stacks inside one page.
 func _adopt_page(page: Control) -> void:
-	page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var container := page as PanelContainer
-	if container != null:
-		container.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	InspectorTabSet.flatten_page(page)
 	if page.has_signal(&"subject_lost"):
 		page.connect(&"subject_lost", _on_subject_lost)
 

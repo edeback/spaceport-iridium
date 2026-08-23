@@ -106,3 +106,24 @@ func tabs() -> Array[Dictionary]:
 ## expensive.
 func make_page(_id: StringName) -> Control:
 	return null
+
+## Makes a page fit the inspector regardless of how it was authored.
+##
+## The component UIs (and the pawn tabs) are [PanelContainer]s that used to sit
+## inside a [TabContainer], so each draws its own surface. Stacked inside the
+## inspector's surface that reads as a box in a box, and there are seventeen of
+## them plus whatever a mod supplies - so the flattening happens once, here,
+## rather than as an edit to every one of them.
+##
+## It lives on the page-factory contract rather than on [InspectorPanel] because
+## two things need it: the panel, on the page it is handed, and WI-64's
+## [ModuleStatusTab], on each page it stacks inside one page. Putting it on the
+## panel made `inspector_panel -> module_tab_set -> module_status_tab ->
+## inspector_panel` a cycle, and a static call across a `class_name` cycle
+## resolves at runtime but reports "Static function not found" from the editor's
+## parse pass. Here nothing points back.
+static func flatten_page(page: Control) -> void:
+	page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var container := page as PanelContainer
+	if container != null:
+		container.add_theme_stylebox_override("panel", StyleBoxEmpty.new())

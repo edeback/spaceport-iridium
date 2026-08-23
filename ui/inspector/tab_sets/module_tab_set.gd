@@ -10,8 +10,13 @@ extends InspectorTabSet
 ## and named** by [InspectorTabPlan] instead of arriving in scene order under
 ## their UI's node name, and that the three things the old panel injected between
 ## the header and the tabs go somewhere better: integrity into the subject block,
-## the adjacency fields into an Environment tab, and DECONSTRUCT / DEMOLISH into
-## the footer.
+## the adjacency fields into the Status tab, and DECONSTRUCT / DEMOLISH into the
+## footer.
+##
+## WI-64 folded three of the resulting tabs into one. Power, Air and the
+## synthetic Environment page are now sections of a single Status tab; the plan
+## decides which sources fold and in what order, [ModuleStatusTab] stacks them,
+## and the component UIs themselves are untouched.
 ##
 ## Corridors need no special case. They are [ModuleBase] instances on the
 ## CORRIDOR layer and resolve here with whatever components they carry - usually
@@ -184,8 +189,37 @@ func tabs() -> Array[Dictionary]:
 	return _tabs
 
 func make_page(id: StringName) -> Control:
-	var index: int = _source_for(id)
-	if index < 0:
+	if id == InspectorTabPlan.TAB_STATUS:
+		return _make_status_page(_sources_for(id))
+	return _make_source_page(_source_for(id))
+
+## Power, air and the surroundings stacked into one page (WI-64).
+##
+## The sections are the same pages the three separate tabs used to be - nothing
+## is re-rendered here, and a component UI that declines to build itself simply
+## contributes no section. Returns null if every source declined, which drops the
+## tab rather than leaving an empty one.
+func _make_status_page(indices: Array[int]) -> Control:
+	var sections: Array[Dictionary] = []
+	for index: int in indices:
+		var content: Control = _make_source_page(index)
+		if content == null:
+			continue
+		sections.append({
+			"heading": InspectorTabPlan.status_heading(_keys[index]),
+			"content": content,
+		})
+	if sections.is_empty():
+		return null
+	var page := ModuleStatusTab.new()
+	page.setup(sections)
+	return page
+
+## The page one source contributes - a component's own UI, or a tab this set
+## synthesises. Shared by the single-source tabs and by the Status fold, which is
+## why the synthetic Environment page is built here rather than inside the fold.
+func _make_source_page(index: int) -> Control:
+	if index < 0 or index >= _keys.size():
 		return null
 	var component: ComponentBase = _builders[index]
 	if component != null:
@@ -207,6 +241,17 @@ func _source_for(id: StringName) -> int:
 			return int(tab["source"])
 	return -1
 
+## Every source behind a tab, which is more than one only for the Status fold.
+func _sources_for(id: StringName) -> Array[int]:
+	for tab: Dictionary in _tabs:
+		if StringName(tab["id"]) == id:
+			var sources: Array = tab.get("sources", [])
+			var out: Array[int] = []
+			for source: int in sources:
+				out.append(source)
+			return out
+	return []
+
 ## Re-derives the tab set from the module's current state. Cheap, and called on
 ## anything that can change the set's shape rather than being worked out per
 ## trigger - a component that just finished building, an upgrade catalogue that
@@ -220,13 +265,17 @@ func _gather() -> void:
 	for component: ComponentBase in _module.components:
 		if not is_instance_valid(component) or not component.has_ui():
 			continue
-		_keys.append(_class_name_of(component))
+		_keys.append(InspectorTabPlan.resolve_key(_class_chain_of(component)))
 		_builders.append(component)
 	# Environment covers the adjacency fields AND the module's temperature (WI-60).
 	# The gate used to ask only about fields, which was right when fields were the
 	# tab's whole content - but every module now has a thermal body, so a module
 	# sitting in no field at all still has something to report. Without the second
 	# clause the temperature is unreachable in the UI for most of the station.
+	#
+	# Still gathered as its own key after WI-64: the fold happens in the plan, and
+	# a gate here that asked "does this module need a Status tab?" would be the
+	# plan's rule reimplemented in the panel.
 	var has_fields: bool = Global.adjacency_manager != null \
 		and not Global.adjacency_manager.get_all_fields(_module).is_empty()
 	var has_heat: bool = Global.heat_manager != null \
@@ -240,18 +289,33 @@ func _gather() -> void:
 		_builders.append(null)
 	_tabs = InspectorTabPlan.module_tabs(_keys)
 
-## The component's own `class_name`, which is what [InspectorTabPlan] keys on.
+## The component's own `class_name` and those of its base scripts, most-derived
+## first - which is what [method InspectorTabPlan.resolve_key] keys on.
+##
+## The **chain** rather than just the leaf, because a component that subclasses
+## another and inherits its `get_ui()` produces that base's page and belongs
+## under that base's tab. Walking it here rather than in the plan keeps the plan
+## free of [Script] - it is pure, and a chain of strings is what a test can hand
+## it.
+##
 ## Falls back to the script's file name for a script with no global class, so a
 ## nameless component still gets a stable tab id rather than sharing "" with
 ## every other nameless one.
-static func _class_name_of(component: ComponentBase) -> String:
+static func _class_chain_of(component: ComponentBase) -> Array[String]:
+	var out: Array[String] = []
 	var script: Script = component.get_script() as Script
-	if script == null:
-		return component.name
-	var global: StringName = script.get_global_name()
-	if global != &"":
-		return String(global)
-	return script.resource_path.get_file().get_basename()
+	while script != null:
+		var global: StringName = script.get_global_name()
+		if global != &"":
+			out.append(String(global))
+		elif out.is_empty():
+			# Only the leaf is worth naming by file: an anonymous script part-way
+			# up a chain is not something any table is keyed on.
+			out.append(script.resource_path.get_file().get_basename())
+		script = script.get_base_script()
+	if out.is_empty():
+		out.append(component.name)
+	return out
 
 # --- signals -------------------------------------------------------------------
 
@@ -272,8 +336,10 @@ func _on_module_event(module: ModuleBase) -> void:
 func _on_fields_changed(module: ModuleBase) -> void:
 	if module != _module:
 		return
-	# The Environment tab appears the moment a field reaches this module and
-	# retires when the last one leaves.
+	# The Environment section appears the moment a field reaches this module and
+	# retires when the last one leaves - which since WI-64 usually repaints the
+	# Status tab in place rather than adding or removing a tab, because a module
+	# with power or air already had one.
 	_gather()
 	tabs_changed.emit()
 

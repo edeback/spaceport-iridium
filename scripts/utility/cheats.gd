@@ -71,6 +71,42 @@ func repair_module(cell: Vector2i, amount: float = -1.0) -> String:
 	module.clear_breakdown()
 	return _report("repaired %s to %.0f/%.0f HP" % [module._display_name(), module.hp, module.max_hp()])
 
+## Opens a hull breach on the module at `cell` for `hours` game-hours (WI-64).
+##
+## This used to be a "Cause Breach" button authored into the atmosphere
+## component's UI. It was fine while it was buried behind an Air tab nobody
+## opened by accident; folding Power/Air/Environment into one Status tab put a
+## button that vents a module's atmosphere in the middle of the page a player
+## lands on. A dev affordance belongs on the dev surface.
+##
+## Reuses `start_breach`, so it takes the same "second strike extends rather than
+## restarts" rule as a pirate hit and raises the same critical alert.
+func breach_module(cell: Vector2i, hours: float = 1.0) -> String:
+	var module: ModuleBase = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, cell)
+	if module == null:
+		return _report("breach_module found no MODULE-layer module at %s" % cell)
+	var atmosphere: AtmosphereComponent = module.get_atmosphere()
+	if atmosphere == null:
+		return _report("%s has no atmosphere (exterior, or not built?)" % module._display_name())
+	atmosphere.start_breach(hours)
+	return _report("breached %s for %.1fh" % [module._display_name(), atmosphere.breach_remaining_hours])
+
+## Seals an open breach on the module at `cell` immediately.
+##
+## The other half of the pair: without it a cheat-opened breach can only be
+## waited out, which makes the cheat above a one-way door in a testing session.
+## Goes through `advance_seal`, so it emits `module_breach_sealed` and clears the
+## alert by exactly the path a repair worker would.
+func seal_breach(cell: Vector2i) -> String:
+	var module: ModuleBase = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, cell)
+	if module == null:
+		return _report("seal_breach found no MODULE-layer module at %s" % cell)
+	var atmosphere: AtmosphereComponent = module.get_atmosphere()
+	if atmosphere == null or not atmosphere.is_breached():
+		return _report("%s is not breached" % module._display_name())
+	atmosphere.advance_seal(atmosphere.breach_remaining_hours)
+	return _report("sealed the breach in %s" % module._display_name())
+
 ## Prints every nonzero adjacency field (WI-30) on the module at `cell` - the
 ## debug readout for vibration/greenery/maintenance propagation.
 func dump_adjacency(cell: Vector2i) -> String:

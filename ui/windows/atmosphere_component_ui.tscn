@@ -62,8 +62,3 @@ layout_mode = 2
 theme_type_variation = &"MetaLine"
 text = "BREACHED"
 
-[node name="BreachButton" type="Button" parent="MarginContainer/ContentsBox" unique_id=2114198886]
-layout_mode = 2
-text = "Cause Breach"
-
-[connection signal="pressed" from="MarginContainer/ContentsBox/BreachButton" to="." method="_on_breach_button_pressed"]
