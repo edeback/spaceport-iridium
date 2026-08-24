@@ -136,6 +136,15 @@ func _component(module: ModuleBase) -> StorageComponent:
 	component.owner_module = module
 	return component
 
+## A bare resource to hang a slot off. include_in_stats is switched off on the
+## components that use these so add_stored_resource() does not register them into
+## a ResourceData that outlives the test.
+func _resource(id: StringName) -> ResourceData:
+	var resource := ResourceData.new()
+	resource.id = id
+	resource.name = String(id)
+	return resource
+
 # --- membership --------------------------------------------------------------------------
 
 func test_a_preview_module_is_not_listed() -> void:
@@ -202,8 +211,8 @@ func test_a_module_owned_bin_does_not() -> void:
 		"a forge always takes iron and carbon and always emits steel")
 
 ## The asymmetry, and the point of having two functions: priority is the routing
-## language of the whole hauling system, so it is the player's on **every** bin,
-## including the ones whose contents the module owns.
+## language of the whole hauling system, so it is the player's on every bin that
+## takes deliveries, including the ones whose contents the module owns.
 func test_priority_is_editable_whatever_the_contents_rule_says() -> void:
 	var module: ModuleBase = autofree(ModuleBase.new())
 	module.build_state = ModuleBase.BuildState.Built
@@ -237,6 +246,62 @@ func test_a_live_construction_bin_is_listed_but_its_contents_are_not_editable() 
 func test_a_missing_component_is_editable_in_neither_sense() -> void:
 	assert_false(StoresModel.contents_editable(null), "null holds nothing")
 	assert_false(StoresModel.priority_editable(null), "and routes nothing")
+
+# --- the one exception to "priority is always the player's" (WI-65) --------------
+
+## An export-only bin has no priority of its own: OUTPUT resolves to the floor
+## whatever the component's number says, so a stepper there would be a control
+## that does nothing. Before WI-65 this case could not arise, because a module's
+## export side was a separate component with its own settable number.
+func test_an_export_only_bin_has_no_priority_to_set() -> void:
+	var module: ModuleBase = autofree(ModuleBase.new())
+	module.build_state = ModuleBase.BuildState.Built
+	var component: StorageComponent = _component(module)
+	component.include_in_stats = false
+	component.default_role = StorageData.Role.OUTPUT
+	component.add_stored_resource(_resource(&"iron_ore"), StorageData.Role.OUTPUT)
+	assert_false(StoresModel.priority_editable(component),
+		"a mining bay always pushes its ore out and cannot be told otherwise")
+	assert_ne(StoresModel.priority_locked_reason(component), "",
+		"and the card says so where the stepper used to be")
+
+## The bug this rule nearly shipped with: an EMPTY bin has no slots either, and
+## "no intake slots" must not be read as "export only". A fresh storeroom holds
+## nothing until the player puts something in it.
+func test_an_empty_storeroom_keeps_its_stepper() -> void:
+	var module: ModuleBase = autofree(ModuleBase.new())
+	module.build_state = ModuleBase.BuildState.Built
+	var component: StorageComponent = _component(module)
+	assert_true(component.storage_data.is_empty(), "fixture precondition")
+	assert_true(StoresModel.priority_editable(component),
+		"an empty storeroom is not an export-only bin")
+	assert_eq(StoresModel.priority_locked_reason(component), "",
+		"and has nothing to explain")
+
+## A bin holding both roles - a refinery - is priced by its intake side.
+func test_a_two_role_bin_is_still_the_players() -> void:
+	var module: ModuleBase = autofree(ModuleBase.new())
+	module.build_state = ModuleBase.BuildState.Built
+	var component: StorageComponent = _component(module)
+	component.add_stored_resource(_resource(&"iron_ore"), StorageData.Role.INPUT)
+	component.add_stored_resource(_resource(&"iron"), StorageData.Role.OUTPUT)
+	assert_true(StoresModel.priority_editable(component),
+		"whether the refinery out-bids the smelter for ore is the player's call")
+
+## Both reasons are sentences, and neither claims more than it should: the
+## priority one must not say the contents are locked, and vice versa.
+func test_the_two_locked_reasons_stay_in_their_lanes() -> void:
+	var module: ModuleBase = autofree(ModuleBase.new())
+	module.build_state = ModuleBase.BuildState.Built
+	var component: StorageComponent = _component(module)
+	component.include_in_stats = false
+	component.default_role = StorageData.Role.OUTPUT
+	component.add_stored_resource(_resource(&"iron"), StorageData.Role.OUTPUT)
+	var reason: String = StoresModel.priority_locked_reason(component)
+	assert_false(reason.to_lower().contains("contents"),
+		"the priority's reason is about the priority")
+	assert_true(reason.to_lower().contains("export"),
+		"and names why: the bin only sends goods out")
 
 ## Locked is a state, not an absence - so a bin whose contents the module owns
 ## owes the player a sentence, and a configurable one must not print a reason that
@@ -277,7 +342,7 @@ func test_no_locked_reason_claims_the_priority_is_locked() -> void:
 
 func test_the_extremes_say_what_the_legend_says() -> void:
 	assert_string_contains(StoresModel.priority_label(StoresModel.PRIORITY_MIN).to_lower(),
-		"refuse")
+		"last choice")
 	assert_string_contains(StoresModel.priority_label(StoresModel.PRIORITY_MAX).to_lower(),
 		"urgent")
 

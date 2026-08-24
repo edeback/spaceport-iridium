@@ -187,7 +187,7 @@ func spawn_resource(id: StringName, amount: int, cell: Vector2i) -> String:
 	var module: ModuleBase = world.get_module_by_cell(WorldManager.StructureLayer.MODULE, cell)
 	if module != null:
 		var storage: StorageComponent = module.get_component_by_type(StorageComponent) as StorageComponent
-		if storage != null and storage.accepts_imports and storage.deposit(resource, amount, true):
+		if storage != null and storage.import_priority(resource) != StorageComponent.REFUSED 				and storage.deposit(resource, amount, true):
 			return _report("added %d %s to storage at %s" % [amount, resource.name, cell])
 	var pile: ResourcePile = ResourcePile.spawn(world.pawn_layer, Global.cell_to_world(cell, true), module)
 	pile.add_amount(resource, amount)

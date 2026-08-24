@@ -11,6 +11,7 @@
 
 [sub_resource type="Resource" id="Resource_o2slot"]
 script = ExtResource("5_sdata")
+role = 1
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
 
 [node name="Module" instance=ExtResource("1_base")]
@@ -19,7 +20,7 @@ metadata/_custom_type_script = "uid://b75b02hdqaib1"
 texture = ExtResource("2_tex")
 
 [node name="InputStorage" parent="." instance=ExtResource("4_storage")]
-accepts_exports = false
+default_role = 1
 storage_data = Dictionary[ExtResource("6_rdata"), ExtResource("5_sdata")]({
 ExtResource("7_oxygen"): SubResource("Resource_o2slot")
 })

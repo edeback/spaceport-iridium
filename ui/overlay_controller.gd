@@ -409,21 +409,20 @@ func _vibration_color(module: ModuleBase) -> Color:
 	return OverlayPalette.vibration_color(field, vibration_high_ref)
 
 ## Tint a storage module by its most salient routing priority (largest
-## magnitude across its storage components - a construction site's +99 outweighs
-## an idle bin). Non-storage modules stay untinted; the flow layer carries the
-## arrows and the numeric labels on top.
+## Non-storage modules stay untinted; the flow layer carries the arrows and the
+## numeric labels on top.
+##
+## This used to pick the largest-MAGNITUDE priority across a module's storage
+## components, because a refinery had two of them and they disagreed. WI-65 made
+## that a module-level fact - one bin, one number - so the collapse is gone. A
+## deconstruction site can still grow a second bin, hence the loop rather than a
+## single lookup, and the first storage the walk finds wins.
 func _logistics_color(module: ModuleBase) -> Color:
-	var best_priority: int = 0
-	var found: bool = false
 	for component: ComponentBase in module.components:
-		if component is StorageComponent:
-			var storage: StorageComponent = component as StorageComponent
-			if not found or absi(storage.priority) > absi(best_priority):
-				best_priority = storage.priority
-				found = true
-	if not found:
-		return OverlayPalette.untinted()
-	return OverlayPalette.logistics_color(best_priority)
+		var storage: StorageComponent = component as StorageComponent
+		if storage != null:
+			return OverlayPalette.logistics_color(storage.priority)
+	return OverlayPalette.untinted()
 
 ## Every placed module has a thermal body, so unlike the other modes this one has
 ## something to say about all of them - truss included, which is exactly where a

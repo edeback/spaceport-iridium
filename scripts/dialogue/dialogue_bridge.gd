@@ -210,8 +210,8 @@ func grant_cargo(resource_id: String, min_amount: int, max_amount: int) -> int:
 		drop = DockingBay.dock_position_for(bay)
 		var storage: StorageComponent = bay.get_component_by_type(
 			StorageComponent) as StorageComponent
-		if storage != null and storage.accepts_imports:
-			var room: int = maxi(0, storage.space_available())
+		if storage != null and storage.import_priority(resource) != StorageComponent.REFUSED:
+			var room: int = maxi(0, storage.space_available_for(resource))
 			var taken: int = mini(room, remainder)
 			if taken > 0 and storage.deposit(resource, taken, true):
 				remainder -= taken

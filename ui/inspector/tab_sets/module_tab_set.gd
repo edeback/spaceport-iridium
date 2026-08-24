@@ -95,12 +95,28 @@ func meta_text() -> String:
 			parts.append("Crew %d/%d" % [assigned, workspace.max_workers])
 		else:
 			parts.append("Crew %d" % assigned)
-	var storage: StorageComponent = _module.get_component_by_type(StorageComponent) as StorageComponent
-	if storage != null:
+	# The module's OWN bin, not the first StorageComponent the walk finds: every
+	# module also carries construction's, which sits at +100 and is not what the
+	# player is being told about here. A screenshot caught this reading "Haul
+	# +100" on a refinery the Stores panel had at +1 (WI-65).
+	#
+	# And nothing at all for an export-only bin: OUTPUT implies the floor, so a
+	# number there would imply a lever that does not exist.
+	var storage: StorageComponent = _haulable_storage()
+	if storage != null and StoresModel.priority_editable(storage):
 		parts.append("Haul %+d" % storage.priority)
 	if not _module.is_complete():
 		parts.append("Under construction")
 	return " · ".join(parts)
+
+## The module's own storage - the one whose priority the player sets - skipping
+## construction's material bin.
+func _haulable_storage() -> StorageComponent:
+	for component: ComponentBase in _module.components:
+		var storage := component as StorageComponent
+		if storage != null and not storage.construction_storage:
+			return storage
+	return null
 
 ## Damage, breakdown and breach, then whatever the components are complaining
 ## about. One amber line: the design budgets amber, and four separate warnings

@@ -367,7 +367,7 @@ func _refresh_rows(docked: bool, bay_trade: TradeComponent) -> void:
 	var cargo_space: int = manager.cargo_space() if docked and manager != null else TradeOffer.ORDER_CAP
 	var import_space: int = TradeOffer.ORDER_CAP
 	if docked and bay_trade != null:
-		import_space = bay_trade.import_storage.space_available()
+		import_space = bay_trade.storage.space_available(false, StorageData.Role.OUTPUT)
 	for row: TradeResourceRow in _rows:
 		var resource: ResourceData = row.resource
 		var market_buy: int = market.get_buy_price(resource) if market != null else 0

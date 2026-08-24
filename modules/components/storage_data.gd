@@ -1,6 +1,33 @@
 class_name StorageData
 extends ResourceStackContainer
 
+## Which directions hauling may move this resource (WI-65). Replaces the
+## component-level accepts_imports/accepts_exports pair, which could not express
+## "this bin pulls iron ore in AND pushes iron out" - the reason a refinery
+## needed two StorageComponents.
+##
+## Four values, not three, because two booleans have four states: EXCLUDED is
+## the fourth corner, so converting the flag pair to this enum loses nothing and
+## a bin frozen out of hauling stays expressible.
+##
+## Roles govern HAULING, not the storage API. deposit()/withdraw_stacks() and
+## friends ignore role entirely - a processor deposits into its own OUTPUT slot,
+## and ConstructionComponent consumes materials out of an EXCLUDED bin.
+enum Role {
+	## Receives and ships. Storerooms.
+	GENERAL,
+	## Receives only. Recipe ingredients, galley food, reactor fuel, sell-order
+	## staging. Its `desired` is a hard cap (WI-65 §11).
+	INPUT,
+	## Ships only, always at StoresModel.PRIORITY_MIN. Recipe products, mined
+	## ore, arriving purchases, deconstruction refunds.
+	OUTPUT,
+	## Neither. A bin frozen out of hauling - construction storage before its
+	## site is a blueprint, and after a free module needs no materials.
+	EXCLUDED,
+}
+
+@export var role: Role = Role.GENERAL
 @export var desired: int = 0
 @export var reserved_withdraw: int = 0
 @export var reserved_deposit: int = 0
@@ -10,7 +37,51 @@ extends ResourceStackContainer
 ## by the claimable contract below (WI-44).
 var import_job: Job = null
 var export_job: Job = null
-@export var autodump: bool = false
+## Destroy stock above this level; -1 disables, which is the default and what
+## nearly every bin stays at.
+##
+## Separate from `desired` because they are different decisions taken at
+## different levels. `desired` is where hauling stops filling; this is where the
+## station starts destroying, and the gap between them is the grace an export job
+## gets to move the surplus somewhere useful before the vent opens. With one
+## number the two mechanisms raced over the same units and which won depended on
+## whether a hauler happened to be free.
+##
+## Must sit at or above `desired` - the reverse of what a cap-shaped reading
+## suggests - because a threshold BELOW desired would destroy stock the bin is
+## still actively asking to be filled with.
+@export var autodump_above: int = -1
+
+# --- role predicates (WI-65) --------------------------------------------------
+#
+# Pure, and deliberately here rather than on StorageComponent: they are questions
+# about one slot, they need nothing but `role`, and keeping them on this class is
+# what lets the GUT suite drive the whole routing table without a scene tree.
+
+## Will hauling ever bring goods INTO this slot?
+func accepts_imports() -> bool:
+	return role == Role.GENERAL or role == Role.INPUT
+
+## Will hauling ever take goods OUT of this slot?
+func accepts_exports() -> bool:
+	return role == Role.GENERAL or role == Role.OUTPUT
+
+## How much this slot wants hauled away right now (WI-65 §4).
+##
+## The role decides what "surplus" means. A GENERAL bin ships what it holds over
+## its target; an OUTPUT slot ships everything, because its `desired` is a
+## capacity bound rather than a level to sit at and its whole purpose is to be
+## emptied. INPUT ships nothing - an over-cap INPUT slot sheds to the module's
+## overflow pile instead (§12), never through the board, because it would post at
+## a priority no ordinary storeroom can out-rank.
+func exportable_surplus() -> int:
+	match role:
+		Role.GENERAL:
+			return maxi(stored - reserved_withdraw - desired, 0)
+		Role.OUTPUT:
+			return maxi(stored - reserved_withdraw, 0)
+		_:
+			return 0
 
 func end_all_jobs() -> void:
 	# Null our reference BEFORE cancelling: ending a job releases its claims,
@@ -33,14 +104,25 @@ func set_job_priority(new_priority: int) -> void:
 	if export_job != null:
 		export_job.priority = new_priority
 
-## How much autodump is allowed to destroy: surplus over `desired`, minus
+## How much autodump is allowed to destroy: surplus over `autodump_above`, minus
 ## anything a hauler has already reserved a withdrawal against. Without the
 ## reserved term a pawn walking to this bin arrives to find its stock deleted
 ## and the trip is wasted (WI-38 A4). Kept here, and out of
 ## StorageComponent.destroy_resource, because that is also the module-destruction
 ## and eject path, where ignoring reservations is the correct behavior.
+##
+## Zero when disabled, which is the only state a bin reaches without the player
+## explicitly turning it on - venting stock is exactly the kind of loss the
+## no-silent-resource-loss rule is about.
 func autodump_amount() -> int:
-	return maxi(stored - desired - reserved_withdraw, 0)
+	if autodump_above < 0:
+		return 0
+	return maxi(stored - autodump_above - reserved_withdraw, 0)
+
+## Is autodump on for this slot? One question with one answer, rather than a bool
+## beside a threshold that could disagree with it.
+func autodump_enabled() -> bool:
+	return autodump_above >= 0
 
 ## Stock nobody has already spoken for - the `AVAIL` column of the Trade panel
 ## (WI-55), and the amount-form of [method can_withdraw] with use_reserve false.
@@ -108,11 +190,21 @@ func can_take_claim(kind: int, amount: int) -> bool:
 	if kind == ClaimSpec.Kind.STORAGE_WITHDRAW:
 		# use_reserve = false: must be stock nobody else has already spoken for.
 		return can_withdraw(amount, false)
-	# Deposit space is a component-level question (max_stored spans every
-	# resource), so the reservation itself is pure bookkeeping - exactly as
-	# add_deposit_job() has always been. Whatever picked this bin is what checked
-	# there was room.
-	return kind == ClaimSpec.Kind.STORAGE_DEPOSIT
+	if kind != ClaimSpec.Kind.STORAGE_DEPOSIT:
+		return false
+	# For GENERAL and OUTPUT, deposit space is a COMPONENT-level question (the
+	# role's pool spans every slot in it), which this class deliberately cannot
+	# see - that is what keeps the claim path free of Global and this suite pure.
+	# So the reservation stays pure bookkeeping, exactly as it has always been,
+	# and whatever picked this bin is what checked there was room.
+	#
+	# INPUT is different since WI-65 §11: its `desired` is a hard per-slot cap,
+	# which is slot-local and therefore answerable right here. Without this check
+	# five haulers each reserve against the same five remaining units and four
+	# arrive at a full slot.
+	if role != Role.INPUT:
+		return true
+	return stored + reserved_deposit + amount <= desired
 
 func take_claim(kind: int, amount: int) -> Variant:
 	if not can_take_claim(kind, amount):
@@ -142,4 +234,3 @@ func deposit_reserved(stacks: Array[ResourceStack], amount: int) -> void:
 	for stack: ResourceStack in stacks:
 		add_stack(stack)
 	reserved_deposit = maxi(reserved_deposit - amount, 0)
-

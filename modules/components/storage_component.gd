@@ -1,14 +1,30 @@
 class_name StorageComponent
 extends ComponentBase
 
+## What this bin exports at, and what its GENERAL/INPUT slots import at. OUTPUT
+## slots ignore it entirely (see [method export_priority]), which is what lets one
+## component hold both roles and still show the player exactly one number.
 @export var priority: int = 1
+## Capacity shared by the GENERAL and INPUT slots. The two never coexist on one
+## module in practice - a module either holds stock or consumes it.
 @export var max_stored: int = 10
+## Capacity for the OUTPUT slots, kept separate from `max_stored` so a backed-up
+## output cannot starve the input side of the same bin (WI-65 §5). Deliberately
+## ONE shared pool across every output: a multi-output recipe deposits
+## atomically, so a blocked product stalling the run is correct behaviour and
+## per-product caps would let a run proceed with only some of its outputs placed.
+@export var output_capacity: int = 0
 @export var power_consumption_component: PowerConsumptionComponent
 
 @export var include_in_stats: bool = true
 
-@export var accepts_imports: bool = true
-@export var accepts_exports: bool = true
+## The role a slot gets when nothing says otherwise - a catch-all bin's first
+## deposit of a new resource, or a slot the save block restores. It is what makes
+## "which side is this bin on?" answerable for a resource nobody has declared:
+## the docking bay's arrivals are OUTPUT whatever turns up in them, and a
+## deconstruction site's recovered materials restore as OUTPUT rather than as
+## general stock that would be hauled straight back in.
+@export var default_role: StorageData.Role = StorageData.Role.GENERAL
 
 ## Can we store anything in here if we want?
 @export var allow_any_resource: bool = false
@@ -55,9 +71,16 @@ func _ready() -> void:
 		if num_to_create > 0:
 			storage.stored = 0
 			storage.deposit(num_to_create, false)
-		if accepts_imports:
-			storage.desired = max_stored
-		
+		# Every slot starts at the whole of the pool it draws on - the same thing
+		# add_stored_resource() does, and the two must not disagree. For INPUT
+		# this is what keeps a catch-all bin working once `desired` becomes a hard
+		# cap (WI-65 §11): default it to 0 and every allow_any bin bricks at once.
+		# For OUTPUT it is a display bound rather than a routing one (an output
+		# slot ships everything it holds), but leaving it at 0 made a mining bay's
+		# ore rows read "0 / 0", i.e. a bay that can hold nothing.
+		if storage.role != StorageData.Role.EXCLUDED:
+			storage.desired = pool_for(storage.role)
+
 func empty_all() -> void:
 	for resource: ResourceData in storage_data:
 		resource.needs_recalc = true
@@ -80,6 +103,13 @@ func ready_blueprint() -> void:
 		_posting_active = false
 
 func ready_constructed() -> void:
+	# A silently-zero output pool is a processor that never produces and a mining
+	# bay that never holds ore, with nothing on screen saying so - and it is
+	# exactly what a scene edit introduces without a crash. Cost one real defect
+	# in WI-65, caught by a screenshot rather than by any check.
+	assert(output_capacity > 0 or not has_output_slots(),
+		"%s has OUTPUT slots but output_capacity = 0, so they can hold nothing"
+			% (owner_module.name if owner_module != null else name))
 	if construction_storage:
 		display_info_panel_ui = false
 		remove_from_group(Groups.RESOURCE_STORAGE)
@@ -94,14 +124,25 @@ func ready_constructed() -> void:
 			for resource: ResourceData in storage_data:
 				resource.register_component(self)
 
-func add_stored_resource(resource: ResourceData) -> void:
+func add_stored_resource(resource: ResourceData,
+		role: StorageData.Role = default_role) -> void:
 	if not storage_data.has(resource):
 		var new_data := StorageData.new()
 		new_data.resource_data = resource
-		new_data.desired = max_stored
+		new_data.role = role
+		# The whole pool, for the same reason _ready() does it: an INPUT slot's
+		# desired is a cap, and a slot created at 0 would refuse everything.
+		# Callers that want a narrower cap (a recipe's run allocation, a sell
+		# order's size) set it right after.
+		new_data.desired = pool_for(role)
 		storage_data[resource] = new_data
 		if include_in_stats:
 			resource.register_component(self)
+	# An EXISTING slot keeps its role. This is load-bearing: the save block calls
+	# this for every restored resource and would otherwise flip a processor's
+	# carefully roled slots to `default_role` on every load. Whoever owns the
+	# roles - _sync_storages for a processor, the order sheet for a bay - assigns
+	# them explicitly after.
 			
 func remove_stored_resource(resource: ResourceData) -> void:
 	var data: StorageData = storage_data.get(resource)
@@ -128,56 +169,71 @@ func _on_slow_tick(_interval: float) -> void:
 	# Autodump destroys extra resources (in case you are just overwhelmed with them)
 	for resource: ResourceData in storage_data.keys():
 		var data: StorageData = storage_data[resource]
-		if data.autodump:
+		if data.autodump_enabled():
 			var dump_amount: int = data.autodump_amount()
 			if dump_amount > 0:
 				destroy_resource(resource, dump_amount)
-	if accepts_imports:
-		# Shared budget across resources so several under-desired resources in
-		# the same bin don't each request up to the bin's full free space and
-		# jointly overcommit it before any pawn has actually moved anything.
-		var import_budget: int = space_available(true)
-		for resource: ResourceData in storage_data:
-			if import_budget <= 0:
-				break
-			var data := storage_data[resource]
-			if data.import_job != null:
-				continue
-			# Positive when we're short of desired once already-incoming
-			# deposits count as "here" and already-reserved withdrawals count
-			# as "gone" - same accounting the trigger below used to use.
-			var deficit: int = data.desired - data.stored - data.reserved_deposit + data.reserved_withdraw
-			if deficit <= 0:
-				continue
-			var request_amount: int = mini(deficit, import_budget)
-			# A pull: the destination is known (this bin), the source is hunted for
-			# by the driver's first action.
-			var new_job: Job = Job.of(&"haul_resource")
-			new_job.target_b = JobTarget.of_component(self)
-			new_job.resource = resource
-			new_job.count = request_amount
-			new_job.priority = priority
-			data.import_job = new_job
-			new_job.job_end.connect(_on_posted_job_end.bind(data, true), CONNECT_ONE_SHOT)
-			Global.job_manager.add_job(new_job)
-			import_budget -= request_amount
-	if accepts_exports:
-		for resource: ResourceData in storage_data:
-			var data := storage_data[resource]
-			if data.export_job != null:
-				continue
-			var surplus: int = data.stored - data.reserved_withdraw - data.desired
-			if surplus <= 0:
-				continue
-			# A push: the source is known (this bin), the destination is hunted for.
-			var new_job: Job = Job.of(&"haul_resource")
-			new_job.target_a = JobTarget.of_component(self)
-			new_job.resource = resource
-			new_job.count = surplus
-			new_job.priority = priority
-			data.export_job = new_job
-			new_job.job_end.connect(_on_posted_job_end.bind(data, false), CONNECT_ONE_SHOT)
-			Global.job_manager.add_job(new_job)
+	# Shared budget across resources so several under-desired resources in the
+	# same bin don't each request up to the bin's full free space and jointly
+	# overcommit it before any pawn has actually moved anything. The intake pool
+	# is the only one that imports - OUTPUT slots never do (WI-65 §4) - so there
+	# is one budget, not one per pool.
+	var import_budget: int = space_available(true, StorageData.Role.GENERAL)
+	for resource: ResourceData in storage_data:
+		if import_budget <= 0:
+			break
+		var data := storage_data[resource]
+		if not data.accepts_imports():
+			continue
+		if data.import_job != null:
+			continue
+		# Positive when we're short of desired once already-incoming
+		# deposits count as "here" and already-reserved withdrawals count
+		# as "gone" - same accounting the trigger below used to use.
+		var deficit: int = data.desired - data.stored - data.reserved_deposit + data.reserved_withdraw
+		if deficit <= 0:
+			continue
+		# Both bounds (WI-65 §11): the role's shared pool AND this slot's own cap.
+		# The deficit is already measured against `desired`, so for an INPUT slot
+		# the second is implied - but saying it here keeps the posting scan honest
+		# if `desired` ever stops being the cap.
+		var request_amount: int = mini(mini(deficit, import_budget),
+			slot_headroom(resource, true))
+		if request_amount <= 0:
+			continue
+		# A pull: the destination is known (this bin), the source is hunted for
+		# by the driver's first action.
+		var new_job: Job = Job.of(&"haul_resource")
+		new_job.target_b = JobTarget.of_component(self)
+		new_job.resource = resource
+		new_job.count = request_amount
+		new_job.priority = priority
+		data.import_job = new_job
+		new_job.job_end.connect(_on_posted_job_end.bind(data, true), CONNECT_ONE_SHOT)
+		Global.job_manager.add_job(new_job)
+		import_budget -= request_amount
+	for resource: ResourceData in storage_data:
+		var data := storage_data[resource]
+		if data.export_job != null:
+			continue
+		# The role decides what "surplus" means (WI-65 §4): a GENERAL bin ships
+		# what it holds over its target, an OUTPUT slot ships everything it has,
+		# and INPUT/EXCLUDED ship nothing. An INPUT slot over its cap sheds to the
+		# overflow pile instead (§12) - never through the board, because it would
+		# post at a priority no ordinary storeroom can out-rank.
+		var surplus: int = data.exportable_surplus()
+		if surplus <= 0:
+			continue
+		# A push: the source is known (this bin), the destination is hunted for.
+		var new_job: Job = Job.of(&"haul_resource")
+		new_job.target_a = JobTarget.of_component(self)
+		new_job.resource = resource
+		new_job.count = surplus
+		new_job.priority = export_priority(resource)
+		data.export_job = new_job
+		new_job.job_end.connect(_on_posted_job_end.bind(data, false), CONNECT_ONE_SHOT)
+		Global.job_manager.add_job(new_job)
+
 
 ## Clears the posted-job pointer when a board job this bin posted ends, so the
 ## next scan can post a replacement. The pointer used to be cleared by the job
@@ -192,8 +248,15 @@ func _on_posted_job_end(data: StorageData, was_import: bool) -> void:
 		data.export_job = null
 
 func update_storage_ui() -> void:
-	var filled_space := max_stored - space_available()
-	storage_ui.value = float(filled_space) / max_stored
+	# Both pools, because the bar over the module is "how full is this thing" and
+	# a refinery whose output bay is backed up is full in every sense a player
+	# glancing at it cares about.
+	var capacity: int = max_stored + output_capacity
+	if capacity <= 0:
+		storage_ui.value = 1.0
+		return
+	var free: int = space_available(false, StorageData.Role.GENERAL) 		+ space_available(false, StorageData.Role.OUTPUT)
+	storage_ui.value = float(capacity - free) / capacity
 
 func _exit_tree() -> void:
 	if include_in_stats:
@@ -393,18 +456,158 @@ func is_empty() -> bool:
 			return false
 	return true
 	
-func space_available(excluding_reserve: bool = false) -> int:
+## Which capacity pool a role draws on (WI-65 §5). OUTPUT has its own so a
+## backed-up output cannot starve the input side; everything else shares
+## `max_stored`. EXCLUDED counts against whichever pool it was created in, which
+## is the intake one - a frozen bin is a bin that was, or will be, receiving.
+func pool_for(role: StorageData.Role) -> int:
+	return output_capacity if role == StorageData.Role.OUTPUT else max_stored
+
+func _is_output_pool(role: StorageData.Role) -> bool:
+	return role == StorageData.Role.OUTPUT
+
+## Free space in one role's pool. `role` defaults to the intake pool because
+## that is what every pre-WI-65 caller meant.
+func space_available(excluding_reserve: bool = false,
+		role: StorageData.Role = StorageData.Role.GENERAL) -> int:
+	var want_output: bool = _is_output_pool(role)
 	var cur_stored_and_reserved: int = 0
 	for data: StorageData in storage_data.values():
+		if _is_output_pool(data.role) != want_output:
+			continue
 		cur_stored_and_reserved += data.stored
 		if excluding_reserve:
 			cur_stored_and_reserved += data.reserved_deposit
-	return max_stored - cur_stored_and_reserved
+	return pool_for(role) - cur_stored_and_reserved
+
+## Free space in the pool `resource`'s own slot draws on - the form every
+## deposit path wants, since the slot already knows its role.
+func space_available_for(resource: ResourceData, excluding_reserve: bool = false) -> int:
+	return space_available(excluding_reserve, role_of(resource))
+
+## The role `resource` is handled under. A resource with no slot resolves to
+## GENERAL, which is also the role add_stored_resource() would give it.
+func role_of(resource: ResourceData) -> StorageData.Role:
+	var data: StorageData = storage_data.get(resource)
+	return data.role if data != null else default_role
 
 func can_deposit(resource: ResourceData, quantity: int, use_reserve: bool = false) -> bool:
-	if allow_any_resource or storage_data.has(resource):
-		return space_available(use_reserve) >= quantity
+	if not allow_any_resource and not storage_data.has(resource):
+		return false
+	if space_available_for(resource, use_reserve) < quantity:
+		return false
+	return slot_headroom(resource, use_reserve) >= quantity
+
+## Room left under this slot's own cap, or a large number when the slot has no
+## cap of its own (WI-65 §11).
+##
+## Only INPUT is capped: over-filling one ingredient starves another and
+## deadlocks the module, which is a property of a bin whose contents are consumed
+## in fixed proportions. A storeroom's `desired` stays a haul TARGET - stock over
+## it is surplus with an export job already posted, and nothing is starved by
+## holding it - and an OUTPUT slot is bounded by its pool alone.
+func slot_headroom(resource: ResourceData, excluding_reserve: bool = false) -> int:
+	var data: StorageData = storage_data.get(resource)
+	if data == null or data.role != StorageData.Role.INPUT:
+		return 0x7FFFFFFF
+	var taken: int = data.stored
+	if excluding_reserve:
+		taken += data.reserved_deposit
+	return maxi(data.desired - taken, 0)
+
+# --- haul routing (WI-65) -----------------------------------------------------
+#
+# StorageQuery asks these instead of reading `priority` and a pair of flags, so
+# one component can pull one resource in while pushing another out. REFUSED is
+# NOT an extreme priority: StorageQuery.ANY_PRIORITY deliberately skips the
+# priority comparison (a pile or a carried-cargo sweep has no priority of its
+# own), so a refusal expressed as a number would be ignored on exactly those
+# paths. It has to be checked before the comparison, never inside it.
+
+## "This bin will never move that resource in this direction."
+const REFUSED: int = 0x7FFFFFFF
+
+## The priority this bin will accept `resource` at, or REFUSED.
+func import_priority(resource: ResourceData) -> int:
+	match _routing_role(resource):
+		StorageData.Role.GENERAL, StorageData.Role.INPUT:
+			return priority
+		_:
+			return REFUSED
+
+## The priority this bin will ship `resource` out at, or REFUSED.
+##
+## OUTPUT reports the floor rather than an offset from `priority`: an output bin
+## is a temporary holding spot, so "anywhere but here" is the correct routing,
+## and pinning it is what leaves the component exactly one editable number.
+func export_priority(resource: ResourceData) -> int:
+	match _routing_role(resource):
+		StorageData.Role.GENERAL:
+			return priority
+		StorageData.Role.OUTPUT:
+			return StoresModel.PRIORITY_MIN
+		# INPUT refuses, same as EXCLUDED. A forge mid-recipe must not have its
+		# ore hauled back out from under it, which is the whole reason the role
+		# exists - grouping it with GENERAL here (as the import side legitimately
+		# does) hands a storeroom the ingredients back.
+		_:
+			return REFUSED
+
+## INPUT never posts an export in steady state, but an over-cap slot still has to
+## be able to shed (WI-65 §12) - and that shed goes to the overflow pile, not
+## through this. Kept as its own helper so the two questions ("will hauling take
+## this out of here?" and "what role is it?") never get conflated.
+func _routing_role(resource: ResourceData) -> StorageData.Role:
+	var data: StorageData = storage_data.get(resource)
+	if data != null:
+		return data.role
+	# A catch-all bin handles anything at its default role; anything else refuses
+	# a resource it has no slot for.
+	return default_role if allow_any_resource else StorageData.Role.EXCLUDED
+
+## Does hauling ever move goods INTO this bin? Drives the UI's role sections and
+## the "this module only exports" sentence, not the queries above.
+func has_intake_slots() -> bool:
+	# No intake pool means no intake side, ever - a mining bay's whole capacity is
+	# its OUTPUT pool. This is the test rather than "are there INPUT slots?"
+	# because slots come and go: an empty storeroom has none yet, and the docking
+	# bay grows its staging slots only when the player places a sell order. Both
+	# take deliveries; both would have lost their priority stepper to a
+	# slot-counting rule, and the bay would have shown "its priority is still
+	# yours" beside no control at all.
+	if max_stored <= 0:
+		return false
+	for data: StorageData in storage_data.values():
+		if data.accepts_imports():
+			return true
+	# It has room to receive but nothing declared to receive yet. That is only an
+	# intake side if a slot can still appear - a catch-all bin, or one that has
+	# not been configured at all.
+	return storage_data.is_empty() or allow_any_resource
+
+func has_output_slots() -> bool:
+	for data: StorageData in storage_data.values():
+		if data.role == StorageData.Role.OUTPUT:
+			return true
 	return false
+
+## Does hauling ever take goods OUT of this bin? The mirror of
+## [method has_intake_slots], and what a conveyor asks when picking a source
+## endpoint - it chooses the endpoint before it chooses the resource.
+func has_output_or_general_slots() -> bool:
+	for data: StorageData in storage_data.values():
+		if data.accepts_exports():
+			return true
+	# Same empty-bin rule as has_intake_slots().
+	return storage_data.is_empty() \
+		and (default_role == StorageData.Role.GENERAL or default_role == StorageData.Role.OUTPUT)
+
+## Re-roles every slot at once - the construction lifecycle's freeze/thaw
+## (WI-65 §7). Per-slot rather than a component flag, so a bin can be frozen with
+## stock already in it.
+func set_all_roles(role: StorageData.Role) -> void:
+	for data: StorageData in storage_data.values():
+		data.role = role
 
 func deposit(resource: ResourceData, quantity: int, only_if_room: bool = false, use_reserve: bool = false) -> bool:
 	var data: StorageData = storage_data.get(resource)
@@ -412,7 +615,7 @@ func deposit(resource: ResourceData, quantity: int, only_if_room: bool = false, 
 		add_stored_resource(resource)
 		data = storage_data.get(resource)
 	if data:
-		var free_space := space_available(use_reserve)
+		var free_space := space_available_for(resource, use_reserve)
 		if only_if_room and free_space < quantity:
 			return false
 		var new_stored := data.deposit(quantity, use_reserve)
@@ -439,7 +642,7 @@ func deposit_stacks(resource: ResourceData, stacks: Array[ResourceStack], only_i
 	var total: int = 0
 	for stack: ResourceStack in stacks:
 		total += stack.amount
-	if only_if_room and space_available() < total:
+	if only_if_room and space_available_for(resource) < total:
 		return false
 	for stack: ResourceStack in stacks:
 		data.add_stack(stack)
@@ -504,8 +707,9 @@ func save_order() -> int:
 func save_key() -> StringName:
 	return &"storage"
 
-## The one component a module can carry several of - a processor has an Input bin
-## and an Output bin - so the blocks nest under "storage" keyed by node path.
+## Blocks nest under "storage" keyed by node path. Since WI-65 a module carries
+## at most one of these plus construction's, but a deconstruction site still grows
+## a second one for its recovered materials, so the per-instance keying stays.
 func saves_per_instance() -> bool:
 	return true
 
@@ -519,8 +723,15 @@ func get_save_data() -> Dictionary:
 		resources[String(resource.id)] = {
 			"desired": data.desired,
 			"stacks": SaveManager.stacks_to_dicts(data.stacks),
-			"autodump": data.autodump,
+			"autodump_above": data.autodump_above,
 		}
+	# Roles are deliberately NOT saved (WI-65): a slot's role comes from whatever
+	# configured the bin during the ready pass - the recipe for a processor, the
+	# trade sheet for a bay, the build phase for construction - all of which run
+	# before this block loads. Saving them would let a stale save fight the live
+	# configuration, and a recipe that changed between builds would restore slots
+	# roled for a recipe that no longer exists.
+	#
 	# Priority is a player setting and it IS the routing language - a hand-tuned
 	# station that reloads at scene defaults silently re-routes every haul. Saved
 	# on every bin, not just the editable ones: a construction site sits at +99 and
@@ -560,7 +771,12 @@ func load_save_data(data: Dictionary) -> void:
 			var stack: ResourceStack = SaveManager.stack_from_dict(resource, stack_dict)
 			if stack.amount > 0:
 				slot.add_stack(stack)
-		slot.autodump = entry.get("autodump", false)
+		# Legacy (pre-WI-65): a bare `autodump: true` meant "destroy everything over
+		# `desired`", which is exactly `autodump_above = desired`.
+		if entry.has("autodump_above"):
+			slot.autodump_above = int(entry["autodump_above"])
+		elif bool(entry.get("autodump", false)):
+			slot.autodump_above = slot.desired
 		storage_value_changed = true
 		storage_changed.emit(resource, slot.stored)
 		resource.needs_recalc = true

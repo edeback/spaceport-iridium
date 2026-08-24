@@ -63,30 +63,19 @@ power_consumption_component = NodePath("../../PowerConsumptionComponent")
 connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, 1)])
 internal_points = Array[Vector2i]([Vector2i(0, 0)])
 
-[node name="ProcessorComponent" parent="." index="3" unique_id=837779850 node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("6_ea26e")]
+[node name="ProcessorComponent" parent="." index="3" unique_id=837779850 node_paths=PackedStringArray("storage", "power_consumer") instance=ExtResource("6_ea26e")]
 recipe = ExtResource("7_fwma6")
-input_storage = NodePath("../Input")
-output_storage = NodePath("../Output")
+storage = NodePath("../Storage Bay")
 time_to_process = 45.0
 power_consumer = NodePath("../PowerConsumptionComponent")
 
 [node name="PowerConsumptionComponent" parent="." index="4" unique_id=593982705 instance=ExtResource("8_6du7y")]
 power_consumption = 20.0
 
-[node name="Input" parent="." index="5" unique_id=1294834415 instance=ExtResource("9_hkc3h")]
-position = Vector2(-37, -1)
+[node name="Storage Bay" parent="." index="5" unique_id=1294834415 instance=ExtResource("9_hkc3h")]
 max_stored = 20
-accepts_exports = false
-storage_data = Dictionary[ExtResource("10_po53d"), ExtResource("11_88cdb")]({
-ExtResource("12_hdqlg"): SubResource("Resource_twimy"),
-ExtResource("15_c40oa"): SubResource("Resource_p460y")
-})
+output_capacity = 10
+default_role = 2
 
-[node name="Output" parent="." index="6" unique_id=849654614 instance=ExtResource("9_hkc3h")]
-position = Vector2(6, -2)
-storage_data = Dictionary[ExtResource("10_po53d"), ExtResource("11_88cdb")]({
-ExtResource("16_rf58j"): SubResource("Resource_txiy8")
-})
-
-[node name="ConstructionComponent" parent="." index="7" unique_id=1206775965]
+[node name="ConstructionComponent" parent="." index="6" unique_id=1206775965]
 position = Vector2(-37, -1)

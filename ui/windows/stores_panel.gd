@@ -233,7 +233,7 @@ func _apply_header(entries: Array) -> void:
 ##
 ## Walks [member WorldManager.id_to_module] rather than the
 ## [constant Groups.RESOURCE_STORAGE] group, deliberately: a component joins and
-## leaves that group as `accepts_exports` flips, so membership is **not** the same
+## leaves that group across its build lifecycle, so membership is **not** the same
 ## as "has a StorageComponent" - and a bin that has stopped exporting is still a
 ## bin whose priority the player may want to see. `id_to_module` is the module
 ## registry, which is the question actually being asked.
@@ -254,11 +254,10 @@ func _collect_entries() -> Array:
 			entries.append(_make_entry(module, storage, bins.size() > 1))
 	return entries
 
-## A module can carry several bins - a processor has an input bay and an output
-## bay - and each is its own card: they have their own priorities and their own
-## contents, and merging them would hide exactly the case this panel is for. The
-## component's own node name disambiguates them, and only when there is something
-## to disambiguate.
+## Since WI-65 a module carries at most one bin (plus construction's), and a
+## refinery that used to be two cards is one card with an IN meter and an OUT
+## meter. A deconstruction site can still grow a second bin, so the disambiguating
+## suffix stays - it just never fires on a standing module any more.
 func _make_entry(module: ModuleBase, storage: StorageComponent,
 		several: bool) -> StoresModel.Entry:
 	var entry := StoresModel.Entry.new()
@@ -267,9 +266,21 @@ func _make_entry(module: ModuleBase, storage: StorageComponent,
 		and module.module_data.name != "" else module.name
 	entry.title = "%s · %s" % [module_name, storage.name] if several else module_name
 	entry.cell = module.module_cell
-	entry.priority = storage.priority
-	entry.stored = storage.max_stored - storage.space_available()
-	entry.capacity = storage.max_stored
+	# An export-only bin shows no number and routes at the floor, so it must SORT
+	# at the floor too - sorting it by a `priority` field the card deliberately
+	# hides is the panel disagreeing with itself.
+	entry.priority = storage.priority if storage.has_intake_slots() else StoresModel.PRIORITY_MIN
+	# Per pool (WI-65): the two roles have separate capacity, so one combined
+	# meter would read a refinery with a full output bay as merely half full.
+	entry.intake_capacity = storage.max_stored
+	entry.intake_stored = storage.max_stored \
+		- storage.space_available(false, StorageData.Role.GENERAL)
+	entry.output_capacity = storage.output_capacity
+	entry.output_stored = storage.output_capacity \
+		- storage.space_available(false, StorageData.Role.OUTPUT)
+	entry.stored = entry.intake_stored + entry.output_stored
+	entry.capacity = entry.intake_capacity + entry.output_capacity
+	entry.has_intake = storage.has_intake_slots()
 	# Through the model, not off the flag: the inspector's storage tab and the chip
 	# dialog read the same call, so "may I change what this bin holds?" has one
 	# answer (WI-58). Priority is a separate question and is never gated on it.

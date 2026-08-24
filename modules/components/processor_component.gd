@@ -13,8 +13,10 @@ extends ComponentBase
 ## tags and the recipe index are both fixed for the life of the run.
 var _resolved_recipes: Array[RecipeData] = []
 var _recipes_resolved: bool = false
-@export var input_storage: StorageComponent
-@export var output_storage: StorageComponent
+## The module's single bin (WI-65). Its ingredient slots are INPUT and its
+## product slots are OUTPUT, both assigned by _sync_storages() from the recipe -
+## which is why the roles are derived rather than saved.
+@export var storage: StorageComponent
 @export var time_to_process: float = 1
 @export var power_consumer: PowerConsumptionComponent
 
@@ -112,8 +114,7 @@ func get_process_time() -> float:
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	assert(recipe != null, "Processor must have recipe!")
-	assert(input_storage != null, "Processor must have input_storage!")
-	assert(output_storage != null, "Processor must have output_storage!")
+	assert(storage != null, "Processor must have storage!")
 	assert(power_consumer != null, "Processor must have power_consumer!")
 	assert(time_to_process > 0, "Processor time_to_process must be > 0!")
 	super()
@@ -178,7 +179,19 @@ func _resolve_available_recipes() -> Array[RecipeData]:
 	# processor whose recipe declares no tags must not end up with an empty list.
 	if recipe != null and not out.has(recipe):
 		out.append(recipe)
-	return out
+	# A recipe whose batch does not fit this bay's intake pool can never run
+	# (WI-65 §6), so it must not be offerable - selecting it would leave the
+	# module permanently idle with nothing on screen explaining why. Reported
+	# rather than dropped quietly: for a mod this is the difference between "my
+	# refinery does nothing" and a diagnosable mistake.
+	var runnable: Array[RecipeData] = []
+	for candidate: RecipeData in out:
+		if storage != null and not recipe_fits(candidate.inputs, storage.max_stored):
+			push_error("Processor '%s' cannot run recipe '%s': one batch needs %d intake capacity, the bay holds %d."
+					% [_module_label(), candidate.name, _batch_size(candidate.inputs), storage.max_stored])
+			continue
+		runnable.append(candidate)
+	return runnable
 
 func can_select_recipes() -> bool:
 	return get_available_recipes().size() > 1
@@ -218,55 +231,137 @@ func _apply_recipe(new_recipe: RecipeData) -> void:
 	_sync_storages()
 	recipe_changed.emit(recipe)
 
-## Reconfigures input/output storage slots to match the current recipe.
-func _sync_storages() -> void:
-	for resource: ResourceData in input_storage.storage_data.keys():
-		if not recipe.inputs.has(resource):
-			_clear_input_slot(resource)
-	var total_ingredients: float = 0
-	for ingredient: ResourceData in recipe.inputs:
-		total_ingredients += recipe.inputs[ingredient]
-	for ingredient: ResourceData in recipe.inputs:
-		input_storage.add_stored_resource(ingredient)
-		# Explicit rather than relying on add_stored_resource: the slot may
-		# survive a round-trip switch (had stock) with desired zeroed below.
-		# Set desired proportionally so multi-ingredient recipes don't clog on one
-		input_storage.storage_data[ingredient].desired = ceili(recipe.inputs[ingredient] / total_ingredients * input_storage.max_stored) if total_ingredients > 0 else input_storage.max_stored
-	for resource: ResourceData in output_storage.storage_data.keys():
-		var data: StorageData = output_storage.storage_data[resource]
-		if not recipe.outputs.has(resource) and data.stored <= 0 and data.reserved_deposit <= 0:
-			output_storage.remove_stored_resource(resource)
-	for output: ResourceData in recipe.outputs:
-		output_storage.add_stored_resource(output)
-		# Outputs are pure surplus - desired 0 keeps the export posting
-		# pushing refined goods out to general storage.
-		output_storage.storage_data[output].desired = 0
+## How many whole batches' worth of ingredients `pool` holds for `inputs` - the
+## unit the input allocation is denominated in (WI-65 §6).
+##
+## Pure and static so the GUT suite can drive it over every shipped recipe. Zero
+## means the bay cannot hold even one batch, which is an authoring error rather
+## than a case to clamp: allocating one batch anyway would put the slot caps'
+## SUM above the pool, which is precisely the state that lets one ingredient
+## starve another - and the module still could not assemble a batch even if it
+## filled perfectly. See [method recipe_fits].
+static func runs_for(inputs: Dictionary[ResourceData, int], pool: int) -> int:
+	var total: int = 0
+	for qty: int in inputs.values():
+		total += qty
+	if total <= 0:
+		return 0
+	return pool / total
 
-## Retires an input slot the current recipe no longer uses. Stock must not be
-## destroyed (jobs invariant), and the refinery input doesn't post exports
-## (accepts_exports = false), so leftovers go to the module's overflow pile,
-## whose collection jobs haul them to any storeroom with space.
+## Can `pool` units of intake capacity hold one batch of `inputs`? The predicate
+## behind both the eligibility filter and the content sweep.
+static func recipe_fits(inputs: Dictionary[ResourceData, int], pool: int) -> bool:
+	return runs_for(inputs, pool) >= 1
+
+## Reconfigures the bin's slots and their roles to match the current recipe.
+##
+## Ingredients become INPUT and products become OUTPUT, on ONE component - the
+## roles are what let a single bin pull ore in while pushing iron out, and they
+## are derived here rather than saved so a recipe that changed between builds
+## cannot restore slots roled for a recipe that no longer exists.
+func _sync_storages() -> void:
+	for ingredient: ResourceData in recipe.inputs:
+		assert(not recipe.outputs.has(ingredient),
+			"Recipe %s names %s as both an input and an output - a slot has one role."
+				% [recipe.name, ingredient.name])
+	# Retire slots the new recipe has no use for. An input's leftovers go to the
+	# overflow pile (an INPUT slot cannot export); an output's stock is left
+	# alone until it has drained, since it is already on its way out.
+	for resource: ResourceData in storage.storage_data.keys():
+		if recipe.inputs.has(resource) or recipe.outputs.has(resource):
+			continue
+		var data: StorageData = storage.storage_data[resource]
+		if data.role == StorageData.Role.OUTPUT:
+			if data.stored <= 0 and data.reserved_deposit <= 0:
+				storage.remove_stored_resource(resource)
+		else:
+			_clear_input_slot(resource)
+	# Whole runs, not a rounded ratio (WI-65 §6): every ingredient gets the SAME
+	# integral number of batches' worth, so the caps sum to runs * total, which
+	# is <= the pool by construction. Rounding each share up independently could
+	# sum ABOVE the pool - two shipped recipes already did - and once `desired` is
+	# a cap that overshoot is what lets one ingredient starve another.
+	var runs: int = runs_for(recipe.inputs, storage.max_stored)
+	if runs < 1:
+		# Should be unreachable: get_available_recipes() filters these out. Loud
+		# rather than silent, because the symptom is "my refinery does nothing".
+		push_error("Recipe %s needs %d intake capacity but %s has %d - it can never run."
+			% [recipe.name, _batch_size(recipe.inputs), owner_module.name if owner_module != null else name,
+				storage.max_stored])
+		runs = 1
+	for ingredient: ResourceData in recipe.inputs:
+		storage.add_stored_resource(ingredient, StorageData.Role.INPUT)
+		# Role and desired are BOTH set explicitly, because add_stored_resource
+		# leaves an existing slot alone: a slot can survive a recipe switch
+		# holding stock, and a resource can change sides entirely (an ingredient
+		# of the old recipe becoming a product of the new one). This function is
+		# the authority on what a processor bin's slots are for.
+		storage.storage_data[ingredient].role = StorageData.Role.INPUT
+		storage.storage_data[ingredient].desired = runs * recipe.inputs[ingredient]
+		# The cap just moved. A slot that survived the recipe switch holding more
+		# than the new allocation is over it, and an INPUT slot cannot export its
+		# way back down - so shed to the overflow pile (WI-65 §12).
+		_shed_input_slot(ingredient, storage.storage_data[ingredient].desired)
+	for output: ResourceData in recipe.outputs:
+		storage.add_stored_resource(output, StorageData.Role.OUTPUT)
+		storage.storage_data[output].role = StorageData.Role.OUTPUT
+		# Outputs ship everything they hold (StorageData.exportable_surplus), so
+		# desired is a capacity bound rather than a level to sit at. The whole
+		# output pool: the products share it, deliberately, because a run
+		# deposits atomically and per-product caps would let a run proceed with
+		# only some of its outputs placed.
+		storage.storage_data[output].desired = storage.output_capacity
+
+static func _batch_size(inputs: Dictionary[ResourceData, int]) -> int:
+	var total: int = 0
+	for qty: int in inputs.values():
+		total += qty
+	return total
+
+## Retires an input slot the current recipe no longer uses.
 func _clear_input_slot(resource: ResourceData) -> void:
-	var data: StorageData = input_storage.storage_data[resource]
+	_shed_input_slot(resource, 0)
+	storage.remove_stored_resource(resource)
+
+## Drains an INPUT slot down to `keep` units, into the module's overflow pile.
+##
+## Stock must not be destroyed (jobs invariant), and an INPUT slot does not post
+## exports - so the pile is the route, and deliberately not a haul job. An export
+## from an INPUT slot would post at the component's priority (a forge input sits
+## at +1) and [StorageQuery.find_sink] demands a STRICTLY greater sink, so every
+## ordinary storeroom at 0 would refuse it and the goods would have nowhere to go
+## but a construction site. Pile collection passes ANY_PRIORITY and accepts any
+## bin with room.
+##
+## Two callers, and the second is why this is not just the retire path: since
+## WI-65 §11 an INPUT slot's `desired` is a hard cap, and the cap MOVES when the
+## recipe changes. A resource the new recipe still uses but in a smaller ratio is
+## suddenly over its cap, and left alone it would be stranded - which is the very
+## deadlock the cap exists to prevent, relocated one step.
+func _shed_input_slot(resource: ResourceData, keep: int) -> void:
+	var data: StorageData = storage.storage_data.get(resource)
+	if data == null:
+		return
 	# Cancel incoming hauls first: the pawns keep their cargo and
 	# the cargo sweep re-homes it, and cancellation reconciles the slot's
 	# reservations to zero so the drain below sees the true stored count.
 	data.end_all_jobs()
-	if data.stored > 0 and input_storage.owner_module != null:
-		var leftovers: Array[ResourceStack] = input_storage.withdraw_stacks(resource, data.stored, true)
-		if not leftovers.is_empty():
-			input_storage.owner_module.get_or_create_overflow_pile().add_stacks(resource, leftovers)
-	input_storage.remove_stored_resource(resource)
+	var excess: int = data.stored - keep
+	if excess <= 0 or storage.owner_module == null:
+		return
+	var leftovers: Array[ResourceStack] = storage.withdraw_stacks(resource, excess, true)
+	if not leftovers.is_empty():
+		storage.owner_module.get_or_create_overflow_pile().add_stacks(resource, leftovers)
 
 func _satisfies_recipe() -> bool:
 	for ingredient in recipe.inputs:
 		var amount := recipe.inputs[ingredient]
-		if !input_storage.can_withdraw(ingredient, amount):
+		if !storage.can_withdraw(ingredient, amount):
 			last_error = "Missing input!"
 			return false
 	for output in recipe.outputs:
 		var amount := recipe.outputs[output]
-		if !output_storage.can_deposit(output, amount):
+		if !storage.can_deposit(output, amount):
 			last_error = "No space for output!"
 			return false
 	return true
@@ -278,7 +373,7 @@ func _withdraw_inputs() -> void:
 	var richness_weighted: float = 0.0
 	for ingredient in recipe.inputs:
 		var amount := recipe.inputs[ingredient]
-		var stacks: Array[ResourceStack] = input_storage.withdraw_stacks(ingredient, amount)
+		var stacks: Array[ResourceStack] = storage.withdraw_stacks(ingredient, amount)
 		var withdrawn: int = 0
 		for stack: ResourceStack in stacks:
 			withdrawn += stack.amount
@@ -324,8 +419,8 @@ func _deposit_output(output: ResourceData, whole: int) -> bool:
 		food.quality = _compute_output_quality()
 		stack.instance_data = food
 		var batch: Array[ResourceStack] = [stack]
-		return output_storage.deposit_stacks(output, batch, false)
-	return output_storage.deposit(output, whole)
+		return storage.deposit_stacks(output, batch, false)
+	return storage.deposit(output, whole)
 
 ## Deposits the batch's outputs, scaled by batch richness. Whole units only;
 ## the fractional remainder per output carries in _yield_residue toward the
@@ -338,14 +433,14 @@ func _try_deposit_outputs() -> bool:
 	for output in recipe.outputs:
 		var with_residue: float = _scaled_output(recipe.outputs[output]) + _yield_residue.get(output, 0.0)
 		var whole: int = int(with_residue)
-		if whole > 0 and not output_storage.can_deposit(output, whole):
+		if whole > 0 and not storage.can_deposit(output, whole):
 			last_error = "No space for output!"
 			return false
 		whole_amounts[output] = whole
 		total_out += whole
 	# can_deposit checks each output alone; two outputs can each fit but not
 	# together, so check the combined room too before committing anything.
-	if total_out > output_storage.space_available():
+	if total_out > storage.space_available(false, StorageData.Role.OUTPUT):
 		last_error = "No space for output!"
 		return false
 	for output in recipe.outputs:

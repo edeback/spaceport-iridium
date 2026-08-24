@@ -6,12 +6,13 @@
 [ext_resource type="PackedScene" path="res://ui/theme/widgets/stepper.tscn" id="4_stepper"]
 [ext_resource type="PackedScene" path="res://ui/theme/widgets/section_label.tscn" id="5_section"]
 
-[node name="Storage" type="PanelContainer" node_paths=PackedStringArray("resource_container", "priority_stepper", "priority_caption", "edit_resources_button", "locked_note")]
+[node name="Storage" type="PanelContainer" node_paths=PackedStringArray("resource_container", "priority_stepper", "priority_caption", "priority_row", "edit_resources_button", "locked_note")]
 custom_minimum_size = Vector2(360, 0)
 script = ExtResource("1_6j2gs")
 resource_container = NodePath("Column/ResourceContainer")
 resource_line = ExtResource("2_4o4nm")
 priority_stepper = NodePath("Column/PriorityRow/PriorityStepper")
+priority_row = NodePath("Column/PriorityRow")
 priority_caption = NodePath("Column/PriorityRow/PriorityCaption")
 edit_resources_button = NodePath("Column/Header/EditResourcesButton")
 locked_note = NodePath("Column/LockedNote")

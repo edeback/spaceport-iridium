@@ -21,12 +21,20 @@ extends ModuleComponentUI
 ## amount, dumping - are the module's decision on all but the multipurpose bins,
 ## and it used to comment *"desired amounts are always configurable"* while the
 ## Stores panel disabled them on the same bins. **Priority** is the player's on
-## every bin, always, because it is how the whole hauling system is steered.
+## every bin that takes deliveries, because it is how the whole hauling system is
+## steered - the one exception being an export-only bin, where OUTPUT implies the
+## floor and there is no number to set (WI-65).
+##
+## Since WI-65 the slots are grouped by **role**: an IN section above an OUT
+## section, headed only when there is something to disambiguate.
 
 @export var resource_container: VBoxContainer
 @export var resource_line: PackedScene
 @export var priority_stepper: Stepper
 @export var priority_caption: Label
+## The whole row, hidden together on an export-only bin: hiding the control but
+## leaving its label prints "Priority" with nothing after it.
+@export var priority_row: Control
 @export var edit_resources_button: ActionButton
 @export var locked_note: Label
 
@@ -47,8 +55,21 @@ func set_storage_component(component: StorageComponent) -> void:
 	# Priority is the player's routing lever on every bin; the contents are the
 	# module's decision on all but the multipurpose ones.
 	priority_stepper.editable = StoresModel.priority_editable(component)
+	# An export-only bin loses the control entirely rather than showing a dead one;
+	# its reason joins the contents note below.
+	var priority_reason: String = StoresModel.priority_locked_reason(component)
+	if priority_row != null:
+		priority_row.visible = priority_reason.is_empty()
+	priority_stepper.visible = priority_reason.is_empty()
+	priority_caption.visible = priority_reason.is_empty()
 	edit_resources_button.visible = StoresModel.contents_editable(component)
-	locked_note.text = StoresModel.locked_reason(component).to_upper()
+	var notes: Array[String] = []
+	if not priority_reason.is_empty():
+		notes.append(priority_reason)
+	var contents_reason: String = StoresModel.locked_reason(component)
+	if not contents_reason.is_empty():
+		notes.append(contents_reason)
+	locked_note.text = "\n".join(notes).to_upper()
 	locked_note.visible = not locked_note.text.is_empty()
 	edit_resources_button.pressed.connect(_on_edit_resources_pressed)
 	refresh_display()
@@ -59,28 +80,32 @@ func refresh_display() -> void:
 		node.queue_free()
 	storage_lines.clear()
 	var editable: bool = StoresModel.contents_editable(storage_component)
+	# Grouped by role, IN above OUT (WI-65). A bin holding only one role prints no
+	# heading - there is nothing to tell it apart from, which is the rule
+	# [ModuleStatusTab] already follows for a lone section.
+	var intake: Array[ResourceData] = []
+	var outputs: Array[ResourceData] = []
 	for resource: ResourceData in storage_component.storage_data:
-		var storage_line: StorageResourceLine = resource_line.instantiate() as StorageResourceLine
-		storage_line.stored_resource_name.text = resource.name
-		storage_line.stored_resource_value.text = _format_slot_value(resource)
-		storage_line.debug_add_button.pressed.connect(_on_debug_add_button_pressed.bind(resource))
-		storage_line.dump_button.pressed.connect(_on_dump_button_pressed.bind(resource))
-		storage_line.remove_resource_button.pressed.connect(
-			_on_remove_resource_pressed.bind(resource))
-		# The desired amount is as much a module decision as the accepted list is,
-		# and so is dumping: a processor bay whose input target the player could
-		# rewrite was the inspector disagreeing with the Stores card about the same
-		# field. Priority is the exception and is set above, per bin, always live.
-		storage_line.set_editable(editable)
-		storage_line.desired_stepper.configure(storage_component.storage_data[resource].desired,
-			0, storage_component.max_stored, 1, false)
-		storage_line.desired_stepper.value_changed.connect(
-			_on_desired_resources_changed.bind(resource))
-		storage_line.autodump_indicator.visible = storage_component.storage_data[resource].autodump
-		storage_lines[resource] = storage_line
-		resource_container.add_child(storage_line)
-	%FreeSpaceAvailableLabel.text = _format_resouce_value(storage_component.space_available())
-	%FreeSpaceMaxLabel.text = _format_resouce_value(storage_component.max_stored)
+		if storage_component.storage_data[resource].role == StorageData.Role.OUTPUT:
+			outputs.append(resource)
+		else:
+			intake.append(resource)
+	var headed: bool = not intake.is_empty() and not outputs.is_empty()
+	if headed:
+		_add_role_heading("Taken in")
+	for resource: ResourceData in intake:
+		_add_resource_line(resource, editable)
+	if headed:
+		_add_role_heading("Sent out")
+	for resource: ResourceData in outputs:
+		_add_resource_line(resource, editable)
+	# Both pools, so a refinery's free-space line accounts for its whole bay rather
+	# than only the side goods arrive on.
+	%FreeSpaceAvailableLabel.text = _format_resouce_value(
+		storage_component.space_available(false, StorageData.Role.GENERAL)
+		+ storage_component.space_available(false, StorageData.Role.OUTPUT))
+	%FreeSpaceMaxLabel.text = _format_resouce_value(
+		storage_component.max_stored + storage_component.output_capacity)
 	# Guarded for the same reason the Stores card guards its own: a refresh landing
 	# mid-drag would snatch the number back, and the commit a moment later would
 	# write that value out as if the player had chosen it.
@@ -92,6 +117,37 @@ func refresh_display() -> void:
 	# processor bay whose contents the module decides is still a bay the player may
 	# want a meter on.
 	%DisplayFillMeterCheckbox.button_pressed = storage_component.display_storage_ui
+
+## One slot's row.
+func _add_resource_line(resource: ResourceData, editable: bool) -> void:
+	var data: StorageData = storage_component.storage_data[resource]
+	var storage_line: StorageResourceLine = resource_line.instantiate() as StorageResourceLine
+	storage_line.stored_resource_name.text = resource.name
+	storage_line.stored_resource_value.text = _format_slot_value(resource)
+	storage_line.debug_add_button.pressed.connect(_on_debug_add_button_pressed.bind(resource))
+	storage_line.dump_button.pressed.connect(_on_dump_button_pressed.bind(resource))
+	storage_line.remove_resource_button.pressed.connect(
+		_on_remove_resource_pressed.bind(resource))
+	# The desired amount is as much a module decision as the accepted list is,
+	# and so is dumping: a processor bay whose input target the player could
+	# rewrite was the inspector disagreeing with the Stores card about the same
+	# field. Priority is the exception and is set above, per bin, always live.
+	storage_line.set_editable(editable)
+	# Bounded by the pool this slot actually draws on, not by max_stored: an OUTPUT
+	# slot's ceiling is output_capacity (WI-65).
+	storage_line.desired_stepper.configure(data.desired,
+		0, storage_component.pool_for(data.role), 1, false)
+	storage_line.desired_stepper.value_changed.connect(
+		_on_desired_resources_changed.bind(resource))
+	storage_line.autodump_indicator.visible = data.autodump_enabled()
+	storage_lines[resource] = storage_line
+	resource_container.add_child(storage_line)
+
+## A role divider inside the slot list. Only drawn when the bin holds both roles -
+## the same "nothing to disambiguate a lone block from" rule [ModuleStatusTab]
+## applies to its sections, and the same widget, so the two read alike.
+func _add_role_heading(text: String) -> void:
+	resource_container.add_child(SectionLabel.create(text))
 
 func _format_resouce_value(value: int) -> String:
 	return "%d" % value

@@ -12,7 +12,10 @@ extends RefCounted
 ##                              to real consumers (kitchen, construction)
 ##    +1  STORAGE_DEFAULT       ordinary storeroom rebalancing (scene default)
 ##     0  (unset)               ad-hoc jobs (pile collection, moves)
-##   -99  DECONSTRUCTION_EXPORT refund materials leaving a torn-down module
+##  -100  (StoresModel.PRIORITY_MIN)  anything an OUTPUT slot ships - a refinery's
+##                              products, mined ore, deconstruction refunds. Not a
+##                              constant here because it is not a choice: the role
+##                              implies it (WI-65 §2).
 ##
 ## Needs jobs (eat/sleep/...) never touch the board - they ride the pawn's
 ## personal queue - so they have no band here.
@@ -25,7 +28,6 @@ const CONSTRUCTION_IMPORT: int = 99
 const COMPLETION_BOOST: int = 50
 const TRADE_EXPORT_BIN: int = 3
 const STORAGE_DEFAULT: int = 1
-const DECONSTRUCTION_EXPORT: int = -99
 
 ## Effective-priority points gained per sim-second waited unclaimed:
 ## +1 per game-hour (30 sim-seconds), capped at +10.

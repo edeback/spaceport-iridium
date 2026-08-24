@@ -76,10 +76,9 @@ anchors = Array[ExtResource("15_anchr")]([SubResource("Resource_wkstn")])
 connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(1, -1), Vector2i(2, -1), Vector2i(-1, 0), Vector2i(3, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)])
 internal_points = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
 
-[node name="ProcessorComponent" parent="." index="3" unique_id=837779850 node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("5_pljme")]
+[node name="ProcessorComponent" parent="." index="3" unique_id=837779850 node_paths=PackedStringArray("storage", "power_consumer") instance=ExtResource("5_pljme")]
 recipe = ExtResource("6_vpngb")
-input_storage = NodePath("../Input")
-output_storage = NodePath("../Output")
+storage = NodePath("../Storage Bay")
 time_to_process = 30.0
 power_consumer = NodePath("../PowerConsumptionComponent")
 requires_worker = true
@@ -88,20 +87,10 @@ worker_skill = &"growing"
 [node name="PowerConsumptionComponent" parent="." index="4" unique_id=593982705 instance=ExtResource("7_utgk8")]
 power_consumption = 150.0
 
-[node name="Input" parent="." index="5" unique_id=1294834415 instance=ExtResource("8_cv27v")]
-position = Vector2(-35, -2)
+[node name="Storage Bay" parent="." index="5" unique_id=1294834415 instance=ExtResource("8_cv27v")]
 max_stored = 15
-accepts_exports = false
-storage_data = Dictionary[ExtResource("9_vk0fi"), ExtResource("10_vp40g")]({
-ExtResource("11_du6w5"): SubResource("Resource_twimy"),
-ExtResource("13_u5ltp"): SubResource("Resource_p460y")
-})
+output_capacity = 10
+default_role = 2
 
-[node name="Output" parent="." index="6" unique_id=849654614 instance=ExtResource("8_cv27v")]
-position = Vector2(133, -3)
-storage_data = Dictionary[ExtResource("9_vk0fi"), ExtResource("10_vp40g")]({
-ExtResource("14_8n0tu"): SubResource("Resource_txiy8")
-})
-
-[node name="WorkspaceComponent" type="Node2D" parent="." index="8" unique_id=771230003]
+[node name="WorkspaceComponent" type="Node2D" parent="." index="7" unique_id=771230003]
 script = ExtResource("16_wksp")

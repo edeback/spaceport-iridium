@@ -49,9 +49,17 @@ static func find_source(pawn: PawnBase, resource: ResourceData, trip_cap: int,
 		var storage: StorageComponent = node as StorageComponent
 		# Null check: anything ever added to the group that isn't a
 		# StorageComponent would otherwise be a nil-access crash here.
-		if storage == null or not storage.accepts_exports:
+		if storage == null:
 			continue
-		if below_priority != ANY_PRIORITY and storage.priority >= below_priority:
+		# Per-resource since WI-65: one component can refuse to export iron ore
+		# (it is an ingredient there) while exporting iron (it is a product).
+		var source_priority: int = storage.export_priority(resource)
+		# REFUSED is checked BEFORE the comparison, never as an extreme number -
+		# ANY_PRIORITY skips the comparison entirely, so a refusal folded into the
+		# number would be silently ignored on exactly the pile/sweep paths.
+		if source_priority == StorageComponent.REFUSED:
+			continue
+		if below_priority != ANY_PRIORITY and source_priority >= below_priority:
 			continue
 		var available: int = storage.total_stored_by_resource(resource)
 		if available <= 0:
@@ -86,9 +94,13 @@ static func find_sink(pawn: PawnBase, resource: ResourceData,
 	var best: StorageComponent = null
 	for node: Node in pawn.get_tree().get_nodes_in_group(Groups.RESOURCE_STORAGE):
 		var storage: StorageComponent = node as StorageComponent
-		if storage == null or not storage.accepts_imports:
+		if storage == null:
 			continue
-		if above_priority != ANY_PRIORITY and storage.priority <= above_priority:
+		var sink_priority: int = storage.import_priority(resource)
+		# Same rule as find_source: refusal first, comparison second.
+		if sink_priority == StorageComponent.REFUSED:
+			continue
+		if above_priority != ANY_PRIORITY and sink_priority <= above_priority:
 			continue
 		# Probes with 1 unit, not the full load, on purpose: a bin with only
 		# partial room is still a valid target - whatever doesn't fit stays on
@@ -98,7 +110,7 @@ static func find_sink(pawn: PawnBase, resource: ResourceData,
 		if not Global.path_manager.is_reachable(pawn, storage.owner_module):
 			continue
 		var dist: int = storage.owner_module.module_cell.distance_squared_to(pawn_cell)
-		if scorer.offer(storage.priority, dist):
+		if scorer.offer(sink_priority, dist):
 			best = storage
 	return best
 

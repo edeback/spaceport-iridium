@@ -163,7 +163,7 @@ func decline(contract: ContractData) -> void:
 func staged_for(contract: ContractData) -> int:
 	if _demand_component == null or not is_instance_valid(_demand_component):
 		return 0
-	var stock: int = _demand_component.export_storage.total_stored_by_resource(contract.resource)
+	var stock: int = _demand_component.storage.total_stored_by_resource(contract.resource)
 	# Earlier active contracts on the same resource claim the stock first.
 	for other: ContractData in active:
 		if other == contract:
@@ -183,11 +183,11 @@ func collect_contract_goods(bay_trade: TradeComponent) -> bool:
 	var collected: bool = false
 	# Iterate over a copy: completion mutates `active`.
 	for contract: ContractData in active.duplicate():
-		var in_bin: int = bay_trade.export_storage.total_stored_by_resource(contract.resource)
+		var in_bin: int = bay_trade.storage.total_stored_by_resource(contract.resource)
 		var take: int = mini(contract.remaining(), in_bin)
 		if take <= 0:
 			continue
-		if not bay_trade.export_storage.withdraw(contract.resource, take):
+		if not bay_trade.storage.withdraw(contract.resource, take):
 			continue
 		bay_trade.reduce_contract_demand(contract.resource, take)
 		contract.delivered += take

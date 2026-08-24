@@ -60,6 +60,11 @@ var _priority_caption: Label
 var _stepper: Stepper
 var _fill_bar: HatchBar
 var _fill_label: Label
+## The second meter, drawn only for a bin that has both roles (WI-65).
+var _out_bar: HatchBar
+var _out_label: Label
+## Takes the stepper's place on an export-only bin.
+var _priority_locked_note: Label
 var _chips: HFlowContainer
 var _edit_button: ActionButton
 var _locked_note: Label
@@ -157,6 +162,17 @@ func _build_fill_block() -> VBoxContainer:
 	fill.add_child(_fill_label)
 	_fill_bar = HatchBar.new()
 	fill.add_child(_fill_bar)
+	# The OUT meter, hidden unless this bin has both roles. Two meters rather than
+	# one, because the pools are separate capacity: a refinery whose products are
+	# not being hauled away is full on the side that stops production and empty on
+	# the side the player would be looking at.
+	_out_label = _label(UIType.METRIC)
+	_out_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_out_label.visible = false
+	fill.add_child(_out_label)
+	_out_bar = HatchBar.new()
+	_out_bar.visible = false
+	fill.add_child(_out_bar)
 	return fill
 
 func _build_priority_block() -> VBoxContainer:
@@ -180,6 +196,20 @@ func _build_priority_block() -> VBoxContainer:
 	_priority_caption.add_theme_stylebox_override("normal",
 		UIMetrics.tracking_center_box(UIMetrics.TRACKING_META))
 	priority.add_child(_priority_caption)
+	# An export-only bin (a mining bay) has no priority of its own, because OUTPUT
+	# implies the floor. The stepper goes away and this says why - a blocked
+	# control names its blocker, and an absent one explains its absence (WI-54).
+	_priority_locked_note = _label(UIType.META_LINE)
+	_priority_locked_note.add_theme_color_override("font_color", UIPalette.TEXT_DISABLED)
+	_priority_locked_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_priority_locked_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# Overrun behaviour makes a Label report a minimum width of ~1, so a wrapped
+	# label collapses instead of wrapping unless it is given a width to wrap in
+	# (WI-53). The column already has one.
+	_priority_locked_note.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+	_priority_locked_note.custom_minimum_size.x = float(PRIORITY_COLUMN)
+	_priority_locked_note.visible = false
+	priority.add_child(_priority_locked_note)
 	return priority
 
 func _ready() -> void:
@@ -211,8 +241,10 @@ func bind(entry: StoresModel.Entry) -> void:
 	# `0` out of reach from the scene default of 1. The hold-repeat covers the
 	# distance and the commit rule covers the cost of crossing it.
 	_stepper.configure(entry.priority, StoresModel.PRIORITY_MIN, StoresModel.PRIORITY_MAX, 1, true)
-	# Live on every card, including the ones whose contents the module owns:
-	# priority is the routing language and it is the player's on every bin.
+	# Live on every card whose contents the module owns - priority is the routing
+	# language and it is the player's - EXCEPT on an export-only bin, where OUTPUT
+	# implies the floor and a stepper would be a control that does nothing
+	# (WI-65). refresh() swaps it for the reason.
 	_stepper.editable = StoresModel.priority_editable(entry.component)
 	refresh(entry)
 
@@ -228,12 +260,28 @@ func refresh(entry: StoresModel.Entry) -> void:
 	if not _stepper.is_editing():
 		_stepper.value = entry.priority
 		_apply_priority_caption(entry.priority)
-	var fraction: float = entry.fill()
-	_fill_label.text = "%d / %d" % [entry.stored, entry.capacity]
+	var both_roles: bool = entry.output_capacity > 0 and entry.intake_capacity > 0
+	var fraction: float = entry.intake_fill() if entry.intake_capacity > 0 \
+		else entry.output_fill()
+	if both_roles:
+		_fill_label.text = "IN %d / %d" % [entry.intake_stored, entry.intake_capacity]
+		_out_label.text = "OUT %d / %d" % [entry.output_stored, entry.output_capacity]
+		_out_bar.fraction = entry.output_fill()
+		_out_bar.fill_color = UIPalette.ATTENTION if entry.output_fill() >= 1.0 \
+			else UIPalette.LIVE
+	else:
+		_fill_label.text = "%d / %d" % [entry.stored, entry.capacity]
+	_out_label.visible = both_roles
+	_out_bar.visible = both_roles
 	_fill_bar.fraction = fraction
 	# A full bin stops accepting deliveries, which is a routing fact and therefore
 	# worth the amber; anything below that is just a level.
 	_fill_bar.fill_color = UIPalette.ATTENTION if fraction >= 1.0 else UIPalette.LIVE
+	var priority_reason: String = StoresModel.priority_locked_reason(entry.component)
+	_stepper.visible = priority_reason.is_empty()
+	_priority_caption.visible = priority_reason.is_empty()
+	_priority_locked_note.text = priority_reason.to_upper()
+	_priority_locked_note.visible = not priority_reason.is_empty()
 	_edit_button.tooltip_text = "Accepted resources and the fill meter"
 	_locked_note.text = _locked_text(entry).to_upper()
 	_locked_note.visible = not _locked_note.text.is_empty()
@@ -294,7 +342,7 @@ func _rebuild_chips() -> void:
 ## normal look - the disabled state is deliberately styled identically - so a
 ## locked card reads as information rather than as a row of greyed-out failures.
 func _make_chip(resource: ResourceData, data: StorageData, editable: bool) -> Button:
-	var kind: UIPalette.Row = UIPalette.Row.AMBER if data.autodump else UIPalette.Row.INERT
+	var kind: UIPalette.Row = UIPalette.Row.AMBER if data.autodump_enabled() else UIPalette.Row.INERT
 	var button := Button.new()
 	button.focus_mode = Control.FOCUS_NONE
 	button.text = "%s  %s" % [resource.name, _chip_value(resource, data)]
@@ -325,7 +373,7 @@ func _chip_value(resource: ResourceData, data: StorageData) -> String:
 		var average: float = data.average_instance_value()
 		if average >= 0.0:
 			text += " (%d%%)" % roundi(average * 100.0)
-	if data.autodump:
+	if data.autodump_enabled():
 		text += " ⌦"
 	return text
 

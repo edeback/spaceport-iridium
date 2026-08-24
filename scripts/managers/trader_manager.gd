@@ -209,11 +209,11 @@ func _fulfill(bay_trade: TradeComponent) -> void:
 	Global.contract_manager.collect_contract_goods(bay_trade)
 	# Sells: bin contents -> trader hold, credits in.
 	for resource: ResourceData in committed_sells.keys():
-		var in_bin: int = bay_trade.export_storage.total_stored_by_resource(resource)
+		var in_bin: int = bay_trade.storage.total_stored_by_resource(resource)
 		var amount: int = mini(mini(committed_sells[resource], in_bin), cargo_space())
 		if amount <= 0:
 			continue
-		if not bay_trade.export_storage.withdraw(resource, amount):
+		if not bay_trade.storage.withdraw(resource, amount):
 			continue
 		# Route through the ARC levy (WI-25): the player banks the net, ARC skims
 		# its cut off the top. Levy-disabled games get the gross back unchanged.
@@ -227,19 +227,24 @@ func _fulfill(bay_trade: TradeComponent) -> void:
 		bay_trade.reduce_sell_order(resource, amount)
 		_net_market_delta[resource] = _net_market_delta.get(resource, 0) + amount
 		traded = true
-	# Buys: trader stock -> import bin, credits out. Charge on fulfillment.
+	# Buys: trader stock -> the bay's OUTPUT slots, credits out. Charge on
+	# fulfillment. The arrivals pool is separate from the sell-staging one
+	# (WI-65 §5), so a large staged sell order cannot eat the room a purchase
+	# needs - which would have surfaced as this alert with nothing on screen
+	# explaining it.
 	for resource: ResourceData in committed_buys.keys():
 		var price: int = buy_prices.get(resource, 0)
 		var affordable: int = committed_buys[resource] if price <= 0 else mini(committed_buys[resource], credits.get_total() / price)
-		var amount: int = mini(mini(affordable, trader_stock(resource)), bay_trade.import_storage.space_available())
+		var amount: int = mini(mini(affordable, trader_stock(resource)), bay_trade.storage.space_available(false, StorageData.Role.OUTPUT))
 		if amount <= 0:
-			if bay_trade.import_storage.space_available() <= 0 and not _import_full_alerted:
+			if bay_trade.storage.space_available(false, StorageData.Role.OUTPUT) <= 0 \
+					and not _import_full_alerted:
 				_import_full_alerted = true
 				AlertManager.raise_alert(&"import_bin_full", AlertData.Priority.HIGH,
 					"Import bin full", "Haul it out to keep buying", bay_trade.owner_module,
 					&"stores")
 			continue
-		if not bay_trade.import_storage.deposit(resource, amount):
+		if not bay_trade.storage.deposit(resource, amount):
 			continue
 		credits.change_global_total(-amount * price)
 		trader.stock[resource] = trader_stock(resource) - amount

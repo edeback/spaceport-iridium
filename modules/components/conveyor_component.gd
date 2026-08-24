@@ -116,7 +116,11 @@ func _endpoint_options(as_source: bool) -> Array[ComponentBase]:
 		for comp: ComponentBase in m.components:
 			if comp is StorageComponent:
 				var storage: StorageComponent = comp as StorageComponent
-				if (as_source and storage.accepts_exports) or (not as_source and storage.accepts_imports):
+				# Since WI-65 direction is per-resource, but a belt endpoint is
+				# picked before its resource is: a bin qualifies if it has ANY
+				# slot facing the right way. Which resources that endpoint can
+				# actually carry is get_resource_options_for()'s question.
+				if (as_source and storage.has_output_or_general_slots()) 						or (not as_source and storage.has_intake_slots()):
 					out.append(comp)
 			elif comp is ConveyorComponent:
 				out.append(comp)

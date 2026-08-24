@@ -3,17 +3,25 @@ extends ComponentBase
 
 ## The docking bay's trade brain (WI-08): holds the standing ORDER SHEET -
 ## what the player wants moved, independent of any particular trader visit.
-## Sell orders configure the export bin as a haul destination (crew stage
-## goods there continuously); buy orders wait for a trader (bought goods land
-## in the import bin, whose existing surplus-export flow hauls them out).
+## Sell orders create INPUT slots so crew stage goods there continuously; buy
+## orders wait for a trader, and bought goods land in OUTPUT slots that haul
+## themselves out to the station's storerooms.
 ## Actual trading happens in TraderManager against the docked trader.
 ##
 ## v1 orders are finite amounts in both directions ("sell 60 ore", "buy 50
 ## steel") that count down as they fulfill and clear at zero - a standing
 ## "keep exporting forever" is approximated by a large amount.
+##
+## WI-65 renamed the two bins and merged them into one component. The old names
+## were the exact inverse of what they held: `storage` was where goods
+## were IMPORTED to await export, and `storage` was where imports landed
+## to be EXPORTED onward. They are now roles on one bin - staging is INPUT,
+## arrivals are OUTPUT - which is also what stops a large sell order eating the
+## space an inbound purchase needs, since the two roles have separate pools.
 
-@export var export_storage: StorageComponent
-@export var import_storage: StorageComponent
+## The bay's single bin. Its staging slots are INPUT (`max_stored`), its arrival
+## slots are OUTPUT (`output_capacity`).
+@export var storage: StorageComponent
 
 ## resource -> amount still wanted. Persisted via the module save section.
 var sell_orders: Dictionary[ResourceData, int] = {}
@@ -35,10 +43,13 @@ func ready_blueprint() -> void:
 
 func ready_constructed() -> void:
 	override_ui = true
-	# The export bin pulls sell-order goods from ordinary storerooms, so its
-	# import priority must beat theirs while staying under real consumers
-	# (kitchen, construction) - see the JobPriorities band table.
-	export_storage.update_priority(JobPriorities.TRADE_EXPORT_BIN)
+	# The staging slots pull sell-order goods from ordinary storerooms, so this
+	# bin's priority must beat theirs while staying under real consumers
+	# (kitchen, construction) - see the JobPriorities band table. Arrivals are
+	# unaffected: an OUTPUT slot ships at the floor whatever this is set to.
+	storage.update_priority(JobPriorities.TRADE_EXPORT_BIN)
+	assert(storage.max_stored > 0 and storage.output_capacity > 0,
+		"a trade bay needs both pools: max_stored stages sell orders, output_capacity receives purchases")
 
 # --- order sheet ----------------------------------------------------------------
 
@@ -47,7 +58,7 @@ func set_sell_order(resource: ResourceData, amount: int) -> void:
 		clear_sell_order(resource)
 		return
 	sell_orders[resource] = amount
-	export_storage.add_stored_resource(resource)
+	storage.add_stored_resource(resource, StorageData.Role.INPUT)
 	_sync_sell_slot(resource)
 	orders_changed.emit()
 
@@ -59,20 +70,20 @@ func set_buy_order(resource: ResourceData, amount: int) -> void:
 	orders_changed.emit()
 
 ## Cancelling a sell order with goods already staged: the bin is not a
-## general storage (accepts_exports = false), so stranded stock is dumped to
+## general storage (its slots are INPUT), so stranded stock is dumped to
 ## a ResourcePile at the bay for haulers to sweep up (WI-08 edge case).
 func clear_sell_order(resource: ResourceData) -> void:
 	sell_orders.erase(resource)
 	# Contract-earmarked stock stays in the bin (WI-14) - only the surplus
 	# beyond remaining contract demand gets dumped.
-	var staged: int = export_storage.total_stored_by_resource(resource) - contract_demand.get(resource, 0)
+	var staged: int = storage.total_stored_by_resource(resource) - contract_demand.get(resource, 0)
 	if staged > 0:
-		var stacks: Array[ResourceStack] = export_storage.withdraw_stacks(resource, staged)
+		var stacks: Array[ResourceStack] = storage.withdraw_stacks(resource, staged)
 		if not stacks.is_empty():
 			var pile := ResourcePile.spawn(Global.world_manager.pawn_layer, DockingBay.dock_position_for(owner_module), owner_module)
 			pile.add_stacks(resource, stacks)
 	if not contract_demand.has(resource):
-		export_storage.remove_stored_resource(resource)
+		storage.remove_stored_resource(resource)
 	_sync_sell_slot(resource)
 	orders_changed.emit()
 
@@ -106,7 +117,7 @@ func add_contract_demand(resource: ResourceData, amount: int) -> void:
 	if resource == null or amount <= 0:
 		return
 	contract_demand[resource] = contract_demand.get(resource, 0) + amount
-	export_storage.add_stored_resource(resource)
+	storage.add_stored_resource(resource, StorageData.Role.INPUT)
 	_sync_sell_slot(resource)
 	orders_changed.emit()
 
@@ -126,9 +137,9 @@ func reduce_contract_demand(resource: ResourceData, amount: int) -> void:
 func release_contract_demand(resource: ResourceData, amount: int) -> void:
 	reduce_contract_demand(resource, amount)
 	var wanted: int = sell_orders.get(resource, 0) + contract_demand.get(resource, 0)
-	var surplus: int = export_storage.total_stored_by_resource(resource) - wanted
+	var surplus: int = storage.total_stored_by_resource(resource) - wanted
 	if surplus > 0:
-		var stacks: Array[ResourceStack] = export_storage.withdraw_stacks(resource, surplus)
+		var stacks: Array[ResourceStack] = storage.withdraw_stacks(resource, surplus)
 		if not stacks.is_empty():
 			var pile := ResourcePile.spawn(Global.world_manager.pawn_layer, DockingBay.dock_position_for(owner_module), owner_module)
 			pile.add_stacks(resource, stacks)
@@ -138,10 +149,10 @@ func release_contract_demand(resource: ResourceData, amount: int) -> void:
 ## capacity) so crew stage exactly what's still wanted and no more.
 func _sync_sell_slot(resource: ResourceData) -> void:
 	var wanted: int = sell_orders.get(resource, 0) + contract_demand.get(resource, 0)
-	_set_slot_desired(resource, mini(wanted, export_storage.max_stored))
+	_set_slot_desired(resource, mini(wanted, storage.max_stored))
 
 func _set_slot_desired(resource: ResourceData, desired: int) -> void:
-	var slot: StorageData = export_storage.storage_data.get(resource)
+	var slot: StorageData = storage.storage_data.get(resource)
 	if slot != null:
 		slot.desired = desired
 

@@ -28,6 +28,7 @@ size = Vector2(126, 62)
 
 [sub_resource type="Resource" id="Resource_byurn"]
 script = ExtResource("8_08lj0")
+role = 1
 desired = 10
 resource_data = ExtResource("9_ilumi")
 metadata/_custom_type_script = "uid://b75b02hdqaib1"
@@ -56,7 +57,7 @@ position = Vector2(-32, 0)
 [node name="Kitchen Supplies" parent="." index="5" unique_id=1059390969 instance=ExtResource("6_4dwlo")]
 position = Vector2(-32, 0)
 priority = 20
-accepts_exports = false
+default_role = 1
 storage_data = Dictionary[ExtResource("7_pclkq"), ExtResource("8_08lj0")]({
 ExtResource("9_ilumi"): SubResource("Resource_byurn")
 })

@@ -54,7 +54,7 @@ const PAWN: StringName = &"pawn"
 
 # --- storage & logistics ------------------------------------------------------
 
-## StorageComponent joins/leaves this as accepts_exports flips, so membership
+## StorageComponent joins/leaves this across its build lifecycle, so membership
 ## is not the same as "has a StorageComponent". Read it through StorageQuery.
 const RESOURCE_STORAGE: StringName = &"resource_storage"
 

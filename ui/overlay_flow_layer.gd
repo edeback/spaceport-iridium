@@ -98,9 +98,10 @@ func _draw_priority_labels() -> void:
 		if storage == null or not is_instance_valid(storage.owner_module):
 			continue
 		var module: ModuleBase = storage.owner_module
-		# One label per module: keep the largest-magnitude priority if a module
-		# somehow hosts several storages, matching the tint's "most salient" rule.
-		if seen.has(module) and absi(seen[module]) >= absi(storage.priority):
+		# One label per module. Since WI-65 a module has one bin and one priority,
+		# so the first one found is the answer - the largest-magnitude tiebreak this
+		# used to run existed only because a refinery had two bins that disagreed.
+		if seen.has(module):
 			continue
 		seen[module] = storage.priority
 	for module: ModuleBase in seen:

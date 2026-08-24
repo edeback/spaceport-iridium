@@ -2,17 +2,13 @@
 
 [ext_resource type="PackedScene" uid="uid://drvd8opv6enr8" path="res://modules/templates/module_2x1.tscn" id="1_06jma"]
 [ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_gtfxg"]
-[ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="3_560w6"]
 [ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_arklq"]
 [ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="3_gtfxg"]
 [ext_resource type="Texture2D" uid="uid://bdedgjs4aas86" path="res://assets/sprites/ore_processor.png" id="3_pj0q4"]
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_ohxey"]
 [ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="5_83mgx"]
 [ext_resource type="PackedScene" uid="uid://c63swhm7yiir" path="res://modules/components/processor_component.tscn" id="6_av0o4"]
-[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="6_ucso1"]
-[ext_resource type="Script" uid="uid://b75b02hdqaib1" path="res://modules/components/storage_data.gd" id="7_ymsq2"]
 [ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="12_8w55x"]
-[ext_resource type="Resource" uid="uid://bdtv1cjftf2g1" path="res://data/resources/iron.tres" id="13_iron"]
 [ext_resource type="Script" uid="uid://by2n6rwcttgyx" path="res://data/recipes/recipe_data.gd" id="14_rcpd"]
 [ext_resource type="Resource" path="res://data/recipes/refining/iron_refining_recipe.tres" id="15_rfiron"]
 [ext_resource type="Resource" path="res://data/recipes/refining/silicon_refining_recipe.tres" id="17_rfsilicon"]
@@ -43,14 +39,6 @@ offset = Vector2(24, 0)
 animation = &"interact"
 metadata/_custom_type_script = "uid://c2qsvh4rhb1ta"
 
-[sub_resource type="Resource" id="Resource_8w55x"]
-script = ExtResource("7_ymsq2")
-metadata/_custom_type_script = "uid://b75b02hdqaib1"
-
-[sub_resource type="Resource" id="Resource_pj0q4"]
-script = ExtResource("7_ymsq2")
-metadata/_custom_type_script = "uid://b75b02hdqaib1"
-
 [sub_resource type="Resource" id="Resource_vibration"]
 script = ExtResource("23_adjsp")
 effect_id = &"vibration"
@@ -80,31 +68,20 @@ position = Vector2(64, 32)
 scale = Vector2(2, 1)
 power_consumption_component = NodePath("../PowerConsumptionComponent")
 
-[node name="Input Storage" parent="." index="4" unique_id=443566926 instance=ExtResource("5_83mgx")]
+[node name="Storage Bay" parent="." index="4" unique_id=443566926 instance=ExtResource("5_83mgx")]
 position = Vector2(-32, 0)
 max_stored = 20
-accepts_exports = false
-storage_data = Dictionary[ExtResource("6_ucso1"), ExtResource("7_ymsq2")]({
-ExtResource("3_560w6"): SubResource("Resource_8w55x")
-})
+output_capacity = 10
+default_role = 2
 
-[node name="Output Storage" parent="." index="5" unique_id=818868622 instance=ExtResource("5_83mgx")]
-position = Vector2(64, 0)
-priority = -1
-accepts_imports = false
-storage_data = Dictionary[ExtResource("6_ucso1"), ExtResource("7_ymsq2")]({
-ExtResource("13_iron"): SubResource("Resource_pj0q4")
-})
-
-[node name="ProcessorComponent" parent="." index="7" unique_id=1865115011 node_paths=PackedStringArray("input_storage", "output_storage", "power_consumer") instance=ExtResource("6_av0o4")]
+[node name="ProcessorComponent" parent="." index="6" unique_id=1865115011 node_paths=PackedStringArray("storage", "power_consumer") instance=ExtResource("6_av0o4")]
 recipe = ExtResource("15_rfiron")
-input_storage = NodePath("../Input Storage")
-output_storage = NodePath("../Output Storage")
+storage = NodePath("../Storage Bay")
 time_to_process = 15.0
 power_consumer = NodePath("../PowerConsumptionComponent")
 requires_worker = true
 
-[node name="WorkspaceComponent" type="Node2D" parent="." index="8" unique_id=771230001]
+[node name="WorkspaceComponent" type="Node2D" parent="." index="7" unique_id=771230001]
 script = ExtResource("21_wksp")
 
 [node name="AdjacencyEmitterComponent" parent="." instance=ExtResource("22_adjem")]

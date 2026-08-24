@@ -55,28 +55,22 @@ connection_points = Array[Vector2i]([Vector2i(1, -1), Vector2i(2, -1), Vector2i(
 internal_points = Array[Vector2i]([Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1)])
 must_be_clear_points = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)])
 
-[node name="TradeComponent" parent="." index="3" unique_id=1540868727 node_paths=PackedStringArray("export_storage", "import_storage") instance=ExtResource("4_psdj2")]
-export_storage = NodePath("../Goods To Export")
-import_storage = NodePath("../Imported Goods")
+[node name="TradeComponent" parent="." index="3" unique_id=1540868727 node_paths=PackedStringArray("storage") instance=ExtResource("4_psdj2")]
+storage = NodePath("../Cargo Bay")
 
-[node name="Imported Goods" parent="." index="4" unique_id=1475305824 instance=ExtResource("5_18pmv")]
+[node name="Cargo Bay" parent="." index="4" unique_id=1475305824 instance=ExtResource("5_18pmv")]
 position = Vector2(32, 0)
-priority = -50
+priority = 3
 max_stored = 80
-accepts_imports = false
+output_capacity = 80
+default_role = 2
 allow_any_resource = true
 
-[node name="Goods To Export" parent="." index="5" unique_id=1010662297 instance=ExtResource("5_18pmv")]
-position = Vector2(192, 0)
-max_stored = 80
-accepts_exports = false
-player_configurable = true
-
-[node name="PowerConsumptionComponent" parent="." index="6" unique_id=1657948966 instance=ExtResource("7_gu0qf")]
+[node name="PowerConsumptionComponent" parent="." index="5" unique_id=1657948966 instance=ExtResource("7_gu0qf")]
 position = Vector2(128, 0)
 power_consumption = 60.0
 
-[node name="ConstructionComponent" parent="." index="7" unique_id=1206775965]
+[node name="ConstructionComponent" parent="." index="6" unique_id=1206775965]
 position = Vector2(32, 0)
 
-[node name="CrewRecruitmentComponent" parent="." index="8" unique_id=1630590133 instance=ExtResource("8_recruit")]
+[node name="CrewRecruitmentComponent" parent="." index="7" unique_id=1630590133 instance=ExtResource("8_recruit")]

@@ -1,10 +1,37 @@
 # WI-65 — Storage Roles & Strict Input Capacity
 
+> **STATUS: COMPLETE (2026-08-23).** Both stages shipped. **1462 GUT tests, all green** (+42: `test_storage_roles.gd` at 24, `test_processor_allocation.gd` at 12, plus 6 in `test_stores_panel_model.gd` and rewritten autodump/claim coverage in `test_storage_data.gd`) — the suite was green at 1420 before this item, so nothing regressed. Verified further by a **45-check headless probe** driven through a real station, and by **three windowed 1920×1080 screenshots**. Save is **version 3**, migrating v2 in place.
+>
+> **The probe proves the deadlock end to end**, which is the whole point of stage 2: an algae vats fed only its first ingredient stops at 7 of a 15-unit bay, the second ingredient's 7 stay both depositable *and* reservable, and the recipe runs. Before this item the first ingredient took the whole bay.
+>
+> **Deviations from the design below:**
+> 1. **Eight modules carried two storages, not five.** `algae_tank`, `algae_vats` and `hydroponics_bay` were missed in the survey because their nodes are named `Input`/`Output` rather than `… Storage`, and their output bins carried **no flag overrides at all** — so they were sitting at the scene default `accepts_imports = true`, i.e. a product bay that general storage would happily push biomass *into*. The merge fixes that as a side effect. §Goal below still says five; this is the correction.
+> 2. **`EXCLUDED` replaced the planned `hauling_enabled` flag** (§7), on the argument that two booleans have four states, so the enum is a *re-encoding* rather than a lossy one. It has a real user after all: `_start_construction_job()` freezes the bin **with its materials still in it**, which a role-per-slot handles and a "roles only work on empty bins" shortcut would not.
+> 3. **`default_role` was not in the design and is load-bearing.** A slot's role is derived rather than saved (§10), but the save block *creates* the slots it restores — so something has to say what role a restored or catch-all slot gets. It is what makes the docking bay's arrivals OUTPUT whatever turns up in them, and what stops a deconstruction site's restored refunds coming back as general stock that is hauled straight back in.
+> 4. **`add_stored_resource()` must never re-role an existing slot**, which the design did not anticipate. The save block calls it for every restored resource; re-roling there flips a processor's carefully roled slots to `default_role` on every load. Owners now assign roles explicitly after.
+> 5. **Capacity is `max_stored` + a new `output_capacity`, not a re-derived split.** The scenes keep the exact two numbers they already carried (the forge is still 30/20), which the "combined total, split by recipe proportion" reading would have changed on every module.
+>
+> **What the probe found that the design got wrong:**
+> - **`export_priority` grouped `INPUT` with `GENERAL`** and handed a forge's ore back to any storeroom that asked. Caught by `test_storage_roles.gd` on its first run — INPUT refuses exports, same as EXCLUDED.
+> - **"No intake slots" is not the same as "export only".** An **empty** storeroom has no slots either, so the first cut of `has_intake_slots()` stripped the priority stepper off every fresh storeroom. It falls back to `default_role` now, and `test_an_empty_storeroom_keeps_its_stepper` pins it.
+> - **Two probe checks were wrong, not the code.** A single-ingredient refinery's allocation *is* its whole intake pool, so "capped" and "pool full" are the same event there and the strict-cap assertion proved nothing — it needs a two-ingredient module, which is also the real scenario. And `find_sink` legitimately answers "nowhere" on the starting station, because it ships **full**: a check that cannot tell a routing bug from a full station is not verification.
+>
+> **What the screenshots caught that 45 probe checks and 1460 tests did not — five defects, and one of them was a functional break:**
+> 1. **The mining bay could not hold ore at all.** Its slots are OUTPUT and therefore draw on `output_capacity`, which the scene left at **0** while its 80 sat in `max_stored` — an intake pool nothing on that module could ever use. Every check agreed with itself because the Stores card sums both pools and printed a plausible `0 / 80`. `ready_constructed()` now **asserts** that a bin with OUTPUT slots has an output pool, which is the check the design asked for and the first pass never wrote.
+> 2. **The docking bay lost its priority stepper while its own card said "its priority is still yours."** `has_intake_slots()` counted INPUT slots, and the bay grows its staging slots only when a sell order exists. The rule is now about **capacity, not slots** — `max_stored <= 0` means no intake side — which fixes the empty-storeroom case in the same stroke and drops the `default_role` dependency entirely.
+> 3. **The inspector's meta line read `HAUL +100` on a refinery the Stores panel had at `+1`.** `get_component_by_type(StorageComponent)` returns the first bin the walk finds, which is **construction's**, sitting at +100 on every module. Pre-existing, and invisible until one module's two numbers could be compared side by side.
+> 4. **A mining bay's ore rows read `0 / 0`.** Scene-authored OUTPUT slots kept `desired = 0`, because `_ready()` only initialised the receiving ones. Every slot now starts at the pool it draws on, which is what `add_stored_resource()` already did — the two were disagreeing.
+> 5. **An orphaned `Priority` label above a sentence running off the panel edge.** Hiding the stepper left its row label behind; the row is hidden as a unit now.
+>
+> The remaining visual claim not exercised is the **"Auto-dump above N"** stepper, which needs the dump dialog driven open.
+>
+> ---
+>
 > **Two stages, shipped separately.** Stage 1 (§1–§10) is the role change and the merge; stage 2 (§11–§15) makes `desired` a hard cap **on INPUT slots**. They are split because stage 2's blast radius is entirely different from stage 1's — it touches the claim contract, the import budget and the overflow paths — and landing them together would leave no way to tell which one broke hauling. **Stage 1 must be verified green before stage 2 starts.**
 
 ## Goal
 
-**Each module carries at most one non-construction `StorageComponent`.** Today five do not — `ore_processor`, `forge`, `electrolysis_processor`, `ice_processor` and `docking_bay_left_base` each carry an input bin and an output bin — and the reason is that direction and priority are both properties of the *component*, so one component cannot both pull a resource in and push a different one out.
+**Each module carries at most one non-construction `StorageComponent`.** Today **eight** do not — `ore_processor`, `forge`, `electrolysis_processor`, `ice_processor`, `algae_tank`, `algae_vats`, `hydroponics_bay` and `docking_bay_left_base` each carry an input bin and an output bin — and the reason is that direction and priority are both properties of the *component*, so one component cannot both pull a resource in and push a different one out.
 
 The fix is to move **direction** down onto the per-resource slot as a **role**, and to stop authoring the output side's priority at all.
 
@@ -12,7 +39,7 @@ Four deliverables:
 
 1. **`accepts_imports` / `accepts_exports` become one `role` on `StorageData`** — `GENERAL`, `INPUT`, `OUTPUT`, `EXCLUDED`.
 2. **OUTPUT slots are pinned to the priority floor**, unsettable and unshown, so a component has exactly one player-facing priority however many roles it holds.
-3. **The five two-storage modules become one-storage modules**, and `ProcessorComponent` / `TradeComponent` each drop a `NodePath`.
+3. **The eight two-storage modules become one-storage modules**, and `ProcessorComponent` / `TradeComponent` each drop a `NodePath`.
 4. **`desired` becomes a hard cap on INPUT slots** (stage 2), with the posting target derived from the role and autodump given its own threshold.
 
 Deliverable 2 is what makes the whole thing work, and §2 is about why.
@@ -329,7 +356,7 @@ UI: `storage_overlays.gd:259`'s *"Keep dumping the surplus automatically"* check
 | `modules/components/processor_component.gd` | one storage ref; `_sync_storages` assigns roles and allocates `desired` by whole runs (§6); same-resource assert; recipe-fits-the-bay eligibility test; `_satisfies_recipe` / `_try_deposit_output` role-qualified |
 | `modules/components/trade_component.gd` | one storage ref; **rename `export_storage` → the sell-staging slots (role `INPUT`) and `import_storage` → the arrivals slots (role `OUTPUT`)** — the current names are the exact inverse of the roles and will read backwards forever if left |
 | `modules/components/construction_component.gd` | re-role helper; `EXCLUDED` / `INPUT` / `OUTPUT` per phase |
-| 5 module scenes | merge two nodes into `Storage Bay`; add `output_capacity` |
+| 8 module scenes | merge two nodes into `Storage Bay`; add `output_capacity` |
 | ~8 module scenes | flags → roles on their slots |
 | `modules/docking_bays/docking_bay_left_base.tscn` | drop `player_configurable` |
 | `scripts/managers/save_manager.gd` | `SAVE_VERSION = 3`, `_migrate_2_to_3` |
@@ -377,4 +404,4 @@ Headless probe (the standing fallback), driven through the states rather than as
 
 - **Does `EXCLUDED` ever hold a populated slot on vanilla content?** Probably not (§7). If a pass through the construction lifecycle confirms it never does, that is worth a comment on the enum member rather than a reason to remove it.
 - **Should `GENERAL` ever be able to opt into a hard cap?** §11 says no on the grounds that surplus exports. A player who wants a storeroom to hold *exactly* 50 iron has `desired` for the haul target and `autodump_above` for the vent, which between them cover the intent without a third mode. Revisit only if play says otherwise.
-- **Outputs have the same shape of problem and no fix.** `output_capacity` is a shared pool with no per-slot split, so on a multi-output recipe (Electrolyze Water makes H2 and O2) one product that cannot be hauled away can fill the pool and block the other, stalling the processor — the mirror image of the input deadlock §11 addresses. It is milder, because OUTPUT ships at `PRIORITY_MIN` to anywhere and a blocked output means the whole station is full. Deferred rather than solved: the fix is §6's run allocator applied to `output_capacity`, and it should be its own change with its own evidence that the case is reachable.
+- **Outputs share one pool on purpose, and must keep doing so.** A multi-output recipe deposits atomically — `_satisfies_recipe` refuses to run unless *every* product fits — so a blocked H2 slot stalling an electrolysis run is correct: you cannot electrolyse water into just hydrogen. Giving each product its own capped slot would let a run proceed when only some outputs fit, which is either a partial deposit or a silent loss of the rest. `output_capacity` stays a single shared pool and §6's run allocator is deliberately **not** applied to it.

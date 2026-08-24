@@ -39,8 +39,7 @@ func ready_constructed() -> void:
 	# Ensure state is set if this was spawned already built
 	current_state = ConstructionState.Built
 	material_storage.empty_all()
-	material_storage.accepts_exports = false
-	material_storage.accepts_imports = false
+	material_storage.set_all_roles(StorageData.Role.EXCLUDED)
 	material_storage.display_storage_ui = false
 	material_storage.display_info_panel_ui = false
 	Global.path_manager.set_exterior(owner_module, false)
@@ -124,8 +123,11 @@ func ready_for_construction() -> bool:
 ## failed at the last second) or a board-claimed job failed some other way
 ## after being picked up (unreachable, module removed mid-route, etc).
 func _start_construction_job(add_to_board: bool) -> Job:
-	material_storage.accepts_exports = false
-	material_storage.accepts_imports = false
+	# Freezes the bin WITH its materials still in it - the site is fully resourced
+	# and the delivered stock must not be hauled back out while the work runs.
+	# This is the case the per-slot role exists for: a component-level flag would
+	# have done, but a role that only worked on an empty bin would not have.
+	material_storage.set_all_roles(StorageData.Role.EXCLUDED)
 	material_storage.display_storage_ui = false
 	material_storage.display_info_panel_ui = false
 	# Only created once the site is fully resourced, so this is always a
@@ -169,12 +171,13 @@ func get_progress() -> float:
 	
 
 func setup_storage_for_construction() -> void:
-	material_storage.accepts_exports = false
 	if owner_module.module_data.resource_costs.is_empty():
+		# A free module never receives anything, so its bin stays out of hauling
+		# entirely rather than sitting at +99 asking for nothing.
+		material_storage.set_all_roles(StorageData.Role.EXCLUDED)
 		material_storage.display_storage_ui = false
 		material_storage.display_info_panel_ui = false
 	else:
-		material_storage.accepts_imports = true
 		material_storage.display_storage_ui = true
 		material_storage.display_info_panel_ui = true
 		material_storage.max_stored = 0
@@ -182,6 +185,7 @@ func setup_storage_for_construction() -> void:
 		for resource : ResourceData in owner_module.module_data.resource_costs:
 			if resource != Global.resource_manager.credit_resource:
 				var new_data := StorageData.new()
+				new_data.role = StorageData.Role.INPUT
 				new_data.desired = owner_module.module_data.resource_costs[resource]
 				material_storage.storage_data[resource] = new_data
 				material_storage.max_stored += new_data.desired
@@ -198,21 +202,26 @@ func setup_storage_post_deconstruction() -> void:
 	Global.path_manager.set_exterior(owner_module, true)
 	material_storage.empty_all()
 	material_storage.add_to_group(Groups.RESOURCE_STORAGE)
-	material_storage.accepts_imports = false
 	if owner_module.module_data.resource_costs.is_empty():
+		material_storage.set_all_roles(StorageData.Role.EXCLUDED)
 		material_storage.display_storage_ui = false
 		material_storage.display_info_panel_ui = false
 	else: 
-		material_storage.accepts_exports = true
 		material_storage.display_storage_ui = true
 		material_storage.display_info_panel_ui = true
-		material_storage.priority = JobPriorities.DECONSTRUCTION_EXPORT
+		material_storage.default_role = StorageData.Role.OUTPUT
+		# Refunds are OUTPUT: they ship at the floor to anywhere that will take
+		# them, which is exactly what the old DECONSTRUCTION_EXPORT constant meant
+		# and no longer needs its own number (WI-65 §2).
+		material_storage.output_capacity = 0
 		for resource : ResourceData in owner_module.module_data.resource_costs:
 			if resource != Global.resource_manager.credit_resource:
 				var new_data := StorageData.new()
+				new_data.role = StorageData.Role.OUTPUT
 				new_data.deposit(owner_module.module_data.resource_costs[resource], false)
 				new_data.desired = 0
 				material_storage.storage_data[resource] = new_data
+				material_storage.output_capacity += new_data.stored
 
 # --- persistence ------------------------------------------------------------
 
@@ -250,16 +259,17 @@ func _setup_deconstructed_for_load() -> void:
 	Global.path_manager.set_exterior(owner_module, true)
 	material_storage.empty_all()
 	material_storage.add_to_group(Groups.RESOURCE_STORAGE)
-	material_storage.accepts_imports = false
-	material_storage.accepts_exports = true
 	material_storage.display_storage_ui = true
 	material_storage.display_info_panel_ui = true
-	material_storage.priority = JobPriorities.DECONSTRUCTION_EXPORT
+	# The storage block restores the actual contents on top of this, and it
+	# creates the slots itself - so the role has to be waiting for them rather
+	# than applied to slots that do not exist yet.
+	material_storage.default_role = StorageData.Role.OUTPUT
 	var capacity: int = 0
 	for resource: ResourceData in owner_module.module_data.resource_costs:
 		if resource != Global.resource_manager.credit_resource:
 			capacity += owner_module.module_data.resource_costs[resource]
-	material_storage.max_stored = maxi(capacity, material_storage.max_stored)
+	material_storage.output_capacity = maxi(capacity, material_storage.output_capacity)
 	work_seconds_done = 0
 	current_state = ConstructionState.Deconstructed
 	set_process(true) # keeps polling until the export bin empties, then removes the module

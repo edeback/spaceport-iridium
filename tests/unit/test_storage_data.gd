@@ -46,29 +46,90 @@ func test_can_withdraw_respects_reservation() -> void:
 	assert_false(storage.can_withdraw(3, false), "the reserved 8 aren't available")
 	assert_true(storage.can_withdraw(10, true), "use_reserve ignores the reservation")
 
-# --- autodump clamp (WI-38 A4) -----------------------------------------------
+# --- autodump clamp (WI-38 A4), against its own threshold (WI-65) -------------
+#
+# The threshold is `autodump_above`, not `desired`: `desired` is where hauling
+# stops filling the bin and this is where the station starts destroying what it
+# could not move. With one number the two mechanisms raced over the same units.
 
-func test_autodump_dumps_only_the_surplus_over_desired() -> void:
+func test_autodump_is_off_until_a_threshold_is_set() -> void:
 	storage.deposit(10, false)
 	storage.desired = 4
-	assert_eq(storage.autodump_amount(), 6, "everything above desired is surplus")
+	assert_false(storage.autodump_enabled(), "-1 is the disabled default")
+	assert_eq(storage.autodump_amount(), 0,
+		"venting stock is an explicit action, never something a bin drifts into")
+
+func test_autodump_dumps_only_the_surplus_over_its_threshold() -> void:
+	storage.deposit(10, false)
+	storage.desired = 4
+	storage.autodump_above = 4
+	assert_eq(storage.autodump_amount(), 6, "everything above the threshold is surplus")
+
+## The gap between the two numbers is the grace an export job gets to move the
+## surplus somewhere useful before the vent opens.
+func test_a_threshold_above_desired_leaves_a_band_for_hauling() -> void:
+	storage.deposit(10, false)
+	storage.desired = 4
+	storage.autodump_above = 8
+	assert_eq(storage.autodump_amount(), 2,
+		"6 units are over target and only 2 of them are past saving")
 
 func test_autodump_never_touches_reserved_stock() -> void:
 	storage.deposit(10, false)
 	storage.desired = 4
+	storage.autodump_above = 4
 	storage.take_claim(ClaimSpec.Kind.STORAGE_WITHDRAW, 3) # a hauler is walking here for 3
 	assert_eq(storage.autodump_amount(), 3, "the reserved 3 are spoken for and stay put")
 
 func test_autodump_is_zero_when_reservations_cover_the_surplus() -> void:
 	storage.deposit(10, false)
 	storage.desired = 4
+	storage.autodump_above = 4
 	storage.take_claim(ClaimSpec.Kind.STORAGE_WITHDRAW, 8)
 	assert_eq(storage.autodump_amount(), 0, "no destruction when haulers claim the whole surplus")
 
-func test_autodump_is_zero_below_desired() -> void:
+func test_autodump_is_zero_below_the_threshold() -> void:
 	storage.deposit(2, false)
 	storage.desired = 10
+	storage.autodump_above = 10
 	assert_eq(storage.autodump_amount(), 0, "under-stocked bins never dump")
+
+# --- the deposit claim (WI-65 §13) -------------------------------------------
+#
+# Only INPUT is capped per slot. GENERAL and OUTPUT are bounded by the
+# component's pool, which this class deliberately cannot see - so their
+# reservations stay pure bookkeeping and whatever picked the bin checked the room.
+
+func test_an_input_slot_refuses_a_deposit_claim_past_its_cap() -> void:
+	storage.role = StorageData.Role.INPUT
+	storage.desired = 10
+	storage.deposit(8, false)
+	assert_true(storage.can_take_claim(ClaimSpec.Kind.STORAGE_DEPOSIT, 2), "2 fit")
+	assert_false(storage.can_take_claim(ClaimSpec.Kind.STORAGE_DEPOSIT, 3), "3 do not")
+
+## The bug this exists to stop: five haulers each reserving against the same
+## five remaining units, four of them arriving at a full slot.
+func test_input_deposit_claims_do_not_overcommit_each_other() -> void:
+	storage.role = StorageData.Role.INPUT
+	storage.desired = 10
+	storage.deposit(5, false)
+	assert_true(storage.take_claim(ClaimSpec.Kind.STORAGE_DEPOSIT, 5) != null,
+		"the first hauler takes the last five")
+	assert_false(storage.can_take_claim(ClaimSpec.Kind.STORAGE_DEPOSIT, 1),
+		"and the second is turned away rather than walking there for nothing")
+
+func test_a_general_slot_leaves_deposit_room_to_the_component() -> void:
+	storage.role = StorageData.Role.GENERAL
+	storage.desired = 4
+	storage.deposit(100, false)
+	assert_true(storage.can_take_claim(ClaimSpec.Kind.STORAGE_DEPOSIT, 50),
+		"a storeroom's bound is max_stored, which this class cannot see")
+
+func test_an_output_slot_leaves_deposit_room_to_the_component() -> void:
+	storage.role = StorageData.Role.OUTPUT
+	storage.desired = 0
+	assert_true(storage.can_take_claim(ClaimSpec.Kind.STORAGE_DEPOSIT, 20),
+		"an output slot is bounded by output_capacity, not by desired")
 
 # --- teardown without a board ------------------------------------------------
 

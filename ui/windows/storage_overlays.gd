@@ -258,19 +258,39 @@ static func open_resource(host: Node, component: StorageComponent, resource: Res
 	_section(column, "Automatically")
 	var autodump := CheckBox.new()
 	autodump.text = "Keep dumping the surplus automatically"
-	autodump.button_pressed = data.autodump
+	autodump.button_pressed = data.autodump_enabled()
 	autodump.disabled = not editable
 	column.add_child(autodump)
+
+	# The threshold, separate from `desired` since WI-65: `desired` is where
+	# hauling stops filling this bin, and this is where the station starts
+	# destroying what it could not move. The gap between them is the grace an
+	# export job gets to find somewhere useful for the surplus first - with one
+	# number the two raced and which won depended on whether a hauler was free.
+	var above_row := HBoxContainer.new()
+	above_row.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	column.add_child(above_row)
+	above_row.add_child(_note("Auto-dump above"))
+	var above := Stepper.create()
+	# Floored at `desired`, not at zero: a threshold below the level hauling is
+	# actively trying to reach would vent stock the bin has just asked for.
+	above.configure(maxi(data.autodump_above, data.desired),
+		data.desired, component.pool_for(data.role), 1, false)
+	above.editable = editable
+	above_row.add_child(above)
 
 	# The warning is built up front and shown reactively rather than re-queried on
 	# each toggle: it is a station scan, and the answer cannot change while a modal
 	# is up (the sim keeps running, but a reactor is not built in that window).
 	var warning: Label = _note(component.autodump_warning(resource))
 	warning.add_theme_color_override("font_color", UIPalette.ATTENTION_TEXT)
-	warning.visible = data.autodump and not warning.text.is_empty()
+	warning.visible = data.autodump_enabled() and not warning.text.is_empty()
 	column.add_child(warning)
-	autodump.toggled.connect(func(pressed: bool) -> void:
-		warning.visible = pressed and not warning.text.is_empty())
+	var sync_autodump: Callable = func(pressed: bool) -> void:
+		warning.visible = pressed and not warning.text.is_empty()
+		above_row.visible = pressed
+	sync_autodump.call(autodump.button_pressed)
+	autodump.toggled.connect(sync_autodump)
 
 	dialog.confirmed.connect(func() -> void:
 		# The editability check is repeated here rather than relying on the disabled
@@ -289,7 +309,10 @@ static func open_resource(host: Node, component: StorageComponent, resource: Res
 				# stepper is capped at the unreserved figure, so the honest call is
 				# the one that also asserts it.
 				component.withdraw_stacks(resource, amount.value, false)
-			component.storage_data[resource].autodump = autodump.button_pressed
+			# -1 is the disabled sentinel, so there is one field rather than a
+			# bool beside a threshold that could disagree with it.
+			component.storage_data[resource].autodump_above = \
+				above.value if autodump.button_pressed else -1
 		if on_applied.is_valid():
 			on_applied.call()
 		dialog.queue_free())

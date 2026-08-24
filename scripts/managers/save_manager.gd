@@ -12,7 +12,7 @@ extends Node
 ## In-flight jobs are deliberately NOT saved - the board repopulates from
 ## storage deficits / construction states within a tick of loading.
 
-const SAVE_VERSION: int = 2
+const SAVE_VERSION: int = 3
 const SAVE_DIR: String = "user://saves/"
 const QUICK_SLOT: String = "quicksave"
 
@@ -58,6 +58,7 @@ var _unclaimed_sections: Dictionary = {}
 ## (WI-36).
 static var _migrations: Dictionary[int, Callable] = {
 	1: _migrate_1_to_2,
+	2: _migrate_2_to_3,
 }
 
 ## v1 -> v2 (WI-44): in-flight jobs changed shape completely. A v1 job entry is
@@ -82,6 +83,61 @@ static func _migrate_1_to_2(data: Dictionary) -> Dictionary:
 		pawn_entry.erase("current_job")
 		pawn_entry.erase("job_queue")
 	data["version"] = 2
+	return data
+
+## v2 -> v3 (WI-65): a module's input bin and output bin became one bin.
+##
+## A v2 save of a refinery has two blocks under `storage`, keyed by node path -
+## "Input Storage" and "Output Storage", or "Input"/"Output" on the growers - and
+## the v3 scene has one node called "Storage Bay". Left alone, ModuleBase's walk
+## iterates live components and would restore neither: both saved paths are
+## orphans, and the player's ore and iron would silently vanish, which is exactly
+## what _warn_orphaned_blocks exists to shout about.
+##
+## So the pair is folded. Contents merge (the two never held the same resource -
+## one side's ingredients, the other's products), and the priority is taken from
+## the INPUT block: an output slot's priority is derived from its role in v3 and
+## whatever the old export bin was tuned to no longer means anything.
+##
+## Roles themselves are NOT written here. They are derived on load by whatever
+## configures the bin - the recipe for a processor, the order sheet for a bay -
+## all of which run in the ready pass, before this block is applied. A v2 save
+## that named a recipe which has since changed would otherwise restore slots
+## roled for a recipe that no longer exists.
+static func _migrate_2_to_3(data: Dictionary) -> Dictionary:
+	var sections: Dictionary = data.get("sections", {})
+	var world: Dictionary = sections.get("world", {})
+	for entry: Variant in world.get("modules", []):
+		var module: Dictionary = entry as Dictionary
+		if module == null or not module.has("storage"):
+			continue
+		var bins: Dictionary = module["storage"]
+		var input_key: String = ""
+		var output_key: String = ""
+		for key: String in bins:
+			var lowered: String = key.to_lower()
+			if lowered.begins_with("input"):
+				input_key = key
+			elif lowered.begins_with("output"):
+				output_key = key
+		if input_key == "" or output_key == "":
+			continue
+		var merged: Dictionary = bins[input_key]
+		var resources: Dictionary = merged.get("resources", {})
+		for id_str: String in Dictionary(bins[output_key]).get("resources", {}):
+			# An id in both blocks would be a resource that was an ingredient AND a
+			# product of the same recipe, which v3 asserts against. Keep the input
+			# side rather than guessing, and say so.
+			if resources.has(id_str):
+				push_warning("WI-65 migration: %s appears in both bins of a module, keeping the input side"
+					% id_str)
+				continue
+			resources[id_str] = Dictionary(bins[output_key])["resources"][id_str]
+		merged["resources"] = resources
+		bins.erase(input_key)
+		bins.erase(output_key)
+		bins["Storage Bay"] = merged
+	data["version"] = 3
 	return data
 
 # --- section registry (WI-47 M3) ------------------------------------------------
