@@ -127,7 +127,7 @@ Every existing UI file and where it goes. Nothing in this table may be silently 
 
 **Becomes a mode panel (WI-54 … WI-57):**
 
-✅ `buttons/build_menu.tscn` and ✅ `overlay_controller.gd`'s toolbar + legend (WI-54; `buttons/module_resource_cost_ui.*` deleted with them, `module_button_tooltip` demoted to the recent strip's hover card). ✅ `trade/trade_screen.tscn`, ✅ `trade/trader_screen.tscn` and ✅ `windows/contracts_screen.tscn` — all three **deleted**, merged into `trade/trade_panel.gd` + `trade/contracts_tab.gd` (WI-55); ✅ `unlocks/unlock_panel.gd` + `unlock_node_card.gd` reframed (WI-55). ✅ `windows/jobs_screen.gd` — no longer a panel; it is the Crew panel's second view and reports its shape through a signal (WI-56). ✅ `windows/ui_crew_recruitment.tscn` — unchanged, and now reachable from the Crew footer as well as from the crew-quarters module (WI-56). ✅ `windows/economy_screen.gd` — **deleted**, reborn as `comms/finance_tab.gd` (WI-57). **The table is empty.**
+✅ `buttons/build_menu.tscn` and ✅ `overlay_controller.gd`'s toolbar + legend (WI-54; `buttons/module_resource_cost_ui.*` deleted with them, `module_button_tooltip` demoted to the recent strip's hover card). ✅ `trade/trade_screen.tscn`, ✅ `trade/trader_screen.tscn` and ✅ `windows/contracts_screen.tscn` — all three **deleted**, merged into `trade/trade_panel.gd` + `trade/contracts_tab.gd` (WI-55); ✅ `unlocks/unlock_panel.gd` + `unlock_node_card.gd` reframed (WI-55). ✅ `windows/jobs_screen.gd` — no longer a panel; it is the Crew panel's second view and reports its shape through a signal (WI-56). ✅ `windows/ui_crew_recruitment.tscn` — reachable from the Crew footer as well as from the docking bay (WI-56), then **deleted** and rebuilt as `windows/hire_tab.gd`, the Crew panel's `HIRE` tab (see §"What moving HIRE changed"). ✅ `windows/economy_screen.gd` — **deleted**, reborn as `comms/finance_tab.gd` (WI-57). **The table is empty.**
 
 **Untouched by this program:** `menus/main_menu.tscn`, `settings_menu.gd`, `save_load_menu.gd`, `keybind_row.gd`, `pause_menu.gd`, `game_over_screen.tscn` (WI-36's out-of-game flow — it has its own consistent look and no console). `event_card.tscn` is untouched here because the Phase-4 **Dialogue** item is going to rewrite it against Dialogue Manager; it should adopt the new theme for free and otherwise be left alone. `preview_module`, `selection_brackets`, `overlay_flow_layer`, `click_cycler` are world-space, not chrome.
 
@@ -321,7 +321,7 @@ Shipped 2026-08-11. Details, the twelve deviations and the four traps found are 
 | --- | --- |
 | `scripts/utility/pawn_status.gd` (`PawnStatus`) | Pure: **the one place in the game that turns a pawn into a sentence**. A `Facts` record and its `facts_for(pawn)` adapter, the sentence table, `describe` / `tone_of` / `is_idle` / `tone_color` / `tone_row`, the roster's `Filter` / `Sort` / `passes` / `compares_before`, and `summarize` / `summary_text` / `summary_color` behind the problem line. 44 tests. |
 | `scripts/utility/stores_model.gd` (`StoresModel`) | Pure: `Entry`, the three sorts and their total comparator, `LEGEND`, the priority range/bands/`priority_label`/`priority_color`, `lists` (which bins are real storage), `modules_holding_stock`, `subtitle_text`. 24 tests. |
-| `ui/windows/crew_panel.gd` + `crew_roster_row.gd` | The 660px roster: filter pills, sort, the problem-line bar with `SHIFT ROTA` and `HIRE`, and the two-view state machine (`show_roster` / `show_board` / `board_visible`). |
+| `ui/windows/crew_panel.gd` + `crew_roster_row.gd` | The 660px roster: filter pills, sort, the problem-line bar with `SHIFT ROTA` and `HIRE`, and the two-view state machine (`show_roster` / `show_board` / `board_visible`). `HIRE` has since become a tab and the state machine has grown a strip — see §"What moving HIRE changed". |
 | `ui/windows/stores_panel.gd` + `stores_module_card.gd` | The 1080px bin list: the legend line, sort, one card per bin with a priority `Stepper`, a fill gauge and contents chips. |
 | `ui/windows/storage_overlays.gd` (`StorageOverlays`) | WI-12's two dialogs, extracted: the accepted-resource checklist and the per-resource desired/dump/auto-dump dialog, plus the shared `dump_to_pile`. Both the Stores card and the inspector's storage tab call in. |
 | `Chip.chip_style(kind)`, `StorageComponent.resource_consumers()` / `autodump_warning()`, `PawnNeedsComponent.has_critical_need()` | The four additive helpers. |
@@ -331,7 +331,7 @@ Shipped 2026-08-11. Details, the twelve deviations and the four traps found are 
 
 1. **`PawnStatus` is the only place a pawn becomes a sentence.** The roster, the job board, the inspector's Job tab and `RobotVitalsTab.state_text` all read it; a fifth surface adds a caller, never a fifth set of rules. The tone set is closed and **only three states spend amber** (resigning, a critical need, a drone out of power) — invariant 5, enforced by a test.
 2. **Off duty is not idle.** `PawnStatus.is_idle` requires `on_shift`, and the console's CREW readiness dot now asks the same question the panel's problem line answers. Any future "is somebody free?" check goes through it.
-3. **A two-view panel swaps in place through public methods.** Crew's `show_roster()` / `show_board()` are public precisely because WI-55's tab-strip defect was a view driven around its own entry point; a probe or a screenshot driver must use the same door the player does.
+3. **A two-view panel swaps in place through public methods.** Crew's `show_roster()` / `show_board()` are public precisely because WI-55's tab-strip defect was a view driven around its own entry point; a probe or a screenshot driver must use the same door the player does. Crew is now a *tabbed* panel with a drill-down; `show_tab()` / `show_hire()` / `open_tab()` joined them under the same rule.
 4. **Storage priority has one vocabulary now** (`StoresModel.priority_label` / `priority_color`, delegating to `UIPalette.sign_color`) and one range. Nothing may print its own words for a haul priority, and **priority writes go through `update_priority()`** — the WI-45 A5 rule, now asserted by a probe that watches an already-posted job's priority move.
 5. **A construction bin on a finished module is not storage.** `StoresModel.lists` is the membership rule; anything else enumerating bins should use it rather than `Groups.RESOURCE_STORAGE`, whose membership tracks `accepts_exports` rather than "has a StorageComponent".
 6. **A screenshot is part of the verification, still.** Three of this item's defects were invisible to an 81-check probe — six dead bins the model and the panel agreed about, priority captions ellipsed to nonsense in a fixed column, and a colour that said the opposite of the text beside it.
@@ -421,6 +421,42 @@ reports a zero minimum height (so a frame authored that way never draws at all �
 `PanelContainer` when the surface has to size to its content), and the dialogue balloon is a
 `CanvasLayer`, so it draws over *every* ordinary child of `UIMain` — any overlay that shares
 the balloon's screen slot is invisible whenever anybody is talking.
+
+## What moving HIRE changed (2026-08-24)
+
+Hiring was a **component UI on the docking bay**: the recruitment window was a page in that
+module's inspector, so the only way to learn the game *had* hiring was to find the right module
+and click it. WI-56 mitigated it with a footer `HIRE` button that opened the same component UI
+inside an `AcceptDialog` — two addresses for one window, and neither of them where the player
+looks for crew. It is now the Crew panel's **`HIRE` tab**.
+
+- **The gate did not move, only the window.** A hire arrives by shuttle and needs a bay to dock
+  at, so `CrewManager.request_hire()` still takes the bay, `HireTab` still finds it through
+  `Groups.CREW_RECRUITMENT`, and `CrewRecruitmentComponent` is still what marks a constructed
+  docking bay as the station's crew gateway. What the component lost is `has_ui()` / `get_ui()`
+  and its `ui_info_panel_element` — it is pure gameplay now, and `InspectorTabPlan`'s `"Hire"`
+  row went with it.
+- **`ROSTER` and `HIRE` are peers; the job board is not.** Who is aboard and who could be are
+  alternatives and sit on a `TabStrip`. `SHOW ALL JOBS` stays a drill-down *through* the roster
+  tab and now covers the strip as well as the page, because leaving `ROSTER` lit over the job
+  board would claim it was a third alternative.
+- **A blocker every card shares is the page's, not the card's.** This is the one new rule and it
+  is extracted, per the risk below: `scripts/utility/hire_board.gd` (`HireBoard`), 20 tests. Four
+  cards each printing `NO FREE SLEEPING PODS` under a page that also printed it was **only**
+  visible in a screenshot. `HireBoard` never decides *whether* a hire is blocked — every sentence
+  it sorts came from `CrewManager.hire_block_reason()`, which owns that. The single sentence it
+  owns is `NO_BAY_REASON`, because the manager has no objection to hiring into a station with
+  nowhere to dock.
+- **The card's reason sits on the card, not in the button's label.** WI-58's rule is that a
+  blocked action names its blocker *on its own control*; the 132px action column is exactly the
+  width that made WI-58 move the roster's problem line off its button in the first place, so the
+  sentence goes on the row beside the button rather than inside it.
+- **The frame's subtitle serves both tabs** (`n aboard · n bunks` — bunks are what gates a hire),
+  which is why the page prints only what the header cannot: `n ARRIVING BY SHUTTLE`, hidden at
+  zero. The first draft repeated the crew and bunk counts four pixels below the header. Also
+  screenshot-only.
+
+Verified by a 40-check windowed probe plus five 1920×1080 screenshots; 1482 GUT green.
 
 ## Cross-cutting risks
 

@@ -20,12 +20,18 @@ extends VBoxContainer
 ## sentences for one state is how "Idle" and "No job" end up meaning the same
 ## thing on two screens.
 ##
-## ## Two views, not two tabs
+## ## Two tabs and a drill-down
 ##
-## `SHOW ALL JOBS` swaps [JobsScreen] in **in place**, with a back control in the
-## header. A drill-down rather than a peer: the roster is who, the board is what.
-## Same mode, same width, same frame - so it is a swap, and a tab strip would have
-## implied they were alternatives.
+## `ROSTER` and `HIRE` are **peers on a tab strip**: who is aboard, and who could
+## be. Hiring lived on the docking bay as a component UI until it moved here - see
+## [HireTab] for why - and a player who has to find one module to learn that
+## recruitment exists is the same failure the roster was built to fix.
+##
+## `SHOW ALL JOBS` is **not** a third tab. It swaps [JobsScreen] in **in place**
+## over the whole body, tab strip included, with a back control in the header. A
+## drill-down rather than a peer: the roster is who, the board is what. Same mode,
+## same width, same frame - so it is a swap, and putting it on the strip would
+## have implied it was an alternative to the roster rather than a view through it.
 ##
 ## ## Who is in the list
 ##
@@ -45,6 +51,10 @@ extends VBoxContainer
 ## point 1) rather than as the last row of a list that scrolls.
 const FOOTER_ROSTER: String = "Click a name to inspect and jump to them"
 const FOOTER_BOARD: String = "The board holds unclaimed work · pick a crew member to see why they are blocked"
+
+## The two peer views on the strip. The board is deliberately not among them.
+const TAB_ROSTER: StringName = &"roster"
+const TAB_HIRE: StringName = &"hire"
 
 ## Filter pill captions, in panel order.
 const FILTER_LABELS: Dictionary[PawnStatus.Filter, String] = {
@@ -66,7 +76,14 @@ const SORT_LABELS: Dictionary[PawnStatus.Sort, String] = {
 }
 
 var _frame: ConsolePanel
+var _tabs: TabStrip
+## The strip's padded host, hidden while the board drill-down is up - the board
+## is a view *through* the roster tab, not a third entry on the strip.
+var _tabs_host: MarginContainer
 var _roster_view: VBoxContainer
+## The `HIRE` page's padded host, shown and hidden as a peer of `_roster_view`.
+var _hire_host: MarginContainer
+var _hire_page: HireTab
 var _board: JobsScreen
 ## The board's padded host. It is what gets shown and hidden, so the board itself
 ## never has to know it is one of two views.
@@ -74,7 +91,6 @@ var _board_host: MarginContainer
 var _back_button: ActionButton
 var _list: VBoxContainer
 var _summary_label: Label
-var _hire_button: ActionButton
 var _rota_button: ActionButton
 var _filter_buttons: Dictionary[PawnStatus.Filter, Button] = {}
 var _sort_picker: OptionButton
@@ -103,9 +119,15 @@ static func create() -> ConsolePanel:
 func _ready() -> void:
 	add_theme_constant_override("separation", 0)
 	_build_back_control()
+	_build_tabs()
 	_build_roster_view()
+	_build_hire_view()
 	_build_board_view()
 	_connect_sources()
+	_tabs.set_tabs([
+		{"id": TAB_ROSTER, "text": "Roster"},
+		{"id": TAB_HIRE, "text": "Hire"},
+	])
 	show_roster()
 
 # --- construction ----------------------------------------------------------------
@@ -121,6 +143,20 @@ func _build_back_control() -> void:
 	_back_button.pressed.connect(show_roster)
 	if _frame != null:
 		_frame.add_header_control(_back_button)
+
+## The peer strip, above both pages. Padded on three sides only: the strip's own
+## underline is what separates it from the page, so a bottom margin would leave
+## the rule floating.
+func _build_tabs() -> void:
+	_tabs_host = MarginContainer.new()
+	_tabs_host.name = "TabsPad"
+	for side: String in ["left", "top", "right"]:
+		_tabs_host.add_theme_constant_override("margin_" + side, UIMetrics.CONTENT_PAD)
+	add_child(_tabs_host)
+
+	_tabs = TabStrip.create()
+	_tabs.tab_selected.connect(show_tab)
+	_tabs_host.add_child(_tabs)
 
 func _build_roster_view() -> void:
 	_roster_view = VBoxContainer.new()
@@ -224,10 +260,12 @@ func _build_summary_bar() -> PanelContainer:
 	box.set_content_margin_all(float(UIMetrics.CONTENT_PAD))
 	bar.add_theme_stylebox_override("panel", box)
 
-	# The problem line above the actions rather than beside them (WI-58). It shared
+	# The problem line above the action rather than beside it (WI-58). It shared
 	# the row until the blocked HIRE button started carrying its reason as a label
 	# - "NO FREE SLEEPING PODS" is three times the width of "HIRE", and it ellipsed
-	# the summary to `2 BUNKS…` on the panel whose whole job is that count.
+	# the summary to `2 BUNKS…` on the panel whose whole job is that count. HIRE
+	# itself has since moved to its own tab; the stacking stays, because SHIFT ROTA
+	# carries a reason of its own and the summary is still live state.
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
 	bar.add_child(column)
@@ -246,11 +284,20 @@ func _build_summary_bar() -> PanelContainer:
 	_rota_button = ActionButton.create(ROTA_LABEL, ActionButton.Weight.SECONDARY)
 	_rota_button.pressed.connect(_on_rota_pressed)
 	row.add_child(_rota_button)
-
-	_hire_button = ActionButton.create(HIRE_LABEL, ActionButton.Weight.PRIMARY)
-	_hire_button.pressed.connect(_on_hire_pressed)
-	row.add_child(_hire_button)
 	return bar
+
+func _build_hire_view() -> void:
+	_hire_host = MarginContainer.new()
+	_hire_host.name = "HirePad"
+	_hire_host.visible = false
+	_hire_host.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	for side: String in ["left", "top", "right", "bottom"]:
+		_hire_host.add_theme_constant_override("margin_" + side, UIMetrics.CONTENT_PAD)
+	add_child(_hire_host)
+
+	_hire_page = HireTab.new()
+	_hire_page.name = "Hire"
+	_hire_host.add_child(_hire_page)
 
 func _build_board_view() -> void:
 	_board_host = MarginContainer.new()
@@ -279,7 +326,6 @@ func _connect_sources() -> void:
 	SignalBus.crew_resigned.connect(_on_roster_changed.unbind(1))
 	SignalBus.crew_resigning.connect(_on_roster_changed.unbind(2))
 	SignalBus.crew_resignation_cancelled.connect(_on_roster_changed.unbind(1))
-	SignalBus.hire_candidates_changed.connect(_on_hire_state_changed)
 	if Global.time_manager != null:
 		Global.time_manager.slow_tick.connect(_on_slow_tick.unbind(1))
 
@@ -290,22 +336,47 @@ func on_opened() -> void:
 
 # --- views -------------------------------------------------------------------------
 
-## The two views are public because the swap **is** part of this panel's contract
-## - `SHOW ALL JOBS` and the back control are two ways into one state machine, and
-## a probe or a screenshot driver has to be able to reach the second view through
-## the same door the player uses. WI-55's tab-strip defect was exactly this shape:
-## a view driven around its own entry point paints the wrong header.
-func show_roster() -> void:
-	_roster_view.visible = true
+## The views are public because the swap **is** part of this panel's contract -
+## the strip, `SHOW ALL JOBS` and the back control are three ways into one state
+## machine, and a probe or a screenshot driver has to be able to reach every view
+## through the same door the player uses. WI-55's tab-strip defect was exactly
+## this shape: a view driven around its own entry point paints the wrong header.
+##
+## Routed through the strip rather than around it for the same reason
+## [method CommsPanel.show_tab] is: a caller that set the page directly would
+## leave the strip painted on the tab it was on, and the panel would then show one
+## thing under another thing's name.
+func show_tab(id: StringName) -> void:
+	if _roster_view == null:
+		return
+	if _tabs != null and _tabs.selected() != id:
+		_tabs.select(id) # emits tab_selected, which lands back here
+		return
 	_board_host.visible = false
 	_back_button.visible = false
+	_tabs_host.visible = true
+	_roster_view.visible = id == TAB_ROSTER
+	_hire_host.visible = id == TAB_HIRE
 	if _frame != null and is_instance_valid(_frame):
 		_frame.title = "Crew"
-		_frame.footer_text = FOOTER_ROSTER
+		_frame.footer_text = HireTab.FOOTER if id == TAB_HIRE else FOOTER_ROSTER
 	refresh()
 
+func show_roster() -> void:
+	show_tab(TAB_ROSTER)
+
+func show_hire() -> void:
+	show_tab(TAB_HIRE)
+
+## The drill-down. It covers the strip as well as the page, because it is not one
+## of the strip's alternatives - leaving `ROSTER` lit over the job board would say
+## it was.
 func show_board() -> void:
+	if _tabs != null:
+		_tabs.select(TAB_ROSTER) # a no-op from the roster, which is the only way in
 	_roster_view.visible = false
+	_hire_host.visible = false
+	_tabs_host.visible = false
 	_board_host.visible = true
 	_back_button.visible = true
 	if _frame != null and is_instance_valid(_frame):
@@ -316,6 +387,11 @@ func show_board() -> void:
 ## True while the job board is the view on screen.
 func board_visible() -> bool:
 	return _board_host != null and _board_host.visible
+
+## The tab currently lit, or `&""` before the strip is built. `&"roster"` while
+## the board drill-down is up, because the board is a view through that tab.
+func open_tab() -> StringName:
+	return _tabs.selected() if _tabs != null else &""
 
 ## The roster rows currently listed, in display order.
 func roster_rows() -> Array[CrewRosterRow]:
@@ -337,7 +413,7 @@ func _on_board_subtitle(text: String) -> void:
 # --- refresh -----------------------------------------------------------------------
 
 func _on_slow_tick() -> void:
-	if not is_visible_in_tree() or not _roster_view.visible:
+	if not is_visible_in_tree() or _board_host.visible:
 		return
 	refresh()
 
@@ -348,10 +424,6 @@ func _on_roster_changed() -> void:
 func _refresh_deferred() -> void:
 	if is_visible_in_tree():
 		refresh()
-
-func _on_hire_state_changed() -> void:
-	if is_visible_in_tree():
-		_refresh_actions()
 
 ## Rebuilds the whole list.
 ##
@@ -367,6 +439,14 @@ func refresh() -> void:
 	var crew: Array[PawnBase] = manager.get_crew() if manager != null else [] as Array[PawnBase]
 	var bunks: int = manager.sleep_capacity() if manager != null else 0
 	_apply_header(crew.size(), bunks)
+
+	# The subtitle above serves both tabs - bunks are what gates a hire - but the
+	# roster's own rebuild is skipped while it is off screen, or reading the Hire
+	# tab would re-lay a hidden list of rows on every slow tick.
+	if _hire_page != null and _hire_host.visible:
+		_hire_page.refresh()
+	if not _roster_view.visible:
+		return
 
 	var facts: Array[PawnStatus.Facts] = []
 	var happiness: Array[float] = []
@@ -445,30 +525,22 @@ func _empty_line(no_crew: bool) -> Label:
 		else "NO CREW MATCH THIS FILTER")
 	return label
 
-## `HIRE` is disabled with its reason **on the button** rather than hidden or
-## merely tooltipped: [method CrewManager.hire_block_reason] already produces the
-## sentence, and making the player guess why a button is missing is the failure
-## mode this replaces.
+## A disabled action is disabled with its reason **on the button** rather than
+## hidden or merely tooltipped: making the player guess why a button is missing is
+## the failure mode this replaces.
 ##
-## WI-58 moved the sentence out of `tooltip_text` and into the label. Crew was the
-## outlier - [CommsPanel] writes its `InspectionBlock` reason into `CONTACT ARC`'s
-## own caption - and it is the panel whose blocked state a new player meets first,
-## on a station with no docking bay. `SHIFT ROTA` was disabled with no reason at
-## all.
-const HIRE_LABEL: String = "Hire"
+## WI-58 moved the sentence out of `tooltip_text` and into the label - `SHIFT
+## ROTA` was disabled with no reason at all. `HIRE` stood beside it until hiring
+## became a tab; [HireTab] keeps the same discipline, putting
+## [method CrewManager.hire_block_reason] on each card it blocks.
 const ROTA_LABEL: String = "Shift rota"
 const NO_CREW_REASON: String = "No crew to schedule"
 
 func _refresh_actions() -> void:
 	var manager: CrewManager = Global.crew_manager
 	if manager == null:
-		_apply_action(_hire_button, HIRE_LABEL, "Crew roster unavailable")
 		_apply_action(_rota_button, ROTA_LABEL, NO_CREW_REASON)
 		return
-	var reason: String = manager.hire_block_reason()
-	if _recruitment_bay() == null:
-		reason = "No docking bay with crew quarters"
-	_apply_action(_hire_button, HIRE_LABEL, reason, "Recruit a new crew member")
 	_apply_action(_rota_button, ROTA_LABEL,
 		NO_CREW_REASON if manager.crew_count() == 0 else "",
 		"Every crew member's duty hours on one grid")
@@ -544,28 +616,6 @@ func _inspector() -> InspectorPanel:
 	return Global.ui_main.inspector
 
 # --- footer actions --------------------------------------------------------------------
-
-## Hiring used to be reachable only by finding and clicking the crew-quarters
-## module, because the recruitment window is a *component UI* on it. As a Crew
-## panel action it becomes discoverable; the component keeps working where it is.
-func _on_hire_pressed() -> void:
-	var component: CrewRecruitmentComponent = _recruitment_bay()
-	if component == null:
-		return
-	var ui: ModuleComponentUI = component.get_ui()
-	if ui == null:
-		return
-	_open_dialog("Recruitment", ui)
-
-## The station's crew gateway. The first constructed bay carrying the component,
-## which is the same rule arriving shuttles and departing crew already follow.
-func _recruitment_bay() -> CrewRecruitmentComponent:
-	for node: Node in get_tree().get_nodes_in_group(Groups.CREW_RECRUITMENT):
-		var component := node as CrewRecruitmentComponent
-		if component != null and component.owner_module != null \
-				and component.owner_module.is_complete():
-			return component
-	return null
 
 ## `SHIFT ROTA` is a station-wide view of what the inspector's Schedule tab shows
 ## per pawn, and it is deliberately **read-only** in v1: a station-wide schedule

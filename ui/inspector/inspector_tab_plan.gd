@@ -84,7 +84,10 @@ const MODULE_TABS: Dictionary[String, Dictionary] = {
 	"ConveyorComponent": {"label": "Belts", "band": BAND_STORAGE},
 	"LogisticsBayComponent": {"label": "Drones", "band": BAND_STORAGE},
 	"WorkspaceComponent": {"label": "Crew", "band": BAND_CREW},
-	"CrewRecruitmentComponent": {"label": "Hire", "band": BAND_CREW},
+	# CrewRecruitmentComponent used to sit here with a "Hire" tab. Hiring is the
+	# Crew panel's own tab now ([HireTab]) and the component carries no UI at all,
+	# so it contributes nothing to walk - an entry for it would be a table row
+	# describing a tab that can no longer be produced.
 	"ConstructionComponent": {"label": "Build", "band": BAND_STRUCTURE},
 }
 

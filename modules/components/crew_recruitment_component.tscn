@@ -1,8 +1,6 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://modules/components/crew_recruitment_component.gd" id="1_recruit"]
-[ext_resource type="PackedScene" path="res://ui/windows/ui_crew_recruitment.tscn" id="2_recruit"]
 
 [node name="CrewRecruitmentComponent" type="Node2D"]
 script = ExtResource("1_recruit")
-ui_info_panel_element = ExtResource("2_recruit")
