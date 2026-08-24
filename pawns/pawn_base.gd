@@ -401,9 +401,12 @@ func _notification(what: int) -> void:
 		# teardown (managers already gone) and when there's nothing to dump.
 		if not is_instance_valid(inventory_component) or inventory_component.is_empty():
 			return
-		if not is_instance_valid(Global.world_manager) or not is_instance_valid(Global.world_manager.pawn_layer):
+		if not is_instance_valid(Global.world_manager):
 			return
-		var pile := ResourcePile.spawn(Global.world_manager.pawn_layer, global_position, current_module)
+		var canvas: CanvasLayer = Global.world_manager.get_canvas_for_module(current_module)
+		if not is_instance_valid(canvas):
+			return
+		var pile := ResourcePile.spawn(canvas, global_position, current_module)
 		inventory_component.dump_all_to_pile(pile)
 
 func move_to(new_pos: Vector2, use_exact_position: bool = false) -> void:

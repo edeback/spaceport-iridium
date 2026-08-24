@@ -250,7 +250,7 @@ func _arrive(hire: Dictionary) -> void:
 		_deliver_crew(bay, candidate)
 		return
 	var shuttle: ArrivalShuttle = shuttle_scene.instantiate() as ArrivalShuttle
-	Global.world_manager.pawn_layer.add_child(shuttle)
+	Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE).add_child(shuttle)
 	var dock: Vector2 = DockingBay.dock_position_for(bay)
 	shuttle.setup(dock, dock + Vector2(DockingBay.approach_sign_for(bay) * shuttle_approach_distance, 0.0))
 	shuttle.docked.connect(_on_shuttle_docked.bind(shuttle, bay, candidate), CONNECT_ONE_SHOT)
@@ -308,7 +308,7 @@ func spawn_crew(at_module: ModuleBase, candidate: HireCandidate = null) -> PawnB
 			pawn.schedule = ScheduleData.shift_b()
 	# Add to tree BEFORE setting current_module: the setter reparents, which
 	# needs a parent (this was the old PawnStorageComponent boot error).
-	Global.world_manager.pawn_layer.add_child(pawn)
+	Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE).add_child(pawn)
 	pawn.current_module = at_module
 	pawn.global_position = Global.cell_to_world(at_module.module_cell, true)
 	# Identity (WI-22). Set after add_child so the tint setter sees the resolved

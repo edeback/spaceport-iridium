@@ -7608,7 +7608,7 @@ script = ExtResource("1_timemgr")
 [node name="AlertManager" type="Node" parent="Managers" unique_id=593433452]
 script = ExtResource("1_alertmgr")
 
-[node name="WorldManager" type="Node" parent="Managers" unique_id=1880931306 node_paths=PackedStringArray("module_layers", "pawn_layer")]
+[node name="WorldManager" type="Node" parent="Managers" unique_id=1880931306 node_paths=PackedStringArray("module_layers")]
 script = ExtResource("6_i5kyc")
 start_module = ExtResource("3_facbu")
 docking_bay = ExtResource("5_0n3wm")
@@ -7618,7 +7618,6 @@ module_layers = {
 2: NodePath("../../ForegroundLayers/VerticalTransportLayer"),
 3: NodePath("../../ForegroundLayers/ForegroundSpace")
 }
-pawn_layer = NodePath("../../ForegroundLayers/ForegroundSpace")
 replacement_module = ExtResource("4_getpj")
 hallway_module = ExtResource("5_b1qrp")
 module_airlock = ExtResource("8_e71vb")
@@ -7829,9 +7828,6 @@ layer = 2
 follow_viewport_enabled = true
 
 [node name="CanvasModulate" type="CanvasModulate" parent="ForegroundLayers/VerticalTransportLayer" unique_id=1229565819]
-
-[node name="PawnLayerLow" type="CanvasLayer" parent="ForegroundLayers" unique_id=1962442915]
-follow_viewport_enabled = true
 
 [node name="ModuleLayer" type="CanvasLayer" parent="ForegroundLayers" unique_id=2010589153]
 layer = 0

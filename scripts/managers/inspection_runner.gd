@@ -64,7 +64,7 @@ func begin() -> void:
 		_on_ship_docked()
 		return
 	_ship = ship_scene.instantiate() as ArrivalShuttle
-	Global.world_manager.pawn_layer.add_child(_ship)
+	Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE).add_child(_ship)
 	var dock: Vector2 = DockingBay.dock_position_for(_bay)
 	_ship.setup(dock, dock + Vector2(DockingBay.approach_sign_for(_bay) * SHIP_APPROACH_DISTANCE, 0.0))
 	_ship.docked.connect(_on_ship_docked, CONNECT_ONE_SHOT)
@@ -82,7 +82,7 @@ func _on_ship_docked() -> void:
 		_fail("the docking bay was lost")
 		return
 	_inspector = inspector_scene.instantiate() as InspectorPawn
-	Global.world_manager.pawn_layer.add_child(_inspector)
+	Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE).add_child(_inspector)
 	_inspector.current_module = _bay
 	_inspector.global_position = Global.cell_to_world(_bay.module_cell, true)
 	AlertManager.resolve_alert(&"inspection_arriving")

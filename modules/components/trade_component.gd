@@ -80,7 +80,9 @@ func clear_sell_order(resource: ResourceData) -> void:
 	if staged > 0:
 		var stacks: Array[ResourceStack] = storage.withdraw_stacks(resource, staged)
 		if not stacks.is_empty():
-			var pile := ResourcePile.spawn(Global.world_manager.pawn_layer, DockingBay.dock_position_for(owner_module), owner_module)
+			var pile := ResourcePile.spawn(
+					Global.world_manager.get_canvas_for_module(owner_module),
+					DockingBay.dock_position_for(owner_module), owner_module)
 			pile.add_stacks(resource, stacks)
 	if not contract_demand.has(resource):
 		storage.remove_stored_resource(resource)
@@ -141,7 +143,9 @@ func release_contract_demand(resource: ResourceData, amount: int) -> void:
 	if surplus > 0:
 		var stacks: Array[ResourceStack] = storage.withdraw_stacks(resource, surplus)
 		if not stacks.is_empty():
-			var pile := ResourcePile.spawn(Global.world_manager.pawn_layer, DockingBay.dock_position_for(owner_module), owner_module)
+			var pile := ResourcePile.spawn(
+					Global.world_manager.get_canvas_for_module(owner_module),
+					DockingBay.dock_position_for(owner_module), owner_module)
 			pile.add_stacks(resource, stacks)
 
 ## The bin's per-resource `desired` drives the existing import-job posting:

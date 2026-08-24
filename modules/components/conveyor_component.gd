@@ -320,14 +320,20 @@ func _dump_buffer_to_pile(buffer: ResourceStackContainer, res: ResourceData) -> 
 func _notification(what: int) -> void:
 	if what != NOTIFICATION_PREDELETE:
 		return
-	if not is_instance_valid(Global.world_manager) or not is_instance_valid(Global.world_manager.pawn_layer):
+	if not is_instance_valid(Global.world_manager):
+		return
+	# The conveyor's module goes away with it, so the spill is free-floating
+	# debris rather than that module's overflow: it belongs in space.
+	var space: CanvasLayer = Global.world_manager.get_canvas_for_layer(
+			WorldManager.StructureLayer.SPACE)
+	if not is_instance_valid(space):
 		return
 	var pile: ResourcePile = null
 	for lane: ConveyorLane in lanes:
 		if lane.buffer.is_empty() or lane.resource == null:
 			continue
 		if pile == null:
-			pile = ResourcePile.spawn(Global.world_manager.pawn_layer, global_position, null)
+			pile = ResourcePile.spawn(space, global_position, null)
 		pile.add_stacks(lane.resource, lane.buffer.withdraw_stacks(lane.buffer.stored))
 
 # --- persistence ------------------------------------------------------------

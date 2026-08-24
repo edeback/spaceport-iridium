@@ -109,7 +109,7 @@ func _begin_visit() -> void:
 		return
 	_inbound = true
 	_shuttle = trader_shuttle_scene.instantiate() as ArrivalShuttle
-	Global.world_manager.pawn_layer.add_child(_shuttle)
+	Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE).add_child(_shuttle)
 	var dock: Vector2 = DockingBay.dock_position_for(bay)
 	_shuttle.setup(dock, dock + Vector2(DockingBay.approach_sign_for(bay) * 1500.0, 0.0))
 	_shuttle.docked.connect(_dock.bind(true), CONNECT_ONE_SHOT)
@@ -278,7 +278,7 @@ func dispatch_contract_courier() -> bool:
 		_courier_collect(bay, null)
 		return true
 	var shuttle := trader_shuttle_scene.instantiate() as ArrivalShuttle
-	Global.world_manager.pawn_layer.add_child(shuttle)
+	Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE).add_child(shuttle)
 	var dock: Vector2 = DockingBay.dock_position_for(bay)
 	shuttle.setup(dock, dock + Vector2(DockingBay.approach_sign_for(bay) * 1500.0, 0.0))
 	shuttle.docked.connect(_courier_collect.bind(bay, shuttle), CONNECT_ONE_SHOT)
@@ -369,7 +369,7 @@ func load_save_data(data: Dictionary) -> void:
 	var bay: ModuleBase = SaveManager.resolve_module_ref(_bay_ref)
 	if bay != null and trader_shuttle_scene != null:
 		_shuttle = trader_shuttle_scene.instantiate() as ArrivalShuttle
-		Global.world_manager.pawn_layer.add_child(_shuttle)
+		Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE).add_child(_shuttle)
 		var dock: Vector2 = DockingBay.dock_position_for(bay)
 		_shuttle.setup(dock, dock)
 	_dock(false)

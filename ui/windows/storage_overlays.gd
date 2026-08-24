@@ -165,7 +165,8 @@ static func dump_to_pile(component: StorageComponent, resource: ResourceData, am
 		# Components are always on modules; this is the completeness branch the
 		# original had, kept so the stock cannot silently evaporate either way.
 		var pile: ResourcePile = ResourcePile.spawn(
-			Global.world_manager.pawn_layer, component.global_position)
+			Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE),
+			component.global_position)
 		pile.add_stacks(resource, withdrawn)
 
 static func _storable_resources() -> Array[ResourceData]:

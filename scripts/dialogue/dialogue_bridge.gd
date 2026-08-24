@@ -187,7 +187,8 @@ func salvage(resource_id: String, min_amount: int, max_amount: int, piles: int =
 		if share <= 0:
 			continue
 		var pile: ResourcePile = ResourcePile.spawn(
-			Global.world_manager.pawn_layer, _roll_space_position(bounds))
+			Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE),
+			_roll_space_position(bounds))
 		pile.add_amount(resource, share)
 
 ## `$> station.grant_cargo("steel", 20, 40)` - a docked ship offloads goods.
@@ -217,7 +218,7 @@ func grant_cargo(resource_id: String, min_amount: int, max_amount: int) -> int:
 				remainder -= taken
 	if remainder > 0:
 		var pile: ResourcePile = ResourcePile.spawn(
-			Global.world_manager.pawn_layer, drop, bay)
+			Global.world_manager.get_canvas_for_module(bay), drop, bay)
 		pile.add_amount(resource, remainder)
 	return amount
 

@@ -189,7 +189,8 @@ func spawn_resource(id: StringName, amount: int, cell: Vector2i) -> String:
 		var storage: StorageComponent = module.get_component_by_type(StorageComponent) as StorageComponent
 		if storage != null and storage.import_priority(resource) != StorageComponent.REFUSED 				and storage.deposit(resource, amount, true):
 			return _report("added %d %s to storage at %s" % [amount, resource.name, cell])
-	var pile: ResourcePile = ResourcePile.spawn(world.pawn_layer, Global.cell_to_world(cell, true), module)
+	var pile: ResourcePile = ResourcePile.spawn(world.get_canvas_for_module(module),
+			Global.cell_to_world(cell, true), module)
 	pile.add_amount(resource, amount)
 	return _report("spawned a pile of %d %s at %s" % [amount, resource.name, cell])
 

@@ -947,7 +947,7 @@ func _load_piles(data: Array) -> void:
 		var pos_arr: Array = entry.get("position", [0, 0])
 		var pos := Vector2(float(pos_arr[0]), float(pos_arr[1]))
 		var module: ModuleBase = resolve_module_ref(entry.get("module", {}))
-		var parent_node: Node = module.get_parent() if module != null else Global.world_manager.pawn_layer
+		var parent_node: Node = Global.world_manager.get_canvas_for_module(module)
 		var pile: ResourcePile = ResourcePile.spawn(parent_node, pos, module)
 		# Restore the saved id (spawn() assigned a fresh one) so a collect job
 		# refs resolve to this exact pile.
@@ -1007,7 +1007,7 @@ func _load_pawns(data: Array) -> void:
 		pawn.personal_credits = int(entry.get("personal_credits", 0))
 		# Add to tree first: current_module's setter reparents, which needs a
 		# parent to exist (CrewManager.spawn_crew follows the same order).
-		Global.world_manager.pawn_layer.add_child(pawn)
+		Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE).add_child(pawn)
 		var pos_arr: Array = entry.get("position", [0, 0])
 		pawn.global_position = Vector2(float(pos_arr[0]), float(pos_arr[1]))
 		# Missing module (deleted mid-save / in-transit pawn) -> stays in

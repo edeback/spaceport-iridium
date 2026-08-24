@@ -157,7 +157,7 @@ func _spawn_visitor() -> void:
 		_deliver_visitor(bay)
 		return
 	var shuttle: ArrivalShuttle = shuttle_scene.instantiate() as ArrivalShuttle
-	Global.world_manager.pawn_layer.add_child(shuttle)
+	Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE).add_child(shuttle)
 	var dock: Vector2 = DockingBay.dock_position_for(bay)
 	shuttle.setup(dock, dock + Vector2(DockingBay.approach_sign_for(bay) * shuttle_approach_distance, 0.0))
 	shuttle.docked.connect(_on_shuttle_docked.bind(shuttle, bay), CONNECT_ONE_SHOT)
@@ -187,7 +187,7 @@ func _deliver_visitor(bay: ModuleBase, wallet: int = -1, stay_hours: float = -1.
 	if visitor == null:
 		push_warning("Visitor scene for '%s' is not a VisitorPawn" % (kind.id if kind != null else &"<fallback>"))
 		return null
-	Global.world_manager.pawn_layer.add_child(visitor)
+	Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE).add_child(visitor)
 	visitor.current_module = bay
 	visitor.global_position = Global.cell_to_world(bay.module_cell, true)
 	visitor.pawn_name = NameGenerator.random_name()

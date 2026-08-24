@@ -151,7 +151,7 @@ func _spawn_ship(variant: ShipData, angle: float, spin: float) -> PirateShip:
 				(variant.id if variant != null else &"<fallback>"))
 		return null
 	ship.ship_data = variant
-	Global.world_manager.pawn_layer.add_child(ship)
+	Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE).add_child(ship)
 	ship.setup(self, _center, _orbit_radius, _orbit_radius + approach_margin, angle, spin)
 	return ship
 
@@ -223,7 +223,8 @@ func _drop_salvage(at: Vector2, variant: ShipData = null) -> void:
 		dir = dir.normalized()
 	else:
 		dir = Vector2.RIGHT
-	var pile: ResourcePile = ResourcePile.spawn(Global.world_manager.pawn_layer, _center + dir * dist)
+	var pile: ResourcePile = ResourcePile.spawn(Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE),
+			_center + dir * dist)
 	pile.add_amount(resource, amount)
 
 func _check_end() -> void:

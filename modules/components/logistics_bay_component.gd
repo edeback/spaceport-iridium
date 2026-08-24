@@ -91,7 +91,7 @@ func _spawn_robot() -> HaulerRobotPawn:
 	# Add to the tree before assigning current_module: its setter reparents to the
 	# module canvas, which needs a parent to exist (same order as SaveManager's
 	# pawn restore).
-	Global.world_manager.pawn_layer.add_child(robot)
+	Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE).add_child(robot)
 	robot.global_position = Global.cell_to_world(owner_module.module_cell, true)
 	robot.current_module = owner_module
 	robots.append(robot)

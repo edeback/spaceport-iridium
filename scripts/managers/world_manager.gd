@@ -14,8 +14,6 @@ class LayerData:
 # Only used for setup. Use layer_data at runtime
 @export var module_layers: Dictionary[StructureLayer, CanvasLayer]
 
-@export var pawn_layer: CanvasLayer
-
 @export var replacement_module: ModuleData
 
 @export var hallway_module: ModuleData
@@ -74,6 +72,21 @@ func _get_next_id() -> int:
 
 func get_canvas_for_layer(layer: StructureLayer) -> CanvasLayer:
 	return layer_data[layer].canvas
+
+## The canvas a loose world object parents into, given whatever module owns it.
+## A pile with a parent_module is "sitting inside" that module (see ResourcePile),
+## so it shares the module's canvas and dims and sorts with it - which is what
+## ModuleBase.get_or_create_overflow_pile does by parenting to the module itself,
+## and what SaveManager._load_piles restores. Nothing owns a free-floating
+## object, so it lives on the SPACE canvas.
+##
+## A pawn spawning into a module does NOT use this - it stages on the SPACE
+## canvas, because PawnBase.current_layer starts at SPACE and the field has to
+## match the tree for update_layer_and_sprite() to do the one reparent.
+func get_canvas_for_module(module: ModuleBase) -> CanvasLayer:
+	if not is_instance_valid(module) or module.module_data == null:
+		return get_canvas_for_layer(StructureLayer.SPACE)
+	return get_canvas_for_layer(module.module_data.interaction_layer)
 
 func get_module_by_cell(layer: StructureLayer, cell: Vector2i) -> ModuleBase:
 	return layer_data[layer].cell_to_module.get(cell)
@@ -135,7 +148,7 @@ func add_module(module_data: ModuleData, cell: Vector2i, flipped: bool = false, 
 	id_to_module[module_id] = new_module
 	var module_array: Array = modules_by_type.get_or_add(module_data, [])
 	module_array.append(new_module)
-	module_layers[module_data.interaction_layer].add_child(new_module)
+	layer_data[module_data.interaction_layer].canvas.add_child(new_module)
 	# defer_ready: save-loading places every module first, then runs a second
 	# ready pass per saved build state (see load_save_data) - mirroring how
 	# modules were built one at a time, so door hookups stay order-safe.
@@ -291,18 +304,18 @@ func get_module_by_id(id: int) -> ModuleBase:
 	
 func show_module_layer(layer: StructureLayer) -> void:
 	if layer == StructureLayer.MODULE:
-		var module_mod: CanvasModulate = module_layers[StructureLayer.MODULE].get_node("CanvasModulate") as CanvasModulate
+		var module_mod: CanvasModulate = layer_data[StructureLayer.MODULE].canvas.get_node("CanvasModulate") as CanvasModulate
 		module_mod.color.a = 1
-		var corridor_mod: CanvasModulate = module_layers[StructureLayer.CORRIDOR].get_node("CanvasModulate") as CanvasModulate
+		var corridor_mod: CanvasModulate = layer_data[StructureLayer.CORRIDOR].canvas.get_node("CanvasModulate") as CanvasModulate
 		corridor_mod.color.a = 0.3
-		var turbolift_mod: CanvasModulate = module_layers[StructureLayer.TURBOLIFT].get_node("CanvasModulate") as CanvasModulate
+		var turbolift_mod: CanvasModulate = layer_data[StructureLayer.TURBOLIFT].canvas.get_node("CanvasModulate") as CanvasModulate
 		turbolift_mod.color.a = 0.3
 	elif layer == StructureLayer.CORRIDOR:
-		var module_mod: CanvasModulate = module_layers[StructureLayer.MODULE].get_node("CanvasModulate") as CanvasModulate
+		var module_mod: CanvasModulate = layer_data[StructureLayer.MODULE].canvas.get_node("CanvasModulate") as CanvasModulate
 		module_mod.color.a = 1
-		var corridor_mod: CanvasModulate = module_layers[StructureLayer.CORRIDOR].get_node("CanvasModulate") as CanvasModulate
+		var corridor_mod: CanvasModulate = layer_data[StructureLayer.CORRIDOR].canvas.get_node("CanvasModulate") as CanvasModulate
 		corridor_mod.color.a = 1
-		var turbolift_mod: CanvasModulate = module_layers[StructureLayer.TURBOLIFT].get_node("CanvasModulate") as CanvasModulate
+		var turbolift_mod: CanvasModulate = layer_data[StructureLayer.TURBOLIFT].canvas.get_node("CanvasModulate") as CanvasModulate
 		turbolift_mod.color.a = 1
 	#for module_layer in module_layers:
 		#if module_layer == layer:

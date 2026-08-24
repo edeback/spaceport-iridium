@@ -458,13 +458,17 @@ func _process(delta: float) -> void:
 # --- flow layer + legend ------------------------------------------------------
 
 func _build_flow_layer() -> void:
-	if Global.world_manager == null or Global.world_manager.pawn_layer == null:
+	if Global.world_manager == null:
+		return
+	# The world-following SPACE canvas (above the module layer), so the layer
+	# draws in world coordinates on top of the station, not on the HUD.
+	var space: CanvasLayer = Global.world_manager.get_canvas_for_layer(
+			WorldManager.StructureLayer.SPACE)
+	if space == null:
 		return
 	_flow_layer = OverlayFlowLayer.new()
 	_flow_layer.visible = false
-	# Parented into the world-following SPACE canvas (above the module layer) so
-	# it draws in world coordinates on top of the station, not on the HUD.
-	Global.world_manager.pawn_layer.add_child(_flow_layer)
+	space.add_child(_flow_layer)
 
 ## Rebuilds the legend for whatever is painted now. The whole section disappears
 ## with the overlay rather than showing an empty ramp: with nothing painted there
