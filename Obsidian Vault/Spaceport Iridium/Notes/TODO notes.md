@@ -2,10 +2,6 @@ Selected box probably connect right to bottom console, gives a few more pixels o
 
 StringNames are cropping back up, should move them to a consts file again.
 
-Hire moves to Crew tab from docking bay
-
-"desired" should have "strict" mode - absolutely won't accept more than that amount, as opposed to simply not requesting more.
-
 R&D -> "Tech" (early game isn't research, it's bought)
 
 Modules should have a list of present pawns so you can go module.get_present() (or something like that) to figure out who is there without looking through every pawn
@@ -14,8 +10,6 @@ Rename modules! And be able to reset them to their default, too. Maybe give the 
 
 When pawns wander, pick a random inner node (if it has one) instead of just flipping between the boundary of two modules
 - They now pick a "stand" target so maybe that's good enough?
-
-Remove Pawn Layer, pawns get reparented constantly and don't need their own layer
 
 For resources:
 Show relationships between resources in the UI

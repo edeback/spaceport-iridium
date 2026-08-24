@@ -165,6 +165,17 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 - Solution: Merge the modules and base import/export on the "role" of input or output
 - Also make "desired" strict to reduce reliance on max_stored since it's all combined
 
+**Star and Planet Variations:** (Written up as [[WI-66_Star_And_Planet_Variations]])
+- Goal: Give each station a more unique background to look at, so each run doesn't look exactly the same
+- Used to have static sprites for star and planet, but those have been swapped to use Deep-Fold's Pixel Planet generator
+	- Not technically an add-on, so implementation has been copied to assets/external/pixel_planets
+- Right now the star and planet in main are just unmodified scenes from pixel_planets, though the code offers a ton of customization options
+- When a new game starts, we should generate a custom (random or semi-random) star and planet
+	- Saves should reload with the same star and planet
+	- Colors should be realistic (no green or purple stars, water on planets is some shade of blue, etc)
+	- The planet currently uses the Rivers template, but LandMasses, IceWorld, and DryTerran should also be possible options (again with varied parameters, not just the defaults)
+- There is no gameplay impact - visuals only - though different solar systems will have different properties in the future, and this is a prerequisite
+
 **Audio:**
 - Goal: Add sounds for feedback and immersion
 - Create a system to easily play sounds at positions
@@ -176,11 +187,7 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 	- When the trader arrives
 	- Combat sounds (firing and when a target is hit)
 
-**Star and Planet Variations:**
-- Use Deep-Fold's Pixel Planet generator to create planets and stars instead of creating sprite sheets
-	- Copied to assets/external/pixel_planets
-	- Original at: https://github.com/Deep-Fold/PixelPlanets
-- 
+
 
 **Stars, Planets and Other Stations:**
 - Right now we only ever see one system, but in the future we will be travelling to different systems with different stars, planets, and optional other stations in the distance.
