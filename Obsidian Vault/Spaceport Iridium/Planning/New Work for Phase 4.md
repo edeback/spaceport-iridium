@@ -160,12 +160,12 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 	- A crewmember has critically low hunger
 		- SAI appears and the specific crewmember is highlighted. SAI mentions that crew need to be able to eat - if they starve, they also become hurt and may eventually die. Make sure that there is a mess hall available with a way to get there, and that there is food available to be consumed there. If there is not enough, buy more from a trader or grow some.
 
-**Storage Updates:** — written up as [[WI-65_Storage_Roles]] (2026-08-23), two stages: roles + the merge first, strict `desired` second.
+**Storage Updates:** (Complete —  [[WI-65_Storage_Roles]])
 - Goal: Each module should have at most one (non-construction-related) storage component. Right now, many modules have two - an input and an output storage. This is mainly because each storage component can only have a single priority, and it is important that goods be hauled _in to_ the input but _out of_ the output, so a single component with a single priority wouldn't work.
 - Solution: Merge the modules and base import/export on the "role" of input or output
 - Also make "desired" strict to reduce reliance on max_stored since it's all combined
 
-**Star and Planet Variations:** (Built, awaiting verification — WI-66, [[WI-66_Star_And_Planet_Variations]])
+**Star and Planet Variations:** (Complete — WI-66, [[WI-66_Star_And_Planet_Variations]])
 - Goal: Give each station a more unique background to look at, so each run doesn't look exactly the same
 - Used to have static sprites for star and planet, but those have been swapped to use Deep-Fold's Pixel Planet generator
 	- Not technically an add-on, so implementation has been copied to assets/external/pixel_planets

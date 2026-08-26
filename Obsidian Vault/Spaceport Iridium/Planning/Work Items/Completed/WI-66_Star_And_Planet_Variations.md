@@ -1,6 +1,6 @@
 # WI-66 — Star and Planet Variations
 
-> **STATUS: BUILT, AWAITING VERIFICATION (2026-08-24).** Shipped as designed apart from the seven deviations below. Six files changed, eighteen new (ten of them `.tres`). **1522 GUT tests, all green** (+40, `test_star_systems.gd`) — the suite was green at 1482 before this item, so nothing regressed. Verified further by a **24-check headless probe** green on repeated runs, and **21 screenshots** driven into each state. Save is backward-compatible and `SAVE_VERSION` did not move.
+> **STATUS: COMPLETE (2026-08-24).** Shipped as designed apart from the seven deviations below. Six files changed, eighteen new (ten of them `.tres`). **1522 GUT tests, all green** (+40, `test_star_systems.gd`) — the suite was green at 1482 before this item, so nothing regressed. Verified further by a **24-check headless probe** green on repeated runs, and **21 screenshots** driven into each state. Save is backward-compatible and `SAVE_VERSION` did not move.
 >
 > **Deviations from the design below:**
 > 1. **`planet_cutoff` shipped as `planet_coverage`, and both it and `planet_cloudiness` are inverted on the way to the shader.** All four uniforms the design names — `cloud_cover`, `land_cutoff`, `river_cutoff`, `lake_cutoff` — are consumed as `step(uniform, noise)`, so a *higher* value means *less* of the thing. Every one of them runs backwards from its name. `StellarBackground._map_threshold()` is the single place that inverts; §Verification's screenshot is what caught it.
