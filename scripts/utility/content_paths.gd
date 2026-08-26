@@ -49,6 +49,13 @@ const PORTRAITS: StringName = &"portraits"
 ## What SAI teaches, and when (WI-63). One [TutorialHintData] per trigger; the
 ## conversation itself is a `.dialogue` file the hint points at.
 const TUTORIAL: StringName = &"tutorial"
+## Spectral classes of star, with the palette each one is authored around (WI-66).
+const STAR_CLASSES: StringName = &"star_classes"
+## Kinds of planet the background can show (WI-66). Two kinds rather than one
+## "star_systems" kind because they are different resource types with different
+## content sweeps, and a mod adding a planet has no business also having to
+## understand stars.
+const PLANET_VARIANTS: StringName = &"planet_variants"
 
 ## Every kind there is. A scan for anything else is a typo, and a typo here would
 ## otherwise surface as "this mod added no content", which is invisible - so an
@@ -58,6 +65,7 @@ const KINDS: Array[StringName] = [
 	EVENTS, DISEASES, SKILLS, TRAITS, SHOPS, DIFFICULTY,
 	BUILD_CATEGORIES, RECIPES, SHIPS, PAWNS, SPACE_BODIES,
 	SPEAKERS, FACTIONS, PORTRAITS, TUTORIAL,
+	STAR_CLASSES, PLANET_VARIANTS,
 ]
 
 ## Roots in load order, base game first. Static so the menus can scan content

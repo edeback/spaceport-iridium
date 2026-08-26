@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://dytaqheck3ddv" path="res://ui/windows/atmosphere_component_ui.tscn" id="3_atmoui"]
 [ext_resource type="Resource" uid="uid://c8o32mbasjok7" path="res://data/modules/special/starting_module_mdata.tres" id="3_facbu"]
 [ext_resource type="Script" uid="uid://d0hud6eqhyh68" path="res://scripts/managers/path_manager.gd" id="3_nkgie"]
+[ext_resource type="Script" uid="uid://divwrjo873b6r" path="res://objects/stellar_background.gd" id="3_stellarbg"]
 [ext_resource type="Script" uid="uid://dvf7wnwvh6siv" path="res://scripts/managers/power_manager.gd" id="4_deici"]
 [ext_resource type="Resource" uid="uid://p3ja7r43eh6c" path="res://data/modules/core/truss_mdata.tres" id="4_getpj"]
 [ext_resource type="PackedScene" uid="uid://umcjs6xyrnek" path="res://ui/ui_debug.tscn" id="4_m3cse"]
@@ -65,8 +66,6 @@
 [ext_resource type="Script" uid="uid://d0bklsxrd4qvm" path="res://scripts/managers/trader_manager.gd" id="35_tradermgr"]
 [ext_resource type="Resource" path="res://data/traders/first_caravan.tres" id="36_caravan"]
 [ext_resource type="PackedScene" uid="uid://bqpttolexash5" path="res://objects/trader_shuttle.tscn" id="37_tradershuttle"]
-[ext_resource type="PackedScene" uid="uid://clqvlybt45o7r" path="res://assets/external/pixel_planets/Star/Star.tscn" id="59_uatky"]
-[ext_resource type="PackedScene" uid="uid://crdxh2i35dorc" path="res://assets/external/pixel_planets/Rivers/Rivers.tscn" id="60_ntx8l"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0rl1p"]
 texture = ExtResource("31_4k2k6")
@@ -565,28 +564,15 @@ texture_filter = 1
 scroll_scale = Vector2(0.1, 0.1)
 follow_viewport = false
 
-[node name="Star" parent="BackgroundLayers/BackgroundLayers/LocalStar" unique_id=1391753778 instance=ExtResource("59_uatky")]
-offset_left = 200.0
-offset_top = 200.0
-offset_right = 200.0
-offset_bottom = 200.0
-scale = Vector2(2, 2)
-
 [node name="LocalPlanet" type="Parallax2D" parent="BackgroundLayers/BackgroundLayers" unique_id=1853146454]
 texture_filter = 1
 scroll_scale = Vector2(0.15, 0.15)
 follow_viewport = false
 
-[node name="Planet" parent="BackgroundLayers/BackgroundLayers/LocalPlanet" unique_id=844727825 instance=ExtResource("60_ntx8l")]
-anchors_preset = 0
-anchor_right = 0.0
-anchor_bottom = 0.0
-offset_left = 600.0
-offset_top = 350.0
-offset_right = 600.0
-offset_bottom = 350.0
-grow_horizontal = 1
-grow_vertical = 1
+[node name="StellarBackground" type="Node" parent="BackgroundLayers" unique_id=1853146455 node_paths=PackedStringArray("star_layer", "planet_layer")]
+script = ExtResource("3_stellarbg")
+star_layer = NodePath("../BackgroundLayers/LocalStar")
+planet_layer = NodePath("../BackgroundLayers/LocalPlanet")
 
 [node name="AsteroidLayer" type="CanvasLayer" parent="BackgroundLayers" unique_id=1072719870]
 layer = -1

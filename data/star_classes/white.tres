@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StarClass" format=3]
+
+[ext_resource type="Script" path="res://data/star_classes/star_class.gd" id="1_class"]
+
+[resource]
+script = ExtResource("1_class")
+id = &"white"
+display_name = "A-class white"
+spectral_class = &"A"
+temperature_k = 8500
+ramp = PackedColorArray(1, 1, 1, 1, 0.87451, 0.909804, 1, 1, 0.623529, 0.705882, 0.847059, 1, 0.235294, 0.290196, 0.447059, 1)
+weight = 2.0
+pixels_range = Vector2i(78, 100)
+scale_range = Vector2i(2, 3)
+noise_size_range = Vector2(4.0, 5.8)
+blob_size_range = Vector2(4.2, 6.4)
+circle_amount_range = Vector2(3.0, 8.0)
+circle_size_range = Vector2(0.65, 1.0)
+storm_width_range = Vector2(0.22, 0.4)
+time_speed_range = Vector2(0.045, 0.09)
+hue_jitter_degrees = 6.0
+value_jitter = 0.08
+saturation_jitter = 0.06

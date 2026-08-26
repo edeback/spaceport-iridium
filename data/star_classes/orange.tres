@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StarClass" format=3]
+
+[ext_resource type="Script" path="res://data/star_classes/star_class.gd" id="1_class"]
+
+[resource]
+script = ExtResource("1_class")
+id = &"orange"
+display_name = "K-class orange"
+spectral_class = &"K"
+temperature_k = 4500
+ramp = PackedColorArray(1, 0.941176, 0.847059, 1, 1, 0.705882, 0.290196, 1, 0.878431, 0.4, 0.164706, 1, 0.419608, 0.117647, 0.070588, 1)
+weight = 4.0
+pixels_range = Vector2i(66, 92)
+scale_range = Vector2i(2, 2)
+noise_size_range = Vector2(3.6, 5.2)
+blob_size_range = Vector2(3.6, 5.8)
+circle_amount_range = Vector2(2.0, 6.0)
+circle_size_range = Vector2(0.55, 0.95)
+storm_width_range = Vector2(0.15, 0.32)
+time_speed_range = Vector2(0.03, 0.07)
+hue_jitter_degrees = 6.0
+value_jitter = 0.08
+saturation_jitter = 0.06

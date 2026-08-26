@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="PlanetVariant" format=3 uid="uid://cwxqy3dnh61hp"]
+
+[ext_resource type="Script" uid="uid://cowatax8knkt1" path="res://data/planet_variants/planet_variant.gd" id="1_variant"]
+[ext_resource type="Script" uid="uid://d1terpgfequys" path="res://data/planet_variants/planet_layer_spec.gd" id="2_layer"]
+[ext_resource type="Script" uid="uid://dso0q3vxipu63" path="res://data/planet_variants/planet_palette_segment.gd" id="3_segment"]
+[ext_resource type="PackedScene" uid="uid://chh0bjjvjt2v8" path="res://assets/external/pixel_planets/LandMasses/LandMasses.tscn" id="4_scene"]
+
+[sub_resource type="Resource" id="seg_0_0"]
+script = ExtResource("3_segment")
+role = 2
+count = 3
+
+[sub_resource type="Resource" id="layer_0"]
+script = ExtResource("2_layer")
+node_name = &"Water"
+segments = Array[ExtResource("3_segment")]([SubResource("seg_0_0")])
+noise_size_range = Vector2(4.2, 6.4)
+
+[sub_resource type="Resource" id="seg_1_0"]
+script = ExtResource("3_segment")
+role = 1
+count = 4
+
+[sub_resource type="Resource" id="layer_1"]
+script = ExtResource("2_layer")
+node_name = &"Land"
+segments = Array[ExtResource("3_segment")]([SubResource("seg_1_0")])
+noise_size_range = Vector2(3.4, 5.4)
+cutoff_param = &"land_cutoff"
+cutoff_range = Vector2(0.52, 0.72)
+
+[sub_resource type="Resource" id="seg_2_0"]
+script = ExtResource("3_segment")
+role = 3
+count = 4
+
+[sub_resource type="Resource" id="layer_2"]
+script = ExtResource("2_layer")
+node_name = &"Cloud"
+segments = Array[ExtResource("3_segment")]([SubResource("seg_2_0")])
+noise_size_range = Vector2(6, 9)
+cloud_cover_range = Vector2(0.22, 0.78)
+
+[resource]
+script = ExtResource("1_variant")
+id = &"land_masses"
+display_name = "Continental"
+scene = ExtResource("4_scene")
+weight = 3.0
+layers = Array[ExtResource("2_layer")]([SubResource("layer_0"), SubResource("layer_1"), SubResource("layer_2")])
+scale_range = Vector2i(1, 1)
+liquid_hue_range = Vector2(192, 240)
+liquid_saturation_range = Vector2(0.4, 0.8)
+liquid_value_range = Vector2(0.42, 0.76)

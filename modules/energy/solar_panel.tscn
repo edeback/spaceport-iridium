@@ -22,9 +22,11 @@ shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/DAMAGE = 0.0
+shader_parameter/OVERLAY_COLOR = Vector4(0, 0, 0, 0)
 shader_parameter/gradient_texture = SubResource("NoiseTexture2D_pbf7i")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_aqnlt"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_p3bqt"]
 resource_local_to_scene = true
 size = Vector2(62, 62)
 
@@ -50,7 +52,7 @@ material = SubResource("ShaderMaterial_p3bqt")
 texture = ExtResource("4_p3bqt")
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_aqnlt")
+shape = SubResource("RectangleShape2D_p3bqt")
 
 [node name="Sprite2D" type="Sprite2D" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="3" unique_id=304492415]
 material = SubResource("CanvasItemMaterial_aqnlt")

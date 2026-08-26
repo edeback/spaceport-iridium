@@ -37,6 +37,10 @@ var alert_manager: AlertManager
 var ui_in_game: UIInGame
 var ui_main: UIMain
 var tilemap: TileMapLayer
+## The background's star and planet (WI-66). Not a manager - no tick, no signals,
+## no save section of its own - but the cheats need a handle on it, and a Groups
+## entry for a single always-present node would be worse.
+var stellar_background: StellarBackground
 ## Debug/cheat helper (WI-19), installed by Main. Callable from the Panku REPL
 ## as Global.cheats.<method>(...). Null in builds where Main hasn't run yet.
 var cheats: Cheats
@@ -383,6 +387,20 @@ var staged_crew: Array[HireCandidate] = []
 ## `_ready`, which is before anything could hand it over any other way.
 var skip_onboarding_requested: bool = false
 
+## The star and planet this run is played under (WI-66). Staged here for exactly
+## the reasons difficulty and the station name are: chosen before the run starts,
+## never mutated by any system, and read from `_ready` onward - [StellarBackground]
+## builds the sky in its own `_ready`, which is well before
+## `SaveManager._apply_pending_load` (deferred) could hand it over any other way.
+## Without staging, a load renders one frame of the wrong sky and then swaps.
+##
+## Null only until something stages a value; every read goes through
+## [method get_star_system], which rolls the legacy sky rather than leaving it
+## null - so a game booted straight into main.tscn from the editor still has a
+## background, and gets the SAME one every time, which is what makes screenshot
+## comparison possible.
+var star_system: StarSystemData
+
 func set_station_name(new_name: String) -> void:
 	station_name = new_name.strip_edges()
 
@@ -410,13 +428,24 @@ func take_staged_crew() -> Array[HireCandidate]:
 	staged_crew = []
 	return out
 
-## Drops both staged values when a run ends or a save is about to be loaded, for
+func stage_star_system(system: StarSystemData) -> void:
+	star_system = system
+
+## The current sky, rolling the legacy one on first read rather than leaving it
+## null. Never returns null.
+func get_star_system() -> StarSystemData:
+	if star_system == null:
+		star_system = StarSystemGenerator.legacy()
+	return star_system
+
+## Drops the staged values when a run ends or a save is about to be loaded, for
 ## the same reason clear_difficulty() exists: nothing the player configured for a
 ## run they abandoned should survive into the next one.
 func clear_staged_start() -> void:
 	station_name = ""
 	staged_crew = []
 	skip_onboarding_requested = false
+	star_system = null
 
 func world_to_cell(position: Vector2) -> Vector2i:
 	return Vector2i(floor((position.x) / CELL_SIZE.x), floor((position.y) / CELL_SIZE.y))

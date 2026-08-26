@@ -1,0 +1,57 @@
+[gd_resource type="Resource" script_class="PlanetVariant" format=3 uid="uid://ncb2ubcl0nnu"]
+
+[ext_resource type="Script" uid="uid://cowatax8knkt1" path="res://data/planet_variants/planet_variant.gd" id="1_variant"]
+[ext_resource type="Script" uid="uid://d1terpgfequys" path="res://data/planet_variants/planet_layer_spec.gd" id="2_layer"]
+[ext_resource type="Script" uid="uid://dso0q3vxipu63" path="res://data/planet_variants/planet_palette_segment.gd" id="3_segment"]
+[ext_resource type="PackedScene" uid="uid://cax1rhbpl13hv" path="res://assets/external/pixel_planets/IceWorld/IceWorld.tscn" id="4_scene"]
+
+[sub_resource type="Resource" id="seg_0_0"]
+script = ExtResource("3_segment")
+count = 3
+
+[sub_resource type="Resource" id="layer_0"]
+script = ExtResource("2_layer")
+node_name = &"Land"
+segments = Array[ExtResource("3_segment")]([SubResource("seg_0_0")])
+noise_size_range = Vector2(6, 10)
+
+[sub_resource type="Resource" id="seg_1_0"]
+script = ExtResource("3_segment")
+role = 2
+count = 3
+
+[sub_resource type="Resource" id="layer_1"]
+script = ExtResource("2_layer")
+node_name = &"Lakes"
+segments = Array[ExtResource("3_segment")]([SubResource("seg_1_0")])
+noise_size_range = Vector2(8, 12)
+cutoff_param = &"lake_cutoff"
+cutoff_range = Vector2(0.46, 0.62)
+
+[sub_resource type="Resource" id="seg_2_0"]
+script = ExtResource("3_segment")
+role = 3
+count = 4
+
+[sub_resource type="Resource" id="layer_2"]
+script = ExtResource("2_layer")
+node_name = &"Clouds"
+segments = Array[ExtResource("3_segment")]([SubResource("seg_2_0")])
+noise_size_range = Vector2(3.2, 5.5)
+cloud_cover_range = Vector2(0.26, 0.8)
+
+[resource]
+script = ExtResource("1_variant")
+id = &"ice_world"
+display_name = "Ice world"
+scene = ExtResource("4_scene")
+weight = 2.0
+layers = Array[ExtResource("2_layer")]([SubResource("layer_0"), SubResource("layer_1"), SubResource("layer_2")])
+scale_range = Vector2i(1, 1)
+liquid_hue_range = Vector2(185, 215)
+liquid_saturation_range = Vector2(0.3, 0.62)
+liquid_value_range = Vector2(0.55, 0.86)
+surface_hue_range = Vector2(195, 220)
+surface_saturation_range = Vector2(0.03, 0.18)
+surface_value_range = Vector2(0.8, 1)
+clear_sky_chance = 0.12

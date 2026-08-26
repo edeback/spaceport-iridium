@@ -766,6 +766,172 @@ func dump_alerts() -> String:
 	lines.append("history: %d entry(s)" % manager.history().size())
 	return "\n".join(lines)
 
+# --- star system (WI-66) ------------------------------------------------------
+
+## The layer a contact sheet sits on: above every UI CanvasLayer in main.tscn, so
+## the console does not sit on top of the thing being photographed.
+const CONTACT_SHEET_LAYER: int = 128
+const CONTACT_SHEET_CELL: Vector2 = Vector2(310.0, 250.0)
+const CONTACT_SHEET_MARGIN: Vector2 = Vector2(30.0, 40.0)
+## Shrinks a whole system - which the generator composes across roughly
+## 1000x500px - into one cell, proportions intact, so relative body sizes stay
+## readable.
+const CONTACT_SHEET_ZOOM: float = 0.29
+
+var _contact_sheet: CanvasLayer
+
+## Regenerate the background star and planet and re-apply them live. A
+## `seed_value` of 0 rolls a fresh random seed. The one cheat that makes this
+## item testable at all - the sky is otherwise chosen once, before the run starts.
+##
+## Note this replaces the system the CURRENT run is playing under, so a save
+## taken afterwards keeps what you are looking at.
+func reroll_system(seed_value: int = 0) -> String:
+	var system: StarSystemData = StarSystemGenerator.generate(seed_value) if seed_value != 0 \
+			else StarSystemGenerator.generate_random()
+	_apply_system(system)
+	return _report("Rerolled system %d: %s / %s"
+			% [system.seed, system.star_class_id, system.planet_variant_id])
+
+## Roll systems until one lands on `class_id`, then apply it. Everything else
+## stays a real roll - pinning one axis by re-rolling rather than by a special
+## generator path means the sky you end up looking at is one the game could
+## actually have produced on its own.
+func set_star_class(class_id: StringName) -> String:
+	if StarClass.by_id(class_id) == null:
+		return _report("No such star class: %s (have: %s)" % [class_id, _star_class_ids()])
+	var system: StarSystemData = _roll_until(class_id, &"")
+	if system == null:
+		return _report("Could not roll a %s system" % class_id)
+	_apply_system(system)
+	return _report("Star class %s (seed %d)" % [class_id, system.seed])
+
+## Same, for the planet.
+func set_planet_variant(variant_id: StringName) -> String:
+	if PlanetVariant.by_id(variant_id) == null:
+		return _report("No such planet variant: %s (have: %s)" % [variant_id, _planet_variant_ids()])
+	var system: StarSystemData = _roll_until(&"", variant_id)
+	if system == null:
+		return _report("Could not roll a %s system" % variant_id)
+	_apply_system(system)
+	return _report("Planet variant %s (seed %d)" % [variant_id, system.seed])
+
+## Everything about the current system as text, palettes included - so a
+## screenshot can be matched back to the data that produced it.
+func dump_system() -> String:
+	var system: StarSystemData = Global.get_star_system()
+	var star_class: StarClass = StarClass.by_id(system.star_class_id)
+	var variant: PlanetVariant = PlanetVariant.by_id(system.planet_variant_id)
+	var lines: Array[String] = []
+	lines.append("seed %d" % system.seed)
+	lines.append("star: %s (%s, %dK)" % [
+		system.star_class_id,
+		star_class.display_name if star_class != null else "?",
+		star_class.temperature_k if star_class != null else 0])
+	lines.append("  ramp %s" % _html(system.star_ramp))
+	lines.append("  pixels %d x%d at %s, seed %.2f" % [
+		system.star_pixels, system.star_scale, system.star_offset, system.star_seed])
+	lines.append("  noise %.2f blob %.2f circles %.2f/%.2f storm %.2f speed %.3f" % [
+		system.star_noise_size, system.star_blob_size, system.star_circle_amount,
+		system.star_circle_size, system.star_storm_width, system.star_time_speed])
+	if not system.has_planet():
+		lines.append("planet: none")
+	else:
+		lines.append("planet: %s (%s)" % [system.planet_variant_id,
+			variant.display_name if variant != null else "?"])
+		for role_id: StringName in system.planet_palette:
+			lines.append("  %s %s" % [role_id, _html(system.planet_palette[role_id])])
+		lines.append("  pixels %d x%d at %s, seed %.2f, tilt %.2f" % [
+			system.planet_pixels, system.planet_scale, system.planet_offset,
+			system.planet_seed, system.planet_rotation])
+		lines.append("  cloudiness %.2f coverage %.2f noise %.2f drift x%.2f" % [
+			system.planet_cloudiness, system.planet_coverage,
+			system.planet_noise_scale, system.planet_time_scale])
+	var text: String = "\n".join(lines)
+	print(text)
+	_report("Dumped system %d (see console)" % system.seed)
+	return text
+
+## Lay `count` freshly generated systems out in a grid over the whole screen, for
+## one screenshot.
+##
+## This is the artefact the item is actually verified by: headless renders no
+## shaders at all, so "does this look like a real sky", "is anything green or
+## purple", "is every ocean blue" and "do two dozen of these genuinely differ"
+## are all questions only a picture answers. It drives the real
+## [StellarBackground] applier, so what the sheet shows is what the game shows.
+func system_contact_sheet(count: int = 24, columns: int = 6) -> String:
+	clear_contact_sheet()
+	var root: Node = Global.world_manager.get_tree().current_scene
+	if root == null:
+		return _report("No scene to hang a contact sheet on")
+	_contact_sheet = CanvasLayer.new()
+	_contact_sheet.layer = CONTACT_SHEET_LAYER
+	root.add_child(_contact_sheet)
+	var backdrop := ColorRect.new()
+	backdrop.color = Color(0.02, 0.02, 0.04)
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_contact_sheet.add_child(backdrop)
+	for index: int in count:
+		var cell := Node2D.new()
+		cell.position = Vector2(
+			CONTACT_SHEET_MARGIN.x + float(index % columns) * CONTACT_SHEET_CELL.x,
+			CONTACT_SHEET_MARGIN.y + float(index / columns) * CONTACT_SHEET_CELL.y)
+		cell.scale = Vector2(CONTACT_SHEET_ZOOM, CONTACT_SHEET_ZOOM)
+		_contact_sheet.add_child(cell)
+		var star_holder := Node2D.new()
+		var planet_holder := Node2D.new()
+		cell.add_child(star_holder)
+		cell.add_child(planet_holder)
+		var preview := StellarBackground.new()
+		preview.is_preview = true
+		preview.star_layer = star_holder
+		preview.planet_layer = planet_holder
+		cell.add_child(preview)
+		preview.apply(StarSystemGenerator.generate_random())
+	return _report("Contact sheet: %d systems (clear_contact_sheet() to dismiss)" % count)
+
+func clear_contact_sheet() -> String:
+	if _contact_sheet != null and is_instance_valid(_contact_sheet):
+		_contact_sheet.queue_free()
+	_contact_sheet = null
+	return "Contact sheet cleared"
+
+func _apply_system(system: StarSystemData) -> void:
+	Global.stage_star_system(system)
+	if Global.stellar_background != null and is_instance_valid(Global.stellar_background):
+		Global.stellar_background.apply(system)
+
+## Rolls until the system matches whichever axis was asked for. Bounded, because
+## a weight of zero on the requested entry would otherwise spin forever.
+func _roll_until(class_id: StringName, variant_id: StringName) -> StarSystemData:
+	for attempt: int in 4000:
+		var system: StarSystemData = StarSystemGenerator.generate_random()
+		if class_id != &"" and system.star_class_id != class_id:
+			continue
+		if variant_id != &"" and system.planet_variant_id != variant_id:
+			continue
+		return system
+	return null
+
+func _star_class_ids() -> String:
+	var ids: Array[String] = []
+	for star_class: StarClass in StarClass.all():
+		ids.append(String(star_class.id))
+	return ", ".join(ids)
+
+func _planet_variant_ids() -> String:
+	var ids: Array[String] = []
+	for variant: PlanetVariant in PlanetVariant.all():
+		ids.append(String(variant.id))
+	return ", ".join(ids)
+
+func _html(colors: PackedColorArray) -> String:
+	var out: Array[String] = []
+	for color: Color in colors:
+		out.append(color.to_html(false))
+	return " ".join(out)
+
 # --- helpers ------------------------------------------------------------------
 
 ## The living crew pawn (drones excluded) nearest `cell` by world distance, or

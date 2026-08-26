@@ -148,6 +148,9 @@ func start_new_game(difficulty_id: StringName = DifficultyData.DEFAULT_ID,
 	Global.set_station_name(station_name)
 	Global.stage_crew(crew)
 	Global.set_skip_onboarding(skip_onboarding)
+	# The sky is rolled, not chosen (WI-66) - the setup screen has no say in it,
+	# which is why this is the only line and there is no matching parameter.
+	Global.stage_star_system(StarSystemGenerator.generate_random())
 	get_tree().change_scene_to_file(MAIN_SCENE)
 
 ## Stage first, then enter the game scene: main.tscn's SaveManager sees the

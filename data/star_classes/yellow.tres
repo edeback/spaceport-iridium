@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="StarClass" format=3]
+
+[ext_resource type="Script" path="res://data/star_classes/star_class.gd" id="1_class"]
+
+[resource]
+script = ExtResource("1_class")
+id = &"yellow"
+display_name = "G-class yellow"
+spectral_class = &"G"
+temperature_k = 5800
+ramp = PackedColorArray(0.960784, 1, 0.909804, 1, 1, 0.847059, 0.196078, 1, 1, 0.509804, 0.231373, 1, 0.486275, 0.098039, 0.101961, 1)
+weight = 4.0
+pixels_range = Vector2i(70, 96)
+scale_range = Vector2i(2, 2)
+noise_size_range = Vector2(3.8, 5.4)
+blob_size_range = Vector2(3.8, 6.0)
+circle_amount_range = Vector2(2.0, 7.0)
+circle_size_range = Vector2(0.6, 1.0)
+storm_width_range = Vector2(0.18, 0.36)
+time_speed_range = Vector2(0.035, 0.08)
+hue_jitter_degrees = 6.0
+value_jitter = 0.08
+saturation_jitter = 0.06

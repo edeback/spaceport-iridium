@@ -465,6 +465,11 @@ func _collect_sections() -> Dictionary:
 		# never mutated by any system - so it travels the same way rather than
 		# inventing a section with one string in it.
 		"station": Global.station_name,
+		# The star and planet (WI-66). Same shape again: rolled once before the
+		# run and never touched afterwards, so there is no live system holding
+		# state to ask for it. The RESOLVED parameters are written, not the seed -
+		# see StarSystemData for why.
+		"system": Global.get_star_system().to_dict(),
 	}
 	for section: SaveSection in sections_in_order():
 		out[String(section.id)] = section.collect.call()
@@ -475,11 +480,15 @@ func _collect_sections() -> Dictionary:
 
 ## Hands each registered section its block, in order, and remembers the rest.
 func _apply_sections(sections: Dictionary) -> void:
-	# Both envelope-level fields must be claimed here even though no section owns
+	# Every envelope-level field must be claimed here even though no section owns
 	# them: anything unclaimed is filed as a disabled mod's data and handed back
 	# untouched on the next save, so an unclaimed "station" would round-trip
-	# forever while the game ran nameless, and nothing would error.
-	var claimed: Dictionary[String, bool] = {"difficulty": true, "station": true}
+	# forever while the game ran nameless, and nothing would error. "system"
+	# (WI-66) is under exactly the same obligation - it would round-trip while
+	# every load rendered the legacy sky, silently.
+	var claimed: Dictionary[String, bool] = {
+		"difficulty": true, "station": true, "system": true,
+	}
 	for section: SaveSection in sections_in_order():
 		var key: String = String(section.id)
 		claimed[key] = true
@@ -765,6 +774,10 @@ static func stage_load(slot: String) -> bool:
 	# half-configured New Game must not survive into the loaded game.
 	Global.clear_staged_start()
 	Global.set_station_name(read_station_name(data))
+	# The sky rides along for the same reason difficulty does (WI-66):
+	# StellarBackground builds it in its own _ready, which runs before the
+	# deferred _apply_pending_load could hand it over.
+	Global.stage_star_system(read_star_system(data))
 	return true
 
 ## The difficulty a parsed envelope was played at. Prefers the authoritative
@@ -789,6 +802,24 @@ static func read_station_name(data: Dictionary) -> String:
 		return from_section
 	var meta: Dictionary = data.get("meta", {})
 	return String(meta.get("station", ""))
+
+## The star and planet a parsed envelope was played under (WI-66).
+##
+## A save with no `system` block - every pre-WI-66 save - gets the legacy sky
+## rather than a fresh roll. That is one specific sky, the same on every load,
+## which is the property that matters: it is NOT the sky that save had, and that
+## one-time change is deliberate, the same bargain WI-61 struck when every
+## pre-WI-61 body restored as a belt asteroid. The block is written on the next
+## save, so it stops being a fallback the first time the player saves.
+##
+## Note SAVE_VERSION does not move for this: an absent key has a correct answer,
+## which is what a migration would have had to invent.
+static func read_star_system(data: Dictionary) -> StarSystemData:
+	var sections: Dictionary = data.get("sections", {})
+	var block: Variant = sections.get("system", null)
+	if block is Dictionary and not (block as Dictionary).is_empty():
+		return StarSystemData.from_dict(block as Dictionary)
+	return StarSystemGenerator.legacy()
 
 ## Parses a slot file into its envelope dictionary. Returns {} for anything
 ## missing, unopenable or malformed - callers treat that as "no such save".

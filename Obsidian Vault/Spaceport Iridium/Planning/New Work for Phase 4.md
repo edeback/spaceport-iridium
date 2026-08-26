@@ -165,7 +165,7 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 - Solution: Merge the modules and base import/export on the "role" of input or output
 - Also make "desired" strict to reduce reliance on max_stored since it's all combined
 
-**Star and Planet Variations:** (Written up as [[WI-66_Star_And_Planet_Variations]])
+**Star and Planet Variations:** (Built, awaiting verification — WI-66, [[WI-66_Star_And_Planet_Variations]])
 - Goal: Give each station a more unique background to look at, so each run doesn't look exactly the same
 - Used to have static sprites for star and planet, but those have been swapped to use Deep-Fold's Pixel Planet generator
 	- Not technically an add-on, so implementation has been copied to assets/external/pixel_planets
