@@ -5,15 +5,13 @@ extends EditorPlugin
 const SINGLETON_NAME = "Panku"
 const SINGLETON_PATH = "res://addons/panku_console/console.tscn"
 const SINGLETON_OPTION = "autoload/" + SINGLETON_NAME
-const INITIAL_DEFAULT_CONFIG_FILE_PATH = "res://addons/panku_console/default_panku_config.cfg"
+# Defined on `PankuConfig` (a plain runtime class) and re-exported here. This
+# script `extends EditorPlugin`, which the export templates are compiled
+# without, so nothing loaded by the running game may depend on it.
+const INITIAL_DEFAULT_CONFIG_FILE_PATH = PankuConfig.INITIAL_DEFAULT_CONFIG_FILE_PATH
 
-const CONFIG_SECTION = "panku"
-const OPTIONS = {
-	# See https://github.com/Ark2000/PankuConsole/issues/170
-	DISABLE_ON_RELEASE = 'disable_on_release',
-	# See https://github.com/Ark2000/PankuConsole/issues/173
-	CUSTOM_DEFAULT_CONFIG = 'custom_default_config',
-}
+const CONFIG_SECTION = PankuConfig.CONFIG_SECTION
+const OPTIONS = PankuConfig.OPTIONS
 
 var exporter: PankuExporter
 
@@ -62,13 +60,13 @@ static func add_custom_project_setting(name: String, default_value, type: int, h
 
 # Full option name in project settings.
 static func panku_option(option: String) -> String:
-	return CONFIG_SECTION + "/" + option
+	return PankuConfig.panku_option(option)
 
 static func get_custom_default_config_path() -> String:
-	return ProjectSettings.get_setting(panku_option(OPTIONS.CUSTOM_DEFAULT_CONFIG), INITIAL_DEFAULT_CONFIG_FILE_PATH)
+	return PankuConfig.get_custom_default_config_path()
 
 static func is_custom_default_config_exists() -> bool:
-	return FileAccess.file_exists(get_custom_default_config_path())
+	return PankuConfig.is_custom_default_config_exists()
 
 # Adding singleton with preliminary check to avoid any conflicts.
 func safe_add_singleton() -> void:
