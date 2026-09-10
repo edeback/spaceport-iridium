@@ -235,6 +235,15 @@ static func contents_editable(component: StorageComponent) -> bool:
 static func priority_editable(component: StorageComponent) -> bool:
 	return component != null and is_instance_valid(component) and component.has_intake_slots()
 
+## The number a bin actually routes at, for any surface that shows or sorts by one.
+##
+## A bin with an intake side routes at its own `priority`. An export-only bin - a
+## mining bay - has no number of its own: OUTPUT ships at the floor (WI-65) and its
+## `priority` field is a leftover nothing routes on. The logistics overlay printed
+## that field, which put a +1 on a mining bay that actually ships at -100.
+static func routing_priority(component: StorageComponent) -> int:
+	return component.priority if priority_editable(component) else PRIORITY_MIN
+
 ## Why a bin's **priority** is not editable, in words - the sentence that takes
 ## the stepper's place (WI-54: a blocked control names its blocker). Empty for a
 ## bin whose priority the player sets, which is nearly all of them.

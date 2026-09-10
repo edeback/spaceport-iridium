@@ -10,6 +10,8 @@ extends TargetFinder
 
 ## Slot holding the DESTINATION, whose priority is the ceiling a source must sit
 ## strictly below. Unset = no filter (a pile sweep has no priority of its own).
+## The ceiling is what the destination receives THIS resource at, not its raw
+## `priority` field - see [method StorageQuery.source_qualifies].
 @export var sink_slot: JobTarget.Slot = JobTarget.Slot.B
 
 func find(job: Job, pawn: PawnBase) -> JobTarget:
@@ -20,7 +22,7 @@ func find(job: Job, pawn: PawnBase) -> JobTarget:
 	if sink != null and sink.is_alive():
 		var sink_storage: StorageComponent = sink.component() as StorageComponent
 		if sink_storage != null:
-			ceiling = sink_storage.priority
+			ceiling = sink_storage.import_priority(job.resource)
 	var found: StorageComponent = StorageQuery.find_source(
 		pawn, job.resource, StorageQuery.trip_cap(pawn, job.count), ceiling)
 	return JobTarget.of_component(found) if found != null else null

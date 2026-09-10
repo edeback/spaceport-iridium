@@ -24,7 +24,9 @@ func on_start(job: Job) -> Status:
 		if not storage.can_store_resource(resource):
 			continue
 		var carried: int = job.pawn.inventory_component.get_carried_amount(resource)
-		var amount: int = mini(carried, storage.space_available())
+		# Per resource: the bin's pools are role-qualified (WI-65), so a mining bay's
+		# ore goes against its output pool, not the empty general one.
+		var amount: int = mini(carried, storage.room_for(resource))
 		if amount <= 0:
 			continue
 		var stacks: Array[ResourceStack] = job.pawn.inventory_component.withdraw_stacks(resource, amount)

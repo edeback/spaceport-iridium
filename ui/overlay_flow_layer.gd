@@ -103,7 +103,7 @@ func _draw_priority_labels() -> void:
 		# used to run existed only because a refinery had two bins that disagreed.
 		if seen.has(module):
 			continue
-		seen[module] = storage.priority
+		seen[module] = StoresModel.routing_priority(storage)
 	for module: ModuleBase in seen:
 		_draw_label(font, _center(module), str(seen[module]))
 

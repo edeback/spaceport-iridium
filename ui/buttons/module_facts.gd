@@ -83,7 +83,9 @@ func _read_one(component: ComponentBase) -> void:
 	var storage: StorageComponent = component as StorageComponent
 	if storage != null:
 		if storage.include_in_stats:
-			storage_capacity += maxi(storage.max_stored, 0)
+			# Both pools (WI-65). A mining bay's whole capacity is output_capacity,
+			# and a refinery's two old bins were summed here before they merged.
+			storage_capacity += maxi(storage.max_stored, 0) + maxi(storage.output_capacity, 0)
 		return
 	var workspace: WorkspaceComponent = component as WorkspaceComponent
 	if workspace != null:

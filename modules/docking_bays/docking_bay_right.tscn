@@ -36,11 +36,5 @@ connection_points = Array[Vector2i]([Vector2i(0, -1), Vector2i(1, -1), Vector2i(
 internal_points = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)])
 must_be_clear_points = Array[Vector2i]([Vector2i(3, 0), Vector2i(3, 1)])
 
-[node name="Imported Goods" parent="." index="4" unique_id=1475305824]
-position = Vector2(-32, 0)
-
-[node name="Goods To Export" parent="." index="5" unique_id=1010662297]
-position = Vector2(128, 0)
-
 [node name="PowerConsumptionComponent" parent="." index="6" unique_id=1657948966]
 position = Vector2(64, 0)

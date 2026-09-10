@@ -102,7 +102,8 @@ func required_claims(job: Job, action_index: int) -> Array[ClaimSpec]:
 	if action_index > RESERVE_SINK and action_index <= DEPOSIT:
 		var sink: StorageComponent = _sink(job)
 		if sink != null:
-			var bin: StorageData = sink.claim_target_for(job.resource)
+			# true: a catch-all sink may need the slot grown (see claim_target_for).
+			var bin: StorageData = sink.claim_target_for(job.resource, true)
 			if bin != null:
 				out.append(ClaimSpec.make(bin, ClaimSpec.Kind.STORAGE_DEPOSIT, job.count))
 	return out

@@ -420,8 +420,11 @@ func _vibration_color(module: ModuleBase) -> Color:
 func _logistics_color(module: ModuleBase) -> Color:
 	for component: ComponentBase in module.components:
 		var storage: StorageComponent = component as StorageComponent
-		if storage != null:
-			return OverlayPalette.logistics_color(storage.priority)
+		# lists() skips the dead construction bin every built module still carries
+		# at +100; routing_priority() reads an export-only bin at the floor it
+		# actually ships at rather than its unused `priority` field.
+		if storage != null and StoresModel.lists(storage):
+			return OverlayPalette.logistics_color(StoresModel.routing_priority(storage))
 	return OverlayPalette.untinted()
 
 ## Every placed module has a thermal body, so unlike the other modes this one has

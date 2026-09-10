@@ -406,8 +406,21 @@ func withdraw_up_to(resource: ResourceData, quantity: int, use_reserve: bool = f
 
 ## The per-resource bin a claim should be taken against, or null when this
 ## storage doesn't handle `resource` at all.
-func claim_target_for(resource: ResourceData) -> StorageData:
-	return storage_data.get(resource)
+##
+## `for_deposit` lets a catch-all bin grow the slot, exactly as deposit() and
+## deposit_stacks() already do on arrival. A hauler reserves BEFORE it deposits,
+## and without this the reservation found no slot to claim against: find_sink()
+## accepts a catch-all bin for any resource (can_deposit allows it), so every push
+## into a storeroom that had never held the resource failed at its sink
+## reservation and re-posted forever. Latent since WI-44; it surfaced when the
+## mining bay's ore finally had a storeroom to go to. Never on the withdraw side -
+## an empty slot has nothing to reserve, and growing one there only litters the bin.
+func claim_target_for(resource: ResourceData, for_deposit: bool = false) -> StorageData:
+	var data: StorageData = storage_data.get(resource)
+	if data == null and for_deposit and allow_any_resource:
+		add_stored_resource(resource)
+		data = storage_data.get(resource)
+	return data
 
 ## Withdraws against a reservation the caller already holds, emitting the same
 ## change notifications complete_withdraw_job() does.
@@ -492,11 +505,21 @@ func role_of(resource: ResourceData) -> StorageData.Role:
 	return data.role if data != null else default_role
 
 func can_deposit(resource: ResourceData, quantity: int, use_reserve: bool = false) -> bool:
-	if not allow_any_resource and not storage_data.has(resource):
-		return false
-	if space_available_for(resource, use_reserve) < quantity:
-		return false
-	return slot_headroom(resource, use_reserve) >= quantity
+	return room_for(resource, use_reserve) >= quantity
+
+## How much of `resource` this bin can take right now: the free space in the pool
+## its slot draws on, bounded by the slot's own cap. Zero for a resource it cannot
+## hold. The amount form of [method can_deposit].
+##
+## Every "how much fits?" question about a specific resource belongs here.
+## [method space_available] with no role answers for the GENERAL pool whatever the
+## resource is - which is what stopped a mining bay (max_stored 0, its whole
+## capacity in output_capacity) from taking a single unit of ore after WI-65.
+func room_for(resource: ResourceData, excluding_reserve: bool = false) -> int:
+	if not can_store_resource(resource):
+		return 0
+	return maxi(mini(space_available_for(resource, excluding_reserve),
+		slot_headroom(resource, excluding_reserve)), 0)
 
 ## Room left under this slot's own cap, or a large number when the slot has no
 ## cap of its own (WI-65 §11).
@@ -642,7 +665,9 @@ func deposit_stacks(resource: ResourceData, stacks: Array[ResourceStack], only_i
 	var total: int = 0
 	for stack: ResourceStack in stacks:
 		total += stack.amount
-	if only_if_room and space_available_for(resource) < total:
+	# room_for, not the bare pool: an INPUT slot's cap binds here too, or a belt
+	# or a cargo sweep tops a recipe ingredient past its share and starves the other.
+	if only_if_room and room_for(resource) < total:
 		return false
 	for stack: ResourceStack in stacks:
 		data.add_stack(stack)

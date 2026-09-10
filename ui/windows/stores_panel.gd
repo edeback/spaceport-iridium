@@ -269,7 +269,7 @@ func _make_entry(module: ModuleBase, storage: StorageComponent,
 	# An export-only bin shows no number and routes at the floor, so it must SORT
 	# at the floor too - sorting it by a `priority` field the card deliberately
 	# hides is the panel disagreeing with itself.
-	entry.priority = storage.priority if storage.has_intake_slots() else StoresModel.PRIORITY_MIN
+	entry.priority = StoresModel.routing_priority(storage)
 	# Per pool (WI-65): the two roles have separate capacity, so one combined
 	# meter would read a refinery with a full output bay as merely half full.
 	entry.intake_capacity = storage.max_stored

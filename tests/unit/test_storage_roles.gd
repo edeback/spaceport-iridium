@@ -253,3 +253,92 @@ func test_set_all_roles_freezes_every_slot_at_once() -> void:
 	for slot: StorageData in bin.storage_data.values():
 		assert_eq(slot.role, StorageData.Role.EXCLUDED,
 			"a construction site freezes its bin WITH its materials still in it")
+
+# --- room for one resource (the mining-bay regression) -------------------------------
+
+func _stack(resource: ResourceData, amount: int) -> ResourceStack:
+	var stack := ResourceStack.new()
+	stack.resource_data = resource
+	stack.amount = amount
+	return stack
+
+## The shape that stopped mining after WI-65: no intake pool at all, the whole
+## capacity in output_capacity. Every "how much fits?" caller that asked the
+## GENERAL pool read zero - so no drone was ever handed a trip, and one that did
+## come home could not put its ore down.
+func test_room_for_answers_from_the_pool_the_slot_draws_on() -> void:
+	var bay: StorageComponent = _bin(1)
+	bay.max_stored = 0
+	bay.output_capacity = 80
+	bay.default_role = StorageData.Role.OUTPUT
+	var ore: ResourceData = _slot(bay, &"iron_ore", StorageData.Role.OUTPUT)
+	assert_eq(bay.space_available(), 0,
+		"the GENERAL pool is empty - the question the broken callers asked")
+	assert_eq(bay.room_for(ore), 80, "the ore's own pool is not")
+	assert_eq(bay.space_available(true, bay.default_role), 80,
+		"nor is the pool MiningComponent checks before sending a drone out")
+	bay.deposit(ore, 30)
+	assert_eq(bay.room_for(ore), 50, "stock already in the bay counts against it")
+
+func test_room_for_respects_an_input_slots_cap() -> void:
+	var bin: StorageComponent = _bin(1)
+	var ore: ResourceData = _slot(bin, &"iron_ore", StorageData.Role.INPUT)
+	bin.storage_data[ore].desired = 10
+	assert_eq(bin.room_for(ore), 10, "the recipe's share, not the whole pool of 100")
+
+func test_room_for_is_zero_for_a_resource_the_bin_cannot_hold() -> void:
+	var bin: StorageComponent = _bin(1)
+	assert_eq(bin.room_for(_resource(&"gold")), 0, "no slot, not a catch-all")
+	bin.allow_any_resource = true
+	assert_eq(bin.room_for(_resource(&"gold")), 100, "a catch-all bin offers its pool")
+
+## The direct API may over-fill a pool (a restored save, a processor's atomic
+## deposit); room must then read as none, never as a negative a caller subtracts.
+func test_room_for_never_goes_negative() -> void:
+	var bin: StorageComponent = _bin(1)
+	var iron: ResourceData = _slot(bin, &"iron", StorageData.Role.OUTPUT)
+	bin.deposit(iron, 55)
+	assert_eq(bin.room_for(iron), 0, "55 in a pool of 40")
+
+## A belt and a cargo sweep both deposit with only_if_room, which has to mean the
+## slot's cap as well as the pool, or they top an ingredient past its share.
+func test_deposit_stacks_only_if_room_honours_the_input_cap() -> void:
+	var bin: StorageComponent = _bin(1)
+	var ore: ResourceData = _slot(bin, &"iron_ore", StorageData.Role.INPUT)
+	bin.storage_data[ore].desired = 10
+	assert_false(bin.deposit_stacks(ore, [_stack(ore, 11)] as Array[ResourceStack]),
+		"eleven does not fit a ten-unit share")
+	assert_eq(bin.total_stored_by_resource(ore), 0,
+		"and all-or-nothing leaves the slot untouched")
+	assert_true(bin.deposit_stacks(ore, [_stack(ore, 10)] as Array[ResourceStack]),
+		"exactly the share does")
+
+# --- claiming into a catch-all bin ------------------------------------------------------
+
+## A hauler reserves before it deposits. find_sink() accepts a catch-all bin for a
+## resource it has never held, so the reservation has to find a slot there too -
+## without one, every push into a fresh storeroom failed at RESERVE_SINK and
+## re-posted forever, which is what kept a mining bay's ore from ever leaving it.
+func test_a_catch_all_bin_grows_a_slot_to_take_a_deposit_claim() -> void:
+	var bin: StorageComponent = _bin(0)
+	bin.allow_any_resource = true
+	var ore: ResourceData = _resource(&"iron_ore")
+	var slot: StorageData = bin.claim_target_for(ore, true)
+	assert_not_null(slot, "the storeroom has somewhere to put the reservation")
+	assert_eq(slot.role, StorageData.Role.GENERAL, "at the bin's default role")
+	assert_true(slot.can_take_claim(ClaimSpec.Kind.STORAGE_DEPOSIT, 10),
+		"and the claim itself goes through")
+
+## Never on the withdraw side: an empty slot has nothing to reserve.
+func test_a_withdraw_claim_grows_no_slot() -> void:
+	var bin: StorageComponent = _bin(0)
+	bin.allow_any_resource = true
+	var ore: ResourceData = _resource(&"iron_ore")
+	assert_null(bin.claim_target_for(ore), "nothing here to take")
+	assert_false(bin.storage_data.has(ore), "and no empty slot left behind")
+
+func test_a_bin_that_does_not_take_the_resource_grows_nothing() -> void:
+	var bin: StorageComponent = _bin(0)
+	var ore: ResourceData = _resource(&"iron_ore")
+	assert_null(bin.claim_target_for(ore, true), "a fixed-contents bin stays fixed")
+	assert_false(bin.storage_data.has(ore))

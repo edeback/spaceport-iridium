@@ -38,7 +38,10 @@ func on_start(job: Job) -> Status:
 		job.count = mini(trip_cap, storage.total_stored_by_resource(job.resource))
 	if job.count <= 0:
 		return Status.FAILED
-	var bin: StorageData = storage.claim_target_for(job.resource)
+	# A deposit into a catch-all bin may be its first unit of this resource, so the
+	# slot is grown here rather than found missing (see claim_target_for).
+	var bin: StorageData = storage.claim_target_for(job.resource,
+		kind == ClaimSpec.Kind.STORAGE_DEPOSIT)
 	if bin == null:
 		return Status.FAILED
 	return Status.DONE if job.claim(bin, kind, job.count) != null else Status.FAILED

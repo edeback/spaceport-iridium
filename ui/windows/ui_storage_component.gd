@@ -101,9 +101,7 @@ func refresh_display() -> void:
 		_add_resource_line(resource, editable)
 	# Both pools, so a refinery's free-space line accounts for its whole bay rather
 	# than only the side goods arrive on.
-	%FreeSpaceAvailableLabel.text = _format_resouce_value(
-		storage_component.space_available(false, StorageData.Role.GENERAL)
-		+ storage_component.space_available(false, StorageData.Role.OUTPUT))
+	%FreeSpaceAvailableLabel.text = _format_resouce_value(_free_space())
 	%FreeSpaceMaxLabel.text = _format_resouce_value(
 		storage_component.max_stored + storage_component.output_capacity)
 	# Guarded for the same reason the Stores card guards its own: a refresh landing
@@ -169,7 +167,14 @@ func _on_storage_changed(resource: ResourceData, _new_value: int) -> void:
 	var storage_line: StorageResourceLine = storage_lines.get(resource)
 	if storage_line != null:
 		storage_line.stored_resource_value.text = _format_slot_value(resource)
-	%FreeSpaceAvailableLabel.text = _format_resouce_value(storage_component.space_available())
+	%FreeSpaceAvailableLabel.text = _format_resouce_value(_free_space())
+
+## Both pools, on the initial draw and on every change alike. The change handler
+## used to read the GENERAL pool alone, so a mining bay's free space dropped to 0
+## the first time a drone unloaded.
+func _free_space() -> int:
+	return storage_component.space_available(false, StorageData.Role.GENERAL) \
+		+ storage_component.space_available(false, StorageData.Role.OUTPUT)
 
 ## The **committed** value only. [Stepper] fires this on release or after a quiet
 ## period, which is what keeps a drag across the 201-value range to one re-sort;

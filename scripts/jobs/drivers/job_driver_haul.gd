@@ -65,14 +65,16 @@ func can_do(job: Job, pawn: PawnBase) -> bool:
 		# Fully specified: just confirm both ends are reachable.
 		return Global.path_manager.is_reachable(pawn, source.owner_module) \
 			and Global.path_manager.is_reachable(pawn, sink.owner_module)
+	# Per-resource priorities, never the bins' raw `priority` fields - see
+	# StorageQuery.source_qualifies for the WI-65 regression that caused.
 	if sink != null:
 		# Pull: destination fixed, need a reachable source with stock.
 		return Global.path_manager.is_reachable(pawn, sink.owner_module) \
 			and StorageQuery.find_source(pawn, job.resource,
-				StorageQuery.trip_cap(pawn, job.count), sink.priority) != null
+				StorageQuery.trip_cap(pawn, job.count), sink.import_priority(job.resource)) != null
 	# Push: source fixed, need a reachable destination with room.
 	return Global.path_manager.is_reachable(pawn, source.owner_module) \
-		and StorageQuery.find_sink(pawn, job.resource, source.priority) != null
+		and StorageQuery.find_sink(pawn, job.resource, source.export_priority(job.resource)) != null
 
 func explain_block(job: Job, pawn: PawnBase) -> String:
 	if job.resource == null:
@@ -84,12 +86,19 @@ func explain_block(job: Job, pawn: PawnBase) -> String:
 	if source == null and sink == null:
 		return "both ends are gone"
 	if sink != null and source == null:
+		var ceiling: int = sink.import_priority(job.resource)
+		# REFUSED is a separate answer, not a number to print.
+		if ceiling == StorageComponent.REFUSED:
+			return "%s no longer takes %s" % [sink.owner_module.module_data.name, job.resource.name]
 		if StorageQuery.find_source(pawn, job.resource,
-				StorageQuery.trip_cap(pawn, job.count), sink.priority) == null:
-			return "no reachable storage holds %s below priority %d" % [job.resource.name, sink.priority]
+				StorageQuery.trip_cap(pawn, job.count), ceiling) == null:
+			return "no reachable storage holds %s below priority %d" % [job.resource.name, ceiling]
 	if source != null and sink == null:
-		if StorageQuery.find_sink(pawn, job.resource, source.priority) == null:
-			return "no reachable storage will take %s above priority %d" % [job.resource.name, source.priority]
+		var floor_priority: int = source.export_priority(job.resource)
+		if floor_priority == StorageComponent.REFUSED:
+			return "%s no longer ships %s" % [source.owner_module.module_data.name, job.resource.name]
+		if StorageQuery.find_sink(pawn, job.resource, floor_priority) == null:
+			return "no reachable storage will take %s above priority %d" % [job.resource.name, floor_priority]
 	for endpoint: StorageComponent in [source, sink]:
 		if endpoint != null and not Global.path_manager.is_reachable(pawn, endpoint.owner_module):
 			return "%s cannot reach %s" % [pawn.pawn_name, endpoint.owner_module.module_data.name]
@@ -112,7 +121,7 @@ func required_claims(job: Job, action_index: int) -> Array[ClaimSpec]:
 	if action_index > RESERVE_SINK and action_index <= DEPOSIT:
 		var sink: StorageComponent = _storage(job.target_b)
 		if sink != null:
-			var bin: StorageData = sink.claim_target_for(job.resource)
+			var bin: StorageData = sink.claim_target_for(job.resource, true)
 			if bin != null:
 				out.append(ClaimSpec.make(bin, ClaimSpec.Kind.STORAGE_DEPOSIT, job.count))
 	return out

@@ -18,7 +18,10 @@ func find(job: Job, pawn: PawnBase) -> JobTarget:
 	if source != null and source.is_alive():
 		var source_storage: StorageComponent = source.component() as StorageComponent
 		if source_storage != null:
-			floor_priority = source_storage.priority
+			# What the source ships THIS resource at, not its raw `priority`: an
+			# OUTPUT slot ships at the floor (WI-65), and the field would demand
+			# every storeroom out-rank a mining bay's leftover +1.
+			floor_priority = source_storage.export_priority(job.resource)
 	var found: StorageComponent = StorageQuery.find_sink(pawn, job.resource, floor_priority)
 	return JobTarget.of_component(found) if found != null else null
 

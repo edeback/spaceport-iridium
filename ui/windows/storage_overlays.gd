@@ -232,7 +232,9 @@ static func open_resource(host: Node, component: StorageComponent, resource: Res
 	# there is ever a surplus for the two dump controls to act on.
 	_section(column, "Keep", "Haulers top this bin up to here and carry the surplus away.")
 	var desired: Stepper = Stepper.create()
-	desired.configure(data.desired, 0, component.max_stored, 1, false)
+	# The pool this slot draws on, not max_stored: an OUTPUT slot's ceiling is
+	# output_capacity (WI-65), same bound the inspector's stepper uses.
+	desired.configure(data.desired, 0, component.pool_for(data.role), 1, false)
 	desired.editable = editable
 	column.add_child(desired)
 

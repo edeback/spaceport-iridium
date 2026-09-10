@@ -98,8 +98,13 @@ func _exit_tree() -> void:
 	for drone: MiningDronePawn in drones:
 		drone.self_destruct()
 
+## Room in the pool the bay's ore lands in. That is the OUTPUT pool for the vanilla
+## bay (WI-65: max_stored 0, everything in output_capacity), and asking
+## space_available() with no role - the GENERAL pool - read 0 forever, so no drone
+## was ever given a trip. `default_role` rather than a hard-coded OUTPUT so a mod's
+## bay built on a general bin still answers for the pool its slots actually use.
 func _can_output(amount: int) -> bool:
-	return output_storage.space_available(true) >= amount
+	return output_storage.space_available(true, output_storage.default_role) >= amount
 
 ## Intentionally not offer_followup_job or else construction workers end up picking this up
 func get_next_job(_pawn: PawnBase) -> Job:

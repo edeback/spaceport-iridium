@@ -53,13 +53,7 @@ static func find_source(pawn: PawnBase, resource: ResourceData, trip_cap: int,
 			continue
 		# Per-resource since WI-65: one component can refuse to export iron ore
 		# (it is an ingredient there) while exporting iron (it is a product).
-		var source_priority: int = storage.export_priority(resource)
-		# REFUSED is checked BEFORE the comparison, never as an extreme number -
-		# ANY_PRIORITY skips the comparison entirely, so a refusal folded into the
-		# number would be silently ignored on exactly the pile/sweep paths.
-		if source_priority == StorageComponent.REFUSED:
-			continue
-		if below_priority != ANY_PRIORITY and source_priority >= below_priority:
+		if not source_qualifies(storage.export_priority(resource), below_priority):
 			continue
 		var available: int = storage.total_stored_by_resource(resource)
 		if available <= 0:
@@ -97,10 +91,7 @@ static func find_sink(pawn: PawnBase, resource: ResourceData,
 		if storage == null:
 			continue
 		var sink_priority: int = storage.import_priority(resource)
-		# Same rule as find_source: refusal first, comparison second.
-		if sink_priority == StorageComponent.REFUSED:
-			continue
-		if above_priority != ANY_PRIORITY and sink_priority <= above_priority:
+		if not sink_qualifies(sink_priority, above_priority):
 			continue
 		# Probes with 1 unit, not the full load, on purpose: a bin with only
 		# partial room is still a valid target - whatever doesn't fit stays on
@@ -129,6 +120,33 @@ static func trip_cap(pawn: PawnBase, desired: int) -> int:
 # Global.world_to_cell), but the comparisons are where the drift actually
 # happened, so those live down here as pure statics and pure accumulators that
 # a GUT suite can drive with synthetic candidates.
+
+## May a bin shipping `resource` at `source_priority` feed a destination that
+## receives it at `below_priority`?
+##
+## Both arguments must be PER-RESOURCE answers - [method StorageComponent.export_priority]
+## and [method StorageComponent.import_priority] - never a bin's raw `priority`
+## field. Since WI-65 an OUTPUT slot ships at the floor whatever that field says,
+## and a finder that compared against the field instead asked every storeroom at
+## 0 to out-rank a mining bay at +1, so ore and refinery products went nowhere.
+##
+## REFUSED is checked BEFORE the comparison, never as an extreme number: the
+## ANY_PRIORITY case skips the comparison entirely, so a refusal folded into the
+## number would be silently ignored on exactly the pile/sweep paths. A refusing
+## DESTINATION disqualifies every source too - a pull for a slot that no longer
+## takes the resource has nowhere legitimate to go.
+static func source_qualifies(source_priority: int, below_priority: int) -> bool:
+	if source_priority == StorageComponent.REFUSED or below_priority == StorageComponent.REFUSED:
+		return false
+	return below_priority == ANY_PRIORITY or source_priority < below_priority
+
+## Mirror of [method source_qualifies]: may a bin receiving at `sink_priority`
+## take goods leaving one that ships at `above_priority`? Strict for the same
+## anti-flip-flop reason.
+static func sink_qualifies(sink_priority: int, above_priority: int) -> bool:
+	if sink_priority == StorageComponent.REFUSED or above_priority == StorageComponent.REFUSED:
+		return false
+	return above_priority == ANY_PRIORITY or sink_priority > above_priority
 
 ## Higher priority always wins; distance only breaks a priority tie. Strictly
 ## greater / strictly nearer, so on a full tie the *first* candidate scanned

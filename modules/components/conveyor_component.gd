@@ -137,8 +137,12 @@ func get_resource_options_for(lane: ConveyorLane) -> Array[ResourceData]:
 			if Global.resource_manager != null:
 				out.assign(Global.resource_manager.storable_resources)
 		else:
+			# Only what this bin will ship (WI-65). A merged refinery bin is a valid
+			# source for its product, and offering its ingredients here let a belt
+			# drain a forge mid-recipe - exactly what the INPUT role exists to stop.
 			for res: ResourceData in storage.storage_data.keys():
-				out.append(res)
+				if storage.export_priority(res) != StorageComponent.REFUSED:
+					out.append(res)
 	elif lane.source is ConveyorComponent:
 		for src_lane: ConveyorLane in (lane.source as ConveyorComponent).lanes:
 			if src_lane.resource != null and not out.has(src_lane.resource):
@@ -217,7 +221,7 @@ func _tick_lane(lane: ConveyorLane, interval: float) -> void:
 			else:
 				lane.status = ""
 		else:
-			lane.status = "Destination full"
+			lane.status = _destination_blocked_status(lane)
 	elif lane.buffer.is_empty():
 		lane.status = ""
 
@@ -240,7 +244,12 @@ func _endpoint_withdraw_up_to(endpoint: ComponentBase, res: ResourceData, amount
 	if amount <= 0:
 		return []
 	if endpoint is StorageComponent:
-		return (endpoint as StorageComponent).withdraw_stacks_up_to(res, amount, false)
+		var storage: StorageComponent = endpoint as StorageComponent
+		# A lane configured before the slot re-roled (or saved that way) must not
+		# keep pulling from a slot hauling would refuse.
+		if storage.export_priority(res) == StorageComponent.REFUSED:
+			return []
+		return storage.withdraw_stacks_up_to(res, amount, false)
 	if endpoint is ConveyorComponent:
 		return (endpoint as ConveyorComponent).buffer_withdraw_up_to(res, amount)
 	return []
@@ -248,12 +257,23 @@ func _endpoint_withdraw_up_to(endpoint: ComponentBase, res: ResourceData, amount
 func _endpoint_space_for(endpoint: ComponentBase, res: ResourceData) -> int:
 	if endpoint is StorageComponent:
 		var storage: StorageComponent = endpoint as StorageComponent
-		if not storage.can_store_resource(res):
+		# Per resource (WI-65): refused wherever hauling would refuse it, and sized
+		# against the slot's own pool and cap rather than the GENERAL pool - which
+		# let a belt top a recipe ingredient past its share of the bin.
+		if storage.import_priority(res) == StorageComponent.REFUSED:
 			return 0
-		return storage.space_available()
+		return storage.room_for(res)
 	if endpoint is ConveyorComponent:
 		return (endpoint as ConveyorComponent).buffer_free_for(res)
 	return 0
+
+## Why a lane's destination took nothing: out of room, or a slot that refuses the
+## resource outright. Two different fixes, so two different sentences.
+func _destination_blocked_status(lane: ConveyorLane) -> String:
+	var storage: StorageComponent = lane.destination as StorageComponent
+	if storage != null and storage.import_priority(lane.resource) == StorageComponent.REFUSED:
+		return "Destination won't take %s" % lane.resource.name
+	return "Destination full"
 
 func _endpoint_deposit_stacks(endpoint: ComponentBase, res: ResourceData, stacks: Array[ResourceStack]) -> bool:
 	if endpoint is StorageComponent:

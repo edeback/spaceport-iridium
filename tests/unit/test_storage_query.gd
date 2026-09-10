@@ -130,3 +130,74 @@ func test_any_priority_sentinel_sits_below_every_real_priority() -> void:
 	# collide with one. -99/+99 are the routing extremes the game actually uses.
 	assert_lt(StorageQuery.ANY_PRIORITY, -99, "sentinel is below the lowest routing band")
 	assert_lt(StorageQuery.ANY_PRIORITY, 0, "sentinel is not a usable priority")
+
+# --- the qualifying filters ----------------------------------------------------------
+
+func _bin(priority: int) -> StorageComponent:
+	var component: StorageComponent = autofree(StorageComponent.new())
+	component.include_in_stats = false
+	component.priority = priority
+	return component
+
+func _resource(id: StringName) -> ResourceData:
+	var resource := ResourceData.new()
+	resource.id = id
+	resource.name = String(id)
+	return resource
+
+## The regression. A mining bay's merged bin keeps a `priority` of +1, but its ore
+## is OUTPUT and ships at the floor. The push finder compared storerooms against
+## the raw +1 - and every storeroom is authored at 0 - so mined ore had nowhere to
+## go, and neither did any refinery's product.
+func test_a_push_from_an_output_slot_clears_a_storeroom_at_zero() -> void:
+	var bay: StorageComponent = _bin(1)
+	bay.max_stored = 0
+	bay.output_capacity = 80
+	var ore: ResourceData = _resource(&"iron_ore")
+	bay.add_stored_resource(ore, StorageData.Role.OUTPUT)
+	var storeroom: StorageComponent = _bin(0)
+	storeroom.allow_any_resource = true
+	assert_true(StorageQuery.sink_qualifies(storeroom.import_priority(ore), bay.export_priority(ore)),
+		"a storeroom at 0 out-ranks ore shipping at the floor")
+	assert_false(StorageQuery.sink_qualifies(storeroom.import_priority(ore), bay.priority),
+		"which the bin's raw priority field refuses - the bug, pinned")
+
+## The same rule from the pull side: a forge at +1 may draw iron out of a
+## smelter's product bay even though the smelter's own field is also +1.
+func test_a_pull_into_an_input_slot_draws_on_a_product_bay() -> void:
+	var iron: ResourceData = _resource(&"iron")
+	var smelter: StorageComponent = _bin(1)
+	smelter.add_stored_resource(iron, StorageData.Role.OUTPUT)
+	var forge: StorageComponent = _bin(1)
+	forge.add_stored_resource(iron, StorageData.Role.INPUT)
+	assert_true(StorageQuery.source_qualifies(smelter.export_priority(iron), forge.import_priority(iron)),
+		"product at the floor feeds an ingredient at +1")
+	assert_false(StorageQuery.source_qualifies(smelter.priority, forge.import_priority(iron)),
+		"where the raw fields tie and the strict filter refuses")
+
+func test_the_filters_are_strict() -> void:
+	assert_false(StorageQuery.sink_qualifies(3, 3), "equal priorities would flip-flop")
+	assert_false(StorageQuery.source_qualifies(3, 3), "in either direction")
+	assert_true(StorageQuery.sink_qualifies(4, 3))
+	assert_true(StorageQuery.source_qualifies(2, 3))
+
+func test_any_priority_admits_every_real_priority() -> void:
+	for priority: int in [StoresModel.PRIORITY_MIN, 0, StoresModel.PRIORITY_MAX]:
+		assert_true(StorageQuery.sink_qualifies(priority, StorageQuery.ANY_PRIORITY),
+			"a sweep accepts a sink at %d" % priority)
+		assert_true(StorageQuery.source_qualifies(priority, StorageQuery.ANY_PRIORITY),
+			"a pile accepts a source at %d" % priority)
+
+## REFUSED on either end disqualifies, and is never read as a number - above all
+## not as a sky-high ceiling that would admit every source for a destination that
+## no longer takes the resource.
+func test_refused_never_qualifies_on_either_end() -> void:
+	var refused: int = StorageComponent.REFUSED
+	assert_false(StorageQuery.sink_qualifies(refused, StorageQuery.ANY_PRIORITY),
+		"a refusing sink, even for a sweep")
+	assert_false(StorageQuery.source_qualifies(refused, StorageQuery.ANY_PRIORITY),
+		"a refusing source, even for a pile")
+	assert_false(StorageQuery.source_qualifies(StoresModel.PRIORITY_MIN, refused),
+		"a destination that refuses the resource has no legitimate source")
+	assert_false(StorageQuery.sink_qualifies(StoresModel.PRIORITY_MAX, refused),
+		"and a source that refuses to ship it has no legitimate sink")

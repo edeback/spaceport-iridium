@@ -288,6 +288,33 @@ func test_a_two_role_bin_is_still_the_players() -> void:
 	assert_true(StoresModel.priority_editable(component),
 		"whether the refinery out-bids the smelter for ore is the player's call")
 
+## What the Stores sort, the flow overlay's labels and the logistics tint all
+## show. An export-only bin reads at the floor it actually ships at: its
+## `priority` field is a leftover nothing routes on, and printing it put a +1 on
+## a mining bay whose ore ships at the floor.
+func test_routing_priority_reads_an_export_only_bin_at_the_floor() -> void:
+	var module: ModuleBase = autofree(ModuleBase.new())
+	module.build_state = ModuleBase.BuildState.Built
+	var component: StorageComponent = _component(module)
+	component.include_in_stats = false
+	component.priority = 7
+	component.default_role = StorageData.Role.OUTPUT
+	component.add_stored_resource(_resource(&"iron_ore"), StorageData.Role.OUTPUT)
+	assert_eq(StoresModel.routing_priority(component), StoresModel.PRIORITY_MIN)
+
+func test_routing_priority_is_the_bins_own_number_when_it_takes_deliveries() -> void:
+	var module: ModuleBase = autofree(ModuleBase.new())
+	module.build_state = ModuleBase.BuildState.Built
+	var storeroom: StorageComponent = _component(module)
+	storeroom.priority = 7
+	assert_eq(StoresModel.routing_priority(storeroom), 7, "an empty storeroom")
+	var refinery: StorageComponent = _component(module)
+	refinery.include_in_stats = false
+	refinery.priority = 7
+	refinery.add_stored_resource(_resource(&"iron_ore"), StorageData.Role.INPUT)
+	refinery.add_stored_resource(_resource(&"iron"), StorageData.Role.OUTPUT)
+	assert_eq(StoresModel.routing_priority(refinery), 7, "a two-role bin, by its intake side")
+
 ## Both reasons are sentences, and neither claims more than it should: the
 ## priority one must not say the contents are locked, and vice versa.
 func test_the_two_locked_reasons_stay_in_their_lanes() -> void:
