@@ -56,7 +56,8 @@ func set_storage_component(component: StorageComponent) -> void:
 	# module's decision on all but the multipurpose ones.
 	priority_stepper.editable = StoresModel.priority_editable(component)
 	# An export-only bin loses the control entirely rather than showing a dead one;
-	# its reason joins the contents note below.
+	# its reason takes the note below, and the model leaves the contents half empty
+	# there so the two sentences cannot contradict each other.
 	var priority_reason: String = StoresModel.priority_locked_reason(component)
 	if priority_row != null:
 		priority_row.visible = priority_reason.is_empty()

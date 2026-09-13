@@ -261,11 +261,18 @@ static func priority_locked_reason(component: StorageComponent) -> String:
 ## Shared with the Stores card so the inspector, the card and the dump dialog say
 ## the same thing about the same bin. Both sentences are careful not to claim the
 ## *whole* bin is locked, because its priority is not.
+##
+## Empty on an export-only bin, where the priority *is* locked: its
+## [method priority_locked_reason] already says the module decides everything
+## about it, and the sentence below would print "its priority is still yours"
+## directly under "does not have its own priority".
 static func locked_reason(component: StorageComponent) -> String:
 	if contents_editable(component):
 		return ""
 	if component == null or not is_instance_valid(component):
 		return "This bin is gone"
+	if not priority_locked_reason(component).is_empty():
+		return ""
 	var module: ModuleBase = component.owner_module
 	if module != null and is_instance_valid(module) and not module.is_complete():
 		return "Construction site — the build decides what it imports"

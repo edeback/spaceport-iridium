@@ -330,6 +330,23 @@ func test_the_two_locked_reasons_stay_in_their_lanes() -> void:
 	assert_true(reason.to_lower().contains("export"),
 		"and names why: the bin only sends goods out")
 
+## The mining bay printed both sentences: "does not have its own priority" and,
+## under it, "its priority is still yours". The priority sentence is the whole
+## story on an export-only bin, so the contents one stays out of it.
+func test_an_export_only_bin_says_one_thing_about_its_priority() -> void:
+	var module: ModuleBase = autofree(ModuleBase.new())
+	module.build_state = ModuleBase.BuildState.Built
+	var component: StorageComponent = _component(module)
+	component.include_in_stats = false
+	component.max_stored = 0
+	component.default_role = StorageData.Role.OUTPUT
+	component.add_stored_resource(_resource(&"iron_ore"), StorageData.Role.OUTPUT)
+	assert_false(StoresModel.contents_editable(component), "fixture precondition")
+	assert_ne(StoresModel.priority_locked_reason(component), "",
+		"the bin names why it has no stepper")
+	assert_eq(StoresModel.locked_reason(component), "",
+		"and no second sentence claims the priority is the player's")
+
 ## Locked is a state, not an absence - so a bin whose contents the module owns
 ## owes the player a sentence, and a configurable one must not print a reason that
 ## does not exist.
