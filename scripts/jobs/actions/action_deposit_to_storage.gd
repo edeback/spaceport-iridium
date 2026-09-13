@@ -22,8 +22,16 @@ func on_start(job: Job) -> Status:
 	var bin: StorageData = storage.claim_target_for(job.resource)
 	if bin == null:
 		return Status.FAILED
+	# No record means no reservation to spend: booking `amount` in its place would
+	# eat into whatever another inbound haul has reserved here.
+	var spec: ClaimSpec = job.find_claim(bin, ClaimSpec.Kind.STORAGE_DEPOSIT)
+	var booked: int = spec.amount if spec != null else 0
 	var carried: int = job.pawn.inventory_component.get_carried_amount(job.resource)
-	var amount: int = mini(carried, maxi(job.count, 0))
+	# Never past capacity, whatever filled the bin while the pawn walked over - a
+	# belt, a processor, a restored save. What fits is the room nobody else has
+	# promised plus this job's own promise; the rest stays on the pawn for the sweep.
+	var amount: int = mini(mini(carried, maxi(job.count, 0)),
+		storage.room_for_booking(job.resource, booked))
 	if amount <= 0:
 		return Status.FAILED
 	var stacks: Array[ResourceStack] = job.pawn.inventory_component.withdraw_stacks(job.resource, amount)
@@ -33,8 +41,6 @@ func on_start(job: Job) -> Status:
 	# either way, so any space we booked and did not use has to come back here -
 	# consume_claim below drops the record without giving anything back, so a
 	# short deposit would otherwise strand the difference as reserved forever.
-	var spec: ClaimSpec = job.find_claim(bin, ClaimSpec.Kind.STORAGE_DEPOSIT)
-	var booked: int = spec.amount if spec != null else amount
 	if not storage.deposit_reserved(job.resource, stacks, booked):
 		# Give it back to the pawn rather than losing it; the sweep retries later.
 		job.pawn.inventory_component.add_stacks(job.resource, stacks)

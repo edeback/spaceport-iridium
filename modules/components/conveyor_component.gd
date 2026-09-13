@@ -262,7 +262,9 @@ func _endpoint_space_for(endpoint: ComponentBase, res: ResourceData) -> int:
 		# let a belt top a recipe ingredient past its share of the bin.
 		if storage.import_priority(res) == StorageComponent.REFUSED:
 			return 0
-		return storage.room_for(res)
+		# Room nobody has promised - the same answer deposit_stacks() checks. A
+		# hauler walking here with a reservation must find the space it booked.
+		return storage.room_for(res, true)
 	if endpoint is ConveyorComponent:
 		return (endpoint as ConveyorComponent).buffer_free_for(res)
 	return 0

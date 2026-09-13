@@ -515,11 +515,28 @@ func can_deposit(resource: ResourceData, quantity: int, use_reserve: bool = fals
 ## [method space_available] with no role answers for the GENERAL pool whatever the
 ## resource is - which is what stopped a mining bay (max_stored 0, its whole
 ## capacity in output_capacity) from taking a single unit of ore after WI-65.
+##
+## Anything that deposits WITHOUT holding a reservation - the cargo sweep, a belt,
+## [method deposit_stacks] with only_if_room - asks with `excluding_reserve` true.
+## A GENERAL or OUTPUT deposit claim is bookkeeping only, so these paths are the
+## only thing standing between a reservation and a bin filled under it.
 func room_for(resource: ResourceData, excluding_reserve: bool = false) -> int:
 	if not can_store_resource(resource):
 		return 0
 	return maxi(mini(space_available_for(resource, excluding_reserve),
 		slot_headroom(resource, excluding_reserve)), 0)
+
+## Room for a job that has already booked `booked` units of deposit here: every
+## OTHER job's reservation counts against it, its own does not. What a hauler
+## standing at the bin may actually put down, and how big a trip into it may be.
+##
+## Not `room_for(resource, true) + booked`: room_for clamps at zero first, so a
+## pool something else over-filled (a restored save, a direct deposit) would read
+## as exactly `booked` units of room and the haul would push it further over.
+func room_for_booking(resource: ResourceData, booked: int) -> int:
+	if not can_store_resource(resource):
+		return 0
+	return maxi(mini(space_available_for(resource, true), _headroom(resource, true)) + booked, 0)
 
 ## Room left under this slot's own cap, or a large number when the slot has no
 ## cap of its own (WI-65 §11).
@@ -530,13 +547,18 @@ func room_for(resource: ResourceData, excluding_reserve: bool = false) -> int:
 ## it is surplus with an export job already posted, and nothing is starved by
 ## holding it - and an OUTPUT slot is bounded by its pool alone.
 func slot_headroom(resource: ResourceData, excluding_reserve: bool = false) -> int:
+	return maxi(_headroom(resource, excluding_reserve), 0)
+
+## slot_headroom() before the clamp - negative for a slot already over its cap,
+## which room_for_booking() needs to see.
+func _headroom(resource: ResourceData, excluding_reserve: bool) -> int:
 	var data: StorageData = storage_data.get(resource)
 	if data == null or data.role != StorageData.Role.INPUT:
 		return 0x7FFFFFFF
 	var taken: int = data.stored
 	if excluding_reserve:
 		taken += data.reserved_deposit
-	return maxi(data.desired - taken, 0)
+	return data.desired - taken
 
 # --- haul routing (WI-65) -----------------------------------------------------
 #
@@ -667,7 +689,9 @@ func deposit_stacks(resource: ResourceData, stacks: Array[ResourceStack], only_i
 		total += stack.amount
 	# room_for, not the bare pool: an INPUT slot's cap binds here too, or a belt
 	# or a cargo sweep tops a recipe ingredient past its share and starves the other.
-	if only_if_room and room_for(resource) < total:
+	# Counting reservations, because nothing on this path holds one: room a hauler
+	# has booked is room it will fill when it arrives, whatever lands here first.
+	if only_if_room and room_for(resource, true) < total:
 		return false
 	for stack: ResourceStack in stacks:
 		data.add_stack(stack)

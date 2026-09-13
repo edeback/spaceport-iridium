@@ -342,3 +342,75 @@ func test_a_bin_that_does_not_take_the_resource_grows_nothing() -> void:
 	var ore: ResourceData = _resource(&"iron_ore")
 	assert_null(bin.claim_target_for(ore, true), "a fixed-contents bin stays fixed")
 	assert_false(bin.storage_data.has(ore))
+
+# --- room already promised (the haul over-fill, 2026-09-12) ------------------------------
+#
+# A GENERAL deposit claim is bookkeeping only, so a reservation is a promise that
+# only holds if everything WITHOUT one leaves the promised room alone - and the
+# hauler holding one must count its own booking as room, but nobody else's.
+
+## The start module's shape: a catch-all storeroom.
+func _storeroom(capacity: int) -> StorageComponent:
+	var bin: StorageComponent = _bin(0)
+	bin.max_stored = capacity
+	bin.allow_any_resource = true
+	return bin
+
+func _promise(bin: StorageComponent, resource: ResourceData, amount: int) -> void:
+	bin.claim_target_for(resource, true).take_claim(ClaimSpec.Kind.STORAGE_DEPOSIT, amount)
+
+func test_room_counting_reservations_leaves_out_what_an_inbound_haul_booked() -> void:
+	var room: StorageComponent = _storeroom(80)
+	var ore: ResourceData = _resource(&"iron_ore")
+	room.deposit(_resource(&"ice"), 55)
+	_promise(room, ore, 16)
+	assert_eq(room.room_for(ore), 25, "the bare pool does not see the promise")
+	assert_eq(room.room_for(ore, true), 9,
+		"which is why every deposit that holds no reservation asks this instead")
+
+func test_a_hauler_counts_its_own_booking_as_room_and_nobody_elses() -> void:
+	var room: StorageComponent = _storeroom(80)
+	var ore: ResourceData = _resource(&"iron_ore")
+	room.deposit(_resource(&"ice"), 55)
+	_promise(room, ore, 16)
+	assert_eq(room.room_for_booking(ore, 16), 25,
+		"the hauler that booked sixteen may still put down the full twenty-five")
+	assert_eq(room.room_for_booking(ore, 0), room.room_for(ore, true),
+		"and with no booking it is exactly the reservation-aware room")
+
+## What the quicksave actually held. Adding the booking back AFTER room_for's clamp
+## would have said ten units fit into a bin already seven over.
+func test_a_booking_never_makes_room_in_an_over_filled_bin() -> void:
+	var room: StorageComponent = _storeroom(80)
+	var ore: ResourceData = _resource(&"iron_ore")
+	room.deposit(_resource(&"ice"), 87)
+	_promise(room, ore, 10)
+	assert_eq(room.room_for_booking(ore, 10), 0, "87/80 has no room, booked or not")
+	assert_eq(room.room_for(ore, true) + 10, 10,
+		"the sum a clamp-then-add would have trusted")
+
+## The booking was taken while the share had room (an INPUT claim refuses one
+## that doesn't); something then topped the slot past its cap directly.
+func test_an_input_slot_over_its_cap_has_no_room_for_a_booking() -> void:
+	var bin: StorageComponent = _bin(1)
+	var ore: ResourceData = _slot(bin, &"iron_ore", StorageData.Role.INPUT)
+	bin.storage_data[ore].desired = 10
+	bin.deposit(ore, 5)
+	_promise(bin, ore, 3)
+	assert_eq(bin.storage_data[ore].reserved_deposit, 3, "fixture: the booking was accepted")
+	bin.deposit(ore, 7)
+	assert_eq(bin.room_for_booking(ore, 3), 0,
+		"the pool has room to spare, but the recipe's share is already exceeded")
+
+## A belt or a cargo sweep holds no reservation, so it gets only the room nobody
+## has promised - otherwise the hauler that did arrives to a full bin.
+func test_deposit_stacks_only_if_room_leaves_promised_room_alone() -> void:
+	var room: StorageComponent = _storeroom(80)
+	var ore: ResourceData = _resource(&"iron_ore")
+	room.deposit(_resource(&"ice"), 70)
+	_promise(room, ore, 8)
+	assert_false(room.deposit_stacks(ore, [_stack(ore, 5)] as Array[ResourceStack]),
+		"five would eat into the eight a hauler has booked")
+	assert_eq(room.total_stored_by_resource(ore), 0, "and all-or-nothing took none of them")
+	assert_true(room.deposit_stacks(ore, [_stack(ore, 2)] as Array[ResourceStack]),
+		"the two nobody has promised are fair game")

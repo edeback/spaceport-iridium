@@ -25,8 +25,10 @@ func on_start(job: Job) -> Status:
 			continue
 		var carried: int = job.pawn.inventory_component.get_carried_amount(resource)
 		# Per resource: the bin's pools are role-qualified (WI-65), so a mining bay's
-		# ore goes against its output pool, not the empty general one.
-		var amount: int = mini(carried, storage.room_for(resource))
+		# ore goes against its output pool, not the empty general one. And counting
+		# reservations: a sweep holds none, so room a hauler has booked is not its to
+		# fill - the hauler would arrive and push the bin past capacity.
+		var amount: int = mini(carried, storage.room_for(resource, true))
 		if amount <= 0:
 			continue
 		var stacks: Array[ResourceStack] = job.pawn.inventory_component.withdraw_stacks(resource, amount)

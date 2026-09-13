@@ -223,6 +223,66 @@ func test_consume_of_something_not_held_is_a_no_op() -> void:
 	registry.consume(job_a, bin, ClaimSpec.Kind.SLOT)
 	assert_eq(registry.claiming_job_count(), 0, "nothing to do, nothing done")
 
+# --- shrinking ----------------------------------------------------------------
+#
+# A haul books its source before it knows how much room its sink has. When the
+# sink cuts the trip short, the source's booking has to come down with it - the
+# pickup step consumes the whole record, so any excess would stay reserved forever.
+
+func test_shrink_gives_back_only_the_excess() -> void:
+	var bin := FakeClaimable.new()
+	bin.capacity = 100
+	registry.claim(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW, 16)
+	registry.shrink(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW, 9)
+	assert_eq(bin.held, 9, "the owner still holds what the shorter trip needs")
+	assert_eq(bin.release_log.size(), 1, "one give-back")
+	assert_eq(bin.release_log[0]["amount"], 7, "of exactly the difference")
+	assert_eq(registry.find_claim(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW).amount, 9,
+		"and the record says what is still held")
+
+## The record's new size is what the job's end gives back - not the original.
+func test_a_shrunk_claim_releases_only_what_is_left_on_job_end() -> void:
+	var bin := FakeClaimable.new()
+	bin.capacity = 100
+	registry.claim(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW, 16)
+	registry.shrink(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW, 9)
+	registry.release_all(job_a)
+	assert_eq(bin.held, 0, "reconciles to zero, not to minus seven")
+
+## Growing needs the owner's say-so, which makes it a new claim, not an adjustment.
+func test_shrink_never_grows_a_claim() -> void:
+	var bin := FakeClaimable.new()
+	registry.claim(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW, 5)
+	registry.shrink(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW, 8)
+	assert_eq(bin.held, 5, "the owner was not asked for more")
+	assert_eq(registry.find_claim(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW).amount, 5,
+		"and the record did not pretend it had been")
+	assert_eq(bin.release_log.size(), 0)
+
+func test_shrinking_to_nothing_releases_the_claim() -> void:
+	var bin := FakeClaimable.new()
+	registry.claim(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW, 5)
+	registry.shrink(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW, 0)
+	assert_eq(bin.held, 0, "everything went back")
+	assert_false(registry.holds_claim(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW),
+		"and a zero-unit record is not left lying around")
+
+func test_shrinking_a_claim_not_held_is_a_no_op() -> void:
+	var bin := FakeClaimable.new()
+	registry.shrink(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW, 3)
+	assert_eq(bin.release_log.size(), 0, "nothing was given back")
+	assert_eq(registry.claiming_job_count(), 0, "and nothing was recorded")
+
+func test_shrink_leaves_other_jobs_claims_on_the_target_alone() -> void:
+	var bin := FakeClaimable.new()
+	bin.capacity = 100
+	registry.claim(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW, 10)
+	registry.claim(job_b, bin, ClaimSpec.Kind.STORAGE_WITHDRAW, 10)
+	registry.shrink(job_a, bin, ClaimSpec.Kind.STORAGE_WITHDRAW, 4)
+	assert_eq(registry.find_claim(job_b, bin, ClaimSpec.Kind.STORAGE_WITHDRAW).amount, 10,
+		"job_b's trip did not get shorter")
+	assert_eq(bin.held, 14)
+
 # --- queries ------------------------------------------------------------------
 
 func test_claims_of_returns_a_copy() -> void:

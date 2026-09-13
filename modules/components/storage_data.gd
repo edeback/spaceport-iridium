@@ -195,8 +195,11 @@ func can_take_claim(kind: int, amount: int) -> bool:
 	# For GENERAL and OUTPUT, deposit space is a COMPONENT-level question (the
 	# role's pool spans every slot in it), which this class deliberately cannot
 	# see - that is what keeps the claim path free of Global and this suite pure.
-	# So the reservation stays pure bookkeeping, exactly as it has always been,
-	# and whatever picked this bin is what checked there was room.
+	# So the reservation stays pure bookkeeping, and the room is checked where the
+	# pool is visible: Action_ReserveStorage sizes the trip to
+	# StorageComponent.room_for_booking() before it claims. Nothing here would
+	# refuse an over-sized claim, which is how a whole trip used to be booked
+	# against a storeroom's last few units and delivered anyway.
 	#
 	# INPUT is different since WI-65 §11: its `desired` is a hard per-slot cap,
 	# which is slot-local and therefore answerable right here. Without this check

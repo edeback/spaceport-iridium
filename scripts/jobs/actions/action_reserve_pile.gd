@@ -37,7 +37,9 @@ func on_start(job: Job) -> Status:
 		var sink: StorageComponent = _sink(job)
 		if sink == null:
 			return Status.FAILED
-		trip_cap = mini(trip_cap, sink.room_for(job.resource))
+		# Room nobody has promised: another collection or haul already booked for
+		# this bin will fill its share, so counting that share here double-books it.
+		trip_cap = mini(trip_cap, sink.room_for(job.resource, true))
 	if trip_cap <= 0:
 		return Status.FAILED
 	job.count = trip_cap

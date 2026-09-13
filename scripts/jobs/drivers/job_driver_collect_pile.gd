@@ -31,7 +31,10 @@ func make_actions(_job: Job) -> Array[ActionBase]:
 	return [
 		Action_FindBestTarget.new(Finder_StorageSink.new(), JobTarget.Slot.B),
 		Action_ReservePile.new(JobTarget.Slot.A, JobTarget.Slot.B, true),
-		Action_ReserveStorage.new(JobTarget.Slot.B, ClaimSpec.Kind.STORAGE_DEPOSIT, false),
+		# The pile reservation already capped the trip at the sink's room; this
+		# re-checks it and, if the room moved, trims the pile claim at A to match.
+		Action_ReserveStorage.new(JobTarget.Slot.B, ClaimSpec.Kind.STORAGE_DEPOSIT, false,
+			JobTarget.Slot.A),
 		Action_GotoTarget.new(JobTarget.Slot.A),
 		Action_TakeFromPile.new(JobTarget.Slot.A),
 		to_sink,

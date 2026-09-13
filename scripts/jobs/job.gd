@@ -470,6 +470,12 @@ func consume_claim(target_object: Object, kind: ClaimSpec.Kind) -> void:
 	if ledger != null:
 		ledger.consume(self, target_object, kind)
 
+## Trims a claim down to `amount`, giving the excess back - see ClaimRegistry.shrink().
+func shrink_claim(target_object: Object, kind: ClaimSpec.Kind, amount: int) -> void:
+	var ledger: ClaimRegistry = _claims()
+	if ledger != null:
+		ledger.shrink(self, target_object, kind, amount)
+
 ## The claim record this job holds against `target_object`, or null. Actions that
 ## need the claim's PAYLOAD back (which anchor was handed out) go through here.
 func find_claim(target_object: Object, kind: ClaimSpec.Kind) -> ClaimSpec:

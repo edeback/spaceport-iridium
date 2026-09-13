@@ -21,7 +21,7 @@ func find(job: Job, pawn: PawnBase) -> JobTarget:
 	if aimed != null:
 		for resource: ResourceData in pawn.inventory_component.get_carried_resources():
 			if pawn.inventory_component.get_carried_amount(resource) > 0 \
-					and aimed.room_for(resource) > 0:
+					and aimed.room_for(resource, true) > 0:
 				return job.target_a
 	for resource: ResourceData in pawn.inventory_component.get_carried_resources():
 		if pawn.inventory_component.get_carried_amount(resource) <= 0:

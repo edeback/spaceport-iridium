@@ -94,9 +94,12 @@ static func find_sink(pawn: PawnBase, resource: ResourceData,
 		if not sink_qualifies(sink_priority, above_priority):
 			continue
 		# Probes with 1 unit, not the full load, on purpose: a bin with only
-		# partial room is still a valid target - whatever doesn't fit stays on
-		# the pawn and gets swept next tick.
-		if not storage.can_deposit(resource, 1):
+		# partial room is still a valid target - the deposit reservation cuts the
+		# trip down to it (Action_ReserveStorage), and a sweep puts down what fits.
+		# Room nobody has PROMISED, though: a bin whose last units are booked by an
+		# inbound haul would fail that reservation, and the haul would re-post
+		# against the same bin forever while one with real room sat idle.
+		if not storage.can_deposit(resource, 1, true):
 			continue
 		if not Global.path_manager.is_reachable(pawn, storage.owner_module):
 			continue

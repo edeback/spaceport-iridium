@@ -108,6 +108,30 @@ func consume(job: Job, target: Object, kind: ClaimSpec.Kind) -> void:
 	if claims.is_empty():
 		_by_job.erase(job)
 
+## Gives back the part of a claim `job` no longer needs, leaving it at `amount`.
+##
+## For a trip that came out shorter than the reservation already taken for it: a
+## haul books its source before it knows how much room its sink has, and the two
+## halves have to agree before the pawn sets off - the pickup step spends
+## job.count and consumes the whole record, so any excess would stay reserved
+## forever.
+##
+## Only ever shrinks. Growing needs the owner's say-so (can_take_claim), which
+## makes it a new claim rather than an adjustment. `amount` <= 0 releases the
+## claim outright. Amount-based kinds only: a payload claim (ANCHOR) is
+## all-or-nothing, and half-releasing one would hand its payload back early.
+func shrink(job: Job, target: Object, kind: ClaimSpec.Kind, amount: int) -> void:
+	var spec: ClaimSpec = find_claim(job, target, kind)
+	if spec == null or amount >= spec.amount:
+		return
+	if amount <= 0:
+		release(job, target, kind)
+		return
+	var excess: int = spec.amount - amount
+	spec.amount = amount
+	if spec.is_alive() and _is_claimable(spec.target):
+		spec.target.call(&"release_claim", int(kind), excess, spec.payload)
+
 ## Gives back everything `job` holds. Job.end() calls this unconditionally, which
 ## is what makes the "reservations reconcile to zero" invariant structural rather
 ## than a per-job discipline.

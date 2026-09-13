@@ -36,7 +36,9 @@ func make_actions(_job: Job) -> Array[ActionBase]:
 		Action_FindBestTarget.new(Finder_StorageSource.new(), JobTarget.Slot.A),
 		Action_ReserveStorage.new(JobTarget.Slot.A, ClaimSpec.Kind.STORAGE_WITHDRAW, true),
 		Action_FindBestTarget.new(Finder_StorageSink.new(), JobTarget.Slot.B),
-		Action_ReserveStorage.new(JobTarget.Slot.B, ClaimSpec.Kind.STORAGE_DEPOSIT, false),
+		# Cuts the trip to the sink's real room and trims the withdraw at A to match.
+		Action_ReserveStorage.new(JobTarget.Slot.B, ClaimSpec.Kind.STORAGE_DEPOSIT, false,
+			JobTarget.Slot.A),
 		Action_GotoTarget.new(JobTarget.Slot.A),
 		Action_TakeFromStorage.new(JobTarget.Slot.A),
 		to_sink,
