@@ -44,10 +44,10 @@ const STARTING_CREW: int = 2
 ## constant, so the palette is tunable without a recompile.
 @export var crew_tint_palette: Array[Color] = CandidateRoller.DEFAULT_TINTS
 
-## Pending hires: {"remaining": sim-hours left, "bay": module ref Dictionary
-## (layer+cell, JSON-safe - resolved at arrival so a deconstructed bay can
-## refund instead of dangling), "candidate": HireCandidate.to_dict()}.
-var _pending_hires: Array[Dictionary] = []
+## Paid hires with no pawn yet - through the arrival delay AND the shuttle's
+## flight in, which is what keeps the lose check from ending a run whose only crew
+## is on final approach. See [PendingHires].
+var _pending: PendingHires = PendingHires.new()
 ## Standing recruitment pool; regenerated on each trader visit. Lazily filled
 ## on first access so a fresh game has offers the moment the window opens.
 var _candidates: Array[HireCandidate] = []
@@ -155,14 +155,14 @@ func free_visitor_bunks() -> int:
 	return free
 
 func pending_hire_count() -> int:
-	return _pending_hires.size()
+	return _pending.count()
 
 # --- hiring -------------------------------------------------------------------
 
 ## "" means a hire is currently allowed; otherwise a player-facing reason.
 ## Priced against `candidate` when given, else the base hire_cost.
 func hire_block_reason(candidate: HireCandidate = null) -> String:
-	if crew_count() + _pending_hires.size() >= sleep_capacity():
+	if crew_count() + _pending.count() >= sleep_capacity():
 		return "No free sleeping pods"
 	var cost: int = candidate.price if candidate != null else hire_cost
 	if Global.resource_manager.credit_resource.get_total() < cost:
@@ -179,11 +179,7 @@ func request_hire(bay: ModuleBase, candidate: HireCandidate) -> bool:
 		return false
 	Global.resource_manager.credit_resource.force_withdraw(candidate.price)
 	_candidates.erase(candidate)
-	_pending_hires.append({
-		"remaining": arrival_delay_hours,
-		"bay": SaveManager.module_ref(bay),
-		"candidate": candidate.to_dict(),
-	})
+	_pending.add(SaveManager.module_ref(bay), candidate.to_dict(), arrival_delay_hours)
 	SignalBus.hire_candidates_changed.emit()
 	return true
 
@@ -233,27 +229,27 @@ func _process(delta: float) -> void:
 	var sim_hours: float = Global.time_manager.scale(delta) / TimeManager.SECONDS_PER_HOUR
 	if sim_hours <= 0.0:
 		return
-	for i: int in range(_pending_hires.size() - 1, -1, -1):
-		_pending_hires[i]["remaining"] = float(_pending_hires[i]["remaining"]) - sim_hours
-		if float(_pending_hires[i]["remaining"]) <= 0.0:
-			var hire: Dictionary = _pending_hires[i]
-			_pending_hires.remove_at(i)
-			_arrive(hire)
+	for hire: Dictionary in _pending.advance(sim_hours):
+		_arrive(hire)
 
+## The hire's delay is up. It stays pending until it is settled here or when its
+## shuttle docks - never in between, or the lose check sees an empty station.
 func _arrive(hire: Dictionary) -> void:
 	var bay: ModuleBase = SaveManager.resolve_module_ref(hire.get("bay", {}))
 	var candidate: HireCandidate = HireCandidate.from_dict(hire.get("candidate", {}))
 	if bay == null or not is_instance_valid(bay):
+		_pending.settle(hire)
 		_refund_hire(candidate)
 		return
 	if shuttle_scene == null:
+		_pending.settle(hire)
 		_deliver_crew(bay, candidate)
 		return
 	var shuttle: ArrivalShuttle = shuttle_scene.instantiate() as ArrivalShuttle
 	Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE).add_child(shuttle)
 	var dock: Vector2 = DockingBay.dock_position_for(bay)
 	shuttle.setup(dock, dock + Vector2(DockingBay.approach_sign_for(bay) * shuttle_approach_distance, 0.0))
-	shuttle.docked.connect(_on_shuttle_docked.bind(shuttle, bay, candidate), CONNECT_ONE_SHOT)
+	shuttle.docked.connect(_on_shuttle_docked.bind(shuttle, bay, hire), CONNECT_ONE_SHOT)
 
 ## Bay deconstructed while the shuttle was inbound: refund the price paid
 ## (WI-07 edge case).
@@ -263,11 +259,15 @@ func _refund_hire(candidate: HireCandidate) -> void:
 	AlertManager.raise_alert(&"hire_refunded", AlertData.Priority.HIGH,
 		"Recruit turned back", "No docking bay · %d cr fee refunded" % amount, null, &"crew")
 
-func _on_shuttle_docked(shuttle: ArrivalShuttle, bay: ModuleBase, candidate: HireCandidate) -> void:
-	if is_instance_valid(bay):
-		_deliver_crew(bay, candidate)
-	else:
-		_refund_hire(candidate)
+func _on_shuttle_docked(shuttle: ArrivalShuttle, bay: ModuleBase, hire: Dictionary) -> void:
+	# A refused settle means this list no longer holds the hire - a load since
+	# launch has already relaunched it - so this shuttle arrives empty.
+	if _pending.settle(hire):
+		var candidate: HireCandidate = HireCandidate.from_dict(hire.get("candidate", {}))
+		if is_instance_valid(bay):
+			_deliver_crew(bay, candidate)
+		else:
+			_refund_hire(candidate)
 	# Wait a little bit before flying away
 	await Global.time_manager.sim_seconds(Global.time_manager.SECONDS_PER_HOUR)
 	shuttle.depart()
@@ -358,7 +358,9 @@ func _on_slow_tick(_interval: float) -> void:
 func _check_lose_condition() -> void:
 	if _game_over_fired:
 		return
-	if crew_count() > 0 or not _pending_hires.is_empty():
+	# A hire counts until its pawn is standing in the bay, shuttle flight
+	# included - a station whose only crew is on final approach is not abandoned.
+	if crew_count() > 0 or not _pending.is_empty():
 		return
 	# Roster empty AND can't afford a replacement - empty-but-solvent is
 	# recoverable by hiring, so it's deliberately not game over.
@@ -374,20 +376,13 @@ func get_save_data() -> Dictionary:
 	for candidate: HireCandidate in _candidates:
 		candidates_out.append(candidate.to_dict())
 	return {
-		"pending_hires": _pending_hires.duplicate(true),
+		"pending_hires": _pending.to_save(),
 		"candidates": candidates_out,
 		"pool_generated": _pool_generated,
 	}
 
 func load_save_data(data: Dictionary) -> void:
-	_pending_hires.clear()
-	for entry in data.get("pending_hires", []):
-		var hire: Dictionary = entry
-		_pending_hires.append({
-			"remaining": float(hire.get("remaining", 0.0)),
-			"bay": hire.get("bay", {}),
-			"candidate": hire.get("candidate", {}),
-		})
+	_pending.load_save(data.get("pending_hires", []))
 	_candidates.clear()
 	for candidate_data: Dictionary in data.get("candidates", []):
 		_candidates.append(HireCandidate.from_dict(candidate_data))
