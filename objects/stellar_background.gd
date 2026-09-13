@@ -23,7 +23,8 @@ extends Node
 ## star), and `set_colors` (the star's slicing is wrong). Colours and seeds are
 ## written straight onto the materials instead.
 ##
-## NOT a manager: no tick, no signals, no save section. It registers on Global
+## NOT a manager: no tick, no save section, and one signal it only listens to
+## (the sim's pause state, which freezes the sky). It registers on Global
 ## purely so the cheats have a handle on it, which is the same reason
 ## `ui_in_game`, `ui_main`, `tilemap` and `cheats` are there.
 
@@ -66,13 +67,11 @@ func _ready() -> void:
 	if is_preview:
 		return
 	Global.stellar_background = self
-	# Real time on purpose. StellarObjectVisual._process accumulates raw delta,
-	# and that is correct here: a body ten canvas layers back, with no collision,
-	# no click target and no gameplay effect, is on the UI side of the
-	# "gameplay follows sim speed, UI stays real time" line. Concretely - do NOT
-	# join Groups.SIM_ANIMATION and do NOT take a pause hold. WI-63's onboarding
-	# holds the sim stopped for its whole run, and a slowly churning star behind
-	# it is what keeps a paused game from looking crashed.
+	# The sky stops when the sim does. WI-66 originally left it running in real
+	# time as "UI-side decoration", and playtesters read the churning star and
+	# spinning planet as the game still running: the one moving thing on a paused
+	# screen is what tells you whether it is paused. See [method _sync_motion].
+	Global.time_manager.pause_state_changed.connect(_on_pause_state_changed)
 	apply(Global.get_star_system())
 
 ## Rebuilds both bodies from `system`. Idempotent - the cheats re-apply live.
@@ -83,6 +82,38 @@ func apply(system: StarSystemData) -> void:
 	_star = _mount_star(system)
 	_planet = _mount_planet(system)
 	_apply_light(system)
+	# Freshly mounted bodies process by default; a load or a cheat re-apply
+	# while paused must come up frozen, not start moving.
+	_sync_motion()
+
+func _on_pause_state_changed(_paused: bool) -> void:
+	_sync_motion()
+
+## Runs the bodies while the sim runs and freezes them while it is stopped - on
+## the COMBINED answer, [method TimeManager.is_paused], so a dialogue or
+## tutorial hold freezes the sky too. That matches the console's pause button,
+## which also shows the combined state; a sky that disagreed with it is the
+## confusion this exists to remove.
+##
+## The vendored [StellarObjectVisual._process] is the bodies' only clock (no
+## shader reads the builtin TIME), so switching it off stops them dead without
+## editing vendored code. Pause only, not speed: at 5x the sky keeps its
+## real-time rate, because a star churning five times faster reads as a glitch.
+##
+## Previews never freeze - the contact sheet is an inspection tool.
+func _sync_motion() -> void:
+	var running: bool = is_preview or Global.time_manager == null \
+			or not Global.time_manager.is_paused()
+	for body: StellarObjectVisual in [_star, _planet]:
+		if body == null:
+			continue
+		if not running:
+			# Push the current clock into the shader before stopping. A body
+			# mounted while already paused has never run _process, so its
+			# `time` uniform is still the .tscn's authored value - and would
+			# visibly jump to the accumulated clock on the first unpaused frame.
+			body.update_time(body.time)
+		body.set_process(running)
 
 func _clear() -> void:
 	for body: Node in [_star, _planet]:

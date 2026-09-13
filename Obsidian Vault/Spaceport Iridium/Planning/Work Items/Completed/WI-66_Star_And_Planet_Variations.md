@@ -229,6 +229,8 @@ Booting `main.tscn` directly from the editor takes the same path, which means **
 
 ### 9 — Time, pause, and why the sky keeps moving
 
+> **Reversed 2026-09-13.** Playtesting showed the premise below was wrong: the motion *is* perceptible, and testers read the churning star and spinning planet as the game still running. `StellarBackground._sync_motion()` now switches the bodies' `_process` off whenever `TimeManager.is_paused()` is true — the combined answer, so holds freeze it too — and the vendored code is still untouched. It follows pause only, not speed. What follows is the original reasoning, kept for the record.
+
 `StellarObjectVisual._process` accumulates **real-time** delta. Leave it.
 
 The project's rule is that gameplay animations follow sim speed via `animation_speed()` and the `sim_animation` group, while UI stays real-time. A background body ten canvas layers behind everything, with no collision, no click target and no gameplay effect, is on the UI side of that line. Concretely: **do not join `sim_animation`, and do not take a pause hold.** The onboarding conversation holds the sim stopped for its whole run (WI-63) and a slowly churning star behind it is the thing that keeps a paused game from looking crashed.
