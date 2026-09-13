@@ -9,9 +9,11 @@ extends InspectorTabSet
 ## component UIs keep their logic. What changes is that the tabs are **ordered
 ## and named** by [InspectorTabPlan] instead of arriving in scene order under
 ## their UI's node name, and that the three things the old panel injected between
-## the header and the tabs go somewhere better: integrity into the subject block,
-## the adjacency fields into the Status tab, and DECONSTRUCT / DEMOLISH into the
-## footer.
+## the header and the tabs go somewhere better: the adjacency fields into the
+## Status tab, and integrity and DECONSTRUCT / DEMOLISH into the Upkeep tab - its
+## page and its footer row - since the inverted inspector keeps the identity strip
+## to the vital (2026-09-13). Integrity is still on the strip, as `INT 88%` on the
+## meta line.
 ##
 ## WI-64 folded three of the resulting tabs into one. Power, Air and the
 ## synthetic Environment page are now sections of a single Status tab; the plan
@@ -34,9 +36,6 @@ var _tabs: Array[Dictionary] = []
 ## Latest error text per component, exactly as the old panel tracked it - a
 ## component reports its own trouble and the panel aggregates.
 var _errors: Dictionary[ComponentBase, String] = {}
-
-func kind_label() -> String:
-	return "Module"
 
 func bind(subject: Variant) -> void:
 	_module = subject as ModuleBase
@@ -81,9 +80,11 @@ func subject_name() -> String:
 		return "Module"
 	return _module.module_data.name
 
-## Location, crew occupancy and haul priority - the three numbers the design puts
-## in front of the tabs. Haul priority is surfaced here on purpose: Stores (WI-56)
-## is where it is edited in bulk, but you can *see* it from a selection.
+## Location, crew occupancy, haul priority and integrity - the numbers the design
+## puts in front of the tabs. Haul priority is surfaced here on purpose: Stores
+## (WI-56) is where it is edited in bulk, but you can *see* it from a selection.
+## Integrity is here because it is the thing you look at first on a module you
+## just clicked after a raid; its bar is on the Upkeep tab.
 func meta_text() -> String:
 	if not is_alive():
 		return ""
@@ -105,7 +106,9 @@ func meta_text() -> String:
 	var storage: StorageComponent = _haulable_storage()
 	if storage != null and StoresModel.priority_editable(storage):
 		parts.append("Haul %+d" % storage.priority)
-	if not _module.is_complete():
+	if _module.is_complete():
+		parts.append("Int %d%%" % roundi(_module.hp_fraction() * 100.0))
+	else:
 		parts.append("Under construction")
 	return " · ".join(parts)
 
@@ -154,36 +157,20 @@ func icon_texture() -> Texture2D:
 		return null
 	return _module.module_data.icon
 
-## Integrity, and only integrity. It moved out of the tab strip into the subject
-## block because it is the thing you look at first on a module you just clicked
-## after a raid, and a bar behind a tab is a bar nobody checks.
-func subject_bars() -> Array[Dictionary]:
-	if not is_alive() or not _module.is_complete():
-		return []
-	var fraction: float = _module.hp_fraction()
-	return [{
-		"label": "Integrity",
-		"fraction": fraction,
-		"value": "%d%%" % int(round(fraction * 100.0)),
-		# Through the palette's threshold, not `< 1.0` (WI-58): a module one point
-		# down from full is not a falling vital, and amber that fires on every
-		# scratch stops meaning "look at this now" anywhere else.
-		"tint": UIPalette.gauge_tint(fraction),
-	}]
-
 ## DECONSTRUCT recovers materials; DEMOLISH does not. Both are destructive, so
 ## both are outline-only - [ActionButton] is where that invariant is enforced, so
-## asking for the weight is all this has to do.
+## asking for the weight is all this has to do. They hang under the Upkeep page,
+## never on the identity strip (2026-09-13).
 ##
 ## Shown only for a finished module, which is the same gate the construction tab
 ## used: a blueprint is cancelled by right-clicking it, and offering "deconstruct"
 ## on something not yet constructed would be a nonsense action.
-func footer_actions() -> Array[Control]:
-	if not is_alive():
-		return []
+func page_footer(id: StringName) -> Control:
+	if id != InspectorTabPlan.TAB_UPKEEP or not is_alive():
+		return null
 	var construction: ConstructionComponent = _construction()
 	if construction == null or construction.current_state != ConstructionComponent.ConstructionState.Built:
-		return []
+		return null
 	var out: Array[Control] = []
 	var deconstruct: ActionButton = ActionButton.create("Deconstruct", ActionButton.Weight.DESTRUCTIVE)
 	deconstruct.tooltip_text = "Take the module apart and recover its materials."
@@ -193,7 +180,7 @@ func footer_actions() -> Array[Control]:
 	demolish.tooltip_text = "Remove the module immediately. Its materials are lost."
 	demolish.pressed.connect(_on_demolish)
 	out.append(demolish)
-	return out
+	return action_row(out)
 
 func _on_demolish() -> void:
 	if is_alive():
@@ -249,6 +236,10 @@ func _make_source_page(index: int) -> Control:
 			var upgrades := LocalUpgradesTab.new()
 			upgrades.setup(_module)
 			return upgrades
+		InspectorTabPlan.SYNTHETIC_UPKEEP:
+			var upkeep := ModuleUpkeepTab.new()
+			upkeep.setup(_module)
+			return upkeep
 	return null
 
 func _source_for(id: StringName) -> int:
@@ -298,6 +289,11 @@ func _gather() -> void:
 		and Global.heat_manager.get_component(_module) != null
 	if has_fields or has_heat:
 		_keys.append(InspectorTabPlan.SYNTHETIC_ENVIRONMENT)
+		_builders.append(null)
+	# Upkeep is about a standing hull, so it arrives when the module is finished -
+	# the moment the Build tab retires and the demolition pair becomes legal.
+	if _module.is_complete():
+		_keys.append(InspectorTabPlan.SYNTHETIC_UPKEEP)
 		_builders.append(null)
 	if Global.unlock_manager != null \
 			and not Global.unlock_manager.get_local_upgrade_catalog(_module).is_empty():

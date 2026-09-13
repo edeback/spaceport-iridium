@@ -234,8 +234,8 @@ func _apply_theme() -> void:
 	_apply_indicator()
 
 
-## Bottom-centred, one gutter above the console - the same budget the inspector
-## takes, so the balloon never covers the console strip.
+## Bottom-centred, one gutter above the console, so the balloon never covers the
+## console strip.
 ##
 ## The frame grows *upward* with its content (`grow_vertical` is BEGIN in the
 ## scene) because an anchored [Control] clamps its rect up to its combined

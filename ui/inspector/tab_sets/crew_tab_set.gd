@@ -18,9 +18,10 @@ extends InspectorTabSet
 ## tab without anyone editing this file.
 ##
 ## The three readout blocks the old panel injected under its name row go where
-## the design puts them: the wage into the meta line and Fire into the footer
-## (WI-25), the robot bars into the Vitals tab (WI-28), and the visitor's wallet
-## and remaining stay into the meta line (WI-33).
+## the design puts them: the wage and FIRE into the Job tab's footer row, side by
+## side (WI-25; the inverted inspector moved them off the subject block), the
+## robot bars into the Vitals tab (WI-28), and the visitor's wallet and remaining
+## stay into the meta line (WI-33).
 
 const JOB_TAB_SCENE: PackedScene = preload("res://ui/pawns/pawn_job_tab.tscn")
 const SKILLS_TAB_SCENE: PackedScene = preload("res://ui/pawns/pawn_skills_tab.tscn")
@@ -31,9 +32,6 @@ const SOCIAL_TAB_SCENE: PackedScene = preload("res://ui/pawns/pawn_social_tab.ts
 var _pawn: PawnBase = null
 var _needs: PawnNeedsComponent = null
 var _tabs: Array[Dictionary] = []
-
-func kind_label() -> String:
-	return "Crew"
 
 func bind(subject: Variant) -> void:
 	_pawn = subject as PawnBase
@@ -85,10 +83,14 @@ func subject_name() -> String:
 		return _pawn.pawn_name
 	return "Visitor" if _pawn.is_visitor else "Crew member"
 
-## Whichever of the three redistributed readouts applies, plus the shift state.
-## Guests read as outsiders and carry no shift indicator; drones carry no shift
-## because they have no schedule, which is a different reason for the same
-## absence and one the component check gets right for free.
+## What the crew member is doing and how they feel about it - the design's
+## `HAULING → SMELTER · HAPPINESS 87%`, the two things you click a colonist to
+## find out. The sentence is [PawnStatus]'s, the one place a pawn becomes one.
+##
+## Guests and drones keep their own readouts. Guests read as outsiders and carry
+## no shift indicator; drones carry no shift because they have no schedule, which
+## is a different reason for the same absence and one the component check gets
+## right for free.
 func meta_text() -> String:
 	if not is_alive():
 		return ""
@@ -104,11 +106,15 @@ func meta_text() -> String:
 		parts.append("Drone")
 		parts.append(RobotVitalsTab.state_text(robot))
 		return " · ".join(parts)
-	if _pawn.schedule != null:
-		parts.append("On shift" if _pawn.is_on_shift() else "Off shift")
-	if Global.economy_manager != null:
-		parts.append("Wage %d cr/cycle" % EconomyManager.wage_for(
-			_pawn.hire_price, Global.economy_manager.wage_fraction))
+	var activity: String = PawnStatus.of(_pawn).text
+	parts.append(activity)
+	# Off shift is worth saying only when the sentence has not already said it:
+	# an idle pawn off shift already reads "Off duty", and one asleep in a bunk
+	# is off shift by the plain meaning of the words.
+	if _pawn.schedule != null and not _pawn.is_on_shift() and activity != PawnStatus.TEXT_OFF_DUTY:
+		parts.append("Off shift")
+	if _needs != null:
+		parts.append("Happiness %d%%" % roundi(_needs.happiness * 100.0))
 	return " · ".join(parts)
 
 ## The one thing about a crew member that is worth spending amber on: they are
@@ -131,15 +137,52 @@ func icon_color() -> Color:
 		return _pawn.animated_sprite.modulate
 	return UIPalette.tinted(UIPalette.LIVE, 0.6)
 
-## Firing costs severance and cannot be undone, so it is confirmed and drawn
+## The Job tab's footer: the wage beside FIRE (2026-09-13). The number you would
+## check before firing someone sits next to the button that does it, and neither
+## is on the identity strip - the design keeps anything destructive off it.
+##
+## The wage is [method EconomyManager.wage_for_pawn], the figure actually charged
+## (scaled by difficulty); the meta line used to print the unscaled one. Firing
+## costs severance and cannot be undone, so it is confirmed and drawn
 ## outline-only. Drones draw no wage and cannot be fired; guests are not employed.
-func footer_actions() -> Array[Control]:
-	if not is_alive() or _pawn is RobotPawnBase or _pawn.is_visitor or _needs == null:
-		return []
+func page_footer(id: StringName) -> Control:
+	if id != InspectorTabPlan.TAB_JOB or not _is_employed():
+		return null
+	var economy: EconomyManager = Global.economy_manager
+	var row := HBoxContainer.new()
+	row.name = "WageRow"
+	row.add_theme_constant_override("separation", UIMetrics.INSPECTOR_STRIP_GAP)
+
+	var wage := VBoxContainer.new()
+	wage.name = "Wage"
+	wage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	wage.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	wage.add_theme_constant_override("separation", 2)
+	row.add_child(wage)
+	var amount := Label.new()
+	amount.name = "Amount"
+	amount.theme_type_variation = UIType.METRIC_LARGE
+	amount.text = "%d cr/cycle" % economy.wage_for_pawn(_pawn)
+	wage.add_child(amount)
+	var caption := Label.new()
+	caption.name = "Caption"
+	caption.theme_type_variation = UIType.META_LINE
+	caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# Wages switch on with ARC's first promotion (WI-26). A figure with no word
+	# about that reads as money already leaving.
+	caption.text = ("Wage · paid each cycle" if economy.wages_enabled
+		else "Wage · starts once ARC promotes the station").to_upper()
+	wage.add_child(caption)
+
 	var fire: ActionButton = ActionButton.create("Fire", ActionButton.Weight.DESTRUCTIVE)
+	fire.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	fire.pressed.connect(_on_fire_pressed)
-	var out: Array[Control] = [fire]
-	return out
+	row.add_child(fire)
+	return row
+
+func _is_employed() -> bool:
+	return is_alive() and not _pawn is RobotPawnBase and not _pawn.is_visitor \
+		and _needs != null and Global.economy_manager != null
 
 func _on_fire_pressed() -> void:
 	if not is_alive():

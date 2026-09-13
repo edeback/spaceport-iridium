@@ -23,9 +23,6 @@ var _lift: ModuleTurbolift = null
 ## open is noticed and rebuilds the pages.
 var _shaft: TurboliftShaft = null
 
-func kind_label() -> String:
-	return "Turboshaft"
-
 func bind(subject: Variant) -> void:
 	_lift = subject as ModuleTurbolift
 	if _lift == null:

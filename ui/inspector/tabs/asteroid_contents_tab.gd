@@ -11,6 +11,9 @@ extends VBoxContainer
 ## own close button, both of which the inspector now provides.
 
 var _asteroid: AsteroidBase = null
+## How much is left to mine. It was a bar in the subject block; the inverted
+## inspector keeps the count on the meta line and the gauge here (2026-09-13).
+var _remaining: StatBar = null
 var _rows: VBoxContainer = null
 
 func set_asteroid(asteroid: AsteroidBase) -> void:
@@ -18,6 +21,8 @@ func set_asteroid(asteroid: AsteroidBase) -> void:
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_theme_constant_override("separation", UIMetrics.ROW_GAP)
 	_asteroid = asteroid
+	_remaining = StatBar.create()
+	add_child(_remaining)
 	_rows = VBoxContainer.new()
 	_rows.add_theme_constant_override("separation", 2)
 	add_child(_rows)
@@ -33,6 +38,11 @@ func refresh() -> void:
 		child.queue_free()
 	if _asteroid == null or not is_instance_valid(_asteroid):
 		return
+	_remaining.visible = _asteroid.max_resources > 0
+	if _remaining.visible:
+		_remaining.configure("Remaining",
+			float(_asteroid.cur_resources) / float(_asteroid.max_resources),
+			"%d" % _asteroid.cur_resources, UIPalette.LIVE)
 	var total: float = _asteroid.resource_total_weights
 	if total <= 0.0:
 		var empty := Label.new()

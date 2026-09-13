@@ -8,9 +8,6 @@ const TAB_CONTENTS: StringName = &"contents"
 
 var _pile: ResourcePile = null
 
-func kind_label() -> String:
-	return "Debris"
-
 func bind(subject: Variant) -> void:
 	_pile = subject as ResourcePile
 	if _pile == null:

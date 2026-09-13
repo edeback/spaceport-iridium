@@ -233,6 +233,57 @@ func test_every_tab_carries_a_sources_list_not_just_the_folded_one() -> void:
 			"source is the first of sources on every tab")
 	assert_eq(_sources(tabs, "Output"), [0] as Array[int])
 
+# --- upkeep (2026-09-13) ---------------------------------------------------------
+
+func test_upkeep_sits_in_the_structure_band_before_upgrades() -> void:
+	var tabs: Array[Dictionary] = InspectorTabPlan.module_tabs([
+		InspectorTabPlan.SYNTHETIC_UPGRADES, InspectorTabPlan.SYNTHETIC_UPKEEP,
+		"WorkspaceComponent", "ProcessorComponent",
+	])
+	assert_eq(_ids(tabs), ["Output", "Crew", "Upkeep", "Upgrades"])
+
+func test_upkeep_follows_build_when_a_walk_somehow_carries_both() -> void:
+	# The two never coexist in the game - one is a site going up, the other a
+	# module standing - but a stable order for the case costs nothing.
+	var tabs: Array[Dictionary] = InspectorTabPlan.module_tabs([
+		"ConstructionComponent", InspectorTabPlan.SYNTHETIC_UPKEEP,
+	])
+	assert_eq(_ids(tabs), ["Build", "Upkeep"])
+
+func test_the_upkeep_id_is_the_plan_constant() -> void:
+	var tabs: Array[Dictionary] = InspectorTabPlan.module_tabs([InspectorTabPlan.SYNTHETIC_UPKEEP])
+	assert_eq(StringName(tabs[0]["id"]), InspectorTabPlan.TAB_UPKEEP,
+		"the set's page_footer finds the demolition pair's tab by this id")
+
+# --- which tab is open (2026-09-13) ----------------------------------------------
+
+func _available(ids: Array[StringName]) -> Array[StringName]:
+	return ids
+
+func test_nothing_remembered_opens_nothing() -> void:
+	# The resting strip is the default: a player who only wants to know what they
+	# clicked never pays for a page.
+	assert_eq(InspectorTabPlan.tab_to_open(&"", _available([&"needs", &"job"])), &"")
+
+func test_a_remembered_tab_opens_on_the_next_subject_that_has_it() -> void:
+	assert_eq(InspectorTabPlan.tab_to_open(&"needs", _available([&"needs", &"job"])), &"needs",
+		"clicking through six colonists with Needs open keeps Needs open")
+
+func test_a_remembered_tab_the_subject_lacks_opens_nothing_rather_than_another() -> void:
+	# From a refinery with Output open onto a truss: popping some other page open
+	# would be the panel choosing for the player.
+	assert_eq(InspectorTabPlan.tab_to_open(&"output", _available([&"status", &"upkeep"])), &"")
+
+func test_pressing_a_closed_tab_opens_it() -> void:
+	assert_eq(InspectorTabPlan.tab_after_click(&"", &"needs"), &"needs")
+
+func test_pressing_another_tab_switches_to_it() -> void:
+	assert_eq(InspectorTabPlan.tab_after_click(&"needs", &"job"), &"job")
+
+func test_pressing_the_open_tab_closes_it() -> void:
+	assert_eq(InspectorTabPlan.tab_after_click(&"needs", &"needs"), &"",
+		"tabs are a toggle, not a selector")
+
 # --- empty ---------------------------------------------------------------------
 
 func test_a_module_with_no_component_uis_gets_an_empty_strip() -> void:
@@ -296,13 +347,26 @@ func test_inspector_never_climbs_into_the_readouts_above_it() -> void:
 	assert_eq(top, UIMetrics.INSPECTOR_TOP_LIMIT,
 		"a full-height inspector's top edge lands exactly on the limit")
 
-func test_inspector_content_budget_excludes_its_own_header() -> void:
-	assert_eq(UIMetrics.inspector_max_content_height(),
-		UIMetrics.inspector_max_height() - UIMetrics.READOUT_HEADER_HEIGHT)
+## The inverted inspector (2026-09-13) has no header, so the detail box's budget
+## is the column's room less the resting strip - and nothing else. The design's
+## 420px cap was dropped: a tall page gets the whole column.
+func test_the_column_is_the_detail_boxs_only_limit() -> void:
+	assert_eq(UIMetrics.inspector_detail_max_height(1440, 0, 110),
+		1440 - UIMetrics.CONSOLE_HEIGHT - 110, "a tall column is the box's to use")
 
-func test_inspector_bottom_sits_one_gutter_above_the_console() -> void:
-	assert_eq(UIMetrics.inspector_bottom_offset(),
-		UIMetrics.CONSOLE_HEIGHT + UIMetrics.SCREEN_GUTTER)
+func test_the_detail_box_gets_what_the_column_leaves_over_the_strip() -> void:
+	var top: int = UIMetrics.inspector_top(400)
+	assert_eq(UIMetrics.inspector_detail_max_height(UIMetrics.SCREEN_SIZE.y, top, 110), 290,
+		"the strip is subtracted first - it is the anchor, the box is what gives")
+
+func test_a_hostile_budget_squeezes_the_box_to_nothing_not_below() -> void:
+	var top: int = UIMetrics.inspector_top(80)
+	assert_eq(UIMetrics.inspector_detail_max_height(UIMetrics.SCREEN_SIZE.y, top, 110), 0,
+		"a column shorter than the strip leaves the box no room, never negative room")
+
+func test_inspector_bottom_sits_on_the_console() -> void:
+	assert_eq(UIMetrics.inspector_bottom_offset(), UIMetrics.CONSOLE_HEIGHT,
+		"pinned to the console's top edge, not floating a gutter above it")
 
 func test_a_taller_screen_gives_the_inspector_more_room() -> void:
 	assert_gt(UIMetrics.inspector_max_height(1440), UIMetrics.inspector_max_height(1080))

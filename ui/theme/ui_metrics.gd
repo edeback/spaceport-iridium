@@ -196,13 +196,49 @@ const STATION_MAP_HEIGHT: int = 240
 ## permanently, on a station that mostly has an empty alert feed.
 const INSPECTOR_TOP_LIMIT: int = SCREEN_GUTTER + STATION_MAP_HEIGHT + SCREEN_GUTTER
 
-## Side of the subject block's icon.
+## Side of the identity strip's icon frame.
 const INSPECTOR_ICON_SIZE: int = 50
+
+# The inverted inspector (2026-09-13). It reads bottom-up: an identity strip on
+# the floor of the panel, a rail of folder tabs standing on it, and a detail box
+# that rises out of the open tab. Every number below is the design's.
+
+## Padding inside the identity strip and the detail box.
+const INSPECTOR_PAD: int = 15
+## Gap between the icon, the name block and the strip's two buttons.
+const INSPECTOR_STRIP_GAP: int = 13
+## Side of the strip's two square buttons, centre-camera and deselect.
+const INSPECTOR_STRIP_BUTTON: int = 30
+const INSPECTOR_STRIP_BUTTON_GAP: int = 6
+## Inset between the icon frame's border and the art inside it.
+const INSPECTOR_ICON_INSET: int = 7
+## The tab rail: how far in from the strip's left edge the first tab stands, the
+## gap between tabs, a tab's own padding, and the height of the open tab's cap.
+##
+## The horizontal pad is 8 where the design drew 14, because the design drew four
+## tabs and the game has six on a crew member and on a refinery. At 14 the sixth
+## wrapped onto a second row, which a screenshot caught; at 8, with the 11px
+## [constant UIType.INSPECTOR_TAB] label, both fit one row with room to spare. The
+## rail still wraps rather than clipping when a module (or a mod) carries more.
+const INSPECTOR_RAIL_INSET: int = 12
+const INSPECTOR_TAB_GAP: int = 3
+const INSPECTOR_TAB_PAD_H: int = 8
+const INSPECTOR_TAB_PAD_V: int = 7
+const INSPECTOR_TAB_CAP: int = 2
+## Gap between an open page and the footer row under its divider (the Job tab's
+## wage-and-FIRE row, the Upkeep tab's demolition pair).
+const INSPECTOR_FOOTER_GAP: int = 12
+## How far each floating part's shadow is pushed away from the rail: the box's
+## upward, the strip's downward. Equal to the shadow's size so neither spills
+## back over the tabs between them - the strip draws after the rail, and a shadow
+## that reached up would darken the tabs it is meant to lift.
+const INSPECTOR_SHADOW_OFFSET: int = READOUT_SHADOW_SIZE
 
 ## The floor the selection surface may never be squeezed under (WI-58).
 ##
-## Sized to the inspector's own chrome - subject block, tab strip, footer - plus
-## roughly two rows of whatever tab is open. It exists because the right column
+## Sized to the inspector's resting chrome - identity strip and tab rail, roughly
+## 115px since the inversion - plus a hundred-odd pixels of whatever tab is open.
+## It exists because the right column
 ## has three tenants and only the inspector has nowhere to overflow to: the feed
 ## has a `+ n more` row and a history flyout, the map folds, and the raid readout
 ## is temporary, but a squeezed inspector simply stops showing the thing the
@@ -217,15 +253,26 @@ const INSPECTOR_MIN_CONTENT_HEIGHT: int = 220
 
 ## Tallest the inspector may become before its tab content starts scrolling
 ## inside itself instead of pushing the panel further up the screen.
+##
+## The whole of it is content: the inspector has had no header since 2026-09-13
+## (the portrait and name say what `SELECTED · CREW` did, in none of the height),
+## so there is no second "less the header" budget any more.
 static func inspector_max_height(screen_height: int = SCREEN_SIZE.y,
 		top_limit: int = INSPECTOR_TOP_LIMIT) -> int:
-	return maxi(0, screen_height - CONSOLE_HEIGHT - SCREEN_GUTTER - top_limit)
+	return maxi(0, screen_height - CONSOLE_HEIGHT - top_limit)
 
-## The same, less the 34px readout header - the budget the tab set's content
-## region actually has to fit into.
-static func inspector_max_content_height(screen_height: int = SCREEN_SIZE.y,
-		top_limit: int = INSPECTOR_TOP_LIMIT) -> int:
-	return maxi(0, inspector_max_height(screen_height, top_limit) - READOUT_HEADER_HEIGHT)
+## Tallest the detail box may be, given the resting chrome under it: whatever the
+## column leaves, under the map and the alerts, once the identity strip and tab
+## rail have taken theirs.
+##
+## No fixed cap. The design drew one at 420px, and in play it cut a tall page
+## short with half the column standing empty above it - the column's own limit is
+## the only one the box needs, which is what the inspector always had. The strip
+## is subtracted first because it is the anchor: a tight column squeezes the box,
+## never the name.
+static func inspector_detail_max_height(screen_height: int, top_limit: int,
+		resting_height: int) -> int:
+	return maxi(0, inspector_max_height(screen_height, top_limit) - resting_height)
 
 # --- alerts (WI-53) -------------------------------------------------------------
 
@@ -260,10 +307,10 @@ const ALERT_HISTORY_RIGHT_INSET: int = INSPECTOR_WIDTH + SCREEN_GUTTER * 2
 ## revisited when the raid readout landed above it, which is how the inspector
 ## ended up with a zero-height content region during a raid.
 ##
-## The subtraction runs bottom-up from the screen: the console, the gutter above
-## it, the inspector's floor plus its own 34px header, the gutter above the
-## inspector, then the readouts stacked above the feed and their gutters. What is
-## left is the feed's.
+## The subtraction runs bottom-up from the screen: the console, the inspector's
+## floor (flush on the console, with no header of its own, since 2026-09-13), the
+## gutter above the inspector, then the readouts stacked above the feed and their
+## gutters. What is left is the feed's.
 ##
 ## **This and [constant AlertRules.FEED_CAP] must still agree** in the ordinary
 ## no-raid column: the cap is 4 rows plus the `+ n more` line, and the height
@@ -281,8 +328,8 @@ static func alert_feed_max_height(raid_visible: bool,
 	var used: int = SCREEN_GUTTER + STATION_MAP_HEIGHT + SCREEN_GUTTER
 	if raid_visible:
 		used += ALERT_RAID_HEIGHT + SCREEN_GUTTER
-	used += SCREEN_GUTTER + READOUT_HEADER_HEIGHT + INSPECTOR_MIN_CONTENT_HEIGHT
-	return maxi(0, screen_height - CONSOLE_HEIGHT - SCREEN_GUTTER - used)
+	used += SCREEN_GUTTER + INSPECTOR_MIN_CONTENT_HEIGHT
+	return maxi(0, screen_height - CONSOLE_HEIGHT - used)
 
 ## Tallest the feed's content region may become - the same budget less its own
 ## 34px header.
@@ -443,16 +490,22 @@ static func panel_height(screen_height: int = SCREEN_SIZE.y) -> int:
 static func panel_content_height(screen_height: int = SCREEN_SIZE.y) -> int:
 	return panel_height(screen_height) - PANEL_HEADER_HEIGHT
 
-## Y of the top of the inspector, which is bottom-anchored one gutter above the
-## console. Its height varies with its tab set, so it is a parameter.
+## Y of the top of the inspector, which is bottom-anchored on the console. Its
+## height varies with its tab set, so it is a parameter.
 static func inspector_top(inspector_height: int, screen_height: int = SCREEN_SIZE.y) -> int:
-	return screen_height - CONSOLE_HEIGHT - SCREEN_GUTTER - inspector_height
+	return screen_height - CONSOLE_HEIGHT - inspector_height
 
 ## Distance from the bottom of the screen to the bottom of the inspector - the
 ## offset the inspector anchors at, and the value that does not change when its
 ## content does.
+##
+## The console's height and nothing else (2026-09-13). It used to be one gutter
+## more, floating the inspector above the console like a readout; it now sits on
+## the console's top edge the way the left panels do, so the identity strip reads
+## as part of the console the eye is already on rather than a box hovering over
+## the station.
 static func inspector_bottom_offset() -> int:
-	return CONSOLE_HEIGHT + SCREEN_GUTTER
+	return CONSOLE_HEIGHT
 
 ## Width of the mode-button zone actually consumed by `count` buttons plus their
 ## gaps (no trailing gap). The console reserves CONSOLE_MODES_WIDTH; this is what

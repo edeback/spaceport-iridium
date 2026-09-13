@@ -54,7 +54,8 @@ const BAND_POWER: int = 20
 const BAND_STORAGE: int = 30
 ## Who works it, and who visits it.
 const BAND_CREW: int = 40
-## The hull itself - construction progress, and whatever a mod puts here.
+## The hull itself - construction progress while it is going up, upkeep once it
+## stands, and whatever a mod puts here.
 const BAND_STRUCTURE: int = 50
 ## Anything this table has never heard of. After the known bands so a mod's tab
 ## does not land between two vanilla ones and look like a reordering bug, before
@@ -94,8 +95,17 @@ const MODULE_TABS: Dictionary[String, Dictionary] = {
 ## Tabs the module set contributes itself rather than getting from a component.
 const SYNTHETIC_ENVIRONMENT: String = "Environment"
 const SYNTHETIC_UPGRADES: String = "Upgrades"
+## What keeping a standing module costs - integrity, breakdown, the upkeep bill -
+## and the page DECONSTRUCT / DEMOLISH hang under (2026-09-13). The inverted
+## inspector has no footer on its identity strip, and the design is explicit that
+## a destructive action never goes there.
+const SYNTHETIC_UPKEEP: String = "Upkeep"
+const TAB_UPKEEP: StringName = &"upkeep"
 
 const SYNTHETIC_TABS: Dictionary[String, Dictionary] = {
+	# Beside Build in the structure band: the two never coexist (one is a site
+	# going up, the other a module standing), so they read as one slot.
+	SYNTHETIC_UPKEEP: {"label": "Upkeep", "band": BAND_STRUCTURE},
 	# Always last, because it is about the module's future rather than its present.
 	SYNTHETIC_UPGRADES: {"label": "Upgrades", "band": BAND_UPGRADES},
 }
@@ -287,6 +297,30 @@ static func crew_tabs(flags: Dictionary) -> Array[Dictionary]:
 	if bool(flags.get("social", false)):
 		out.append({"id": TAB_SOCIAL, "text": "Social"})
 	return out
+
+# --- which tab is open (2026-09-13) ----------------------------------------------
+#
+# The inverted inspector's tabs are a **toggle, not a selector**: nothing open is
+# its resting state, and it is the one a player who only wants to know what they
+# clicked never has to leave. So "no tab" is a real answer here, spelled `&""`,
+# and it is remembered like any other.
+
+## The tab to open when a subject is mounted, given the one its kind was last left
+## on (`preferred`) and the tabs this subject actually has.
+##
+## A remembered tab this subject lacks opens **nothing** rather than the first tab:
+## clicking from a refinery with Output open onto a truss that has no Output must
+## not pop some other page open. The caller keeps the memory, so the next refinery
+## still opens on Output.
+static func tab_to_open(preferred: StringName, available: Array[StringName]) -> StringName:
+	if preferred == &"" or not available.has(preferred):
+		return &""
+	return preferred
+
+## What is open after the player presses `clicked` while `open` is: pressing the
+## open tab closes the box back to the resting strip, pressing any other opens it.
+static func tab_after_click(open: StringName, clicked: StringName) -> StringName:
+	return &"" if clicked == open else clicked
 
 ## Drops the `band` and `source` bookkeeping, leaving what [TabStrip.set_tabs]
 ## reads. The extra keys are harmless to the strip - it only looks at `id`,

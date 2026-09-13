@@ -111,6 +111,7 @@ func _all_variations() -> Array[StringName]:
 		UIType.META_LINE, UIType.MODE_LABEL, UIType.HOTKEY, UIType.TAB_LABEL,
 		UIType.BODY, UIType.ACTION_PRIMARY, UIType.ACTION_SECONDARY,
 		UIType.ACTION_DESTRUCTIVE, UIType.TAB_ACTIVE, UIType.TAB_INACTIVE,
+		UIType.INSPECTOR_TAB,
 	]
 
 ## Every name [UIType] hands out has to exist as a variation, or a control that
@@ -130,7 +131,8 @@ func test_label_variations_carry_a_font_and_a_size() -> void:
 
 func test_the_button_variations_are_buttons_and_the_rest_are_labels() -> void:
 	for name: StringName in [UIType.ACTION_PRIMARY, UIType.ACTION_SECONDARY,
-			UIType.ACTION_DESTRUCTIVE, UIType.TAB_ACTIVE, UIType.TAB_INACTIVE]:
+			UIType.ACTION_DESTRUCTIVE, UIType.TAB_ACTIVE, UIType.TAB_INACTIVE,
+			UIType.INSPECTOR_TAB]:
 		assert_eq(_theme.get_type_variation_base(name), StringName("Button"),
 			"%s varies Button" % name)
 	for name: StringName in [UIType.PANEL_TITLE, UIType.READOUT_LABEL, UIType.METRIC,
@@ -148,6 +150,7 @@ func test_tracked_variations_actually_carry_tracking() -> void:
 		UIType.META_LINE: UIMetrics.TRACKING_META,
 		UIType.MODE_LABEL: UIMetrics.TRACKING_MODE_LABEL,
 		UIType.TAB_LABEL: UIMetrics.TRACKING_TAB_LABEL,
+		UIType.INSPECTOR_TAB: UIMetrics.TRACKING_TAB_LABEL,
 	}
 	for name: StringName in expected:
 		var font: FontVariation = _theme.get_font(&"font", name) as FontVariation

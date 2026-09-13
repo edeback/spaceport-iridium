@@ -47,6 +47,11 @@ const ACTIVE_BORDER := Color("2f6b80")
 ## Left accent of an inert list row - present so every row has one, dim enough
 ## that it never competes with a live or amber row.
 const INERT_ACCENT := Color("2e4256")
+## The frame around the inspector's subject icon (2026-09-13). A step brighter
+## than [constant CONTROL_BORDER]: the icon is the only thing on the identity
+## strip that is not text, and a frame the same weight as the two buttons beside
+## it would read as a third button.
+const ICON_FRAME_BORDER := Color("3a5f75")
 ## 1px inner top highlight every panel carries, so a surface reads as lit from
 ## above rather than as a flat hole.
 const INNER_HIGHLIGHT := Color(0.471, 0.745, 0.882, 0.07) # rgba(120,190,225,.07)
@@ -156,6 +161,13 @@ static var _cached_panel_gradient: GradientTexture2D = null
 static var _cached_readout_gradient: GradientTexture2D = null
 static var _cached_rule_gradient: GradientTexture2D = null
 static var _cached_console_gradient: GradientTexture2D = null
+static var _cached_open_tab_gradient: GradientTexture2D = null
+
+## The inspector's open tab (2026-09-13): a cyan wash, strongest at its capped top
+## and fading toward the identity strip it stands on. The design's
+## rgba(79,191,217,.22 -> .05).
+const OPEN_TAB_WASH_TOP: float = 0.22
+const OPEN_TAB_WASH_BOTTOM: float = 0.05
 
 # --- helpers ------------------------------------------------------------------
 
@@ -220,6 +232,17 @@ static func section_rule_gradient() -> GradientTexture2D:
 		texture.fill_to = Vector2(1.0, 0.0)
 		_cached_rule_gradient = texture
 	return _cached_rule_gradient
+
+## The open inspector tab's wash. Composited over [constant PANEL] rather than
+## drawn as a translucent LIVE: the top half of the tab rail is see-through, so a
+## translucent wash would take its colour from whatever part of the station the
+## tab happens to sit over. Shared - do not mutate.
+static func open_tab_gradient() -> GradientTexture2D:
+	if _cached_open_tab_gradient == null:
+		_cached_open_tab_gradient = _make_gradient(
+			PANEL.blend(tinted(LIVE, OPEN_TAB_WASH_TOP)),
+			PANEL.blend(tinted(LIVE, OPEN_TAB_WASH_BOTTOM)))
+	return _cached_open_tab_gradient
 
 ## Top-to-bottom two-stop gradient texture, 1px wide - callers stretch it.
 static func _make_gradient(top: Color, bottom: Color) -> GradientTexture2D:

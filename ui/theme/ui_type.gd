@@ -87,3 +87,10 @@ const TAB_ACTIVE: StringName = &"TabActive"
 
 ## Unselected tab: no fill, no border, secondary text.
 const TAB_INACTIVE: StringName = &"TabInactive"
+
+## A folder tab on the inspector's rail (2026-09-13). Chakra Petch 600 at the
+## design's 11px - one size under a strip tab, which is what fits a crew member's
+## six tabs, and a refinery's, on one 420px row. The colours are a closed tab's;
+## [InspectorTabRail] lifts the open one to TEXT_ON_LIVE, and draws both shapes
+## itself, because a folder tab is not the strip's underlined tab.
+const INSPECTOR_TAB: StringName = &"InspectorTab"

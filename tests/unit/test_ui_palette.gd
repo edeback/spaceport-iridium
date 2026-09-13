@@ -282,15 +282,14 @@ func test_panel_content_height_excludes_the_header() -> void:
 		UIMetrics.panel_height() - UIMetrics.PANEL_HEADER_HEIGHT,
 		"content is what is left below the 56px header")
 
-func test_inspector_top_leaves_a_gutter_above_the_console() -> void:
+func test_inspector_top_sits_on_the_console() -> void:
 	var top: int = UIMetrics.inspector_top(300)
-	assert_eq(top, 1080 - 112 - 20 - 300, "inspector top at the design resolution")
-	assert_eq(top + 300, UIMetrics.panel_bottom() - UIMetrics.SCREEN_GUTTER,
-		"its foot sits one gutter above the console")
+	assert_eq(top, 1080 - 112 - 300, "inspector top at the design resolution")
+	assert_eq(top + 300, UIMetrics.panel_bottom(),
+		"its foot is the console's top edge, where the left panels end too")
 
-func test_inspector_bottom_offset_is_console_plus_gutter() -> void:
-	assert_eq(UIMetrics.inspector_bottom_offset(),
-		UIMetrics.CONSOLE_HEIGHT + UIMetrics.SCREEN_GUTTER,
+func test_inspector_bottom_offset_is_the_console() -> void:
+	assert_eq(UIMetrics.inspector_bottom_offset(), UIMetrics.CONSOLE_HEIGHT,
 		"the offset the inspector anchors at does not depend on its content")
 
 func test_mode_zone_width_counts_gaps_between_not_after() -> void:
@@ -322,18 +321,19 @@ func _top_limit_for(raid_visible: bool) -> int:
 
 func test_inspector_survives_a_raid_with_a_full_alert_feed() -> void:
 	var top: int = _top_limit_for(true)
-	var content: int = UIMetrics.inspector_max_content_height(UIMetrics.SCREEN_SIZE.y, top)
+	var content: int = UIMetrics.inspector_max_height(UIMetrics.SCREEN_SIZE.y, top)
 	assert_gte(content, UIMetrics.INSPECTOR_MIN_CONTENT_HEIGHT,
 		"a raid plus a capped feed still leaves the inspector its floor")
 
 func test_inspector_survives_a_full_alert_feed_with_no_raid() -> void:
 	var top: int = _top_limit_for(false)
-	var content: int = UIMetrics.inspector_max_content_height(UIMetrics.SCREEN_SIZE.y, top)
+	var content: int = UIMetrics.inspector_max_height(UIMetrics.SCREEN_SIZE.y, top)
 	assert_gte(content, UIMetrics.INSPECTOR_MIN_CONTENT_HEIGHT,
 		"the ordinary column leaves the inspector its floor too")
 
-## The floor has to clear a realistic crew subject's chrome (~152px) with room
-## left for content, or it is a floor that still renders an empty box.
+## The floor has to clear the inspector's resting chrome (identity strip plus tab
+## rail, ~115px since the 2026-09-13 inversion) with room left for an open page,
+## or it is a floor that still renders an empty box.
 func test_the_inspector_floor_clears_its_own_chrome() -> void:
 	assert_gt(UIMetrics.INSPECTOR_MIN_CONTENT_HEIGHT, 160,
 		"the floor is chrome plus content, not chrome alone")

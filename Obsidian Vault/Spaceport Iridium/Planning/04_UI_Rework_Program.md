@@ -17,11 +17,11 @@ The end state: navigation in a console welded to the bottom edge, **one** panel 
 These are the load-bearing rules. Every child WI is judged against them.
 
 1. **One panel.** Build, Crew, Stores, Trade, R&D, Comms and Overlays are *modes*, not windows. Opening one closes the last. Two panels can never coexist — so there is no z-order to manage and no "close everything" problem. Two **readout flyouts** are chartered exceptions: the resource ledger (WI-52) and the alert log (WI-53). Both are raised from a permanent readout rather than from the console, both are things you glance at rather than work in, and closing Build to check stock or to read what just happened is exactly the interruption this rule exists to prevent. Nothing else gets the exemption without a line here.
-2. **One inspector.** Crew, module, asteroid, pile, turboshaft and corridor selections render into the *same* bottom-right surface with a swapped tab set. ~~Nothing selected shrinks it to a single line of text rather than hiding it.~~ *(2026-09-13)* Nothing selected hides it — the line was a permanent box that said nothing.
+2. **One inspector.** Crew, module, asteroid, pile, turboshaft and corridor selections render into the *same* bottom-right surface with a swapped tab set. ~~Nothing selected shrinks it to a single line of text rather than hiding it.~~ *(2026-09-13)* Nothing selected hides it — the line was a permanent box that said nothing. *(2026-09-13, later)* It reads **bottom-up**: an identity strip on its floor, a rail of tabs on that, and a detail box that rises only while a tab is open — see §"What inverting the inspector changed".
 3. **Left is doing, right is watching.** Panels only ever open on the left. Map, alerts and inspector own the right edge permanently and never move, so opening a panel shifts nothing the player was reading.
 4. **Vitals are pinned; everything else is the ledger.** Six resources sit in the console strip; the rest live behind the ledger chip, grouped. Pinning promotes any resource into the strip, so the layout is indifferent to 20 resources or 100.
 5. **Amber is a budget, not a colour.** Cyan means live / selected / affordable. Amber is reserved for breaches, falling vitals and ARC. Nothing decorative is amber, which is why one amber pixel reads instantly.
-6. **One panel frame.** A 56px panel header, a 34px readout header, a 1px `#1d2c40` edge, a 1px inner top highlight, and the hotkey right-aligned in the header. *Most of the polish gap in the current build is frame inconsistency, not placement.*
+6. **One panel frame.** A 56px panel header, a 34px readout header, a 1px `#1d2c40` edge, a 1px inner top highlight, and the hotkey right-aligned in the header. *Most of the polish gap in the current build is frame inconsistency, not placement.* *(2026-09-13)* The inspector is the one right-column tenant with **no** readout header: the inversion traded `SELECTED · CREW` for the portrait and name, which say the same thing in none of the height. It keeps the edge, the inner highlight and the palette.
 
 ## Geometry
 
@@ -46,7 +46,7 @@ The project already runs a **1920×1080 viewport** with `window/stretch/mode="vi
 | Panel header | 56px |
 | Readout header | 34px |
 
-Panels run from the top of the screen to the top of the console (`bottom: 112px`). The right column starts at `top: 20px, right: 20px`; the inspector sits at `right: 20px, bottom: 132px` (20px above the console).
+Panels run from the top of the screen to the top of the console (`bottom: 112px`). The right column starts at `top: 20px, right: 20px`; the inspector sits at `right: 20px, bottom: 132px` (20px above the console). *(2026-09-13: `bottom: 112px` — it sits on the console now, like the left panels.)*
 
 ## Palette
 
@@ -208,7 +208,7 @@ Shipped 2026-08-10. Details and the five traps found are in [[WI-51_Inspector]].
 
 | File | What it is |
 | --- | --- |
-| `ui/inspector/inspector_panel.tscn` + `.gd` (`InspectorPanel`) | The one selection surface: a bottom-right `ReadoutPanel`, 420px, one gutter above the console, **growing upward** to a hard top limit. `SelectionKind`, `select()` / `clear()` / `kind()` / `selected_subject()` / `camera_target()`, the static `kind_of()`, `signal selection_changed`, and ~~the nothing-selected line with its caret~~ — removed 2026-09-13: nothing selected hides the panel through `UIMain._sync_inspector_visibility()`. |
+| `ui/inspector/inspector_panel.tscn` + `.gd` (`InspectorPanel`) | The one selection surface: a bottom-right ~~`ReadoutPanel`~~ plain `Control` since the 2026-09-13 inversion (§"What inverting the inspector changed"), 420px, ~~one gutter above the console~~ sitting on the console since 2026-09-13, **growing upward** to a hard top limit. `SelectionKind`, `select()` / `clear()` / `kind()` / `selected_subject()` / `camera_target()`, the static `kind_of()`, `signal selection_changed`, and ~~the nothing-selected line with its caret~~ — removed 2026-09-13: nothing selected hides the panel through `UIMain._sync_inspector_visibility()`. |
 | `ui/inspector/tab_sets/*.gd` | One `InspectorTabSet` per kind — `CrewTabSet`, `ModuleTabSet`, `AsteroidTabSet`, `PileTabSet`, `TurboshaftTabSet`. A set answers *what the thing is called, what its meta line says, which tabs it has, what each page holds*; the panel owns the surface. Nodes, not RefCounteds, so their connections die with them. |
 | `ui/inspector/inspector_tab_plan.gd` (`InspectorTabPlan`) | Pure: module tab ordering (production → status → power → storage → crew → structure → *unknown* → upgrades), the short labels, duplicate numbering, and the component-derived crew tab set. 25 tests. **Amended by WI-64 (2026-08-23):** Power, Air and the synthetic Environment page fold into one `Status` tab (`STATUS_MEMBERS`, sections stacked Power → Air → Environment by `ModuleStatusTab`), every tab carries a `sources` list, and a component's key resolves up its inheritance chain so a subclass inherits its base's tab. 44 tests. |
 | `scripts/utility/mood_catalog.gd` (`MoodCatalog`) | Pure: modifier id → `{label, blurb, cause}` across the fixed table and the three dynamic families (disease/trait/event), the duration-or-cause column, breakdown sorting, and **the happiness formula itself** (`combine`) — which `PawnNeedsComponent` now calls, so the breakdown and the sim cannot diverge. 30 tests. |
@@ -457,6 +457,41 @@ looks for crew. It is now the Crew panel's **`HIRE` tab**.
   screenshot-only.
 
 Verified by a 40-check windowed probe plus five 1920×1080 screenshots; 1482 GUT green.
+
+## What inverting the inspector changed (2026-09-13)
+
+Source: the Claude Design handoff `Iridium Inspector.dc.html` (project `d4fdab39-dde5-4ff9-9aba-4ae13578fe3e`). It is a **layout** document, not a content spec — its tab names (`LOG`, `STAFF`) are illustrative — so everything the inspector already showed was kept and re-homed rather than dropped.
+
+The inspector used to read top-down: a 34px `SELECTED · CREW` header, the subject block with its bars, a tab strip whose first tab was always open, the page, and a footer of actions. Every click paid for a whole page. It now reads **bottom-up**, and at rest it shows the vital information and nothing else.
+
+| Part | What it is |
+| --- | --- |
+| **Identity strip** | On the panel's floor, sitting on the console's top edge, where the eye already is. Framed icon, name, meta line (the amber status line under it when there is one), and exactly two buttons: **◎ centre camera** (`camera_target()` → `GameCamera.jump_to`) and **✕ deselect**. Never anything destructive. It never moves: switching or closing tabs changes only what is above it. |
+| **Tab rail** | `InspectorTabRail` (`ui/inspector/inspector_tab_rail.gd`): folder tabs standing on the strip. A **toggle, not a selector** — nothing open is the resting state, and pressing the open tab closes the box. The open tab gets `ACTIVE_BORDER` sides, a 2px `LIVE` cap and the `UIPalette.open_tab_gradient()` wash and stands 2px taller; while one is open the whole rail fills, side borders included. It is not a `TabStrip` because a strip always has something selected. |
+| **Detail box** | Rises out of the open tab and grows upward as far as its page needs, stopped only by `UIMetrics.inspector_detail_max_height()` — what the column leaves under the map and alerts once the resting chrome has its share — past which the page scrolls. A page may carry a **footer row** under a divider (`InspectorTabSet.page_footer(id)`), rebuilt with the strip. |
+
+Where things moved:
+
+- **No header.** `InspectorPanel` extends `Control` and is no longer a `ReadoutPanel`; `inspector_panel.tscn` is a bare root and the whole surface is built in code from `UIMetrics`. `kind_label()` went with the header. `UIMetrics.inspector_max_content_height()` is deleted (all it did was subtract the header), and `alert_feed_max_height()` no longer reserves 34px for one.
+- **No subject bars, no subject footer.** `subject_bars()` and `footer_actions()` are gone from the tab-set contract; `page_footer(id)` replaces the second. **FIRE sits beside the wage** on the Job tab's footer — the number you would check before firing sits next to the button — and the wage is now `EconomyManager.wage_for_pawn()`, the scaled figure actually charged (the meta line used to print the unscaled one). **DECONSTRUCT / DEMOLISH** hang under a new synthetic **Upkeep** tab (`ModuleUpkeepTab`: the integrity bar, a breakdown row, the module's upkeep line with a word on whether ARC has switched upkeep on yet), `BAND_STRUCTURE`, present once a module is complete. **DESIGNATE** moved under an asteroid's Contents, with the remaining-chunks bar.
+- **The meta lines carry what the bars used to.** Crew: `PawnStatus`'s sentence · `Off shift` when the sentence has not said so · happiness. Module: cell · crew · haul · **`INT 88%`**. Integrity is still visible without opening anything, and the amber status line still says "Damaged" the moment it matters.
+- **The open tab persists per kind, "none" included.** `InspectorTabPlan.tab_to_open()` / `tab_after_click()` are the rule, with tests. A remembered tab the next subject lacks opens nothing rather than some other page, and the memory survives it, so the next refinery still opens on Output.
+- **Esc is unchanged** — still the selection rung, still a deselect.
+
+Two deviations from the design, both because the game has more than the mockup drew:
+
+1. **Tab padding is 8px, not 14, and the label is 11px through a new `UIType.INSPECTOR_TAB`.** The design drew four tabs; a crew member and a refinery have six. At 14px the sixth wrapped onto a second row, which only a screenshot showed. The 11px is the design's own size — the theme's strip tabs are 12. The rail still wraps rather than clipping when something carries more.
+2. **The meta line wraps rather than ellipsing.** The design's meta fits on one line; `PawnStatus` sentences often do not, and the sentence *is* the vital information. A crew strip with a wrapped sentence rests at ~124px against the design's 108.
+
+Three more after the first screenshots, at the user's direction — each walks back a piece of the design that did not survive being played with:
+
+3. **The rail is solid while a tab is open.** The design filled only its lower half, leaving a see-through notch beside the tabs between the box and the strip. Now the whole rail fills and carries the box's side borders down to the strip, so the three parts are one column. At rest it stays clear.
+4. **Flush on the console, not floating a gutter above it.** `UIMetrics.inspector_bottom_offset()` is `CONSOLE_HEIGHT`; the strip wears no bottom border, because the console's cyan top edge is that edge (the left panels' rule). `alert_feed_max_height()` stopped reserving the gutter that used to sit under the inspector.
+5. **No 420px cap.** The detail box grows as far as its page needs, limited only by the map and alerts above it, which is what the inspector always had. `INSPECTOR_DETAIL_MAX_HEIGHT` is deleted.
+
+One defect the inversion introduced and a screenshot caught: **a page opened from the resting strip is built while the box is still hidden**, so its autowrap labels measure at zero width and ask for several lines too many — a blank band under Status. The column's `minimum_size_changed` cannot see the correction, because the page sits in a `ScrollContainer`, which reports a fixed minimum whatever its child asks for. `_adopt_page` now connects each page's own `minimum_size_changed` to the fit. This is WI-51's "re-fit, never measure once" rule, with one more place the signal has to come from.
+
+Verified by a 50-check windowed probe (every state the design names, the toggle, per-kind memory, the anchor, the three moved actions, ✕ and Esc) plus 1920×1080 screenshots of each state, and a second probe for the three changes above; GUT green.
 
 ## Cross-cutting risks
 

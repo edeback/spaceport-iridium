@@ -1,26 +1,44 @@
 class_name InspectorPanel
-extends ReadoutPanel
+extends Control
 
-## The one selection surface (WI-51, invariant 2).
+## The one selection surface (WI-51, invariant 2), read **bottom-up** since
+## 2026-09-13.
 ##
-## Crew, module, asteroid, pile and turboshaft selections all render here, into a
-## 420px [ReadoutPanel] welded to the bottom-right corner one gutter above the
-## console. Only the tab set changes. It replaces five panels, three of which
-## instantiated themselves fresh per click and two of which **chased their
-## subject across the screen every frame** - which is the clearest single symptom
-## of the problem this program exists to fix: a panel that overlaps the station,
-## overlaps other panels, moves while you read it, and leaves selection with no
-## fixed place to be.
+## Crew, module, asteroid, pile and turboshaft selections all render here, in a
+## 420px surface in the bottom-right corner, sitting on the console's top edge.
+## Only the tab set changes. It replaces five panels, three of which instantiated
+## themselves fresh per click and two of which **chased their subject across the
+## screen every frame**.
 ##
-## The panel grows *upward* with its content and stops at
-## [constant UIMetrics.INSPECTOR_TOP_LIMIT]; past that its tab content scrolls
-## inside itself rather than climbing into the readouts above.
+## Three parts, stacked from the floor up:
 ##
-## Nothing selected is **no panel at all** (2026-09-13). WI-51 kept a caret-blinking
-## nothing-selected line so the bottom-right would teach the player where
-## selection lives; in play it was a permanent box that said nothing. [UIMain]
-## owns this panel's `visible` (its `_sync_inspector_visibility()`), because
-## Trade and R&D hide it too and two writers would each undo the other.
+## 1. **The identity strip**, on the console's top edge where the eye already
+##    is: the icon, the name, the meta line (and the amber status line when there
+##    is one), plus the two things you always want - centre the camera, deselect.
+##    Nothing else, and never anything destructive. It never moves: switching or
+##    closing tabs changes only what is above it.
+## 2. **The tab rail** ([InspectorTabRail]) standing on it.
+## 3. **The detail box**, rising out of the open tab and growing upward as far as
+##    its page needs, stopped only by the map and alerts above it
+##    ([method UIMetrics.inspector_detail_max_height]), past which the page
+##    scrolls inside itself.
+##
+## **Tabs are a toggle, not a selector.** Nothing open is the resting state -
+## ~115px of chrome - and pressing the open tab returns to it; a player who only
+## wants to know what they clicked never pays for the rest. The open tab is
+## remembered **per kind**, "none" included ([method InspectorTabPlan.tab_to_open]
+## and [method InspectorTabPlan.tab_after_click] are the rule), so clicking
+## through six colonists with Needs open keeps Needs open.
+##
+## There is **no title bar**. It used to be a [ReadoutPanel] whose 34px header said
+## `SELECTED · CREW`; the portrait and name say the same thing in none of the
+## height, and the close control moved into the strip. That makes the inspector
+## the one right-column tenant that is not a readout frame, which is recorded in
+## the program doc beside invariant 6.
+##
+## Nothing selected is **no panel at all** (2026-09-13). [UIMain] owns this
+## panel's `visible` (its `_sync_inspector_visibility()`), because Trade and R&D
+## hide it too and two writers would each undo the other.
 ##
 ## One entry point: [method select]. Nothing else in the game may instantiate a
 ## selection surface - WI-53's alerts and WI-56's roster rows both come through
@@ -58,9 +76,13 @@ var _kind: SelectionKind = SelectionKind.NONE
 var _subject: Variant = null
 var _set: InspectorTabSet = null
 
-## The tab each kind was last left on, so clicking through five crew members does
-## not send you back to Needs every time.
+## The tab each kind was last left on - `&""` included, which is how "left
+## closed" is remembered. Session-only, like everything else about the HUD's
+## open state.
 var _last_tab: Dictionary[SelectionKind, StringName] = {}
+
+## The tab whose page is showing, or `&""` for the resting strip.
+var _open_tab: StringName = &""
 
 ## Pages built so far for the current selection, by tab id. Cleared wholesale on
 ## every selection change - a page holds a reference to the old subject, so
@@ -68,17 +90,19 @@ var _last_tab: Dictionary[SelectionKind, StringName] = {}
 var _pages: Dictionary[StringName, Control] = {}
 
 var _column: VBoxContainer
-var _subject_block: VBoxContainer
+var _detail: PanelContainer
+var _detail_box: StyleBoxFlat
+var _scroll: ScrollContainer
+var _page_host: MarginContainer
+var _page_footer: VBoxContainer
+var _footer_slot: MarginContainer
+var _rail: InspectorTabRail
+var _identity: PanelContainer
 var _icon: ColorRect
 var _icon_art: TextureRect
 var _name_label: Label
 var _meta_label: Label
 var _status_label: Label
-var _bars: VBoxContainer
-var _tabs: TabStrip
-var _scroll: ScrollContainer
-var _page_host: MarginContainer
-var _footer: HBoxContainer
 ## Re-entrancy latch for [method _refit]: the fit writes a minimum size, which is
 ## exactly the signal that triggers it.
 var _refitting: bool = false
@@ -87,16 +111,14 @@ static func create() -> InspectorPanel:
 	return load(SCENE_PATH).instantiate() as InspectorPanel
 
 func _ready() -> void:
-	super()
-	_build_body()
+	_build()
 	_apply_selection()
 
 # --- public API ----------------------------------------------------------------
 
 ## Selects `subject`, resolving its kind and swapping the tab set. Passing the
 ## already-selected subject deselects it, which is the behaviour all four old
-## click handlers had; what changes is the visual result - the panel shows its
-## nothing-selected line instead of disappearing.
+## click handlers had.
 ##
 ## `null` clears. An unrecognised subject also clears rather than erroring: this
 ## is the entry point every click path in the game funnels into, and a hard
@@ -119,8 +141,14 @@ func kind() -> SelectionKind:
 func has_selection() -> bool:
 	return _kind != SelectionKind.NONE
 
+## The tab whose page is showing, or `&""` when only the strip is. For probes and
+## for anything that has to know whether the box is up.
+func open_tab() -> StringName:
+	return _open_tab
+
 ## The node the camera should travel to for the current selection - the other
-## half of the jump-to pair WI-53 and WI-56 consume, alongside [method select].
+## half of the jump-to pair WI-53 and WI-56 consume, alongside [method select],
+## and what the strip's centre button uses.
 func camera_target() -> Node2D:
 	return _set.camera_target() if _set != null else null
 
@@ -157,7 +185,7 @@ func _mount(subject: Variant) -> void:
 		add_child(_set)
 		_set.subject_lost.connect(_on_subject_lost)
 		_set.subject_changed.connect(refresh_subject)
-		_set.tabs_changed.connect(_rebuild_tabs)
+		_set.tabs_changed.connect(_on_tabs_changed)
 		_set.bind(_subject)
 	_apply_selection()
 	selection_changed.emit(_kind)
@@ -172,6 +200,7 @@ func _teardown() -> void:
 	_set = null
 	_subject = null
 	_kind = SelectionKind.NONE
+	_open_tab = &""
 
 func _make_set(for_kind: SelectionKind) -> InspectorTabSet:
 	match for_kind:
@@ -199,12 +228,10 @@ func _on_subject_lost() -> void:
 
 ## The backstop under [signal InspectorTabSet.subject_lost]: a subject can be
 ## freed with no signal at all (a `queue_free` from anywhere), and it can be
-## freed *between* a deferred signal and the handler that reads it - which is
-## exactly what `is_instance_valid` guards in the panels this replaces.
+## freed *between* a deferred signal and the handler that reads it.
 ##
-## One validity check per frame while something is selected, in one place, rather
-## than the five per-panel `_process` handlers that used to also reposition
-## themselves. `set_process` is off entirely when nothing is selected.
+## One validity check per frame while something is selected, in one place.
+## `set_process` is off entirely when nothing is selected.
 func _process(_delta: float) -> void:
 	if _set != null and not _set.is_alive():
 		clear()
@@ -215,21 +242,19 @@ func _apply_selection() -> void:
 	var empty: bool = _kind == SelectionKind.NONE or _set == null
 	set_process(not empty)
 	if empty:
-		# [UIMain] hides the frame off `selection_changed`. It is still emptied, so
+		# [UIMain] hides the panel off `selection_changed`. It is still emptied, so
 		# the next select() never shows the last subject's pages for a frame.
 		_clear_pages()
-		_tabs.set_tabs([])
+		_rail.set_tabs([])
+		_rail.visible = false
+		_show_tab(&"")
 		return
-	# The caption comes from the mounted tab set's kind_label() - a static table
-	# here could not say "Comet" for a body that resolves as ASTEROID (WI-61).
-	label = "Selected · " + _set.kind_label()
-	accent_color = UIPalette.LIVE
 	refresh_subject()
-	_rebuild_tabs()
+	_rebuild_tabs(_last_tab.get(_kind, &""))
 
-# --- subject block -------------------------------------------------------------
+# --- identity strip -------------------------------------------------------------
 
-## Repaints everything above the tab strip, plus the footer. Cheap enough that a
+## Repaints the identity strip and the open page's footer. Cheap enough that a
 ## tab set is free to call it on any change rather than working out which field
 ## moved.
 func refresh_subject() -> void:
@@ -247,71 +272,62 @@ func refresh_subject() -> void:
 	_status_label.visible = not status.is_empty()
 	var tint: Color = _set.icon_color()
 	_icon.color = tint
-	_icon.visible = tint.a > 0.0
 	var art: Texture2D = _set.icon_texture()
 	_icon_art.texture = art
 	_icon_art.visible = art != null
-	_rebuild_bars()
-	_rebuild_footer()
+	_rebuild_page_footer()
 	_refit()
 
-func _rebuild_bars() -> void:
-	for child: Node in _bars.get_children():
-		_bars.remove_child(child)
-		child.queue_free()
-	var specs: Array[Dictionary] = _set.subject_bars()
-	_bars.visible = not specs.is_empty()
-	for spec: Dictionary in specs:
-		var bar: StatBar = StatBar.create()
-		_bars.add_child(bar)
-		bar.configure(String(spec.get("label", "")), float(spec.get("fraction", 0.0)),
-			String(spec.get("value", "")), spec.get("tint", UIPalette.LIVE))
-
-func _rebuild_footer() -> void:
-	for child: Node in _footer.get_children():
-		_footer.remove_child(child)
-		child.queue_free()
-	var actions: Array[Control] = _set.footer_actions()
-	_footer.visible = not actions.is_empty()
-	for action: Control in actions:
-		_footer.add_child(action)
+func _on_centre_pressed() -> void:
+	var target: Node2D = camera_target()
+	var camera: GameCamera = get_viewport().get_camera_2d() as GameCamera
+	if target != null and camera != null:
+		camera.jump_to(target.global_position)
 
 # --- tabs ----------------------------------------------------------------------
 
-func _rebuild_tabs() -> void:
+## Rebuilds the rail from the set and opens `preferred` if this subject has it.
+func _rebuild_tabs(preferred: StringName) -> void:
 	if _set == null:
 		return
-	var defs: Array[Dictionary] = _set.tabs()
 	# The pages cached for tabs that did not survive the rebuild are dead weight
 	# and would be shown again if the tab came back with different contents.
 	_clear_pages()
-	_tabs.set_tabs(InspectorTabPlan.to_strip_defs(defs))
-	var remembered: StringName = _last_tab.get(_kind, &"")
-	if remembered != &"":
-		_tabs.select(remembered)
-	_show_page(_tabs.selected())
+	_rail.set_tabs(InspectorTabPlan.to_strip_defs(_set.tabs()))
+	_rail.visible = not _rail.is_empty()
+	_show_tab(InspectorTabPlan.tab_to_open(preferred, _rail.tab_ids()))
 
-func _on_tab_selected(id: StringName) -> void:
-	_last_tab[_kind] = id
-	_show_page(id)
+## The set's tab shape moved under a live selection. The open tab stays open if
+## it survived; if it did not, the box closes - but the kind's memory is left
+## alone, so the next subject that has the tab still opens on it.
+func _on_tabs_changed() -> void:
+	_rebuild_tabs(_open_tab)
 
-func _show_page(id: StringName) -> void:
+func _on_tab_pressed(id: StringName) -> void:
+	var next: StringName = InspectorTabPlan.tab_after_click(_open_tab, id)
+	_last_tab[_kind] = next
+	_show_tab(next)
+
+## Shows `id`'s page in the detail box, building it on first use, or closes the
+## box for `&""`.
+func _show_tab(id: StringName) -> void:
+	if id != &"" and _set != null and not _pages.has(id):
+		var page: Control = _set.make_page(id)
+		if page != null:
+			_adopt_page(page)
+			_pages[id] = page
+			_page_host.add_child(page)
+	# A set that declined to build the page (every Status source declined) leaves
+	# nothing to show, which is the resting strip rather than an empty box.
+	var shown: bool = id != &"" and _pages.has(id)
+	_open_tab = id if shown else &""
 	for page_id: StringName in _pages:
 		var cached: Control = _pages[page_id]
 		if is_instance_valid(cached):
-			cached.visible = page_id == id
-	if id == &"" or _set == null:
-		_refit()
-		return
-	if not _pages.has(id):
-		var page: Control = _set.make_page(id)
-		if page == null:
-			_refit()
-			return
-		_adopt_page(page)
-		_pages[id] = page
-		_page_host.add_child(page)
-	_pages[id].visible = true
+			cached.visible = page_id == _open_tab
+	_rail.set_open(_open_tab)
+	_detail.visible = shown
+	_rebuild_page_footer()
 	_refit()
 
 ## Makes a page fit the inspector and hooks up the one signal a page may raise.
@@ -321,6 +337,14 @@ func _adopt_page(page: Control) -> void:
 	InspectorTabSet.flatten_page(page)
 	if page.has_signal(&"subject_lost"):
 		page.connect(&"subject_lost", _on_subject_lost)
+	# The column's own `minimum_size_changed` cannot see the page: it sits inside a
+	# [ScrollContainer], which reports a fixed minimum whatever its child asks for.
+	# So a page that re-measures after it is mounted - an autowrap label learning
+	# its width, which is every page opened from the resting strip, because it is
+	# built while the box is still hidden - has to call the fit itself, or the box
+	# keeps the height its first, widthless measurement asked for. A screenshot
+	# caught that as a blank band under the Status tab.
+	page.minimum_size_changed.connect(_queue_refit)
 
 func _clear_pages() -> void:
 	for id: StringName in _pages:
@@ -329,71 +353,73 @@ func _clear_pages() -> void:
 			page.queue_free()
 	_pages.clear()
 
+func _rebuild_page_footer() -> void:
+	if _footer_slot == null:
+		return
+	for child: Node in _footer_slot.get_children():
+		_footer_slot.remove_child(child)
+		child.queue_free()
+	var row: Control = null
+	if _set != null and _open_tab != &"":
+		row = _set.page_footer(_open_tab)
+	_page_footer.visible = row != null
+	if row != null:
+		_footer_slot.add_child(row)
+
 # --- geometry ------------------------------------------------------------------
 
-## Grows the panel upward from its bottom edge.
+## Sizes the panel to its three parts and grows it upward from its bottom edge.
 ##
-## [ReadoutPanel.fit_height] grows *downward* from `offset_top`, which is right
-## for the map at the top of the right column and wrong here: the inspector's
-## bottom edge is the fixed one (a gutter above the console) and its top edge is
-## what moves as tab content changes.
-func fit_height() -> void:
-	offset_top = offset_bottom - custom_minimum_size.y
-
-## Sizes the content region to what the current tab set asks for, capped so the
-## panel never climbs into the readouts above it.
+## The bottom edge is the fixed one (the console's top edge) and the top edge
+## is what moves, which is why this writes `offset_top` rather than letting the
+## size run downward.
 ##
 ## The page region is a [ScrollContainer], which reports a **minimum height of
-## zero** - it is built to be handed a size, not to ask for one. That is WI-48's
-## deviation 8 verbatim, and left alone it collapses the page to nothing while
-## every value inside it is correct. So the height is driven from the page's own
-## combined minimum, synchronously and without touching `get_tree()`, because the
-## panel is configured before it is mounted.
+## zero** - it is built to be handed a size, not to ask for one (WI-48's deviation
+## 8). So its height is driven from the page's own combined minimum, capped by
+## what the column leaves once the strip and rail have theirs.
 ##
-## Measuring **once** is not enough, which is the other half of that lesson: an
-## autowrapped label (the processor tab's recipe line) reports a minimum height
+## Measuring **once** is not enough: an autowrapped label reports a minimum height
 ## computed from its current width, so a page measured before layout has given it
-## the panel's 400px asks for roughly twice the height it will actually need.
-## Left latched, the panel rendered at its full 668px cap around three lines of
-## content. So the fit re-runs whenever anything below it changes size.
+## the panel's width asks for roughly twice the height it will need. So the fit
+## re-runs whenever anything in the column changes size.
 func _refit() -> void:
 	if _column == null or _refitting:
 		return
 	_refitting = true
-	var page: Control = _visible_page()
-	var page_min: float = page.get_combined_minimum_size().y if page != null else 0.0
-	var chrome: float = _chrome_height()
-	var budget: float = float(UIMetrics.inspector_max_content_height(
-		UIMetrics.SCREEN_SIZE.y, top_limit))
-	var page_height: float = minf(page_min, maxf(0.0, budget - chrome))
-	_scroll.custom_minimum_size.y = page_height
-	# The frame must always contain its own chrome, even if the budget handed down
-	# is hostile (WI-58). Capping at the budget alone let the subject block, tab
-	# strip and footer render *outside* the panel's rect on a column where the
-	# readouts above had eaten the room - a frame that does not contain its
-	# contents is worse than a frame that overhangs its budget by a few pixels.
-	# The page region is what absorbs the shortfall, by scrolling.
-	content_height = int(ceilf(maxf(chrome, minf(chrome + page_height, budget))))
+	# The strip and rail always fit, whatever the budget handed down (WI-58): a
+	# frame that does not contain its own name is worse than one that overhangs
+	# its budget by a few pixels. The page is what absorbs a shortfall, by
+	# scrolling.
+	var resting: float = _identity.get_combined_minimum_size().y
+	if _rail.visible:
+		resting += _rail.get_combined_minimum_size().y
+	var height: float = resting
+	if _detail.visible:
+		var page: Control = _pages.get(_open_tab, null) as Control
+		var page_min: float = page.get_combined_minimum_size().y if is_instance_valid(page) else 0.0
+		var chrome: float = _detail_chrome_height()
+		var cap: float = float(UIMetrics.inspector_detail_max_height(
+			UIMetrics.SCREEN_SIZE.y, top_limit, int(ceilf(resting))))
+		var page_height: float = minf(page_min, maxf(0.0, cap - chrome))
+		_scroll.custom_minimum_size.y = page_height
+		height += chrome + page_height
+	else:
+		_scroll.custom_minimum_size.y = 0.0
+	custom_minimum_size = Vector2(float(UIMetrics.INSPECTOR_WIDTH), ceilf(height))
+	offset_top = offset_bottom - custom_minimum_size.y
 	_refitting = false
 
-## Everything in the column except the scrolling page region, plus the gaps
-## between the visible parts and the content padding.
+## Everything in the detail box except the scrolling page: its padding, and the
+## footer row with the gap above it when the open page has one.
 ##
-## Summed by hand rather than by zeroing the scroll and asking the column,
-## because that mutate-measure-mutate dance invalidates the very cache it is
-## about to read and makes the result depend on when it was called.
-func _chrome_height() -> float:
-	var total: float = 0.0
-	var shown: int = 0
-	for child: Node in _column.get_children():
-		var control: Control = child as Control
-		if control == null or not control.visible:
-			continue
-		shown += 1
-		if control != _scroll:
-			total += control.get_combined_minimum_size().y
-	total += float(maxi(shown - 1, 0)) * float(UIMetrics.ROW_GAP)
-	return total + float(content_padding) * 2.0
+## Summed by hand rather than by zeroing the scroll and asking the box, because
+## that mutate-measure-mutate dance invalidates the very cache it is about to read.
+func _detail_chrome_height() -> float:
+	var total: float = _detail_box.get_margin(SIDE_TOP) + _detail_box.get_margin(SIDE_BOTTOM)
+	if _page_footer.visible:
+		total += float(UIMetrics.INSPECTOR_FOOTER_GAP) + _page_footer.get_combined_minimum_size().y
+	return total
 
 ## Deferred so a burst of layout changes in one frame settles into a single fit,
 ## and so the fit never runs inside the notification that caused it.
@@ -402,92 +428,146 @@ func _queue_refit() -> void:
 		return
 	_refit.call_deferred()
 
-func _visible_page() -> Control:
-	for id: StringName in _pages:
-		var page: Control = _pages[id]
-		if is_instance_valid(page) and page.visible:
-			return page
-	return null
-
 # --- construction ---------------------------------------------------------------
 
-## The frame is the scene; the body is built here (program decision 8). Nothing
-## below is authored in `inspector_panel.tscn`, so the tab sets cannot drift out
-## of sync with a hand-edited layout.
-func _build_body() -> void:
-	panel_width = UIMetrics.INSPECTOR_WIDTH
-	drop_shadow = true
-	content_padding = UIMetrics.READOUT_CONTENT_PAD
+## The scene is a bare root; everything is built here (program decision 8), so the
+## tab sets cannot drift out of sync with a hand-edited layout, and every number
+## comes from [UIMetrics].
+func _build() -> void:
+	# The root only positions. The see-through half of the rail must let a click
+	# through to the station, so nothing but the three parts may catch the mouse.
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	grow_vertical = Control.GROW_DIRECTION_BEGIN
+	offset_right = -float(UIMetrics.SCREEN_GUTTER)
+	offset_left = offset_right - float(UIMetrics.INSPECTOR_WIDTH)
+	offset_bottom = -float(UIMetrics.inspector_bottom_offset())
+	offset_top = offset_bottom
 
 	_column = VBoxContainer.new()
 	_column.name = "Column"
-	_column.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
-	content().add_child(_column)
+	_column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_column.add_theme_constant_override("separation", 0)
+	_column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# A page wider than 420px widens the panel rather than clipping (WI-58); it has
+	# to widen leftward, away from the screen edge.
+	_column.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_column.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	add_child(_column)
 	# The backstop for the fit: fonts settling, an autowrap label learning its
-	# width, a flow container wrapping onto a second row all change what the
-	# content asks for *after* the page was mounted and measured.
+	# width, the rail wrapping onto a second row all change what the column asks
+	# for *after* the page was mounted and measured.
 	_column.minimum_size_changed.connect(_queue_refit)
 
-	_column.add_child(_build_subject_block())
+	_column.add_child(_build_detail())
 
-	_tabs = TabStrip.create()
-	_tabs.name = "Tabs"
-	_tabs.tab_selected.connect(_on_tab_selected)
-	_column.add_child(_tabs)
+	_rail = InspectorTabRail.new()
+	_rail.tab_pressed.connect(_on_tab_pressed)
+	_column.add_child(_rail)
+
+	_column.add_child(_build_identity())
+
+## The box an open tab rises into: bordered on three sides, open at the bottom
+## where it meets the rail, its shadow thrown upward.
+func _build_detail() -> PanelContainer:
+	_detail = PanelContainer.new()
+	_detail.name = "Detail"
+	_detail.visible = false
+	_detail_box = StyleBoxFlat.new()
+	_detail_box.bg_color = UIPalette.tinted(UIPalette.PANEL, UIMetrics.INSPECTOR_ALPHA)
+	_detail_box.border_color = UIPalette.ACTIVE_BORDER
+	_detail_box.border_width_left = UIMetrics.BORDER_WIDTH
+	_detail_box.border_width_right = UIMetrics.BORDER_WIDTH
+	_detail_box.border_width_top = UIMetrics.BORDER_WIDTH
+	_detail_box.border_width_bottom = 0
+	_detail_box.content_margin_left = float(UIMetrics.INSPECTOR_PAD)
+	_detail_box.content_margin_right = float(UIMetrics.INSPECTOR_PAD)
+	_detail_box.content_margin_top = float(UIMetrics.INSPECTOR_PAD)
+	_detail_box.content_margin_bottom = float(UIMetrics.INSPECTOR_PAD + UIMetrics.BORDER_WIDTH)
+	_detail_box.shadow_color = UIPalette.READOUT_SHADOW
+	_detail_box.shadow_size = UIMetrics.READOUT_SHADOW_SIZE
+	_detail_box.shadow_offset = Vector2(0.0, -float(UIMetrics.INSPECTOR_SHADOW_OFFSET))
+	_detail.add_theme_stylebox_override("panel", _detail_box)
+
+	var stack := VBoxContainer.new()
+	stack.name = "Stack"
+	stack.add_theme_constant_override("separation", UIMetrics.INSPECTOR_FOOTER_GAP)
+	_detail.add_child(stack)
 
 	_scroll = ScrollContainer.new()
 	_scroll.name = "PageScroll"
 	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_column.add_child(_scroll)
+	stack.add_child(_scroll)
 
 	_page_host = MarginContainer.new()
 	_page_host.name = "PageHost"
 	_page_host.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.add_child(_page_host)
 
-	_footer = HBoxContainer.new()
-	_footer.name = "Footer"
-	_footer.alignment = BoxContainer.ALIGNMENT_END
-	_footer.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
-	_column.add_child(_footer)
+	# The footer row under a page: a divider, then whatever the set hands back.
+	_page_footer = VBoxContainer.new()
+	_page_footer.name = "PageFooter"
+	_page_footer.visible = false
+	_page_footer.add_theme_constant_override("separation", UIMetrics.INSPECTOR_FOOTER_GAP)
+	stack.add_child(_page_footer)
+	var divider := ColorRect.new()
+	divider.name = "Divider"
+	divider.color = UIPalette.DIVIDER
+	divider.custom_minimum_size.y = float(UIMetrics.BORDER_WIDTH)
+	_page_footer.add_child(divider)
+	_footer_slot = MarginContainer.new()
+	_footer_slot.name = "Slot"
+	_page_footer.add_child(_footer_slot)
+	return _detail
 
-	var close := Button.new()
-	close.name = "Close"
-	close.text = "✕"
-	close.flat = true
-	close.focus_mode = Control.FOCUS_NONE
-	close.tooltip_text = "Deselect"
-	close.pressed.connect(clear)
-	add_action(close)
+## The strip on the panel's floor: icon, name block, centre and deselect.
+func _build_identity() -> PanelContainer:
+	_identity = PanelContainer.new()
+	_identity.name = "Identity"
+	var box := StyleBoxFlat.new()
+	box.bg_color = UIPalette.tinted(UIPalette.PANEL, UIMetrics.INSPECTOR_ALPHA)
+	box.border_color = UIPalette.ACTIVE_BORDER
+	box.set_border_width_all(UIMetrics.BORDER_WIDTH)
+	# No bottom edge: the strip sits on the console, whose cyan top border is that
+	# edge - the same reason a left panel wears no border where it meets the
+	# console. Two rules one pixel apart would read as a seam.
+	box.border_width_bottom = 0
+	# Children start inside the border, so the inner highlight below lands under
+	# the top edge rather than over it.
+	box.set_content_margin_all(float(UIMetrics.BORDER_WIDTH))
+	box.content_margin_bottom = 0.0
+	box.shadow_color = UIPalette.READOUT_SHADOW
+	box.shadow_size = UIMetrics.READOUT_SHADOW_SIZE
+	box.shadow_offset = Vector2(0.0, float(UIMetrics.INSPECTOR_SHADOW_OFFSET))
+	_identity.add_theme_stylebox_override("panel", box)
 
-func _build_subject_block() -> VBoxContainer:
-	_subject_block = VBoxContainer.new()
-	_subject_block.name = "Subject"
-	_subject_block.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	var stack := VBoxContainer.new()
+	stack.name = "Stack"
+	stack.add_theme_constant_override("separation", 0)
+	_identity.add_child(stack)
+
+	# The 1px inner top highlight every surface wears (invariant 6).
+	var highlight := ColorRect.new()
+	highlight.name = "Highlight"
+	highlight.color = UIPalette.INNER_HIGHLIGHT
+	highlight.custom_minimum_size.y = float(UIMetrics.BORDER_WIDTH)
+	highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stack.add_child(highlight)
+
+	var pad := MarginContainer.new()
+	pad.name = "Pad"
+	for side: String in ["left", "top", "right", "bottom"]:
+		pad.add_theme_constant_override("margin_" + side, UIMetrics.INSPECTOR_PAD)
+	stack.add_child(pad)
 
 	var row := HBoxContainer.new()
 	row.name = "Row"
-	row.add_theme_constant_override("separation", UIMetrics.READOUT_HEADER_GAP)
-	_subject_block.add_child(row)
+	row.add_theme_constant_override("separation", UIMetrics.INSPECTOR_STRIP_GAP)
+	pad.add_child(row)
 
-	_icon = ColorRect.new()
-	_icon.name = "Icon"
-	_icon.custom_minimum_size = Vector2(
-		float(UIMetrics.INSPECTOR_ICON_SIZE), float(UIMetrics.INSPECTOR_ICON_SIZE))
-	_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(_icon)
-
-	# The module's own artwork over its tint, when it has any. Anchored inside the
-	# swatch rather than replacing it, so a subject with no art still reads as a
-	# coloured block instead of a hole.
-	_icon_art = TextureRect.new()
-	_icon_art.name = "Art"
-	_icon_art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_icon_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_icon_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_icon_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_icon.add_child(_icon_art)
+	row.add_child(_build_icon())
 
 	var names := VBoxContainer.new()
 	names.name = "Names"
@@ -513,11 +593,68 @@ func _build_subject_block() -> VBoxContainer:
 	_status_label.theme_type_variation = UIType.META_LINE
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status_label.add_theme_color_override("font_color", UIPalette.ATTENTION_TEXT)
-	_subject_block.add_child(_status_label)
+	names.add_child(_status_label)
 
-	_bars = VBoxContainer.new()
-	_bars.name = "Bars"
-	_bars.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
-	_subject_block.add_child(_bars)
+	var buttons := HBoxContainer.new()
+	buttons.name = "Buttons"
+	buttons.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	buttons.add_theme_constant_override("separation", UIMetrics.INSPECTOR_STRIP_BUTTON_GAP)
+	row.add_child(buttons)
+	buttons.add_child(_strip_button("Centre", "◎", "Centre the camera on this", _on_centre_pressed))
+	buttons.add_child(_strip_button("Close", "✕", "Deselect (Esc)", clear))
+	return _identity
 
-	return _subject_block
+## The framed icon: the subject's tint, with its artwork over it when it has any.
+func _build_icon() -> PanelContainer:
+	var frame := PanelContainer.new()
+	frame.name = "IconFrame"
+	var side: float = float(UIMetrics.INSPECTOR_ICON_SIZE)
+	frame.custom_minimum_size = Vector2(side, side)
+	frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var box := StyleBoxFlat.new()
+	box.bg_color = UIPalette.DIVIDER
+	box.border_color = UIPalette.ICON_FRAME_BORDER
+	box.set_border_width_all(UIMetrics.BORDER_WIDTH)
+	box.set_content_margin_all(float(UIMetrics.INSPECTOR_ICON_INSET))
+	frame.add_theme_stylebox_override("panel", box)
+
+	_icon = ColorRect.new()
+	_icon.name = "Icon"
+	_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.add_child(_icon)
+
+	# Anchored inside the tint rather than replacing it, so a subject with no art
+	# still reads as a coloured block instead of a hole.
+	_icon_art = TextureRect.new()
+	_icon_art.name = "Art"
+	_icon_art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_icon_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_icon_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_icon_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_icon.add_child(_icon_art)
+	return frame
+
+## One of the strip's two square buttons. A secondary [ActionButton] with its
+## padding taken out, because the theme's padding is sized for a word and these
+## carry one glyph in a 30px square.
+func _strip_button(node_name: String, glyph: String, tip: String, action: Callable) -> ActionButton:
+	var button: ActionButton = ActionButton.create("", ActionButton.Weight.SECONDARY)
+	button.name = node_name
+	button.caps = false
+	button.set_label(glyph)
+	button.tooltip_text = tip
+	button.focus_mode = Control.FOCUS_NONE
+	var side: float = float(UIMetrics.INSPECTOR_STRIP_BUTTON)
+	button.custom_minimum_size = Vector2(side, side)
+	for state: StringName in [&"normal", &"hover", &"pressed", &"disabled"]:
+		var themed: StyleBox = button.get_theme_stylebox(state, UIType.ACTION_SECONDARY)
+		if themed == null:
+			continue
+		var square: StyleBox = themed.duplicate() as StyleBox
+		square.content_margin_left = 0.0
+		square.content_margin_right = 0.0
+		square.content_margin_top = 0.0
+		square.content_margin_bottom = 0.0
+		button.add_theme_stylebox_override(state, square)
+	button.pressed.connect(action)
+	return button

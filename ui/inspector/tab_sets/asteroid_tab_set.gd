@@ -17,9 +17,6 @@ const TAB_CONTENTS: StringName = &"contents"
 
 var _asteroid: AsteroidBase = null
 
-func kind_label() -> String:
-	return subject_name()
-
 func bind(subject: Variant) -> void:
 	_asteroid = subject as AsteroidBase
 	if _asteroid == null:
@@ -59,29 +56,21 @@ func icon_color() -> Color:
 		return Color(0.0, 0.0, 0.0, 0.0)
 	return UIPalette.LIVE if _asteroid.designated else UIPalette.tinted(UIPalette.TEXT, 0.5)
 
-func subject_bars() -> Array[Dictionary]:
-	if not is_alive() or _asteroid.max_resources <= 0:
-		return []
-	var fraction: float = float(_asteroid.cur_resources) / float(_asteroid.max_resources)
-	return [{
-		"label": "Remaining",
-		"fraction": fraction,
-		"value": "%d" % _asteroid.cur_resources,
-		"tint": UIPalette.LIVE,
-	}]
-
-## Designating an asteroid is the one thing you do to one, so it is the footer
-## action rather than a checkbox buried in the tab. It toggles, so the button
-## reports the current state in its label.
-func footer_actions() -> Array[Control]:
-	if not is_alive():
-		return []
+## Designating a body is the one thing you do to one, so it is a button rather
+## than a checkbox buried in a list - on the Contents tab's footer row since the
+## inverted inspector left the identity strip to the vital (2026-09-13), under the
+## mix it is a decision about. It toggles, so the button reports the current state
+## in its label. The remaining-chunks bar moved onto that page too; the count is
+## still on the meta line.
+func page_footer(id: StringName) -> Control:
+	if id != TAB_CONTENTS or not is_alive():
+		return null
 	var designate: ActionButton = ActionButton.create(
 		"Mining designated" if _asteroid.designated else "Designate for mining",
 		ActionButton.Weight.PRIMARY if _asteroid.designated else ActionButton.Weight.SECONDARY)
 	designate.pressed.connect(_on_designate_pressed)
 	var out: Array[Control] = [designate]
-	return out
+	return action_row(out)
 
 func _on_designate_pressed() -> void:
 	if is_alive():
