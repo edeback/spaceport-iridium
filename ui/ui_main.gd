@@ -180,8 +180,6 @@ func _on_sys_pressed() -> void:
 ## declares nothing leaves the inspector alone, which is the right default for the
 ## five narrow modes.
 func _on_mode_changed(new_mode: ModeManager.Mode, _previous: ModeManager.Mode) -> void:
-	if inspector == null or not is_instance_valid(inspector):
-		return
 	var panel: Control = null
 	if new_mode != ModeManager.Mode.NONE:
 		panel = mode_manager.panel_for(new_mode)
@@ -189,7 +187,25 @@ func _on_mode_changed(new_mode: ModeManager.Mode, _previous: ModeManager.Mode) -
 	# thing GDScript will build - so the presence test has to be the type check,
 	# not a cast.
 	var declared: Variant = panel.get(&"hides_inspector") if panel != null else null
-	inspector.visible = not (declared is bool and bool(declared))
+	_mode_hides_inspector = declared is bool and bool(declared)
+	_sync_inspector_visibility()
+
+## Whether the open mode has claimed the whole screen - one of the two inputs to
+## [method _sync_inspector_visibility].
+var _mode_hides_inspector: bool = false
+
+## The inspector's one visibility rule, with both of its inputs in one place:
+## something is selected, and the open mode has not claimed the screen.
+##
+## Nothing selected is **no inspector at all** (2026-09-13). WI-51 kept a
+## nothing-selected line so the bottom-right would teach the player where
+## selection lives; in play it was a permanent box that said nothing. The panel
+## never sets its own `visible` - two writers (this and `hides_inspector`) would
+## each undo the other.
+func _sync_inspector_visibility() -> void:
+	if inspector == null or not is_instance_valid(inspector):
+		return
+	inspector.visible = inspector.has_selection() and not _mode_hides_inspector
 
 ## Station overlays (WI-35): a self-contained UI-side controller that owns the
 ## overlay tint, the digit hotkeys, and the logistics flow layer. Its panel is
@@ -497,6 +513,8 @@ func _setup_inspector_ui() -> void:
 	inspector = INSPECTOR_SCENE.instantiate() as InspectorPanel
 	add_child(inspector)
 	inspector.selection_changed.connect(_on_selection_changed)
+	_sync_feed_to_selection()
+	_sync_inspector_visibility()
 
 ## Selection brackets follow the inspector rather than the panels. Module
 ## brackets are driven by `ModuleBase.selected`, which the module and turboshaft
@@ -504,12 +522,24 @@ func _setup_inspector_ui() -> void:
 ## pointed from here. Selecting anything that is not a pawn clears them, which is
 ## what "only one thing is selected" means on screen.
 func _on_selection_changed(selection_kind: InspectorPanel.SelectionKind) -> void:
+	_sync_feed_to_selection()
+	_sync_inspector_visibility()
 	if Global.ui_in_game == null:
 		return
 	var pawn: PawnBase = null
 	if selection_kind == InspectorPanel.SelectionKind.CREW:
 		pawn = inspector.selected_subject() as PawnBase
 	Global.ui_in_game.set_selected_pawn(pawn)
+
+## The feed collapses to one row while something is selected, so the inspector
+## gets the column instead of reading through its 220px floor. The feed's own
+## `minimum_size_changed` re-stacks the column too; queueing here as well means
+## the inspector's new `top_limit` never waits on whether the fit changed size.
+func _sync_feed_to_selection() -> void:
+	if _alert_feed == null or not is_instance_valid(_alert_feed) or inspector == null:
+		return
+	_alert_feed.compact = inspector.has_selection()
+	_queue_column_layout()
 
 func pawn_clicked(pawn: PawnBase) -> void:
 	inspector.select(pawn)

@@ -348,10 +348,10 @@ func find(id: StringName) -> AlertData:
 
 # --- history --------------------------------------------------------------------
 
-## Writes an alert into the log, newest first. LOW never gets here (it was
-## designed to be missable and logging it would bury the rest); nor does a cheat
-## message, whatever tier it was raised at, because `Cheats.fire_alert` exists
-## precisely to raise criticals on demand and a log full of them is useless.
+## Writes an alert into the log, newest first - every tier, because the feed's
+## `+ n more` line points here. A cheat message never gets here, whatever tier it
+## was raised at, because `Cheats.fire_alert` exists precisely to raise criticals
+## on demand and a log full of them is useless.
 func _log(alert: AlertData) -> void:
 	if not AlertRules.is_logged(alert.priority) or AlertRules.is_cheat(alert.title):
 		return

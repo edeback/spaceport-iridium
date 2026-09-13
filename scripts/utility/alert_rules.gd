@@ -57,6 +57,19 @@ const LOW_TTL_SECONDS: float = 15.0
 ## the inspector below it collapse. The cap stays 4 there and the rows scroll.
 const FEED_CAP: int = 4
 
+## Rows the feed shows while the inspector holds a selection.
+##
+## The same argument as the raid case, taken all the way: the inspector's 220px
+## floor was sized to keep it from collapsing, not to be read through, and a
+## selected module's Status tab scrolled inside it whenever a few alerts were up.
+## While the player is looking at something they clicked, that is the surface that
+## matters, so the feed yields everything but its most severe row - which is
+## still on screen, still clickable, and still followed by the `+ n more` line
+## into the log. One, never zero: a critical that paused the sim must stay
+## readable without deselecting.
+const COMPACT_CAP: int = 1
+
+
 ## Entries the history log retains. Bounded because it is saved, and a log that
 ## grows without limit turns into a save-size problem on a long run.
 const HISTORY_CAP: int = 300
@@ -80,10 +93,14 @@ static func pauses(priority: AlertData.Priority) -> bool:
 
 ## Whether an alert of this priority is written to the history log.
 ##
-## LOW alerts are **not** logged: they are the ones that were designed to be
-## missable, and logging them would bury the ones that were not.
-static func is_logged(priority: AlertData.Priority) -> bool:
-	return priority != AlertData.Priority.LOW
+## Every tier is logged (2026-09-13). WI-53 kept LOW out on the grounds that it
+## was designed to be missable and would bury the rest - but the feed's
+## `+ n more` line points at the log, and a LOW alert hidden behind that line and
+## absent from the log is one the player was told exists and can never find. The
+## log's filter tabs are what keep LOW rows from burying the others now. Kept as
+## a function because it is a column of the tier table the tests assert whole.
+static func is_logged(_priority: AlertData.Priority) -> bool:
+	return true
 
 ## Whether an alert of this priority expires on its own.
 static func ages_out(priority: AlertData.Priority) -> bool:
@@ -336,6 +353,12 @@ static func visible(rows: Array[Group], cap: int = FEED_CAP) -> Array[Group]:
 	if cap <= 0 or rows.size() <= cap:
 		return rows.duplicate()
 	return rows.slice(0, cap)
+
+## The design's row cap for the feed's current state - [constant COMPACT_CAP]
+## while a selection is open, [constant FEED_CAP] otherwise. The feed still takes
+## the smaller of this and what its pixel budget has room for.
+static func feed_cap(compact: bool) -> int:
+	return COMPACT_CAP if compact else FEED_CAP
 
 ## How many alerts the `+ n more` line stands for - counted in alerts rather than
 ## rows, because "3 more" meaning "three hidden groups of six" would be a lie.

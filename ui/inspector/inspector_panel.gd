@@ -16,9 +16,11 @@ extends ReadoutPanel
 ## [constant UIMetrics.INSPECTOR_TOP_LIMIT]; past that its tab content scrolls
 ## inside itself rather than climbing into the readouts above.
 ##
-## Nothing selected is a **state, not a hidden panel**. A surface that vanishes
-## teaches the player that the bottom-right is sometimes empty space they can
-## click through; a surface that stays teaches them where selection lives.
+## Nothing selected is **no panel at all** (2026-09-13). WI-51 kept a caret-blinking
+## nothing-selected line so the bottom-right would teach the player where
+## selection lives; in play it was a permanent box that said nothing. [UIMain]
+## owns this panel's `visible` (its `_sync_inspector_visibility()`), because
+## Trade and R&D hide it too and two writers would each undo the other.
 ##
 ## One entry point: [method select]. Nothing else in the game may instantiate a
 ## selection surface - WI-53's alerts and WI-56's roster rows both come through
@@ -30,18 +32,6 @@ const SCENE_PATH: String = "res://ui/inspector/inspector_panel.tscn"
 ## [ModuleBase] instances on the CORRIDOR layer and resolve as MODULE with
 ## whatever components they carry, which needs no special case.
 enum SelectionKind { NONE, CREW, MODULE, ASTEROID, PILE, TURBOSHAFT }
-
-## Header caption with nothing selected. Every other caption comes from the
-## mounted tab set's kind_label(), which is what that method was always
-## documented to be for - a static table here could not say "Comet" for a body
-## that resolves as ASTEROID (WI-61).
-const EMPTY_CAPTION: String = "Nothing"
-
-const EMPTY_TEXT: String = "NOTHING SELECTED — CLICK A MODULE OR CREW MEMBER"
-## Real seconds between caret blinks. Wall-clock, like everything else in the
-## HUD: a caret that stopped blinking while the sim was paused would read as a
-## frozen panel.
-const CARET_PERIOD: float = 0.55
 
 ## Emitted after the selection settles, so the Esc ladder and anything watching
 ## selection (brackets, WI-56's roster highlight) can react to one signal instead
@@ -78,7 +68,6 @@ var _last_tab: Dictionary[SelectionKind, StringName] = {}
 var _pages: Dictionary[StringName, Control] = {}
 
 var _column: VBoxContainer
-var _empty_label: Label
 var _subject_block: VBoxContainer
 var _icon: ColorRect
 var _icon_art: TextureRect
@@ -90,8 +79,6 @@ var _tabs: TabStrip
 var _scroll: ScrollContainer
 var _page_host: MarginContainer
 var _footer: HBoxContainer
-var _caret: Timer
-var _caret_on: bool = true
 ## Re-entrancy latch for [method _refit]: the fit writes a minimum size, which is
 ## exactly the signal that triggers it.
 var _refitting: bool = false
@@ -227,19 +214,16 @@ func _apply_selection() -> void:
 		return
 	var empty: bool = _kind == SelectionKind.NONE or _set == null
 	set_process(not empty)
-	label = "Selected · " + (EMPTY_CAPTION if empty else _set.kind_label())
-	accent_color = UIPalette.TEXT_META if empty else UIPalette.LIVE
-	_empty_label.visible = empty
-	_subject_block.visible = not empty
-	_tabs.visible = not empty
-	_scroll.visible = not empty
-	_footer.visible = not empty
-	_caret.paused = not empty
 	if empty:
+		# [UIMain] hides the frame off `selection_changed`. It is still emptied, so
+		# the next select() never shows the last subject's pages for a frame.
 		_clear_pages()
 		_tabs.set_tabs([])
-		_refit()
 		return
+	# The caption comes from the mounted tab set's kind_label() - a static table
+	# here could not say "Comet" for a body that resolves as ASTEROID (WI-61).
+	label = "Selected · " + _set.kind_label()
+	accent_color = UIPalette.LIVE
 	refresh_subject()
 	_rebuild_tabs()
 
@@ -444,13 +428,6 @@ func _build_body() -> void:
 	# content asks for *after* the page was mounted and measured.
 	_column.minimum_size_changed.connect(_queue_refit)
 
-	_empty_label = Label.new()
-	_empty_label.name = "Empty"
-	_empty_label.theme_type_variation = UIType.META_LINE
-	_empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_empty_label.add_theme_color_override("font_color", UIPalette.TEXT_META)
-	_column.add_child(_empty_label)
-
 	_column.add_child(_build_subject_block())
 
 	_tabs = TabStrip.create()
@@ -483,14 +460,6 @@ func _build_body() -> void:
 	close.tooltip_text = "Deselect"
 	close.pressed.connect(clear)
 	add_action(close)
-
-	_caret = Timer.new()
-	_caret.name = "Caret"
-	_caret.wait_time = CARET_PERIOD
-	_caret.timeout.connect(_blink)
-	add_child(_caret)
-	_caret.start()
-	_blink()
 
 func _build_subject_block() -> VBoxContainer:
 	_subject_block = VBoxContainer.new()
@@ -552,11 +521,3 @@ func _build_subject_block() -> VBoxContainer:
 	_subject_block.add_child(_bars)
 
 	return _subject_block
-
-## The caret is the whole point of the nothing-selected state: a blinking cursor
-## says "this surface is live and waiting" where a blank box says "this surface
-## is broken".
-func _blink() -> void:
-	_caret_on = not _caret_on
-	if _empty_label != null:
-		_empty_label.text = EMPTY_TEXT + ("  ▌" if _caret_on else "   ")

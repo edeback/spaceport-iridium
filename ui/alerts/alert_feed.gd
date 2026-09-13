@@ -42,7 +42,7 @@ var _column: VBoxContainer
 var _scroll: ScrollContainer
 var _rows_box: VBoxContainer
 var _empty: Label
-var _overflow: ListRow
+var _overflow: Button
 var _clear_button: ActionButton
 
 var _rows: Array[AlertRow] = []
@@ -74,6 +74,21 @@ var height_budget: int = UIMetrics.alert_feed_max_height(false):
 		height_budget = clamped
 		_refit()
 
+## Whether the feed is collapsed to [constant AlertRules.COMPACT_CAP] rows, pushed
+## in by [UIMain] whenever the inspector's selection changes. The feed yields to a
+## selection for the same reason it yields to a raid: the inspector below it is the
+## one tenant with nowhere to overflow to, and the feed's hidden rows still have
+## the `+ n more` line and the log.
+var compact: bool = false:
+	set(value):
+		if compact == value:
+			return
+		compact = value
+		# Re-derive the cap first so the render below uses it, rather than drawing
+		# a frame of the old row count and correcting it on the deferred refresh.
+		_refit()
+		refresh()
+
 static func create() -> AlertFeed:
 	return load(SCENE_PATH).instantiate() as AlertFeed
 
@@ -103,7 +118,7 @@ func _build_body() -> void:
 	# both ways - so anything that does not fit does not clip, it spills out of
 	# both edges of the panel.
 	var history_button: ActionButton = ActionButton.create("Log", ActionButton.Weight.SECONDARY)
-	history_button.tooltip_text = "Every high and critical alert this station has seen"
+	history_button.tooltip_text = "Every alert this station has seen"
 	history_button.pressed.connect(history_requested.emit)
 	add_action(history_button)
 
@@ -138,8 +153,21 @@ func _build_body() -> void:
 	_rows_box.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
 	_scroll.add_child(_rows_box)
 
-	_overflow = ListRow.create()
+	# One line in the header's own type rather than a [ListRow] (2026-09-13). A
+	# `+ 1 more` the height of an alert is a slot that could have held the alert.
+	# Flat, so no style box is drawn and the line reads as part of the readout's
+	# chrome rather than as a fifth row; the colours say it is still a link.
+	_overflow = Button.new()
 	_overflow.name = "Overflow"
+	_overflow.flat = true
+	_overflow.focus_mode = Control.FOCUS_NONE
+	_overflow.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_overflow.theme_type_variation = UIType.READOUT_LABEL
+	_overflow.add_theme_color_override("font_color", UIPalette.TEXT_META)
+	_overflow.add_theme_color_override("font_hover_color", UIPalette.LIVE)
+	_overflow.add_theme_color_override("font_pressed_color", UIPalette.LIVE)
+	_overflow.add_theme_color_override("font_hover_pressed_color", UIPalette.LIVE)
+	_overflow.tooltip_text = "Open the alert log"
 	_overflow.pressed.connect(history_requested.emit)
 	_column.add_child(_overflow)
 
@@ -167,8 +195,7 @@ func refresh() -> void:
 	_scroll.visible = not shown.is_empty()
 	_overflow.visible = hidden > 0
 	if hidden > 0:
-		_overflow.configure("+ %d more" % hidden, "in the alert log", "Log ▸",
-			UIPalette.Row.INERT)
+		_overflow.text = ("+ %d more in the log  ▸" % hidden).to_upper()
 	label = _header_text(alerts)
 	_apply_accent_for(alerts)
 	_clear_button.disabled = AlertRules.survives_clear(alerts).size() == alerts.size()
@@ -298,7 +325,7 @@ func _refit() -> void:
 	var rows_height: float = minf(rows, maxf(0.0, budget - chrome))
 	_scroll.custom_minimum_size.y = rows_height
 	content_height = int(ceilf(minf(chrome + rows_height, budget)))
-	var wanted: int = _cap_for(budget)
+	var wanted: int = mini(_cap_for(budget), AlertRules.feed_cap(compact))
 	_refitting = false
 	if wanted != _row_cap:
 		_row_cap = wanted
@@ -319,7 +346,11 @@ func _cap_for(budget: float) -> int:
 	if row <= 0.0:
 		return AlertRules.FEED_CAP # nothing built yet; the next fit corrects it
 	var gap: float = float(UIMetrics.ROW_GAP)
-	var available: float = budget - float(content_padding) * 2.0 - (row + gap)
+	# The overflow line's own height, not a row's: it is one line of header type,
+	# and its height does not depend on the cap (only its text does), so reserving
+	# it keeps this free of the feedback loop described above.
+	var overflow: float = _overflow.get_combined_minimum_size().y
+	var available: float = budget - float(content_padding) * 2.0 - (overflow + gap)
 	return clampi(int(floorf((available + gap) / (row + gap))), 1, AlertRules.FEED_CAP)
 
 func _row_height() -> float:

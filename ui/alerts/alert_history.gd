@@ -1,15 +1,17 @@
 class_name AlertHistory
 extends ReadoutPanel
 
-## The alert log (WI-53): every HIGH and CRITICAL alert this station has seen,
-## newest first, with a cycle/hour stamp and a priority filter.
+## The alert log (WI-53): every alert this station has seen, newest first, with a
+## cycle/hour stamp and a priority filter.
 ##
 ## It is what makes `CLEAR ALL` safe. Clearing is only non-destructive because
 ## the rows go somewhere, and a clear the player trusts is a clear they will
 ## actually use instead of letting forty rows pile up in the feed.
 ##
-## LOW alerts are deliberately absent: they are the ones that were designed to be
-## missable, and logging them would bury the ones that were not.
+## LOW alerts are logged too (2026-09-13). WI-53 left them out as missable, but
+## the feed's `+ n more` line opens this flyout, and a comet arrival hidden behind
+## that line and absent from here read as a broken link. The LOW tab and the two
+## above it are what keep them from burying the rest.
 ##
 ## Like the resource ledger (WI-52) this is a **flyout, not a mode** - it is
 ## raised from a permanent readout rather than from the console, it is a readout
@@ -19,13 +21,14 @@ extends ReadoutPanel
 
 const SCENE_PATH: String = "res://ui/alerts/alert_history.tscn"
 
-const EMPTY_TEXT: String = "Nothing logged yet — high and critical alerts are kept here"
+const EMPTY_TEXT: String = "Nothing logged yet — every alert this station raises is kept here"
 
 ## Filter tabs. `ALL` is a sentinel rather than a fourth priority, so the filter
 ## never has to be an `int` that sometimes means a priority and sometimes does not.
 const FILTER_ALL: StringName = &"all"
 const FILTER_CRITICAL: StringName = &"critical"
 const FILTER_HIGH: StringName = &"high"
+const FILTER_LOW: StringName = &"low"
 
 var _column: VBoxContainer
 var _scroll: ScrollContainer
@@ -105,6 +108,7 @@ func _build_body() -> void:
 		{"id": FILTER_ALL, "text": "All"},
 		{"id": FILTER_CRITICAL, "text": "Critical"},
 		{"id": FILTER_HIGH, "text": "High"},
+		{"id": FILTER_LOW, "text": "Low"},
 	] as Array[Dictionary])
 	_tabs.tab_selected.connect(_on_filter_selected)
 	_column.add_child(_tabs)
@@ -162,6 +166,8 @@ func _apply_filter(logged: Array[AlertData]) -> Array[AlertData]:
 			return AlertRules.filter_priority(logged, AlertData.Priority.CRITICAL)
 		FILTER_HIGH:
 			return AlertRules.filter_priority(logged, AlertData.Priority.HIGH)
+		FILTER_LOW:
+			return AlertRules.filter_priority(logged, AlertData.Priority.LOW)
 		_:
 			return logged
 

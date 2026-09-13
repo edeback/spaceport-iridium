@@ -49,11 +49,12 @@ func test_only_low_is_transient() -> void:
 		assert_false(AlertRules.ages_out(priority), "priority %d never ages out" % priority)
 		assert_true(AlertRules.is_sticky(priority), "priority %d is sticky" % priority)
 
-func test_low_alerts_are_not_logged_to_history() -> void:
-	assert_false(AlertRules.is_logged(AlertData.Priority.LOW),
-		"low was designed to be missable, so logging it would bury the rest")
-	assert_true(AlertRules.is_logged(AlertData.Priority.HIGH), "high is logged")
-	assert_true(AlertRules.is_logged(AlertData.Priority.CRITICAL), "critical is logged")
+## Every tier, LOW included: the feed's `+ n more` line opens the log, and a
+## hidden LOW alert the log did not keep is one the player can never find.
+func test_every_tier_is_logged_to_history() -> void:
+	for priority: AlertData.Priority in [AlertData.Priority.LOW, AlertData.Priority.HIGH,
+			AlertData.Priority.CRITICAL]:
+		assert_true(AlertRules.is_logged(priority), "priority %d is logged" % priority)
 
 func test_cheat_messages_are_recognised_by_their_prefix() -> void:
 	assert_true(AlertRules.is_cheat("CHEAT: built module reactor at (2, 3)"), "prefixed")
@@ -293,6 +294,31 @@ func test_a_short_feed_has_no_overflow() -> void:
 	var rows: Array[AlertRules.Group] = AlertRules.group(
 		[_alert(&"a", AlertData.Priority.HIGH)] as Array[AlertData])
 	assert_eq(AlertRules.overflow(rows), 0, "nothing hidden")
+
+func test_the_feed_cap_by_state() -> void:
+	assert_eq(AlertRules.feed_cap(false), AlertRules.FEED_CAP, "the ordinary feed")
+	assert_eq(AlertRules.feed_cap(true), AlertRules.COMPACT_CAP, "a selection is open")
+	assert_lt(AlertRules.COMPACT_CAP, AlertRules.FEED_CAP, "compact is actually smaller")
+
+## Zero would hide a critical that paused the sim behind a deselect.
+func test_the_compact_feed_still_shows_a_row() -> void:
+	assert_gte(AlertRules.COMPACT_CAP, 1, "compact never hides every alert")
+
+## The one row a compact feed keeps is the most severe one, and the overflow line
+## still accounts for everything else - counted in alerts, not rows.
+func test_the_compact_feed_keeps_the_most_severe_row() -> void:
+	var alerts: Array[AlertData] = [
+		_alert(&"low", AlertData.Priority.LOW, "Low"),
+		_alert(&"crit", AlertData.Priority.CRITICAL, "Critical"),
+		_alert(&"high", AlertData.Priority.HIGH, "High"),
+	]
+	for index: int in 3:
+		alerts.append(_alert(StringName("ill|%d" % index), AlertData.Priority.HIGH, "Ill"))
+	var rows: Array[AlertRules.Group] = AlertRules.group(alerts)
+	var shown: Array[AlertRules.Group] = AlertRules.visible(rows, AlertRules.COMPACT_CAP)
+	assert_eq(_titles(shown), ["Critical"] as Array[String], "the critical leads")
+	assert_eq(AlertRules.overflow(rows, AlertRules.COMPACT_CAP), alerts.size() - 1,
+		"every other alert is in the + n more count")
 
 # --- actionability -------------------------------------------------------------
 

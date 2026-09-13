@@ -241,7 +241,14 @@ const ALERT_HISTORY_WIDTH: int = 480
 const ALERT_HISTORY_MAX_HEIGHT: int = 560
 ## Distance from the right edge the flyout must stop at: the right column plus
 ## its own gutter plus one more.
-const ALERT_HISTORY_RIGHT_INSET: int = RIGHT_COLUMN_WIDTH + SCREEN_GUTTER * 2
+##
+## Measured from the **inspector**, not the column: the inspector is the column's
+## widest tenant (420 against 344), and the flyout hangs off the feed's header, so
+## a tall log reaches down beside it. Measured from the column, the flyout covered
+## the inspector's left 56px - which the compact feed (the feed collapsing while a
+## selection is open) made the ordinary case, since the inspector now rises to
+## just under the feed.
+const ALERT_HISTORY_RIGHT_INSET: int = INSPECTOR_WIDTH + SCREEN_GUTTER * 2
 
 ## Tallest the alert feed may become, with the raid readout stacked above it or
 ## not (WI-58).
@@ -264,6 +271,10 @@ const ALERT_HISTORY_RIGHT_INSET: int = RIGHT_COLUMN_WIDTH + SCREEN_GUTTER * 2
 ## disagree about how many rows are hidden. During a raid the feed deliberately
 ## drops below that and scrolls - it is the tenant with somewhere to put the
 ## overflow, and the inspector is not.
+##
+## This is the budget with **nothing selected**. While the inspector holds a
+## selection the feed also caps itself at [constant AlertRules.COMPACT_CAP] rows,
+## so the inspector gets most of this back - see [member AlertFeed.compact].
 static func alert_feed_max_height(raid_visible: bool,
 		screen_height: int = SCREEN_SIZE.y) -> int:
 	# Everything the column owes the tenants above and below the feed.

@@ -346,6 +346,18 @@ func test_the_feed_is_the_readout_that_yields_to_a_raid() -> void:
 	assert_eq(quiet - raiding, UIMetrics.ALERT_RAID_HEIGHT + UIMetrics.SCREEN_GUTTER,
 		"exactly the raid readout and its gutter, nothing else")
 
+## The alert log flyout hangs beside the right column and must clear its widest
+## tenant - the inspector is wider than the column, and a selection pulls it up
+## beside the feed the flyout hangs from.
+func test_the_alert_log_flyout_clears_the_inspector() -> void:
+	var gutter: int = UIMetrics.SCREEN_GUTTER
+	assert_gte(UIMetrics.ALERT_HISTORY_RIGHT_INSET, UIMetrics.INSPECTOR_WIDTH + gutter * 2,
+		"the flyout stops a gutter short of the inspector's left edge")
+	assert_gte(UIMetrics.ALERT_HISTORY_RIGHT_INSET, UIMetrics.RIGHT_COLUMN_WIDTH + gutter * 2,
+		"and of the column's")
+	assert_lte(UIMetrics.ALERT_HISTORY_RIGHT_INSET + UIMetrics.ALERT_HISTORY_WIDTH,
+		UIMetrics.SCREEN_SIZE.x, "and still fits on the reference screen")
+
 ## `AlertRules.FEED_CAP` rows plus the `+ n more` line have to render in the
 ## ordinary column without an inner scrollbar - the agreement WI-53 wrote down
 ## and WI-58 turned from a constant into a derivation.
