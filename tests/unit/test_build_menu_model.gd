@@ -257,6 +257,143 @@ func test_gating_unlock_tolerates_nulls_in_authored_data() -> void:
 func test_gating_unlock_of_null_is_null() -> void:
 	assert_null(BuildMenuModel.gating_unlock(null, [] as Array[UnlockData]))
 
+# --- what the menu lists (2026-09-15) ----------------------------------------------
+# A locked module stays listed while research alone can reach it; one that needs a
+# station promotion first, or that nothing grants, leaves the menu. A category
+# reaches the rail only while it holds something buildable right now.
+
+func _node(node_name: String, min_tier: int = 1, prereqs: Array = []) -> UnlockData:
+	var unlock := UnlockData.new()
+	unlock.name = node_name
+	unlock.id = StringName(node_name)
+	unlock.min_tier = min_tier
+	unlock.prerequisites.assign(prereqs)
+	return unlock
+
+## Owns by name, the way [method _locks] locks by name.
+func _owns(names: Array) -> Callable:
+	return func(unlock: UnlockData) -> bool:
+		return names.has(unlock.name)
+
+func test_a_node_at_or_below_the_tier_is_reachable() -> void:
+	var node := _node("Drilling II", 2)
+	assert_false(BuildMenuModel.unlock_reachable(node, 1), "tier 1 cannot buy a tier-2 node")
+	assert_true(BuildMenuModel.unlock_reachable(node, 2), "tier 2 can")
+	assert_true(BuildMenuModel.unlock_reachable(node, 3), "and so can anything above it")
+
+func test_a_prerequisite_above_the_tier_blocks_the_node() -> void:
+	# The node's own min_tier is 1, but it cannot be bought until its tier-3
+	# prerequisite is - which is the case a min_tier-only check would miss.
+	var node := _node("Relay", 1, [_node("Fusion Theory", 3)])
+	assert_false(BuildMenuModel.unlock_reachable(node, 1))
+	assert_true(BuildMenuModel.unlock_reachable(node, 3))
+
+func test_an_owned_node_is_reachable_above_the_tier() -> void:
+	var node := _node("Fusion Theory", 5)
+	assert_true(BuildMenuModel.unlock_reachable(node, 1, _owns(["Fusion Theory"])),
+			"an owned node gates nothing, whatever its tier says")
+
+func test_an_owned_prerequisite_above_the_tier_does_not_block() -> void:
+	var node := _node("Relay", 1, [_node("Fusion Theory", 3)])
+	assert_true(BuildMenuModel.unlock_reachable(node, 1, _owns(["Fusion Theory"])))
+
+func test_null_prerequisites_are_ignored() -> void:
+	var node := _node("Holey", 1, [null])
+	assert_true(BuildMenuModel.unlock_reachable(node, 1),
+			"a placeholder slot in authored data is not a gate")
+
+func test_a_prerequisite_cycle_is_unreachable_rather_than_endless() -> void:
+	var a := _node("A")
+	var b := _node("B", 1, [a])
+	a.prerequisites.assign([b])
+	assert_false(BuildMenuModel.unlock_reachable(a, 5), "nothing can buy into a cycle")
+	a.prerequisites.clear() # break the reference cycle so the resources free
+
+func test_a_shared_prerequisite_resolves_for_both_paths() -> void:
+	# A diamond: both halves of the top node need the same root. A walk that
+	# treated "seen" as "unreachable" would fail the second path.
+	var root := _node("Root")
+	var top := _node("Top", 1, [_node("Left", 1, [root]), _node("Right", 1, [root])])
+	assert_true(BuildMenuModel.unlock_reachable(top, 1))
+
+func test_a_null_node_is_unreachable() -> void:
+	assert_false(BuildMenuModel.unlock_reachable(null, 5))
+
+func test_a_buildable_module_is_listed_whatever_its_tier() -> void:
+	var reactor := _mod("Fusion Reactor", &"power")
+	var grant := _grant("Fusion Power", reactor)
+	grant.min_tier = 5
+	assert_true(BuildMenuModel.is_listed(reactor, false, [grant] as Array[UnlockData], 1),
+			"a module the player can place is always pickable")
+
+func test_a_locked_module_research_can_reach_is_listed() -> void:
+	var conveyor := _mod("Conveyor", &"logistics")
+	assert_true(BuildMenuModel.is_listed(conveyor, true,
+			[_grant("Conveyors", conveyor)] as Array[UnlockData], 1))
+
+func test_a_locked_module_that_needs_a_promotion_is_not_listed() -> void:
+	var reactor := _mod("Fusion Reactor", &"power")
+	var grant := _grant("Fusion Power", reactor)
+	grant.min_tier = 3
+	var unlocks: Array[UnlockData] = [grant]
+	assert_false(BuildMenuModel.is_listed(reactor, true, unlocks, 1),
+			"nothing the player can do at tier 1 unlocks it")
+	assert_true(BuildMenuModel.is_listed(reactor, true, unlocks, 3),
+			"the promotion brings it back")
+
+func test_a_locked_module_behind_a_promotion_gated_prerequisite_is_not_listed() -> void:
+	var shield := _mod("Shield Generator", &"defense")
+	var grant := _grant("Shields", shield)
+	grant.prerequisites.assign([_node("Turrets", 2)])
+	assert_false(BuildMenuModel.is_listed(shield, true, [grant] as Array[UnlockData], 1))
+
+func test_a_locked_module_nothing_grants_is_not_listed() -> void:
+	var orphan := _mod("Orphan Bay", &"mining")
+	assert_false(BuildMenuModel.is_listed(orphan, true, [] as Array[UnlockData], 5),
+			"a module no node reaches is not something the player can act on")
+
+func test_any_reachable_grant_lists_the_module() -> void:
+	var bay := _mod("Repair Bay", &"logistics")
+	var far := _grant("Robotics III", bay)
+	far.min_tier = 5
+	var near := _grant("Robotics I", bay)
+	assert_true(BuildMenuModel.is_listed(bay, true, [far, near] as Array[UnlockData], 1),
+			"the first granter being out of reach must not hide the second")
+
+func test_a_hidden_module_is_never_listed() -> void:
+	assert_false(BuildMenuModel.is_listed(_mod("Battery", &"power", true), false,
+			[] as Array[UnlockData], 5))
+
+func test_listed_only_keeps_order_and_drops_the_rest() -> void:
+	var modules: Array[ModuleData] = [_mod("C", &"x"), _mod("A", &"x"), _mod("B", &"x")]
+	var kept := BuildMenuModel.listed_only(modules, func(m: ModuleData) -> bool:
+		return m.name != "A")
+	assert_eq(kept.size(), 2)
+	assert_eq(kept[0].name, "C", "the input's order survives - sorting is sort_bucket's job")
+	assert_eq(kept[1].name, "B")
+	assert_eq(modules.size(), 3, "the input is untouched")
+
+func test_an_all_locked_category_is_not_shown() -> void:
+	var bucket: Array[ModuleData] = [_mod("Laser Turret", &"defense"), _mod("Armor Plate", &"defense")]
+	assert_false(BuildMenuModel.category_shown(bucket, _locks(["Laser Turret", "Armor Plate"])),
+			"researchable-but-locked is R&D's to advertise, not the rail's")
+
+func test_one_buildable_module_shows_the_category() -> void:
+	var bucket: Array[ModuleData] = [_mod("Laser Turret", &"defense"), _mod("Armor Plate", &"defense")]
+	assert_true(BuildMenuModel.category_shown(bucket, _locks(["Laser Turret"])))
+
+func test_a_hidden_buildable_module_does_not_show_its_category() -> void:
+	var bucket: Array[ModuleData] = [_mod("Battery", &"power", true), _mod("Fusion Reactor", &"power")]
+	assert_false(BuildMenuModel.category_shown(bucket, _locks(["Fusion Reactor"])),
+			"a module the menu never lists cannot be the reason its category is on the rail")
+
+func test_an_empty_category_is_not_shown() -> void:
+	assert_false(BuildMenuModel.category_shown([] as Array[ModuleData]))
+
+func test_with_no_predicate_a_category_with_modules_is_shown() -> void:
+	assert_true(BuildMenuModel.category_shown([_mod("Hallway", &"core")] as Array[ModuleData]),
+			"nothing is locked when nothing says so")
+
 # --- row text (WI-54) -------------------------------------------------------------
 
 func test_format_footprint() -> void:

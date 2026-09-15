@@ -22,8 +22,10 @@ static func category_name(category_id: StringName) -> String:
 ## battery) drop out here exactly as they did under the old tag walk.
 ##
 ## Bucket order is [method sort_bucket]'s: buildable first, locked after, name
-## within each. Hidden is the only thing that removes a module from the menu -
-## locked is a *state*, not an absence (WI-54).
+## within each. Hidden is the only thing that removes a module from a *bucket*;
+## which of a bucket's modules the menu actually lists, and whether its category
+## reaches the rail at all, is [method is_listed] / [method category_shown]'s -
+## both change as the tech tree opens, and the buckets never do.
 static func group_modules(modules: Array[ModuleData]) -> Dictionary:
 	var groups: Dictionary = {}
 	for module_data: ModuleData in modules:
@@ -38,8 +40,9 @@ static func group_modules(modules: Array[ModuleData]) -> Dictionary:
 
 ## Orders one category's modules for the flyout: everything currently buildable
 ## first, everything gated behind an unlock after it, alphabetical within each
-## half. Never drops an entry - a locked module is rendered dimmed with its
-## gating tech, because "that list is half of what makes R&D legible" (WI-54).
+## half. Never drops an entry: *which* locked modules are listed is decided
+## before this, by [method is_listed], and the ones that survive render dimmed
+## with their gating tech.
 ##
 ## `is_locked` is injected rather than read off the module so this stays pure:
 ## `ModuleData.is_unlocked()` goes through `Global.unlock_manager`, and a rule
@@ -134,13 +137,21 @@ static func gating_unlock(module: ModuleData, unlocks: Array[UnlockData]) -> Unl
 	if module == null:
 		return null
 	for unlock: UnlockData in unlocks:
-		if unlock == null:
-			continue
-		for effect: UnlockEffect in unlock.effects:
-			var grant: GrantModuleEffect = effect as GrantModuleEffect
-			if grant != null and grant.module == module:
-				return unlock
+		if _grants(unlock, module):
+			return unlock
 	return null
+
+## Whether `unlock` carries a [GrantModuleEffect] naming `module`. The one place
+## the grant edge is read, so the gate label and the listing rule below can never
+## disagree about which node unlocks what.
+static func _grants(unlock: UnlockData, module: ModuleData) -> bool:
+	if unlock == null or module == null:
+		return false
+	for effect: UnlockEffect in unlock.effects:
+		var grant: GrantModuleEffect = effect as GrantModuleEffect
+		if grant != null and grant.module == module:
+			return true
+	return false
 
 ## The `NEEDS: DRILLING II` line on a locked row. Falls back to the unlock's id
 ## when it carries no display name, and to [constant NO_GATE_LABEL] when nothing
@@ -153,6 +164,107 @@ static func gating_label(module: ModuleData, unlocks: Array[UnlockData]) -> Stri
 	if label == "":
 		return NO_GATE_LABEL
 	return "Needs: %s" % label
+
+# --- what the menu lists (2026-09-15) -------------------------------------------
+# WI-54 rendered every locked module and never hid a category. That left the rail
+# advertising things the player could not act on: Defense and Logistics opened
+# on nothing buildable, and a tier-1 station's Power flyout offered a fusion
+# reactor it could not even research for two promotions. The menu now lists what
+# the player can build *or can do something about* - a locked module stays,
+# dimmed, while research alone can reach it; one that also needs a promotion, or
+# that nothing grants, does not.
+
+## Whether `unlock` can be bought without the station being promoted - now, or
+## once research the station can also reach is owned. An owned node is reachable
+## whatever its `min_tier`: a cheat or an old save can own one above the station's
+## tier, and an owned node gates nothing. Null prerequisites are authoring
+## placeholders and are ignored, as [method UnlockManager.prerequisites_met]
+## ignores them.
+##
+## `is_owned` is injected for [method sort_bucket]'s reason: ownership lives on
+## [UnlockManager], and a rule that reads an autoload cannot be tested.
+static func unlock_reachable(unlock: UnlockData, tier: int, is_owned: Callable = Callable()) -> bool:
+	var memo: Dictionary[UnlockData, bool] = {}
+	return _reachable(unlock, tier, is_owned, memo)
+
+## `memo` keeps the walk linear and finite. A diamond of prerequisites resolves
+## each node once; and a node is recorded unreachable *before* its prerequisites
+## are walked, so a prerequisite cycle - an authoring error nothing could ever buy
+## into - ends as unreachable rather than recursing forever. Any node that meets an
+## in-progress entry depends on its own ancestor, so the early `false` is the
+## right answer and not merely a stop.
+static func _reachable(unlock: UnlockData, tier: int, is_owned: Callable,
+		memo: Dictionary[UnlockData, bool]) -> bool:
+	if unlock == null:
+		return false
+	if memo.has(unlock):
+		return memo[unlock]
+	if is_owned.is_valid() and bool(is_owned.call(unlock)):
+		memo[unlock] = true
+		return true
+	memo[unlock] = false
+	if not unlock.available_at_tier(tier):
+		return false
+	for prereq: UnlockData in unlock.prerequisites:
+		if prereq != null and not _reachable(prereq, tier, is_owned, memo):
+			return false
+	memo[unlock] = true
+	return true
+
+## Whether any node that grants `module` is [method unlock_reachable]. *Any*,
+## not [method gating_unlock]'s first: a module two trees both grant is within
+## reach if either of them is.
+static func module_reachable(module: ModuleData, unlocks: Array[UnlockData], tier: int,
+		is_owned: Callable = Callable()) -> bool:
+	if module == null:
+		return false
+	# One memo across every granter: entries are final once a walk returns, so a
+	# prerequisite two granters share is resolved once.
+	var memo: Dictionary[UnlockData, bool] = {}
+	for unlock: UnlockData in unlocks:
+		if _grants(unlock, module) and _reachable(unlock, tier, is_owned, memo):
+			return true
+	return false
+
+## Whether the build menu lists `module` at all. A buildable module always is,
+## whatever the tier - it can be placed, so it has to be pickable. A locked one is
+## listed only while research the station can reach grants it; one that needs a
+## promotion first, or that nothing grants, is left off, because nothing the
+## player can do today changes it.
+##
+## `locked` is the caller's answer rather than read off the module, for
+## [method sort_bucket]'s reason.
+static func is_listed(module: ModuleData, locked: bool, unlocks: Array[UnlockData], tier: int,
+		is_owned: Callable = Callable()) -> bool:
+	if module == null or module.hidden:
+		return false
+	if not locked:
+		return true
+	return module_reachable(module, unlocks, tier, is_owned)
+
+## The entries of `modules` that `keep` accepts, order preserved. Returns a fresh
+## array - never mutates the input.
+static func listed_only(modules: Array[ModuleData], keep: Callable) -> Array[ModuleData]:
+	var out: Array[ModuleData] = []
+	for module_data: ModuleData in modules:
+		if module_data != null and bool(keep.call(module_data)):
+			out.append(module_data)
+	return out
+
+## Whether a category reaches the rail: only while it holds something the player
+## can build right now. A category of nothing but locked entries - Defense and
+## Logistics on a new station - is R&D's to advertise, not the build menu's, and
+## it joins the rail the moment its first module is granted.
+##
+## Deliberately not "holds something listed": a category of researchable-but-
+## locked modules is exactly the distraction this rule exists to remove.
+static func category_shown(bucket: Array[ModuleData], is_locked: Callable = Callable()) -> bool:
+	for module_data: ModuleData in bucket:
+		if module_data == null or module_data.hidden:
+			continue
+		if not (is_locked.is_valid() and bool(is_locked.call(module_data))):
+			return true
+	return false
 
 # --- row text (WI-54) -----------------------------------------------------------
 

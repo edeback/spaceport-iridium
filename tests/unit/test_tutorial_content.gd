@@ -236,6 +236,26 @@ func test_the_onboarding_points_at_things_that_exist() -> void:
 		assert_true(_mode_labels().has(id.to_lower()),
 			"the onboarding opens a '%s' console mode" % id)
 
+## The rail hides a category holding nothing buildable (2026-09-15), and the coach
+## reads a hidden row as absent - so a category the introduction waits on has to
+## hold something a brand-new station can place, or the gate never closes with the
+## sim held. "A new station" is: nothing researched beyond the default nodes.
+func test_every_category_the_onboarding_opens_is_on_a_new_stations_rail() -> void:
+	var categories: Array[String] = _arguments_of(
+		_read(TutorialManager.ONBOARDING_PATH), "guide.await_category")
+	assert_false(categories.is_empty(), "the onboarding opens a build category")
+	var granted: Array[ModuleData] = _granted_by_default_nodes()
+	var locked_at_start := func(module: ModuleData) -> bool:
+		return not module.unlocked_by_default and not granted.has(module)
+	for id: String in categories:
+		var bucket: Array[ModuleData] = []
+		for path: String in ContentPaths.scan(ContentPaths.MODULES):
+			var module: ModuleData = ResourceLoader.load(path) as ModuleData
+			if module != null and module.category_id == StringName(id):
+				bucket.append(module)
+		assert_true(BuildMenuModel.category_shown(bucket, locked_at_start),
+			"the onboarding opens '%s', which a new station's rail does not show" % id)
+
 # --- helpers --------------------------------------------------------------------
 
 func _read(path: String) -> String:
@@ -306,6 +326,19 @@ func _module_by_id(id: StringName) -> ModuleData:
 		if module != null and module.id == id:
 			return module
 	return null
+
+## Modules a default-owned tech node grants, so owned before the introduction runs.
+func _granted_by_default_nodes() -> Array[ModuleData]:
+	var out: Array[ModuleData] = []
+	for path: String in ContentPaths.scan(ContentPaths.UNLOCKS):
+		var unlock: UnlockData = ResourceLoader.load(path) as UnlockData
+		if unlock == null or not unlock.unlocked_by_default:
+			continue
+		for effect: UnlockEffect in unlock.effects:
+			var grant: GrantModuleEffect = effect as GrantModuleEffect
+			if grant != null and grant.module != null:
+				out.append(grant.module)
+	return out
 
 func _category_path(id: String) -> String:
 	return "res://data/build_categories/%s.tres" % id

@@ -12,6 +12,14 @@ extends VBoxContainer
 ## right edge with its own 56px header; and **locked modules render** - dimmed,
 ## with the tech that grants them - instead of being hidden until unlocked.
 ##
+## Within limits (2026-09-15): the menu lists what the player can build *or can
+## do something about*. A category holding nothing buildable stays off the rail,
+## and a locked module that needs a station promotion before it can even be
+## researched is not listed ([method BuildMenuModel.category_shown],
+## [method BuildMenuModel.is_listed]). The rail therefore grows as the tech tree
+## opens - WI-54 argued against that, but a rail of categories the player cannot
+## act on turned out to be the worse cost.
+##
 ## Two stage, not a drilldown: picking a category never takes the rail away, so
 ## the player keeps their place and can hop categories without a back step.
 ##
@@ -76,7 +84,12 @@ func _ready() -> void:
 	# One shared zero-arg handler recomputes everything cheaply; module count is
 	# small and unlocks are rare, so fine-grained per-button maps aren't worth it.
 	for module_data: ModuleData in _modules:
-		module_data.module_lock_changed.connect(_on_module_lock_changed.unbind(1))
+		module_data.module_lock_changed.connect(_on_listing_changed.unbind(1))
+	# What is listed also turns on the tier and on what is owned: a promotion
+	# brings the next tier's modules into reach, and owning a prerequisite above
+	# the tier (a cheat, an old save) does the same without granting anything.
+	SignalBus.station_tier_changed.connect(_on_listing_changed.unbind(1))
+	SignalBus.global_unlock_changed.connect(_on_listing_changed.unbind(1))
 	if Global.ui_in_game != null:
 		Global.ui_in_game.input_mode_changed.connect(_on_input_mode_changed)
 	_refresh_rail()
@@ -180,8 +193,11 @@ func _cycle_hint() -> String:
 	return "%s/%s" % [prev, next]
 
 ## A rail entry: category icon, name, the number of modules the flyout will show,
-## and a disclosure caret. The count is what is *shown*, locked entries included,
-## because that is what the player finds when they open it.
+## and a disclosure caret. The count is what is *listed*, the locked entries the
+## player can research included, because that is what they find when they open it.
+##
+## Every category gets a row up front; one with nothing buildable is a hidden row,
+## not a missing one, so a grant can reveal it in place without rebuilding the rail.
 ##
 ## Count and caret share [ListRow]'s one right-hand slot rather than the count
 ## going on the row's meta line: the design has them inline beside each other,
@@ -195,9 +211,10 @@ func _make_rail_row(category: StringName) -> ListRow:
 	return row
 
 func _paint_rail_row(category: StringName, row: ListRow) -> void:
+	row.visible = _category_shown(category)
 	var live: bool = category == _open_category
 	var label: String = BuildMenuModel.category_name(category)
-	var count: int = _bucket(category).size()
+	var count: int = _listed_bucket(category).size()
 	row.configure(label, "", "%d  ▸" % count,
 		UIPalette.Row.LIVE if live else UIPalette.Row.INERT)
 	row.set_icon(_category_icon(category), UIMetrics.BUILD_RAIL_ICON)
@@ -265,15 +282,17 @@ func _on_rail_pressed(category: StringName) -> void:
 		return
 	open_category(category)
 
-## Opens one category's flyout. Public because the cycle keys drive it too.
+## Opens one category's flyout. Public because the cycle keys drive it too. A
+## category off the rail does not open: there is no row for the flyout to stand
+## beside, and nothing in it the player can build.
 func open_category(category: StringName) -> void:
-	if not _groups.has(category):
+	if not _groups.has(category) or not _category_shown(category):
 		return
 	_search.text = "" # a rail pick overrides any active search
 	_open_category = category
 	_flyout.title = BuildMenuModel.category_name(category)
 	_flyout_collapse.visible = true
-	_populate_list(_bucket(category))
+	_populate_list(_listed_bucket(category))
 	_show_flyout()
 
 func _on_search_changed(text: String) -> void:
@@ -286,7 +305,11 @@ func _on_search_changed(text: String) -> void:
 	_open_category = &""
 	_flyout.title = "Results"
 	_flyout_collapse.visible = false
-	_populate_list(BuildMenuModel.filter_by_name(_modules, query))
+	# The same listing rule as the rail, not a looser one: a module that needs a
+	# promotion must not turn up by name either. A researchable module in a
+	# category not yet on the rail does, dimmed - the player asked for it by name.
+	_populate_list(BuildMenuModel.listed_only(
+		BuildMenuModel.filter_by_name(_modules, query), _is_listed))
 	_show_flyout()
 
 func _show_flyout() -> void:
@@ -326,10 +349,11 @@ func close_flyout() -> void:
 		flyout_anchor.active = true
 	_refresh_rail()
 
-## Fills the flyout with a category's (or a search's) modules. Locked entries are
-## rendered dimmed, after the buildable ones, with the tech that grants them -
-## the only behaviour change in WI-54, and the one that makes the tech tree
-## legible from the build menu.
+## Fills the flyout with a category's (or a search's) *listed* modules. Locked
+## entries are rendered dimmed, after the buildable ones, with the tech that
+## grants them - WI-54's change, and the one that makes the next step of the tech
+## tree legible from the build menu. The caller has already dropped the ones that
+## need a promotion.
 func _populate_list(modules: Array[ModuleData]) -> void:
 	for child: Node in _flyout_list.get_children():
 		_flyout_list.remove_child(child)
@@ -356,6 +380,36 @@ func _populate_list(modules: Array[ModuleData]) -> void:
 func _is_locked(module_data: ModuleData) -> bool:
 	return module_data != null and not module_data.is_unlocked()
 
+## [method BuildMenuModel.is_listed] with the live answers plugged in. Asked per
+## row on every repaint rather than cached: the menu has a few dozen modules and
+## the tree a few dozen nodes, and an uncached answer cannot go stale.
+func _is_listed(module_data: ModuleData) -> bool:
+	return BuildMenuModel.is_listed(module_data, _is_locked(module_data),
+		_all_unlocks(), _current_tier(), _is_owned)
+
+func _is_owned(unlock: UnlockData) -> bool:
+	return Global.unlock_manager != null and Global.unlock_manager.is_unlocked(unlock)
+
+## Tier 1 with no manager (a probe mounting the menu alone), which with no
+## unlocks to walk lists every buildable module and no locked one.
+func _current_tier() -> int:
+	return Global.unlock_manager.current_tier if Global.unlock_manager != null else 1
+
+func _category_shown(category: StringName) -> bool:
+	return BuildMenuModel.category_shown(_bucket(category), _is_locked)
+
+## A category's modules as the flyout lists them, in bucket order.
+func _listed_bucket(category: StringName) -> Array[ModuleData]:
+	return BuildMenuModel.listed_only(_bucket(category), _is_listed)
+
+## The rail's categories that are on it right now, in rail order.
+func _shown_categories() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for category: StringName in _categories:
+		if _category_shown(category):
+			out.append(category)
+	return out
+
 func _all_unlocks() -> Array[UnlockData]:
 	if Global.unlock_manager == null:
 		return [] as Array[UnlockData]
@@ -370,7 +424,8 @@ func _bucket(category: StringName) -> Array[ModuleData]:
 
 ## Steps the open category one place along the rail, wrapping. With nothing open
 ## it opens the first (or last) category rather than doing nothing, so the key is
-## a way *into* the rail as well as through it.
+## a way *into* the rail as well as through it. It steps through the categories
+## on the rail only - a hidden one is skipped, not opened.
 ##
 ## `_shortcut_input` rather than `_unhandled_input`: the rail rows are focusable
 ## [Button]s, and a focused button consumes arrow-style navigation before
@@ -378,7 +433,7 @@ func _bucket(category: StringName) -> Array[ModuleData]:
 ## hotkey uses (WI-50 contract point 6) - typing "steel" into the search box must
 ## not cycle the rail.
 func _shortcut_input(event: InputEvent) -> void:
-	if not is_visible_in_tree() or _categories.is_empty():
+	if not is_visible_in_tree():
 		return
 	if ModeManager.text_entry_has_focus(get_viewport()):
 		return
@@ -389,13 +444,16 @@ func _shortcut_input(event: InputEvent) -> void:
 		step = -1
 	if step == 0:
 		return
+	var shown: Array[StringName] = _shown_categories()
+	if shown.is_empty():
+		return
 	get_viewport().set_input_as_handled()
-	var index: int = _categories.find(_open_category)
+	var index: int = shown.find(_open_category)
 	if index < 0:
-		index = 0 if step > 0 else _categories.size() - 1
+		index = 0 if step > 0 else shown.size() - 1
 	else:
-		index = posmod(index + step, _categories.size())
-	open_category(_categories[index])
+		index = posmod(index + step, shown.size())
+	open_category(shown[index])
 
 # --- recently built ------------------------------------------------------------
 
@@ -432,17 +490,26 @@ func _rebuild_recent_row() -> void:
 
 # --- reactivity ---------------------------------------------------------------
 
-func _on_module_lock_changed() -> void:
+## A grant, a promotion, or a change in what is owned: any of them can change what
+## is listed and which categories are on the rail. The open flyout is re-listed in
+## place - or shut, when its category just left the rail (a load clears every
+## grant before re-applying them) - and a search is re-run under the new rule.
+func _on_listing_changed() -> void:
+	if flyout_open():
+		if _open_category != &"":
+			if _category_shown(_open_category):
+				_populate_list(_listed_bucket(_open_category))
+			else:
+				close_flyout()
+		elif not _search.text.strip_edges().is_empty():
+			_on_search_changed(_search.text)
 	_refresh_rail()
 	_rebuild_recent_row()
-	if flyout_open() and _open_category != &"":
-		_populate_list(_bucket(_open_category))
 
-## Repaints the rail: the open category takes the live treatment, and every entry
-## restates its count. Unlike WI-43's version this never *hides* a category -
-## locked modules are rendered now, so a category whose modules are all
-## un-researched has something to show, and the rail stops changing length under
-## the player as the tech tree opens up.
+## Repaints the rail: every entry shows or hides by [method _category_shown] and
+## restates its count, and the open category takes the live treatment. WI-54's
+## version never hid a category; since 2026-09-15 one with nothing buildable is
+## off the rail until its first module is granted (see the class comment).
 func _refresh_rail() -> void:
 	for category: StringName in _rail_rows:
 		var row: ListRow = _rail_rows[category]
@@ -473,10 +540,14 @@ func facts_for(scene: PackedScene) -> ModuleFacts:
 		facts_cache[scene] = cached
 	return cached
 
-## Live count of modules shown in a category, for the probe and for tests of the
+## Live count of modules listed in a category, for the probe and for tests of the
 ## header/rail agreement.
 func category_count(category: StringName) -> int:
-	return _bucket(category).size()
+	return _listed_bucket(category).size()
+
+## Whether a category's row is on the rail right now, for the probe.
+func category_on_rail(category: StringName) -> bool:
+	return _groups.has(category) and _category_shown(category)
 
 ## The flyout frame, so the mount can measure it. Never null once `_ready` ran.
 func flyout_panel() -> ConsolePanel:
@@ -489,8 +560,12 @@ func open_category_id() -> StringName:
 	return _open_category
 
 ## One category's row on the rail, for a caller that needs to point at it
-## (WI-63). Null for a category this menu has no row for.
+## (WI-63). Null for a category this menu has no row for *or* one off the rail
+## right now - the same "not on screen resolves to nothing" rule as
+## [method list_row], stated here rather than left to the caller's visibility check.
 func rail_row(category: StringName) -> ListRow:
+	if not category_on_rail(category):
+		return null
 	return _rail_rows.get(category)
 
 ## One module's row in the open flyout, or null when the flyout is shut or shows
