@@ -438,9 +438,9 @@ func _shortcut_input(event: InputEvent) -> void:
 	if ModeManager.text_entry_has_focus(get_viewport()):
 		return
 	var step: int = 0
-	if event.is_action_pressed(&"build_category_next"):
+	if ModeManager.hotkey_pressed(event, &"build_category_next"):
 		step = 1
-	elif event.is_action_pressed(&"build_category_prev"):
+	elif ModeManager.hotkey_pressed(event, &"build_category_prev"):
 		step = -1
 	if step == 0:
 		return

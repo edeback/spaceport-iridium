@@ -377,6 +377,10 @@ border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.11372549, 0.17254902, 0.2509804, 1)
 
+[sub_resource type="FontVariation" id="FontVariation_m1q1p"]
+base_font = ExtResource("2_63ai6")
+spacing_glyph = 1
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_070qk"]
 bg_color = Color(0, 0, 0, 0)
 border_width_left = 1
@@ -567,10 +571,6 @@ border_width_top = 1
 border_color = Color(0.11372549, 0.17254902, 0.2509804, 1)
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_p3ppn"]
-
-[sub_resource type="FontVariation" id="FontVariation_m1q1p"]
-base_font = ExtResource("2_63ai6")
-spacing_glyph = 1
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dm8ed"]
 content_margin_left = 14.0
@@ -831,6 +831,12 @@ Hotkey/base_type = &"Label"
 Hotkey/colors/font_color = Color(0.36862746, 0.53333336, 0.64705884, 1)
 Hotkey/font_sizes/font_size = 11
 Hotkey/fonts/font = ExtResource("4_3elkx")
+InspectorTab/base_type = &"Button"
+InspectorTab/colors/font_color = Color(0.4509804, 0.56078434, 0.64705884, 1)
+InspectorTab/colors/font_hover_color = Color(0.6156863, 0.7254902, 0.7882353, 1)
+InspectorTab/colors/font_pressed_color = Color(0.6156863, 0.7254902, 0.7882353, 1)
+InspectorTab/font_sizes/font_size = 11
+InspectorTab/fonts/font = SubResource("FontVariation_m1q1p")
 ItemList/colors/font_color = Color(0.6156863, 0.7254902, 0.7882353, 1)
 ItemList/colors/font_outline_color = Color(0, 0, 0, 0)
 ItemList/colors/font_selected_color = Color(0.91764706, 0.9647059, 0.9843137, 1)
@@ -959,12 +965,6 @@ TabInactive/fonts/font = SubResource("FontVariation_m1q1p")
 TabInactive/styles/hover = SubResource("StyleBoxFlat_dm8ed")
 TabInactive/styles/normal = SubResource("StyleBoxEmpty_b6u8l")
 TabInactive/styles/pressed = SubResource("StyleBoxFlat_38jnt")
-InspectorTab/base_type = &"Button"
-InspectorTab/colors/font_color = Color(0.4509804, 0.56078434, 0.64705884, 1)
-InspectorTab/colors/font_hover_color = Color(0.6156863, 0.7254902, 0.7882353, 1)
-InspectorTab/colors/font_pressed_color = Color(0.6156863, 0.7254902, 0.7882353, 1)
-InspectorTab/font_sizes/font_size = 11
-InspectorTab/fonts/font = SubResource("FontVariation_m1q1p")
 TabLabel/base_type = &"Label"
 TabLabel/colors/font_color = Color(0.4509804, 0.56078434, 0.64705884, 1)
 TabLabel/font_sizes/font_size = 12

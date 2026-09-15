@@ -79,6 +79,32 @@ func test_gamepad_events_are_not_remappable_in_v1() -> void:
 	assert_eq(GameSettings.event_to_dict(joy), {}, "joypad events serialize to nothing")
 	assert_false(GameSettings.is_remappable(joy), "so the remap screen refuses them")
 
+## The remap screen holds a modifier until it learns what it is for. Shift
+## arrives before the 1 in Shift+1, and capturing it on its press made every
+## chord - the overlays' own defaults included - unbindable.
+func test_a_modifier_on_its_own_is_recognised() -> void:
+	for key: Key in [KEY_SHIFT, KEY_CTRL, KEY_ALT, KEY_META]:
+		assert_true(GameSettings.is_modifier_key(_key(key)), "%s is held for another key" % OS.get_keycode_string(key))
+	assert_false(GameSettings.is_modifier_key(_key(KEY_1, false, true)), "Shift+1 is the chord, not the modifier")
+	assert_false(GameSettings.is_modifier_key(_key(KEY_SPACE)), "Space is a key of its own")
+	assert_false(GameSettings.is_modifier_key(_mouse(MOUSE_BUTTON_LEFT)), "and a mouse button is neither")
+
+## Holding Ctrl reports `ctrl_pressed` on the Ctrl event itself. Bound as-is that
+## stores - and describes - "Ctrl + Ctrl".
+func test_a_bare_modifier_binding_drops_its_own_flag() -> void:
+	var held: InputEventKey = _key(KEY_CTRL, true)
+	var bound: InputEventKey = GameSettings.bare_modifier(held)
+	assert_eq(bound.physical_keycode, KEY_CTRL, "still the Ctrl key")
+	assert_false(bound.ctrl_pressed, "without Ctrl as its own modifier")
+	assert_eq(GameSettings.describe_event(bound), OS.get_keycode_string(KEY_CTRL), "and it reads as one key")
+
+func test_a_shift_chord_round_trips_and_is_distinct_from_the_bare_key() -> void:
+	var chord: InputEventKey = _key(KEY_1, false, true)
+	var restored := GameSettings.event_from_dict(GameSettings.event_to_dict(chord)) as InputEventKey
+	assert_true(restored.shift_pressed, "Shift survives the settings file")
+	assert_false(GameSettings.events_conflict(chord, _key(KEY_1)),
+		"Shift+1 and 1 are two bindings, which is what lets overlays and speeds share digits")
+
 func test_corrupt_event_dicts_parse_to_null() -> void:
 	assert_null(GameSettings.event_from_dict({}), "empty dict is not an event")
 	assert_null(GameSettings.event_from_dict({"type": "telepathy"}), "unknown type is not an event")

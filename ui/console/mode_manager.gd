@@ -266,22 +266,34 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _text_entry_has_focus():
 		return
 	for mode: Mode in HOTKEY_ACTIONS:
-		var action: StringName = HOTKEY_ACTIONS[mode]
-		if not InputMap.has_action(action):
-			continue
-		if event.is_action_pressed(action):
+		if hotkey_pressed(event, HOTKEY_ACTIONS[mode]):
 			get_viewport().set_input_as_handled()
 			toggle(mode)
 			return
+
+## Whether `event` presses `action` **with exactly its bound modifiers** - the one
+## way every HUD hotkey handler asks, never a bare `is_action_pressed`.
+##
+## Godot's default match ignores *extra* modifiers, so an action bound to a bare
+## `1` also fires on Shift+1. The overlays are Shift+digit and the time speeds are
+## the bare digits (2026-09-15), so under the default every overlay press would
+## have changed the speed too, and which handler got there first would have been
+## tree order. It is also what makes [method GameSettings.events_conflict] true in
+## play: the rebind scan treats Shift+X and X as two keys, which they only are if
+## every handler matches exactly.
+static func hotkey_pressed(event: InputEvent, action: StringName) -> bool:
+	return InputMap.has_action(action) and event.is_action_pressed(action, false, true)
 
 func _text_entry_has_focus() -> bool:
 	return text_entry_has_focus(get_viewport())
 
 ## Typing "steel" into the build menu's search box must not fire mode_stores and
 ## mode_trade. Every HUD hotkey handler asks this - the mode keys here, the
-## overlay digits in [OverlayController], the map toggle in [UIMain] - so it is
-## one static rather than three copies that drift the first time the rule has to
-## widen (a rename field, Panku's REPL, a [CodeEdit]).
+## overlay keys in [OverlayController], the time keys in [UITimeScaleSelect], the
+## map toggle in [UIMain] - so it is one static rather than four copies that drift
+## the first time the rule has to widen (a rename field, Panku's REPL, a
+## [CodeEdit]). Typing a space or a digit into a search box must not pause the
+## game or change its speed.
 static func text_entry_has_focus(viewport: Viewport) -> bool:
 	if viewport == null:
 		return false

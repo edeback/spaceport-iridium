@@ -23,6 +23,9 @@ var _difficulty_detail: Label
 ## Capture state: the row waiting for a key, plus the overlay that eats input
 ## while it waits.
 var _capturing_row: KeybindRow = null
+## A modifier pressed during capture, waiting to learn whether it is a binding of
+## its own (released alone) or half of a chord (another key comes first).
+var _held_modifier: InputEventKey = null
 var _capture_overlay: Control
 var _capture_label: Label
 
@@ -361,6 +364,7 @@ func _cancel_capture() -> void:
 	if _capturing_row != null:
 		_capturing_row.set_capturing(false)
 		_capturing_row = null
+	_held_modifier = null
 	if _capture_overlay != null:
 		_capture_overlay.visible = false
 	set_process_input(false)
@@ -370,8 +374,23 @@ func _cancel_capture() -> void:
 func _input(event: InputEvent) -> void:
 	if _capturing_row == null:
 		return
-	# Releases and echoes would end the capture on the same press that started it.
-	if not event.is_pressed() or event.is_echo():
+	if event.is_echo():
+		return
+	# A modifier is captured on its *release*, and only if no other key went down
+	# while it was held. Capturing it on its press took Shift before the 1 in
+	# Shift+1 arrived, so no chord could be bound - including the overlays' own
+	# defaults. Releasing it alone still binds it alone, which Ctrl (module
+	# labels) needs.
+	if GameSettings.is_modifier_key(event):
+		get_viewport().set_input_as_handled()
+		var key := event as InputEventKey
+		if key.pressed:
+			_held_modifier = key
+		elif _held_modifier != null and _held_modifier.physical_keycode == key.physical_keycode:
+			_capture(GameSettings.bare_modifier(_held_modifier))
+		return
+	# Releases would end the capture on the same press that started it.
+	if not event.is_pressed():
 		return
 	# A mouse press on the Cancel button must still reach the button.
 	if event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
@@ -379,6 +398,9 @@ func _input(event: InputEvent) -> void:
 	if not GameSettings.is_remappable(event):
 		return
 	get_viewport().set_input_as_handled()
+	_capture(event)
+
+func _capture(event: InputEvent) -> void:
 	var action: StringName = _capturing_row.action
 	_cancel_capture()
 	_try_bind(action, event)

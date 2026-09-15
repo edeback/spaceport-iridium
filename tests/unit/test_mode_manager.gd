@@ -299,6 +299,9 @@ func _hud_hotkey_actions() -> Array[StringName]:
 		actions.append(ModeManager.HOTKEY_ACTIONS[mode])
 	for action: StringName in OverlayController.HOTKEY_ACTIONS:
 		actions.append(action)
+	actions.append(UITimeScaleSelect.PAUSE_ACTION)
+	for action: StringName in UITimeScaleSelect.SPEED_ACTIONS:
+		actions.append(action)
 	actions.append(&"toggle_map")
 	return actions
 
@@ -309,8 +312,12 @@ func test_every_hud_hotkey_action_exists_in_the_input_map() -> void:
 ## HUD hotkeys must not collide with the WASD camera pan or any other bound
 ## action - a key that both opens Stores and pans the camera down is a bug the
 ## player experiences as the station sliding away under an opening panel. The
-## overlay digits are in scope because WI-50 moved them onto real actions; before
+## overlay keys are in scope because WI-50 moved them onto real actions; before
 ## that they consumed every bare digit press before the action system saw it.
+## Since 2026-09-15 the overlays (Shift+digit) and the speeds (bare digit) share
+## physical keys, which this scan accepts because `events_conflict` compares
+## modifiers - and which is only true in play because of the exact match pinned
+## below.
 func test_hud_hotkeys_do_not_collide_with_other_bound_actions() -> void:
 	var hud: Array[StringName] = _hud_hotkey_actions()
 	for action: StringName in hud:
@@ -332,3 +339,71 @@ func test_every_hud_hotkey_is_offered_by_the_remapper() -> void:
 	for action: StringName in _hud_hotkey_actions():
 		assert_true(Global.REMAPPABLE_ACTIONS.has(action),
 			"%s appears in the keybind remapper" % action)
+
+# --- digits: speeds bare, overlays on Shift (2026-09-15) -----------------------
+
+func _press(physical: Key, shift: bool = false) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.physical_keycode = physical
+	event.shift_pressed = shift
+	event.pressed = true
+	return event
+
+## The reason `hotkey_pressed` exists. Godot's default match ignores extra
+## modifiers, so an action bound to a bare 1 fires on Shift+1 as well - every
+## overlay press would also have changed the speed.
+func test_shift_digit_paints_an_overlay_and_leaves_the_speed_alone() -> void:
+	var shift_one: InputEventKey = _press(KEY_1, true)
+	assert_true(ModeManager.hotkey_pressed(shift_one, &"overlay_power"), "Shift+1 paints power")
+	assert_false(ModeManager.hotkey_pressed(shift_one, &"time_speed_half"),
+		"and is not also the 1 key")
+	assert_true(ModeManager.hotkey_pressed(_press(KEY_0, true), &"overlay_clear"),
+		"Shift+0 clears")
+
+func test_the_bare_digits_count_up_the_speeds() -> void:
+	var expected: Dictionary[Key, StringName] = {
+		KEY_1: &"time_speed_half",
+		KEY_2: &"time_speed_normal",
+		KEY_3: &"time_speed_double",
+		KEY_4: &"time_speed_quad",
+	}
+	for key: Key in expected:
+		var press: InputEventKey = _press(key)
+		assert_true(ModeManager.hotkey_pressed(press, expected[key]),
+			"%s is %s" % [OS.get_keycode_string(key), expected[key]])
+		for overlay: StringName in OverlayController.HOTKEY_ACTIONS:
+			assert_false(ModeManager.hotkey_pressed(press, overlay),
+				"a bare %s paints no overlay" % OS.get_keycode_string(key))
+
+func test_space_is_pause() -> void:
+	assert_true(ModeManager.hotkey_pressed(_press(KEY_SPACE), UITimeScaleSelect.PAUSE_ACTION),
+		"Space pauses")
+	assert_false(ModeManager.hotkey_pressed(_press(KEY_SPACE, true), UITimeScaleSelect.PAUSE_ACTION),
+		"Shift+Space is a different key")
+
+func test_an_unknown_action_is_never_pressed() -> void:
+	assert_false(ModeManager.hotkey_pressed(_press(KEY_1), &"no_such_action"),
+		"a missing action is a no, not an InputMap error")
+
+## Keyed by action, so the check is that the two lists agree: a pill with no key
+## is unreachable from the keyboard, and a key with no pill lights nothing.
+func test_every_speed_pill_has_one_key_and_every_key_a_pill() -> void:
+	var seen: Dictionary[StringName, bool] = {}
+	for preset: float in TimeManager.SPEED_PRESETS:
+		var action: StringName = UITimeScaleSelect.speed_action(preset)
+		assert_ne(action, &"", "%.1f× has a hotkey" % preset)
+		assert_false(seen.has(action), "%s selects exactly one speed" % action)
+		seen[action] = true
+	assert_eq(seen.size(), UITimeScaleSelect.SPEED_ACTIONS.size(),
+		"and no key names a speed with no pill")
+
+## A key toggles its own overlay; the clear key still clears.
+func test_an_overlay_key_toggles_its_own_overlay() -> void:
+	var none: OverlayController.Mode = OverlayController.Mode.NONE
+	var power: OverlayController.Mode = OverlayController.Mode.POWER
+	var o2: OverlayController.Mode = OverlayController.Mode.O2
+	assert_eq(OverlayController.toggled_mode(none, power), power, "from nothing it paints")
+	assert_eq(OverlayController.toggled_mode(power, power), none, "its own key again clears it")
+	assert_eq(OverlayController.toggled_mode(power, o2), o2, "another key switches rather than clears")
+	assert_eq(OverlayController.toggled_mode(power, none), none, "Shift+0 still clears")
+	assert_eq(OverlayController.toggled_mode(none, none), none, "and clearing nothing is nothing")

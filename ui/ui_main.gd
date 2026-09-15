@@ -299,7 +299,8 @@ func _topmost_esc_claim() -> StringName:
 		return &"selection"
 	# Last: a painted overlay. It is ranked below everything because the overlay
 	# is designed to outlive its panel - Esc must never take it away while the
-	# player still has something else open. `0` clears it directly.
+	# player still has something else open. Shift+0, or the painted overlay's own
+	# key again, clears it directly.
 	if overlay_controller != null and overlay_controller.has_active_mode():
 		return &"overlay"
 	return &""
@@ -485,16 +486,17 @@ func _on_game_over(reason: String) -> void:
 ## The two readout hotkeys that are not modes: M folds the station map, L opens
 ## the resource ledger. Both go through the same text-focus guard every other HUD
 ## hotkey uses (WI-50 contract point 6) - typing "steel" into the build search
-## must not fold the map.
+## must not fold the map - and the same exact match ([method
+## ModeManager.hotkey_pressed]), so a Shift chord rebound onto M is not also M.
 func _shortcut_input(event: InputEvent) -> void:
 	if ModeManager.text_entry_has_focus(get_viewport()):
 		return
-	if event.is_action_pressed("toggle_map"):
+	if ModeManager.hotkey_pressed(event, &"toggle_map"):
 		if _map_readout == null or not is_instance_valid(_map_readout):
 			return
 		get_viewport().set_input_as_handled()
 		_map_readout.toggle_collapsed()
-	elif event.is_action_pressed("toggle_ledger"):
+	elif ModeManager.hotkey_pressed(event, &"toggle_ledger"):
 		if ledger == null or not is_instance_valid(ledger):
 			return
 		get_viewport().set_input_as_handled()

@@ -15,14 +15,19 @@ extends Control
 ## WI-50 turned the free-floating toolbar strip into the OVERLAY console panel.
 ## The overlay itself is deliberately **not** a mode panel: the tint outlives the
 ## panel that switched it on, which is exactly what the console button's cyan bar
-## reports. So the digit hotkeys moved off the buttons' [Shortcut]s (which only
-## fire while their button is visible) and into this node's `_unhandled_input`,
-## where they keep working with the panel shut - the stated design.
+## reports. So the hotkeys moved off the buttons' [Shortcut]s (which only fire
+## while their button is visible) and into this node's `_unhandled_input`, where
+## they keep working with the panel shut - the stated design.
 ##
 ## WI-54 gave the panel its final body: six [ListRow]s that print their own
-## number key, and a legend for the active mode only. The legend swatches are
+## hotkey, and a legend for the active mode only. The legend swatches are
 ## produced by [OverlayPalette]'s own mode functions rather than named here, so
 ## the square beside "breathable" is the tint a breathable module actually gets.
+##
+## The keys are Shift+1…6 with Shift+0 clearing (2026-09-15) - the bare digits
+## went to the time speeds - and a key **toggles**: pressing the painted
+## overlay's own key again clears it, so Shift+0 is a way back rather than the
+## only one. Its row does the same ([method toggled_mode]).
 
 enum Mode { NONE, POWER, O2, INTEGRITY, VIBRATION, LOGISTICS, HEAT }
 
@@ -43,8 +48,8 @@ const PULSE_HZ: float = 2.2
 const PULSE_MIN_A: float = 0.4
 const PULSE_MAX_A: float = 0.95
 
-## Overlay hotkeys, in panel order: the digit each is bound to by default, and
-## the mode it paints. Real input actions rather than raw keycodes (program
+## Overlay hotkeys, in panel order: Shift plus the digit each is bound to by
+## default, and the mode it paints. Real input actions rather than raw keycodes (program
 ## decision 9), so WI-36's remapper lists them, a rebind is possible, and a key
 ## bound to something else later cannot be silently swallowed here.
 const HOTKEY_ACTIONS: Dictionary[StringName, Mode] = {
@@ -130,8 +135,8 @@ func panel() -> ConsolePanel:
 
 	var modes := VBoxContainer.new()
 	modes.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
-	# Order + hotkeys: 1..6 down the panel, 0 clears. The printed key comes from
-	# the live InputMap, so a rebind shows up on the row.
+	# Order + hotkeys: Shift+1..6 down the panel, Shift+0 clears. The printed key
+	# comes from the live InputMap, so a rebind shows up on the row.
 	_add_mode_row(modes, Mode.POWER, "Power", &"overlay_power")
 	_add_mode_row(modes, Mode.O2, "Oxygen", &"overlay_o2")
 	_add_mode_row(modes, Mode.INTEGRITY, "Integrity", &"overlay_integrity")
@@ -186,10 +191,11 @@ func _add_mode_row(parent: Node, mode: Mode, label: String, action: StringName) 
 	var row: ListRow = ListRow.create()
 	row.configure(label, "", key)
 	row.tooltip_text = "%s (%s)" % [label, key] if key != "" else label
-	# A plain press, not a toggle: the mode is owned by this controller (the
+	# A plain press, not a toggle button: the mode is owned by this controller (the
 	# hotkeys set it with the panel shut), so the rows report it rather than
 	# holding it. A radio ButtonGroup would have been a second source of truth.
-	row.pressed.connect(set_mode.bind(mode))
+	# The press still toggles the *mode*, exactly as the row's key does.
+	row.pressed.connect(toggle_mode.bind(mode))
 	parent.add_child(row)
 	_rows[mode] = row
 
@@ -202,16 +208,29 @@ func _on_corridor_display_toggled(toggled_on: bool) -> void:
 ## The overlay hotkeys live here rather than on the buttons because a [Shortcut]
 ## only fires while its button is visible in the tree, and the whole point of the
 ## overlay is that it survives its panel being closed.
+##
+## Matched exactly ([method ModeManager.hotkey_pressed]): the bare digits are the
+## time speeds, and Godot's default match would fire both on every Shift+digit.
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey or event is InputEventMouseButton):
 		return
 	if ModeManager.text_entry_has_focus(get_viewport()):
 		return
 	for action: StringName in HOTKEY_ACTIONS:
-		if InputMap.has_action(action) and event.is_action_pressed(action):
+		if ModeManager.hotkey_pressed(event, action):
 			get_viewport().set_input_as_handled()
-			set_mode(HOTKEY_ACTIONS[action])
+			toggle_mode(HOTKEY_ACTIONS[action])
 			return
+
+## What pressing `pressed`'s key or row does while `current` is painted: the
+## painted overlay's own key clears it, any other key switches to its overlay,
+## and the clear key clears. Static and pure so the rule is tested without a
+## station to tint.
+static func toggled_mode(current: Mode, pressed: Mode) -> Mode:
+	return Mode.NONE if pressed == current else pressed
+
+func toggle_mode(pressed: Mode) -> void:
+	set_mode(toggled_mode(_mode, pressed))
 
 ## Esc clears an active overlay, but the decision isn't made here: UIMain ranks
 ## every Esc claimant in one place (WI-36) and calls set_mode(NONE) when the
@@ -221,7 +240,7 @@ func has_active_mode() -> bool:
 	return _mode != Mode.NONE
 
 ## Keeps the row list honest when the mode is set from anywhere but a click - a
-## number key with the panel shut, Esc, `0`. The rows hold no state of their own,
+## hotkey with the panel shut, Esc, Shift+0. The rows hold no state of their own,
 ## so this is a repaint rather than a reconciliation.
 func _sync_rows() -> void:
 	for mode: Mode in _rows:

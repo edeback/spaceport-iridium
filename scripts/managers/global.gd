@@ -104,6 +104,15 @@ const REMAPPABLE_ACTIONS: Array[StringName] = [
 	# panel prints comes from the live InputMap, so it follows a rebind here.
 	&"build_category_prev",
 	&"build_category_next",
+	# Time controls (2026-09-15). The bare digits are the four speed presets and
+	# Space is the pause button; the overlays below moved to Shift+digit to make
+	# room. Both halves share physical keys, which only works because every HUD
+	# hotkey matches its binding exactly (`ModeManager.hotkey_pressed`).
+	&"time_pause",
+	&"time_speed_half",
+	&"time_speed_normal",
+	&"time_speed_double",
+	&"time_speed_quad",
 	&"overlay_power",
 	&"overlay_o2",
 	&"overlay_integrity",
@@ -144,6 +153,11 @@ const ACTION_LABELS: Dictionary[StringName, String] = {
 	&"toggle_ledger": "Resource ledger",
 	&"build_category_prev": "Previous build category",
 	&"build_category_next": "Next build category",
+	&"time_pause": "Pause / resume",
+	&"time_speed_half": "Speed 0.5×",
+	&"time_speed_normal": "Speed 1×",
+	&"time_speed_double": "Speed 2×",
+	&"time_speed_quad": "Speed 4×",
 	&"overlay_power": "Power overlay",
 	&"overlay_o2": "Oxygen overlay",
 	&"overlay_integrity": "Integrity overlay",

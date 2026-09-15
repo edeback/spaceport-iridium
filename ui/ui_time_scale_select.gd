@@ -11,6 +11,9 @@ extends MarginContainer
 ## returns the one-line form for logs; the console needs the two halves at
 ## different sizes, which is why it formats them itself rather than splitting a
 ## formatted string back apart.
+##
+## Space and the bare digits drive it too (2026-09-15): see [constant PAUSE_ACTION]
+## and [constant SPEED_ACTIONS].
 
 ## What is holding the sim, per holder id - the sentence the control shows when
 ## the player presses un-pause and nothing happens (WI-58).
@@ -57,6 +60,22 @@ const HOLD_LABEL_MAX: int = 20
 ## saying *"held by cargo_inspection"* is worth more than one saying "held".
 const UNKNOWN_HOLD: String = "Held by %s"
 
+## The time hotkeys. Space is the pause button and the bare digits are the speed
+## pills - the overlays moved to Shift+digit to make room. Real input actions for
+## the reason every HUD key is one (WI-50 contract point 6): the remapper lists
+## them, and a rebind onto one is a conflict the scan can see.
+const PAUSE_ACTION: StringName = &"time_pause"
+
+## Keyed by action rather than by pill index, so reordering
+## [constant TimeManager.SPEED_PRESETS] cannot quietly move 4× onto the `1` key.
+## A test pins that every pill has exactly one key and every key a pill.
+const SPEED_ACTIONS: Dictionary[StringName, float] = {
+	&"time_speed_half": 0.5,
+	&"time_speed_normal": 1.0,
+	&"time_speed_double": 2.0,
+	&"time_speed_quad": 4.0,
+}
+
 @onready var clock_label: Label = %ClockLabel
 @onready var cycle_label: Label = %CycleLabel
 @onready var pause_button: Button = %PauseButton
@@ -89,9 +108,23 @@ static func hold_label(holders: Array[StringName]) -> String:
 	var first: StringName = holders[0]
 	return HOLD_LABELS.get(first, UNKNOWN_HOLD % first)
 
+## The action that selects `preset`, or `&""` for a pill with no key.
+static func speed_action(preset: float) -> StringName:
+	for action: StringName in SPEED_ACTIONS:
+		if is_equal_approx(SPEED_ACTIONS[action], preset):
+			return action
+	return &""
+
+## "2× speed (3)". The key comes from the live InputMap through the helper the
+## console's mode buttons use, so a rebind shows on the next HUD build.
+static func _hotkey_tooltip(text: String, action: StringName) -> String:
+	var key: String = ModeManager.action_hotkey_label(action)
+	return "%s (%s)" % [text, key] if key != "" else text
+
 func _ready() -> void:
 	var tm: TimeManager = Global.time_manager
 	pause_button.toggled.connect(_on_pause_toggled)
+	pause_button.tooltip_text = _hotkey_tooltip("Pause / resume", PAUSE_ACTION)
 	for preset: float in TimeManager.SPEED_PRESETS:
 		var button := Button.new()
 		button.toggle_mode = true
@@ -101,6 +134,7 @@ func _ready() -> void:
 		# so a speed pill needs no per-state styling of its own.
 		button.theme_type_variation = UIType.ACTION_SECONDARY
 		button.text = ("%d" % preset if preset == roundf(preset) else "%.1f" % preset) + "×"
+		button.tooltip_text = _hotkey_tooltip("%s speed" % button.text, speed_action(preset))
 		button.button_pressed = is_equal_approx(preset, tm.speed)
 		button.pressed.connect(_on_speed_selected.bind(preset))
 		speed_buttons.add_child(button)
@@ -114,6 +148,30 @@ func _ready() -> void:
 	tm.pause_state_changed.connect(_on_pause_state_changed)
 	tm.speed_changed.connect(_on_speed_changed)
 	_refresh_clock()
+
+## A key is a click on this control, nothing more: Space goes through
+## [method _on_pause_toggled] and a digit through [method _on_speed_selected], so
+## a key pressed under a hold names the holder exactly as the button does. They
+## live here rather than on the buttons as [Shortcut]s for the overlay keys'
+## reason - a shortcut only fires while its button is visible - and they are
+## matched exactly ([method ModeManager.hotkey_pressed]) because Shift+the same
+## digits are the overlays.
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventKey or event is InputEventMouseButton):
+		return
+	if ModeManager.text_entry_has_focus(get_viewport()):
+		return
+	if ModeManager.hotkey_pressed(event, PAUSE_ACTION):
+		get_viewport().set_input_as_handled()
+		# What clicking the button sends. It shows the combined state, so while
+		# something holds the sim this reads as "resume" - and says what is holding.
+		_on_pause_toggled(not pause_button.button_pressed)
+		return
+	for action: StringName in SPEED_ACTIONS:
+		if ModeManager.hotkey_pressed(event, action):
+			get_viewport().set_input_as_handled()
+			_on_speed_selected(SPEED_ACTIONS[action])
+			return
 
 ## Keeps the preset buttons honest when speed is set from elsewhere (loading
 ## a save, future event cards).

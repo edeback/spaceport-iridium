@@ -145,6 +145,27 @@ static func _read_modifiers(data: Dictionary, event: InputEventWithModifiers) ->
 static func is_remappable(event: InputEvent) -> bool:
 	return not event_to_dict(event).is_empty()
 
+## The keys that are held *for* another key rather than pressed for their own sake.
+const MODIFIER_KEYS: Array[Key] = [KEY_SHIFT, KEY_CTRL, KEY_ALT, KEY_META]
+
+## True for Shift, Ctrl, Alt or Meta on its own. The remap screen must not
+## capture one on its press: Shift arrives before the 1 in Shift+1, so doing that
+## made every chord unbindable - the overlays' own defaults included.
+static func is_modifier_key(event: InputEvent) -> bool:
+	var key := event as InputEventKey
+	if key == null:
+		return false
+	return MODIFIER_KEYS.has(key.physical_keycode) or MODIFIER_KEYS.has(key.keycode)
+
+## A modifier bound on its own (Ctrl shows module labels), as a binding. The event
+## that delivers it carries its own flag - holding Ctrl reports `ctrl_pressed` -
+## which would otherwise be stored and described as "Ctrl + Ctrl".
+static func bare_modifier(event: InputEventKey) -> InputEventKey:
+	var out := InputEventKey.new()
+	out.physical_keycode = event.physical_keycode
+	out.keycode = event.keycode
+	return out
+
 ## Two bindings collide when they'd both fire on the same physical input.
 ## Compared through the dictionary form so only the fields we actually persist
 ## take part - device ids, positions and echo flags are irrelevant.
