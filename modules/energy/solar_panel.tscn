@@ -43,6 +43,7 @@ fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(0.8, 0.8)
 
 [node name="Module" unique_id=355746657 instance=ExtResource("1_ldvtf")]
+has_atmosphere = false
 
 [node name="SpriteSelectionComponent" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="0" unique_id=2121829806 node_paths=PackedStringArray("sprite") instance=ExtResource("2_p3bqt")]
 sprite = NodePath("../Sprite")
