@@ -176,6 +176,17 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 	- The planet currently uses the Rivers template, but LandMasses, IceWorld, and DryTerran should also be possible options (again with varied parameters, not just the defaults)
 - There is no gameplay impact - visuals only - though different solar systems will have different properties in the future, and this is a prerequisite
 
+**Move Heat and O2 Systems to Tier 2**:
+- Goal: Move the heat and oxygen systems out of the start of the game so the player is not immediately overwhelmed with complexity.
+- Currently the player has to deal with a huge number of systems as soon as the game starts. The crew needs food, sleep, recreation, air to breathe and a comfortable temperature. While the station starts oxygenated and warm, players often expand quickly and overwhelm the starter module, causing their crew to suffer in a way that is less obvious than food or sleep.
+- To remove some of the pressure from the player, the crew is going to start off, and stay, in spacesuits during Tier 1. These spacesuits will keep them breathing and the right temperature regardless of if they are in or out of the station. (There is no cost in energy or resources for this.) Low oxygen and bad temperature warnings will also be muted during Tier 1. Oxygen and temperature will still move through the station, it just won't be highlighted to the player.
+- Once the player advances to Tier 2, a notification from SAI will tell the player that the crew desires a habitable interior and will no longer be happy wearing a spacesuit around indoors.
+- During Tier 2 (and above), the crew will remove their spacesuits on entering the station via the airlock as long as the interior of the airlock is habitable (O2 and temp in normal range).
+- If the interior is not habitable, the crew will keep on their suits
+- If the crew has their spacesuits on while inside, they get a "Spacesuit on inside" -10 happiness debuff. This is not triggered during Tier 1 or if they leave the interior of the station.
+- If crew encounter harmful (damaging) conditions inside (due to lack of O2 or bad temp) they will put on their suits and keep them on for at least 2 hours past the last time they encountered a hostile interior space, or if they leave and come back via an airlock and the interior is safe.
+- The current crew sprites will be the ones to use if the spacesuit is on. I've added new sprites with no helmet that should be used when the spacesuit is off. The new sprites are located in \assets\external\Spaceship Creation Kit\NoHelmet and have the same naming convention as the original sprites except with "noHelmet" in the name.
+
 **Audio:**
 - Goal: Add sounds for feedback and immersion
 - Create a system to easily play sounds at positions
@@ -219,9 +230,12 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 
 **Pawn Death:**
 - When health goes to zero, the pawn should die
+	- All items on pawn dropped in pile in module
 - Pawns nearby (in the same module) as well as pawns with relationships should get a heavy mood penalty for a long time
 - Pawn must be disposed of
 	- Ejected? Incinerated?
+	- New button on pawn to eject them into space ("space burial")
+	- (Option later to "recycle" them?)
 - Pawn can be memorialized to lesson mood penalty
 	- Module of "Memorial to XX"
 		- Or maybe a general "Memorial" building that unlocks after the first pawn dies

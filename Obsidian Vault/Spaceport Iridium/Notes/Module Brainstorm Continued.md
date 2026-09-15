@@ -3,12 +3,12 @@ Start out:
 Asteroids:
 Iron Ore
 Carbon
-Silica Ore (Not technically ore!)
+Silicates
 
 Comets:
 Ice
 Carbon
-Silica Ore
+Silicates
 
 
 Research:
@@ -19,11 +19,11 @@ Iridium
 
 Foundry
 Iron ore + carbon -> Steel Ingot
-Silica Ore + carbon -> Silicon Ingot
 Gold Ore -> Gold Ingot
 Iridium Ore -> Iridium Ingot
 
-
+Silicon Furnace
+Silicates + carbon -> Silicon Ingot
 
 Isotope Separator
 Uranium Ore -> Enriched Uranium (Uranium Pellets?)

@@ -4,3 +4,5 @@
 - Bar modules have rumors about the galaxy
 	- EV-like
 	- Might warn of upcoming events
+
+Distillery, alcohol (+ alcohol effects)

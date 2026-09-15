@@ -1,4 +1,12 @@
-Selected box probably connect right to bottom console, gives a few more pixels of space? Looks good like this though...
+Forbid modules? So crew don't try to go to or pathfind through them
+
+Truss that _can_ be destroyed (because station stays intact) should be destroyed
+
+Start off with crew in suits and so heat/O2 doesn't matter to them? Then at tier 2 force the station to become habitable without them?
+
+Internal airlocks? Corridors that don't allow O2 through, to maintain pressure
+- Or make airlocks 1-tile and allow both sides to be connected and let that determine exteriorness?
+- Or have all corridors have the option to be "sealed" like an airlock?
 
 Hide research tab completely until it opens up. No research should be possible until level 2
 Similarly, hide tabs for module types that aren't available yet
@@ -10,13 +18,6 @@ R&D -> "Tech" (early game isn't research, it's bought)
 Modules should have a list of present pawns so you can go module.get_present() (or something like that) to figure out who is there without looking through every pawn
 
 Rename modules! And be able to reset them to their default, too. Maybe give the default the droid treatment and name them Module + ID (Hallway 36, etc) so things can specify them exactly.
-
-Module/pawn info:
-Invert tab/info direction - tabs go below the info. Make this similar to RimWorld.
-When selected, have the basic pawn or module info, plus the tabs about getting additional information. Then when the tabs are selected the rest of the info box appears above.
-Also set the info flush against the bottom console to gain space. Don't show a mostly-empty "Nothing Selected" box when nothing is selected.
-
-Overlays to shift-num, use num to set speed instead. Space pauses/unpauses. Selecting an already-selected overlay turns off the overlay (so you don't have to always go to "clear overlay")
 
 When pawns wander, pick a random inner node (if it has one) instead of just flipping between the boundary of two modules
 - They now pick a "stand" target so maybe that's good enough?
