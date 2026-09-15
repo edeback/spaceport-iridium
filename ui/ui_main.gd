@@ -9,7 +9,9 @@ extends Control
 ## Draw order is the order things are added in [method _ready], and it matters:
 ## ambient strips first, then the mode panels (an opened panel is the thing the
 ## player just asked for, so it draws over the alert feed), then the console,
-## then the right column, then the modals, then the pause menu last.
+## then the right column, then the modals. The pause menu is the exception: it is
+## on a [CanvasLayer] of its own, because tree order cannot put anything over a
+## conversation's balloon, which is a CanvasLayer too.
 
 var preview_model : ModuleBase
 var skip_emit: bool = false
@@ -226,13 +228,23 @@ func _setup_build_cursor_hint() -> void:
 	_build_cursor_hint = BUILD_CURSOR_HINT_SCENE.instantiate() as BuildCursorHint
 	add_child(_build_cursor_hint)
 
-## Pause menu (WI-36). Added last so it sits on top of every other HUD panel;
-## it claims Esc only when esc_claimed() says nothing else wants it.
+## Pause menu (WI-36). It claims Esc only when esc_claimed() says nothing else
+## wants it.
+##
+## Mounted on its own [CanvasLayer] at [constant PauseMenu.LAYER], not as the last
+## HUD child. A CanvasLayer draws and takes clicks by its layer number, whatever its
+## place in the tree, and a dialogue balloon is one at a layer above the HUD's - so
+## "added last" put the menu *under* any open conversation, whose screen-wide click
+## catcher then took every click meant for Resume or Load Game.
 var pause_menu: PauseMenu
 
 func _setup_pause_menu() -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "PauseMenuLayer"
+	layer.layer = PauseMenu.LAYER
+	add_child(layer)
 	pause_menu = PauseMenu.new()
-	add_child(pause_menu)
+	layer.add_child(pause_menu)
 
 # --- Escape -------------------------------------------------------------------
 

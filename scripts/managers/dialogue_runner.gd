@@ -14,9 +14,11 @@ extends Node
 ## - **The balloon's lifecycle.** Deliberately *not* [method
 ##   DialogueManager.show_dialogue_balloon], which adds the balloon to
 ##   `get_current_scene()` - that puts its draw order **and** its
-##   `_unhandled_input` order at the mercy of tree position. Mounting it under
-##   [UIMain] puts it in the slot the event card used to occupy: above the mode
-##   panels, below the pause menu.
+##   `_unhandled_input` order at the mercy of tree position. It mounts under
+##   [UIMain]. What it draws over is **not** decided by that, though: the balloon
+##   is a CanvasLayer, which draws and takes clicks by its layer number. Its
+##   [constant DialogueBalloon.LAYER] puts it above the whole HUD, and
+##   [constant PauseMenu.LAYER] puts the pause menu above it.
 ## - **The cast** ([SpeakerCast]) for the current conversation, which is what makes
 ##   a random face hold still across several lines.
 ## - **The two state contexts and the access filter** (§3), which is what makes

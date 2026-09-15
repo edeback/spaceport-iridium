@@ -51,6 +51,14 @@ signal finished
 ## the sim at the same time without un-pausing each other.
 const PAUSE_HOLD: StringName = &"dialogue"
 
+## The [CanvasLayer] the balloon draws on. A CanvasLayer draws - and is hit-tested
+## - by this number, whatever its place in the tree, which is why mounting under
+## [UIMain] does not by itself decide what it sits over. Above the HUD's layer, so
+## a conversation is in front of the console and every panel; below
+## [constant PauseMenu.LAYER], so the pause menu is in front of a conversation.
+## `balloon.tscn` must not author a layer of its own (`test_modal_layers.gd`).
+const LAYER: int = 100
+
 ## The dialogue resource
 @export var dialogue_resource: DialogueResource
 
@@ -150,6 +158,7 @@ var mutation_cooldown: Timer = Timer.new()
 
 
 func _ready() -> void:
+	layer = LAYER
 	_apply_theme()
 	balloon.hide()
 	Engine.get_singleton("DialogueManager").mutated.connect(_on_mutated)

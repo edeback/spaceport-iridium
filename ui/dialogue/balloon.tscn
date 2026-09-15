@@ -43,7 +43,6 @@ _data = {
 }
 
 [node name="DialogueBalloon" type="CanvasLayer" unique_id=416777208]
-layer = 100
 script = ExtResource("1_36de5")
 
 [node name="Balloon" type="Control" parent="." unique_id=1101766730]

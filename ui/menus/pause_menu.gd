@@ -1,9 +1,18 @@
 class_name PauseMenu
 extends Control
 
-## The in-game Esc menu (WI-36). Mounted by UIMain, so it lives on the HUD
-## CanvasLayer and keeps working while the sim is paused (UI is real-time by
+## The in-game Esc menu (WI-36). Mounted by UIMain on a CanvasLayer of its own at
+## [constant LAYER], and keeps working while the sim is paused (UI is real-time by
 ## design - see TimeManager).
+##
+## It is the one modal that outranks a conversation, and that takes two things.
+## **The layer**: a dialogue balloon is a CanvasLayer above the whole HUD, so a menu
+## mounted on the HUD sat underneath one - and the balloon's screen-wide click
+## catcher took every click meant for Resume or Load Game and advanced the
+## conversation instead. **Keyboard focus**: the balloon holds it so Space and Enter
+## advance a line, and a focused control gets keys before any layer is consulted.
+## The menu takes focus when it opens and hands it back when it closes, so the
+## conversation neither advances behind it nor goes deaf to the keyboard after it.
 ##
 ## Pause semantics: opening pauses the sim, closing restores the pause state the
 ## player had *before* opening. A game the player had manually paused stays
@@ -22,6 +31,16 @@ const MAIN_MENU_SCENE: String = "res://ui/menus/main_menu.tscn"
 
 ## This menu's entry in [TimeManager]'s hold set.
 const PAUSE_HOLD: StringName = &"pause_menu"
+
+## One above the dialogue balloon, so the menu draws - and is hit-tested - in front
+## of an open conversation. See the class note.
+const LAYER: int = DialogueBalloon.LAYER + 1
+
+## Whatever held keyboard focus when the menu opened, as an instance id rather than
+## a typed field: a balloon freed while the menu is up (the conversation ended, or
+## was abandoned) would make a typed [Control] field error on the way back.
+var _focus_before_id: int = 0
+var _resume_button: Button
 var _settings_menu: SettingsMenu
 var _save_load_menu: SaveLoadMenu
 var _confirm: ConfirmationDialog
@@ -40,8 +59,11 @@ func open() -> void:
 	if visible:
 		return
 	Global.time_manager.hold_pause(PAUSE_HOLD)
+	var focused: Control = get_viewport().gui_get_focus_owner()
+	_focus_before_id = focused.get_instance_id() if focused != null else 0
 	visible = true
 	_panel.visible = true
+	_resume_button.grab_focus()
 	opened.emit()
 
 func close() -> void:
@@ -52,10 +74,24 @@ func close() -> void:
 	if _save_load_menu != null and _save_load_menu.visible:
 		_save_load_menu.close()
 	visible = false
+	_restore_focus()
 	# Release, don't unpause: the player may have paused the game themselves
 	# before pressing Esc, and their flag was never touched.
 	Global.time_manager.release_pause(PAUSE_HOLD)
 	closed.emit()
+
+## Hands keyboard focus back to whatever had it when the menu opened - in practice
+## a conversation's balloon, which only advances on a key while it holds focus.
+## Nothing is restored if that control has gone, been hidden, or stopped taking
+## focus in the meantime.
+func _restore_focus() -> void:
+	var previous: Control = instance_from_id(_focus_before_id) as Control
+	_focus_before_id = 0
+	if previous == null or not previous.is_visible_in_tree():
+		return
+	if previous.focus_mode == Control.FOCUS_NONE:
+		return
+	previous.grab_focus()
 
 func toggle() -> void:
 	if visible:
@@ -116,7 +152,7 @@ func _build_shell() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
-	_add_button(vbox, "Resume", close)
+	_resume_button = _add_button(vbox, "Resume", close)
 	_add_button(vbox, "Save Game", func() -> void: _open_slots(SaveLoadMenu.Mode.SAVE))
 	_add_button(vbox, "Load Game", func() -> void: _open_slots(SaveLoadMenu.Mode.LOAD))
 	_add_button(vbox, "Settings", _open_settings)
