@@ -176,10 +176,12 @@ Goal: Add detail to the world and show it to the player. Expanding on existing s
 	- The planet currently uses the Rivers template, but LandMasses, IceWorld, and DryTerran should also be possible options (again with varied parameters, not just the defaults)
 - There is no gameplay impact - visuals only - though different solar systems will have different properties in the future, and this is a prerequisite
 
-**Move Heat and O2 Systems to Tier 2**:
+**Move Heat and O2 Systems to Tier 2**: (Written up as [[WI-67_Move_Heat_And_O2_To_Tier_2]])
 - Goal: Move the heat and oxygen systems out of the start of the game so the player is not immediately overwhelmed with complexity.
 - Currently the player has to deal with a huge number of systems as soon as the game starts. The crew needs food, sleep, recreation, air to breathe and a comfortable temperature. While the station starts oxygenated and warm, players often expand quickly and overwhelm the starter module, causing their crew to suffer in a way that is less obvious than food or sleep.
 - To remove some of the pressure from the player, the crew is going to start off, and stay, in spacesuits during Tier 1. These spacesuits will keep them breathing and the right temperature regardless of if they are in or out of the station. (There is no cost in energy or resources for this.) Low oxygen and bad temperature warnings will also be muted during Tier 1. Oxygen and temperature will still move through the station, it just won't be highlighted to the player.
+- While a crewperson is in a spacesuit, they act as if they are in ideal oxygen/heat conditions (no debuffs or damage no matter what the environment is like)
+- The ARC inspector for Tier 1 will take this into account and come in their own suit and not penalize the station for the O2 or heat situation.
 - Once the player advances to Tier 2, a notification from SAI will tell the player that the crew desires a habitable interior and will no longer be happy wearing a spacesuit around indoors.
 - During Tier 2 (and above), the crew will remove their spacesuits on entering the station via the airlock as long as the interior of the airlock is habitable (O2 and temp in normal range).
 - If the interior is not habitable, the crew will keep on their suits
