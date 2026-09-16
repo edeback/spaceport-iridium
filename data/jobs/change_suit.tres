@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="JobData" format=3]
+
+[ext_resource type="Script" path="res://scripts/jobs/job_data.gd" id="1_data"]
+[ext_resource type="Script" path="res://scripts/jobs/drivers/job_driver_change_suit.gd" id="2_driver"]
+
+[resource]
+script = ExtResource("1_data")
+id = &"change_suit"
+display_name = "Change Suit"
+report_template = "Heading to {a} to change"
+category = 3
+skill = &""
+xp_reward = 0.0
+player_cancelable = false
+saveable = true
+driver = ExtResource("2_driver")

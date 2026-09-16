@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3]
+
+[ext_resource type="Texture2D" uid="uid://cs0ht0ea12qtx" path="res://assets/sprites/solar_panel_tilemap.png" id="1_heaticon"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_heatres"]
+[ext_resource type="PackedScene" path="res://modules/life_support/heater.tscn" id="3_heatscene"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="4_heatscript"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="5_heatsteel"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heaticon"]
+atlas = ExtResource("1_heaticon")
+region = Rect2(64, 128, 64, 64)
+
+[resource]
+script = ExtResource("4_heatscript")
+id = &"heater_mdata"
+name = "Heater"
+description = "Warms the modules around it to a temperature you set. Bury it inside the station - a heater on the hull sheds most of its output straight to space. Needs power, and stops once the room is warm enough."
+scene = ExtResource("3_heatscene")
+icon = SubResource("AtlasTexture_heaticon")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_heatres"), int]({
+ExtResource("5_heatsteel"): 4
+})
+tags = Array[String](["Life Support", "Thermal"])
+category_id = &"life_support"
+unlocked_by_default = false
+max_hp = 40.0
+upkeep_per_cycle = 3
+heat_radiation_mult = 0.5

@@ -500,6 +500,31 @@ func _play_work_or_idle() -> void:
 func set_idle() -> void:
 	_play_work_or_idle()
 
+## Swaps the sprite's frame set, keeping the pose (WI-67).
+##
+## The ONLY place `sprite_frames` is assigned. Assigning it directly restarts
+## whatever was playing, which for a suit coming off mid-stride is a visible
+## stutter - so the animation, frame and sub-frame progress are carried across,
+## along with the facing that `update_layer_and_sprite` and the walk code own.
+## A missing animation in the new set falls back to idle rather than erroring.
+func set_sprite_frames(frames: SpriteFrames) -> void:
+	if animated_sprite == null or frames == null or animated_sprite.sprite_frames == frames:
+		return
+	var playing: StringName = animated_sprite.animation
+	var frame_index: int = animated_sprite.frame
+	var progress: float = animated_sprite.frame_progress
+	var was_playing: bool = animated_sprite.is_playing()
+	animated_sprite.sprite_frames = frames
+	if not frames.has_animation(playing):
+		playing = &"idle"
+	if not frames.has_animation(playing):
+		return
+	animated_sprite.animation = playing
+	if was_playing:
+		animated_sprite.play(playing)
+	animated_sprite.set_frame_and_progress(mini(frame_index, frames.get_frame_count(playing) - 1),
+		progress)
+
 ## Pushes the identity tint (WI-22) onto the sprite. Safe to call before the
 ## sprite resolves - it just no-ops, and _ready re-applies once it exists.
 func _apply_tint() -> void:

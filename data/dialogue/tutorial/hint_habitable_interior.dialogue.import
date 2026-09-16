@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://pxs00ooiky1x"
+path="res://.godot/imported/hint_habitable_interior.dialogue-c7411ed1a048510ffe29bafb432ddbf7.tres"
+
+[deps]
+
+source_file="res://data/dialogue/tutorial/hint_habitable_interior.dialogue"
+dest_files=["res://.godot/imported/hint_habitable_interior.dialogue-c7411ed1a048510ffe29bafb432ddbf7.tres"]
+
+[params]
+
+defaults=true

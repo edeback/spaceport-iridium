@@ -52,6 +52,7 @@ func refresh() -> void:
 	if _module == null or not is_instance_valid(_module):
 		return
 	_add_temperature()
+	_add_thermostat()
 	if Global.adjacency_manager == null:
 		return
 	var fields: Dictionary[StringName, float] = Global.adjacency_manager.get_all_fields(_module)
@@ -119,6 +120,39 @@ func _add_temperature() -> void:
 	# the bottom of this tab as the COMBINED environment multiplier, and
 	# temperature is now part of that number. Saying it twice in two framings
 	# reads as two separate effects.
+
+## The setpoint on a module that has a thermostat - the Heater, and nothing else
+## today (WI-67).
+##
+## A [Stepper] rather than a readout because it is the one number on this tab the
+## player owns, and it commits on release rather than on every step, which is what
+## keeps a drag from writing the setpoint forty times. Hidden entirely on the
+## ninety-odd modules with no thermostat: a disabled control on every module would
+## be ninety wrong affordances to save one conditional.
+func _add_thermostat() -> void:
+	var emitter: HeatEmitterComponent = _module.get_component_by_type(HeatEmitterComponent) as HeatEmitterComponent
+	if emitter == null or not emitter.thermostat_enabled:
+		return
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
+	add_child(row)
+	var label := Label.new()
+	label.text = "Heat to"
+	label.theme_type_variation = UIType.META_LINE
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
+	var stepper: Stepper = Stepper.create()
+	row.add_child(stepper)
+	stepper.configure(int(round(emitter.target_temperature_f)),
+		int(HeatEmitterComponent.TARGET_MIN_F), int(HeatEmitterComponent.TARGET_MAX_F),
+		HeatEmitterComponent.TARGET_STEP_F, false)
+	stepper.value_changed.connect(func(value: int) -> void:
+		emitter.set_target_temperature(float(value)))
+	# Why an aimed heater can be sitting idle. Without this line a player who sets
+	# 68 and watches the heat output read zero has no way to tell "satisfied" from
+	# "broken", which is the same complaint TEXT_DISABLED exists to answer.
+	if emitter.thermostat_holding():
+		add_child(_line("At temperature — the heater is idle.", UIPalette.TEXT_SECONDARY))
 
 ## Level -> qualitative severity word. The underlying float is a propagation
 ## strength with no units the player could interpret, so it is never printed.

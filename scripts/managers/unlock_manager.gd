@@ -135,6 +135,22 @@ var _inspection_in_progress: bool = false
 func is_inspection_active() -> bool:
 	return _inspection_in_progress
 
+## Do crew live in pressure suits at the current tier (WI-67)?
+##
+## The one accessor for [member TierData.suits_mandatory], shared by
+## PawnSuitComponent, AtmosphereManager's alert gate, the OXYGEN vitals chip and
+## the min-tier event condition - so "is this Tier 1?" has exactly one answer.
+##
+## A tier with no data answers false: the failure mode of a missing .tres should
+## be a station that behaves like a grown-up one, not a crew sealed in suits
+## forever with no way to get out.
+func suits_mandatory() -> bool:
+	var data: TierData = current_tier_data()
+	if data == null:
+		push_warning("UnlockManager: no TierData for tier %d" % current_tier)
+		return false
+	return data.suits_mandatory
+
 func _ready() -> void:
 	Global.unlock_manager = self
 	# Before world: ready_constructed applies global modifiers and granted-module
@@ -358,13 +374,18 @@ func advance_tier() -> void:
 	var data: TierData = current_tier_data()
 	var label: String = data.display_name if data != null and data.display_name != "" else str(current_tier)
 	SignalBus.station_tier_changed.emit(current_tier)
+	var body: String = ("This station is rated Tier %d%s. New licences follow; so does a heavier"
+		+ " share of the Corporation's overheads.") \
+		% [current_tier, (" — " + label) if label != "" else ""]
+	# WI-67: the one line a player who skipped the tutorial still sees about the
+	# suits coming off. Only on the promotion that changes the rule - this body is
+	# shared by every tier-up, and saying it at Tier 4 would be noise.
+	if current_tier == 2:
+		body += " Crew quarters are now held to habitable standards, and your crew will" \
+			+ " expect habitable interior conditions."
 	AlertManager.transmit(&"tier_promoted", AlertData.Priority.HIGH,
 		"Station promoted to Tier %d" % current_tier, label,
-		&"arc", InspectionRunner.ARC_SENDER,
-		("This station is rated Tier %d%s. New licences follow; so does a heavier"
-			+ " share of the Corporation's overheads.")
-			% [current_tier, (" — " + label) if label != "" else ""],
-		&"comms")
+		&"arc", InspectionRunner.ARC_SENDER, body, &"comms")
 	# Nudge every listener that gates on tier (unlock cards, tier panel).
 	SignalBus.station_tier_progress_changed.emit()
 

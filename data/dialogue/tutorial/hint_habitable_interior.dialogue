@@ -1,0 +1,12 @@
+~ tier_two
+
+sai: Tier 2. Congratulations are conditional.
+sai: Your crew have worn pressure suits since the day they arrived. At this rating they will not keep doing it indoors.
+sai: They change at an airlock, and only where the interior is fit to stand in - forty to ninety degrees, with oxygen above the low mark.
+$> guide.point("console:overlay", "Oxygen and heat overlays")
+sai: These overlays show you which rooms qualify. A room that fails is a room nobody takes a helmet off in, and a crew member still suited inside is an unhappy one.
+$> guide.point("console:rnd", "Research")
+sai: Heaters and standalone life support are researched here. You will want both before the station gets much larger.
+sai: One more thing, and it matters more than the rest. If a room turns hostile - no air, or a serious cold - anyone in it has to walk to an airlock to suit up, and they take harm the whole way.
+sai: So keep an airlock near where people work. It is the difference between an incident and a funeral.
+=> END

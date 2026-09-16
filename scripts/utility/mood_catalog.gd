@@ -53,6 +53,7 @@ const CAUSE_COMPANY: String = "who's nearby"
 const CAUSE_EVENT: String = "event"
 const CAUSE_COLD: String = "while cold"
 const CAUSE_HOT: String = "while hot"
+const CAUSE_SUITED: String = "while suited indoors"
 
 ## Every id that is fixed in code, with its label, its one-line explanation, and
 ## the cause that holds it (empty for a finite modifier, which prints a duration
@@ -125,6 +126,16 @@ const STATIC_ENTRIES: Dictionary[StringName, Dictionary] = {
 		"label": "Too hot",
 		"blurb": "This room is above the temperature crew are comfortable in.",
 		"cause": CAUSE_HOT,
+	},
+	# WI-67. The id is PawnSuitComponent.MOOD_SUIT_INDOORS, spelled out because a
+	# const Dictionary's keys must be literals. The blurb carries the whole rule on
+	# purpose: for a player who skipped the tutorial, this row is where the change
+	# at Tier 2 gets explained.
+	&"suit_indoors": {
+		"label": "Spacesuit on inside",
+		"blurb": "Wearing a pressure suit indoors. Crew change at an airlock, and only"
+			+ " once the station has rooms they can breathe and stay warm in without one.",
+		"cause": CAUSE_SUITED,
 	},
 }
 

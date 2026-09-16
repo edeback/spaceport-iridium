@@ -60,6 +60,11 @@ func tuning() -> HeatMath.ComfortTuning:
 ## The temperature this pawn is experiencing, or NAN when it is in a suit (in
 ## space, riding a turbolift, mid-load) and therefore feels nothing.
 func ambient_temperature() -> float:
+	# A suit is suit supply exactly as being outside is (WI-67), and it lands on
+	# the same NAN branch: mood cleared, no harm, no alert. One question, one place
+	# - see PawnSuitComponent.on_suit_supply.
+	if PawnSuitComponent.on_suit_supply(owner_pawn):
+		return NAN
 	var module: ModuleBase = owner_pawn.current_module
 	if module == null or not is_instance_valid(module) or Global.heat_manager == null:
 		return NAN
@@ -133,4 +138,7 @@ func _check_alert(temp: float) -> void:
 		"Dangerously cold" if freezing else "Dangerously hot",
 		"%s - %s" % [owner_pawn.pawn_name, HeatMath.format_temperature(temp)],
 		owner_pawn, &"",
-		"%d crew are in dangerous temperatures")
+		# "people" rather than "crew" since WI-67: crew suit up before harm can
+		# accumulate, so in practice the only pawns this alert can still reach are
+		# visitors, who never wear a suit.
+		"%d people are in dangerous temperatures")

@@ -24,6 +24,19 @@ extends Resource
 ## plain ids. Empty on the cap tier.
 @export var export_goals: Dictionary[StringName, int] = {}
 
+## Whether crew live in pressure suits at this tier (WI-67).
+##
+## True only on Tier 1, where it does three things at once: crew are suited
+## everywhere and feel ideal air and temperature, the low-O2 alert and the OXYGEN
+## chip's amber stay quiet, and hull breaches cannot fire. The point is that a new
+## player is not asked to run life support and thermals on day one.
+##
+## Data rather than a `current_tier < 2` test in code, for the WI-26 reason: what a
+## tier IS lives in its .tres, so a mod reshaping the ladder decides where the
+## suits come off. Read it through UnlockManager.suits_mandatory(), which is the
+## one accessor every consumer shares.
+@export var suits_mandatory: bool = false
+
 ## Module *tags* the inspector must visit, one built instance of each (tags
 ## already live on ModuleData - "Industrial", "Crew", "Power", "Dock", ...). The
 ## station must hold at least one built module per tag before goals count as met,

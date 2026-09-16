@@ -1,0 +1,67 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" uid="uid://cnyrsr2kw7fcm" path="res://modules/templates/module_base.tscn" id="1_heatbase"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_heatshad"]
+[ext_resource type="PackedScene" uid="uid://cq34q4cbroavg" path="res://modules/components/sprite_selection_component.tscn" id="3_heatsel"]
+[ext_resource type="Texture2D" uid="uid://cs0ht0ea12qtx" path="res://assets/sprites/solar_panel_tilemap.png" id="4_heattex"]
+[ext_resource type="PackedScene" path="res://modules/components/power_consumption_component.tscn" id="5_heatpwr"]
+[ext_resource type="PackedScene" path="res://modules/components/heat_emitter_component.tscn" id="6_heatemit"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_heat"]
+frequency = 0.0668
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_heat"]
+width = 64
+height = 64
+generate_mipmaps = false
+noise = SubResource("FastNoiseLite_heat")
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heat"]
+atlas = ExtResource("4_heattex")
+region = Rect2(64, 128, 64, 64)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_heat"]
+shader = ExtResource("2_heatshad")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
+shader_parameter/DAMAGE = 0.0
+shader_parameter/gradient_texture = SubResource("NoiseTexture2D_heat")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_heat"]
+resource_local_to_scene = true
+size = Vector2(62, 62)
+
+; A heater is the radiator's opposite number and copies its shape: structure only,
+; no interior, no atmosphere of its own, conducting into its neighbours over the
+; structure graph like every other WI-60 thermal body. Where the radiator wants to
+; be exposed, this wants to be buried - see heat_radiation_mult on its ModuleData.
+[node name="Module" unique_id=1933614002 instance=ExtResource("1_heatbase")]
+has_atmosphere = false
+
+[node name="SpriteSelectionComponent" parent="Offset" index="0" node_paths=PackedStringArray("sprite") instance=ExtResource("3_heatsel")]
+sprite = NodePath("../Sprite")
+
+[node name="Sprite" parent="Offset" index="1"]
+material = SubResource("ShaderMaterial_heat")
+texture = SubResource("AtlasTexture_heat")
+
+[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
+shape = SubResource("RectangleShape2D_heat")
+
+[node name="PathComponent" parent="." index="1"]
+path_points = Array[Vector2i]([])
+door_connections = Dictionary[int, int]({})
+door_required = false
+
+[node name="PowerConsumptionComponent" parent="." instance=ExtResource("5_heatpwr")]
+power_consumption = 15.0
+
+; Thermostat on, and the power link set: unpowered or already at temperature, it
+; emits nothing. The setpoint is the player's and saves with the module.
+[node name="HeatEmitterComponent" parent="." node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("6_heatemit")]
+idle_heat_per_hour = 150.0
+power_consumption_component = NodePath("../PowerConsumptionComponent")
+thermostat_enabled = true
+target_temperature_f = 68.0

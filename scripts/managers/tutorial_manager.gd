@@ -248,6 +248,17 @@ func _arm_watchers() -> void:
 	if _is_armed(&"need_critical") \
 			and not SignalBus.pawn_critical_need.is_connected(_on_critical_need):
 		SignalBus.pawn_critical_need.connect(_on_critical_need)
+	if _is_armed(&"station_tier_reached") \
+			and not SignalBus.station_tier_changed.is_connected(_on_tier_reached):
+		SignalBus.station_tier_changed.connect(_on_tier_reached)
+		# The tier signal has ALREADY FIRED by the time watchers arm on a load:
+		# UnlockManager emits it from load_save_data, and arming happens on
+		# game_bootstrapped. So the current tier is checked once here as well, which
+		# is the watcher form of WI-63's rule that an already-true condition resolves
+		# immediately. Without it, a save that reached Tier 2 before this feature
+		# existed would never be told the rule had changed.
+		if Global.unlock_manager != null:
+			_on_tier_reached(Global.unlock_manager.current_tier)
 	_update_scan()
 
 ## The two module watchers share one periodic scan, because they share a grace
@@ -288,6 +299,9 @@ func _disarm_spent() -> void:
 	if not _is_armed(&"need_critical") \
 			and SignalBus.pawn_critical_need.is_connected(_on_critical_need):
 		SignalBus.pawn_critical_need.disconnect(_on_critical_need)
+	if not _is_armed(&"station_tier_reached") \
+			and SignalBus.station_tier_changed.is_connected(_on_tier_reached):
+		SignalBus.station_tier_changed.disconnect(_on_tier_reached)
 	_update_scan()
 
 func _on_trader_arrived(_trader: TraderData) -> void:
@@ -303,6 +317,17 @@ func _on_crew_resigning(pawn: PawnBase, _grace_hours: float) -> void:
 
 func _on_critical_need(pawn: PawnBase, need: StringName) -> void:
 	_fire_for(&"need_critical", need, pawn)
+
+## Every tier from 2 up to `tier`, not just `tier` itself.
+##
+## Two tier_up cheats in one frame, a promotion while a conversation is already
+## running, or a load at Tier 3 would otherwise skip the Tier 2 advisory
+## permanently - and it is the one that explains a rule change rather than giving
+## advice. Each is spent on its own id, so a station that climbed past 2 before
+## this feature shipped still gets exactly the ones it has not had.
+func _on_tier_reached(tier: int) -> void:
+	for reached: int in range(2, maxi(tier, 1) + 1):
+		_fire_for(&"station_tier_reached", StringName(str(reached)), null)
 
 ## The shared grace-window scan behind `module_unreachable` and
 ## `module_unpowered`. Both accumulate continuous sim-hours in trouble and reset

@@ -1,6 +1,22 @@
 # WI-67 — Move Heat and O2 to Tier 2 (Spacesuits)
 
-> **STATUS: DESIGNED, NOT STARTED (2026-09-15).** The questions the brief left open were settled with the author in two rounds — §0 carries the answers, and they are decisions rather than suggestions. **Round two changed the shape of the item:** a suit is put on and taken off **at an airlock**, not where the pawn stands, which is what makes a breach or a cold room genuinely dangerous and makes airlock placement a layout decision. Nothing here moves `SAVE_VERSION`.
+> **STATUS: IMPLEMENTED 2026-09-15, STATICALLY VERIFIED ONLY.** Nine files new, twenty-two changed. **1672 GUT tests green** (1624 before this item, so +48 and nothing regressed), across three new suites: `test_suit_rules.gd`, `test_suit_content.gd` and `test_crew_frames.gd`. `SAVE_VERSION` did not move.
+>
+> **What is NOT verified, and it is the important half:**
+> - **No live-world run.** The headless probe in §Verification was written and *hung before its first line of output* — the WI-40 `-s script.gd` autoload gotcha, not a defect in the item. Its resource-and-logic checks were moved into GUT (where they pass); everything that genuinely needs a loaded station is **untested**: a crew pawn actually spawning with the component, Tier 1 posting no trips, `tier_up` sending helmets to the airlock, the walk itself, the suit-up alert firing, the mood applying, the Heater warming anything. **Assume none of that works until it has been run.**
+> - **No screenshots.** The tint-on-faces question (§10) is completely open, and it is the one the design flags as needing a look rather than a test.
+> - **No balance measurement.** The Heater's 150/hour, 15 power, its thermostat band and `harm_hold_hours = 2.0` are all first guesses. WI-60's first guesses were out by ~4× in both directions.
+>
+> **Deviations from the design below:**
+> 1. **`SuitRules.Environment` is `SuitRules.RoomState`.** Godot has a native `Environment` class, and an enum of that name at script scope makes every *external* reference resolve to a different type — `Parse Error: Could not resolve external class member "Environment"`, then `Invalid operands "Environment" and "SuitRules.Environment"`. Worth knowing before naming any enum after a Godot type.
+> 2. **Inner classes must spell the enum `SuitRules.RoomState` in full.** An inner class does not inherit the outer script's type scope, so `Situation.environment: RoomState` is a *different* type from the one every caller passes. Reads as redundant; is not. The WI-64 `class_name`-cycle trap in a new costume.
+> 3. **The change duration is `JobDriver_ChangeSuit.CHANGE_SECONDS`, not an export on the component.** `make_actions()` runs on unclaimed board jobs with no pawn attached, so there is no component to read it from — and `PawnComponentBase` is a `Node2D`, so instantiating one for a default would allocate a node per call and leak it.
+> 4. **`sleep_restored_per_hour()` gained an optional `sleeper` parameter** rather than becoming a second function; `environment_rest_multiplier(sleeper)` does the same. Null still asks the module-level question the Environment tab prints.
+> 5. **`pawn_base.tscn` still contains the old embedded `SpriteFrames` sub-resource and its 38 texture references**, now unused — the `Crew` node points at `crew_suited_frames.tres`. Hand-deleting ~190 lines of a scene file risked corrupting it; the editor drops them on the next save.
+> 6. **`PawnSuitComponent.hold_remaining()`** was added as a public accessor for `dump_suits` and the Needs tab.
+> 7. **`project.godot` changed by itself**: the Dialogue Manager addon appends every new `.dialogue` to `locale/translations_pot_files`. Expected, and the same thing WI-62 and WI-63 did.
+>
+> The questions the brief left open were settled with the author in two rounds — §0 carries the answers, and they are decisions rather than suggestions. **Round two changed the shape of the item:** a suit is put on and taken off **at an airlock**, not where the pawn stands, which is what makes a breach or a cold room genuinely dangerous and makes airlock placement a layout decision.
 
 ## Goal
 

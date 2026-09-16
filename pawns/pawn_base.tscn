@@ -40,6 +40,7 @@
 [ext_resource type="Texture2D" uid="uid://c34uykx6rc5da" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_walk_6.png" id="38_p0eqp"]
 [ext_resource type="Texture2D" uid="uid://cdra5ew47vsrx" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_walk_7.png" id="39_eokgd"]
 [ext_resource type="Texture2D" uid="uid://ygivuayv0dg4" path="res://assets/external/Spaceship Creation Kit/Assets/Crew/Blue Crew/crewBlueA_walk_8.png" id="40_clhk7"]
+[ext_resource type="SpriteFrames" path="res://pawns/frames/crew_suited_frames.tres" id="41_suited"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_o283h"]
 animations = [{
@@ -291,7 +292,7 @@ region_rect = Rect2(16, 32, 64, 96)
 
 [node name="Crew" type="AnimatedSprite2D" parent="Offset" unique_id=552917447]
 scale = Vector2(0.25, 0.25)
-sprite_frames = SubResource("SpriteFrames_o283h")
+sprite_frames = ExtResource("41_suited")
 animation = &"idle_sit"
 frame_progress = 0.41255856
 

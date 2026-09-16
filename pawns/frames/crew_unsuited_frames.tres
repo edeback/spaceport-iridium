@@ -1,0 +1,204 @@
+[gd_resource type="SpriteFrames" format=3]
+
+; The crew sprite with the helmet OFF (WI-67).
+;
+; The same seven animations as crew_suited_frames.tres, frame for frame, at the
+; same speeds and loop flags - PawnBase.set_sprite_frames carries the current
+; animation and frame index across a swap, so a mismatch would drop a walking
+; pawn onto idle mid-stride (or onto nothing at all).
+;
+; Only crewBlueA has helmetless art, and it is the only crew set the game uses -
+; every crew member is this sprite recoloured by WI-22's tint. Note that the tint
+; falls on the face and hair here rather than on a suit, which is the one thing
+; about this wardrobe that needs looking at rather than testing.
+
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_idle_1.png" id="1_idle1"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_idle_2.png" id="2_idle2"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_idle_3.png" id="3_idle3"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_idle_4.png" id="4_idle4"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_idle_5.png" id="5_idle5"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_idle_6.png" id="6_idle6"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_idleSit_1.png" id="7_sit1"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_idleSit_2.png" id="8_sit2"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_idleSit_3.png" id="9_sit3"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_idleSit_4.png" id="10_sit4"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_idleSit_5.png" id="11_sit5"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_idleSit_6.png" id="12_sit6"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_interact_1.png" id="13_int1"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_interact_2.png" id="14_int2"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_interact_3.png" id="15_int3"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_interact_4.png" id="16_int4"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_interactBack_1.png" id="17_back1"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_interactBack_2.png" id="18_back2"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_interactBack_3.png" id="19_back3"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_interactBack_4.png" id="20_back4"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_interactSit_1.png" id="21_isit1"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_interactSit_2.png" id="22_isit2"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_interactSit_3.png" id="23_isit3"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_interactSit_4.png" id="24_isit4"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_layDown_1.png" id="25_lay1"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_layDown_2.png" id="26_lay2"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_layDown_3.png" id="27_lay3"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_layDown_4.png" id="28_lay4"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_layDown_5.png" id="29_lay5"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_layDown_6.png" id="30_lay6"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_walk_1.png" id="31_walk1"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_walk_2.png" id="32_walk2"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_walk_3.png" id="33_walk3"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_walk_4.png" id="34_walk4"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_walk_5.png" id="35_walk5"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_walk_6.png" id="36_walk6"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_walk_7.png" id="37_walk7"]
+[ext_resource type="Texture2D" path="res://assets/external/Spaceship Creation Kit/NoHelmet/crewBlueA_noHelmet_walk_8.png" id="38_walk8"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_idle1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_idle2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_idle3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_idle4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_idle5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_idle6")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 3.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("7_sit1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_sit2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_sit3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_sit4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_sit5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_sit6")
+}],
+"loop": 1,
+"name": &"idle_sit",
+"speed": 3.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("13_int1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("14_int2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("15_int3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("16_int4")
+}],
+"loop": 1,
+"name": &"interact",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("17_back1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("18_back2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("19_back3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("20_back4")
+}],
+"loop": 1,
+"name": &"interact_back",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("21_isit1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("22_isit2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("23_isit3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("24_isit4")
+}],
+"loop": 1,
+"name": &"interact_sit",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("25_lay1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("26_lay2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("27_lay3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("28_lay4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("29_lay5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("30_lay6")
+}],
+"loop": 1,
+"name": &"lay_down",
+"speed": 3.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("31_walk1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("32_walk2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("33_walk3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("34_walk4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("35_walk5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("36_walk6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("37_walk7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("38_walk8")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 20.0
+}]

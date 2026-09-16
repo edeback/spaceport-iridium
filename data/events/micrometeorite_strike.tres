@@ -1,7 +1,13 @@
 [gd_resource type="Resource" script_class="EventData" format=3 uid="uid://cblg4s7k7qap7"]
 
 [ext_resource type="Script" path="res://data/events/event_data.gd" id="1_evdata"]
+[ext_resource type="Script" path="res://data/events/event_condition.gd" id="2_cond"]
 [ext_resource type="Resource" path="res://data/dialogue/events/micrometeorite_strike.dialogue" id="3_script"]
+[ext_resource type="Script" path="res://data/events/conditions/condition_min_tier.gd" id="4_mintier"]
+
+[sub_resource type="Resource" id="Resource_mintier"]
+script = ExtResource("4_mintier")
+min_tier = 2
 
 [resource]
 script = ExtResource("1_evdata")
@@ -9,6 +15,7 @@ id = &"micrometeorite_strike"
 title = "Micrometeorite Strike"
 body = "A micrometeorite has punched through the hull! The module is venting atmosphere - emergency bulkheads will take time to seal. Keep oxygen reserves flowing."
 dialogue = ExtResource("3_script")
-cue = "strike"
 min_cycle = 3
 cooldown_cycles = 6
+cue = "strike"
+conditions = Array[ExtResource("2_cond")]([SubResource("Resource_mintier")])

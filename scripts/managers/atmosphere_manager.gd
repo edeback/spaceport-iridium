@@ -34,6 +34,20 @@ func _ready() -> void:
 	Global.atmosphere_manager = self
 	SignalBus.module_added.connect(_on_module_added)
 	Global.time_manager.slow_tick.connect(_on_slow_tick)
+	SignalBus.station_tier_changed.connect(_on_tier_changed)
+
+## Leaving Tier 1 clears every latch (WI-67), so the first pass at the new tier
+## raises for every room that is already thin.
+##
+## That is the moment the list is worth having: the crew are about to start taking
+## their suits off, and the rooms they cannot take them off in are exactly what
+## the player now needs to see. The existing plural line coalesces them into one
+## row, so this is one alert rather than twenty. Leaving the latches in place
+## instead would keep a room that went bad at Tier 1 silent until it recovered and
+## dropped a second time.
+func _on_tier_changed(_tier: int) -> void:
+	if not _suits_mandatory():
+		_low_o2_alerted.clear()
 
 ## Attach to anything a pawn can stand inside. Runs for previews too - the
 ## component stays inert (unregistered, no processing) until ready_constructed.
@@ -162,6 +176,12 @@ func _equalize_group(members: Array, step: float) -> void:
 ## One alert per low-O2 episode per module; re-arms after recovery so a
 ## slowly oscillating module doesn't spam the strip.
 func _check_alerts() -> void:
+	# Tier 1 crew live in suits and cannot be harmed by thin air (WI-67), so the
+	# alert has nothing to warn about - and a new player being told about oxygen
+	# before oxygen matters is exactly the overwhelm this item removes. The gas
+	# still moves and the overlay still shows it; only the warning is muted.
+	if _suits_mandatory():
+		return
 	for module: ModuleBase in _components:
 		var component: AtmosphereComponent = _components[module]
 		var partial: float = component.o2_partial()
@@ -174,6 +194,11 @@ func _check_alerts() -> void:
 			AlertManager.raise_alert(AlertRules.make_id(&"low_o2", module),
 				AlertData.Priority.HIGH, "Low oxygen", module_name, module, &"",
 				"%d modules are low on oxygen")
+
+## Whether the current tier keeps crew in suits (WI-67). One accessor, shared with
+## PawnSuitComponent and the OXYGEN chip, so "is this Tier 1?" has one answer.
+func _suits_mandatory() -> bool:
+	return Global.unlock_manager != null and Global.unlock_manager.suits_mandatory()
 
 ## Station-average O2 partial pressure across completed pressurized modules, as
 ## the percentage the OXYGEN vitals chip reads (WI-52).

@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_tier")
 tier = 1
+suits_mandatory = true
 display_name = "Outpost"
 flavor = "A pressurized tin can bolted to an ore claim. Prove it can turn rock into revenue and the Authority may recognize it as a real station."
 export_goals = Dictionary[StringName, int]({

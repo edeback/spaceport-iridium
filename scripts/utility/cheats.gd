@@ -164,6 +164,77 @@ func dump_heat() -> String:
 		return _report("heat manager unavailable")
 	return _report("heat:\n" + Global.heat_manager.debug_dump())
 
+# --- suits (WI-67) ------------------------------------------------------------
+
+## Sets the O2 partial of the module at `cell` - WI-60's set_temperature, for gas.
+## The only practical way to drive a room across each SuitRules boundary on demand.
+func set_o2(cell: Vector2i, partial: float) -> String:
+	var module: ModuleBase = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, cell)
+	if module == null:
+		return _report("set_o2 found no MODULE-layer module at %s" % cell)
+	if Global.atmosphere_manager == null:
+		return _report("atmosphere manager unavailable")
+	var component: AtmosphereComponent = Global.atmosphere_manager.get_component(module)
+	if component == null:
+		return _report("%s holds no atmosphere" % module._display_name())
+	component.o2 = clampf(partial, 0.0, 200.0) * component.volume()
+	return _report("set %s to O2 %.0f" % [module._display_name(), component.o2_partial()])
+
+## Suits a crew member up as though they had just walked into a harmful room:
+## suit on, full hold. `name` is a pawn name, or "all" for the whole crew.
+func suit_up(pawn_name: String) -> String:
+	return _set_suits(pawn_name, true)
+
+## Takes a suit off and clears the hold. The rule may put it straight back on,
+## which is the fastest way to find out WHY it wants one.
+func unsuit(pawn_name: String) -> String:
+	return _set_suits(pawn_name, false)
+
+func _set_suits(pawn_name: String, on: bool) -> String:
+	var touched: int = 0
+	for suit: PawnSuitComponent in _suit_components():
+		if pawn_name != "all" and suit.owner_pawn.pawn_name != pawn_name:
+			continue
+		suit.apply_change(on)
+		touched += 1
+	if touched == 0:
+		return _report("no crew matched '%s'" % pawn_name)
+	return _report("%s %d crew" % ["suited" if on else "unsuited", touched])
+
+## One line per crew member: what they are wearing, why, and how far the nearest
+## airlock is. The distance column is the point - it is what turns "my crew keep
+## dying" into "my crew keep dying forty metres from an airlock".
+func dump_suits() -> String:
+	var lines: PackedStringArray = []
+	var mandatory: bool = Global.unlock_manager != null and Global.unlock_manager.suits_mandatory()
+	lines.append("tier %d, suits mandatory: %s"
+		% [Global.unlock_manager.current_tier if Global.unlock_manager != null else 0, mandatory])
+	for suit: PawnSuitComponent in _suit_components():
+		var pawn: PawnBase = suit.owner_pawn
+		var module: ModuleBase = pawn.current_module
+		var where: String = module._display_name() if module != null else "outside"
+		var airlock: JobTarget = Finder_Airlock.new(false).find(Job.of(&"change_suit"), pawn)
+		var distance: String = "none reachable"
+		if airlock != null and airlock.module() != null:
+			distance = "%d cells to %s" % [
+				Vector2(airlock.module().module_cell - Global.world_to_cell(pawn.global_position)).length(),
+				airlock.module()._display_name()]
+		lines.append("  %s: %s in %s | hold %.2fh | %s" % [
+			pawn.pawn_name, "SUITED" if suit.suited else "unsuited", where,
+			suit.hold_remaining(), distance])
+	return _report("suits:\n" + "\n".join(lines))
+
+func _suit_components() -> Array[PawnSuitComponent]:
+	var out: Array[PawnSuitComponent] = []
+	for node: Node in Global.get_tree().get_nodes_in_group(Groups.PAWN):
+		var pawn: PawnBase = node as PawnBase
+		if pawn == null:
+			continue
+		var suit: PawnSuitComponent = pawn.get_component_by_type(PawnSuitComponent) as PawnSuitComponent
+		if suit != null and not suit.static_suit:
+			out.append(suit)
+	return out
+
 ## Forces a breakdown on the module at `cell` (WI-24), ignoring the hourly roll.
 func break_module(cell: Vector2i) -> String:
 	var module: ModuleBase = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.MODULE, cell)

@@ -43,6 +43,13 @@ const DECLARED: Dictionary[StringName, bool] = {
 	## A pawn need has crossed into its critical band. **Filtered by the need
 	## name** (`hunger`, `sleep`, `recreation`) - one watcher, three hints.
 	&"need_critical": true,
+	## The station has reached a tier. **Filtered by the tier number as a string**
+	## (`2`), so a later hint about Tier 3 is a `.tres` drop with no watcher edit.
+	##
+	## The watcher fires for every tier from 2 up to the new one rather than only
+	## the newest, because two `tier_up` cheats in a row - or a load at Tier 3 -
+	## must not skip the Tier 2 advisory (WI-67).
+	&"station_tier_reached": true,
 }
 
 ## Triggers declared at runtime by a mod. Kept separate from [constant DECLARED]

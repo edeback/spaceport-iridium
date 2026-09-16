@@ -97,10 +97,14 @@ func restore_rate_per_hour(pawn: PawnBase) -> float:
 	var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
 	if needs == null:
 		return 0.0
-	return sleep_restored_per_hour(needs.sleep_max)
+	# The sleeper is passed down because a suit changes the answer (WI-67).
+	return sleep_restored_per_hour(needs.sleep_max, pawn)
 
-func sleep_restored_per_hour(sleep_max: float) -> float:
-	return sleep_max / base_hours_to_full * effective_sleep_quality() * environment_rest_multiplier()
+## `sleeper` is optional so the pure "what does this pod restore" question can
+## still be asked without one (tests, and the module facts panel).
+func sleep_restored_per_hour(sleep_max: float, sleeper: PawnBase = null) -> float:
+	return sleep_max / base_hours_to_full * effective_sleep_quality() \
+		* environment_rest_multiplier(sleeper)
 
 ## Effective nightly charge after any suite upgrade.
 func effective_nightly_rate() -> int:
@@ -141,7 +145,13 @@ func complete_stay(pawn: PawnBase) -> int:
 ## The temperature term joins this function rather than becoming a second one:
 ## this is already the single place that answers "what do my surroundings do to
 ## rest", and a caller should not have to know how many things are in that answer.
-func environment_rest_multiplier() -> float:
+## `sleeper` null asks the module-level question - what this room does to rest -
+## which is what the Environment tab prints. Passing a pawn asks it for that pawn,
+## and the one thing that differs is temperature: a crew member sleeping in a
+## pressure suit is in ideal heat whatever the room reads (WI-67), so the
+## temperature term drops out. Vibration and greenery stay, because a suit does
+## not make a noisy dormitory quiet.
+func environment_rest_multiplier(sleeper: PawnBase = null) -> float:
 	if owner_module == null:
 		return 1.0
 	var multiplier: float = 1.0
@@ -149,6 +159,8 @@ func environment_rest_multiplier() -> float:
 		var vibration: float = Global.adjacency_manager.get_field(owner_module, &"vibration")
 		var greenery: float = Global.adjacency_manager.get_field(owner_module, &"greenery")
 		multiplier *= (1.0 / (1.0 + vibration * vibration_penalty_k)) * (1.0 + greenery * greenery_rest_bonus_k)
+	if sleeper != null and PawnSuitComponent.on_suit_supply(sleeper):
+		return multiplier
 	return multiplier * temperature_comfort_multiplier()
 
 ## The heat half of the environment, on its own so the Environment tab can name

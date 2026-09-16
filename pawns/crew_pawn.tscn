@@ -10,6 +10,9 @@
 [ext_resource type="Script" uid="uid://c2m45tq3mak8h" path="res://pawns/pawn_traits_component.gd" id="8_vy4ld"]
 [ext_resource type="Script" path="res://pawns/pawn_disease_component.gd" id="9_disease"]
 [ext_resource type="Script" uid="uid://bdwmqub12ii6e" path="res://pawns/pawn_temperature_component.gd" id="10_heattemp"]
+[ext_resource type="Script" path="res://pawns/pawn_suit_component.gd" id="11_suit"]
+[ext_resource type="SpriteFrames" path="res://pawns/frames/crew_suited_frames.tres" id="12_suited"]
+[ext_resource type="SpriteFrames" path="res://pawns/frames/crew_unsuited_frames.tres" id="13_unsuited"]
 
 [node name="PawnBase" unique_id=1067060448 node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_4e1f1")]
 animated_sprite = NodePath("Offset/Crew")
@@ -53,3 +56,8 @@ script = ExtResource("9_disease")
 
 [node name="PawnTemperatureComponent" type="Node2D" parent="." index="8" unique_id=1900733115]
 script = ExtResource("10_heattemp")
+
+[node name="PawnSuitComponent" type="Node2D" parent="." index="9" unique_id=1900733116]
+script = ExtResource("11_suit")
+suited_frames = ExtResource("12_suited")
+unsuited_frames = ExtResource("13_unsuited")

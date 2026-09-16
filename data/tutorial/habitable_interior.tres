@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TutorialHintData" format=3]
+
+[ext_resource type="Script" path="res://data/tutorial/tutorial_hint_data.gd" id="1_hint"]
+[ext_resource type="Resource" path="res://data/dialogue/tutorial/hint_habitable_interior.dialogue" id="2_script"]
+
+[resource]
+script = ExtResource("1_hint")
+id = &"habitable_interior"
+trigger = &"station_tier_reached"
+trigger_filter = &"2"
+dialogue = ExtResource("2_script")
+cue = "tier_two"
+title = "Crew want their helmets off"
+body = "Tier 2 crew will not live in pressure suits indoors. They change at an airlock, and only where the air and the temperature are fit - forty to ninety degrees, with oxygen above the low mark. A crew member still suited inside is an unhappy one, and anyone caught in a room that turns hostile has to walk to an airlock to suit up, taking harm the whole way. Keep an airlock near where people work."
+has_subject = false
+metadata/_custom_type_script = "res://data/tutorial/tutorial_hint_data.gd"

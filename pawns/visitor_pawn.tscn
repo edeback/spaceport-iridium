@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://pawns/pawn_breathing_component.tscn" id="5_breath"]
 [ext_resource type="Script" path="res://pawns/pawn_disease_component.gd" id="6_disease"]
 [ext_resource type="Script" uid="uid://bdwmqub12ii6e" path="res://pawns/pawn_temperature_component.gd" id="7_heattemp"]
+[ext_resource type="SpriteFrames" path="res://pawns/frames/crew_unsuited_frames.tres" id="8_unsuited"]
 
 [node name="VisitorPawn" node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_base")]
 script = ExtResource("2_visitor")
@@ -19,7 +20,12 @@ position = Vector2(0, -9)
 [node name="Sprite2D" parent="Offset" index="0"]
 scale = Vector2(0.22, 0.22)
 
+; Visitors never wear a suit (WI-67), so they wear the helmetless frames
+; permanently - a guest in a helmet reads as a guest in a suit. They carry no
+; PawnSuitComponent at all, which is also why they still feel the station's air
+; and heat exactly as they did before this item.
 [node name="Crew" parent="Offset" index="1"]
+sprite_frames = ExtResource("8_unsuited")
 scale = Vector2(0.2, 0.2)
 frame = 1
 

@@ -4,6 +4,9 @@
 [ext_resource type="Script" path="res://pawns/inspector_pawn.gd" id="2_insp"]
 [ext_resource type="PackedScene" path="res://pawns/pawn_health_component.tscn" id="3_health"]
 [ext_resource type="PackedScene" path="res://pawns/pawn_breathing_component.tscn" id="4_breath"]
+[ext_resource type="Script" path="res://pawns/pawn_suit_component.gd" id="5_suit"]
+[ext_resource type="SpriteFrames" path="res://pawns/frames/crew_suited_frames.tres" id="6_suited"]
+[ext_resource type="SpriteFrames" path="res://pawns/frames/crew_unsuited_frames.tres" id="7_unsuited"]
 
 [node name="InspectorPawn" node_paths=PackedStringArray("animated_sprite") instance=ExtResource("1_base")]
 script = ExtResource("2_insp")
@@ -26,3 +29,14 @@ scale = Vector2(0.22, 0.22)
 [node name="PawnHealthComponent" parent="." index="1" instance=ExtResource("3_health")]
 
 [node name="PawnBreathingComponent" parent="." index="2" instance=ExtResource("4_breath")]
+
+; static_suit (WI-67 §11): the inspector follows the tier and nothing else - no
+; trips, no mood, no hold. At Tier 1 that means they arrive and stay suited, so an
+; inspection can never fail on air or heat the player was not yet asked to
+; provide; from Tier 2 they are unsuited and WI-26's harm-fails-the-run rule works
+; exactly as it always has.
+[node name="PawnSuitComponent" type="Node2D" parent="." index="3"]
+script = ExtResource("5_suit")
+static_suit = true
+suited_frames = ExtResource("6_suited")
+unsuited_frames = ExtResource("7_unsuited")

@@ -69,6 +69,12 @@ func _process(delta: float) -> void:
 			_try_flee()
 
 func _current_atmosphere() -> AtmosphereComponent:
+	# "Am I on my own supply?" is one question in one place since WI-67, because a
+	# suit answers it as surely as being outside does. Everything below this line -
+	# no O2 drawn, no suffocation, no flee - is the existing suit-supply branch
+	# doing the work with no new test of its own.
+	if PawnSuitComponent.on_suit_supply(owner_pawn):
+		return null
 	var module: ModuleBase = owner_pawn.current_module
 	if module == null:
 		return null
@@ -80,6 +86,11 @@ func _current_atmosphere() -> AtmosphereComponent:
 static func is_module_safe_for(pawn: PawnBase, module: ModuleBase) -> bool:
 	var breathing: PawnBreathingComponent = pawn.get_component_by_type(PawnBreathingComponent) as PawnBreathingComponent
 	if breathing == null or module == null:
+		return true
+	# A suited pawn is safe everywhere, so idle wandering has no reason to avoid a
+	# thin room (WI-67). Without this a Tier-1 crew - suited by definition - would
+	# refuse to wander into any module that had not filled with air yet.
+	if PawnSuitComponent.on_suit_supply(pawn):
 		return true
 	var atmosphere: AtmosphereComponent = module.get_component_by_type(AtmosphereComponent) as AtmosphereComponent
 	if atmosphere == null:

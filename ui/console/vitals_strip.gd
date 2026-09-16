@@ -323,8 +323,16 @@ func _refresh_derived_chip(id: StringName, chip: VitalsChip) -> void:
 			var partial: float = 0.0
 			if Global.atmosphere_manager != null:
 				partial = Global.atmosphere_manager.station_average_o2_partial()
+			# Amber is muted while the crew live in suits (WI-67): at Tier 1 a thin
+			# station harms nobody, so the chip going amber is the same false alarm
+			# the low-O2 alert is gated for. The number still prints - this mutes
+			# the warning, not the readout - and the gate re-reads on every refresh,
+			# so promotion lights it with no wiring.
+			var suited: bool = Global.unlock_manager != null \
+				and Global.unlock_manager.suits_mandatory()
 			chip.set_value("%d%%" % roundi(partial), "",
-				UIPalette.Row.AMBER if partial < low_oxygen_partial else UIPalette.Row.INERT)
+				UIPalette.Row.AMBER if partial < low_oxygen_partial and not suited
+					else UIPalette.Row.INERT)
 		LedgerModel.DERIVED_CREW:
 			var crew: int = 0
 			var bunks: int = 0
