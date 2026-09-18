@@ -58,6 +58,10 @@ func _process(delta: float) -> void:
 	_tick_happiness_effects(sim_hours)
 
 func _unhandled_input(event: InputEvent) -> void:
+	# A developer key, not a player one (WI-68 F5): false only in a release
+	# export, so the editor and debug exports keep it. Panku is already off there.
+	if not OS.is_debug_build():
+		return
 	if event.is_action_pressed("debug_fire_event"):
 		get_viewport().set_input_as_handled()
 		if not try_fire_random_event(true):

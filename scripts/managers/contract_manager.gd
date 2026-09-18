@@ -62,6 +62,9 @@ func _ready() -> void:
 	Global.time_manager.slow_tick.connect(_on_slow_tick)
 
 func _unhandled_input(event: InputEvent) -> void:
+	# A developer key, not a player one (WI-68 F5); see EventManager's twin.
+	if not OS.is_debug_build():
+		return
 	if event.is_action_pressed("debug_offer_contract"):
 		get_viewport().set_input_as_handled()
 		if generate_offer(0.0) == null:
