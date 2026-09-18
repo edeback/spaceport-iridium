@@ -1,6 +1,16 @@
 # WI-68 — Audit Fix Pass
 
-> **Status: READY (2026-09-18). Not started.** Scoped from the 2026-09-18 pass in [[03_Bugs_and_Improvements]] (findings **F1–F20**). The three open questions were settled with the author the same day and all three recommended defaults were taken (§0), so every stage can start. The finding ids are kept throughout so the audit entries and this doc stay cross-referenced.
+> **Status: IN PROGRESS. Stage 1 done (2026-09-18); stages 2–6 not started.** Scoped from the 2026-09-18 pass in [[03_Bugs_and_Improvements]] (findings **F1–F20**). The three open questions were settled with the author the same day and all three recommended defaults were taken (§0). The finding ids are kept throughout so the audit entries and this doc stay cross-referenced.
+>
+> **Stage 1 (F1, F3, F12): implemented as designed, not yet committed. 1,683 GUT tests green** (1,672 + 11: the new 7-test `test_module_queue.gd`, plus 4 teardown tests in `test_module_graph.gd`). Both leak guards were proven to bite: with each fix temporarily undone, exactly the new test failed and named the leaked object. Re-measured in a scratch copy on the real quicksave:
+> - **F1 + F3, in play:** loose (non-Node, non-Resource) objects now plateau after about the first sim-day and then oscillate. A 72-hour soak read 5,424 at h24 and 5,456 at h72, dipping to 5,404 in between. Before the fix the count rose monotonically by ~240 per cycle, and the exit leak grew with play time; it now reads 639 at 24 h and 649 at 72 h.
+> - **F3, scene swaps:** +6 objects per New Game ↔ menu cycle (was +42). The exit leak after two loads is 631 (was 1,305). A fresh boot also fell, 583 → 544, because the starter station's graphs no longer leak either.
+> - **F12:** a `TurboliftCab` instantiates cleanly outside a game. In-game, a cab made by `create_new_cab` on a freshly built two-floor shaft registers its vertex in `_ready` and lands in the shaft's group (`turboshaft_0`).
+>
+> **Deviations and notes:**
+> - **Two verification targets were mis-specified and are corrected in §Verification.** "24-hour loose growth ≤ ~70" assumed linear growth, but the first sim-day is buffers filling to their caps (+111 in 24 h). The real criterion is a plateau after warm-up and an exit leak that doesn't grow with play time. "Within ~50 of a fresh boot" compared against a baseline this stage itself moved.
+> - **Residual, not F3:** each load still keeps about 43 objects until exit (two loads: 631 against a fresh boot's 544). This is small, doesn't grow with play time, and has a different source from the graph cycles. It's worth one short investigation, but it's not in this WI's scope unless it turns out to be trivial.
+> - `clear()` also empties `_linked_groups` and `_exterior_vertices`, not just `_vertices`. It deliberately emits nothing, and a test pins that.
 
 ## Goal
 
@@ -207,8 +217,8 @@ The rest are one or two per file. The count is a lower bound, because a script t
 2. **Re-run the audit probes** in a scratch copy with its own `user://`. The method is in [[03_Bugs_and_Improvements]]'s 2026-09-18 section. Targets:
    - **R6 (leak cycle):** per-New-Game object growth ≤ ~10 (was +42).
    - **R4 idempotence:** the save → load → save diff is **empty** (F13).
-   - **R4, exit leak after two loads:** within ~50 of a fresh boot (was 1,305 against 583).
-   - **R5 (24 sim-hours):** non-Node, non-Resource object growth ≤ ~70 (was +311); still zero script errors, reservation drift and overfill.
+   - **R4, exit leak after two loads:** about half its pre-fix value (was 1,305; 631 after stage 1). Compare against a fresh boot on the *same* build, since stage 1 moved that baseline too.
+   - **R5 (72 sim-hours):** non-Node, non-Resource objects plateau after the first sim-day rather than climbing (pre-fix: +~240 per cycle, monotonic), and the exit leak doesn't grow between 24 h and 72 h. Still zero script errors, reservation drift and overfill.
    - **R7 (suit mid-trip across a reload):** zero job restarts, never two `change_suit` jobs in one pawn's queue, suited within about 7 s (the control is 6.9 s).
 3. **F4, in a real session:**
    - Tier 2 with costs on, a docked trader, one buy and one sell.

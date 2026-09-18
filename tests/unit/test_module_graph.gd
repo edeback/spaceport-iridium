@@ -267,3 +267,52 @@ func test_pathfind_between_disconnected_vertices_is_empty() -> void:
 	graph.add_vertex(a)
 	graph.add_vertex(b)
 	assert_eq(graph.pathfind(a, b).size(), 0, "no route -> empty path")
+
+# --- teardown (WI-68 F3) -------------------------------------------------------
+
+## A linked a-b-c chain, for the teardown tests.
+func _chain() -> Array[Node2D]:
+	var a := _vertex("a")
+	var b := _vertex("b")
+	var c := _vertex("c")
+	graph.add_vertex(a)
+	graph.add_vertex(b)
+	graph.add_vertex(c)
+	graph.add_edge(a, b, 1.0)
+	graph.add_edge(b, c, 1.0)
+	var nodes: Array[Node2D] = [a, b, c]
+	return nodes
+
+func test_clear_releases_connected_vertices() -> void:
+	# Neighbours hold each other through `edges`, so a graph that is merely
+	# released leaks every connected vertex as a RefCounted cycle. clear() is what
+	# PathManager/StructureManager call on the way out to break them.
+	var nodes: Array[Node2D] = _chain()
+	var ref: WeakRef = weakref(graph.get_vertex_for_path(nodes[1]))
+	graph.clear()
+	graph = null
+	assert_null(ref.get_ref(), "the middle vertex of a linked chain is freed with its graph")
+
+func test_clear_forgets_every_vertex() -> void:
+	var nodes: Array[Node2D] = _chain()
+	graph.clear()
+	for node: Node2D in nodes:
+		assert_null(graph.get_vertex_for_path(node), "%s is no longer a vertex" % node.name)
+	assert_false(graph.is_reachable(nodes[0], nodes[2]), "nothing is reachable in an empty graph")
+
+func test_removing_a_vertex_after_clear_is_a_no_op() -> void:
+	# A pawn's PREDELETE calls path_manager.remove_vertex(self) during the same
+	# teardown that cleared the graph; that has to land on the unknown-vertex
+	# early return rather than error.
+	var nodes: Array[Node2D] = _chain()
+	graph.clear()
+	graph.remove_vertex(nodes[1])
+	assert_null(graph.get_vertex_for_path(nodes[1]), "still absent, and no error on the way")
+
+func test_clear_does_not_announce_a_change() -> void:
+	# It runs from _exit_tree while graph_changed's listeners are being torn down
+	# in the same pass, so it must stay silent.
+	_chain()
+	watch_signals(graph)
+	graph.clear()
+	assert_signal_not_emitted(graph, "graph_changed")

@@ -176,6 +176,25 @@ func remove_vertex(vertex: Node2D) -> void:
 	# mutual-reference cycles so it can actually be collected.
 	_mark_dirty() # This may have split our graph
 	_emit_graph_changed()
+
+## Drops every vertex, for a graph whose owner is going away (WI-68 F3).
+##
+## Neighbouring vertices hold each other through `edges`, so a graph that is
+## simply released leaks every connected vertex as a RefCounted cycle - the whole
+## station, twice (path and structure graphs), on every load and Quit to Menu.
+## Emptying each vertex's edges is what breaks those cycles.
+##
+## Deliberately silent: no graph_changed and no dirty mark. It runs from an
+## owner's _exit_tree, while the listeners are being torn down in the same pass.
+## Anything that calls remove_vertex afterwards (a pawn's PREDELETE) hits the
+## unknown-vertex early return. Only safe because each manager owns its own
+## ModuleGraph.new() - if a graph is ever shared, this becomes destructive.
+func clear() -> void:
+	for vertex: ModuleGraphVertex in _vertices.values():
+		vertex.edges.clear()
+	_vertices.clear()
+	_linked_groups.clear()
+	_exterior_vertices.clear()
 	
 func add_edge(start: Node2D, end: Node2D, cost: float, data: StringName = "") -> bool:
 	var start_vertex: ModuleGraphVertex = _vertices.get(start)

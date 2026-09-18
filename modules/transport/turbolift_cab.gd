@@ -102,11 +102,14 @@ func floor_has_requests(next_floor: ModuleTurbolift) -> bool:
 			return true
 	return false
 
-func _init() -> void:
-	Global.path_manager.add_vertex(self, true) 
-
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	# Registered here rather than in _init (WI-68 F12): _init runs on bare
+	# instantiation, so anything that built a cab outside a running game - a
+	# preview, a tool, a probe - errored on a null path_manager. The ordering is
+	# still safe: TurboliftShaft.create_new_cab add_child()s the cab (running this)
+	# before add_cab() moves its vertex into the shaft's group.
+	Global.path_manager.add_vertex(self, true)
 	#SignalBus.module_removed.connect(module_removed)
 	for marker in standing_locations:
 		assigned_locations[marker] = null

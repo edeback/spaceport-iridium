@@ -12,7 +12,12 @@ func _ready() -> void:
 	SignalBus.module_structure_connection_added.connect(_on_module_connection_added)
 	SignalBus.module_structure_connection_removed.connect(_on_module_connection_removed)
 	Global.structure_manager = self
-	
+
+## Break the graph's vertex cycles before it is released, or every load and Quit
+## to Menu leaks the station's whole structure graph (WI-68 F3).
+func _exit_tree() -> void:
+	graph.clear()
+
 func _on_module_added(module: ModuleBase) -> void:
 	graph.add_vertex(module)
 	
