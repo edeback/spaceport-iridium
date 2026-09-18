@@ -1104,13 +1104,18 @@ func _load_pawn_jobs(pawn: PawnBase, entry: Dictionary) -> void:
 	var current_job: Job = Job.from_dict(entry.get("current_job", {}))
 	if current_job != null:
 		pawn.queue_job(current_job, true) # to front: runs before the restored queue
+		# ...and before the cargo sweep, which would otherwise take the cargo this
+		# job is carrying and abandon it (WI-68 F21).
+		pawn.mark_restored_job(current_job)
 		_adopt_if_need_job(pawn, needs, current_job)
 
 ## A restored need job must be re-linked to the component that queued it, or that
 ## component (which lost its pending-job pointer on load) would queue a second
-## job for the same need. Covers organic needs (Eat/Sleep/Recreate) and the robot
-## needs (WI-28: recharge -> RobotPowerComponent, repair -> RobotIntegrityComponent).
-## No-op for anything else.
+## job for the same need. Covers organic needs (Eat/Sleep/Recreate), the robot
+## needs (WI-28: recharge -> RobotPowerComponent, repair -> RobotIntegrityComponent),
+## treatment (WI-31) and suit trips (WI-67/68: change_suit -> PawnSuitComponent).
+## No-op for anything else. A component that remembers a job it queued on the
+## pawn needs a branch here, or every load duplicates that job.
 func _adopt_if_need_job(pawn: PawnBase, needs: PawnNeedsComponent, job: Job) -> void:
 	if needs != null and (job.is_type(&"eat") or job.is_type(&"sleep")
 			or job.is_type(&"recreate") or job.is_type(&"shop")):
@@ -1129,3 +1134,10 @@ func _adopt_if_need_job(pawn: PawnBase, needs: PawnNeedsComponent, job: Job) -> 
 		var disease: PawnDiseaseComponent = pawn.get_component_by_type(PawnDiseaseComponent) as PawnDiseaseComponent
 		if disease != null:
 			disease.adopt_restored_treatment_job(job)
+	elif job.is_type(&"change_suit"):
+		# Suits (WI-67), missed until WI-68 F2: an unadopted trip made the suit
+		# component post a second one, and the orphan then walked an
+		# already-suited pawn to an airlock and back.
+		var suit: PawnSuitComponent = pawn.get_component_by_type(PawnSuitComponent) as PawnSuitComponent
+		if suit != null:
+			suit.adopt_restored_trip(job)

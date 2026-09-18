@@ -29,6 +29,9 @@ func _module_components() -> Dictionary[String, ComponentBase]:
 		"mining": autofree(MiningComponent.new()),
 		"shield": autofree(ShieldComponent.new()),
 		"battery": autofree(BatteryComponent.new()),
+		# WI-60/WI-67, pinned by WI-68 F9.
+		"heat": autofree(HeatComponent.new()),
+		"heat_emitter": autofree(HeatEmitterComponent.new()),
 	}
 	return out
 
@@ -43,6 +46,8 @@ func _pawn_components() -> Dictionary[String, PawnComponentBase]:
 		"breathing": autofree(PawnBreathingComponent.new()),
 		"robot_power": autofree(RobotPowerComponent.new()),
 		"robot_integrity": autofree(RobotIntegrityComponent.new()),
+		# WI-67, pinned by WI-68 F9.
+		"suit": autofree(PawnSuitComponent.new()),
 	}
 	return out
 

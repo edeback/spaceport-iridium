@@ -41,7 +41,7 @@ func on_start(job: Job) -> Status:
 	# Taking a suit off is the only direction that can be refused: the airlock has
 	# to still be fit to stand in unsuited.
 	if not putting_on and not _airlock_is_fit(job):
-		suit.trip_refused()
+		suit.trip_refused(job)
 		return Status.FAILED
 	return Status.ONGOING
 
@@ -62,10 +62,10 @@ func on_finish(job: Job, outcome: Job.Outcome) -> void:
 	if suit == null:
 		return
 	if not putting_on and not _airlock_is_fit(job):
-		suit.trip_refused()
+		suit.trip_refused(job)
 		return
 	_changed = true
-	suit.apply_change(putting_on)
+	suit.apply_change(putting_on, job)
 
 func report(_job: Job) -> String:
 	return "Putting on a suit" if putting_on else "Taking off a suit"

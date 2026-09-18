@@ -149,6 +149,11 @@ func start_job() -> void:
 	if power_component != null and power_component.must_recharge():
 		_start_recharge_only()
 		return
+	# Then the job this robot was doing when the save was written (WI-68 F21):
+	# the cargo it carries is that job's, not leftovers for the sweep below. After
+	# the emergency gate deliberately - a drained robot still recharges first.
+	if _resume_restored_job():
+		return
 	# Return carried cargo first so a robot never sits on stock it could deposit.
 	if inventory_component != null and not inventory_component.is_empty():
 		var return_job: Job = _make_store_inventory_job()

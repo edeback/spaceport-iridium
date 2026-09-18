@@ -46,6 +46,8 @@
 
 **F5. Two debug hotkeys are live in release builds — read from code.** F6 (`debug_fire_event`, [`event_manager.gd:61`](../../../scripts/managers/event_manager.gd)) fires a random event and F7 (`debug_offer_contract`, [`contract_manager.gd:65`](../../../scripts/managers/contract_manager.gd)) generates a contract, with no `OS.is_debug_build()` gate anywhere in the project. WI-58 deliberately keeps them out of the remap screen, which also means a player can't unbind them. Panku is already disabled on release; these aren't. **Fix:** gate both handlers on `OS.is_debug_build()`.
 
+**F21. On load, a pawn carrying cargo abandons its restored job to a cargo sweep — confirmed and fixed in [[WI-68_Audit_Fix_Pass]] stage 2.** Found while verifying F2, so it isn't in the original pass. `PawnBase.start_job()` ([`pawn_base.gd:209`](../../../pawns/pawn_base.gd)) sweeps carried cargo before looking at the queue, and `_load_pawn_jobs` restores the saved current job only as the front of that queue. So the cargo a restored pawn carries, which usually belongs to that very job, got swept first. On the real quicksave, **four of five restored jobs were preempted**: three mining drones mid-mine and a crew member mid-haul. The restored job then resumed empty-handed. In F2's case, a crew member restored mid-way to an airlock stopped to put their cargo away while the room harmed them. **Fix:** the restored current job is marked, and each sweeping `start_job()` resumes it first, once.
+
 ### B. Invariant violations / design debt
 
 **F6. The script half of the UI drift guard was never automated.** `test_ui_theme.gd` sweeps scenes, but nothing sweeps scripts. About **40 geometry literals** have crept into console-UI scripts:
@@ -98,7 +100,7 @@ Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", 
 
 **F20. CLAUDE.md is stale.** It says "86 suites, 1624 tests"; the real figures are 89 and 1,672.
 
-**Bundled as [[WI-68_Audit_Fix_Pass]]** (drafted 2026-09-18): F1–F7, F9, F10, F12, F13 and F15–F18. F8, F11, F14 and F19's `PawnOpinion` suite are deliberately left out, with the reasons recorded there.
+**Bundled as [[WI-68_Audit_Fix_Pass]]** (drafted 2026-09-18): F1–F7, F9, F10, F12, F13, F15–F18, and F21 (added during stage 2). F8, F11, F14 and F19's `PawnOpinion` suite are deliberately left out, with the reasons recorded there.
 
 ---
 

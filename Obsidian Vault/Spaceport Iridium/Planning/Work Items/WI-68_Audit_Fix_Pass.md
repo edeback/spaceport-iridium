@@ -1,8 +1,20 @@
 # WI-68 — Audit Fix Pass
 
-> **Status: IN PROGRESS. Stage 1 done (2026-09-18); stages 2–6 not started.** Scoped from the 2026-09-18 pass in [[03_Bugs_and_Improvements]] (findings **F1–F20**). The three open questions were settled with the author the same day and all three recommended defaults were taken (§0). The finding ids are kept throughout so the audit entries and this doc stay cross-referenced.
+> **Status: IN PROGRESS. Stages 1–2 done (2026-09-18); stages 3–6 not started.** Scoped from the 2026-09-18 pass in [[03_Bugs_and_Improvements]] (findings **F1–F20**, plus **F21**, found and fixed during stage 2). The three open questions were settled with the author the same day and all three recommended defaults were taken (§0). The finding ids are kept throughout so the audit entries and this doc stay cross-referenced.
 >
-> **Stage 1 (F1, F3, F12): implemented as designed, not yet committed. 1,683 GUT tests green** (1,672 + 11: the new 7-test `test_module_queue.gd`, plus 4 teardown tests in `test_module_graph.gd`). Both leak guards were proven to bite: with each fix temporarily undone, exactly the new test failed and named the leaked object. Re-measured in a scratch copy on the real quicksave:
+> **Stage 2 (F2, F9, F10, F13, and the new F21): not yet committed. 1,693 GUT tests green** (1,683 + 10: six trip-pointer tests in `test_suit_content.gd`, and two chat-log plus two rotation tests in `test_component_persistence.gd`; F9 widened the existing key tables). With each fix temporarily undone, exactly the nine targeted tests failed and nothing else did. Re-measured in a scratch copy on the real quicksave:
+> - **F2, the suit trip across a reload:** one `change_suit` job ever, never two held at once, and suited after 7.4 s (the no-reload control: 7.5 s). Before, a duplicate trip was posted and the orphan walked the already-suited pawn to an airlock and back.
+> - **F21, restored jobs:** all five restored in-flight jobs now resume first after the load (before: four of five were abandoned to a cargo sweep). Twelve sim-hours of play after the load showed zero reservation drift, zero overfill and zero script errors across 462 checks.
+> - **F13:** save → load → save is now **exactly** identical (0 differences; it was 6 rotation diffs).
+>
+> **Stage 2 deviations and notes:**
+> - **F21 was not in the design.** It surfaced while verifying F2: with the trip correctly adopted, a crew member restored mid-way to an airlock still spent 11 sim-seconds on a cargo sweep first (suited at 27.7 s against the target of ~7 s), standing in the harmful room. The sweep was preempting *every* restored job whose pawn carried cargo, not just suits, so it was fixed at that root and added to scope. See §Stage 2, F21.
+> - **F13 snaps as well as wraps.** Wrapping alone doesn't make the save idempotent, because rotation round-trips through float32 radians and still loses a bit. `saved_rotation_of()` wraps to one turn, then snaps to 0.001°, then maps a snap-up to 360 back to 0. The test for that edge caught a bug in the first version, which snapped first.
+> - **F9 needed no new round-trip test.** `test_suit_content.gd` already had one for the suit block.
+> - **F10 also skips a malformed entry** rather than appending whatever `as Dictionary` produces.
+> - Two read accessors were added for the new tests and the cheat dump: `PawnSuitComponent.has_live_trip()` and `trip_cooldown_remaining()`, alongside the existing `hold_remaining()`.
+>
+> **Stage 1 (F1, F3, F12): committed `b85090cc` on `wi-68-audit-fixes`. 1,683 GUT tests green** (1,672 + 11: the new 7-test `test_module_queue.gd`, plus 4 teardown tests in `test_module_graph.gd`). Both leak guards were proven to bite: with each fix temporarily undone, exactly the new test failed and named the leaked object. Re-measured in a scratch copy on the real quicksave:
 > - **F1 + F3, in play:** loose (non-Node, non-Resource) objects now plateau after about the first sim-day and then oscillate. A 72-hour soak read 5,424 at h24 and 5,456 at h72, dipping to 5,404 in between. Before the fix the count rose monotonically by ~240 per cycle, and the exit leak grew with play time; it now reads 639 at 24 h and 649 at 72 h.
 > - **F3, scene swaps:** +6 objects per New Game ↔ menu cycle (was +42). The exit leak after two loads is 631 (was 1,305). A fresh boot also fell, 583 → 544, because the starter station's graphs no longer leak either.
 > - **F12:** a `TurboliftCab` instantiates cleanly outside a game. In-game, a cab made by `create_new_cab` on a freshly built two-floor shaft registers its vertex in `_ready` and lands in the shaft's group (`turboshaft_0`).
@@ -40,7 +52,8 @@ These are decisions, not suggestions. The alternatives that were turned down are
 - the save-key pin, **F9**;
 - the small load-path fixes **F10** and **F13**;
 - the cab registration, **F12**;
-- a cleanup commit covering **F15–F18**, with the CLAUDE.md counts (**F20**) updated at close.
+- a cleanup commit covering **F15–F18**, with the CLAUDE.md counts (**F20**) updated at close;
+- **added during stage 2:** **F21**, restored in-flight jobs lost their turn to the cargo sweep on load. It was found while verifying F2 and blocked F2's own target.
 
 **Out, deliberately:**
 - **F8** (node-keyed dictionaries). All eight are safe today by pairing. Whether to convert them or to amend the CLAUDE.md rule so the unregister-on-`_exit_tree` pairing is sanctioned is a rule decision, not a fix.
@@ -90,7 +103,12 @@ Tests, extending the existing pure setup where a component is constructed bare w
 
 **F10.** [`socialize_component.gd:442`](../../../../pawns/socialize_component.gd) coerces each `recent` entry on load instead of appending the parsed dictionary as-is: `with`, `cycle` and `hour` to int, `delta` to float, `positive` to bool, `name` to String. Add a GUT round-trip test that asserts `typeof` on each field after a JSON pass. Nothing keys on `with` today; this stops the first thing that does from missing every lookup, since `6.0` and `6` are different keys in Godot.
 
-**F13.** [`asteroid_base.gd:202`](../../../../objects/asteroid_base.gd) saves `fposmod(sprite.rotation_degrees, 360.0)`. That makes the save/load/save diff exactly empty, which makes the R4 probe a clean pass/fail from now on.
+**F13.** [`asteroid_base.gd`](../../../../objects/asteroid_base.gd) saves `saved_rotation_of(sprite.rotation_degrees)`: wrapped to one turn, then snapped to 0.001°. Wrapping alone isn't enough, because the value round-trips through float32 radians (see the status block). That makes the save/load/save diff exactly empty, which makes the R4 probe a clean pass/fail from now on.
+
+**F21 (added during stage 2). A restored in-flight job runs before the cargo sweep.** `start_job()` sweeps carried cargo before anything else, which is right for leftovers from a cancelled job. But on the first pick after a load, the cargo usually *belongs* to the restored job: a haul mid-carry, a drone mid-mine, and in F2's case a crew member mid-way to an airlock. On the real quicksave, four of five restored jobs were abandoned to a sweep.
+- `SaveManager._load_pawn_jobs` now calls `PawnBase.mark_restored_job()` on the restored current job, after queueing it to the front as before. Queued jobs are unaffected.
+- `PawnBase._resume_restored_job()` begins that job ahead of the sweep, once. The marker is spent on the first `start_job()` whatever happens. If something was queued in front of the job since the load, or it can no longer run, the normal rules take over: a cancelled job leaves its cargo on the pawn, and the next pick sweeps it as leftovers.
+- The three `start_job()` implementations that sweep call it: `PawnBase`, `VisitorPawn`, and `RobotPawnBase`. The robot calls it **after** its zero-energy gate, so a drained robot still recharges first. `InspectorPawn` never sweeps and is never saved.
 
 ### Stage 3 — The Finance tab's Net (F4)
 
@@ -185,7 +203,7 @@ The rest are one or two per file. The count is a lower bound, because a script t
 | Stage | Files |
 |---|---|
 | 1 | `scripts/utility/module_queue.gd`, `scripts/utility/module_graph.gd`, `scripts/managers/path_manager.gd`, `scripts/managers/structure_manager.gd`, `modules/transport/turbolift_cab.gd`; new `tests/unit/test_module_queue.gd`, extend `test_module_graph.gd` |
-| 2 | `pawns/pawn_suit_component.gd`, `scripts/managers/save_manager.gd`, `scripts/jobs/actions/action_change_suit.gd`, `scripts/jobs/drivers/job_driver_change_suit.gd`, `scripts/utility/cheats.gd`, `pawns/socialize_component.gd`, `objects/asteroid_base.gd`; `test_component_save_contract.gd` plus a suit-trip test |
+| 2 | `pawns/pawn_suit_component.gd`, `scripts/managers/save_manager.gd`, `scripts/jobs/actions/action_change_suit.gd`, `scripts/jobs/drivers/job_driver_change_suit.gd`, `scripts/utility/cheats.gd`, `pawns/socialize_component.gd`, `objects/asteroid_base.gd`; F21: `pawns/pawn_base.gd`, `pawns/robot_pawn_base.gd`, `pawns/visitor_pawn.gd`; tests in `test_suit_content.gd`, `test_component_save_contract.gd`, `test_component_persistence.gd` |
 | 3 | `scripts/managers/economy_manager.gd`, `ui/windows/comms/finance_tab.gd`, `scripts/managers/trader_manager.gd`, `scripts/managers/raid_manager.gd`, `scripts/managers/crew_manager.gd`; `test_economy.gd`, `test_ledger_grouping.gd` |
 | 4 | `scripts/managers/event_manager.gd`, `scripts/managers/contract_manager.gd`, `scripts/managers/global.gd` |
 | 5 | `tests/unit/test_ui_theme.gd`, `ui/theme/ui_metrics.gd`, `ui/theme/ui_palette.gd`, ~20 `ui/**` scripts (F6); the 50 files in the appendix plus `project.godot` (F7); `04_UI_Rework_Program.md` |
@@ -220,6 +238,7 @@ The rest are one or two per file. The count is a lower bound, because a script t
    - **R4, exit leak after two loads:** about half its pre-fix value (was 1,305; 631 after stage 1). Compare against a fresh boot on the *same* build, since stage 1 moved that baseline too.
    - **R5 (72 sim-hours):** non-Node, non-Resource objects plateau after the first sim-day rather than climbing (pre-fix: +~240 per cycle, monotonic), and the exit leak doesn't grow between 24 h and 72 h. Still zero script errors, reservation drift and overfill.
    - **R7 (suit mid-trip across a reload):** zero job restarts, never two `change_suit` jobs in one pawn's queue, suited within about 7 s (the control is 6.9 s).
+   - **Resume after a load (F21):** every pawn's restored current job is the first job it begins after the load, and twelve sim-hours of play afterwards show no reservation drift or overfill.
 3. **F4, in a real session:**
    - Tier 2 with costs on, a docked trader, one buy and one sell.
    - Purchases and Sales each show their amounts.
