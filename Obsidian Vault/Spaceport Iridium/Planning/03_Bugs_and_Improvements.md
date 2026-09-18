@@ -1,5 +1,107 @@
 # Bugs, Code Issues & Improvement Suggestions
 
+## 2026-09-18 audit pass (post-WI-67)
+
+*The first whole-codebase sweep since 2026-07-22. WI-38…WI-67 (~30 items) had each been verified on its own terms, but nobody had checked the whole against CLAUDE.md's invariants, several of which were written after the code they govern. Findings are numbered **F1…F20** so they don't collide with the older A/B/C/D ids below. Everything marked* confirmed *was either reproduced at runtime or A/B-tested with a one-line patch in a throwaway copy of the project; everything else is marked as read from code.*
+
+**How it was checked.** Static: every CLAUDE.md rule that can be expressed as a grep was run, and every hit was read in context. Runtime: a temporary autoload probe ran in a **scratch copy of the project with its own `user://`**, so the real `project.godot` and saves were never touched. It had seven phases:
+- **R1** GUT;
+- **R2** typed warnings raised to errors;
+- **R3** load every `.tres`/`.tscn`;
+- **R4** save→load→save JSON diff, plus Quit-to-Menu → New Game vs a fresh boot;
+- **R5** a 120-sim-hour soak at 4× on the real quicksave, checking reservations, capacity, stuck jobs, world resource totals and object counts every few ticks;
+- **R6** six New Game ↔ menu cycles;
+- **R7** a crew member mid-suit-trip across a save/load, against a no-reload control.
+
+### Verified clean (so the next pass needn't redo it)
+
+- **GUT: 89 suites, 1,672/1,672 passing** (54,286 asserts).
+- **R3:** all 389 resources load and all 142 scenes instantiate; no `ModuleData` lacks a scene.
+- **R4 idempotence:** a save written straight after loading another is identical to it except for F13's float drift. Pawn current jobs come back at the front of the queue with their action index intact, which is equivalent.
+- **R4 scene swap:** New Game after Quit to Menu differs from a fresh boot only in random rolls and the static id counters, which keep counting and stay unique. **The A8 class stays fixed.**
+- **R5, 120 sim-hours:** zero script errors, zero reservation drift between `StorageData` and `ClaimRegistry`, zero capacity overfill (pool, output or INPUT cap), zero orphan nodes, and no unexplained drop in any resource's world total (the largest hourly drop was 2 units, a batch). *Caveat:* the quicksave is Tier 1, so the cost streams, the suit rules and trader visits were not exercised by the soak.
+- **Static:**
+  - no `create_timer`, `Engine.time_scale` or `get_tree().paused` in gameplay code;
+  - only `UITimeScaleSelect` writes `TimeManager.paused`;
+  - zero bare group literals;
+  - all six `record_income` callers credit the returned net;
+  - every non-consuming withdraw lands in a pile or overflow pile;
+  - the three hour-long manager awaits only delay a shuttle's departure;
+  - both self-bound `job_end` connections are `CONNECT_ONE_SHOT`.
+
+### A. Confirmed bugs
+
+**F1. Every pathfinding query leaks an object — confirmed.** `ModuleQueue` is `extends Object` ([`module_queue.gd:2`](../../../scripts/utility/module_queue.gd)), so it must be freed by hand, but [`ModuleGraph.pathfind_by_vertex`](../../../scripts/utility/module_graph.gd) (`:385`) and `pathfind_to_func` (`:503`) allocate one per call and never free it. The `QueueElement`s it still holds leak with it. In the soak, non-Node, non-Resource objects grew linearly by about **240 per sim-cycle (~1.2 MB)** and never plateaued, and they were all still leaked at exit, so they aren't held by anything. Changing that one word to `extends RefCounted` cut 24-hour growth from +364 to +93 objects and brought the exit leak back to the single-load baseline. Memory grows without bound for as long as pawns walk. **Fix:** `extends RefCounted`, plus a GUT suite for `ModuleQueue`, which has none.
+
+**F2. A suit trip in flight at save time is orphaned on load, and the crew member makes a redundant airlock round-trip — confirmed.** `PawnSuitComponent._trip` is not saved ([`pawn_suit_component.gd:71`](../../../pawns/pawn_suit_component.gd)), but the `change_suit` job it points at *is* restored. [`SaveManager._adopt_if_need_job`](../../../scripts/managers/save_manager.gd) re-links restored jobs for eat/sleep/recreate/shop/recharge/repair/treatment, and WI-67 never added `change_suit`. So after the load the component sees no trip and posts a second one. R7's trace:
+- the new trip suits the crew member up at t=7 s;
+- the orphaned restored trip then runs at t=16 s, walking an already-suited pawn to an airlock and back (about 15 sim-seconds, roughly 1.5 working hours);
+- health ended at 94.8, against 96.0 in the control run.
+
+**Worse case, from reading the code and not reproduced:** if the restored job is *current* rather than queued when the component first re-evaluates, `interrupt_with_job` cancels it. `JobDriver_ChangeSuit.on_job_end` then calls `trip_refused()`, which nulls `_trip` — clearing the *new* trip's pointer. That allows a re-post on every 0.25 s slow tick, and the 6-second change at the rack would never finish. **Fix:** an `adopt_restored_trip(job)` hook wired into `_adopt_if_need_job`. Also make `trip_refused()`/`apply_change()` clear `_trip` only when the ending job *is* `_trip`.
+
+**F3. Both module graphs leak their vertices on every scene teardown — confirmed.** `ModuleGraphVertex.edges` is `Dictionary[ModuleGraphVertex, EdgeData]` ([`module_graph_vertex.gd:9`](../../../scripts/utility/module_graph_vertex.gd)), so neighbouring vertices hold each other: RefCounted cycles. Edges are only erased in `remove_vertex`/`remove_edge`, and nothing clears either graph when `PathManager`/`StructureManager` are freed. So every load (`reload_current_scene`) and every Quit to Menu leaks the whole station graph twice. On the real quicksave that is about 320 objects per load; on the starter station it's about 35 per New Game. Clearing the edges in both managers' `_exit_tree` took the exit leak after two loads from 1,305 to 631 (a fresh boot is 583), and per-New-Game growth from +42 to +7 objects. **Fix:** a `ModuleGraph.clear()` that empties every vertex's `edges`, called from both managers' `_exit_tree`.
+
+**F4. The Finance tab's "Net" line leaves out real spending — read from code.** [`finance_tab.gd:148`](../../../ui/windows/comms/finance_tab.gd) computes `gross_income - total_cost` from the ledger, but only operating flows reach the ledger. **Trade purchases** ([`trader_manager.gd:249`](../../../scripts/managers/trader_manager.gd), `credits.change_global_total(-amount * price)`), **raid payoffs** ([`raid_manager.gd:298`](../../../scripts/managers/raid_manager.gd)) and **hire fees** ([`crew_manager.gd:180`](../../../scripts/managers/crew_manager.gd)) all leave the balance unbooked, while trade *sales* are booked as income. A cycle that buys 6,000 cr of goods and sells 250 cr reports **Net +250** while the balance falls by 5,750. Construction, research, upgrades, cabs and robots are unbooked too, which is defensible as capital spending but should be a stated rule. **Fix:** book trade purchases, raid payoffs and hire fees through `record_external_cost` under their own categories, and either book capital spending as its own section or relabel the line "Operating net".
+
+**F5. Two debug hotkeys are live in release builds — read from code.** F6 (`debug_fire_event`, [`event_manager.gd:61`](../../../scripts/managers/event_manager.gd)) fires a random event and F7 (`debug_offer_contract`, [`contract_manager.gd:65`](../../../scripts/managers/contract_manager.gd)) generates a contract, with no `OS.is_debug_build()` gate anywhere in the project. WI-58 deliberately keeps them out of the remap screen, which also means a player can't unbind them. Panku is already disabled on release; these aren't. **Fix:** gate both handlers on `OS.is_debug_build()`.
+
+### B. Invariant violations / design debt
+
+**F6. The script half of the UI drift guard was never automated.** `test_ui_theme.gd` sweeps scenes, but nothing sweeps scripts. About **40 geometry literals** have crept into console-UI scripts:
+- `add_theme_constant_override("separation", 5/7/8/14)`, margins and `custom_minimum_size = Vector2(72/80/84, 0)`;
+- the worst files are `build_menu.gd`, `inspector_panel.gd`, `finance_tab.gd`, `pawn_social_tab.gd`, `local_upgrades_tab.gd`, `workspace_tab.gd` and `pawn_needs_tab.gd`;
+- plus ten raw colours in `minimap.gd`.
+
+`new_game_setup.gd` (WI-59) has 25 literals and is **not** on `04_UI_Rework_Program.md`'s exemption list, because the list predates it. **Fix:** a script sweep in `test_ui_theme.gd` with an explicit allowlist of the world-space files and WI-36's menus. Then decide whether WI-59's setup screen joins the menus or the console.
+
+**F7. "Keep everything typed" is unenforced: 98 violations in project code.** The three typed warnings sit at level 1 ([`project.godot:46-48`](../../../project.godot)), so they fail nothing. Raised to errors in the scratch copy, they found **238 unique violations in 52 files**: 88 unsafe method access, 61 unsafe property access, 58 untyped declarations and 31 missing return types. 140 of those are in vendored `assets/external/pixel_planets/` (`Star.gd` 88, `StellarObjectVisual.gd` 52). The remaining **98 are in project code across ~48 files**, led by `module_base.gd` and `preview_module.gd` (7 each), `pawn_job_tab.gd` (5), and `balloon.gd`, `turbolift_cab.gd` and `ui_storage_component.gd` (4 each). This is a lower bound, because a file that fails to compile hides violations in the scripts that depend on it. **Fix:** clear the 98, then raise all three to error (2) with `assets/external/` excluded.
+
+**F8. Eight node-keyed dictionaries, all currently safe by pairing.** They are in `heat_manager.gd:54`, `atmosphere_manager.gd:27,31`, `structure_component.gd:32`, `path_component.gd:75`, `module_graph.gd:26`, `stores_panel.gd:59` and `crew_panel.gd:102`. Each is protected by unregistering in `_exit_tree`, by `remove_module` detaching neighbours before `queue_free`, or by a rebuild on `crew_departed` — and loads are a full scene reload. The two that iterate with a typed loop variable, [`heat_manager.gd:181`](../../../scripts/managers/heat_manager.gd) over a neighbour's `module_connections` and [`crew_panel.gd:601`](../../../ui/windows/crew_panel.gd), are the ones that crash the moment a pairing slips. **Fix:** convert those two to `get_instance_id()` keys when next touched, or amend the CLAUDE.md rule to name the unregister-on-exit pairing as the sanctioned exception.
+
+**F9. The save-key stability pin misses the newest components.** [`test_component_save_contract.gd`](../../../tests/unit/test_component_save_contract.gd) lists 15 module and 9 pawn components, but not `HeatComponent` (`temperature`), `HeatEmitterComponent` (`target_f`) or `PawnSuitComponent` (`suited`, `hold_hours`). Add them.
+
+**F10. The load path doesn't coerce types.** After one load of the real quicksave, `social.recent[].with/cycle/hour` are floats rather than ints, because [`socialize_component.gd:442`](../../../pawns/socialize_component.gd) appends the parsed dictionaries as-is. Nothing uses `with` as a dictionary key yet, but if anything ever does, `6.0` and `6` are different keys in Godot. **Fix:** coerce on load, like every other block does.
+
+**F11. SignalBus has one dead signal and ten with no listener.** `special_path_connection_added` is declared and never emitted or connected. `ship_destroyed`, `pawn_skill_leveled`, `station_alert_raised`, `event_triggered`, `contract_offered/accepted/completed/failed` and `visitor_arrived/departed` are emitted but nobody listens. They may be intended as WI-47 mod hooks; if so, say so in `signal_bus.gd`, and if not, delete them.
+
+**F12. `TurboliftCab._init` registers itself with `Global.path_manager`** ([`turbolift_cab.gd:105`](../../../modules/transport/turbolift_cab.gd)). Any instantiation outside a running game errors; R3 hit it, and so would a preview cache, a tool or a test. Move the registration to `_enter_tree`.
+
+**F13. Asteroid rotation is never wrapped** ([`asteroid_base.gd:122`](../../../objects/asteroid_base.gd) accumulates `rotation_degrees`; it reached 3,457° on the quicksave). It drifts by one float32 ulp on every save/load, which R4's diff caught. It's cosmetic and harmless at any realistic game length, but it's the only non-idempotent value in the whole save. **Fix:** `fposmod(..., 360.0)` on save.
+
+**F14. A module saved mid-deconstruction finishes deconstructing on load.** [`construction_component.gd:250`](../../../modules/components/construction_component.gd) collapses Deconstructing → Deconstructed, so the remaining teardown work is skipped. It's documented as the mirror of Constructing → NotStarted, but it isn't a mirror: construction keeps its progress, while deconstruction completes. It's a minor save/load shortcut.
+
+**F15. [`crew_manager.gd:272`](../../../scripts/managers/crew_manager.gd) calls `shuttle.depart()` after a sim-hour await with no `is_instance_valid` guard.** Its twin in `visitor_manager.gd:168` has one.
+
+### C. Hygiene
+
+**F16. Six Godot editor temp files are tracked in git:** `main.tscn22649915396.tmp`, `modules/core/hallway.tscn5672602772.tmp`, two `modules/templates/module_base.tscn*.tmp`, `modules/transport/module_airlock_right.tscn*.tmp` and `data/modules/module_airlock.tres*.tmp`. `git rm` them and add `*.tmp` to `.gitignore`.
+
+**F17. Stale comments.** Five places still describe JobBase as coexisting with Job, which CLAUDE.md tells readers to ignore; they should be deleted instead:
+- `job_data.gd:14-15`;
+- `slot_pool.gd:13`;
+- `job_driver.gd:33,40`;
+- `workspace_component.gd:7`;
+- `job.gd:707`.
+
+Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", but WI-63 made AIDE remappable.
+
+**F18. Carried-forward items, re-checked.**
+- **B4 is closed** (`SAVE_VERSION` is 3 and two migrations exist).
+- **B5 is still open** (`world_manager.gd:196-199` reads `module.module_data` after `queue_free`).
+- **B6 is still open** (the empty `_process` at `world_manager.gd:66`, and commented-out code at `storage_component.gd:296`, `module_turbolift.gd:158` and `pawn_base.gd:378-382`).
+- **C8 is still open** (`capacitator` in `power_consumption_component.gd:5`).
+- **C11 is still open** (the `result.has()` dedupe at `world_manager.gd:298`).
+- A stray `print("Trader departing…")` remains in `trader_manager.gd`, along with four `print`s in `module_turbolift.gd`.
+
+**F19. Coverage gaps.** `ModuleQueue` (where F1 lived), `ModuleGraphVertex` and `PawnOpinion` have no suite. GUT also leaks about 1,000 objects at exit, from tests that don't `autofree`.
+
+**F20. CLAUDE.md is stale.** It says "86 suites, 1624 tests"; the real figures are 89 and 1,672.
+
+**Bundled as [[WI-68_Audit_Fix_Pass]]** (drafted 2026-09-18): F1–F7, F9, F10, F12, F13 and F15–F18. F8, F11, F14 and F19's `PawnOpinion` suite are deliberately left out, with the reasons recorded there.
+
+---
+
 *Re-audited 2026-07-22 against the post-WI-37 codebase (~30k lines of GDScript across 243 scripts, 58 GUT suites / 342 tests). The previous pass was 2026-07-13, before WI-01; almost everything in it has since been fixed, so this is a rewrite rather than an edit. Section E records what closed.*
 
 *Findings below come from reading the code; only A8 had been reproduced in-game. Severity ordering is my judgement of player impact. Fixes for the section A list were bundled as [[WI-38_Bug_Fix_Pass_2]], **completed 2026-07-22** — the whole of section A is now closed and recorded in section E. The entries are kept below for the reasoning trail.*

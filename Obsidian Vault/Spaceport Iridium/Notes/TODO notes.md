@@ -13,6 +13,8 @@ Similarly, hide tabs for module types that aren't available yet
 
 StringNames are cropping back up, should move them to a consts file again.
 
+Trade - have "max" as an option? Also be able to type the value directly in. Also clicking on the alert should bring up the trade sheet
+
 R&D -> "Tech" (early game isn't research, it's bought)
 
 Modules should have a list of present pawns so you can go module.get_present() (or something like that) to figure out who is there without looking through every pawn

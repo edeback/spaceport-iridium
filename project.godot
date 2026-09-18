@@ -38,8 +38,8 @@ ModManager="*res://scripts/managers/mod_manager.gd"
 Global="*res://scripts/managers/global.gd"
 SignalBus="*res://scripts/managers/signal_bus.gd"
 DialogueManager="*uid://c3rodes2l3gxb"
-Panku="*uid://cyftuo4syatlv"
 _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
+Panku="*uid://cyftuo4syatlv"
 
 [debug]
 
