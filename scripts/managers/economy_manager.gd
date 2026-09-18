@@ -23,6 +23,56 @@ extends Node
 ## [InspectionRunner] so ARC is one correspondent in the feed rather than two.
 const ARC_SENDER: String = InspectionRunner.ARC_SENDER
 
+# --- ledger categories (WI-68 F4) ---------------------------------------------
+# A category is declared or it does not exist - the same rule as Groups, UIType
+# and StoryFlags. The Finance tab used to keep its own display lists and summed
+# only what they named, so a cost booked under anything else vanished from "Net"
+# although it had really left the balance - and trade purchases, raid payoffs and
+# hire fees weren't booked at all. These lists are the display order too.
+
+## Costs, in the order the Finance tab lists them. The first four are the
+## settlement streams (loan -> wages -> upkeep -> levy fee, the charge order).
+const COST_CATEGORIES: Array[StringName] = [
+	&"loan_payment", &"wages", &"upkeep", &"levy_fee", &"levy_skim", &"severance",
+	&"hiring", &"trade_purchases", &"raid_payoff", &"penalty", &"event",
+]
+## Income, in display order. `event` is in both lists: a windfall and a loss.
+const INCOME_CATEGORIES: Array[StringName] = [
+	&"trade", &"contract", &"shops", &"hotels", &"dining", &"refunds", &"event",
+]
+## Every declared category's display name. Ids are what the saved ledger history
+## stores, so an id never changes - only its label may (`trade` reads "Sales"
+## now that purchases have a line of their own).
+const CATEGORY_LABELS: Dictionary[StringName, String] = {
+	&"loan_payment": "Loan",
+	&"wages": "Wages",
+	&"upkeep": "Upkeep",
+	&"levy_fee": "ARC fee",
+	&"levy_skim": "ARC levy",
+	&"severance": "Severance",
+	&"hiring": "Hiring",
+	&"trade_purchases": "Purchases",
+	&"raid_payoff": "Pirate ransom",
+	&"penalty": "Penalty",
+	&"event": "Event",
+	&"trade": "Sales",
+	&"contract": "Contracts",
+	# Visitor economy (WI-33): shop sales, hotel nights, and paid meals.
+	&"shops": "Shops",
+	&"hotels": "Hotels",
+	&"dining": "Dining",
+	&"refunds": "Refunds",
+}
+## Income booked when money spent earlier comes back (a hire whose bay vanished
+## before the shuttle landed). Income rather than a negative cost: a refund can
+## land cycles after its charge, and a negative cost line would read as nonsense.
+const REFUND_CATEGORY: StringName = &"refunds"
+## Record keys for the balance at either end of a cycle, which is what lets the
+## Finance tab show the real change beside the operating net (WI-68 F4). Optional:
+## a record from a save that predates them simply has neither.
+const OPENING_BALANCE: String = "opening_balance"
+const CLOSING_BALANCE: String = "closing_balance"
+
 # --- cost toggles (flipped on by WI-26's first ARC inspection) -----------------
 var wages_enabled: bool = false
 var upkeep_enabled: bool = false
@@ -78,6 +128,10 @@ const DEFAULT_WAGE_FRACTION: float = 0.05
 var _current: Dictionary = {}
 ## Finalized past cycles, chronological (oldest first). last() = most recent.
 var _history: Array[Dictionary] = []
+## True once a save has supplied _current, so the bootstrap stamp leaves it be:
+## a record from a pre-WI-68 save has no opening balance and must stay without
+## one rather than be stamped "since the load", which would be a lie.
+var _record_restored: bool = false
 
 # --- loan runtime state -------------------------------------------------------
 var loan_active: bool = false
@@ -98,6 +152,14 @@ func _ready() -> void:
 	SaveManager.register_section(&"economy", 50, get_save_data, load_save_data)
 	_current = _new_record(Global.time_manager.cycle)
 	Global.time_manager.cycle_changed.connect(_on_cycle_changed)
+	SignalBus.game_bootstrapped.connect(_on_game_bootstrapped)
+
+## A new game's first cycle opens with the starting balance. Stamped here and not
+## in _ready: this manager readies before SaveManager resets the credit totals,
+## so _ready would read 0 - or, after Quit to Menu, the previous run's balance.
+func _on_game_bootstrapped() -> void:
+	if not _record_restored and not _current.has(OPENING_BALANCE):
+		_current[OPENING_BALANCE] = _balance()
 
 # --- pure helpers (unit-tested without Global/SignalBus, WI-19) ----------------
 
@@ -149,6 +211,47 @@ static func loan_schedule(principal: int, interest_fraction: float, term_cycles:
 			break
 	return out
 
+## Whether `category` is declared on the cost side (`costs` true) or the income
+## side of the ledger.
+static func is_declared(category: StringName, costs: bool) -> bool:
+	return (COST_CATEGORIES if costs else INCOME_CATEGORIES).has(category)
+
+## Adds `amount` under `category` to one side of a ledger record ("costs" or
+## "income"). An undeclared category is an authoring error and says so - but is
+## still booked, because the money really moved: refusing it would recreate the
+## very bug the declaration exists to prevent (WI-68 F4).
+static func add_to_record(record: Dictionary, side: String, category: StringName, amount: int) -> void:
+	if not is_declared(category, side == "costs"):
+		push_error("EconomyManager: undeclared %s category '%s' - add it to %s and CATEGORY_LABELS"
+			% [side, category, "COST_CATEGORIES" if side == "costs" else "INCOME_CATEGORIES"])
+	var bucket: Dictionary = record.get_or_add(side, {})
+	bucket[category] = int(bucket.get(category, 0)) + amount
+
+## Income minus costs for one record, over EVERY category it holds, declared or
+## not - so nothing booked can fall out of the total.
+static func record_net(record: Dictionary) -> int:
+	var net: int = 0
+	var income: Dictionary = record.get("income", {})
+	for category: Variant in income:
+		net += int(income[category])
+	var costs: Dictionary = record.get("costs", {})
+	for category: Variant in costs:
+		net -= int(costs[category])
+	return net
+
+## Whether a record knows the balance it opened with. A record from a save that
+## predates WI-68, or the cycle in progress when such a save was loaded, doesn't.
+static func knows_balance_change(record: Dictionary) -> bool:
+	return record.has(OPENING_BALANCE)
+
+## How far the balance moved across a record's cycle: its closing balance, or
+## `live_balance` for the cycle still in progress, minus its opening balance.
+## Unlike record_net this counts everything - building, research, upgrades and
+## loans included - which is why the Finance tab shows both.
+static func balance_change(record: Dictionary, live_balance: int) -> int:
+	var closing: int = int(record.get(CLOSING_BALANCE, live_balance))
+	return closing - int(record.get(OPENING_BALANCE, closing))
+
 # --- cost activation (WI-26) --------------------------------------------------
 
 ## Switches on wages, upkeep, and the ARC levy together. Called by UnlockManager
@@ -179,7 +282,7 @@ func enable_recurring_costs() -> void:
 func record_income(amount: int, category: StringName) -> int:
 	if amount <= 0:
 		return amount
-	_current["income"][category] = int(_current["income"].get(category, 0)) + amount
+	add_to_record(_current, "income", category, amount)
 	var skim: int = skim_for(amount, levy_fraction) if levy_enabled else 0
 	if skim > 0:
 		_add_cost(&"levy_skim", skim)
@@ -187,13 +290,23 @@ func record_income(amount: int, category: StringName) -> int:
 	return amount - skim
 
 ## Records a cost the caller has ALREADY applied to the credit balance (contract
-## penalties, event credit deltas) so it shows on the economy page. Unlike a
-## levy charge this never touches credits and never refunds levy (losses aren't
-## negative income - WI-25 edge case).
+## penalties, trade purchases, raid payoffs, hire fees) so it shows on the
+## economy page. Unlike a levy charge this never touches credits and never
+## refunds levy (losses aren't negative income - WI-25 edge case).
 func record_external_cost(amount: int, category: StringName) -> void:
 	if amount <= 0:
 		return
 	_add_cost(category, amount)
+	_emit_changed()
+
+## Books money coming back that was spent earlier - a hire refunded because its
+## bay was gone before the shuttle landed (WI-68 F4). The caller has already
+## credited the balance. Income, but never through record_income: the levy
+## skims earnings, and a refund of the player's own money isn't one.
+func record_refund(amount: int) -> void:
+	if amount <= 0:
+		return
+	add_to_record(_current, "income", REFUND_CATEGORY, amount)
 	_emit_changed()
 
 ## Books an event's credit swing (EventEffectCreditDelta) on the ledger without
@@ -204,7 +317,7 @@ func record_event_delta(amount: int) -> void:
 	if amount < 0:
 		_add_cost(&"event", -amount)
 	elif amount > 0:
-		_current["income"][&"event"] = int(_current["income"].get(&"event", 0)) + amount
+		add_to_record(_current, "income", &"event", amount)
 	_emit_changed()
 
 # --- per-cycle settlement -----------------------------------------------------
@@ -323,10 +436,15 @@ func _announce_settlement(balance_before: int) -> void:
 		&"comms")
 
 func _finalize_current(new_cycle: int) -> void:
+	# After the settlement charges, so the cycle that just ended closes on what
+	# they left and the next one opens on the same figure.
+	var balance_now: int = _balance()
+	_current[CLOSING_BALANCE] = balance_now
 	_history.append(_current)
 	while _history.size() > ledger_history:
 		_history.pop_front()
 	_current = _new_record(new_cycle)
+	_current[OPENING_BALANCE] = balance_now
 	_emit_changed()
 
 # --- bankruptcy ---------------------------------------------------------------
@@ -497,29 +615,16 @@ func _new_record(cycle: int) -> Dictionary:
 	}
 
 func _add_cost(category: StringName, amount: int) -> void:
-	_current["costs"][category] = int(_current["costs"].get(category, 0)) + amount
+	add_to_record(_current, "costs", category, amount)
 
 func _emit_changed() -> void:
 	SignalBus.economy_changed.emit()
 
-## Human-readable category names shared by the settlement alert and the UI.
+## Human-readable category names shared by the settlement alert and the UI. The
+## capitalised fallback only ever shows for an undeclared category, which
+## add_to_record has already reported.
 static func category_label(category: StringName) -> String:
-	match category:
-		&"wages": return "Wages"
-		&"upkeep": return "Upkeep"
-		&"levy_fee": return "ARC fee"
-		&"levy_skim": return "ARC levy"
-		&"loan_payment": return "Loan"
-		&"severance": return "Severance"
-		&"penalty": return "Penalty"
-		&"event": return "Event"
-		&"trade": return "Trade"
-		&"contract": return "Contracts"
-		# Visitor economy (WI-33): shop sales, hotel nights, and paid meals.
-		&"shops": return "Shops"
-		&"hotels": return "Hotels"
-		&"dining": return "Dining"
-		_: return String(category).capitalize()
+	return CATEGORY_LABELS.get(category, String(category).capitalize())
 
 func _category_label(category: StringName) -> String:
 	return category_label(category)
@@ -531,8 +636,8 @@ func get_save_data() -> Dictionary:
 		"wages_enabled": wages_enabled,
 		"upkeep_enabled": upkeep_enabled,
 		"levy_enabled": levy_enabled,
-		"current": _record_to_save(_current),
-		"history": _history.map(_record_to_save),
+		"current": record_to_save(_current),
+		"history": _history.map(record_to_save),
 		"loan": {
 			"active": loan_active,
 			"remaining": loan_remaining,
@@ -548,10 +653,11 @@ func load_save_data(data: Dictionary) -> void:
 	wages_enabled = bool(data.get("wages_enabled", false))
 	upkeep_enabled = bool(data.get("upkeep_enabled", false))
 	levy_enabled = bool(data.get("levy_enabled", false))
-	_current = _record_from_save(data.get("current", {}), Global.time_manager.cycle)
+	_current = record_from_save(data.get("current", {}), Global.time_manager.cycle)
+	_record_restored = true
 	_history.clear()
 	for entry: Dictionary in data.get("history", []):
-		_history.append(_record_from_save(entry, 0))
+		_history.append(record_from_save(entry, 0))
 	var loan: Dictionary = data.get("loan", {})
 	loan_active = bool(loan.get("active", false))
 	loan_remaining = int(loan.get("remaining", 0))
@@ -565,28 +671,38 @@ func load_save_data(data: Dictionary) -> void:
 	_emit_changed()
 
 ## Ledger records store category keys as StringName; JSON round-trips them as
-## String, so convert on the way in and out.
-func _record_to_save(record: Dictionary) -> Dictionary:
-	return {
+## String, so convert on the way in and out. Static (and pure) so the round trip
+## is testable. The two balance stamps are optional: absent stays absent, which
+## is what keeps a pre-WI-68 record from growing a made-up opening balance.
+static func record_to_save(record: Dictionary) -> Dictionary:
+	var out: Dictionary = {
 		"cycle": int(record.get("cycle", 0)),
 		"income": _string_keys(record.get("income", {})),
 		"costs": _string_keys(record.get("costs", {})),
 	}
+	for key: String in [OPENING_BALANCE, CLOSING_BALANCE]:
+		if record.has(key):
+			out[key] = int(record[key])
+	return out
 
-func _record_from_save(data: Dictionary, fallback_cycle: int) -> Dictionary:
-	return {
+static func record_from_save(data: Dictionary, fallback_cycle: int) -> Dictionary:
+	var out: Dictionary = {
 		"cycle": int(data.get("cycle", fallback_cycle)),
 		"income": _stringname_keys(data.get("income", {})),
 		"costs": _stringname_keys(data.get("costs", {})),
 	}
+	for key: String in [OPENING_BALANCE, CLOSING_BALANCE]:
+		if data.has(key):
+			out[key] = int(data[key])
+	return out
 
-func _string_keys(source: Dictionary) -> Dictionary:
+static func _string_keys(source: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
 	for key: Variant in source:
 		out[String(key)] = int(source[key])
 	return out
 
-func _stringname_keys(source: Dictionary) -> Dictionary:
+static func _stringname_keys(source: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
 	for key: Variant in source:
 		out[StringName(String(key))] = int(source[key])

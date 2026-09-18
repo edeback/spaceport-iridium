@@ -48,6 +48,19 @@
 
 **F21. On load, a pawn carrying cargo abandons its restored job to a cargo sweep — confirmed and fixed in [[WI-68_Audit_Fix_Pass]] stage 2.** Found while verifying F2, so it isn't in the original pass. `PawnBase.start_job()` ([`pawn_base.gd:209`](../../../pawns/pawn_base.gd)) sweeps carried cargo before looking at the queue, and `_load_pawn_jobs` restores the saved current job only as the front of that queue. So the cargo a restored pawn carries, which usually belongs to that very job, got swept first. On the real quicksave, **four of five restored jobs were preempted**: three mining drones mid-mine and a crew member mid-haul. The restored job then resumed empty-handed. In F2's case, a crew member restored mid-way to an airlock stopped to put their cargo away while the room harmed them. **Fix:** the restored current job is marked, and each sweeping `start_job()` resumes it first, once.
 
+**F23. A pile tagged with a module that has since been removed makes the next save drop every pile on the station — confirmed during [[WI-68_Audit_Fix_Pass]] stage 3.** This is silent resource loss, and the most serious finding of the pass. `ModuleBase.pre_delete` clears `parent_module` on the module's *own* overflow pile ([`module_base.gd:618-621`](../../../modules/templates/module_base.gd)). But other code spawns piles tagged with a module too, and those keep a reference to the freed module:
+- a manual dump (`storage_overlays.gd:167`);
+- a pawn's dropped cargo (`pawn_base.gd:450`);
+- a cancelled sell order and a released contract demand (`trade_component.gd:83, 146`);
+- the dialogue bridge.
+
+On save, [`SaveManager._get_piles_save`](../../../scripts/managers/save_manager.gd) passes that freed reference to `module_ref()`. The typed parameter rejects it before `module_ref`'s own null check can run, the script error aborts the collector, and the whole `piles` section is written empty. **Reproduced:** 5 piles before the save, 0 after the reload. **Reachable** whenever a module is destroyed in a raid or deconstructed while a pile it tagged still exists. **Fix, in three parts, so one bad reference can never again cost a whole section:**
+- a pile clears `parent_module` when that module leaves the tree;
+- `_get_piles_save` checks `is_instance_valid`;
+- `module_ref` accepts a possibly-freed object.
+
+**F22. A hire whose bay is removed mid-flight is delivered into whatever replaced the bay, never refunded — confirmed during [[WI-68_Audit_Fix_Pass]] stage 3.** `PendingHires` stores `module_ref(bay)`, which is a layer + cell, and [`CrewManager._arrive`](../../../scripts/managers/crew_manager.gd) re-resolves it when the delay is up. Removing a module-layer bay backfills truss onto its cells, so the reference resolves to the *truss*, a valid module. The recruit is delivered into it, and the WI-07 refund branch never runs. **Reproduced:** with the bay removed mid-flight, crew went 3 → 4 and the refund was 0. The same cell-only resolution would deliver to any module the player builds on that cell afterwards. **Fix:** at arrival (and in `_on_shuttle_docked`), accept the resolved module only if it still carries a `CrewRecruitmentComponent`; otherwise refund.
+
 ### B. Invariant violations / design debt
 
 **F6. The script half of the UI drift guard was never automated.** `test_ui_theme.gd` sweeps scenes, but nothing sweeps scripts. About **40 geometry literals** have crept into console-UI scripts:
@@ -100,7 +113,7 @@ Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", 
 
 **F20. CLAUDE.md is stale.** It says "86 suites, 1624 tests"; the real figures are 89 and 1,672.
 
-**Bundled as [[WI-68_Audit_Fix_Pass]]** (drafted 2026-09-18): F1–F7, F9, F10, F12, F13, F15–F18, and F21 (added during stage 2). F8, F11, F14 and F19's `PawnOpinion` suite are deliberately left out, with the reasons recorded there.
+**Bundled as [[WI-68_Audit_Fix_Pass]]** (drafted 2026-09-18): F1–F7, F9, F10, F12, F13, F15–F18, and F21 (added during stage 2). F22 and F23 were found during stage 3; see the WI's status block for where they're scheduled. F8, F11, F14 and F19's `PawnOpinion` suite are deliberately left out, with the reasons recorded there.
 
 ---
 

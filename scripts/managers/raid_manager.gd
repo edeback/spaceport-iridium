@@ -295,7 +295,10 @@ func can_pay_off() -> bool:
 func pay_off() -> bool:
 	if not can_pay_off():
 		return false
-	Global.resource_manager.credit_resource.force_withdraw(current_payoff())
+	# Read once: the same figure is withdrawn and booked (WI-68 F4).
+	var ransom: int = current_payoff()
+	Global.resource_manager.credit_resource.force_withdraw(ransom)
+	Global.economy_manager.record_external_cost(ransom, &"raid_payoff")
 	_paid = true
 	for ship: PirateShip in _ships:
 		if is_instance_valid(ship):

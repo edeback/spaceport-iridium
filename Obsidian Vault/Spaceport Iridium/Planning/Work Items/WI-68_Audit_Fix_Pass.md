@@ -1,8 +1,26 @@
 # WI-68 — Audit Fix Pass
 
-> **Status: IN PROGRESS. Stages 1–2 done (2026-09-18); stages 3–6 not started.** Scoped from the 2026-09-18 pass in [[03_Bugs_and_Improvements]] (findings **F1–F20**, plus **F21**, found and fixed during stage 2). The three open questions were settled with the author the same day and all three recommended defaults were taken (§0). The finding ids are kept throughout so the audit entries and this doc stay cross-referenced.
+> **Status: IN PROGRESS. Stages 1–3 done (2026-09-18); stages 4–6 not started.** Scoped from the 2026-09-18 pass in [[03_Bugs_and_Improvements]] (findings **F1–F20**, plus **F21**, found and fixed during stage 2, and **F22–F23**, found during stage 3 and not yet scheduled). The three open questions were settled with the author the same day and all three recommended defaults were taken (§0). The finding ids are kept throughout so the audit entries and this doc stay cross-referenced.
 >
-> **Stage 2 (F2, F9, F10, F13, and the new F21): not yet committed. 1,693 GUT tests green** (1,683 + 10: six trip-pointer tests in `test_suit_content.gd`, and two chat-log plus two rotation tests in `test_component_persistence.gd`; F9 widened the existing key tables). With each fix temporarily undone, exactly the nine targeted tests failed and nothing else did. Re-measured in a scratch copy on the real quicksave:
+> **Stage 3 (F4): not yet committed. 1,709 GUT tests green** (1,693 + 16 in `test_economy.gd`). Undoing two representative pieces (the balance keys in the save round trip, and `hiring` from the declared costs) failed five tests. Verified windowed in a scratch copy on the real quicksave, with every booking site driven for real: a docked trader's purchase, a raid bought off, a hire, and a truss bought through `purchase_and_add_module`:
+> - Each booked flow moved the operating net by exactly what it moved the balance: Purchases 750, Pirate ransom 5,979, Hiring 890.
+> - **The reconciliation holds exactly:** across the whole cycle, Balance change − Operating net = −35, which is precisely the truss (−6,764 against −6,729). No unbooked flow remains.
+> - The first roll stamped `opening_balance` (and the finished cycle's `closing_balance`); both survived save/load. A record from the pre-F4 quicksave correctly has no opening balance, and the tab hides its Balance change line.
+> - **Screenshot checked at 1080p:** This cycle lists Refunds +890, Hiring −890, Purchases −750, Pirate ransom −5,979, Operating net −6,729 and Balance change −6,764, with the note under them. Last cycle shows Operating net only. Nothing clips.
+>
+> **Stage 3 deviations and notes:**
+> - **An undeclared category is reported *and* still booked.** The design said `push_error` only. Refusing it would drop real money from the books, which is the very bug being fixed, so the tab also lists any undeclared category after the declared ones. GUT fails a test on an unexpected `push_error`, so the declaration rule is enforced by the suite as well.
+> - **`opening_balance` is stamped at `game_bootstrapped`, not in `_ready`.** EconomyManager readies before SaveManager resets the credit totals, so `_ready` would have read 0 (or the previous run's balance after Quit to Menu, the A8 class). A loaded record never gets a stamp, even when it lacks one, because "since the load" would be a different number.
+> - **A cycle with no income or costs but a moved balance no longer says "Nothing recorded yet"**; building alone is real movement.
+> - **The tests went in `test_economy.gd`, not `test_ledger_grouping.gd`.** The latter is the *resource* ledger (`LedgerModel`), which the design confused with this one. The record helpers (`add_to_record`, `record_net`, `balance_change`, `record_to_save`/`record_from_save`) are pure statics, per the file's existing pattern.
+> - **The natural refund path couldn't be verified, because of F22.** The refund booking was verified by calling `_refund_hire` directly.
+> - **Two new bugs, confirmed while verifying F4 and recorded in the audit doc:**
+>   - **F22:** a hire whose bay is removed mid-flight is delivered into the backfilled truss instead of refunded.
+>   - **F23:** a pile tagged with a since-removed module makes the next save drop *every* pile on the station (5 → 0).
+>
+>   Neither is part of F4, so neither is fixed yet. F23 is silent resource loss and should be fixed next.
+>
+> **Stage 2 (F2, F9, F10, F13, and the new F21): committed `580efc19`. 1,693 GUT tests green** (1,683 + 10: six trip-pointer tests in `test_suit_content.gd`, and two chat-log plus two rotation tests in `test_component_persistence.gd`; F9 widened the existing key tables). With each fix temporarily undone, exactly the nine targeted tests failed and nothing else did. Re-measured in a scratch copy on the real quicksave:
 > - **F2, the suit trip across a reload:** one `change_suit` job ever, never two held at once, and suited after 7.4 s (the no-reload control: 7.5 s). Before, a duplicate trip was posted and the orphan walked the already-suited pawn to an airlock and back.
 > - **F21, restored jobs:** all five restored in-flight jobs now resume first after the load (before: four of five were abandoned to a cargo sweep). Twelve sim-hours of play after the load showed zero reservation drift, zero overfill and zero script errors across 462 checks.
 > - **F13:** save → load → save is now **exactly** identical (0 differences; it was 6 rotation diffs).

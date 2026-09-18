@@ -178,6 +178,7 @@ func request_hire(bay: ModuleBase, candidate: HireCandidate) -> bool:
 	if hire_block_reason(candidate) != "":
 		return false
 	Global.resource_manager.credit_resource.force_withdraw(candidate.price)
+	Global.economy_manager.record_external_cost(candidate.price, &"hiring") # WI-68 F4
 	_candidates.erase(candidate)
 	_pending.add(SaveManager.module_ref(bay), candidate.to_dict(), arrival_delay_hours)
 	SignalBus.hire_candidates_changed.emit()
@@ -256,6 +257,8 @@ func _arrive(hire: Dictionary) -> void:
 func _refund_hire(candidate: HireCandidate) -> void:
 	var amount: int = candidate.price if candidate != null else hire_cost
 	Global.resource_manager.credit_resource.change_global_total(amount)
+	# Undoes the hiring cost in the books too: income, never skimmed (WI-68 F4).
+	Global.economy_manager.record_refund(amount)
 	AlertManager.raise_alert(&"hire_refunded", AlertData.Priority.HIGH,
 		"Recruit turned back", "No docking bay · %d cr fee refunded" % amount, null, &"crew")
 

@@ -247,6 +247,9 @@ func _fulfill(bay_trade: TradeComponent) -> void:
 		if not bay_trade.storage.deposit(resource, amount):
 			continue
 		credits.change_global_total(-amount * price)
+		# Booked, so the Finance tab's operating net sees purchases as well as sales
+		# (WI-68 F4). A zero-price line books nothing.
+		Global.economy_manager.record_external_cost(amount * price, &"trade_purchases")
 		trader.stock[resource] = trader_stock(resource) - amount
 		committed_buys[resource] -= amount
 		if committed_buys[resource] <= 0:
