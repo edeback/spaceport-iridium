@@ -71,6 +71,61 @@ func test_asteroid_ref_null_is_empty() -> void:
 func test_pile_ref_null_is_empty() -> void:
 	assert_eq(SaveManager.pile_ref(null), {}, "null pile -> empty ref")
 
+# --- freed references (WI-68 F23) -------------------------------------------------
+#
+# A typed parameter rejects a freed object at the call, before any check inside
+# runs, so these used to raise a script error - which aborted whichever save
+# section was being collected. A pile tagged with a removed module wrote the
+# whole pile section empty. Now a freed reference costs its own entry and no more.
+
+func _freed(node: Node) -> Node:
+	node.free()
+	return node
+
+func test_module_ref_of_a_freed_module_is_empty() -> void:
+	assert_eq(SaveManager.module_ref(_freed(ModuleBase.new())), {}, "freed module -> empty ref, not an error")
+
+func test_pawn_ref_of_a_freed_pawn_is_empty() -> void:
+	assert_eq(SaveManager.pawn_ref(_freed(PawnBase.new())), {})
+
+func test_pile_ref_of_a_freed_pile_is_empty() -> void:
+	assert_eq(SaveManager.pile_ref(_freed(ResourcePile.new())), {})
+
+func test_asteroid_ref_of_a_freed_asteroid_is_empty() -> void:
+	assert_eq(SaveManager.asteroid_ref(_freed(AsteroidBase.new())), {})
+
+func test_component_ref_of_a_freed_component_is_empty() -> void:
+	assert_eq(SaveManager.component_ref(_freed(ComponentBase.new())), {})
+
+func test_module_ref_of_the_wrong_kind_is_empty() -> void:
+	var node: Node2D = autofree(Node2D.new())
+	assert_eq(SaveManager.module_ref(node), {}, "a live node that isn't a module refers to nothing")
+
+# --- a pile lets go of a module that leaves (WI-68 F23) ------------------------------
+
+func test_a_pile_forgets_a_module_that_leaves_the_tree() -> void:
+	var module: ModuleBase = autofree(ModuleBase.new())
+	var pile: ResourcePile = autofree(ResourcePile.new())
+	pile.parent_module = module
+	module.tree_exiting.emit()
+	assert_null(pile.parent_module, "a removed module's pile is left floating, not pointing at a freed node")
+
+func test_a_repointed_pile_ignores_its_old_module_leaving() -> void:
+	var first: ModuleBase = autofree(ModuleBase.new())
+	var second: ModuleBase = autofree(ModuleBase.new())
+	var pile: ResourcePile = autofree(ResourcePile.new())
+	pile.parent_module = first
+	pile.parent_module = second
+	first.tree_exiting.emit()
+	assert_eq(pile.parent_module, second, "only the current module's exit clears it")
+
+# --- only a crew gateway receives a recruit (WI-68 F22) -----------------------------
+
+func test_nothing_is_a_gateway_that_cannot_receive_crew() -> void:
+	assert_false(CrewManager._is_gateway(null), "no module")
+	assert_false(CrewManager._is_gateway(_freed(ModuleBase.new())), "a freed bay (bound to a shuttle that outlived it)")
+	assert_false(CrewManager._is_gateway(autofree(ModuleBase.new())), "a module with no recruitment component - the truss the bay became")
+
 func test_resolve_empty_refs_return_null() -> void:
 	assert_null(SaveManager.resolve_module_ref({}), "empty module ref -> null")
 	assert_null(SaveManager.resolve_component_ref({}), "empty component ref -> null")

@@ -44,7 +44,21 @@ var _claim_targets: Dictionary[ResourceData, PileStock] = {}
 ## Null = free-floating in space. Set = sitting inside this module (e.g. a
 ## corridor overflow pile); collection jobs path to the module itself, not
 ## to this node's exact position.
-var parent_module: ModuleBase = null
+##
+## Let go of automatically when the module leaves the tree (WI-68 F23). A
+## module's own overflow pile was always released in ModuleBase.pre_delete, but
+## plenty of other piles are tagged with a module - a manual dump, a pawn's
+## dropped cargo, a cancelled sell order - and those kept a reference to the
+## freed module, which made the next save write the pile section empty. What's
+## left of a removed module is floating where it stood, which is exactly what
+## null means here.
+var parent_module: ModuleBase = null:
+	set(value):
+		if is_instance_valid(parent_module) and parent_module.tree_exiting.is_connected(_on_parent_module_exiting):
+			parent_module.tree_exiting.disconnect(_on_parent_module_exiting)
+		parent_module = value
+		if is_instance_valid(value):
+			value.tree_exiting.connect(_on_parent_module_exiting)
 
 ## Stable save id (WI-21), assigned by spawn(). Lets a the pile-collection job persist
 ## the pile it targets and re-resolve it on load. Static counter because spawn()
@@ -175,6 +189,9 @@ func _despawn() -> void:
 		parent_module.overflow_pile = null
 	remove_from_group(Groups.RESOURCE_DEBRIS)
 	queue_free()
+
+func _on_parent_module_exiting() -> void:
+	parent_module = null
 
 ## Convenience constructor: builds a pile, adds it under parent_node, and
 ## positions it. parent_node should be whatever canvas/layer the caller

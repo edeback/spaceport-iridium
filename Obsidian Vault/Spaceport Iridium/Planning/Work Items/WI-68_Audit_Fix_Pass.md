@@ -1,8 +1,21 @@
 # WI-68 — Audit Fix Pass
 
-> **Status: IN PROGRESS. Stages 1–3 done (2026-09-18); stages 4–6 not started.** Scoped from the 2026-09-18 pass in [[03_Bugs_and_Improvements]] (findings **F1–F20**, plus **F21**, found and fixed during stage 2, and **F22–F23**, found during stage 3 and not yet scheduled). The three open questions were settled with the author the same day and all three recommended defaults were taken (§0). The finding ids are kept throughout so the audit entries and this doc stay cross-referenced.
+> **Status: IN PROGRESS. Stages 1–3 and 3b done (2026-09-18); stages 4–6 not started.** Scoped from the 2026-09-18 pass in [[03_Bugs_and_Improvements]]. The findings are **F1–F20**, plus **F21** (found and fixed during stage 2), **F22–F23** (found during stage 3 and fixed in stage 3b) and **F24** (found during 3b and fixed only where it touched 3b's flow). The three open questions were settled with the author the same day and all three recommended defaults were taken (§0). The finding ids are kept throughout so the audit entries and this doc stay cross-referenced.
 >
-> **Stage 3 (F4): not yet committed. 1,709 GUT tests green** (1,693 + 16 in `test_economy.gd`). Undoing two representative pieces (the balance keys in the save round trip, and `hiring` from the declared costs) failed five tests. Verified windowed in a scratch copy on the real quicksave, with every booking site driven for real: a docked trader's purchase, a raid bought off, a hire, and a truss bought through `purchase_and_add_module`:
+> **Stage 3b (F23, F22, F15, and part of F24), added by the author after stage 3: not yet committed. 1,718 GUT tests green** (1,709 + 9 in `test_job_serialization.gd`). With the fixes undone, exactly the four targeted tests failed. On the real quicksave, the scenario that reproduced both bugs (hire, tag a pile with the bay, remove the bay mid-flight, save, reload) now passes every check. The same probe run against the pre-3b code fails all five, so it genuinely detects them:
+> - **F23:** the tagged pile lets go of the bay the moment the bay is removed, and **6 piles → 6 after the reload** (pre-3b: 6 → 0, with the `module_ref` script error). No freed-reference warning fired, because the fix held at the source.
+> - **F22:** crew 3 → 3, refund 1,238 booked, balance restored (pre-3b: the recruit was delivered into the truss, crew 3 → 4, refund 0).
+>
+> **Stage 3b design, as built:**
+> - **F23 has three layers, so one bad reference can never again cost a whole section.**
+>   - `ResourcePile.parent_module` gained a setter that follows the module's `tree_exiting` and lets go. Only `remove_module` ever takes a module out of the tree, so this means "removed".
+>   - The five `SaveManager` `*_ref` helpers take a `Variant`, and a freed object returns `{}` with a `push_warning`.
+>   - `_get_piles_save` needed no change of its own once `module_ref` stopped raising.
+> - **F22:** `CrewManager._is_gateway()` means a *built crew gateway* (a `CrewRecruitmentComponent` in the `CREW_RECRUITMENT` group), which is what the rest of the game already means by one. `_arrive` and `_on_shuttle_docked` both use it, so a truss backfilled onto the bay's cells, or anything else later built there, gets a refund rather than a recruit.
+> - **F24 (new) is why the helpers take `Variant`.** A typed object parameter rejects a freed object *at the call*, before any `is_instance_valid` inside can run. That made the old helpers' validity checks dead code. The same trap was fixed where it met this flow: the crew, visitor and trader-courier shuttle handlers, whose bay is bound at launch and can be freed by docking. Before this fix, a courier whose bay died in flight stranded `_courier_active`, and no courier was ever dispatched again. **37 functions** have the pattern; the rest are recorded under F24 in the audit doc.
+> - **F15** moved here from stage 6: it's the same function as F22's docking handler.
+>
+> **Stage 3 (F4): committed `12cd0180`. 1,709 GUT tests green** (1,693 + 16 in `test_economy.gd`). Undoing two representative pieces (the balance keys in the save round trip, and `hiring` from the declared costs) failed five tests. Verified windowed in a scratch copy on the real quicksave, with every booking site driven for real: a docked trader's purchase, a raid bought off, a hire, and a truss bought through `purchase_and_add_module`:
 > - Each booked flow moved the operating net by exactly what it moved the balance: Purchases 750, Pirate ransom 5,979, Hiring 890.
 > - **The reconciliation holds exactly:** across the whole cycle, Balance change − Operating net = −35, which is precisely the truss (−6,764 against −6,729). No unbooked flow remains.
 > - The first roll stamped `opening_balance` (and the finished cycle's `closing_balance`); both survived save/load. A record from the pre-F4 quicksave correctly has no opening balance, and the tab hides its Balance change line.
@@ -199,7 +212,7 @@ The rest are one or two per file. The count is a lower bound, because a script t
 
 ### Stage 6 — Cleanup commit (F15–F18)
 
-- **F15.** `crew_manager.gd:272`: guard `shuttle.depart()` with `is_instance_valid(shuttle)`, the way `visitor_manager.gd:168` does.
+- ~~**F15.** `crew_manager.gd:272`: guard `shuttle.depart()` with `is_instance_valid(shuttle)`, the way `visitor_manager.gd:168` does.~~ Done in stage 3b.
 - **F16.** `git rm` the six tracked `*.tmp` editor files and add `*.tmp` to `.gitignore`.
 - **F17.** Delete the stale JobBase-coexistence comments (`job_data.gd:14-15`, `slot_pool.gd:13`, `job_driver.gd:33,40`, `workspace_component.gd:7`, `job.gd:707`) and fix `global.gd:266`.
 - **F18 (B5).** In `world_manager.remove_module`, capture `module_data`/`module_cell`/`interaction_layer` into locals before the free, and move `queue_free()` to the end.

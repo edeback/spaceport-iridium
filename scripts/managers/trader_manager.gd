@@ -287,9 +287,13 @@ func dispatch_contract_courier() -> bool:
 	shuttle.docked.connect(_courier_collect.bind(bay, shuttle), CONNECT_ONE_SHOT)
 	return true
 
-func _courier_collect(bay: ModuleBase, shuttle: ArrivalShuttle) -> void:
+## `bay` is a Variant because it is bound at dispatch and may be freed by the
+## time the courier docks. Typed, the call itself failed on a freed bay - before
+## the check below - so _courier_active never reset and no courier was ever
+## dispatched again (WI-68 F24).
+func _courier_collect(bay: Variant, shuttle: ArrivalShuttle) -> void:
 	if is_instance_valid(bay):
-		var bay_trade: TradeComponent = bay.get_component_by_type(TradeComponent) as TradeComponent
+		var bay_trade: TradeComponent = (bay as ModuleBase).get_component_by_type(TradeComponent) as TradeComponent
 		if bay_trade != null:
 			Global.contract_manager.collect_contract_goods(bay_trade)
 	if shuttle != null and is_instance_valid(shuttle):

@@ -162,9 +162,12 @@ func _spawn_visitor() -> void:
 	shuttle.setup(dock, dock + Vector2(DockingBay.approach_sign_for(bay) * shuttle_approach_distance, 0.0))
 	shuttle.docked.connect(_on_shuttle_docked.bind(shuttle, bay), CONNECT_ONE_SHOT)
 
-func _on_shuttle_docked(shuttle: ArrivalShuttle, bay: ModuleBase) -> void:
+## `bay` is a Variant because it is bound at launch and may be freed by the time
+## the shuttle docks; a typed parameter would reject it at the call, before the
+## check below could run (WI-68 F24).
+func _on_shuttle_docked(shuttle: ArrivalShuttle, bay: Variant) -> void:
 	if is_instance_valid(bay):
-		_deliver_visitor(bay)
+		_deliver_visitor(bay as ModuleBase)
 	await Global.time_manager.sim_seconds(TimeManager.SECONDS_PER_HOUR)
 	if is_instance_valid(shuttle):
 		shuttle.depart()

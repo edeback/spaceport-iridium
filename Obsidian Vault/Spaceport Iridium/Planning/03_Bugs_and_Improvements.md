@@ -48,7 +48,7 @@
 
 **F21. On load, a pawn carrying cargo abandons its restored job to a cargo sweep — confirmed and fixed in [[WI-68_Audit_Fix_Pass]] stage 2.** Found while verifying F2, so it isn't in the original pass. `PawnBase.start_job()` ([`pawn_base.gd:209`](../../../pawns/pawn_base.gd)) sweeps carried cargo before looking at the queue, and `_load_pawn_jobs` restores the saved current job only as the front of that queue. So the cargo a restored pawn carries, which usually belongs to that very job, got swept first. On the real quicksave, **four of five restored jobs were preempted**: three mining drones mid-mine and a crew member mid-haul. The restored job then resumed empty-handed. In F2's case, a crew member restored mid-way to an airlock stopped to put their cargo away while the room harmed them. **Fix:** the restored current job is marked, and each sweeping `start_job()` resumes it first, once.
 
-**F23. A pile tagged with a module that has since been removed makes the next save drop every pile on the station — confirmed during [[WI-68_Audit_Fix_Pass]] stage 3.** This is silent resource loss, and the most serious finding of the pass. `ModuleBase.pre_delete` clears `parent_module` on the module's *own* overflow pile ([`module_base.gd:618-621`](../../../modules/templates/module_base.gd)). But other code spawns piles tagged with a module too, and those keep a reference to the freed module:
+**F23. A pile tagged with a module that has since been removed makes the next save drop every pile on the station — confirmed during [[WI-68_Audit_Fix_Pass]] stage 3, fixed in stage 3b.** This is silent resource loss, and the most serious finding of the pass. `ModuleBase.pre_delete` clears `parent_module` on the module's *own* overflow pile ([`module_base.gd:618-621`](../../../modules/templates/module_base.gd)). But other code spawns piles tagged with a module too, and those keep a reference to the freed module:
 - a manual dump (`storage_overlays.gd:167`);
 - a pawn's dropped cargo (`pawn_base.gd:450`);
 - a cancelled sell order and a released contract demand (`trade_component.gd:83, 146`);
@@ -59,7 +59,7 @@ On save, [`SaveManager._get_piles_save`](../../../scripts/managers/save_manager.
 - `_get_piles_save` checks `is_instance_valid`;
 - `module_ref` accepts a possibly-freed object.
 
-**F22. A hire whose bay is removed mid-flight is delivered into whatever replaced the bay, never refunded — confirmed during [[WI-68_Audit_Fix_Pass]] stage 3.** `PendingHires` stores `module_ref(bay)`, which is a layer + cell, and [`CrewManager._arrive`](../../../scripts/managers/crew_manager.gd) re-resolves it when the delay is up. Removing a module-layer bay backfills truss onto its cells, so the reference resolves to the *truss*, a valid module. The recruit is delivered into it, and the WI-07 refund branch never runs. **Reproduced:** with the bay removed mid-flight, crew went 3 → 4 and the refund was 0. The same cell-only resolution would deliver to any module the player builds on that cell afterwards. **Fix:** at arrival (and in `_on_shuttle_docked`), accept the resolved module only if it still carries a `CrewRecruitmentComponent`; otherwise refund.
+**F22. A hire whose bay is removed mid-flight is delivered into whatever replaced the bay, never refunded — confirmed during [[WI-68_Audit_Fix_Pass]] stage 3, fixed in stage 3b.** `PendingHires` stores `module_ref(bay)`, which is a layer + cell, and [`CrewManager._arrive`](../../../scripts/managers/crew_manager.gd) re-resolves it when the delay is up. Removing a module-layer bay backfills truss onto its cells, so the reference resolves to the *truss*, a valid module. The recruit is delivered into it, and the WI-07 refund branch never runs. **Reproduced:** with the bay removed mid-flight, crew went 3 → 4 and the refund was 0. The same cell-only resolution would deliver to any module the player builds on that cell afterwards. **Fix:** at arrival (and in `_on_shuttle_docked`), accept the resolved module only if it still carries a `CrewRecruitmentComponent`; otherwise refund.
 
 ### B. Invariant violations / design debt
 
@@ -73,6 +73,19 @@ On save, [`SaveManager._get_piles_save`](../../../scripts/managers/save_manager.
 **F7. "Keep everything typed" is unenforced: 98 violations in project code.** The three typed warnings sit at level 1 ([`project.godot:46-48`](../../../project.godot)), so they fail nothing. Raised to errors in the scratch copy, they found **238 unique violations in 52 files**: 88 unsafe method access, 61 unsafe property access, 58 untyped declarations and 31 missing return types. 140 of those are in vendored `assets/external/pixel_planets/` (`Star.gd` 88, `StellarObjectVisual.gd` 52). The remaining **98 are in project code across ~48 files**, led by `module_base.gd` and `preview_module.gd` (7 each), `pawn_job_tab.gd` (5), and `balloon.gd`, `turbolift_cab.gd` and `ui_storage_component.gd` (4 each). This is a lower bound, because a file that fails to compile hides violations in the scripts that depend on it. **Fix:** clear the 98, then raise all three to error (2) with `assets/external/` excluded.
 
 **F8. Eight node-keyed dictionaries, all currently safe by pairing.** They are in `heat_manager.gd:54`, `atmosphere_manager.gd:27,31`, `structure_component.gd:32`, `path_component.gd:75`, `module_graph.gd:26`, `stores_panel.gd:59` and `crew_panel.gd:102`. Each is protected by unregistering in `_exit_tree`, by `remove_module` detaching neighbours before `queue_free`, or by a rebuild on `crew_departed` — and loads are a full scene reload. The two that iterate with a typed loop variable, [`heat_manager.gd:181`](../../../scripts/managers/heat_manager.gd) over a neighbour's `module_connections` and [`crew_panel.gd:601`](../../../ui/windows/crew_panel.gd), are the ones that crash the moment a pairing slips. **Fix:** convert those two to `get_instance_id()` keys when next touched, or amend the CLAUDE.md rule to name the unregister-on-exit pairing as the sanctioned exception.
+
+**F24. `is_instance_valid(param)` behind a typed parameter is dead code for a freed object — found during [[WI-68_Audit_Fix_Pass]] stage 3b.** GDScript rejects a freed object at a typed parameter *at the call*, with a script error that aborts the caller, before the body can check anything. **37 functions** check validity on a typed object parameter. Most are harmless, because their callers only ever pass live objects or `null`. The dangerous ones receive a reference that was *stored or bound* earlier and can outlive its object. Stage 3b fixed the ones in its own flow:
+- the `*_ref` save helpers (F23);
+- the crew, visitor and trader-courier shuttle-docked handlers. The courier's version was the worst: a freed bay failed the call, `_courier_active` never reset, and no courier was ever dispatched again.
+
+Still open, and worth a pass:
+- alert subjects (`AlertRules.make_id`, `AlertManager._pawn_label`, `TutorialManager.fire`);
+- `PawnSuitComponent._environment_of(owner_pawn.current_module)` and its siblings;
+- `ConveyorComponent._endpoint_alive` / `OverlayFlowLayer._endpoint_module`;
+- `UIInGame.set_selected_pawn`;
+- the `StoresModel` queries.
+
+**Fix:** make it a rule, then enforce it with a GUT source sweep (the same shape as the UI drift guard): *a function that checks `is_instance_valid(x)` on a parameter must take `x` as `Variant`*.
 
 **F9. The save-key stability pin misses the newest components.** [`test_component_save_contract.gd`](../../../tests/unit/test_component_save_contract.gd) lists 15 module and 9 pawn components, but not `HeatComponent` (`temperature`), `HeatEmitterComponent` (`target_f`) or `PawnSuitComponent` (`suited`, `hold_hours`). Add them.
 
@@ -113,7 +126,7 @@ Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", 
 
 **F20. CLAUDE.md is stale.** It says "86 suites, 1624 tests"; the real figures are 89 and 1,672.
 
-**Bundled as [[WI-68_Audit_Fix_Pass]]** (drafted 2026-09-18): F1–F7, F9, F10, F12, F13, F15–F18, and F21 (added during stage 2). F22 and F23 were found during stage 3; see the WI's status block for where they're scheduled. F8, F11, F14 and F19's `PawnOpinion` suite are deliberately left out, with the reasons recorded there.
+**Bundled as [[WI-68_Audit_Fix_Pass]]** (drafted 2026-09-18): F1–F7, F9, F10, F12, F13, F15–F18, and F21 (added during stage 2). F22 and F23 were found during stage 3 and fixed in stage 3b, along with F15 and the shuttle-handler part of F24. The rest of F24 is open. F8, F11, F14 and F19's `PawnOpinion` suite are deliberately left out, with the reasons recorded there.
 
 ---
 

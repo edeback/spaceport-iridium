@@ -327,14 +327,34 @@ static func stack_from_dict(resource: ResourceData, data: Dictionary) -> Resourc
 	stack.instance_data = instance_from_dict(resource, data.get("instance", {}))
 	return stack
 
+## Whether `value` is a live instance, and complains when it is a FREED one.
+##
+## Why every *_ref helper takes a Variant (WI-68 F23): a typed parameter rejects
+## a freed object at the call, before the body runs, so the is_instance_valid
+## checks these helpers always carried were dead code for the one case they were
+## written for. The script error then aborted whichever section collector was
+## running - a pile tagged with a since-removed module wrote the whole `piles`
+## section empty, and every pile on the station was gone on the next load. A
+## freed reference now costs its own entry, never its neighbours'. The warning
+## is how the dangling reference behind it gets found.
+static func _live(value: Variant, what: String) -> bool:
+	if is_instance_valid(value):
+		return true
+	if typeof(value) == TYPE_OBJECT:
+		push_warning("SaveManager: skipped a reference to a freed %s" % what)
+	return false
+
 ## Reference to a placed module instance: layer + root cell uniquely identify
-## it (no per-instance ids needed). Null module -> empty dict.
-static func module_ref(module: ModuleBase) -> Dictionary:
-	if module == null or module.module_data == null:
+## it (no per-instance ids needed). Null or freed module -> empty dict.
+static func module_ref(module: Variant) -> Dictionary:
+	if not _live(module, "module"):
+		return {}
+	var placed: ModuleBase = module as ModuleBase
+	if placed == null or placed.module_data == null:
 		return {}
 	return {
-		"layer": module.module_data.interaction_layer,
-		"cell": [module.module_cell.x, module.module_cell.y],
+		"layer": placed.module_data.interaction_layer,
+		"cell": [placed.module_cell.x, placed.module_cell.y],
 	}
 
 static func resolve_module_ref(ref: Dictionary) -> ModuleBase:
@@ -350,13 +370,16 @@ static func resolve_module_ref(ref: Dictionary) -> ModuleBase:
 ## layer+cell (as module_ref) plus the node path from the module to the
 ## component. Same layer+cell+path scheme ModuleBase already uses to key its
 ## per-storage save data, so a re-placed module resolves the exact component.
-static func component_ref(component: ComponentBase) -> Dictionary:
-	if component == null or not is_instance_valid(component) or component.owner_module == null:
+static func component_ref(component: Variant) -> Dictionary:
+	if not _live(component, "component"):
 		return {}
-	var ref: Dictionary = module_ref(component.owner_module)
+	var part: ComponentBase = component as ComponentBase
+	if part == null or not is_instance_valid(part.owner_module):
+		return {}
+	var ref: Dictionary = module_ref(part.owner_module)
 	if ref.is_empty():
 		return {}
-	ref["path"] = String(component.owner_module.get_path_to(component))
+	ref["path"] = String(part.owner_module.get_path_to(part))
 	return ref
 
 static func resolve_component_ref(ref: Dictionary) -> ComponentBase:
@@ -371,10 +394,11 @@ static func resolve_component_ref(ref: Dictionary) -> ComponentBase:
 ## Reference to an asteroid by its stable id (WI-21). Empty for a null/freed
 ## rock; resolve returns null when the id is gone (mined dry, despawned, or a
 ## hand-edited save) so a mining job cancels cleanly through its lifecycle.
-static func asteroid_ref(asteroid: AsteroidBase) -> Dictionary:
-	if asteroid == null or not is_instance_valid(asteroid):
+static func asteroid_ref(asteroid: Variant) -> Dictionary:
+	if not _live(asteroid, "asteroid"):
 		return {}
-	return {"id": asteroid.asteroid_id}
+	var rock: AsteroidBase = asteroid as AsteroidBase
+	return {"id": rock.asteroid_id} if rock != null else {}
 
 static func resolve_asteroid_ref(ref: Dictionary) -> AsteroidBase:
 	if ref.is_empty() or Global.asteroid_manager == null:
@@ -384,10 +408,13 @@ static func resolve_asteroid_ref(ref: Dictionary) -> AsteroidBase:
 ## Reference to a pawn by its stable pawn_id (WI-23 ids, WI-44 job targets).
 ## Pawns are restored before their jobs are rebuilt (_load_pawn_jobs runs at the
 ## end of the pawn section), so a resolve during job restore always sees them.
-static func pawn_ref(pawn: PawnBase) -> Dictionary:
-	if pawn == null or not is_instance_valid(pawn) or pawn.pawn_id == 0:
+static func pawn_ref(pawn: Variant) -> Dictionary:
+	if not _live(pawn, "pawn"):
 		return {}
-	return {"pawn": pawn.pawn_id}
+	var who: PawnBase = pawn as PawnBase
+	if who == null or who.pawn_id == 0:
+		return {}
+	return {"pawn": who.pawn_id}
 
 static func resolve_pawn_ref(ref: Dictionary) -> PawnBase:
 	if ref.is_empty() or Global.world_manager == null:
@@ -403,10 +430,11 @@ static func resolve_pawn_ref(ref: Dictionary) -> PawnBase:
 
 ## Reference to a resource pile by its stable id (WI-21). Piles are saved in the
 ## piles section with their ids, so resolve scans the live resource_debris group.
-static func pile_ref(pile: ResourcePile) -> Dictionary:
-	if pile == null or not is_instance_valid(pile):
+static func pile_ref(pile: Variant) -> Dictionary:
+	if not _live(pile, "pile"):
 		return {}
-	return {"id": pile.pile_id}
+	var heap: ResourcePile = pile as ResourcePile
+	return {"id": heap.pile_id} if heap != null else {}
 
 static func resolve_pile_ref(ref: Dictionary) -> ResourcePile:
 	if ref.is_empty() or Global.world_manager == null:
