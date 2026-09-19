@@ -62,8 +62,9 @@ func remove_turbolift_module(module: ModuleTurbolift) -> bool:
 func _get_shaft_at_cell(cell: Vector2i) -> TurboliftShaft:
 	# Check if a module exists at the given cell and if it's a turbolift module
 	var module := Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.TURBOLIFT, cell)
-	if module is ModuleTurbolift and module.shaft != null:
-		return module.shaft
+	var lift: ModuleTurbolift = module as ModuleTurbolift
+	if lift != null and lift.shaft != null:
+		return lift.shaft
 	return null
 
 # --- persistence ------------------------------------------------------------

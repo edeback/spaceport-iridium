@@ -201,7 +201,7 @@ func _make_card(candidate: HireCandidate) -> Control:
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	info.add_theme_constant_override("separation", 2)
+	info.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	row.add_child(info)
 
 	var name_label := Label.new()
@@ -237,7 +237,7 @@ func _make_action(candidate: HireCandidate, reason: Label) -> Control:
 	var column := VBoxContainer.new()
 	column.custom_minimum_size.x = float(ACTION_WIDTH)
 	column.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	column.add_theme_constant_override("separation", 2)
+	column.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 
 	var price := Label.new()
 	price.theme_type_variation = UIType.METRIC

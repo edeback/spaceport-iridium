@@ -14,7 +14,10 @@ var debug_path_position: PackedVector2Array:
 		debug_path_position = new_path
 		queue_redraw()
 		
-enum InputMode {None, Module, Structure, Turbolift, Multiplace}
+## No Turbolift mode any more (WI-68 F7): it was never entered, and its one branch
+## called a TurboliftManager method that does not exist - which only the
+## typed-warning census could see.
+enum InputMode {None, Module, Structure, Multiplace}
 
 signal input_mode_changed(new_mode: InputMode)
 
@@ -132,8 +135,6 @@ func _process(_delta: float) -> void:
 			update_module_placement()
 		InputMode.Structure:
 			update_structure_placement()
-		InputMode.Turbolift:
-			Global.turbolift_manager.update_turboshaft_placement(get_global_mouse_position())
 		InputMode.Multiplace:
 			update_multiplacement()
 			if Input.is_action_just_released("build"):

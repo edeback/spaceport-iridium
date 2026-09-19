@@ -42,10 +42,10 @@ func job_changed() -> void:
 
 func subtask_changed() -> void:
 	if pawn != null and pawn.current_job != null:
-		%CurrentSubTask.text = pawn.current_job.subtask_report()
+		(%CurrentSubTask as Label).text = pawn.current_job.subtask_report()
 	else:
-		%CurrentSubTask.text = ""
-	%SubTaskContainer.visible = not %CurrentSubTask.text.is_empty()
+		(%CurrentSubTask as Label).text = ""
+	(%SubTaskContainer as HBoxContainer).visible = not (%CurrentSubTask as Label).text.is_empty()
 
 ## Follows exactly one job's subtask signal at a time.
 func _watch(job: Job) -> void:

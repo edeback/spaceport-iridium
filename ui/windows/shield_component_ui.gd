@@ -25,7 +25,7 @@ func setup(shield: ShieldComponent) -> void:
 	_bar.min_value = 0.0
 	_bar.max_value = 1.0
 	_bar.show_percentage = false
-	_bar.custom_minimum_size = Vector2(140, 12)
+	_bar.custom_minimum_size = UIMetrics.SHIELD_BAR
 	vbox.add_child(_bar)
 	_status = Label.new()
 	vbox.add_child(_status)

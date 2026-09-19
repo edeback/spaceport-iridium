@@ -10,7 +10,7 @@ var resource_rows: Dictionary[ResourceData, SimpleInventoryRow]
 func set_pawn(_pawn: PawnBase) -> void:
 	pawn_inventory = _pawn.inventory_component
 	pawn_inventory.inventory_changed.connect(_inventory_changed)
-	%FreeSpaceMaxLabel.text = str(_pawn.carrying_capacity)
+	(%FreeSpaceMaxLabel as Label).text = str(_pawn.carrying_capacity)
 	for resource in pawn_inventory.carried:
 		_inventory_changed(resource, pawn_inventory.get_carried_amount(resource))
 	_refresh_total()
@@ -32,4 +32,4 @@ func _inventory_changed(resource: ResourceData, new_value: int) -> void:
 	_refresh_total()
 	
 func _refresh_total() -> void:
-	%FreeSpaceAvailableLabel.text = str(pawn_inventory.space_available())
+	(%FreeSpaceAvailableLabel as Label).text = str(pawn_inventory.space_available())

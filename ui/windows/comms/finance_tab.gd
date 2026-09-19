@@ -114,7 +114,7 @@ func _active_streams(economy: EconomyManager) -> String:
 
 func _build_cycle_section(heading: String, record: Dictionary, economy: EconomyManager) -> void:
 	var section := VBoxContainer.new()
-	section.add_theme_constant_override("separation", 2)
+	section.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	var cycle_no: int = int(record.get("cycle", 0))
 	section.add_child(SectionLabel.create(
 		"%s (cycle %d)" % [heading, cycle_no] if cycle_no > 0 else heading))
@@ -179,7 +179,7 @@ func _build_visitors_section() -> void:
 	if visitors == null:
 		return
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 2)
+	box.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	box.add_child(SectionLabel.create("Visitors"))
 	box.add_child(_line("On station", str(visitors.visitor_count()), UIPalette.TEXT))
 	box.add_child(_line("Reputation", "%d%%" % roundi(visitors.reputation * 100.0), UIPalette.TEXT))
@@ -187,7 +187,7 @@ func _build_visitors_section() -> void:
 
 func _build_levy_summary(economy: EconomyManager) -> void:
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 2)
+	box.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	box.add_child(SectionLabel.create("ARC levy"))
 	if economy.levy_enabled:
 		box.add_child(_muted("%d%% of income skimmed, plus %d cr every %d cycles." %
@@ -225,7 +225,7 @@ func _build_loan_section(economy: EconomyManager) -> void:
 
 func _wage_detail(economy: EconomyManager) -> Control:
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 1)
+	box.add_theme_constant_override("separation", UIMetrics.FINANCE_DETAIL_GAP)
 	var breakdown: Dictionary = economy.wage_breakdown()
 	if breakdown.is_empty():
 		box.add_child(_muted("    (no wage-drawing crew)"))
@@ -236,7 +236,7 @@ func _wage_detail(economy: EconomyManager) -> Control:
 
 func _upkeep_detail(economy: EconomyManager) -> Control:
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 1)
+	box.add_theme_constant_override("separation", UIMetrics.FINANCE_DETAIL_GAP)
 	var breakdown: Dictionary = economy.upkeep_breakdown()
 	if breakdown.is_empty():
 		box.add_child(_muted("    (no upkeep modules)"))

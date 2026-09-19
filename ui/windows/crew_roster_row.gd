@@ -83,7 +83,7 @@ func _build() -> void:
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	text.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	text.add_theme_constant_override("separation", 2)
+	text.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	_row.add_child(text)
 
 	_name_label = _make_label(UIType.ENTITY_NAME)
@@ -100,7 +100,7 @@ func _build() -> void:
 	morale.custom_minimum_size.x = float(MORALE_WIDTH)
 	morale.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	morale.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	morale.add_theme_constant_override("separation", 4)
+	morale.add_theme_constant_override("separation", UIMetrics.ITEM_GAP)
 	_row.add_child(morale)
 
 	_morale_value = _make_label(UIType.METRIC)

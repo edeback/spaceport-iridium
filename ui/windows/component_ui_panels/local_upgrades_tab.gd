@@ -69,12 +69,12 @@ func refresh() -> void:
 func _build_row(upgrade: LocalUpgradeData) -> Control:
 	var panel := PanelContainer.new()
 	var margin := MarginContainer.new()
-	for side in ["left", "top", "right", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 6)
+	for side: String in ["left", "top", "right", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, UIMetrics.COMPONENT_PAGE_PAD)
 	panel.add_child(margin)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
+	row.add_theme_constant_override("separation", UIMetrics.INLINE_GAP)
 	margin.add_child(row)
 
 	var info := VBoxContainer.new()

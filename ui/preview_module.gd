@@ -2,6 +2,8 @@ class_name PreviewModule
 extends Node2D
 
 @onready var sprite: Sprite2D = $Sprite2D
+## Typed once, so the verdict code isn't unsafe access on a bare `%ErrorLabel` Node.
+@onready var _error_label: Label = %ErrorLabel
 @export var default_texture: Texture2D
 
 const SHADER_PARAM_PLACEABLE = "PLACEABLE"
@@ -137,8 +139,8 @@ func update_from_module_data() -> void:
 	sprite.flip_h = preview_data.flip_h
 	sprite.flip_v = preview_data.flip_v
 	offset = preview_data.module_offset
-	%ErrorLabel.position.x = -offset.x
-	%ErrorLabel.position.y = -offset.y - 32
+	_error_label.position.x = -offset.x
+	_error_label.position.y = -offset.y - 32
 
 ## Cached geometry for one module scene, built on first sight. Multiplacement
 ## duplicates share the dictionary by reference, and the truss a corridor drag
@@ -151,8 +153,9 @@ func _preview_data_for(scene: PackedScene) -> ModulePreviewData:
 	return preview_data
 
 func _update_shader() -> void:
-	if (sprite && sprite.material != null):
-		sprite.material.set_shader_parameter(SHADER_PARAM_PLACEABLE, can_place)
+	var shader: ShaderMaterial = sprite.material as ShaderMaterial if sprite != null else null
+	if shader != null:
+		shader.set_shader_parameter(SHADER_PARAM_PLACEABLE, can_place)
 
 
 func update_placeable(module_cell: Vector2i) -> void:
@@ -185,13 +188,13 @@ func apply_drag_verdict(connected: bool, show_reason: bool) -> void:
 
 func _show_verdict(connected: bool, show_reason: bool) -> void:
 	can_place = affordable and footprint_clear and connected
-	%ErrorLabel.visible = not can_place and show_reason
+	_error_label.visible = not can_place and show_reason
 	if not affordable:
-		%ErrorLabel.text = "Can't afford!"
+		_error_label.text = "Can't afford!"
 	elif not footprint_clear:
-		%ErrorLabel.text = "Blocked!"
+		_error_label.text = "Blocked!"
 	elif not connected:
-		%ErrorLabel.text = "Not connected to anything!"
+		_error_label.text = "Not connected to anything!"
 
 ## Recompute per-cell validity for the footprint at module_cell. Returns true
 ## if any cell is blocked (the whole-placement answer the caller needs).

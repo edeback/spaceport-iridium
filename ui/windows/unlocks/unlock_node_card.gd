@@ -59,15 +59,15 @@ func setup(u: UnlockData) -> void:
 
 	var margin := MarginContainer.new()
 	for side: String in ["left", "top", "right", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 10)
+		margin.add_theme_constant_override("margin_" + side, UIMetrics.UNLOCK_CARD_PAD)
 	add_child(margin)
 
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 6)
+	column.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
 	margin.add_child(column)
 
 	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", 10)
+	head.add_theme_constant_override("separation", UIMetrics.UNLOCK_CARD_HEAD_GAP)
 	column.add_child(head)
 
 	_icon = TextureRect.new()
@@ -81,7 +81,7 @@ func setup(u: UnlockData) -> void:
 	var text := VBoxContainer.new()
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	text.add_theme_constant_override("separation", 3)
+	text.add_theme_constant_override("separation", UIMetrics.UNLOCK_CARD_TEXT_GAP)
 	head.add_child(text)
 
 	_name_label = Label.new()
@@ -180,7 +180,7 @@ func _apply(kind: State, edge: Color, edge_alpha: float, state_text: String,
 	_button.weight = ActionButton.Weight.SECONDARY if dim else ActionButton.Weight.PRIMARY
 	# Dimming the whole card is what makes a locked column read as a block at
 	# 1400px, where a border colour alone does not.
-	modulate = Color(1.0, 1.0, 1.0, 0.62 if dim else 1.0)
+	modulate = UIPalette.MODULATE_DIMMED if dim else Color.WHITE
 	_name_label.add_theme_color_override("font_color",
 		UIPalette.TEXT_META if dim else UIPalette.TEXT_EMPHASIS)
 

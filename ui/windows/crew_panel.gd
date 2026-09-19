@@ -656,7 +656,7 @@ const ROTA_LABEL_EVERY: int = 4
 
 func _rota_hour_scale() -> HBoxContainer:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 2)
+	row.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	var spacer := Control.new()
 	spacer.custom_minimum_size.x = float(ROTA_NAME_WIDTH)
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -673,7 +673,7 @@ func _rota_hour_scale() -> HBoxContainer:
 
 func _rota_row(pawn: PawnBase) -> HBoxContainer:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 2)
+	row.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	var name_label := Label.new()
 	name_label.custom_minimum_size.x = float(ROTA_NAME_WIDTH)
 	name_label.theme_type_variation = UIType.ENTITY_NAME

@@ -43,7 +43,7 @@ var _kind: UIPalette.Row = UIPalette.Row.INERT
 var _row: HBoxContainer
 
 static func create() -> ListRow:
-	return load(SCENE_PATH).instantiate() as ListRow
+	return (load(SCENE_PATH) as PackedScene).instantiate() as ListRow
 
 func _ready() -> void:
 	_ensure_refs()

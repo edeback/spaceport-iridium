@@ -72,7 +72,7 @@ func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: 
 		if graph_vertex.group:
 			_linked_groups[graph_vertex.group].erase(graph_vertex)
 		if new_group:
-			_linked_groups.get_or_add(new_group, []).append(graph_vertex)
+			(_linked_groups.get_or_add(new_group, []) as Array).append(graph_vertex)
 			graph_vertex.subgraph = get_group_subgraph(new_group)
 		else:
 			last_subgraph += 1
@@ -502,7 +502,9 @@ func pathfind_to_type(start: Node2D, end_type: ModuleData) -> Array[PathPoint]:
 	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
 	if start_vertex == null:
 		return []
-	var type_callable: Callable = func(test_vertex: ModuleGraphVertex) -> bool: return test_vertex.node is ModuleBase and test_vertex.node.module_data == end_type
+	var type_callable: Callable = func(test_vertex: ModuleGraphVertex) -> bool:
+		var module: ModuleBase = test_vertex.node as ModuleBase
+		return module != null and module.module_data == end_type
 	return pathfind_to_func(start, type_callable)
 	
 func pathfind_to_component_type(start: Node2D, end_component_type: Variant) -> Array[PathPoint]:
@@ -511,7 +513,9 @@ func pathfind_to_component_type(start: Node2D, end_component_type: Variant) -> A
 	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
 	if start_vertex == null:
 		return []
-	var component_type_callable: Callable = func(test_vertex: ModuleGraphVertex) -> bool: return test_vertex.node is ModuleBase and test_vertex.node.get_component_by_type(end_component_type) != null
+	var component_type_callable: Callable = func(test_vertex: ModuleGraphVertex) -> bool:
+		var module: ModuleBase = test_vertex.node as ModuleBase
+		return module != null and module.get_component_by_type(end_component_type) != null
 	return pathfind_to_func(start, component_type_callable)	
 
 func pathfind_to_func(start: Node2D, end_func: Callable) -> Array[PathPoint]:

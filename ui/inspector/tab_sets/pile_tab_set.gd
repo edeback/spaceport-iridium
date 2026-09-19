@@ -42,7 +42,7 @@ func meta_text() -> String:
 ## never "look at this now". Amber on *every* pile, unconditionally, was the
 ## single largest unbudgeted spend in the HUD.
 func icon_color() -> Color:
-	return UIPalette.tinted(UIPalette.LIVE, 0.5) if is_alive() else Color(0.0, 0.0, 0.0, 0.0)
+	return UIPalette.tinted(UIPalette.LIVE, 0.5) if is_alive() else Color.TRANSPARENT
 
 func tabs() -> Array[Dictionary]:
 	return [{"id": TAB_CONTENTS, "text": "Contents"}]

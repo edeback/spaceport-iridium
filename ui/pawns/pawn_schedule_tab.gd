@@ -34,8 +34,8 @@ var _paint_value: int = ScheduleData.Slot.WORK
 func set_pawn(_pawn: PawnBase) -> void:
 	pawn = _pawn
 	var has_schedule: bool = pawn != null and pawn.schedule != null
-	%NoScheduleLabel.visible = not has_schedule
-	%ScheduleRows.visible = has_schedule
+	(%NoScheduleLabel as Label).visible = not has_schedule
+	(%ScheduleRows as VBoxContainer).visible = has_schedule
 	if not has_schedule:
 		return
 	if _cells.is_empty():

@@ -265,8 +265,15 @@ func extract_position(index: int) -> Vector2:
 		return Global.cell_to_world(module.module_cell, true)
 	return path[index].node.global_position
 	
+## Whether a path node is a module with its own interior pathing. Path nodes are
+## Node2D (space nodes and turbolift cabs are on the graph too), so the cast is the
+## check - and it keeps the call below typed (WI-68 F7).
+static func _has_custom_pathing(node: Node2D) -> bool:
+	var module: ModuleBase = node as ModuleBase
+	return module != null and module.has_custom_pathing()
+
 func reached_next_node() -> void:
-	if next_path_index >= 0 and path[next_path_index].node is ModuleBase and path[next_path_index].node.has_custom_pathing():
+	if next_path_index >= 0 and _has_custom_pathing(path[next_path_index].node):
 		var door: int = 0
 		if sub_path.size() > 0:
 			door = sub_path[sub_path.size() - 1].end_index
@@ -287,7 +294,7 @@ func reached_next_node() -> void:
 	else:
 		sub_path = get_sub_path(next_path_index)
 		
-	if next_path_index > 0 and next_path_index < path.size() and path[next_path_index].node is ModuleBase and path[next_path_index].node.has_custom_pathing():
+	if next_path_index > 0 and next_path_index < path.size() and _has_custom_pathing(path[next_path_index].node):
 		var door: int = 0
 		if sub_path.size() > 0:
 			door = sub_path[0].end_index

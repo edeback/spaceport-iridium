@@ -40,7 +40,7 @@ var _rule: TextureRect
 var _hint: Label
 
 static func create(section_text: String = "") -> SectionLabel:
-	var section: SectionLabel = load(SCENE_PATH).instantiate() as SectionLabel
+	var section: SectionLabel = (load(SCENE_PATH) as PackedScene).instantiate() as SectionLabel
 	if not section_text.is_empty():
 		section.text = section_text
 	return section

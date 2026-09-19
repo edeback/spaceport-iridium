@@ -166,7 +166,7 @@ static func resolve_key(chain: Array[String]) -> String:
 ## The heading `key`'s section prints inside the Status tab, or "" for a key that
 ## does not belong to it.
 static func status_heading(key: String) -> String:
-	return String(STATUS_MEMBERS.get(key, {}).get("heading", ""))
+	return String((STATUS_MEMBERS.get(key, {}) as Dictionary).get("heading", ""))
 
 # --- module tabs ---------------------------------------------------------------
 

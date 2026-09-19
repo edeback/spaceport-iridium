@@ -59,13 +59,13 @@ func test_every_module_component_keeps_its_legacy_key() -> void:
 	for expected_key: String in _module_components():
 		var component: ComponentBase = _module_components()[expected_key]
 		assert_eq(String(component.save_key()), expected_key,
-				"%s must keep its legacy save key" % component.get_script().resource_path.get_file())
+				"%s must keep its legacy save key" % (component.get_script() as Script).resource_path.get_file())
 
 func test_every_pawn_component_keeps_its_legacy_key() -> void:
 	for expected_key: String in _pawn_components():
 		var component: PawnComponentBase = _pawn_components()[expected_key]
 		assert_eq(String(component.save_key()), expected_key,
-				"%s must keep its legacy save key" % component.get_script().resource_path.get_file())
+				"%s must keep its legacy save key" % (component.get_script() as Script).resource_path.get_file())
 
 func test_an_unowned_component_falls_back_to_its_node_name() -> void:
 	# The default key is a node path, which needs an owner. Without one it must
@@ -137,8 +137,8 @@ func test_storage_is_the_only_per_instance_component() -> void:
 func test_the_base_saves_nothing_by_default() -> void:
 	# A component with no state must produce no key at all, so modules that carry
 	# path/structure/adjacency components stay compact in the file.
-	assert_eq(autofree(ComponentBase.new()).get_save_data(), {})
-	assert_eq(autofree(PawnComponentBase.new()).get_save_data(), {})
+	assert_eq((autofree(ComponentBase.new()) as ComponentBase).get_save_data(), {})
+	assert_eq((autofree(PawnComponentBase.new()) as PawnComponentBase).get_save_data(), {})
 
 func test_traits_round_trip_through_the_dictionary_shape() -> void:
 	# The one component whose block shape changed in stage 2 (a bare Array can't

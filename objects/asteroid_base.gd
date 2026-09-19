@@ -90,7 +90,7 @@ func _ready() -> void:
 	# Covers a direction assigned before the sprite resolved, and a scene whose
 	# direction was never set at all.
 	_apply_orientation()
-	$ClickArea.input_event.connect(_on_click_area_input_event)
+	($ClickArea as Area2D).input_event.connect(_on_click_area_input_event)
 
 func _on_click_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event.is_action_pressed("build"):

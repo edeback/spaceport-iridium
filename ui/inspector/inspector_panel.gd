@@ -108,7 +108,7 @@ var _status_label: Label
 var _refitting: bool = false
 
 static func create() -> InspectorPanel:
-	return load(SCENE_PATH).instantiate() as InspectorPanel
+	return (load(SCENE_PATH) as PackedScene).instantiate() as InspectorPanel
 
 func _ready() -> void:
 	_build()
@@ -573,7 +573,7 @@ func _build_identity() -> PanelContainer:
 	names.name = "Names"
 	names.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	names.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	names.add_theme_constant_override("separation", 2)
+	names.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	row.add_child(names)
 
 	_name_label = Label.new()

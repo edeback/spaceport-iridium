@@ -205,7 +205,7 @@ func test_a_save_of_an_empty_log_round_trips() -> void:
 func test_a_restored_log_is_still_capped() -> void:
 	var data: Dictionary = {"sequence": 200, "entries": [] as Array}
 	for index: int in TransmissionLog.CAP + 20:
-		data["entries"].append(TransmissionData.create(
+		(data["entries"] as Array).append(TransmissionData.create(
 			&"trader", "Meridian Combine", "Docked %d" % index).to_dict())
 	var log: TransmissionLog = _log()
 	log.load_save(data)

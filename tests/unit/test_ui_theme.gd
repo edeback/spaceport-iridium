@@ -320,6 +320,90 @@ func test_every_scene_type_variation_is_a_declared_ui_type() -> void:
 				"%s assigns `%s`, which UIType does not declare" % [path, variation])
 	assert_gt(seen, 30, "the sweep actually read the assignments")
 
+# --- the script sweep (WI-68 F6) ---------------------------------------------------
+
+## The other missing half. WI-58 added the scene sweep above because a `.tscn`
+## literal is the same violation as its code form - and the code form was left
+## to a one-off grep. By the 2026-09-18 audit about forty geometry numbers and ten
+## colours had crept back into `ui/**.gd`. This is that grep, made permanent.
+
+## Scripts allowed their own numbers. The out-of-game menus and the game-over
+## takeover (the same exemption the scenes get), `ui/theme/` - where the tokens
+## are defined - and the files that draw in world space rather than on the HUD.
+const SCRIPT_EXEMPT: Array[String] = [
+	"res://ui/menus/", "res://ui/game_over_screen.gd", "res://ui/theme/",
+	"res://ui/preview_module.gd", "res://ui/selection_brackets.gd",
+	"res://ui/overlay_flow_layer.gd", "res://ui/click_cycler.gd", "res://ui/overlay_palette.gd",
+]
+
+## What a script may not spell out, each with the token it should use instead.
+## Zero is allowed on purpose: "no gap" isn't a geometry choice. Named engine
+## constants (`Color.TRANSPARENT`, `Color.WHITE`) are allowed; they aren't literals.
+const SCRIPT_LITERALS: Dictionary[String, String] = {
+	'add_theme_font_size_override\\([^,]+,\\s*-?\\d': "a UIType variation",
+	'add_theme_constant_override\\([^,]+,\\s*-?[1-9]': "a UIMetrics token",
+	'\\bColor\\(\\s*[-0-9.]': "a UIPalette colour",
+	'\\bColor\\(\\s*"': "a UIPalette colour",
+	'\\bColor\\.(html|hex|hex64)\\(': "a UIPalette colour",
+	# A number that IS an argument, or is added to one (`side + 12`) - never a
+	# multiplier: `INSET * 2` is "both sides", not a size.
+	'custom_minimum_size\\s*=\\s*Vector2i?\\((?:[^)]*[(,+\\-]\\s*|\\s*)[1-9]': "a UIMetrics size",
+	'custom_minimum_size\\.[xy]\\s*=\\s*[1-9]': "a UIMetrics size",
+	'theme_type_variation\\s*=\\s*&?"': "a UIType constant",
+}
+
+func _script_paths() -> PackedStringArray:
+	var out := PackedStringArray()
+	_collect_scripts("res://ui", out)
+	return out
+
+func _collect_scripts(dir_path: String, out: PackedStringArray) -> void:
+	var dir: DirAccess = DirAccess.open(dir_path)
+	if dir == null:
+		return
+	dir.list_dir_begin()
+	var entry: String = dir.get_next()
+	while entry != "":
+		var full: String = dir_path.path_join(entry)
+		if dir.current_is_dir():
+			_collect_scripts(full, out)
+		elif entry.ends_with(".gd"):
+			out.append(full)
+		entry = dir.get_next()
+	dir.list_dir_end()
+
+func _script_exempt(path: String) -> bool:
+	for prefix: String in SCRIPT_EXEMPT:
+		if path.begins_with(prefix):
+			return true
+	return false
+
+func test_the_script_sweep_actually_finds_scripts() -> void:
+	assert_gt(_script_paths().size(), 80, "the script sweep sees the ui/ tree")
+
+## Nothing in `ui/` may name a hex literal, a geometry number or a type-variation
+## string - in a script any more than in a scene. One assertion per offending
+## line, so the failure lists every site to fix.
+func test_no_ui_script_spells_out_a_colour_size_or_variation() -> void:
+	var patterns: Dictionary[RegEx, String] = {}
+	for source: String in SCRIPT_LITERALS:
+		patterns[RegEx.create_from_string(source)] = SCRIPT_LITERALS[source]
+	var checked: int = 0
+	for path: String in _script_paths():
+		if _script_exempt(path):
+			continue
+		checked += 1
+		var lines: PackedStringArray = FileAccess.get_file_as_string(path).split("\n")
+		for index: int in lines.size():
+			var line: String = lines[index]
+			if line.strip_edges().begins_with("#"):
+				continue # prose may quote an old value
+			for pattern: RegEx in patterns:
+				if pattern.search(line) != null:
+					fail_test("%s:%d spells out what should be %s:  %s"
+						% [path, index + 1, patterns[pattern], line.strip_edges()])
+	assert_gt(checked, 80, "and read them")
+
 ## `SpinBox extends Range`, not `LineEdit`, so it inherits **nothing** from this
 ## theme - its arrows come from Godot's default *light* theme. Two of them were
 ## the only un-skinned controls in the HUD until WI-58 replaced both with

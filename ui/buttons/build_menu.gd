@@ -120,7 +120,7 @@ func _scan_modules() -> void:
 func _build_search() -> void:
 	var block := PanelContainer.new()
 	var box := StyleBoxFlat.new()
-	box.bg_color = Color(0.0, 0.0, 0.0, 0.0)
+	box.bg_color = Color.TRANSPARENT
 	box.border_color = UIPalette.DIVIDER
 	box.set_border_width_all(0)
 	box.border_width_bottom = UIMetrics.BORDER_WIDTH
@@ -131,8 +131,8 @@ func _build_search() -> void:
 	var pad := MarginContainer.new()
 	pad.add_theme_constant_override("margin_left", UIMetrics.CONTENT_PAD)
 	pad.add_theme_constant_override("margin_right", UIMetrics.CONTENT_PAD)
-	pad.add_theme_constant_override("margin_top", 14)
-	pad.add_theme_constant_override("margin_bottom", 14)
+	pad.add_theme_constant_override("margin_top", UIMetrics.BUILD_SEARCH_PAD_V)
+	pad.add_theme_constant_override("margin_bottom", UIMetrics.BUILD_SEARCH_PAD_V)
 	block.add_child(pad)
 
 	_search = LineEdit.new()
@@ -176,7 +176,7 @@ func _build_body() -> void:
 
 	_rail = VBoxContainer.new()
 	_rail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_rail.add_theme_constant_override("separation", 5)
+	_rail.add_theme_constant_override("separation", UIMetrics.BUILD_RAIL_GAP)
 	scroll.add_child(_rail)
 	for category: StringName in _categories:
 		_rail.add_child(_make_rail_row(category))
@@ -271,7 +271,7 @@ func _build_flyout() -> void:
 
 	_flyout_list = VBoxContainer.new()
 	_flyout_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_flyout_list.add_theme_constant_override("separation", 7)
+	_flyout_list.add_theme_constant_override("separation", UIMetrics.BUILD_FLYOUT_ROW_GAP)
 	_flyout_scroll.add_child(_flyout_list)
 
 # --- rail / flyout interaction -------------------------------------------------

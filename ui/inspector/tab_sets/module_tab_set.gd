@@ -147,7 +147,7 @@ func status_text() -> String:
 
 func icon_color() -> Color:
 	if not is_alive():
-		return Color(0.0, 0.0, 0.0, 0.0)
+		return Color.TRANSPARENT
 	if not _module.is_complete():
 		return UIPalette.tinted(UIPalette.LIVE, 0.5)
 	return UIPalette.tinted(UIPalette.GROWTH, 0.7)

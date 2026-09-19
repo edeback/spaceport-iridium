@@ -18,7 +18,7 @@ func set_resource_pile(pile: ResourcePile) -> void:
 	add_theme_constant_override("separation", UIMetrics.ROW_GAP)
 	_pile = pile
 	_rows = VBoxContainer.new()
-	_rows.add_theme_constant_override("separation", 2)
+	_rows.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	add_child(_rows)
 	if _pile != null:
 		# Rebuilt wholesale rather than patched per resource: a pile holds a

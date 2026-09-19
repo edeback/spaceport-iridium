@@ -183,7 +183,7 @@ func _floor_served(floor_module: ModuleBase) -> bool:
 	return shaft != null and shaft.is_floor_served(floor_module)
 
 func recheck_requests() -> void:
-	for request in pickup_requests.duplicate():
+	for request: RideRequest in pickup_requests.duplicate():
 		if request.from_floor and not _floor_served(request.from_floor):
 			cancel_request(request)
 		elif request.to_floor and not _floor_served(request.to_floor):
@@ -226,7 +226,7 @@ func cancel_request(request: RideRequest) -> bool:
 
 # Unload all passengers that want to exit at this floor
 func unload_passengers(cur_module: ModuleTurbolift) -> void:
-	for request in onboard.duplicate():
+	for request: RideRequest in onboard.duplicate():
 		if request.to_floor == cur_module or request.to_floor == null:
 			onboard.erase(request)
 			assigned_locations[request.stand_position] = null

@@ -334,11 +334,11 @@ func get_save_data() -> Dictionary:
 		"history": [],
 	}
 	for contract: ContractData in offers:
-		out["offers"].append(contract.to_dict())
+		(out["offers"] as Array).append(contract.to_dict())
 	for contract: ContractData in active:
-		out["active"].append(contract.to_dict())
+		(out["active"] as Array).append(contract.to_dict())
 	for contract: ContractData in history:
-		out["history"].append(contract.to_dict())
+		(out["history"] as Array).append(contract.to_dict())
 	return out
 
 ## Loads after world/market: demand re-registers on the restored bay via the

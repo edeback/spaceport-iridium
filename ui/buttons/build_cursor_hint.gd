@@ -33,7 +33,7 @@ const SCREEN_MARGIN: float = 8.0
 var _label: Label
 
 static func create() -> BuildCursorHint:
-	return load(SCENE_PATH).instantiate() as BuildCursorHint
+	return (load(SCENE_PATH) as PackedScene).instantiate() as BuildCursorHint
 
 func _ready() -> void:
 	_label = get_node_or_null("Pad/Label") as Label

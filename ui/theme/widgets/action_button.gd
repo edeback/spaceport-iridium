@@ -38,7 +38,7 @@ const SCENE_PATH: String = "res://ui/theme/widgets/action_button.tscn"
 		set_label(text)
 
 static func create(label: String = "", button_weight: Weight = Weight.SECONDARY) -> ActionButton:
-	var button: ActionButton = load(SCENE_PATH).instantiate() as ActionButton
+	var button: ActionButton = (load(SCENE_PATH) as PackedScene).instantiate() as ActionButton
 	button.weight = button_weight
 	button.set_label(label)
 	return button

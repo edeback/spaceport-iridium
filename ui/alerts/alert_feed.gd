@@ -90,7 +90,7 @@ var compact: bool = false:
 		refresh()
 
 static func create() -> AlertFeed:
-	return load(SCENE_PATH).instantiate() as AlertFeed
+	return (load(SCENE_PATH) as PackedScene).instantiate() as AlertFeed
 
 func _ready() -> void:
 	super()

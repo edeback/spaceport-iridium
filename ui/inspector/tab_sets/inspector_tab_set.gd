@@ -74,7 +74,7 @@ func status_text() -> String:
 
 ## The icon's tint. A fully transparent colour leaves the frame empty.
 func icon_color() -> Color:
-	return Color(0.0, 0.0, 0.0, 0.0)
+	return Color.TRANSPARENT
 
 ## Artwork drawn over the tint, when the subject has any. Modules carry one on
 ## their [ModuleData]; crew, asteroids and piles do not, and read as a tinted

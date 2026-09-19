@@ -185,7 +185,7 @@ func split_at(module: ModuleTurbolift) -> void:
 	var floor_index: int = floors.find(module)
 	if floor_index == -1:
 		return
-	for cab in cabs.duplicate():
+	for cab: TurboliftCab in cabs.duplicate():
 		if cab.current_turbolift == module:
 			cabs.erase(cab)
 			cab.destroy()

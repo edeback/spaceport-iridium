@@ -24,7 +24,7 @@ func set_asteroid(asteroid: AsteroidBase) -> void:
 	_remaining = StatBar.create()
 	add_child(_remaining)
 	_rows = VBoxContainer.new()
-	_rows.add_theme_constant_override("separation", 2)
+	_rows.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	add_child(_rows)
 	if _asteroid != null:
 		_asteroid.contents_changed.connect(refresh)

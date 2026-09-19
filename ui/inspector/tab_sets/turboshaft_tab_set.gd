@@ -64,7 +64,7 @@ func status_text() -> String:
 
 func icon_color() -> Color:
 	if not is_alive():
-		return Color(0.0, 0.0, 0.0, 0.0)
+		return Color.TRANSPARENT
 	return UIPalette.ATTENTION if _shaft.force_shutdown else UIPalette.tinted(UIPalette.LIVE, 0.6)
 
 func tabs() -> Array[Dictionary]:

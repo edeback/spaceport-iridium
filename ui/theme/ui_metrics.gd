@@ -400,6 +400,17 @@ const CONTENT_PAD: int = 16
 const READOUT_CONTENT_PAD: int = 10
 ## Vertical gap between rows in a list.
 const ROW_GAP: int = 6
+## Between the lines of one block: a name over its meta line, a label over its
+## value, the rows of a contents list or a Finance breakdown. The tightest step
+## on the ladder, because these lines belong to each other (WI-68 F6).
+const LINE_GAP: int = 2
+## Between small items in a short run: legend rows, a Stores card's fill and
+## priority lines, the parts of a morale meter, trait chips.
+const ITEM_GAP: int = 4
+## Between the controls that share one line: a name, a bar and a button.
+const INLINE_GAP: int = 8
+## Side of an icon that sits inline with text - a resource's icon on its checkbox.
+const INLINE_ICON: int = 24
 
 ## Width reserved for a [ListRow]'s right-hand action slot - "JUMP ▸", "+12.4/C",
 ## "RESUME ▸".
@@ -413,6 +424,54 @@ const ROW_GAP: int = 6
 const LIST_ROW_ACTION_WIDTH: int = 72
 ## Vertical gap between sections in a panel.
 const SECTION_GAP: int = 14
+
+# --- panel internals (WI-68 F6) -----------------------------------------------
+# Numbers that belong to one surface. They were literals in that surface's script
+# until the script half of the drift guard (test_ui_theme.gd) caught them; the
+# values are unchanged, so moving them here moved no pixel.
+
+## The Build panel: vertical padding round the search field, the gap between rail
+## entries, and between the flyout's module rows.
+const BUILD_SEARCH_PAD_V: int = 14
+const BUILD_RAIL_GAP: int = 5
+const BUILD_FLYOUT_ROW_GAP: int = 7
+## Inset of a compact Build tile's content from its edge. The tile is its icon
+## square plus this on both sides, so the two can't disagree.
+const BUILD_TILE_INSET: int = 6
+
+## The Finance tab's per-payer lines under an expanded wage or upkeep row: one
+## step tighter than [constant LINE_GAP], a list inside a line.
+const FINANCE_DETAIL_GAP: int = 1
+
+## The component pages the inspector flattens into a tab (conveyor, logistics
+## bay, workspace, local upgrades): padding round the page, and the padding and
+## line gap inside one of its blocks (a conveyor lane).
+const COMPONENT_PAGE_PAD: int = 6
+const COMPONENT_BLOCK_PAD: int = 4
+const COMPONENT_BLOCK_GAP: int = 3
+## Fixed width of a label heading a component-page row, so the controls beside
+## the labels start on one line.
+const COMPONENT_LABEL_WIDTH: int = 80
+
+## An R&D node card: padding, the gap between its icon and heading, and between
+## its text lines.
+const UNLOCK_CARD_PAD: int = 10
+const UNLOCK_CARD_HEAD_GAP: int = 10
+const UNLOCK_CARD_TEXT_GAP: int = 3
+
+## Padding inside a Stores module card.
+const STORES_CARD_PAD: int = 12
+## Space under a Trade row, before the next.
+const TRADE_ROW_PAD_BOTTOM: int = 4
+
+## Fixed widths on the crew Social tab (a relationship's status word and its bar)
+## and the Needs tab (a need's trend trail), so the columns line up row to row.
+const SOCIAL_STATUS_WIDTH: int = 72
+const SOCIAL_BAR_WIDTH: int = 80
+const NEEDS_TRAIL_WIDTH: int = 84
+
+## The shield page's capacitor bar.
+const SHIELD_BAR := Vector2(140, 12)
 
 # --- type ---------------------------------------------------------------------
 

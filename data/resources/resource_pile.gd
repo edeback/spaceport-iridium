@@ -73,7 +73,7 @@ signal resource_pile_clicked(resource_pile: ResourcePile)
 
 func _ready() -> void:
 	add_to_group(Groups.RESOURCE_DEBRIS)
-	$ClickArea.input_event.connect(_on_click_area_input_event)
+	($ClickArea as Area2D).input_event.connect(_on_click_area_input_event)
 
 func _on_click_area_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
 	if event.is_action_pressed("build"):

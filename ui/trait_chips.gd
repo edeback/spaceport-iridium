@@ -46,7 +46,7 @@ static func build(traits: Array[TraitData], color: Color,
 		row.add_child(label)
 		if not last:
 			var gap := Control.new()
-			gap.custom_minimum_size = Vector2(4, 0)
+			gap.custom_minimum_size = Vector2(UIMetrics.ITEM_GAP, 0)
 			gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			row.add_child(gap)
 	return row

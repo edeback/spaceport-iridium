@@ -110,7 +110,7 @@ func _build_facilities(manager: UnlockManager, data: TierData) -> void:
 		var count: int = manager.built_module_count_with_tag(tag)
 		var chip: Chip = Chip.create()
 		chip.configure(tag.capitalize(), "×%d" % count if count > 0 else "Needed",
-			Color(0, 0, 0, 0), UIPalette.Row.LIVE if count > 0 else UIPalette.Row.AMBER)
+			Color.TRANSPARENT, UIPalette.Row.LIVE if count > 0 else UIPalette.Row.AMBER)
 		chip.tooltip_text = ("The inspector tours one %s module." % tag if count > 0
 			else "Build a %s module — the inspector tours one and fails without it." % tag)
 		facilities.add_child(chip)

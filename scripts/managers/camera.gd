@@ -17,7 +17,7 @@ func _process(delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.is_action_pressed("camera_drag"):
-		position -= event.relative * drag_sensitivity / zoom
+		position -= (event as InputEventMouseMotion).relative * drag_sensitivity / zoom
 	if Input.is_action_pressed("camera_down"):
 		position.y += pan_speed
 	elif Input.is_action_pressed("camera_up"):

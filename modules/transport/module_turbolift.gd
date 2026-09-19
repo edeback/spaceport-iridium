@@ -51,10 +51,6 @@ func pre_delete() -> void:
 
 func on_select(new_selected: bool) -> void:
 	super(new_selected)
-	#if new_selected:
-		#Global.ui_in_game.change_input_mode(UIInGame.InputMode.Turbolift)
-	#else:
-		#Global.ui_in_game.change_input_mode(UIInGame.InputMode.None)
 	
 func door_connected(_cell: Vector2i, _from_layer: WorldManager.StructureLayer) -> void:
 	door_sprite.visible = true

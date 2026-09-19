@@ -54,7 +54,7 @@ func _build_traits(container: VBoxContainer) -> void:
 	for trait_data: TraitData in traits.traits:
 		var chip: Chip = Chip.create()
 		row.add_child(chip)
-		chip.configure(trait_data.display_name, "", Color(0.0, 0.0, 0.0, 0.0),
+		chip.configure(trait_data.display_name, "", Color.TRANSPARENT,
 			UIPalette.Row.LIVE)
 		chip.tooltip_text = trait_data.description
 		chip.mouse_filter = Control.MOUSE_FILTER_STOP # let the tooltip show

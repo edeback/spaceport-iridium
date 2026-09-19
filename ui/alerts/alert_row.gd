@@ -46,7 +46,7 @@ const RESUME_VERB: String = "Resume ▸"
 var group: AlertRules.Group = null
 
 static func create() -> AlertRow:
-	return load(ROW_SCENE_PATH).instantiate() as AlertRow
+	return (load(ROW_SCENE_PATH) as PackedScene).instantiate() as AlertRow
 
 ## Paints the row from `row_group`. `history` renders the log's variant: a
 ## timestamp instead of a live action, and no dismissal affordance, because a

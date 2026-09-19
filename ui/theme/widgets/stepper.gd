@@ -93,7 +93,7 @@ var _dirty: bool = false
 var _quiet_for: float = 0.0
 
 static func create() -> Stepper:
-	return load(SCENE_PATH).instantiate() as Stepper
+	return (load(SCENE_PATH) as PackedScene).instantiate() as Stepper
 
 func _ready() -> void:
 	_ensure_refs()

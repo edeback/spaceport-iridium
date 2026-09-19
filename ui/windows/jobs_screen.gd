@@ -219,7 +219,7 @@ func _with_block_line(row: ListRow, job: Job) -> Control:
 			sentence = "%s cannot take this" % _pawn_name(_selected)
 	row.tooltip_text = sentence
 	var entry := VBoxContainer.new()
-	entry.add_theme_constant_override("separation", 2)
+	entry.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	entry.add_child(row)
 	# Indented so the sentence reads as belonging to the row above it rather than
 	# as the next item in the list.

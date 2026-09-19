@@ -168,7 +168,7 @@ func _refresh_balance() -> void:
 		return
 	var credits: ResourceData = Global.resource_manager.credit_resource
 	_balance.configure("Credits", LedgerModel.format_compact(credits.get_total()),
-		Color(0, 0, 0, 0),
+		Color.TRANSPARENT,
 		UIPalette.Row.LIVE if Global.unlock_manager.has_affordable_unlock()
 		else UIPalette.Row.INERT)
 
@@ -391,7 +391,7 @@ func _unlocks_by_tree() -> Dictionary:
 	for unlock: UnlockData in Global.unlock_manager.get_all_unlocks():
 		if not by_tree.has(unlock.tree_id):
 			by_tree[unlock.tree_id] = [] as Array[UnlockData]
-		by_tree[unlock.tree_id].append(unlock)
+		(by_tree[unlock.tree_id] as Array).append(unlock)
 	return by_tree
 
 func _ordered_tree_ids(ids: Array) -> Array[StringName]:

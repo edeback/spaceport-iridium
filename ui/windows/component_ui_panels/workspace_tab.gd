@@ -26,12 +26,12 @@ func setup(component: WorkspaceComponent) -> void:
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 	var margin := MarginContainer.new()
-	for side in ["left", "top", "right", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 6)
+	for side: String in ["left", "top", "right", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, UIMetrics.COMPONENT_PAGE_PAD)
 	add_child(margin)
 
 	var outer := VBoxContainer.new()
-	outer.add_theme_constant_override("separation", 6)
+	outer.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
 	margin.add_child(outer)
 
 	_header = Label.new()
@@ -45,7 +45,7 @@ func setup(component: WorkspaceComponent) -> void:
 
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_list.add_theme_constant_override("separation", 4)
+	_list.add_theme_constant_override("separation", UIMetrics.ITEM_GAP)
 	_scroll.add_child(_list)
 	_list.minimum_size_changed.connect(_fit_height)
 
@@ -93,7 +93,7 @@ func refresh() -> void:
 
 func _build_row(pawn: PawnBase) -> Control:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
+	row.add_theme_constant_override("separation", UIMetrics.INLINE_GAP)
 
 	var label := Label.new()
 	label.text = pawn.pawn_name if pawn.pawn_name != "" else "Crew"

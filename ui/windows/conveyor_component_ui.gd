@@ -17,11 +17,11 @@ func set_conveyor(component: ConveyorComponent) -> void:
 
 	var margin := MarginContainer.new()
 	for side: String in ["left", "top", "right", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 6)
+		margin.add_theme_constant_override("margin_" + side, UIMetrics.COMPONENT_PAGE_PAD)
 	add_child(margin)
 
 	_vbox = VBoxContainer.new()
-	_vbox.add_theme_constant_override("separation", 6)
+	_vbox.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
 	margin.add_child(_vbox)
 
 	if not conveyor.lanes_changed.is_connected(_rebuild):
@@ -41,10 +41,10 @@ func _build_lane_block(index: int) -> void:
 	var panel := PanelContainer.new()
 	_vbox.add_child(panel)
 	var inner := VBoxContainer.new()
-	inner.add_theme_constant_override("separation", 3)
+	inner.add_theme_constant_override("separation", UIMetrics.COMPONENT_BLOCK_GAP)
 	var pmargin := MarginContainer.new()
 	for side: String in ["left", "top", "right", "bottom"]:
-		pmargin.add_theme_constant_override("margin_" + side, 4)
+		pmargin.add_theme_constant_override("margin_" + side, UIMetrics.COMPONENT_BLOCK_PAD)
 	panel.add_child(pmargin)
 	pmargin.add_child(inner)
 
@@ -90,7 +90,7 @@ func _add_row(parent: VBoxContainer, label_text: String) -> OptionButton:
 	var hbox := HBoxContainer.new()
 	var label := Label.new()
 	label.text = label_text
-	label.custom_minimum_size = Vector2(80, 0)
+	label.custom_minimum_size = Vector2(UIMetrics.COMPONENT_LABEL_WIDTH, 0)
 	hbox.add_child(label)
 	var selector := OptionButton.new()
 	selector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
