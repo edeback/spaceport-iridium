@@ -95,6 +95,8 @@ Each entry: what is there, what it costs, what to do, and roughly how big the ch
 
 **Do.** Decide one rule and finish it. WI-44 chose "restored jobs resume", and it is the right choice (a haul mid-carry resuming is the whole point of F21). So: every owner re-adopts (A2), and no owner re-posts until its slot is empty. Write the rule into the persistence section of CLAUDE.md beside the load-order sentence, because it is the same kind of load-bearing fact.
 
+> *Built (2026-09-19) as [[WI-70_Job_Ownership_Contract]], for A2-A4 together.* Two corrections. **Adoption goes by a declared owner, not by target:** `JobData.origin` names which target (or the pawn) posted the job, because a haul has two storage targets and only one of them posted it, and a pawn-side job has no target at all. **A4 was worse than it reads here: restored jobs did not resume at all.** `Job.resume_job()` had never had a caller, so every restored job replayed from its first step, and the board's pickup gate cancelled some before they moved - F40, found by WI-70's own verification and fixed there. With it fixed, the model this section describes is the one that runs.
+
 ### A5. Three hand-numbered orderings hold the boot and load together
 
 **What.** Manager ready order is the `Managers/` child order in `main.tscn` ("tree order = ready order and it is load-bearing"). Save-section order is an integer each manager passes to `register_section`. Component restore order is `save_order()`. Each is a number chosen by reading the others; `test_component_save_contract` pins some component pairs and `test_save_sections` pins the registry's sort, but nothing pins the scene, and the scene is the one that gets edited in the editor.

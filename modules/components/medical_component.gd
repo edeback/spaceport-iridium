@@ -42,7 +42,7 @@ func claim_pool() -> SlotPool:
 	_slots.capacity = capacity
 	return _slots
 ## The outstanding doctor job, so slow_tick doesn't post a duplicate.
-var _doctor_job: Job = null
+var _doctor_slot: JobSlot = JobSlot.new(_on_doctor_job_end)
 
 func ready_constructed() -> void:
 	add_to_group(Groups.MEDICAL_BAY)
@@ -96,25 +96,23 @@ func heal_rate_per_hour() -> float:
 func _on_slow_tick(_interval: float) -> void:
 	if not has_patients() or not powered():
 		return
-	if _doctor_job != null and not _doctor_job.is_ended():
+	if _doctor_slot.is_live():
 		return
 	if Global.job_manager == null:
 		return
-	_doctor_job = Job.of(&"doctor").with_target_a(JobTarget.of_component(self))
-	_doctor_job.job_end.connect(_on_doctor_job_end.bind(_doctor_job), CONNECT_ONE_SHOT)
-	Global.job_manager.add_job(_doctor_job)
+	var job: Job = Job.of(&"doctor").with_target_a(JobTarget.of_component(self))
+	_doctor_slot.post(job)
+	Global.job_manager.add_job(job)
 
-## Drops the outstanding-job slot when the doctor job ends and clears our operator
-## link (if it was this doctor), so the slow-tick poll re-posts while patients
-## still wait. Connected at post time rather than called by the job: a WI-44 job
-## does not know who posted it.
-func _on_doctor_job_end(job: Job) -> void:
-	if _doctor_job == job:
-		_doctor_job = null
+## Clears our operator link when the doctor job ends (if it was this doctor), so
+## a stale doctor isn't credited to a later treatment tick. The slot has already
+## let go, so the slow-tick poll re-posts while patients still wait.
+func _on_doctor_job_end(job: Job, _completed: bool) -> void:
 	if current_doctor != null and job.pawn == current_doctor:
 		current_doctor = null
 
-## Claim the outstanding-doctor-job slot for a restored job (WI-21), so slow_tick
-## doesn't post a duplicate before the loaded pawn runs it.
-func adopt_doctor_job(job: Job) -> void:
-	_doctor_job = job
+## The doctor's job, restored from a save (WI-70 §3). This hook existed since
+## WI-21 as adopt_doctor_job() and nothing ever called it, so every load posted a
+## second doctor job beside the restored one (F26).
+func adopt_restored_job(job: Job) -> bool:
+	return job.is_type(&"doctor") and _doctor_slot.adopt(job)

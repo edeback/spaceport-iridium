@@ -32,11 +32,13 @@ enum Role {
 @export var reserved_withdraw: int = 0
 @export var reserved_deposit: int = 0
 ## The outstanding board jobs this bin has posted, so it doesn't post a second
-## one for the same deficit/surplus. Reservations are NOT tracked here any more -
-## they are claims, and reserved_withdraw/reserved_deposit above are maintained
-## by the claimable contract below (WI-44).
-var import_job: Job = null
-var export_job: Job = null
+## one for the same deficit/surplus: a pull it wants filled, a push it wants
+## emptied. Reservations are NOT tracked here any more - they are claims, and
+## reserved_withdraw/reserved_deposit above are maintained by the claimable
+## contract below (WI-44). A haul restored from a save comes back through
+## StorageComponent.adopt_restored_job (WI-70).
+var import_slot: JobSlot = JobSlot.new()
+var export_slot: JobSlot = JobSlot.new()
 ## Destroy stock above this level; -1 disables, which is the default and what
 ## nearly every bin stays at.
 ##
@@ -84,25 +86,19 @@ func exportable_surplus() -> int:
 			return 0
 
 func end_all_jobs() -> void:
-	# Null our reference BEFORE cancelling: ending a job releases its claims,
+	# cancel_live lets go BEFORE cancelling: ending a job releases its claims,
 	# which re-enters this storage, and clearing first is what keeps that
 	# re-entrancy safe.
-	if import_job != null:
-		var job: Job = import_job
-		import_job = null
-		job.cancel(true)
-		Global.job_manager.remove_job(job)
-	if export_job != null:
-		var job: Job = export_job
-		export_job = null
-		job.cancel(true)
-		Global.job_manager.remove_job(job)
+	for slot: JobSlot in [import_slot, export_slot]:
+		var job: Job = slot.cancel_live(true)
+		if job != null and Global.job_manager != null:
+			Global.job_manager.remove_job(job)
 
 func set_job_priority(new_priority: int) -> void:
-	if import_job != null:
-		import_job.priority = new_priority
-	if export_job != null:
-		export_job.priority = new_priority
+	for slot: JobSlot in [import_slot, export_slot]:
+		var job: Job = slot.job()
+		if job != null:
+			job.priority = new_priority
 
 ## How much autodump is allowed to destroy: surplus over `autodump_above`, minus
 ## anything a hauler has already reserved a withdrawal against. Without the

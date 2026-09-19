@@ -134,13 +134,13 @@ func test_an_output_slot_leaves_deposit_room_to_the_component() -> void:
 # --- teardown without a board ------------------------------------------------
 
 func test_end_all_jobs_does_not_crash_without_a_job_manager() -> void:
-	# import_job/export_job stay null, so end_all_jobs never reaches
-	# Global.job_manager. Reservations are claims now and are released by the
-	# registry when their job ends, so there is nothing else here to tear down.
+	# Both slots stay empty, so end_all_jobs never reaches Global.job_manager.
+	# Reservations are claims now and are released by the registry when their job
+	# ends, so there is nothing else here to tear down.
 	storage.take_claim(ClaimSpec.Kind.STORAGE_WITHDRAW, 2)
 	storage.end_all_jobs()
-	assert_null(storage.import_job, "no posted import job")
-	assert_null(storage.export_job, "no posted export job")
+	assert_null(storage.import_slot.job(), "no posted import job")
+	assert_null(storage.export_slot.job(), "no posted export job")
 	pass_test("end_all_jobs completed without a board attached")
 
 func _make_stack(amount: int) -> ResourceStack:

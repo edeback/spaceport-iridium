@@ -36,10 +36,10 @@ var energy: float = energy_max:
 			energy_changed.emit(energy)
 signal energy_changed(new_energy: float)
 
-## The pending/active recharge job (null when none). Same single-slot bookkeeping
+## The pending/active recharge job. Same single-slot bookkeeping
 ## PawnNeedsComponent keeps per need, so a second job is never queued for the same
 ## energy deficit.
-var _recharge_job: Job = null
+var _recharge_slot: JobSlot = JobSlot.new(_on_recharge_end)
 var _retry_cooldown: float = 0.0
 ## Alert-once latch for the stranded (zero energy, no reachable charger) state, so
 ## a robot parked far from any working charger doesn't spam the alert strip.
@@ -114,33 +114,32 @@ func _maybe_seek_recharge() -> void:
 	if energy_percent() >= seek_threshold_percent:
 		_stranded_alerted = false
 		return
-	if _recharge_job != null and not _recharge_job.is_ended():
+	var pending: Job = _recharge_slot.job()
+	if pending != null:
 		# A recharge job already exists. If we've now hit zero and it's only
 		# queued (not the running job), escalate to an immediate preempt.
-		if energy <= 0.0 and owner_pawn.current_job != _recharge_job:
-			owner_pawn.dequeue_job(_recharge_job)
-			owner_pawn.interrupt_with_job(_recharge_job)
+		if energy <= 0.0 and owner_pawn.current_job != pending:
+			owner_pawn.dequeue_job(pending)
+			owner_pawn.interrupt_with_job(pending)
 		return
 	# Need a fresh recharge job, subject to the retry throttle.
 	if _retry_cooldown > 0.0:
 		return
-	_recharge_job = _make_recharge_job()
-	_recharge_job.job_end.connect(_on_recharge_end.bind(_recharge_job), CONNECT_ONE_SHOT)
+	var job: Job = _make_recharge_job()
+	_recharge_slot.post(job)
 	if energy <= 0.0:
 		# Emergency backup power: cancel whatever we're doing (gracefully - cargo
 		# kept) and head straight for a charger.
-		owner_pawn.interrupt_with_job(_recharge_job)
+		owner_pawn.interrupt_with_job(job)
 	else:
 		# Non-disruptive: runs after the current job finishes (like a need).
-		owner_pawn.queue_job(_recharge_job)
+		owner_pawn.queue_job(job)
 
 func _make_recharge_job() -> Job:
 	var job: Job = Job.of(&"recharge")
 	return job
 
-func _on_recharge_end(job: Job) -> void:
-	if job == _recharge_job:
-		_recharge_job = null
+func _on_recharge_end(_job: Job, _completed: bool) -> void:
 	# The attempt left us still low (couldn't reach/claim a charger, or power died
 	# mid-charge): throttle the next try and, if stranded at zero, alert once.
 	if energy_percent() < seek_threshold_percent:
@@ -175,9 +174,7 @@ func load_save_data(data: Dictionary) -> void:
 	energy = float(data.get("energy", energy_max))
 
 ## Re-link a recharge job restored from a save so the decay loop treats it as the
-## already-pending job instead of queuing a second one (mirrors
-## PawnNeedsComponent.adopt_restored_need_job).
-func adopt_restored_recharge_job(job: Job) -> void:
-	if _recharge_job == null:
-		_recharge_job = job
-		job.job_end.connect(_on_recharge_end.bind(job), CONNECT_ONE_SHOT)
+## already-pending job instead of queuing a second one (WI-70; mirrors
+## PawnNeedsComponent.adopt_restored_job).
+func adopt_restored_job(job: Job) -> bool:
+	return job.is_type(&"recharge") and _recharge_slot.adopt(job)

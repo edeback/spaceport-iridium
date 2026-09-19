@@ -13,7 +13,10 @@ var current_state : ConstructionState = ConstructionState.NotStarted:
 		if new_state != current_state:
 			current_state = new_state
 			state_changed.emit(new_state)
-var construction_job: Job = null
+## The build or teardown job this site has posted and not yet seen end (WI-70).
+## Its handler is what puts a site back to work when a builder walks away: see
+## _on_slot_job_end.
+var _slot: JobSlot = JobSlot.new(_on_slot_job_end)
 
 signal construction_finished
 signal deconstruction_finished
@@ -48,11 +51,7 @@ func start_deconstruction() -> void:
 	if current_state == ConstructionState.Built:
 		set_process(true)
 		# Tearing down something already standing is "finish what's started".
-		construction_job = Job.of(&"deconstruct_module")
-		construction_job.target_a = JobTarget.of_component(self)
-		construction_job.priority = JobPriorities.COMPLETION_BOOST
-		construction_job.job_end.connect(_on_deconstruction_job_end.bind(construction_job), CONNECT_ONE_SHOT)
-		Global.job_manager.add_job(construction_job)
+		_post_deconstruction_job()
 		current_state = ConstructionState.Deconstructing
 		work_seconds_done = work_seconds_to_complete * deconstruction_time_multiplier
 		# A module coming apart stops being a live part of the station - it was
@@ -70,17 +69,27 @@ func _process(delta: float) -> void:
 		ConstructionState.Paused:
 			pass
 		ConstructionState.NotStarted:
-			if ready_for_construction():
+			if ready_for_construction() and not _slot.is_live():
 				_start_construction_job(true)
 		ConstructionState.Constructing:
 			if work_seconds_done >= work_seconds_to_complete:
 				current_state = ConstructionState.Built
 				construction_finished.emit()
 				owner_module.ready_constructed()
+			elif not _slot.is_live():
+				# Belt and braces for F25 (WI-70 §4): building with nobody on the
+				# job. The slot handler already resets this, so reaching here means
+				# a path that ended the job without it - and it is also what frees a
+				# site stuck like this in a session that predates the fix.
+				current_state = ConstructionState.NotStarted
 		ConstructionState.Built:
 			pass
 		ConstructionState.Deconstructing:
-			if work_seconds_done <= 0:
+			if work_seconds_done > 0 and not _slot.is_live():
+				# Same self-heal for a teardown, and the path a site restored
+				# mid-teardown takes when nobody was working it at the save (F38).
+				_post_deconstruction_job()
+			elif work_seconds_done <= 0:
 				current_state = ConstructionState.Deconstructed
 				deconstruction_finished.emit()
 				setup_storage_post_deconstruction()
@@ -117,12 +126,26 @@ func ready_for_construction() -> bool:
 			return false
 	return true
 
-## Creates and arms a construction job, wiring up the failure listener so
-## the component can't get permanently stuck if the job never actually gets
-## done - whether that's because a direct handoff got declined (can_do_job()
-## failed at the last second) or a board-claimed job failed some other way
-## after being picked up (unreachable, module removed mid-route, etc).
+## Creates and holds a construction job. The slot's handler is what keeps the
+## site from getting stuck if the job never gets done - a direct handoff declined
+## at the last second, a board-claimed job that failed after pickup (unreachable,
+## module removed mid-route), or a builder who was interrupted (F25).
+##
+## Only called with nothing live in the slot; both callers check.
 func _start_construction_job(add_to_board: bool) -> Job:
+	# Only created once the site is fully resourced, so this is always a
+	# finish-what's-started job: boost it over starting fresh hauls.
+	var job: Job = Job.of(&"construct_module")
+	job.target_a = JobTarget.of_component(self)
+	job.priority = JobPriorities.COMPLETION_BOOST
+	_slot.post(job)
+	_begin_constructing()
+	if add_to_board:
+		Global.job_manager.add_job(job)
+	return job
+
+## The site is resourced and has a builder accounted for.
+func _begin_constructing() -> void:
 	# Freezes the bin WITH its materials still in it - the site is fully resourced
 	# and the delivered stock must not be hauled back out while the work runs.
 	# This is the case the per-slot role exists for: a component-level flag would
@@ -130,32 +153,64 @@ func _start_construction_job(add_to_board: bool) -> Job:
 	material_storage.set_all_roles(StorageData.Role.EXCLUDED)
 	material_storage.display_storage_ui = false
 	material_storage.display_info_panel_ui = false
-	# Only created once the site is fully resourced, so this is always a
-	# finish-what's-started job: boost it over starting fresh hauls.
-	construction_job = Job.of(&"construct_module")
-	construction_job.target_a = JobTarget.of_component(self)
-	construction_job.priority = JobPriorities.COMPLETION_BOOST
-	construction_job.job_end.connect(_on_construction_job_end.bind(construction_job), CONNECT_ONE_SHOT)
 	current_state = ConstructionState.Constructing
-	if add_to_board:
-		Global.job_manager.add_job(construction_job)
-	return construction_job
+
+func _post_deconstruction_job() -> void:
+	if Global.job_manager == null:
+		return
+	var job: Job = Job.of(&"deconstruct_module")
+	job.target_a = JobTarget.of_component(self)
+	job.priority = JobPriorities.COMPLETION_BOOST
+	if _slot.post(job) == job:
+		Global.job_manager.add_job(job)
 
 ## Claims the pawn that just delivered the last resource this site needed,
 ## handing them straight into the construction job instead of waiting for
 ## _process() to notice next frame and post it on the shared board for
 ## whoever happens to be free.
 func offer_followup_job(_pawn: PawnBase) -> Job:
-	if current_state != ConstructionState.NotStarted or construction_job != null:
+	if current_state != ConstructionState.NotStarted or _slot.is_live():
 		return null
 	if not ready_for_construction():
 		return null
 	return _start_construction_job(false)
 
-func _on_construction_job_end(finished_job: Job) -> void:
-	if finished_job.is_failed() and construction_job == finished_job:
-		construction_job = null
-		current_state = ConstructionState.NotStarted
+## The build or teardown job ended. Finished is the lifecycle's business: the
+## work counter is where it should be and _process moves the state on. Anything
+## else - FAILED or INTERRUPTED - puts the site back to work (F25, WI-70 §4). This
+## handler asked is_failed() before, and an interrupted job is not failed: a
+## builder who resigned, was fired, or went to suit up at Tier 2 left the site in
+## Constructing for the rest of the session.
+func _on_slot_job_end(_job: Job, completed: bool) -> void:
+	if completed or not is_inside_tree():
+		return
+	match current_state:
+		ConstructionState.Constructing:
+			current_state = ConstructionState.NotStarted # re-posts once resourced
+		ConstructionState.Deconstructing:
+			_post_deconstruction_job()
+
+## The build or teardown job a pawn was on when the save was written (WI-70 §3).
+## The site restores without it - Constructing comes back as NotStarted, and a
+## teardown comes back Deconstructing with an empty slot - so without this both
+## post a second job beside the restored one (F26).
+func adopt_restored_job(job: Job) -> bool:
+	if job.is_type(&"construct_module"):
+		# Resourced by now: the storage block restored the delivered materials
+		# before any pawn loaded.
+		if current_state != ConstructionState.NotStarted or not ready_for_construction():
+			return false
+		if not _slot.adopt(job):
+			return false
+		_begin_constructing()
+		return true
+	if job.is_type(&"deconstruct_module"):
+		return current_state == ConstructionState.Deconstructing and _slot.adopt(job)
+	return false
+
+## The live build or teardown job, or null. For the inspector and the tests.
+func live_job() -> Job:
+	return _slot.job()
 
 func _set_work_seconds(new_work_seconds: float) -> void:
 	work_seconds_done = new_work_seconds
@@ -189,14 +244,6 @@ func setup_storage_for_construction() -> void:
 				new_data.desired = owner_module.module_data.resource_costs[resource]
 				material_storage.storage_data[resource] = new_data
 				material_storage.max_stored += new_data.desired
-
-func _on_deconstruction_job_end(finished_job: Job) -> void:
-	if finished_job.is_failed() and construction_job == finished_job:
-		construction_job = Job.of(&"deconstruct_module")
-		construction_job.target_a = JobTarget.of_component(self)
-		construction_job.priority = JobPriorities.COMPLETION_BOOST
-		construction_job.job_end.connect(_on_deconstruction_job_end.bind(construction_job), CONNECT_ONE_SHOT)
-		Global.job_manager.add_job(construction_job)
 
 func setup_storage_post_deconstruction() -> void:
 	Global.path_manager.set_exterior(owner_module, true)
@@ -238,23 +285,49 @@ func get_save_data() -> Dictionary:
 	return {"state": current_state, "work_done": work_seconds_done}
 
 ## Runs after the ready pass (ready_blueprint for unbuilt modules). Saved
-## Constructing collapses to NotStarted: the job wasn't persisted, and
-## NotStarted re-posts as soon as ready_for_construction() sees the restored
-## materials - work_seconds_done keeps the progress already made.
+## Constructing collapses to NotStarted, with work_seconds_done keeping the
+## progress already made: a builder restored mid-job is re-adopted through
+## adopt_restored_job, which puts it back to Constructing, and a build nobody had
+## claimed yet re-posts as soon as ready_for_construction() sees the materials.
 func load_save_data(data: Dictionary) -> void:
 	var saved_state: ConstructionState = int(data.get("state", ConstructionState.NotStarted)) as ConstructionState
 	match saved_state:
 		ConstructionState.Built:
 			pass # ready_constructed already set everything
-		ConstructionState.Deconstructing, ConstructionState.Deconstructed:
+		ConstructionState.Deconstructing:
+			_restore_deconstructing(float(data.get("work_done", 0.0)))
+		ConstructionState.Deconstructed:
 			_setup_deconstructed_for_load()
 		_:
 			current_state = ConstructionState.NotStarted
 			work_seconds_done = float(data.get("work_done", 0.0))
 
-## Deconstruction-in-progress collapses to Deconstructed on load (mirror of
-## the Constructing->NotStarted rule): reconfigure the material storage as an
-## export bin; the storage section restores the actual remaining contents.
+## A teardown saved in progress comes back IN PROGRESS, with the work it had left
+## (F38, WI-70 §5).
+##
+## It used to collapse to Deconstructed, "the mirror of Constructing->NotStarted".
+## It wasn't one. The refund is only deposited by the live Deconstructing ->
+## Deconstructed transition, and during a teardown the bin is empty - so the
+## reloaded site found nothing to ship, removed itself, and the whole refund was
+## gone. The realistic path was pause, order a demolition, quicksave.
+##
+## The load's ready pass ran ready_constructed (a teardown site saves as built),
+## which left the bin empty and frozen - exactly how start_deconstruction finds
+## one. So this is start_deconstruction with the progress restored and without a
+## job: the one a pawn was on is adopted through adopt_restored_job, and if nobody
+## was, the first frame's self-heal posts one. A save written mid-teardown before
+## this fix still says Deconstructing with its work_done, so it restores too.
+func _restore_deconstructing(work_left: float) -> void:
+	current_state = ConstructionState.Deconstructing
+	# After the state: progress reads the remaining work against the teardown's
+	# own total only once the state says it is a teardown.
+	work_seconds_done = work_left
+	set_process(true)
+	owner_module.ready_deconstructing()
+
+## A finished teardown whose refund was still waiting to be hauled away: the
+## material storage becomes the export bin again, and the storage section
+## restores the refund still in it on top of this.
 func _setup_deconstructed_for_load() -> void:
 	Global.path_manager.set_exterior(owner_module, true)
 	material_storage.empty_all()

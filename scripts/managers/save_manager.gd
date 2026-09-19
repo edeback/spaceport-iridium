@@ -1040,8 +1040,13 @@ func _load_piles(data: Array) -> void:
 			var stacks: Array[ResourceStack] = []
 			for stack_dict: Dictionary in content.get("stacks", []):
 				stacks.append(stack_from_dict(resource, stack_dict))
-			# add_stacks also posts the collection job, same as live overflow.
-			pile.add_stacks(resource, stacks)
+			# Restored without posting (WI-70): pawns load after piles, and a collect
+			# job a crew member was on has to be handed back to the pile first, or it
+			# finds the slot taken by a fresh job and runs beside it (F26).
+			pile.add_stacks(resource, stacks, false)
+		# Once the load is done - by then every restored collector has been adopted,
+		# and this posts only for what nobody was already fetching.
+		pile.ensure_collection_jobs.call_deferred()
 	# Bump the shared counter past every restored id so post-load piles (which
 	# take fresh ids from spawn()) can never collide with a restored one.
 	if max_saved_id >= 0:
@@ -1134,54 +1139,25 @@ func _load_pawns(data: Array) -> void:
 		# deserialize to null and are silently dropped.
 		_load_pawn_jobs(pawn, entry)
 
-## Rebuilds current_job + job_queue onto a freshly restored pawn.
+## Rebuilds current_job + job_queue onto a freshly restored pawn, and hands each
+## restored job back to whoever posted it (WI-70 §3).
+##
+## That hand-back used to be an if-chain here, one branch per job type a pawn
+## component remembered, and it only ever knew about the pawn side: no module,
+## storage or pile was re-linked to its restored job, so every load posted those
+## owners a duplicate (F26). F2 was a pawn-side branch nobody had added. A job's
+## owner is now declared on its JobData (`origin`) and adoption asks that owner,
+## so a new job type - or a mod's - needs no edit here.
 func _load_pawn_jobs(pawn: PawnBase, entry: Dictionary) -> void:
-	# Looked up here rather than threaded down from the restore walk: a restored
-	# need-job has to be re-adopted by the needs component so the need stops
-	# re-queueing a duplicate, and that is the only reason this function wants it.
-	var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
 	for job_data: Dictionary in entry.get("job_queue", []):
 		var job: Job = Job.from_dict(job_data)
 		if job != null:
 			pawn.queue_job(job)
-			_adopt_if_need_job(pawn, needs, job)
+			job.offer_to_owner(pawn)
 	var current_job: Job = Job.from_dict(entry.get("current_job", {}))
 	if current_job != null:
 		pawn.queue_job(current_job, true) # to front: runs before the restored queue
 		# ...and before the cargo sweep, which would otherwise take the cargo this
 		# job is carrying and abandon it (WI-68 F21).
 		pawn.mark_restored_job(current_job)
-		_adopt_if_need_job(pawn, needs, current_job)
-
-## A restored need job must be re-linked to the component that queued it, or that
-## component (which lost its pending-job pointer on load) would queue a second
-## job for the same need. Covers organic needs (Eat/Sleep/Recreate), the robot
-## needs (WI-28: recharge -> RobotPowerComponent, repair -> RobotIntegrityComponent),
-## treatment (WI-31) and suit trips (WI-67/68: change_suit -> PawnSuitComponent).
-## No-op for anything else. A component that remembers a job it queued on the
-## pawn needs a branch here, or every load duplicates that job.
-func _adopt_if_need_job(pawn: PawnBase, needs: PawnNeedsComponent, job: Job) -> void:
-	if needs != null and (job.is_type(&"eat") or job.is_type(&"sleep")
-			or job.is_type(&"recreate") or job.is_type(&"shop")):
-		needs.adopt_restored_need_job(job)
-	elif job.is_type(&"recharge"):
-		var power: RobotPowerComponent = pawn.get_component_by_type(RobotPowerComponent) as RobotPowerComponent
-		if power != null:
-			power.adopt_restored_recharge_job(job)
-	elif job.is_type(&"get_repaired"):
-		var integrity: RobotIntegrityComponent = pawn.get_component_by_type(RobotIntegrityComponent) as RobotIntegrityComponent
-		if integrity != null:
-			integrity.adopt_restored_repair_job(job)
-	elif job.is_type(&"get_treatment"):
-		# Health & disease (WI-31): re-link so the disease component's seek loop
-		# treats it as the already-pending job instead of queuing a second.
-		var disease: PawnDiseaseComponent = pawn.get_component_by_type(PawnDiseaseComponent) as PawnDiseaseComponent
-		if disease != null:
-			disease.adopt_restored_treatment_job(job)
-	elif job.is_type(&"change_suit"):
-		# Suits (WI-67), missed until WI-68 F2: an unadopted trip made the suit
-		# component post a second one, and the orphan then walked an
-		# already-suited pawn to an airlock and back.
-		var suit: PawnSuitComponent = pawn.get_component_by_type(PawnSuitComponent) as PawnSuitComponent
-		if suit != null:
-			suit.adopt_restored_trip(job)
+		current_job.offer_to_owner(pawn)

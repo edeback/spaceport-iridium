@@ -40,9 +40,6 @@ extends ComponentBase
 @export var player_configurable: bool = false
 @export var construction_storage: bool = false
 
-var export_jobs: Array[Job] = []
-var import_jobs: Array[Job] = []
-
 const SMALL_FLOAT: float = 0.000001
 
 var storage_value_changed: bool = true
@@ -185,7 +182,7 @@ func _on_slow_tick(_interval: float) -> void:
 		var data := storage_data[resource]
 		if not data.accepts_imports():
 			continue
-		if data.import_job != null:
+		if data.import_slot.is_live():
 			continue
 		# Positive when we're short of desired once already-incoming
 		# deposits count as "here" and already-reserved withdrawals count
@@ -202,19 +199,19 @@ func _on_slow_tick(_interval: float) -> void:
 		if request_amount <= 0:
 			continue
 		# A pull: the destination is known (this bin), the source is hunted for
-		# by the driver's first action.
-		var new_job: Job = Job.of(&"haul_resource")
+		# by the driver's first action. This bin posted it and is its target B, so
+		# that is where a load hands it back (WI-70).
+		var new_job: Job = Job.of(&"haul_resource").with_origin(JobData.Origin.TARGET_B)
 		new_job.target_b = JobTarget.of_component(self)
 		new_job.resource = resource
 		new_job.count = request_amount
 		new_job.priority = priority
-		data.import_job = new_job
-		new_job.job_end.connect(_on_posted_job_end.bind(data, true), CONNECT_ONE_SHOT)
+		data.import_slot.post(new_job)
 		Global.job_manager.add_job(new_job)
 		import_budget -= request_amount
 	for resource: ResourceData in storage_data:
 		var data := storage_data[resource]
-		if data.export_job != null:
+		if data.export_slot.is_live():
 			continue
 		# The role decides what "surplus" means (WI-65 §4): a GENERAL bin ships
 		# what it holds over its target, an OUTPUT slot ships everything it has,
@@ -225,27 +222,31 @@ func _on_slow_tick(_interval: float) -> void:
 		if surplus <= 0:
 			continue
 		# A push: the source is known (this bin), the destination is hunted for.
-		var new_job: Job = Job.of(&"haul_resource")
+		var new_job: Job = Job.of(&"haul_resource").with_origin(JobData.Origin.TARGET_A)
 		new_job.target_a = JobTarget.of_component(self)
 		new_job.resource = resource
 		new_job.count = surplus
 		new_job.priority = export_priority(resource)
-		data.export_job = new_job
-		new_job.job_end.connect(_on_posted_job_end.bind(data, false), CONNECT_ONE_SHOT)
+		data.export_slot.post(new_job)
 		Global.job_manager.add_job(new_job)
 
-
-## Clears the posted-job pointer when a board job this bin posted ends, so the
-## next scan can post a replacement. The pointer used to be cleared by the job
-## reaching back into its requester; a WI-44 job does not know who posted it, so
-## the poster listens instead - which also means a job ending for ANY reason
-## (cancelled, failed, pawn deleted) frees the slot, where the old path only
-## cleared it on the routes that remembered to.
-func _on_posted_job_end(data: StorageData, was_import: bool) -> void:
-	if was_import:
-		data.import_job = null
-	else:
-		data.export_job = null
+## A haul this bin posted, restored from a save (WI-70 §3). Which slot it belongs
+## in is the job's origin: posted as a pull, this bin is its target B and it fills
+## the import slot; posted as a push, this bin is its target A and it empties the
+## export one. A haul saved before origin existed carries the data default, NONE,
+## is offered to nobody, and costs one duplicate trip on its first load.
+func adopt_restored_job(job: Job) -> bool:
+	if not job.is_type(&"haul_resource") or job.resource == null:
+		return false
+	var data: StorageData = storage_data.get(job.resource)
+	if data == null:
+		return false
+	match job.origin:
+		JobData.Origin.TARGET_B:
+			return data.import_slot.adopt(job)
+		JobData.Origin.TARGET_A:
+			return data.export_slot.adopt(job)
+	return false
 
 func update_storage_ui() -> void:
 	# Both pools, because the bar over the module is "how full is this thing" and
@@ -711,9 +712,9 @@ func withdraw_stacks(resource: ResourceData, quantity: int, use_reserve: bool = 
 # That does NOT mean jobs aren't persisted (the old wording here, false since
 # WI-21): a haul in flight is saved on the pawn carrying it and restored there
 # by SaveManager._load_pawn_jobs, and reservations are re-taken as it resumes.
-# What is re-derived is the board side - the posting scan re-posts from
-# stored/desired. The restored job is not re-linked to import_job/export_job,
-# which is F26 in the 2026-09-18 second-pass audit (03_Bugs_and_Improvements).
+# The restored haul is handed back to this bin's slot by adopt_restored_job
+# (WI-70). What is re-derived is the board side: a haul nobody had claimed is
+# not saved, and the posting scan re-posts it from stored/desired.
 
 ## Shape (WI-45 A4): {"priority": int, "resources": {<id>: {...}}}. The pre-WI-45
 ## shape was the bare resource map with no room for a component-level field;

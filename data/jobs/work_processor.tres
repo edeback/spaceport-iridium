@@ -13,4 +13,5 @@ skill = &"crafting"
 xp_reward = 12.0
 player_cancelable = true
 saveable = true
+origin = 2
 driver = ExtResource("2_driver")

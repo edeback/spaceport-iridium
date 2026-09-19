@@ -224,7 +224,7 @@ func start_job() -> void:
 	# here rather than polled every frame by whatever queued them.
 	while not job_queue.is_empty():
 		var queued_job: Job = job_queue.pop_front()
-		if queued_job.is_valid() and queued_job.can_do_job(self):
+		if queued_job.can_begin(self):
 			_begin_job(queued_job)
 			return
 		queued_job.cancel(true) # cancel implies end_job (lifecycle contract)
@@ -269,6 +269,11 @@ func mark_restored_job(job: Job) -> void:
 ## something has been queued in front of the job since the load, or it can no
 ## longer run, the normal rules take over - a cancelled job leaves its cargo on
 ## the pawn, and the next pick sweeps it as leftovers.
+##
+## "Can no longer run" is Job.can_begin(), not the board's is_valid()/can_do_job():
+## the pickup gate refused every pawn restored carrying a full load of the job's
+## own cargo, and validity can hang on a claim only the resume re-takes (F40,
+## WI-70).
 func _resume_restored_job() -> bool:
 	var restored: Job = _resume_first
 	if restored == null:
@@ -277,7 +282,7 @@ func _resume_restored_job() -> bool:
 	if job_queue.is_empty() or job_queue[0] != restored:
 		return false
 	job_queue.pop_front()
-	if restored.is_valid() and restored.can_do_job(self):
+	if restored.can_begin(self):
 		_begin_job(restored)
 		return true
 	restored.cancel(true) # cancel implies end_job (lifecycle contract)
@@ -288,9 +293,13 @@ func _resume_restored_job() -> bool:
 func _make_store_inventory_job() -> Job:
 	return Job.of(&"store_inventory")
 
+## Every job a pawn begins from its own queue goes through resume_job(), which
+## starts a fresh job normally and puts a restored one back on the action it was
+## saved on (F40, WI-70). Board jobs are never restored, so the board path's
+## start_job() calls are unaffected.
 func _begin_job(job: Job) -> void:
 	current_job = job
-	current_job.start_job(self)
+	current_job.resume_job(self)
 
 ## Adds a job to this pawn's personal queue, checked in start_job() ahead of
 ## the shared board. Use this for queued needs - queue once when the need

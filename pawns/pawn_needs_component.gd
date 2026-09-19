@@ -83,7 +83,8 @@ class NeedDef:
 	var get_max: Callable
 	var duration_hours: float
 	var make_job: Callable
-	var pending_job: Job = null
+	## The job queued for this need, so the decay loop never queues a second.
+	var slot: JobSlot = JobSlot.new()
 	var was_critical: bool = false
 
 	func percent() -> float:
@@ -168,10 +169,9 @@ func _process(delta: float) -> void:
 	for need: NeedDef in _needs:
 		need.set_value.call(float(need.get_value.call()) - sim_hours / need.duration_hours * float(need.get_max.call()))
 		var percent: float = need.percent()
-		if percent < percent_to_look_for_needs and need.pending_job == null:
+		if percent < percent_to_look_for_needs and not need.slot.is_live():
 			var job: Job = need.make_job.call()
-			need.pending_job = job
-			job.job_end.connect(_on_need_job_end.bind(need))
+			need.slot.post(job)
 			owner_pawn.queue_job(job) # start when free
 		if percent < percent_critical:
 			if not need.was_critical:
@@ -191,24 +191,20 @@ func _process(delta: float) -> void:
 	_recompute_happiness()
 	_tick_resignation(sim_hours)
 
-func _on_need_job_end(need: NeedDef) -> void:
-	need.pending_job = null
-
 ## WI-21: adopt a needs job restored from a save so the decay loop treats it as
 ## the already-pending job for its need instead of queuing a second one. On load
-## the component is fresh (pending_job is null), so without this a persisted
+## the component is fresh (every slot is empty), so without this a persisted
 ## eat/sleep/recreate job in the pawn's queue would be doubled by the first
-## _process tick. Matched to its need by job id; no-op for anything else.
-func adopt_restored_need_job(job: Job) -> void:
+## _process tick. Matched to its need by job id; declines anything else, which is
+## what lets Job.offer_to_owner() ask every pawn component in turn (WI-70).
+func adopt_restored_job(job: Job) -> bool:
 	var target_name: StringName = _need_name_for_job(job)
 	if target_name == &"":
-		return
+		return false
 	for need: NeedDef in _needs:
 		if need.need_name == target_name:
-			if need.pending_job == null:
-				need.pending_job = job
-				job.job_end.connect(_on_need_job_end.bind(need))
-			return
+			return need.slot.adopt(job)
+	return false
 
 func _need_name_for_job(job: Job) -> StringName:
 	if job.is_type(&"eat"):
@@ -224,11 +220,11 @@ func _need_name_for_job(job: Job) -> StringName:
 func _promote_critical_jobs() -> void:
 	var criticals: Array[NeedDef] = []
 	for need: NeedDef in _needs:
-		if need.was_critical and need.pending_job != null:
+		if need.was_critical and need.slot.is_live():
 			criticals.append(need)
 	criticals.sort_custom(func(a: NeedDef, b: NeedDef) -> bool: return a.percent() > b.percent())
 	for need: NeedDef in criticals:
-		owner_pawn.promote_queued_job(need.pending_job)
+		owner_pawn.promote_queued_job(need.slot.job())
 
 ## True while any enabled need sits in its critical band - the one thing about a
 ## crew member that makes their roster row spend amber short of a resignation

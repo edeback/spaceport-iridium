@@ -46,6 +46,16 @@ class StubDriver:
 	## install_driver, so tests control both the saving and the loading shape.
 	var plan_names: PackedStringArray = ["walk", "work"]
 	var claims_at: Dictionary[int, Array] = {}
+	## What the board's pickup gate answers.
+	var claimable: bool = true
+	## What is_valid() answers.
+	var valid: bool = true
+
+	func can_do(_job: Job, _pawn: PawnBase) -> bool:
+		return claimable
+
+	func is_valid(_job: Job) -> bool:
+		return valid
 
 	func make_actions(_job: Job) -> Array[ActionBase]:
 		var out: Array[ActionBase] = []
@@ -318,6 +328,55 @@ func test_resume_on_an_unstarted_job_just_starts_it() -> void:
 	job.install_driver(StubDriver.new())
 	job.resume_job(null)
 	assert_eq(job.action_index(), 0, "an unstarted job resumes by starting normally")
+
+# --- beginning a restored job (F40, WI-70) -------------------------------------
+#
+# resume_job() had no caller: every restored job went through start_job() and
+# replayed from its first step. PawnBase now begins every job through
+# resume_job(), and asks can_begin() rather than the board's pickup gate.
+
+func test_a_restored_job_awaits_resume_until_it_is_resumed() -> void:
+	var restored: Job = _restore(_running_job(1).to_dict())
+	assert_true(restored.awaits_resume(), "restored on action 1, not yet resumed")
+	restored.resume_job(null)
+	assert_false(restored.awaits_resume(), "resumed once, and only once")
+	assert_eq(restored.action_index(), 1, "on the action it was saved on")
+
+func test_only_a_job_restored_mid_sequence_awaits_resume() -> void:
+	var fresh := Job.create(_data())
+	assert_false(fresh.awaits_resume(), "a fresh job starts")
+	var queued := Job.create(_data())
+	var restored_queued: Job = _restore(queued.to_dict())
+	assert_false(restored_queued.awaits_resume(), "a job restored from a queue was never started")
+	var ended: Job = _restore(_running_job(1).to_dict())
+	ended.end(Job.Outcome.FAILED)
+	assert_false(ended.awaits_resume(), "an ended job awaits nothing")
+
+func test_a_job_awaiting_resume_is_not_asked_the_pickup_gate() -> void:
+	# A pawn restored carrying a full load of this job's own cargo has no room to
+	# pick anything up, and the board's can_do() says so. That refused every
+	# restored full load and sent the cargo to the sweep.
+	var restored: Job = _restore(_running_job(1).to_dict())
+	(restored.driver() as StubDriver).claimable = false
+	assert_true(restored.can_begin(null), "a resume proves itself through its claims instead")
+	var fresh := Job.create(_data())
+	var driver := StubDriver.new()
+	driver.claimable = false
+	fresh.install_driver(driver)
+	assert_false(fresh.can_begin(null), "while a fresh job still has to be claimable")
+
+func test_a_job_awaiting_resume_is_not_asked_its_validity_until_it_has_resumed() -> void:
+	# A pile collection between reserving and taking is valid only while it holds
+	# its pile claim, and claims are never saved - so asked before the resume, every
+	# one restored on its walk to the pile read as invalid and was cancelled.
+	var restored: Job = _restore(_running_job(1).to_dict())
+	var stub: StubDriver = restored.driver() as StubDriver
+	stub.valid = false
+	assert_true(restored.can_begin(null), "begun, and resumed")
+	restored.resume_job(null)
+	assert_false(restored.is_ended(), "the resume itself does not ask")
+	restored.process_job(0.1)
+	assert_true(restored.is_failed(), "the first frame does, with the claims back in hand")
 
 # --- registry -----------------------------------------------------------------
 

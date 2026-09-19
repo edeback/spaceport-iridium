@@ -164,7 +164,7 @@ func start_job() -> void:
 	# Personal queue next: chained followups, queued needs (recharge/repair).
 	while not job_queue.is_empty():
 		var queued_job: Job = job_queue.pop_front()
-		if queued_job.is_valid() and queued_job.can_do_job(self):
+		if queued_job.can_begin(self):
 			_begin_job(queued_job)
 			return
 		queued_job.cancel(true) # cancel implies end_job (lifecycle contract)
@@ -184,7 +184,7 @@ func _start_recharge_only() -> void:
 		if job_queue[i].data != null and job_queue[i].data.id == &"recharge":
 			var job: Job = job_queue[i]
 			job_queue.remove_at(i)
-			if job.is_valid() and job.can_do_job(self):
+			if job.can_begin(self):
 				_begin_job(job)
 				return
 			job.cancel(true)

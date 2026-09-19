@@ -68,7 +68,7 @@ var _trip_cooldown: float = 0.0
 var _came_in_from_outside: bool = false
 var _was_outside: bool = false
 ## The trip this component posted, so it never posts a second one alongside it.
-var _trip: Job = null
+var _trip: JobSlot = JobSlot.new()
 var _mood_applied: bool = false
 ## Edge-detect for the suit-up alert: raised when a trip starts, cleared when the
 ## suit is on. Not saved (WI-45 A7) - the latch only suppresses a repeat.
@@ -220,12 +220,7 @@ static func _is_airlock(module: ModuleBase) -> bool:
 # --- the trip -----------------------------------------------------------------
 
 func _trip_is_live() -> bool:
-	if _trip == null:
-		return false
-	if _trip.is_ended():
-		_trip = null
-		return false
-	return true
+	return _trip.is_live()
 
 ## Whether a trip to an airlock is under way (or queued). For the cheat dump and
 ## tests; the rule itself reads _trip_is_live() through the Situation.
@@ -236,15 +231,15 @@ func has_live_trip() -> bool:
 func trip_cooldown_remaining() -> float:
 	return _trip_cooldown
 
-## Re-links a change_suit job restored from a save (WI-68 F2).
+## Re-links a change_suit job restored from a save (WI-68 F2, WI-70).
 ##
-## _trip is not saved, but the job it pointed at is - SaveManager restores it
+## The trip is not saved, but the job it pointed at is - SaveManager restores it
 ## into the pawn's queue. Without this the component saw no trip, posted a
 ## second one, and the orphaned first walked an already-suited pawn to an
-## airlock and back. Same shape as the needs/recharge/repair/treatment adopters
-## in SaveManager._adopt_if_need_job, which is the only caller.
-func adopt_restored_trip(job: Job) -> void:
-	_trip = job
+## airlock and back. Job.offer_to_owner() asks every component on the pawn, so
+## this declines anything that isn't a trip.
+func adopt_restored_job(job: Job) -> bool:
+	return job.is_type(CHANGE_SUIT_JOB) and _trip.adopt(job)
 
 ## Posts the walk to an airlock.
 ##
@@ -263,7 +258,7 @@ func _start_trip(putting_on: bool, module: ModuleBase, environment: SuitRules.Ro
 		if putting_on:
 			_raise_alert(module, environment, true)
 		return
-	_trip = job
+	_trip.post(job)
 	if putting_on:
 		_raise_alert(module, environment, false)
 		owner_pawn.interrupt_with_job(job)
@@ -279,7 +274,7 @@ func hold_remaining() -> float:
 ## Called by Action_ChangeSuit when the change actually happens, so the flip lives
 ## with the action that earned it rather than being guessed at from here.
 ##
-## `job` is the trip that made the change. Only that trip may clear _trip
+## `job` is the trip that made the change. Only that trip may clear the slot
 ## (WI-68 F2): the cheat console flips a suit with no job at all, and clearing
 ## then would orphan a trip still walking - the same leak of the pointer the
 ## save/load bug had. A live trip simply finishes and applies its own change.
@@ -289,23 +284,20 @@ func apply_change(putting_on: bool, job: Job = null) -> void:
 		_hold_remaining = maxf(_hold_remaining, harm_hold_hours)
 	else:
 		_hold_remaining = 0.0
-	if job != null and job == _trip:
-		_trip = null
+	_trip.clear_if(job)
 
 ## The change was refused at the airlock (it stopped being habitable during the
 ## walk) or the trip failed. Throttle before deciding again.
 ##
-## Ignored unless `job` IS the current trip (WI-68 F2). _start_trip sets _trip
-## to the new job *before* interrupt_with_job cancels whatever was running; if
-## that was a stale change_suit job, its driver reports the failure here, and
-## clearing unconditionally would null the new trip's pointer - letting the next
-## slow tick post yet another, which interrupts this one, and so on, with the
-## six-second change at the rack never finishing.
+## Ignored unless `job` IS the current trip (WI-68 F2). _start_trip posts the new
+## job *before* interrupt_with_job cancels whatever was running; if that was a
+## stale change_suit job, its driver reports the failure here, and clearing
+## unconditionally would drop the new trip - letting the next slow tick post yet
+## another, which interrupts this one, and so on, with the six-second change at
+## the rack never finishing. JobSlot.clear_if is that rule.
 func trip_refused(job: Job) -> void:
-	if job == null or job != _trip:
-		return
-	_trip = null
-	_trip_cooldown = trip_retry_hours
+	if _trip.clear_if(job):
+		_trip_cooldown = trip_retry_hours
 
 # --- the alert ----------------------------------------------------------------
 

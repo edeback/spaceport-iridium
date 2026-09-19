@@ -32,10 +32,10 @@ var contents: Dictionary[ResourceData, ResourceStackContainer] = {}
 ## ResourceData -> amount currently claimed by an in-flight the pile-collection job,
 ## so two pawns can't both walk over to collect the same last few units.
 var reserved: Dictionary[ResourceData, int] = {}
-## ResourceData -> the collection job currently responsible for it, so
-## add_stacks() doesn't spam the job board with a fresh job every time more
-## material lands on an already-being-collected pile.
-var active_jobs: Dictionary[ResourceData, Job] = {}
+## ResourceData -> the slot holding the collection job currently responsible for
+## it, so add_stacks() doesn't spam the job board with a fresh job every time more
+## material lands on an already-being-collected pile. Created on first use.
+var _collect_slots: Dictionary[ResourceData, JobSlot] = {}
 ## ResourceData -> its claimable face (WI-44). Memoised because the ClaimRegistry
 ## matches claims by object identity, so a fresh PileStock per call would make
 ## every release miss.
@@ -98,8 +98,15 @@ func is_empty() -> bool:
 	return true
 
 ## Adds real stacks (preserving instance_data - ore richness etc survives
-## being dumped or ejected same as it survives a normal storage deposit).
-func add_stacks(resource: ResourceData, stacks: Array[ResourceStack]) -> void:
+## being dumped or ejected same as it survives a normal storage deposit), and
+## posts a collection job for them.
+##
+## `post_job` false is the load path's (WI-70): a restored pile must not post
+## before the pawn section has handed back the collect job a crew member was
+## already on, or that job finds the slot taken and runs beside a duplicate
+## (F26). SaveManager posts for it once the load is done - see
+## ensure_collection_jobs.
+func add_stacks(resource: ResourceData, stacks: Array[ResourceStack], post_job: bool = true) -> void:
 	if resource == null or stacks.is_empty():
 		return
 	var container: ResourceStackContainer = contents.get(resource)
@@ -110,7 +117,8 @@ func add_stacks(resource: ResourceData, stacks: Array[ResourceStack]) -> void:
 	for stack: ResourceStack in stacks:
 		container.add_stack(stack)
 	pile_changed.emit(resource, container.stored)
-	_ensure_collection_job(resource)
+	if post_job:
+		_ensure_collection_job(resource)
 
 func add_amount(resource: ResourceData, amount: int) -> void:
 	if resource == null or amount <= 0:
@@ -163,25 +171,55 @@ func withdraw_stacks(resource: ResourceData, amount: int) -> Array[ResourceStack
 		_despawn()
 	return withdrawn
 
+## Posts a collection job for every resource here that nobody is collecting. The
+## load path's deferred half of add_stacks(..., false).
+func ensure_collection_jobs() -> void:
+	for resource: ResourceData in contents:
+		if get_available(resource) > 0:
+			_ensure_collection_job(resource)
+
+## One live job per resource. The old check here also re-posted over a live job
+## that had gone invalid, but a collect job waiting on the board is valid exactly
+## while the pile has stock nobody has claimed - which is the only time anything
+## calls this - and past its pile claim it is valid by construction. A job the
+## board does find invalid is cancelled there, and the handler re-posts.
 func _ensure_collection_job(resource: ResourceData) -> void:
-	var existing: Job = active_jobs.get(resource)
-	if existing != null and not existing.is_ended() and existing.is_valid():
+	if not is_inside_tree() or Global.job_manager == null:
+		return
+	var slot: JobSlot = _slot_for(resource)
+	if slot.is_live():
 		return
 	var job: Job = Job.of(&"collect_pile")
 	job.target_a = JobTarget.of_pile(self)
 	job.resource = resource
-	active_jobs[resource] = job
-	job.job_end.connect(_on_job_end.bind(resource, job), CONNECT_ONE_SHOT)
+	slot.post(job)
 	Global.job_manager.add_job(job)
 
-func _on_job_end(resource: ResourceData, job: Job) -> void:
-	if active_jobs.get(resource) == job:
-		active_jobs.erase(resource)
+func _slot_for(resource: ResourceData) -> JobSlot:
+	var slot: JobSlot = _collect_slots.get(resource)
+	if slot == null:
+		slot = JobSlot.new(_on_collect_job_end)
+		_collect_slots[resource] = slot
+	return slot
+
+## Whether a collection job for `resource` is live. For the tests.
+func is_collecting(resource: ResourceData) -> bool:
+	var slot: JobSlot = _collect_slots.get(resource)
+	return slot != null and slot.is_live()
+
+func _on_collect_job_end(job: Job, _completed: bool) -> void:
 	# Job may have only cleared a partial trip (carrying capacity, or the
 	# storage it found only had room for some) - re-post for the remainder,
-	# same "next trip picks up the rest" pattern the haul job uses.
-	if get_available(resource) > 0:
-		_ensure_collection_job(resource)
+	# same "next trip picks up the rest" pattern the haul job uses. Whatever
+	# ended it: the check is only ever "is there anything left to fetch".
+	if job.resource != null and get_available(job.resource) > 0:
+		_ensure_collection_job(job.resource)
+
+## The collect job a crew member was on when the save was written (WI-70 §3).
+func adopt_restored_job(job: Job) -> bool:
+	if not job.is_type(&"collect_pile") or job.resource == null:
+		return false
+	return _slot_for(job.resource).adopt(job)
 
 func _despawn() -> void:
 	despawning.emit()

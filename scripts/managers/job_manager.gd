@@ -10,11 +10,15 @@ extends Node
 var _board: Dictionary[JobData.Category, Array] = {}
 var _all_categories: Array[JobData.Category] = []
 
-func _ready() -> void:
-	Global.job_manager = self
+## The queues exist from construction rather than from _ready, so the board can
+## be driven without a scene tree - which is how test_job_manager.gd pins F32.
+func _init() -> void:
 	for category: int in JobData.Category.values():
 		_board[category] = []
 		_all_categories.append(category)
+
+func _ready() -> void:
+	Global.job_manager = self
 	# Aging: bump every waiting job's age, then re-sort. Ages grow uniformly
 	# but bonuses cap out, so relative effective order genuinely changes over
 	# time; queues are small (tens of jobs), so a 4 Hz sim-time sort is
@@ -72,10 +76,17 @@ func find_job(pawn: PawnBase, allowed_categories: Array[JobData.Category] = []) 
 		var job_to_do: Job = queues[best_index][cursors[best_index]]
 		# Check that the job is still possible. Cancel (not just end) so the
 		# requester releases its reservations / import-export slots.
+		#
+		# Off the board FIRST, then cancel (F32, WI-70 §7). The cancel emits
+		# job_end synchronously, and an owner that re-posts from its handler
+		# inserts into this very queue - which shifted the job under the cursor,
+		# so the remove_at that followed took a valid job off the board and left
+		# the dead one on it. At worst the insert now makes this scan skip one
+		# job, which the next scan sees.
 		if !job_to_do.is_valid():
-			job_to_do.cancel(true)
 			queues[best_index].remove_at(cursors[best_index])
 			cursors[best_index] -= 1
+			job_to_do.cancel(true)
 			continue
 		if job_to_do.can_do_job(pawn):
 			queues[best_index].remove_at(cursors[best_index])

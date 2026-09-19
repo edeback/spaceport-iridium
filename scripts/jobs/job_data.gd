@@ -13,6 +13,21 @@ extends Resource
 ## Which board queue jobs of this type live in.
 enum Category { HAUL, BUILD, WORK, NEEDS, MOVE, MISC }
 
+## Who posted a job of this type and remembers it (WI-70 §3) - so a job restored
+## from a save can be handed back to that owner instead of the owner posting a
+## duplicate beside it.
+##
+## - `NONE`: nobody remembers it (idle, a move order, a mining trip).
+## - `PAWN`: a component on the pawn the job is queued for (a need, a suit trip).
+## - `TARGET_A` / `TARGET_B` / `TARGET_C`: whatever that target slot names - the
+##   component for a component target, the module for a module target, the pile
+##   for a pile target.
+##
+## The owner receives it through a duck-typed `adopt_restored_job(job) -> bool`,
+## in the claimable contract's shape, so a mod's component adopts its own jobs
+## with no core edit. See Job.offer_to_owner().
+enum Origin { NONE, PAWN, TARGET_A, TARGET_B, TARGET_C }
+
 @export var id: StringName = &""
 @export var display_name: String = ""
 
@@ -39,6 +54,12 @@ enum Category { HAUL, BUILD, WORK, NEEDS, MOVE, MISC }
 ## NOT registered" list that used to live as a comment in job_serializer.gd:
 ## idle, idle-wander, store-inventory, leave-station.
 @export var saveable: bool = true
+
+## Who re-adopts a restored job of this type (see [enum Origin]). A job type an
+## owner remembers MUST declare it, or every load posts that owner a duplicate -
+## which is F26, and before it F2. Overridable per post with Job.with_origin() for
+## the one type whose owner depends on direction: a haul.
+@export var origin: Origin = Origin.NONE
 
 ## Script whose class extends JobDriver - the per-type behaviour. Held as a
 ## Script reference rather than a class_name string so that renaming the driver

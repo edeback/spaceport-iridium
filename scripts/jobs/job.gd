@@ -50,6 +50,10 @@ var priority: int = 0
 var age: float = 0.0
 ## Optional workspace gate (WI-23). Unchanged semantics.
 var workspace: WorkspaceComponent = null
+## Who re-adopts this job after a load (WI-70 §3). Defaults from the type's
+## JobData.origin; with_origin() overrides it for a haul, whose poster depends on
+## direction. Saved only when it differs from the type's default.
+var origin: JobData.Origin = JobData.Origin.NONE
 
 # --- runner state -------------------------------------------------------------
 var _driver: JobDriver = null
@@ -64,6 +68,9 @@ var _elapsed: float = 0.0
 ## DURATION progress lives on the runner rather than in the action, so without
 ## this a job saved four seconds into a six-second wait would restart the wait.
 var _resume_elapsed: float = 0.0
+## Set by a restore that put the job back on its saved action; cleared once a pawn
+## resumes it. See awaits_resume().
+var _awaiting_resume: bool = false
 
 enum MoveState { NONE, PENDING, ARRIVED, FAILED }
 var _move_state: MoveState = MoveState.NONE
@@ -77,6 +84,8 @@ var registry: ClaimRegistry = null
 static func create(job_data: JobData) -> Job:
 	var job := Job.new()
 	job.data = job_data
+	if job_data != null:
+		job.origin = job_data.origin
 	return job
 
 ## The posting-site constructor: `Job.of(&"haul_resource").with_resource(r)`.
@@ -111,6 +120,10 @@ func with_resource(new_resource: ResourceData) -> Job:
 
 func with_priority(new_priority: int) -> Job:
 	priority = new_priority
+	return self
+
+func with_origin(new_origin: JobData.Origin) -> Job:
+	origin = new_origin
 	return self
 
 # --- target access ------------------------------------------------------------
@@ -203,6 +216,30 @@ func can_do_job(candidate: PawnBase) -> bool:
 		return false
 	return _driver.can_do(self, candidate)
 
+## True for a job restored part-way through its sequence that no pawn has resumed
+## yet. Only a pawn's own restored job is ever in this state; board jobs are not
+## saved, and a job restored from a pawn's queue was never started.
+func awaits_resume() -> bool:
+	return _awaiting_resume and not _ended
+
+## Whether `candidate` may begin this job now: the board's claimability check for
+## a fresh job, and always for one awaiting resume (F40, WI-70).
+##
+## Neither of the board's questions can be asked of a restored job before it
+## resumes. can_do() is a PICKUP gate - is there room to carry, is there somewhere
+## to take it - and asked of a pawn restored mid-carry it refused every full load,
+## because the pawn's hands were full of that job's own cargo. is_valid() can hang
+## on a claim: a pile collection between reserving and taking is valid only while
+## it holds its pile claim, and claims are never saved, so every one restored on
+## its walk to the pile read as invalid. Both were cancelled before they moved.
+## A resumed job proves itself instead: resume_job() re-takes the claims its
+## action needs and ends it cleanly if it cannot, and process_job() asks
+## is_valid() on its first frame, with the claims back in hand.
+func can_begin(candidate: PawnBase) -> bool:
+	if awaits_resume():
+		return true
+	return can_do_job(candidate)
+
 func explain_block(candidate: PawnBase) -> String:
 	if _driver == null:
 		_ensure_board_driver()
@@ -230,6 +267,7 @@ func start_job(claiming_pawn: PawnBase) -> void:
 		return
 	pawn = claiming_pawn
 	_started = true
+	_awaiting_resume = false
 	_ensure_board_driver()
 	if _driver == null:
 		push_error("Job '%s' has no usable driver script" % _id_string())
@@ -374,8 +412,17 @@ func is_ended() -> bool:
 func is_finished() -> bool:
 	return _ended and _outcome == Outcome.SUCCEEDED
 
+## Ended as FAILED - and only FAILED. For the runner and its tests. An owner
+## deciding whether to re-post wants [method did_not_complete]: an INTERRUPTED job
+## didn't finish either, and asking this instead is F25 (WI-70). A source sweep
+## fails on any call to it outside `scripts/jobs/`.
 func is_failed() -> bool:
 	return _ended and _outcome == Outcome.FAILED
+
+## Ended without finishing: FAILED or INTERRUPTED. "It didn't finish, so re-post"
+## is the question every owner asks.
+func did_not_complete() -> bool:
+	return _ended and _outcome != Outcome.SUCCEEDED
 
 func outcome() -> Outcome:
 	return _outcome
@@ -570,6 +617,10 @@ func to_dict() -> Dictionary:
 		out["resource"] = String(resource.id)
 	if priority != 0:
 		out["priority"] = priority
+	# Only a per-post override is written; every other job's owner comes from its
+	# .tres, which is also what lets a save predating origin be adopted.
+	if origin != data.origin:
+		out["origin"] = int(origin)
 	# A job still sitting in a pawn's queue has never been started, so it has no
 	# actions and no index to protect - it restores by running from the top.
 	if _started:
@@ -632,6 +683,8 @@ static func restore(encoded: Dictionary, job_data: JobData, job_resource: Resour
 static func restore_into(job: Job, encoded: Dictionary) -> Job:
 	job.count = int(encoded.get("count", 0))
 	job.priority = int(encoded.get("priority", 0))
+	if encoded.has("origin"):
+		job.origin = int(encoded["origin"]) as JobData.Origin
 	job.target_a = JobTarget.from_dict(encoded.get("a", {}))
 	job.target_b = JobTarget.from_dict(encoded.get("b", {}))
 	job.target_c = JobTarget.from_dict(encoded.get("c", {}))
@@ -684,7 +737,48 @@ func _resume_at(saved_index: int, saved_signature: String, states: Dictionary) -
 			_actions[i].load_state(states[key] as Dictionary)
 	_index = saved_index
 	_started = true
+	_awaiting_resume = true
 	return true
+
+## Hands a job restored from a save back to whoever posted it (WI-70 §3), so that
+## owner holds it in its JobSlot rather than posting a second one beside it.
+## Returns whether anyone took it.
+##
+## `holder` is the pawn the job was restored onto; `pawn` is still null here,
+## because it is only set once the job starts or resumes.
+##
+## The owner answers through a duck-typed `adopt_restored_job(job) -> bool`,
+## and declining is always safe: an unadopted job still runs, and at worst its
+## owner posts a duplicate once, which is what every load did before this.
+## Nobody is asked for `NONE`, and nobody is found for a PAWN job whose component
+## is missing (a mod removed since the save).
+func offer_to_owner(holder: PawnBase) -> bool:
+	match origin:
+		JobData.Origin.NONE:
+			return false
+		JobData.Origin.PAWN:
+			if holder == null:
+				return false
+			for component: PawnComponentBase in holder.components:
+				if _offer(component):
+					return true
+			return false
+		JobData.Origin.TARGET_A:
+			return _offer_to_target(target_a)
+		JobData.Origin.TARGET_B:
+			return _offer_to_target(target_b)
+		JobData.Origin.TARGET_C:
+			return _offer_to_target(target_c)
+	return false
+
+func _offer_to_target(slot: JobTarget) -> bool:
+	return slot != null and _offer(slot.object())
+
+func _offer(candidate: Object) -> bool:
+	if candidate == null or not is_instance_valid(candidate) \
+			or not candidate.has_method(&"adopt_restored_job"):
+		return false
+	return bool(candidate.call(&"adopt_restored_job", self))
 
 ## Second half of the restore, run once the pawn is known: re-acquires the claims
 ## the current action needs and enters that action through on_resume().
@@ -695,13 +789,21 @@ func _resume_at(saved_index: int, saved_signature: String, states: Dictionary) -
 ## be re-taken (someone else got the bed during load), the job fails cleanly and
 ## whatever queued it will queue it again, which is still better than the
 ## pre-WI-44 behaviour of replaying the whole job from its first step.
+##
+## PawnBase._begin_job() is the caller, for every job a pawn begins, so this is
+## also the ordinary start for anything not awaiting a resume. Until WI-70 (F40)
+## nothing called this at all: every restored job went through start_job(), which
+## rebuilt its actions and replayed them from the first step, so the saved index,
+## the per-action state, every action's on_resume() and F39's elapsed time were
+## all written and never read.
 func resume_job(claiming_pawn: PawnBase) -> void:
 	if _ended:
 		return
-	if not _started or _index < 0:
+	if not awaits_resume():
 		# Never actually started - the ordinary path is correct.
 		start_job(claiming_pawn)
 		return
+	_awaiting_resume = false
 	pawn = claiming_pawn
 	var ledger: ClaimRegistry = _claims()
 	for spec: ClaimSpec in _driver.required_claims(self, _index):

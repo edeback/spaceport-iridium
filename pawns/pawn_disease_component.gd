@@ -38,7 +38,8 @@ signal diseases_changed
 ## disease_id -> {"stage": int, "stage_hours": float, "treat_progress": float}.
 var _active: Dictionary[StringName, Dictionary] = {}
 
-var _treatment_job: Job = null
+## The pending/active trip to a Medical Bay, so the seek loop never queues two.
+var _treatment_slot: JobSlot = JobSlot.new(_on_treatment_end)
 var _retry_cooldown: float = 0.0
 var _stranded_alerted: bool = false
 ## Cached sibling - component _ready order isn't guaranteed, resolve lazily.
@@ -321,24 +322,23 @@ func _maybe_seek_treatment() -> void:
 	if not wants_treatment():
 		_stranded_alerted = false
 		return
-	if _treatment_job != null and not _treatment_job.is_ended():
+	var pending: Job = _treatment_slot.job()
+	if pending != null:
 		# Already queued/running; promote it to the front if we've turned critical.
 		if _is_critical():
-			owner_pawn.promote_queued_job(_treatment_job)
+			owner_pawn.promote_queued_job(pending)
 		return
 	if _retry_cooldown > 0.0:
 		return
-	_treatment_job = Job.of(&"get_treatment")
-	_treatment_job.job_end.connect(_on_treatment_end.bind(_treatment_job), CONNECT_ONE_SHOT)
+	var job: Job = Job.of(&"get_treatment")
+	_treatment_slot.post(job)
 	# Non-disruptive: treatment runs after the current job finishes (the WI-05
 	# needs pattern), unless critical, in which case it jumps the queue front.
-	owner_pawn.queue_job(_treatment_job)
+	owner_pawn.queue_job(job)
 	if _is_critical():
-		owner_pawn.promote_queued_job(_treatment_job)
+		owner_pawn.promote_queued_job(job)
 
-func _on_treatment_end(job: Job) -> void:
-	if job == _treatment_job:
-		_treatment_job = null
+func _on_treatment_end(_job: Job, _completed: bool) -> void:
 	# Still wanting treatment after the attempt (no reachable bay / all bunks full):
 	# throttle the next try and alert once so the player knows capacity is short.
 	if wants_treatment():
@@ -353,11 +353,9 @@ func _on_treatment_end(job: Job) -> void:
 		_stranded_alerted = false
 
 ## Re-link a treatment job restored from a save so the seek loop treats it as the
-## already-pending job (mirrors adopt_restored_repair_job).
-func adopt_restored_treatment_job(job: Job) -> void:
-	if _treatment_job == null:
-		_treatment_job = job
-		job.job_end.connect(_on_treatment_end.bind(job), CONNECT_ONE_SHOT)
+## already-pending job (WI-70; mirrors RobotIntegrityComponent.adopt_restored_job).
+func adopt_restored_job(job: Job) -> bool:
+	return job.is_type(&"get_treatment") and _treatment_slot.adopt(job)
 
 # --- helpers ------------------------------------------------------------------
 

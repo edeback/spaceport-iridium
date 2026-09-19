@@ -103,6 +103,8 @@ Every manager nulls its own `Global` slot in `_exit_tree`, the pattern `StorySta
 
 If WI-70 §6's measurement shows the ~43-object residual wasn't board jobs, the hunt continues here, with the first audit's recipe: bisect by class, not by `--verbose`, which names only base classes. Record what it was.
 
+> *(2026-09-19, WI-70 §6 measured it: **there is nothing to hunt.** The exit-time leak count doesn't grow with the number of loads, before WI-70 or after: on the real quicksave it was 635 / 634 / 630 after 1 / 3 / 5 loads on the old code and 635 / 631 / 631 on the new. A fresh new game with no load leaks 597-602. WI-68's "two loads: 631 against a fresh boot's 544" compared a loaded game against a new game, so the ~40 is a one-time difference in what a loaded station has resolved and cached, not a per-load leak. The board-job cycles WI-70 removed were real, but they broke themselves: freeing an owner disconnects it as a signal target, which drops the bound job. Drop this section unless something else shows a per-load growth.)*
+
 ## Files to touch
 
 | | Files |

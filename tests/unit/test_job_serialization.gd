@@ -60,6 +60,76 @@ func test_ordinary_job_types_do_persist() -> void:
 		if data != null:
 			assert_true(data.saveable, "'%s' persists" % id)
 
+# --- declared owners (WI-70 §3) ------------------------------------------------
+#
+# A restored job goes back to the owner its type declares. A type an owner
+# remembers that declares nobody posts that owner a duplicate on every load -
+# F26, and F2 before it - so every type is listed here and a new one has to be
+# added on purpose.
+
+const ORIGINS: Dictionary[StringName, JobData.Origin] = {
+	&"eat": JobData.Origin.PAWN,
+	&"sleep": JobData.Origin.PAWN,
+	&"recreate": JobData.Origin.PAWN,
+	&"shop": JobData.Origin.PAWN,
+	&"recharge": JobData.Origin.PAWN,
+	&"get_repaired": JobData.Origin.PAWN,
+	&"get_treatment": JobData.Origin.PAWN,
+	&"change_suit": JobData.Origin.PAWN,
+	&"construct_module": JobData.Origin.TARGET_A,
+	&"deconstruct_module": JobData.Origin.TARGET_A,
+	&"work_processor": JobData.Origin.TARGET_A,
+	&"doctor": JobData.Origin.TARGET_A,
+	&"repair_module": JobData.Origin.TARGET_A,
+	&"collect_pile": JobData.Origin.TARGET_A,
+	# Set per post: a pull is its sink's (TARGET_B), a push its source's (TARGET_A).
+	&"haul_resource": JobData.Origin.NONE,
+	&"idle": JobData.Origin.NONE,
+	&"idle_wander": JobData.Origin.NONE,
+	&"wait": JobData.Origin.NONE,
+	&"move_to_location": JobData.Origin.NONE,
+	&"store_inventory": JobData.Origin.NONE,
+	&"leave_station": JobData.Origin.NONE,
+	&"mine_asteroid": JobData.Origin.NONE,
+}
+
+func test_every_job_type_declares_who_adopts_it() -> void:
+	for data: JobData in JobDataRegistry.all():
+		assert_true(ORIGINS.has(data.id),
+			"'%s' is new: decide who adopts it after a load, and list it here" % data.id)
+		if ORIGINS.has(data.id):
+			assert_eq(data.origin, ORIGINS[data.id], "'%s' declares %s" % [data.id,
+				JobData.Origin.keys()[ORIGINS[data.id]]])
+
+func test_a_job_takes_its_origin_from_its_type() -> void:
+	var job: Job = Job.create(JobDataRegistry.get_data(&"construct_module"))
+	assert_eq(job.origin, JobData.Origin.TARGET_A)
+
+func test_the_data_default_origin_is_not_written() -> void:
+	var job: Job = Job.create(JobDataRegistry.get_data(&"construct_module"))
+	assert_false(job.to_dict().has("origin"), "every type's default comes from its .tres")
+
+func test_a_per_post_origin_round_trips() -> void:
+	var haul_data: JobData = JobDataRegistry.get_data(&"haul_resource")
+	var pull: Job = Job.create(haul_data).with_origin(JobData.Origin.TARGET_B)
+	var encoded: Dictionary = pull.to_dict()
+	assert_true(encoded.has("origin"), "an override is written")
+	var restored: Job = Job.restore(encoded, haul_data, null, null)
+	assert_not_null(restored)
+	if restored != null:
+		assert_eq(restored.origin, JobData.Origin.TARGET_B, "and read back")
+
+func test_a_haul_from_before_origin_restores_as_nobodys() -> void:
+	# An old save's haul has no "origin" key. It takes the data default and is
+	# offered to nobody: one duplicate trip on its first load, which was every
+	# type's behaviour before WI-70. SAVE_VERSION does not move for it.
+	var haul_data: JobData = JobDataRegistry.get_data(&"haul_resource")
+	var restored: Job = Job.restore({"def": "haul_resource", "index": -1}, haul_data, null, null)
+	assert_not_null(restored)
+	if restored != null:
+		assert_eq(restored.origin, JobData.Origin.NONE)
+		assert_false(restored.offer_to_owner(null), "and nobody is asked")
+
 # --- SaveManager ref-helper null guards ---------------------------------------
 
 func test_component_ref_null_is_empty() -> void:

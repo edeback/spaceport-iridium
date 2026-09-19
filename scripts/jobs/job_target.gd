@@ -116,6 +116,14 @@ func pile() -> ResourcePile:
 func cell() -> Vector2i:
 	return _cell
 
+## The live object this target names, whatever its kind - the module, component,
+## pawn, asteroid or pile - or null for a cell, an unset slot or a freed object.
+## What Job.offer_to_owner() hands a restored job back to (WI-70).
+func object() -> Object:
+	if kind == Kind.CELL or not is_alive():
+		return null
+	return _object
+
 ## The node a movement action should path to. For a component that's its owning
 ## module (you walk to the module, not to the child node); for a module, itself;
 ## for a free-floating pile or an asteroid, the thing itself, which is how

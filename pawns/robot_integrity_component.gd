@@ -32,7 +32,8 @@ var integrity: float = integrity_max:
 			integrity_changed.emit(integrity)
 signal integrity_changed(new_integrity: float)
 
-var _repair_job: Job = null
+## The pending/active trip to a Repair Bay, so the seek loop never queues two.
+var _repair_slot: JobSlot = JobSlot.new(_on_repair_end)
 var _retry_cooldown: float = 0.0
 var _stranded_alerted: bool = false
 ## Guards the destruction path against re-entry (a second apply_damage during
@@ -91,19 +92,17 @@ func _maybe_seek_repair() -> void:
 	if integrity_percent() >= repair_seek_threshold_percent:
 		_stranded_alerted = false
 		return
-	if _repair_job != null and not _repair_job.is_ended():
+	if _repair_slot.is_live():
 		return
 	if _retry_cooldown > 0.0:
 		return
-	_repair_job = Job.of(&"get_repaired")
-	_repair_job.job_end.connect(_on_repair_end.bind(_repair_job), CONNECT_ONE_SHOT)
+	var job: Job = Job.of(&"get_repaired")
+	_repair_slot.post(job)
 	# Non-disruptive: repair runs after the current job finishes (unlike the
 	# zero-energy preempt) - damage doesn't stop the robot working.
-	owner_pawn.queue_job(_repair_job)
+	owner_pawn.queue_job(job)
 
-func _on_repair_end(job: Job) -> void:
-	if job == _repair_job:
-		_repair_job = null
+func _on_repair_end(_job: Job, _completed: bool) -> void:
 	# Still damaged after the attempt (no reachable Repair Bay, or it was deconstructed
 	# mid-repair): throttle the next try and alert once if we can't get patched.
 	if integrity_percent() < repair_seek_threshold_percent:
@@ -153,8 +152,6 @@ func load_save_data(data: Dictionary) -> void:
 	integrity = float(data.get("integrity", integrity_max))
 
 ## Re-link a repair job restored from a save so the seek loop treats it as the
-## already-pending job (mirrors RobotPowerComponent.adopt_restored_recharge_job).
-func adopt_restored_repair_job(job: Job) -> void:
-	if _repair_job == null:
-		_repair_job = job
-		job.job_end.connect(_on_repair_end.bind(job), CONNECT_ONE_SHOT)
+## already-pending job (WI-70; mirrors RobotPowerComponent.adopt_restored_job).
+func adopt_restored_job(job: Job) -> bool:
+	return job.is_type(&"get_repaired") and _repair_slot.adopt(job)

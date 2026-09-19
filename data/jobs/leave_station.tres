@@ -13,4 +13,5 @@ skill = &""
 xp_reward = 0.0
 player_cancelable = false
 saveable = false
+origin = 0
 driver = ExtResource("2_driver")

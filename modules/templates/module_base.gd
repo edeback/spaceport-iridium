@@ -117,9 +117,9 @@ const BREAKDOWN_EFFICIENCY := 0.5
 ## blueprints read as undamaged (hp_fraction guards on build state). Set to
 ## max_hp on build and restored from the save.
 var hp: float = -1.0
-## Set while a repair job for this module is live on the board / being worked, so
-## the slow-tick poll doesn't post a duplicate (mirrors ProcessorComponent._work_job).
-var _repair_job: Job = null
+## Live while a repair job for this module is on the board or being worked, so
+## the slow-tick poll doesn't post a duplicate.
+var _repair_slot: JobSlot = JobSlot.new()
 ## True while a rolled breakdown's efficiency modifier is active (WI-24). Cleared
 ## when a repair job completes; persisted so a broken machine stays broken across
 ## a save. Direct-damage breakdowns don't set this - HP repair fixes those.
@@ -401,17 +401,19 @@ func clear_breakdown() -> void:
 func _on_durability_slow_tick(_interval: float) -> void:
 	if not needs_repair():
 		return
-	if _repair_job != null and not _repair_job.is_ended():
+	if _repair_slot.is_live():
 		return
 	if Global.job_manager == null:
 		return
-	_repair_job = Job.of(&"repair_module").with_target_a(JobTarget.of_module(self))
-	Global.job_manager.add_job(_repair_job)
+	var job: Job = Job.of(&"repair_module").with_target_a(JobTarget.of_module(self))
+	_repair_slot.post(job)
+	Global.job_manager.add_job(job)
 
-## Claim the outstanding-repair-job slot for a restored job (WI-24), so the
-## slow-tick poll doesn't post a duplicate before the loaded pawn runs it.
-func adopt_repair_job(job: Job) -> void:
-	_repair_job = job
+## The repair a crew member was on when the save was written (WI-70 §3). This
+## hook existed since WI-24 as adopt_repair_job() and nothing ever called it, so
+## every load posted a second repair beside the restored one (F26).
+func adopt_restored_job(job: Job) -> bool:
+	return job.is_type(&"repair_module") and _repair_slot.adopt(job)
 
 func _display_name() -> String:
 	if module_data != null and module_data.name != "":

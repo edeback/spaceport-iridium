@@ -84,11 +84,11 @@ var pending_recipe: RecipeData = null
 
 ## Manned processing (WI-23). The outstanding work job for this module -
 ## either sitting on the board unclaimed, being walked to, or actively advancing
-## a batch. Non-null (and not ended) means "a worker is already accounted for",
-## so _manned_processing won't post a second. Handed straight to a followup on
-## batch completion so the operating pawn stays at the machine across batches
-## with no board round-trip and no window for another pawn to be double-posted.
-var _work_job: Job = null
+## a batch. Live means "a worker is already accounted for", so _manned_processing
+## won't post a second. The batch loop lives inside the driver (next_index_after
+## re-enters the work action while work remains), so the operating pawn stays at
+## the machine across batches with no board round-trip.
+var _work_slot: JobSlot = JobSlot.new()
 ## Set by advance_work() each time a worker drives a batch; read and cleared by
 ## _manned_processing() once per frame to tell "actively worked" (progress bar
 ## live) from "waiting for a worker" (stalled, distinct from unpowered).
@@ -526,25 +526,22 @@ func has_active_batch() -> bool:
 ## is still live (on the board, being walked to, or working); posts a fresh board
 ## job otherwise.
 func _ensure_work_job() -> void:
-	if _work_job != null and not _work_job.is_ended():
+	if _work_slot.is_live():
 		return
 	if owner_module == null or not owner_module.is_complete():
 		return
-	_work_job = Job.of(&"work_processor").with_target_a(JobTarget.of_component(self))
+	var job: Job = Job.of(&"work_processor").with_target_a(JobTarget.of_component(self))
 	# The gate itself is re-read off the module by the driver; this copy is what
 	# gives an assignee the priority bonus on the board (WI-23).
-	_work_job.workspace = owner_module.get_component_by_type(WorkspaceComponent) as WorkspaceComponent
-	_work_job.job_end.connect(_on_work_job_end.bind(_work_job), CONNECT_ONE_SHOT)
-	Global.job_manager.add_job(_work_job)
+	job.workspace = owner_module.get_component_by_type(WorkspaceComponent) as WorkspaceComponent
+	_work_slot.post(job)
+	Global.job_manager.add_job(job)
 
-## Frees the outstanding-job slot when the job ends, whatever ended it. The
-## batch loop lives inside the driver now (next_index_after re-enters the work
-## action while work remains), so there is no followup to hand the slot to and no
-## adopt_* counterpart - the pair this replaced existed only to keep the handoff
-## from double-posting.
-func _on_work_job_end(job: Job) -> void:
-	if _work_job == job:
-		_work_job = null
+## The operator's job, restored from a save (WI-70 §3). Without this the slot was
+## empty after a load, a second work job went up beside the restored one, and a
+## second crew member walked to the machine to fail on its one operator slot (F26).
+func adopt_restored_job(job: Job) -> bool:
+	return job.is_type(&"work_processor") and _work_slot.adopt(job)
 
 ## WI-44 operator slot: exactly one pawn works a machine at a time. A SlotPool of
 ## capacity 1 rather than a bespoke flag, so Action_ClaimSlot works unchanged and
