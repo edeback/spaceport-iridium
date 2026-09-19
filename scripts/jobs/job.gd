@@ -364,7 +364,7 @@ func end(outcome: Outcome) -> void:
 		ledger.release_all(self)
 	job_end.emit()
 
-## Compatibility with the pre-WI-44 call sites while both systems coexist.
+## `end()` as FAILED or INTERRUPTED - the shorthand most call sites use.
 func cancel(as_failed: bool) -> void:
 	end(Outcome.FAILED if as_failed else Outcome.INTERRUPTED)
 
@@ -704,7 +704,7 @@ func resume_job(claiming_pawn: PawnBase) -> void:
 			return
 	_enter(_index, true)
 
-# --- board sorting (unchanged semantics from JobBase) -------------------------
+# --- board sorting ------------------------------------------------------------
 
 func effective_priority() -> float:
 	return priority + minf(age * JobPriorities.AGE_BONUS_RATE, JobPriorities.AGE_BONUS_CAP)

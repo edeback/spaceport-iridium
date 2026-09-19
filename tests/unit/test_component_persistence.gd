@@ -200,3 +200,49 @@ func test_negative_fuel_floors_at_empty() -> void:
 func test_idle_generator_saves_nothing() -> void:
 	var generator: PowerGenerationComponent = _generator(false)
 	assert_true(generator.get_save_data().is_empty(), "a running solar panel adds no keys")
+
+# --- WI-68 F10: the chat log re-types on load --------------------------------------
+
+func test_the_chat_log_comes_back_with_its_types() -> void:
+	# Through real JSON, as a save does: every number comes back a float. The log
+	# must re-type on load, or `with` (a pawn_id) stops matching int-keyed lookups.
+	var saved: Dictionary = {"recent": [{
+		"with": 6, "name": "Erla Hadley", "positive": true, "delta": 0.05, "cycle": 15, "hour": 22,
+	}]}
+	var parsed: Dictionary = JSON.parse_string(JSON.stringify(saved)) as Dictionary
+	var social: SocializeComponent = autofree(SocializeComponent.new())
+	social.load_save_data(parsed)
+	var chats: Array[Dictionary] = social.recent_chats()
+	assert_eq(chats.size(), 1, "the one logged chat is restored")
+	if chats.size() != 1:
+		return
+	var chat: Dictionary = chats[0]
+	assert_eq(typeof(chat["with"]), TYPE_INT, "with is a pawn_id - an int, not the float JSON handed back")
+	assert_eq(typeof(chat["cycle"]), TYPE_INT, "cycle is an int")
+	assert_eq(typeof(chat["hour"]), TYPE_INT, "hour is an int")
+	assert_eq(chat["with"], 6)
+	assert_eq(chat["name"], "Erla Hadley")
+	assert_true(chat["positive"])
+	assert_almost_eq(float(chat["delta"]), 0.05, 0.0001)
+
+func test_a_malformed_chat_entry_is_skipped() -> void:
+	var social: SocializeComponent = autofree(SocializeComponent.new())
+	social.load_save_data({"recent": ["not a chat", {"with": 2, "cycle": 1, "hour": 3}]})
+	assert_eq(social.recent_chats().size(), 1, "the bad entry is dropped, the good one kept")
+
+# --- WI-68 F13: asteroid spin saves idempotently -----------------------------------
+
+func test_saved_asteroid_rotation_is_one_turn() -> void:
+	for degrees: float in [0.0, 359.9996, 360.0, 3457.6199, -45.25, 1000000.123]:
+		var saved: float = AsteroidBase.saved_rotation_of(degrees)
+		assert_true(saved >= 0.0 and saved < 360.0, "%f saves inside one turn, got %f" % [degrees, saved])
+
+func test_saved_asteroid_rotation_survives_a_load_and_resave() -> void:
+	# The load writes rotation_degrees onto a real node, which stores float32
+	# radians - the exact path that used to lose a bit on every round trip.
+	var node: Node2D = autofree(Node2D.new())
+	for degrees: float in [0.3, 217.6, 3457.61987304688, 1759.90686035156, 359.9994, 12.345678]:
+		var first: float = AsteroidBase.saved_rotation_of(degrees)
+		node.rotation_degrees = first
+		assert_eq(AsteroidBase.saved_rotation_of(node.rotation_degrees), first,
+			"%f saves, loads and saves back unchanged" % degrees)

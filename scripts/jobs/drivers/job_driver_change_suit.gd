@@ -58,4 +58,4 @@ func on_job_end(job: Job, outcome: Job.Outcome) -> void:
 		return
 	var suit: PawnSuitComponent = job.pawn.get_component_by_type(PawnSuitComponent) as PawnSuitComponent
 	if suit != null:
-		suit.trip_refused()
+		suit.trip_refused(job)

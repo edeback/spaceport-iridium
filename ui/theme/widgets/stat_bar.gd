@@ -21,7 +21,7 @@ var _value: Label
 var _bar: HatchBar
 
 static func create() -> StatBar:
-	return load(SCENE_PATH).instantiate() as StatBar
+	return (load(SCENE_PATH) as PackedScene).instantiate() as StatBar
 
 func _ready() -> void:
 	_ensure_refs()

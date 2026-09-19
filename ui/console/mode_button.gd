@@ -106,7 +106,7 @@ const SCENE_PATH: String = "res://ui/console/mode_button.tscn"
 ## The console is code-built (program decision 8), so the button needs a one-call
 ## instantiation path.
 static func create() -> ModeButton:
-	return load(SCENE_PATH).instantiate() as ModeButton
+	return (load(SCENE_PATH) as PackedScene).instantiate() as ModeButton
 
 func _ready() -> void:
 	_ensure_refs()

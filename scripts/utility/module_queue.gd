@@ -1,5 +1,11 @@
 class_name ModuleQueue
-extends Object
+extends RefCounted
+
+## RefCounted, not Object (WI-68 F1). ModuleGraph allocates one of these per
+## pathfinding query and drops it on return; as a bare Object nothing ever freed
+## it, so every query leaked the queue plus whatever QueueElements it still held -
+## ~240 objects per sim-cycle on a working station, growing for as long as pawns
+## walked.
 
 class QueueElement:
 	var vertex: ModuleGraphVertex

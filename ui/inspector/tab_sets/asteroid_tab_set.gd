@@ -53,7 +53,7 @@ func meta_text() -> String:
 ## which made a working mining operation read as a problem.
 func icon_color() -> Color:
 	if not is_alive():
-		return Color(0.0, 0.0, 0.0, 0.0)
+		return Color.TRANSPARENT
 	return UIPalette.LIVE if _asteroid.designated else UIPalette.tinted(UIPalette.TEXT, 0.5)
 
 ## Designating a body is the one thing you do to one, so it is a button rather

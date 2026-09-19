@@ -109,7 +109,7 @@ func _make_row(other: PawnBase) -> HBoxContainer:
 	var met: bool = record != null and record.chats > 0
 	var value: float = record.value if record != null else 0.0
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override(&"separation", 8)
+	row.add_theme_constant_override(&"separation", UIMetrics.INLINE_GAP)
 	row.tooltip_text = _row_tooltip(other, record, met)
 	row.mouse_filter = Control.MOUSE_FILTER_STOP  # let the tooltip show
 	var name_label := Label.new()
@@ -118,7 +118,7 @@ func _make_row(other: PawnBase) -> HBoxContainer:
 	row.add_child(name_label)
 	var tint: Color = _opinion_colour(value) if met else UNMET_COLOUR
 	var status := Label.new()
-	status.custom_minimum_size = Vector2(72, 0)
+	status.custom_minimum_size = Vector2(UIMetrics.SOCIAL_STATUS_WIDTH, 0)
 	status.text = SocialMath.opinion_label(value) if met else "Not met"
 	status.add_theme_color_override("font_color", tint)
 	row.add_child(status)
@@ -130,7 +130,7 @@ func _make_row(other: PawnBase) -> HBoxContainer:
 	# groove it sat in. The design's bar takes a fill colour and leaves the track
 	# alone (WI-58).
 	var bar := HatchBar.new()
-	bar.custom_minimum_size = Vector2(80, 0)
+	bar.custom_minimum_size = Vector2(UIMetrics.SOCIAL_BAR_WIDTH, 0)
 	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.fraction = (absf(value) / SocialMath.OPINION_MAX) if met else 0.0
 	bar.fill_color = tint

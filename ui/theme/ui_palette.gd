@@ -169,6 +169,57 @@ static var _cached_open_tab_gradient: GradientTexture2D = null
 const OPEN_TAB_WASH_TOP: float = 0.22
 const OPEN_TAB_WASH_BOTTOM: float = 0.05
 
+# --- dimming (WI-68 F6) ---------------------------------------------------------
+
+## Modulates for a control that is on screen but not available. Two strengths on
+## purpose: a locked Build tile is further away (research it first) than an R&D
+## node that is merely not next in line, and the difference is what reads.
+const MODULATE_LOCKED := Color(1.0, 1.0, 1.0, 0.45)
+const MODULATE_DIMMED := Color(1.0, 1.0, 1.0, 0.62)
+
+# --- the station map (WI-68 F6) ---------------------------------------------------
+# Moved out of minimap.gd's @exports: the minimap is HUD chrome, and nothing in
+# ui/ names a colour (decision 3 of WI-68). These describe world CONTENT - what a
+# cell holds - not chrome state, so they are their own block and never stand in
+# for a state colour. A module can still name its own map colour in data
+# (ModuleData.minimap_color), which is also the route a mod has; this table is
+# only the fallback by tag.
+
+## ModuleData tag -> fill for a built module. An unlisted tag falls back to
+## [constant MAP_HULL].
+const MAP_TAG_COLORS: Dictionary[String, Color] = {
+	"Power": Color("f5c542"),
+	"Industrial": Color("d9803a"),
+	"Crew": Color("54b95e"),
+	"Defense": Color("6c8ecf"),
+	"Storage": Color("8f96a3"),
+	"Commerce": Color("c065c0"),
+	"Life Support": Color("46b3a0"),
+	"Logistics": Color("b0a13c"),
+	"Transport": Color("7a86c9"),
+	"Transportation": Color("7a86c9"),
+	"Dock": Color("9aa0a6"),
+	"Core": Color("7d828a"),
+}
+const MAP_HULL := Color("6f747c")
+## Truss / structural placeholder - the dimmest hull shade.
+const MAP_STRUCTURE := Color(0.32, 0.34, 0.37)
+const MAP_BLUEPRINT := Color(0.42, 0.72, 1.0, 0.9)
+## What a damaged module's fill is lerped towards as it loses HP.
+const MAP_DAMAGE := Color(1.0, 0.24, 0.18)
+const MAP_ASTEROID := Color(0.55, 0.5, 0.42)
+const MAP_ASTEROID_DESIGNATED := Color(1.0, 0.85, 0.45)
+## Crossing bodies (comets), so a transient prize is distinguishable from the
+## standing belt at a glance. Pale blue against the belt's grey-brown.
+const MAP_COMET := Color(0.55, 0.78, 0.95)
+const MAP_FRIENDLY_SHIP := Color(0.45, 0.85, 0.95)
+const MAP_PIRATE_SHIP := Color(1.0, 0.4, 0.35)
+## Outline of the camera's view on the map.
+const MAP_VIEWPORT_RECT := Color(1.0, 1.0, 1.0, 0.85)
+## The map's own darker inset inside the readout's surface. The surface itself
+## belongs to [ReadoutPanel] and is not drawn by the minimap.
+const MAP_BG := Color(0.03, 0.05, 0.07, 0.55)
+
 # --- helpers ------------------------------------------------------------------
 
 ## `color` at `alpha`, for the rgba(...,.06) washes the design uses constantly.

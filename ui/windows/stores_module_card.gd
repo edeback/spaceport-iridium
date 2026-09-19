@@ -84,7 +84,7 @@ func _build() -> void:
 
 	var pad := MarginContainer.new()
 	for side: String in ["left", "top", "right", "bottom"]:
-		pad.add_theme_constant_override("margin_" + side, 12)
+		pad.add_theme_constant_override("margin_" + side, UIMetrics.STORES_CARD_PAD)
 	add_child(pad)
 
 	var column := VBoxContainer.new()
@@ -135,7 +135,7 @@ func _build_name_block() -> Button:
 	_names = VBoxContainer.new()
 	_names.set_anchors_preset(Control.PRESET_FULL_RECT, true)
 	_names.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_names.add_theme_constant_override("separation", 2)
+	_names.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	_name_button.add_child(_names)
 	_names.minimum_size_changed.connect(_refit_name_block)
 
@@ -156,7 +156,7 @@ func _build_fill_block() -> VBoxContainer:
 	var fill := VBoxContainer.new()
 	fill.custom_minimum_size.x = float(FILL_WIDTH)
 	fill.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	fill.add_theme_constant_override("separation", 4)
+	fill.add_theme_constant_override("separation", UIMetrics.ITEM_GAP)
 	_fill_label = _label(UIType.METRIC)
 	_fill_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	fill.add_child(_fill_label)
@@ -179,7 +179,7 @@ func _build_priority_block() -> VBoxContainer:
 	var priority := VBoxContainer.new()
 	priority.custom_minimum_size.x = float(PRIORITY_COLUMN)
 	priority.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	priority.add_theme_constant_override("separation", 4)
+	priority.add_theme_constant_override("separation", UIMetrics.ITEM_GAP)
 	_stepper = Stepper.create()
 	_stepper.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_stepper.value_changed.connect(_on_priority_committed)

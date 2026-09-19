@@ -187,12 +187,6 @@ func run_pathfinding() -> void:
 		nodes_to_watch.reverse()
 		state = State.Moving
 		movement_started.emit()
-		# Debug shove path in UI
-		#var packed_path: PackedVector2Array = []
-		#for index in path.size():
-			#packed_path.append(Global.world_to_cell(extract_position(index)))
-		#Global.ui_in_game.debug_path_cell = packed_path
-		#Global.ui_in_game.debug_path_position = get_debug_path_detailed()
 	
 		
 func module_removed(removed_module: ModuleBase) -> void:
@@ -231,25 +225,19 @@ func get_debug_path_detailed() -> PackedVector2Array:
 			var base_pos := path[index].node.global_position
 			var sub := get_sub_path(index)
 			if sub.size() > 0:
-				#packed_path.append(base_pos + sub[0].start_pos)
 				for data: PathComponent.PathTraversalEdgeData in sub:
 					packed_path.append(base_pos + data.end_pos)
 			else:
 				packed_path.append(extract_position(index))
-			#if path[index] is ModuleBase:
-				#var mod := path[index] as ModuleBase
-				#packed_path.append(mod.get_global_center())
-			#else:
-				#packed_path.append(base_pos)
 	return packed_path
 	
 		
 func extract_position(index: int) -> Vector2:
 	if index >= path.size() or index < 0:
-		print("trying to get the path position of an element not in the path_variant array!")
+		push_warning("trying to get the path position of an element not in the path_variant array!")
 		return Vector2.ZERO
 	if not is_instance_valid(path[index].node):
-		print("trying to get the path position of a freed node!")
+		push_warning("trying to get the path position of a freed node!")
 		return Vector2.ZERO
 	if path[index].node is ModuleBase:
 		var module: ModuleBase = path[index].node as ModuleBase
@@ -265,8 +253,15 @@ func extract_position(index: int) -> Vector2:
 		return Global.cell_to_world(module.module_cell, true)
 	return path[index].node.global_position
 	
+## Whether a path node is a module with its own interior pathing. Path nodes are
+## Node2D (space nodes and turbolift cabs are on the graph too), so the cast is the
+## check - and it keeps the call below typed (WI-68 F7).
+static func _has_custom_pathing(node: Node2D) -> bool:
+	var module: ModuleBase = node as ModuleBase
+	return module != null and module.has_custom_pathing()
+
 func reached_next_node() -> void:
-	if next_path_index >= 0 and path[next_path_index].node is ModuleBase and path[next_path_index].node.has_custom_pathing():
+	if next_path_index >= 0 and _has_custom_pathing(path[next_path_index].node):
 		var door: int = 0
 		if sub_path.size() > 0:
 			door = sub_path[sub_path.size() - 1].end_index
@@ -287,7 +282,7 @@ func reached_next_node() -> void:
 	else:
 		sub_path = get_sub_path(next_path_index)
 		
-	if next_path_index > 0 and next_path_index < path.size() and path[next_path_index].node is ModuleBase and path[next_path_index].node.has_custom_pathing():
+	if next_path_index > 0 and next_path_index < path.size() and _has_custom_pathing(path[next_path_index].node):
 		var door: int = 0
 		if sub_path.size() > 0:
 			door = sub_path[0].end_index
@@ -430,10 +425,6 @@ func move(delta: float) -> void:
 				next_position = next_position + travel_vector / dist_to_next_point * dist_to_travel
 				dist_to_travel = 0
 				break
-	#if next_position == pawn.global_position:
-		# We didn't move, we're done here
-		#print ("tried to move but failed? Marking as finished but investigate")
-		#action_state = PathActionState.Finished
 	owner_pawn.move_to(next_position)
 	if next_path_index >= path.size():
 		# Made it to the last position

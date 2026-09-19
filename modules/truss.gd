@@ -1,4 +1,5 @@
 @tool
+class_name TrussModule
 extends ModuleBase
 
 ## The structural placeholder must never be removed by damage (WI-24): trusses

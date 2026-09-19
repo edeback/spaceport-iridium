@@ -10,10 +10,8 @@ extends RefCounted
 ## and it should be pure. Five components each hand-rolled this counting; now
 ## they each hold one of these.
 ##
-## While the legacy JobBase system still exists, BOTH systems book their
-## occupants through this one object, so neither can oversubscribe the other's.
-## The component's own _claims array survives only to remember which legacy job
-## holds which slot; the count that matters lives here.
+## Every occupant is booked through this one object, so the count that matters
+## lives in exactly one place.
 
 var capacity: int = 1
 var occupied: int = 0

@@ -56,7 +56,7 @@ func test_content_fits_inside_draw_rect() -> void:
 
 func test_world_map_roundtrip() -> void:
 	var t := _fit(Rect2(Vector2(-200.0, 300.0), Vector2(2500.0, 1800.0)))
-	for world in [Vector2(0.0, 500.0), Vector2(1200.0, 900.0), Vector2(-150.0, 320.0)]:
+	for world: Vector2 in [Vector2(0.0, 500.0), Vector2(1200.0, 900.0), Vector2(-150.0, 320.0)]:
 		var back := t.map_to_world(t.world_to_map(world))
 		assert_almost_eq(back.x, world.x, 0.01, "roundtrip x")
 		assert_almost_eq(back.y, world.y, 0.01, "roundtrip y")

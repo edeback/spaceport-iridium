@@ -178,6 +178,7 @@ func request_hire(bay: ModuleBase, candidate: HireCandidate) -> bool:
 	if hire_block_reason(candidate) != "":
 		return false
 	Global.resource_manager.credit_resource.force_withdraw(candidate.price)
+	Global.economy_manager.record_external_cost(candidate.price, &"hiring") # WI-68 F4
 	_candidates.erase(candidate)
 	_pending.add(SaveManager.module_ref(bay), candidate.to_dict(), arrival_delay_hours)
 	SignalBus.hire_candidates_changed.emit()
@@ -237,7 +238,7 @@ func _process(delta: float) -> void:
 func _arrive(hire: Dictionary) -> void:
 	var bay: ModuleBase = SaveManager.resolve_module_ref(hire.get("bay", {}))
 	var candidate: HireCandidate = HireCandidate.from_dict(hire.get("candidate", {}))
-	if bay == null or not is_instance_valid(bay):
+	if not _is_gateway(bay):
 		_pending.settle(hire)
 		_refund_hire(candidate)
 		return
@@ -251,26 +252,54 @@ func _arrive(hire: Dictionary) -> void:
 	shuttle.setup(dock, dock + Vector2(DockingBay.approach_sign_for(bay) * shuttle_approach_distance, 0.0))
 	shuttle.docked.connect(_on_shuttle_docked.bind(shuttle, bay, hire), CONNECT_ONE_SHOT)
 
+## Whether `module` can still receive a recruit (WI-68 F22).
+##
+## A pending hire stores its bay as a layer + cell reference, and removing a
+## module-layer bay backfills truss onto those cells - so a reference that merely
+## resolved to *something* delivered the recruit into the truss, and the refund
+## below was unreachable. Whatever stands on the cell now only counts if it is a
+## built crew gateway: the same group the departure job and the hire gate use.
+##
+## Takes a Variant so a freed module (a bay bound to a shuttle that outlived it)
+## reads as "not a gateway" instead of failing the call's type check.
+static func _is_gateway(module: Variant) -> bool:
+	if not is_instance_valid(module):
+		return false
+	var placed: ModuleBase = module as ModuleBase
+	if placed == null:
+		return false
+	var gateway: CrewRecruitmentComponent = placed.get_component_by_type(CrewRecruitmentComponent) as CrewRecruitmentComponent
+	return gateway != null and gateway.is_in_group(Groups.CREW_RECRUITMENT)
+
 ## Bay deconstructed while the shuttle was inbound: refund the price paid
 ## (WI-07 edge case).
 func _refund_hire(candidate: HireCandidate) -> void:
 	var amount: int = candidate.price if candidate != null else hire_cost
 	Global.resource_manager.credit_resource.change_global_total(amount)
+	# Undoes the hiring cost in the books too: income, never skimmed (WI-68 F4).
+	Global.economy_manager.record_refund(amount)
 	AlertManager.raise_alert(&"hire_refunded", AlertData.Priority.HIGH,
 		"Recruit turned back", "No docking bay · %d cr fee refunded" % amount, null, &"crew")
 
-func _on_shuttle_docked(shuttle: ArrivalShuttle, bay: ModuleBase, hire: Dictionary) -> void:
+## `bay` is a Variant, not a ModuleBase (WI-68 F22/F24): it is bound when the
+## shuttle launches, so it can be freed by the time the shuttle docks - a bay
+## destroyed during the approach. A typed parameter rejects a freed object at the
+## call, before any validity check in here runs, which stranded the hire as
+## pending forever with no refund and a shuttle that never left.
+func _on_shuttle_docked(shuttle: ArrivalShuttle, bay: Variant, hire: Dictionary) -> void:
 	# A refused settle means this list no longer holds the hire - a load since
 	# launch has already relaunched it - so this shuttle arrives empty.
 	if _pending.settle(hire):
 		var candidate: HireCandidate = HireCandidate.from_dict(hire.get("candidate", {}))
-		if is_instance_valid(bay):
-			_deliver_crew(bay, candidate)
+		if _is_gateway(bay):
+			_deliver_crew(bay as ModuleBase, candidate)
 		else:
 			_refund_hire(candidate)
 	# Wait a little bit before flying away
 	await Global.time_manager.sim_seconds(Global.time_manager.SECONDS_PER_HOUR)
-	shuttle.depart()
+	# The same guard the visitor and courier shuttles have (WI-68 F15).
+	if is_instance_valid(shuttle):
+		shuttle.depart()
 
 func _deliver_crew(bay: ModuleBase, candidate: HireCandidate) -> void:
 	var pawn: PawnBase = spawn_crew(bay, candidate)

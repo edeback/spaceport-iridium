@@ -49,7 +49,7 @@ const SCENE_PATH: String = "res://ui/tutorial/tutorial_coach.tscn"
 signal skip_pressed
 
 static func create() -> TutorialCoach:
-	return load(SCENE_PATH).instantiate() as TutorialCoach
+	return (load(SCENE_PATH) as PackedScene).instantiate() as TutorialCoach
 
 @onready var ring: Panel = $Ring
 @onready var plate: PanelContainer = $Plate

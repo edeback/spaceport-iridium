@@ -44,7 +44,7 @@ signal close_requested
 ## Panels are code-built (program decision 8), so the frame needs a one-call
 ## instantiation path like the widgets have.
 static func create() -> ConsolePanel:
-	return load(SCENE_PATH).instantiate() as ConsolePanel
+	return (load(SCENE_PATH) as PackedScene).instantiate() as ConsolePanel
 
 @export var title: String = "PANEL":
 	set(value):

@@ -107,7 +107,7 @@ static func open_edit(host: Node, component: StorageComponent, on_applied: Calla
 		var box := CheckBox.new()
 		box.text = resource.name
 		box.icon = resource.icon
-		box.add_theme_constant_override("icon_max_width", 24)
+		box.add_theme_constant_override("icon_max_width", UIMetrics.INLINE_ICON)
 		box.button_pressed = component.storage_data.has(resource)
 		box.disabled = not editable
 		column.add_child(box)

@@ -74,7 +74,7 @@ var _facts_built: bool = false
 var _refitting: bool = false
 
 static func create() -> ModuleButton:
-	return load("res://ui/buttons/module_button.tscn").instantiate() as ModuleButton
+	return (load("res://ui/buttons/module_button.tscn") as PackedScene).instantiate() as ModuleButton
 
 func _ready() -> void:
 	_ensure_refs()
@@ -139,7 +139,7 @@ func set_locked(is_locked: bool, label: String = "") -> void:
 	gating_label = label
 	# A locked row is still a row - it reports, it just cannot be acted on - so
 	# the whole control dims rather than the parts of it disappearing.
-	modulate = Color(1.0, 1.0, 1.0, 0.45) if locked else Color.WHITE
+	modulate = UIPalette.MODULATE_LOCKED if locked else Color.WHITE
 	mouse_default_cursor_shape = Control.CURSOR_ARROW if locked else Control.CURSOR_POINTING_HAND
 	_refresh_cost()
 	_refresh_footprint()
@@ -280,11 +280,11 @@ func _apply_compact() -> void:
 	if compact:
 		# A fixed square, so a strip of five tiles is exactly as wide as it looks
 		# and never re-lays out when a longer module name arrives.
-		custom_minimum_size = Vector2(float(side + 12), float(side + 12))
-		_column.offset_left = 6.0
-		_column.offset_right = -6.0
-		_column.offset_top = 6.0
-		_column.offset_bottom = -6.0
+		custom_minimum_size = Vector2(float(side + UIMetrics.BUILD_TILE_INSET * 2), float(side + UIMetrics.BUILD_TILE_INSET * 2))
+		_column.offset_left = UIMetrics.BUILD_TILE_INSET
+		_column.offset_right = -UIMetrics.BUILD_TILE_INSET
+		_column.offset_top = UIMetrics.BUILD_TILE_INSET
+		_column.offset_bottom = -UIMetrics.BUILD_TILE_INSET
 	_refit()
 
 ## Height that fits the content. Only the height: a minimum width would fight the
@@ -314,7 +314,7 @@ func _on_pressed() -> void:
 func _make_custom_tooltip(_for_text: String) -> Object:
 	if module_data == null:
 		return null
-	var tooltip: ModuleButtonTooltip = load(
-		"res://ui/buttons/module_button_tooltip.tscn").instantiate() as ModuleButtonTooltip
+	var tooltip: ModuleButtonTooltip = (load(
+		"res://ui/buttons/module_button_tooltip.tscn") as PackedScene).instantiate() as ModuleButtonTooltip
 	tooltip.set_module_data(module_data, locked, gating_label)
 	return tooltip

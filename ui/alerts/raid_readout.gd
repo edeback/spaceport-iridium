@@ -27,7 +27,7 @@ var _payoff: Label
 var _hail: ActionButton
 
 static func create() -> RaidReadout:
-	return load(SCENE_PATH).instantiate() as RaidReadout
+	return (load(SCENE_PATH) as PackedScene).instantiate() as RaidReadout
 
 func _ready() -> void:
 	super()

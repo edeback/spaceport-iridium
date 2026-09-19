@@ -55,7 +55,7 @@ var _avail: Label
 var _stepper: Stepper
 
 static func create() -> TradeResourceRow:
-	return load(SCENE_PATH).instantiate() as TradeResourceRow
+	return (load(SCENE_PATH) as PackedScene).instantiate() as TradeResourceRow
 
 func _ready() -> void:
 	_ensure_refs()
@@ -161,7 +161,7 @@ static func make_header() -> Control:
 	var pad := MarginContainer.new()
 	pad.add_theme_constant_override("margin_left", int(box.content_margin_left))
 	pad.add_theme_constant_override("margin_right", int(box.content_margin_right))
-	pad.add_theme_constant_override("margin_bottom", 4)
+	pad.add_theme_constant_override("margin_bottom", UIMetrics.TRADE_ROW_PAD_BOTTOM)
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", COLUMN_GAP)

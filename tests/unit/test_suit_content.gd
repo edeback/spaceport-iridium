@@ -202,6 +202,59 @@ func test_taking_a_suit_off_clears_the_hold() -> void:
 	assert_false(suit.suited)
 	assert_eq(suit.hold_remaining(), 0.0, "out of the suit means the hold is spent")
 
+# --- the trip pointer (WI-68 F2) ------------------------------------------------
+#
+# _trip is not saved; the job it points at is. SaveManager hands the restored job
+# back through adopt_restored_trip, and only the trip itself may clear the
+# pointer - a stale trip's failure, or a cheat flip, must leave a live one alone.
+
+func test_an_adopted_trip_counts_as_under_way() -> void:
+	var suit: PawnSuitComponent = autofree(PawnSuitComponent.new())
+	assert_false(suit.has_live_trip(), "a fresh component has no trip")
+	suit.adopt_restored_trip(_job(true))
+	assert_true(suit.has_live_trip(), "a restored trip is live, so no second one is posted")
+
+func test_a_stale_trips_refusal_leaves_the_current_one_alone() -> void:
+	# _start_trip sets the new trip before interrupt_with_job cancels the old one,
+	# whose driver then reports the failure. That report must not null the new
+	# trip, or the next slow tick posts another and the change never finishes.
+	var suit: PawnSuitComponent = autofree(PawnSuitComponent.new())
+	suit.adopt_restored_trip(_job(true))
+	suit.trip_refused(_job(true))
+	assert_true(suit.has_live_trip(), "the current trip survives a stale trip's failure")
+	assert_eq(suit.trip_cooldown_remaining(), 0.0, "and no retry throttle is started")
+
+func test_the_current_trips_refusal_clears_it_and_throttles() -> void:
+	var suit: PawnSuitComponent = autofree(PawnSuitComponent.new())
+	var trip: Job = _job(false)
+	suit.adopt_restored_trip(trip)
+	suit.trip_refused(trip)
+	assert_false(suit.has_live_trip(), "a refused trip is over")
+	assert_eq(suit.trip_cooldown_remaining(), suit.trip_retry_hours,
+		"and the retry throttle starts, so a station that cannot comply doesn't re-post every tick")
+
+func test_a_refusal_with_no_trip_is_harmless() -> void:
+	var suit: PawnSuitComponent = autofree(PawnSuitComponent.new())
+	suit.trip_refused(_job(true))
+	assert_eq(suit.trip_cooldown_remaining(), 0.0, "nothing was refused that this component asked for")
+
+func test_a_change_clears_only_its_own_trip() -> void:
+	var suit: PawnSuitComponent = autofree(PawnSuitComponent.new())
+	var trip: Job = _job(true)
+	suit.adopt_restored_trip(trip)
+	suit.apply_change(true, _job(true))
+	assert_true(suit.has_live_trip(), "another job's change does not end this trip")
+	suit.apply_change(true, trip)
+	assert_false(suit.has_live_trip(), "the trip's own change does")
+
+func test_a_cheat_flip_leaves_a_walking_trip_alone() -> void:
+	# The cheat console calls apply_change with no job. Clearing the pointer then
+	# would orphan the trip still walking - the save/load bug in miniature.
+	var suit: PawnSuitComponent = autofree(PawnSuitComponent.new())
+	suit.adopt_restored_trip(_job(true))
+	suit.apply_change(false)
+	assert_true(suit.has_live_trip(), "the trip finishes and applies its own change")
+
 # --- breaches -----------------------------------------------------------------
 
 func test_hull_breaches_cannot_fire_at_tier_one() -> void:

@@ -10,10 +10,7 @@ extends Resource
 ## Everything here is static configuration shared by every instance of the type.
 ## Per-instance state (targets, count, progress) lives on Job.
 
-## Which board queue jobs of this type live in. Same six values, in the same
-## order, as the legacy JobBase.Category - they are ints either way, so the two
-## are interchangeable while both systems coexist. JobBase.Category is deleted
-## at cutover and this becomes the only definition.
+## Which board queue jobs of this type live in.
 enum Category { HAUL, BUILD, WORK, NEEDS, MOVE, MISC }
 
 @export var id: StringName = &""

@@ -11,7 +11,7 @@ var _rows: Dictionary[ModuleTurbolift, CheckButton] = {}
 func set_shaft(shaft: TurboliftShaft) -> void:
 	name = "Floors"
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_theme_constant_override("separation", 2)
+	add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	_shaft = shaft
 	rebuild()
 

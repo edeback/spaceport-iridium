@@ -21,7 +21,7 @@ var _label: Label
 var _value: Label
 
 static func create() -> Chip:
-	return load(SCENE_PATH).instantiate() as Chip
+	return (load(SCENE_PATH) as PackedScene).instantiate() as Chip
 
 func _ready() -> void:
 	_ensure_refs()

@@ -116,7 +116,7 @@ func withdraw_cost() -> void:
 		resource.force_withdraw(resource_costs[resource])
 
 func withdraw_credit_cost() -> void:
-	var cost = resource_costs.get(Global.resource_manager.credit_resource, 0)
+	var cost: int = int(resource_costs.get(Global.resource_manager.credit_resource, 0))
 	if cost > 0:
 		Global.resource_manager.credit_resource.force_withdraw(cost)
 

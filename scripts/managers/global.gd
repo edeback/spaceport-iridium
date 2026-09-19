@@ -178,10 +178,6 @@ func _ready() -> void:
 	settings = GameSettings.load_from_file()
 	apply_settings()
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
-
 # --- settings (WI-36) ---------------------------------------------------------
 
 ## Music/Effects buses are created here rather than shipped in a bus layout so
@@ -264,10 +260,12 @@ func get_default_events(action: StringName) -> Array[InputEvent]:
 	return out
 
 ## The project's own actions that are **not** offered in the remap screen: the
-## AIDE key and the two debug hotkeys.
+## two debug hotkeys. (AIDE used to be here too; WI-63 made it remappable.)
 ##
 ## They are listed rather than left out, because a key that is bound is a key a
 ## rebind can collide with, whether or not the player is allowed to move it.
+## That holds in a release export as well, where both handlers are gated off by
+## OS.is_debug_build() (WI-68 F5): the keys stay reserved, they just do nothing.
 ## [constant REMAPPABLE_ACTIONS] plus this is every action the project declares,
 ## and `test_keybinds.gd` sweeps `project.godot` to keep that true - a new action
 ## added to neither list fails there rather than silently escaping conflict

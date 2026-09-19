@@ -623,33 +623,31 @@ func _eject_stored_resources_as_debris() -> void:
 func on_select(new_selected: bool) -> void:
 	self.selected = new_selected
 	
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta: float) -> void:
-	#if previewing:
-		#can_place = _check_if_placeable()
-	#else:
-		#can_place = true
-	#pass
-	
-#func _physics_process(delta: float) -> void:
-#	pass
-	
+## The module sprite's shader, or null when there is no sprite or its material is
+## not a ShaderMaterial. One cast rather than one per parameter write (WI-68 F7).
+func _shader_material() -> ShaderMaterial:
+	var sprite_node: Sprite2D = get_sprite()
+	return sprite_node.material as ShaderMaterial if sprite_node != null else null
+
 func _update_shader() -> void:
-	if (get_sprite() && get_sprite().material != null):
-		get_sprite().material.set_shader_parameter(SHADER_PARAM_PREVIEW, previewing)
-		get_sprite().material.set_shader_parameter(SHADER_PARAM_PLACEABLE, can_place)
-		get_sprite().material.set_shader_parameter(SHADER_PARAM_SELECTED, selected)
-		get_sprite().material.set_shader_parameter(SHADER_PARAM_PROGRESS, progress)
-		get_sprite().material.set_shader_parameter(SHADER_PARAM_DAMAGE, 1.0 - hp_fraction())
-		get_sprite().material.set_shader_parameter(SHADER_PARAM_OVERLAY, overlay_color)
+	var shader: ShaderMaterial = _shader_material()
+	if shader == null:
+		return
+	shader.set_shader_parameter(SHADER_PARAM_PREVIEW, previewing)
+	shader.set_shader_parameter(SHADER_PARAM_PLACEABLE, can_place)
+	shader.set_shader_parameter(SHADER_PARAM_SELECTED, selected)
+	shader.set_shader_parameter(SHADER_PARAM_PROGRESS, progress)
+	shader.set_shader_parameter(SHADER_PARAM_DAMAGE, 1.0 - hp_fraction())
+	shader.set_shader_parameter(SHADER_PARAM_OVERLAY, overlay_color)
 
 ## WI-35 station overlays: set (or clear, with alpha 0) this module's overlay
 ## tint. Called by the UI-side OverlayController for every visible module while
 ## a mode is active. Cheap - a single param write, guarded like _update_shader.
 func set_overlay_color(color: Color) -> void:
 	overlay_color = color
-	if get_sprite() != null and get_sprite().material != null:
-		get_sprite().material.set_shader_parameter(SHADER_PARAM_OVERLAY, color)
+	var shader: ShaderMaterial = _shader_material()
+	if shader != null:
+		shader.set_shader_parameter(SHADER_PARAM_OVERLAY, color)
 		
 func get_path_component() -> PathComponent:
 	if _cached_path_component:
@@ -745,8 +743,6 @@ func get_random_position_on_module() -> Vector2:
 
 func _on_footprint_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton:
-		#if sprite.is_pixel_opaque(sprite.to_local(get_global_mouse_position())):
-			#print("clicked " + module_data.name)
 			if event.is_action_pressed("build"):
 					get_viewport().set_input_as_handled()
 					# Routed through UIMain's click arbiter: stacked footprints

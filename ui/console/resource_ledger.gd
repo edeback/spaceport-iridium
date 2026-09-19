@@ -33,7 +33,7 @@ const LEGEND: String = "Pin any resource to promote it into the console strip ·
 const REFRESH_INTERVAL: float = 0.5
 
 static func create() -> ResourceLedger:
-	return load(SCENE_PATH).instantiate() as ResourceLedger
+	return (load(SCENE_PATH) as PackedScene).instantiate() as ResourceLedger
 
 ## The strip the pin toggles act on. Set by [UIMain] right after instantiation;
 ## without it the panel still renders, just with pinning inert.

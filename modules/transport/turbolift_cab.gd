@@ -66,7 +66,6 @@ func _process(delta: float) -> void:
 			var dist_to_move: float = speed * Global.CELL_SIZE.y * sim_delta
 			var dist_left: float = destination_module.global_position.y - get_apparent_position().y
 			# Probably want to recheck where we're going and stopping to pick up people on the way?
-			#var next_floor: ModuleTurbolift = shaft.get_floor_module(Global.world_to_cell(global_position).y + signf(dist_left))
 			
 			if dist_to_move >= absf(dist_left):
 				set_apparent_position_y(destination_module.global_position.y)
@@ -102,26 +101,17 @@ func floor_has_requests(next_floor: ModuleTurbolift) -> bool:
 			return true
 	return false
 
-func _init() -> void:
-	Global.path_manager.add_vertex(self, true) 
-
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	#SignalBus.module_removed.connect(module_removed)
+	# Registered here rather than in _init (WI-68 F12): _init runs on bare
+	# instantiation, so anything that built a cab outside a running game - a
+	# preview, a tool, a probe - errored on a null path_manager. The ordering is
+	# still safe: TurboliftShaft.create_new_cab add_child()s the cab (running this)
+	# before add_cab() moves its vertex into the shaft's group.
+	Global.path_manager.add_vertex(self, true)
 	for marker in standing_locations:
 		assigned_locations[marker] = null
 
-#func module_removed(removed_module: ModuleBase) -> void:
-	#for ride in pickup_requests:
-		#if ride.to_floor == removed_module:
-			## Cancel
-			#ride.pawn.current_module = ride.from_floor
-			#pickup_requests.erase(ride)
-			#ride.finished.emit(false)
-	#if destination_module == removed_module:
-		#destination_module = null
-	#recheck_requests()
-		
 
 func add_pickup_request(request: RideRequest) -> void:
 	pickup_requests.append(request)
@@ -180,7 +170,7 @@ func _floor_served(floor_module: ModuleBase) -> bool:
 	return shaft != null and shaft.is_floor_served(floor_module)
 
 func recheck_requests() -> void:
-	for request in pickup_requests.duplicate():
+	for request: RideRequest in pickup_requests.duplicate():
 		if request.from_floor and not _floor_served(request.from_floor):
 			cancel_request(request)
 		elif request.to_floor and not _floor_served(request.to_floor):
@@ -223,7 +213,7 @@ func cancel_request(request: RideRequest) -> bool:
 
 # Unload all passengers that want to exit at this floor
 func unload_passengers(cur_module: ModuleTurbolift) -> void:
-	for request in onboard.duplicate():
+	for request: RideRequest in onboard.duplicate():
 		if request.to_floor == cur_module or request.to_floor == null:
 			onboard.erase(request)
 			assigned_locations[request.stand_position] = null

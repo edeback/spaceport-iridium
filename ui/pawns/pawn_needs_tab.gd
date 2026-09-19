@@ -77,11 +77,11 @@ func _build() -> void:
 	_happiness_bar = _add_bar("Happiness")
 	_breakdown = VBoxContainer.new()
 	_breakdown.name = "Breakdown"
-	_breakdown.add_theme_constant_override("separation", 2)
+	_breakdown.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	add_child(_breakdown)
 	_diseases = VBoxContainer.new()
 	_diseases.name = "Diseases"
-	_diseases.add_theme_constant_override("separation", 2)
+	_diseases.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	add_child(_diseases)
 
 func _add_bar(label: String) -> StatBar:
@@ -169,7 +169,7 @@ func _row(label_text: String, percent: float, trailing: String, tint: Color,
 	row.add_child(value)
 	var trail := Label.new()
 	trail.theme_type_variation = UIType.META_LINE
-	trail.custom_minimum_size = Vector2(84, 0)
+	trail.custom_minimum_size = Vector2(UIMetrics.NEEDS_TRAIL_WIDTH, 0)
 	trail.text = trailing.to_upper()
 	trail.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	trail.add_theme_color_override("font_color", UIPalette.TEXT_META)

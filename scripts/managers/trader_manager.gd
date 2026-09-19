@@ -247,6 +247,9 @@ func _fulfill(bay_trade: TradeComponent) -> void:
 		if not bay_trade.storage.deposit(resource, amount):
 			continue
 		credits.change_global_total(-amount * price)
+		# Booked, so the Finance tab's operating net sees purchases as well as sales
+		# (WI-68 F4). A zero-price line books nothing.
+		Global.economy_manager.record_external_cost(amount * price, &"trade_purchases")
 		trader.stock[resource] = trader_stock(resource) - amount
 		committed_buys[resource] -= amount
 		if committed_buys[resource] <= 0:
@@ -284,9 +287,13 @@ func dispatch_contract_courier() -> bool:
 	shuttle.docked.connect(_courier_collect.bind(bay, shuttle), CONNECT_ONE_SHOT)
 	return true
 
-func _courier_collect(bay: ModuleBase, shuttle: ArrivalShuttle) -> void:
+## `bay` is a Variant because it is bound at dispatch and may be freed by the
+## time the courier docks. Typed, the call itself failed on a freed bay - before
+## the check below - so _courier_active never reset and no courier was ever
+## dispatched again (WI-68 F24).
+func _courier_collect(bay: Variant, shuttle: ArrivalShuttle) -> void:
 	if is_instance_valid(bay):
-		var bay_trade: TradeComponent = bay.get_component_by_type(TradeComponent) as TradeComponent
+		var bay_trade: TradeComponent = (bay as ModuleBase).get_component_by_type(TradeComponent) as TradeComponent
 		if bay_trade != null:
 			Global.contract_manager.collect_contract_goods(bay_trade)
 	if shuttle != null and is_instance_valid(shuttle):
@@ -298,7 +305,6 @@ func _courier_collect(bay: ModuleBase, shuttle: ArrivalShuttle) -> void:
 # --- departure ------------------------------------------------------------------
 
 func _end_visit(reason: String) -> void:
-	print("Trader departing (%s), %.1fh remaining" % [reason, visit_remaining_hours])
 	visit_active = false
 	# Net market settlement, deferred to departure for visit-long price
 	# stability (WI-08 design).

@@ -26,7 +26,7 @@ const FALLING_GLYPH: String = "▼"
 const SWATCH_SIZE: int = 12
 
 static func create() -> VitalsChip:
-	return load(SCENE_PATH).instantiate() as VitalsChip
+	return (load(SCENE_PATH) as PackedScene).instantiate() as VitalsChip
 
 ## What this chip is pinned as - a resource id, or one of [LedgerModel]'s
 ## `derived:` ids. The strip keys its rebuild diff on this.

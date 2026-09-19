@@ -130,7 +130,7 @@ func status_text() -> String:
 
 func icon_color() -> Color:
 	if not is_alive():
-		return Color(0.0, 0.0, 0.0, 0.0)
+		return Color.TRANSPARENT
 	# The pawn's own tint (WI-22 gives every pawn one), so the block reads as the
 	# crew member you clicked rather than as a generic slot.
 	if _pawn.animated_sprite != null:
@@ -157,7 +157,7 @@ func page_footer(id: StringName) -> Control:
 	wage.name = "Wage"
 	wage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wage.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	wage.add_theme_constant_override("separation", 2)
+	wage.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	row.add_child(wage)
 	var amount := Label.new()
 	amount.name = "Amount"

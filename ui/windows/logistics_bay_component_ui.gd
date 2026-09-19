@@ -15,11 +15,11 @@ func set_logistics_bay(component: LogisticsBayComponent) -> void:
 
 	var margin := MarginContainer.new()
 	for side: String in ["left", "top", "right", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 6)
+		margin.add_theme_constant_override("margin_" + side, UIMetrics.COMPONENT_PAGE_PAD)
 	add_child(margin)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 6)
+	vbox.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
 	margin.add_child(vbox)
 
 	_robots_label = Label.new()

@@ -26,8 +26,6 @@ func can_do(job: Job, pawn: PawnBase) -> bool:
 		return false
 	var medical: MedicalComponent = _medical(job)
 	# The sole doctor can't also be one of the patients (WI-31 edge case).
-	# NOTE: is_patient() still walks the LEGACY claims array - see the coexistence
-	# gaps in the WI - so this under-reports until the treatment job converts.
 	if medical.is_patient(pawn):
 		return false
 	var workspace: WorkspaceComponent = _workspace(job)

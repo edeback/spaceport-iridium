@@ -90,7 +90,7 @@ func _ready() -> void:
 	# Covers a direction assigned before the sprite resolved, and a scene whose
 	# direction was never set at all.
 	_apply_orientation()
-	$ClickArea.input_event.connect(_on_click_area_input_event)
+	($ClickArea as Area2D).input_event.connect(_on_click_area_input_event)
 
 func _on_click_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event.is_action_pressed("build"):
@@ -183,6 +183,24 @@ func is_empty() -> bool:
 
 # --- persistence (WI-21) ------------------------------------------------------
 
+## The sprite's spin, as saved (WI-68 F13). _process accumulates rotation_degrees
+## without ever wrapping it (thousands of degrees on a long game), and the value
+## round-trips through float32 radians, so the raw number lost a bit on every
+## save/load and was the only non-idempotent field in the whole file. Wrapped to
+## one turn, then snapped to a thousandth of a degree - far coarser than float32's
+## error below 360, so a load-then-save writes back exactly what it read.
+func _saved_rotation() -> float:
+	if sprite == null:
+		return 0.0
+	return saved_rotation_of(sprite.rotation_degrees)
+
+## Wrap first, then snap: the result is then always the same round(x / 0.001) *
+## 0.001 product, which is what makes a second pass land on it exactly. Snapping
+## can round a value just under a full turn up to 360, which is 0.
+static func saved_rotation_of(degrees: float) -> float:
+	var snapped: float = snappedf(fposmod(degrees, 360.0), 0.001)
+	return 0.0 if snapped >= 360.0 else snapped
+
 ## Full serializable state. AsteroidManager aggregates these into the world
 ## save so mining jobs still have their rock on load and the asteroid field
 ## (contents, richness, positions) round-trips identically. resource_total_weights
@@ -199,7 +217,7 @@ func get_save_data() -> Dictionary:
 		"position": [position.x, position.y],
 		"direction": [direction.x, direction.y],
 		"speed": speed_pixels_per_sec,
-		"rotation": sprite.rotation_degrees if sprite != null else 0.0,
+		"rotation": _saved_rotation(),
 		"max_resources": max_resources,
 		"cur_resources": cur_resources,
 		"richness_range": [richness_range.x, richness_range.y],

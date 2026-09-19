@@ -102,8 +102,8 @@ func refresh_display() -> void:
 		_add_resource_line(resource, editable)
 	# Both pools, so a refinery's free-space line accounts for its whole bay rather
 	# than only the side goods arrive on.
-	%FreeSpaceAvailableLabel.text = _format_resouce_value(_free_space())
-	%FreeSpaceMaxLabel.text = _format_resouce_value(
+	(%FreeSpaceAvailableLabel as Label).text = _format_resouce_value(_free_space())
+	(%FreeSpaceMaxLabel as Label).text = _format_resouce_value(
 		storage_component.max_stored + storage_component.output_capacity)
 	# Guarded for the same reason the Stores card guards its own: a refresh landing
 	# mid-drag would snatch the number back, and the commit a moment later would
@@ -115,7 +115,7 @@ func refresh_display() -> void:
 	# preference about the player's own screen, not a property of the bin. A
 	# processor bay whose contents the module decides is still a bay the player may
 	# want a meter on.
-	%DisplayFillMeterCheckbox.button_pressed = storage_component.display_storage_ui
+	(%DisplayFillMeterCheckbox as CheckBox).button_pressed = storage_component.display_storage_ui
 
 ## One slot's row.
 func _add_resource_line(resource: ResourceData, editable: bool) -> void:
@@ -168,7 +168,7 @@ func _on_storage_changed(resource: ResourceData, _new_value: int) -> void:
 	var storage_line: StorageResourceLine = storage_lines.get(resource)
 	if storage_line != null:
 		storage_line.stored_resource_value.text = _format_slot_value(resource)
-	%FreeSpaceAvailableLabel.text = _format_resouce_value(_free_space())
+	(%FreeSpaceAvailableLabel as Label).text = _format_resouce_value(_free_space())
 
 ## Both pools, on the initial draw and on every change alike. The change handler
 ## used to read the GENERAL pool alone, so a mining bay's free space dropped to 0

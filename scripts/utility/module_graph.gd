@@ -39,7 +39,7 @@ func _flush_subgraphs() -> void:
 
 func add_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "", group_door: int = 0, exterior: bool = false) -> void:
 	if _vertices.has(vertex):
-		print("trying to add existing vertex! skipping. Module: " + vertex.name)
+		push_warning("trying to add existing vertex! skipping. Module: " + vertex.name)
 		return
 	_vertices[vertex] = _make_vertex(vertex, is_endpoint, group, group_door, exterior)
 	_emit_graph_changed()
@@ -72,7 +72,7 @@ func change_vertex_group(vertex: Node2D, new_group: StringName, new_group_door: 
 		if graph_vertex.group:
 			_linked_groups[graph_vertex.group].erase(graph_vertex)
 		if new_group:
-			_linked_groups.get_or_add(new_group, []).append(graph_vertex)
+			(_linked_groups.get_or_add(new_group, []) as Array).append(graph_vertex)
 			graph_vertex.subgraph = get_group_subgraph(new_group)
 		else:
 			last_subgraph += 1
@@ -176,12 +176,31 @@ func remove_vertex(vertex: Node2D) -> void:
 	# mutual-reference cycles so it can actually be collected.
 	_mark_dirty() # This may have split our graph
 	_emit_graph_changed()
+
+## Drops every vertex, for a graph whose owner is going away (WI-68 F3).
+##
+## Neighbouring vertices hold each other through `edges`, so a graph that is
+## simply released leaks every connected vertex as a RefCounted cycle - the whole
+## station, twice (path and structure graphs), on every load and Quit to Menu.
+## Emptying each vertex's edges is what breaks those cycles.
+##
+## Deliberately silent: no graph_changed and no dirty mark. It runs from an
+## owner's _exit_tree, while the listeners are being torn down in the same pass.
+## Anything that calls remove_vertex afterwards (a pawn's PREDELETE) hits the
+## unknown-vertex early return. Only safe because each manager owns its own
+## ModuleGraph.new() - if a graph is ever shared, this becomes destructive.
+func clear() -> void:
+	for vertex: ModuleGraphVertex in _vertices.values():
+		vertex.edges.clear()
+	_vertices.clear()
+	_linked_groups.clear()
+	_exterior_vertices.clear()
 	
 func add_edge(start: Node2D, end: Node2D, cost: float, data: StringName = "") -> bool:
 	var start_vertex: ModuleGraphVertex = _vertices.get(start)
 	var end_vertex: ModuleGraphVertex = _vertices.get(end)
 	if (start_vertex == null or end_vertex == null):
-		print("tried to add an edge but missing vertex.")
+		push_warning("tried to add an edge but missing vertex.")
 		return false
 	start_vertex.add_edge(end_vertex, cost, data)
 	end_vertex.add_edge(start_vertex, cost, data)
@@ -197,7 +216,7 @@ func remove_edge(start: Node2D, end: Node2D) -> bool:
 	var start_vertex: ModuleGraphVertex = _vertices.get(start) as ModuleGraphVertex
 	var end_vertex: ModuleGraphVertex = _vertices.get(end)
 	if (start_vertex == null or end_vertex == null):
-		print("tried to remove an edge but missing vertex.")
+		push_warning("tried to remove an edge but missing vertex.")
 		return false
 	start_vertex.edges.erase(end_vertex)
 	end_vertex.edges.erase(start_vertex)
@@ -483,7 +502,9 @@ func pathfind_to_type(start: Node2D, end_type: ModuleData) -> Array[PathPoint]:
 	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
 	if start_vertex == null:
 		return []
-	var type_callable: Callable = func(test_vertex: ModuleGraphVertex) -> bool: return test_vertex.node is ModuleBase and test_vertex.node.module_data == end_type
+	var type_callable: Callable = func(test_vertex: ModuleGraphVertex) -> bool:
+		var module: ModuleBase = test_vertex.node as ModuleBase
+		return module != null and module.module_data == end_type
 	return pathfind_to_func(start, type_callable)
 	
 func pathfind_to_component_type(start: Node2D, end_component_type: Variant) -> Array[PathPoint]:
@@ -492,7 +513,9 @@ func pathfind_to_component_type(start: Node2D, end_component_type: Variant) -> A
 	var start_vertex: ModuleGraphVertex = get_vertex_for_path(start)
 	if start_vertex == null:
 		return []
-	var component_type_callable: Callable = func(test_vertex: ModuleGraphVertex) -> bool: return test_vertex.node is ModuleBase and test_vertex.node.get_component_by_type(end_component_type) != null
+	var component_type_callable: Callable = func(test_vertex: ModuleGraphVertex) -> bool:
+		var module: ModuleBase = test_vertex.node as ModuleBase
+		return module != null and module.get_component_by_type(end_component_type) != null
 	return pathfind_to_func(start, component_type_callable)	
 
 func pathfind_to_func(start: Node2D, end_func: Callable) -> Array[PathPoint]:

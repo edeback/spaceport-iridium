@@ -16,7 +16,11 @@ func _ready() -> void:
 	SignalBus.module_removed.connect(_on_module_removed)
 	SignalBus.module_path_connection_removed.connect(_on_module_connection_removed)
 	SignalBus.module_selected.connect(_on_module_selected)
-	pass # Replace with function body.
+
+## Break the graph's vertex cycles before it is released, or every load and Quit
+## to Menu leaks the station's whole path graph (WI-68 F3).
+func _exit_tree() -> void:
+	graph.clear()
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.

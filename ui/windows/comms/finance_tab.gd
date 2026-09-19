@@ -20,13 +20,16 @@ extends VBoxContainer
 ##
 ## Refreshes live off [signal SignalBus.economy_changed] while visible, and does
 ## **not** pause the sim.
-
-## Cost and income category display order. Fixed rather than dictionary order so
-## the ledger reads the same way twice.
-const COST_ORDER: Array[StringName] = [
-	&"loan_payment", &"wages", &"upkeep", &"levy_fee", &"levy_skim", &"severance", &"penalty", &"event",
-]
-const INCOME_ORDER: Array[StringName] = [&"trade", &"contract", &"shops", &"hotels", &"dining", &"event"]
+##
+## Each cycle shows two bottom lines (WI-68 F4). **Operating net** is the ledger:
+## income minus costs, every booked category included. **Balance change** is what
+## the balance actually did, which also counts the spending the ledger treats as
+## capital - building, research, upgrades - and loan principal. The tab used to
+## show one "Net" that left out purchases, ransoms and hire fees too, so a cycle
+## could read +250 while the balance fell by thousands.
+##
+## Category order comes from EconomyManager's declared lists; this tab keeps no
+## list of its own, which is how a category once went missing from the total.
 
 var _content: VBoxContainer
 
@@ -111,30 +114,30 @@ func _active_streams(economy: EconomyManager) -> String:
 
 func _build_cycle_section(heading: String, record: Dictionary, economy: EconomyManager) -> void:
 	var section := VBoxContainer.new()
-	section.add_theme_constant_override("separation", 2)
+	section.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	var cycle_no: int = int(record.get("cycle", 0))
 	section.add_child(SectionLabel.create(
 		"%s (cycle %d)" % [heading, cycle_no] if cycle_no > 0 else heading))
 
 	var income: Dictionary = record.get("income", {})
 	var costs: Dictionary = record.get("costs", {})
-	if income.is_empty() and costs.is_empty():
+	var knows_change: bool = EconomyManager.knows_balance_change(record)
+	var change: int = EconomyManager.balance_change(record, economy.balance())
+	# A cycle spent only on building has an empty ledger but a very real balance
+	# change - that is not "nothing recorded".
+	if income.is_empty() and costs.is_empty() and (not knows_change or change == 0):
 		section.add_child(_muted("Nothing recorded yet."))
 		_content.add_child(section)
 		return
 
-	var gross_income: int = 0
-	for category: StringName in INCOME_ORDER:
-		var value: int = int(income.get(category, 0))
+	for category: StringName in _in_display_order(income, EconomyManager.INCOME_CATEGORIES):
+		var value: int = int(income[category])
 		if value > 0:
-			gross_income += value
 			section.add_child(_line(EconomyManager.category_label(category), "+%d" % value, UIPalette.LIVE))
 
-	var total_cost: int = 0
-	for category: StringName in COST_ORDER:
-		var value: int = int(costs.get(category, 0))
+	for category: StringName in _in_display_order(costs, EconomyManager.COST_CATEGORIES):
+		var value: int = int(costs[category])
 		if value > 0:
-			total_cost += value
 			# Wages and upkeep expand into a per-pawn / per-module list. The detail
 			# reflects the CURRENT roster/station (the projection for the next
 			# settlement) - the closest available breakdown of a charged total.
@@ -145,9 +148,29 @@ func _build_cycle_section(heading: String, record: Dictionary, economy: EconomyM
 			else:
 				section.add_child(_line(EconomyManager.category_label(category), "-%d" % value, UIPalette.ATTENTION))
 
-	var net: int = gross_income - total_cost
-	section.add_child(_line("Net", "%+d" % net, UIPalette.sign_color(float(net))))
+	var net: int = EconomyManager.record_net(record)
+	section.add_child(_line("Operating net", "%+d" % net, UIPalette.sign_color(float(net))))
+	# Absent for a cycle from a save that predates WI-68 - hidden rather than
+	# guessed, since "since the load" would be a different number.
+	if knows_change:
+		section.add_child(_line("Balance change", "%+d" % change, UIPalette.sign_color(float(change))))
+		if change != net:
+			section.add_child(_muted("Balance change also counts building, research, upgrades and loans."))
 	_content.add_child(section)
+
+## A record's categories in the declared display order, then any undeclared ones
+## (EconomyManager has already reported those) - so nothing booked is left off
+## the page, and the lines always add up to the operating net beneath them.
+static func _in_display_order(bucket: Dictionary, declared: Array[StringName]) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for category: StringName in declared:
+		if bucket.has(category):
+			out.append(category)
+	for category: Variant in bucket:
+		var id: StringName = StringName(str(category))
+		if not out.has(id):
+			out.append(id)
+	return out
 
 ## Visitor economy summary (WI-33): live guest count + station reputation. The
 ## per-category income (shops/hotels/dining) shows in the cycle ledger above.
@@ -156,7 +179,7 @@ func _build_visitors_section() -> void:
 	if visitors == null:
 		return
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 2)
+	box.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	box.add_child(SectionLabel.create("Visitors"))
 	box.add_child(_line("On station", str(visitors.visitor_count()), UIPalette.TEXT))
 	box.add_child(_line("Reputation", "%d%%" % roundi(visitors.reputation * 100.0), UIPalette.TEXT))
@@ -164,7 +187,7 @@ func _build_visitors_section() -> void:
 
 func _build_levy_summary(economy: EconomyManager) -> void:
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 2)
+	box.add_theme_constant_override("separation", UIMetrics.LINE_GAP)
 	box.add_child(SectionLabel.create("ARC levy"))
 	if economy.levy_enabled:
 		box.add_child(_muted("%d%% of income skimmed, plus %d cr every %d cycles." %
@@ -202,7 +225,7 @@ func _build_loan_section(economy: EconomyManager) -> void:
 
 func _wage_detail(economy: EconomyManager) -> Control:
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 1)
+	box.add_theme_constant_override("separation", UIMetrics.FINANCE_DETAIL_GAP)
 	var breakdown: Dictionary = economy.wage_breakdown()
 	if breakdown.is_empty():
 		box.add_child(_muted("    (no wage-drawing crew)"))
@@ -213,7 +236,7 @@ func _wage_detail(economy: EconomyManager) -> Control:
 
 func _upkeep_detail(economy: EconomyManager) -> Control:
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 1)
+	box.add_theme_constant_override("separation", UIMetrics.FINANCE_DETAIL_GAP)
 	var breakdown: Dictionary = economy.upkeep_breakdown()
 	if breakdown.is_empty():
 		box.add_child(_muted("    (no upkeep modules)"))

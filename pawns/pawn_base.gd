@@ -99,6 +99,9 @@ var current_job: Job = null:
 ## Always checked before the shared board in start_job(), and never touched
 ## by other pawns or JobManager.
 var job_queue: Array[Job] = []
+## The job restored as this pawn's current one on load, resumed ahead of the
+## cargo sweep by the first start_job() (WI-68 F21). Null otherwise.
+var _resume_first: Job = null
 
 ## Start the very first job immediately
 var job_length: float = 1
@@ -149,8 +152,6 @@ func _ready() -> void:
 	add_child(inventory_component)
 	Global.path_manager.add_vertex(self, true, "", current_module == null)
 	SignalBus.module_removed.connect(_on_module_removed)
-	#SignalBus.module_selected.connect(_on_module_selected)
-	pass # Replace with function body.
 	
 
 func _on_module_removed(module: ModuleBase) -> void:
@@ -207,6 +208,10 @@ func _end_current_job() -> void:
 		
 
 func start_job() -> void:
+	# The job this pawn was doing when the save was written goes first - ahead of
+	# the sweep below, which would otherwise take the cargo that job is carrying.
+	if _resume_restored_job():
+		return
 	# If we have an inventory, try to store it ASAP
 	if inventory_component != null and not inventory_component.is_empty():
 		var return_job: Job = _make_store_inventory_job()
@@ -243,6 +248,40 @@ func start_job() -> void:
 			# Can't even move anywhere, idle pose
 			if animated_sprite != null:
 				animated_sprite.play("idle")
+
+## Marks `job` - already restored to the front of the queue - as the one this
+## pawn was doing when the save was written (WI-68 F21). Only
+## SaveManager._load_pawn_jobs calls it.
+func mark_restored_job(job: Job) -> void:
+	_resume_first = job
+
+## Resumes the restored in-flight job ahead of the inventory sweep, once
+## (WI-68 F21). True if it began.
+##
+## Every start_job() sweeps carried cargo before anything else, which is right
+## for leftovers from a cancelled job - and wrong on the first pick after a load,
+## where the cargo usually BELONGS to the restored job: a haul mid-carry, a drone
+## mid-mine. Measured on a real save, four of five restored jobs were abandoned
+## to a sweep, and a crew member restored mid-way to an airlock stopped to put
+## their cargo away while the room harmed them.
+##
+## One shot: the marker is spent on the first call whatever happens. If
+## something has been queued in front of the job since the load, or it can no
+## longer run, the normal rules take over - a cancelled job leaves its cargo on
+## the pawn, and the next pick sweeps it as leftovers.
+func _resume_restored_job() -> bool:
+	var restored: Job = _resume_first
+	if restored == null:
+		return false
+	_resume_first = null
+	if job_queue.is_empty() or job_queue[0] != restored:
+		return false
+	job_queue.pop_front()
+	if restored.is_valid() and restored.can_do_job(self):
+		_begin_job(restored)
+		return true
+	restored.cancel(true) # cancel implies end_job (lifecycle contract)
+	return false
 
 ## Store-inventory sweep target, overridable (a mining drone restricts deposits
 ## to its own bay). Base: an open sweep to any storage that will take the cargo.
@@ -374,13 +413,6 @@ func interrupt_with_job(new_job: Job) -> void:
 	job_length = 0
 	_begin_job(new_job)
 
-
-#func _exit_tree() -> void:
-	#Global.path_manager.remove_vertex(self)
-	#if current_job != null:
-		#current_job.cancel(true)
-		#current_job = null
-		
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
 		release_stand_anchor()
@@ -550,11 +582,6 @@ func update_layer_and_sprite() -> void:
 		if current_layer != current_module.module_data.interaction_layer:
 			current_layer = current_module.module_data.interaction_layer
 			reparent(Global.world_manager.get_canvas_for_layer(current_layer))
-
-#func _find_next_job() -> void:
-	#if current_job == null:
-		#current_job = Global.job_manager.find_job()
-	#pass
 
 func _on_collision_clicked(viewport: Node, event: InputEvent, shape_idx: int) -> void:
 	if event.is_action_pressed("build"):

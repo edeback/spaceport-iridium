@@ -440,4 +440,21 @@ func load_save_data(data: Dictionary) -> void:
 	_hours_since_chat = float(data.get("hours_since_chat", 0.0))
 	_recent.clear()
 	for entry: Variant in data.get("recent", []):
-		_recent.append(entry as Dictionary)
+		if entry is Dictionary:
+			_recent.append(_chat_from_dict(entry as Dictionary))
+
+## One logged chat, re-typed after the JSON round trip (WI-68 F10).
+##
+## JSON has a single number type, so every int in the log came back a float and
+## went out again as one on the next save. Harmless while nothing keys on these,
+## but `with` is a pawn_id, and the first lookup keyed on it would miss - 6.0 and
+## 6 are different Dictionary keys.
+static func _chat_from_dict(entry: Dictionary) -> Dictionary:
+	return {
+		"with": int(entry.get("with", 0)),
+		"name": str(entry.get("name", "")),
+		"positive": bool(entry.get("positive", false)),
+		"delta": float(entry.get("delta", 0.0)),
+		"cycle": int(entry.get("cycle", 0)),
+		"hour": int(entry.get("hour", 0)),
+	}

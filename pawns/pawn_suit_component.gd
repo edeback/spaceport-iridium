@@ -227,6 +227,25 @@ func _trip_is_live() -> bool:
 		return false
 	return true
 
+## Whether a trip to an airlock is under way (or queued). For the cheat dump and
+## tests; the rule itself reads _trip_is_live() through the Situation.
+func has_live_trip() -> bool:
+	return _trip_is_live()
+
+## Sim-hours before a refused or failed trip may be retried.
+func trip_cooldown_remaining() -> float:
+	return _trip_cooldown
+
+## Re-links a change_suit job restored from a save (WI-68 F2).
+##
+## _trip is not saved, but the job it pointed at is - SaveManager restores it
+## into the pawn's queue. Without this the component saw no trip, posted a
+## second one, and the orphaned first walked an already-suited pawn to an
+## airlock and back. Same shape as the needs/recharge/repair/treatment adopters
+## in SaveManager._adopt_if_need_job, which is the only caller.
+func adopt_restored_trip(job: Job) -> void:
+	_trip = job
+
 ## Posts the walk to an airlock.
 ##
 ## Suiting up INTERRUPTS - this pawn is being harmed right now, and WI-17's
@@ -259,17 +278,32 @@ func hold_remaining() -> float:
 
 ## Called by Action_ChangeSuit when the change actually happens, so the flip lives
 ## with the action that earned it rather than being guessed at from here.
-func apply_change(putting_on: bool) -> void:
+##
+## `job` is the trip that made the change. Only that trip may clear _trip
+## (WI-68 F2): the cheat console flips a suit with no job at all, and clearing
+## then would orphan a trip still walking - the same leak of the pointer the
+## save/load bug had. A live trip simply finishes and applies its own change.
+func apply_change(putting_on: bool, job: Job = null) -> void:
 	suited = putting_on
 	if putting_on:
 		_hold_remaining = maxf(_hold_remaining, harm_hold_hours)
 	else:
 		_hold_remaining = 0.0
-	_trip = null
+	if job != null and job == _trip:
+		_trip = null
 
 ## The change was refused at the airlock (it stopped being habitable during the
 ## walk) or the trip failed. Throttle before deciding again.
-func trip_refused() -> void:
+##
+## Ignored unless `job` IS the current trip (WI-68 F2). _start_trip sets _trip
+## to the new job *before* interrupt_with_job cancels whatever was running; if
+## that was a stale change_suit job, its driver reports the failure here, and
+## clearing unconditionally would null the new trip's pointer - letting the next
+## slow tick post yet another, which interrupts this one, and so on, with the
+## six-second change at the rack never finishing.
+func trip_refused(job: Job) -> void:
+	if job == null or job != _trip:
+		return
 	_trip = null
 	_trip_cooldown = trip_retry_hours
 

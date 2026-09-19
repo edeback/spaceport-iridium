@@ -145,6 +145,9 @@ func load_visitor_save_data(data: Dictionary) -> void:
 ## MiningDronePawn): run only queued need jobs, otherwise wander. Leaving is driven
 ## by _process, not the board.
 func start_job() -> void:
+	# A restored in-flight job first, as for crew (WI-68 F21).
+	if _resume_restored_job():
+		return
 	if inventory_component != null and not inventory_component.is_empty():
 		var return_job: Job = _make_store_inventory_job()
 		if return_job.can_do_job(self):

@@ -36,7 +36,7 @@ var _ids: Array[StringName] = []
 var _selected: StringName = &""
 
 static func create() -> TabStrip:
-	return load(SCENE_PATH).instantiate() as TabStrip
+	return (load(SCENE_PATH) as PackedScene).instantiate() as TabStrip
 
 func _ready() -> void:
 	_ensure_refs()

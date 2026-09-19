@@ -7,7 +7,6 @@ enum Multiplacement { NONE, HORIZONTAL, VERTICAL, BOTH }
 class LayerData:
 	var canvas: CanvasLayer
 	var cell_to_module: Dictionary[Vector2i, ModuleBase] = {}
-	#var id_to_module: Dictionary[int, ModuleBase] = {}
 
 @export var start_module: ModuleData
 @export var docking_bay: ModuleData
@@ -23,9 +22,8 @@ class LayerData:
 var layer_data: Dictionary[StructureLayer, LayerData]
 
 var last_id : int = 0
-#var cell_to_module: Dictionary[Vector2i, ModuleBase] = {}
 var id_to_module: Dictionary[int, ModuleBase] = {}
-			
+
 var modules_by_type: Dictionary = {}
 
 var debug_build_anything: bool = false
@@ -61,10 +59,6 @@ func spawn_starting_station() -> void:
 	# so this is a plain direct call, no registration window needed.
 	Global.atmosphere_manager.seed_starting_atmosphere()
 
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
 
 func _get_next_id() -> int:
 	last_id = last_id + 1
@@ -123,9 +117,8 @@ func add_module(module_data: ModuleData, cell: Vector2i, flipped: bool = false, 
 	if flipped and module_data.flippable:
 		module_scene = module_data.flipped_scene
 	var new_module: ModuleBase = module_scene.instantiate()
-	new_module.get_instance_id()
 	if is_blocked(module_data.interaction_layer, cell, new_module.size):
-		print("Warning, attempted to add module where one exists at: " + str(cell))
+		push_warning("Warning, attempted to add module where one exists at: " + str(cell))
 		new_module.free()
 		return null
 	# Note this only works for one-cell modules but right now only matters for those
@@ -179,6 +172,11 @@ func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 				AlertData.Priority.HIGH, "Cannot remove %s" % module_name,
 				"Removing it would split the station into disconnected pieces", module)
 			return false
+	# Everything read off the module is read before it is freed, and the free is
+	# the last thing that happens (WI-68 F18/B5). queue_free defers to the end of
+	# the frame, so reading `module` after it happened to work - until someone
+	# swaps it for free().
+	var data: ModuleData = module.module_data
 	var replacement_location: Vector2i = module.module_cell
 	var replacement_points: Array[Vector2i] = []
 	if module.get_structure_component() != null:
@@ -187,16 +185,16 @@ func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 	module.remove_connections()
 	for x in module.size.x:
 		for y in module.size.y:
-			layer_data[module.module_data.interaction_layer].cell_to_module.erase(module.module_cell + Vector2i(x,y))
+			layer_data[data.interaction_layer].cell_to_module.erase(module.module_cell + Vector2i(x,y))
 	id_to_module.erase(module.module_id)
-	layer_data[module.module_data.interaction_layer].canvas.remove_child(module)
+	layer_data[data.interaction_layer].canvas.remove_child(module)
 	SignalBus.module_removed.emit(module)
-	var module_array: Array = modules_by_type.get_or_add(module.module_data, [])
+	var module_array: Array = modules_by_type.get_or_add(data, [])
 	module_array.erase(module)
+	if data != replacement_module and data.interaction_layer == StructureLayer.MODULE:
+		for replacement_point: Vector2i in replacement_points:
+			add_module(replacement_module, replacement_location + replacement_point)
 	module.queue_free()
-	if module.module_data != replacement_module and module.module_data.interaction_layer == StructureLayer.MODULE:
-		for replacement_point in replacement_points:
-			add_module(replacement_module, replacement_location +replacement_point)
 	return true
 	
 # --- persistence ------------------------------------------------------------
@@ -290,12 +288,18 @@ func get_stack_at_cell(cell: Vector2i) -> Array[ModuleBase]:
 ## placeholder (truss) so raids strike real hardware, not existing wreckage.
 func get_built_modules(layer: StructureLayer = StructureLayer.MODULE, exclude_replacement: bool = true) -> Array[ModuleBase]:
 	var result: Array[ModuleBase] = []
+	# A multi-cell module appears once per cell. A seen-set rather than
+	# result.has(), which made this O(cells^2) (WI-68 F18/C11); keyed on the
+	# instance id, never the node, per the WI-63 rule.
+	var seen: Dictionary[int, bool] = {}
 	for module: ModuleBase in layer_data[layer].cell_to_module.values():
 		if module == null or not module.is_complete():
 			continue
 		if exclude_replacement and module.module_data == replacement_module:
 			continue
-		if not result.has(module):
+		var id: int = module.get_instance_id()
+		if not seen.has(id):
+			seen[id] = true
 			result.append(module)
 	return result
 
@@ -317,12 +321,3 @@ func show_module_layer(layer: StructureLayer) -> void:
 		corridor_mod.color.a = 1
 		var turbolift_mod: CanvasModulate = layer_data[StructureLayer.TURBOLIFT].canvas.get_node("CanvasModulate") as CanvasModulate
 		turbolift_mod.color.a = 1
-	#for module_layer in module_layers:
-		#if module_layer == layer:
-			#module_layers[module_layer].visible = true
-			#var mod: CanvasModulate = module_layers[module_layer].get_node("CanvasModulate") as CanvasModulate
-			#mod.color.a = 1
-		#else:
-			#module_layers[module_layer].visible = true
-			#var mod: CanvasModulate = module_layers[module_layer].get_node("CanvasModulate") as CanvasModulate
-			#mod.color.a = 0.3

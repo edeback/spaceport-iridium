@@ -156,7 +156,7 @@ func panel() -> ConsolePanel:
 	_legend_section.add_theme_constant_override("separation", UIMetrics.ROW_GAP)
 	_legend_section.add_child(SectionLabel.create("Legend"))
 	_legend_rows = VBoxContainer.new()
-	_legend_rows.add_theme_constant_override("separation", 4)
+	_legend_rows.add_theme_constant_override("separation", UIMetrics.ITEM_GAP)
 	_legend_section.add_child(_legend_rows)
 	_legend_note = Label.new()
 	_legend_note.theme_type_variation = UIType.BODY

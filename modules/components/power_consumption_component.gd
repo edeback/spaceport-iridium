@@ -2,7 +2,9 @@ class_name PowerConsumptionComponent
 extends ComponentBase
 
 @export var power_consumption: float = 10.0
-@export var capacitator: float = 0.0
+## Not read by anything yet - a placeholder for a per-consumer buffer. Renamed
+## from the misspelt `capacitator` (WI-68 F18/C8); no scene or resource set it.
+@export var capacitor: float = 0.0
 @export var animation_player: AnimationPlayer
 @export var force_off: bool = false
 

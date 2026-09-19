@@ -46,6 +46,21 @@
 
 **F5. Two debug hotkeys are live in release builds — read from code.** F6 (`debug_fire_event`, [`event_manager.gd:61`](../../../scripts/managers/event_manager.gd)) fires a random event and F7 (`debug_offer_contract`, [`contract_manager.gd:65`](../../../scripts/managers/contract_manager.gd)) generates a contract, with no `OS.is_debug_build()` gate anywhere in the project. WI-58 deliberately keeps them out of the remap screen, which also means a player can't unbind them. Panku is already disabled on release; these aren't. **Fix:** gate both handlers on `OS.is_debug_build()`.
 
+**F21. On load, a pawn carrying cargo abandons its restored job to a cargo sweep — confirmed and fixed in [[WI-68_Audit_Fix_Pass]] stage 2.** Found while verifying F2, so it isn't in the original pass. `PawnBase.start_job()` ([`pawn_base.gd:209`](../../../pawns/pawn_base.gd)) sweeps carried cargo before looking at the queue, and `_load_pawn_jobs` restores the saved current job only as the front of that queue. So the cargo a restored pawn carries, which usually belongs to that very job, got swept first. On the real quicksave, **four of five restored jobs were preempted**: three mining drones mid-mine and a crew member mid-haul. The restored job then resumed empty-handed. In F2's case, a crew member restored mid-way to an airlock stopped to put their cargo away while the room harmed them. **Fix:** the restored current job is marked, and each sweeping `start_job()` resumes it first, once.
+
+**F23. A pile tagged with a module that has since been removed makes the next save drop every pile on the station — confirmed during [[WI-68_Audit_Fix_Pass]] stage 3, fixed in stage 3b.** This is silent resource loss, and the most serious finding of the pass. `ModuleBase.pre_delete` clears `parent_module` on the module's *own* overflow pile ([`module_base.gd:618-621`](../../../modules/templates/module_base.gd)). But other code spawns piles tagged with a module too, and those keep a reference to the freed module:
+- a manual dump (`storage_overlays.gd:167`);
+- a pawn's dropped cargo (`pawn_base.gd:450`);
+- a cancelled sell order and a released contract demand (`trade_component.gd:83, 146`);
+- the dialogue bridge.
+
+On save, [`SaveManager._get_piles_save`](../../../scripts/managers/save_manager.gd) passes that freed reference to `module_ref()`. The typed parameter rejects it before `module_ref`'s own null check can run, the script error aborts the collector, and the whole `piles` section is written empty. **Reproduced:** 5 piles before the save, 0 after the reload. **Reachable** whenever a module is destroyed in a raid or deconstructed while a pile it tagged still exists. **Fix, in three parts, so one bad reference can never again cost a whole section:**
+- a pile clears `parent_module` when that module leaves the tree;
+- `_get_piles_save` checks `is_instance_valid`;
+- `module_ref` accepts a possibly-freed object.
+
+**F22. A hire whose bay is removed mid-flight is delivered into whatever replaced the bay, never refunded — confirmed during [[WI-68_Audit_Fix_Pass]] stage 3, fixed in stage 3b.** `PendingHires` stores `module_ref(bay)`, which is a layer + cell, and [`CrewManager._arrive`](../../../scripts/managers/crew_manager.gd) re-resolves it when the delay is up. Removing a module-layer bay backfills truss onto its cells, so the reference resolves to the *truss*, a valid module. The recruit is delivered into it, and the WI-07 refund branch never runs. **Reproduced:** with the bay removed mid-flight, crew went 3 → 4 and the refund was 0. The same cell-only resolution would deliver to any module the player builds on that cell afterwards. **Fix:** at arrival (and in `_on_shuttle_docked`), accept the resolved module only if it still carries a `CrewRecruitmentComponent`; otherwise refund.
+
 ### B. Invariant violations / design debt
 
 **F6. The script half of the UI drift guard was never automated.** `test_ui_theme.gd` sweeps scenes, but nothing sweeps scripts. About **40 geometry literals** have crept into console-UI scripts:
@@ -58,6 +73,19 @@
 **F7. "Keep everything typed" is unenforced: 98 violations in project code.** The three typed warnings sit at level 1 ([`project.godot:46-48`](../../../project.godot)), so they fail nothing. Raised to errors in the scratch copy, they found **238 unique violations in 52 files**: 88 unsafe method access, 61 unsafe property access, 58 untyped declarations and 31 missing return types. 140 of those are in vendored `assets/external/pixel_planets/` (`Star.gd` 88, `StellarObjectVisual.gd` 52). The remaining **98 are in project code across ~48 files**, led by `module_base.gd` and `preview_module.gd` (7 each), `pawn_job_tab.gd` (5), and `balloon.gd`, `turbolift_cab.gd` and `ui_storage_component.gd` (4 each). This is a lower bound, because a file that fails to compile hides violations in the scripts that depend on it. **Fix:** clear the 98, then raise all three to error (2) with `assets/external/` excluded.
 
 **F8. Eight node-keyed dictionaries, all currently safe by pairing.** They are in `heat_manager.gd:54`, `atmosphere_manager.gd:27,31`, `structure_component.gd:32`, `path_component.gd:75`, `module_graph.gd:26`, `stores_panel.gd:59` and `crew_panel.gd:102`. Each is protected by unregistering in `_exit_tree`, by `remove_module` detaching neighbours before `queue_free`, or by a rebuild on `crew_departed` — and loads are a full scene reload. The two that iterate with a typed loop variable, [`heat_manager.gd:181`](../../../scripts/managers/heat_manager.gd) over a neighbour's `module_connections` and [`crew_panel.gd:601`](../../../ui/windows/crew_panel.gd), are the ones that crash the moment a pairing slips. **Fix:** convert those two to `get_instance_id()` keys when next touched, or amend the CLAUDE.md rule to name the unregister-on-exit pairing as the sanctioned exception.
+
+**F24. `is_instance_valid(param)` behind a typed parameter is dead code for a freed object — found during [[WI-68_Audit_Fix_Pass]] stage 3b.** GDScript rejects a freed object at a typed parameter *at the call*, with a script error that aborts the caller, before the body can check anything. **37 functions** check validity on a typed object parameter. Most are harmless, because their callers only ever pass live objects or `null`. The dangerous ones receive a reference that was *stored or bound* earlier and can outlive its object. Stage 3b fixed the ones in its own flow:
+- the `*_ref` save helpers (F23);
+- the crew, visitor and trader-courier shuttle-docked handlers. The courier's version was the worst: a freed bay failed the call, `_courier_active` never reset, and no courier was ever dispatched again.
+
+Still open, and worth a pass:
+- alert subjects (`AlertRules.make_id`, `AlertManager._pawn_label`, `TutorialManager.fire`);
+- `PawnSuitComponent._environment_of(owner_pawn.current_module)` and its siblings;
+- `ConveyorComponent._endpoint_alive` / `OverlayFlowLayer._endpoint_module`;
+- `UIInGame.set_selected_pawn`;
+- the `StoresModel` queries.
+
+**Fix:** make it a rule, then enforce it with a GUT source sweep (the same shape as the UI drift guard): *a function that checks `is_instance_valid(x)` on a parameter must take `x` as `Variant`*.
 
 **F9. The save-key stability pin misses the newest components.** [`test_component_save_contract.gd`](../../../tests/unit/test_component_save_contract.gd) lists 15 module and 9 pawn components, but not `HeatComponent` (`temperature`), `HeatEmitterComponent` (`target_f`) or `PawnSuitComponent` (`suited`, `hold_hours`). Add them.
 
@@ -98,7 +126,7 @@ Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", 
 
 **F20. CLAUDE.md is stale.** It says "86 suites, 1624 tests"; the real figures are 89 and 1,672.
 
-**Bundled as [[WI-68_Audit_Fix_Pass]]** (drafted 2026-09-18): F1–F7, F9, F10, F12, F13 and F15–F18. F8, F11, F14 and F19's `PawnOpinion` suite are deliberately left out, with the reasons recorded there.
+**Bundled as [[WI-68_Audit_Fix_Pass]]** (drafted 2026-09-18): F1–F7, F9, F10, F12, F13, F15–F18, and F21 (added during stage 2). F22 and F23 were found during stage 3 and fixed in stage 3b, along with F15 and the shuttle-handler part of F24. The rest of F24 is open. F8, F11, F14 and F19's `PawnOpinion` suite are deliberately left out, with the reasons recorded there.
 
 ## 2026-09-18 second-pass audit (post-WI-68 stage 4)
 
@@ -134,6 +162,8 @@ Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", 
 ### B. Invariant violations / design debt
 
 **F29. `Global`'s manager slots are never cleared, and 218 `== null` / `!= null` guards test them (20 use `is_instance_valid`).** [`global.gd:5-46`](../../../scripts/managers/global.gd) holds 30 typed slots; every manager writes its own in `_ready` and none clears it in `_exit_tree`. After Quit to Menu every slot names a freed node, and `freed == null` is false. Nothing fires today because the menus reach only `Global.settings`, difficulty and the staging fields (verified: `ui/menus` touches no manager slot outside the in-game pause menu). But the guards in `data/` are wrong the moment a menu screen asks a data class a question: `module_data.gd:126` (`is_unlocked`), `local_upgrade_data.gd:49`, `condition_min_tier.gd:18`, `condition_disease_unlocked.gd:9` all test `Global.unlock_manager == null` and then call into it. A "preview your starting station" screen, or a mod's menu, would be the first to trip it. **Fix:** each manager nulls its slot in `_exit_tree` (one line each), then a GUT source sweep for `Global\.\w+ (==|!=) null` in the F24 sweep's family. **Rule:** a `Global` manager slot is live or null, never freed.
+
+> *Correction (2026-09-19, during [[WI-68_Audit_Fix_Pass]] stage 5):* **the premise is wrong for Godot 4.7.** A freed object compares `== null` as **true**, whether the slot is typed or untyped, and it is also falsy. This was checked with a five-line headless script: free a node held in a typed `Node` var and an untyped one, then print `== null`, `!= null`, `is_instance_valid()` and truthiness. Stage 3's dangling-pile counter had already hit the same behaviour: it read 0 precisely because the freed parent compared equal to null. So the 218 `== null` guards *do* catch a freed `Global` slot, and the `data/` paths named above would take their null branch rather than call into a freed manager. What stays true is narrower. Passing a freed slot to a **typed parameter** still errors at the call, which is F24. Nulling slots in `_exit_tree` is still tidy, and makes the state honest for `is_instance_valid` and debuggers. Downgrade F29 from a latent crash to hygiene.
 
 **F30. Stat names are an undeclared vocabulary.** `StatModifierSpec.stat` and `StatModifierEffect.stat` in `.tres`, `get_effective_stat(&"…")` and `set_single_modifier(&"…")` in code, together name seventeen stats - `process_time`, `mining_rate`, `power_output`, `traversal_speed_mult`, `breakdown_chance`, `scrub_rate`, `o2_release_rate`, `sleep_quality`, `shield_radius`, `shield_charge_rate`, `shield_capacity`, `hotel_rate`, `hotel_mood`, `robot_speed`, `robot_capacity`, `logistics_max_robots`, `conveyor_lanes` - as free-form StringNames with no constants file and no sweep (`module_base.gd:331-334, 364-366`; the per-component `STAT_*` consts cover five of them). A typo in an upgrade's `.tres` is an upgrade that costs credits and does nothing, silently - the failure the ledger-category rule (F4), `StoryFlags` and `TutorialTriggers` were each introduced to prevent. **Fix:** `scripts/utility/stats.gd` in the `Groups` style, code reads through it, and a content sweep over `data/unlocks/**` and `data/local_upgrades/**` asserting every `stat =` is declared (the `test_event_content` shape).
 

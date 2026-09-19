@@ -167,7 +167,7 @@ func _build_orders_page() -> Control:
 	for column_index: int in 2:
 		var column := VBoxContainer.new()
 		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		column.add_theme_constant_override("separation", 4)
+		column.add_theme_constant_override("separation", UIMetrics.ITEM_GAP)
 		column.add_child(TradeResourceRow.make_header())
 		_columns.add_child(column)
 		var from: int = column_index * half

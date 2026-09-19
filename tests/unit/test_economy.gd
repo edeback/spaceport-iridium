@@ -63,3 +63,114 @@ func test_loan_schedule_shorter_when_principal_tiny() -> void:
 		sum += pay
 	assert_eq(sum, EconomyManager.loan_total(5, 0.2))
 	assert_true(schedule.size() <= 10)
+
+# --- ledger categories (WI-68 F4) -------------------------------------------------
+
+func test_every_declared_category_has_a_label() -> void:
+	for category: StringName in EconomyManager.COST_CATEGORIES + EconomyManager.INCOME_CATEGORIES:
+		assert_true(EconomyManager.CATEGORY_LABELS.has(category), "%s is declared but has no label" % category)
+
+func test_every_label_belongs_to_a_declared_category() -> void:
+	# A label with no list is a category the Finance tab can never show.
+	for category: StringName in EconomyManager.CATEGORY_LABELS:
+		assert_true(EconomyManager.is_declared(category, true) or EconomyManager.is_declared(category, false),
+			"%s has a label but is in neither list" % category)
+
+func test_no_category_is_listed_twice_on_one_side() -> void:
+	for side: Array[StringName] in [EconomyManager.COST_CATEGORIES, EconomyManager.INCOME_CATEGORIES]:
+		for category: StringName in side:
+			assert_eq(side.count(category), 1, "%s appears once" % category)
+
+func test_only_event_sits_on_both_sides() -> void:
+	# A windfall and a loss; anything else on both sides is a mistake.
+	for category: StringName in EconomyManager.COST_CATEGORIES:
+		if EconomyManager.is_declared(category, false):
+			assert_eq(category, &"event", "%s is both a cost and income" % category)
+
+func test_the_formerly_unbooked_spends_are_declared_costs() -> void:
+	for category: StringName in [&"trade_purchases", &"raid_payoff", &"hiring"]:
+		assert_true(EconomyManager.is_declared(category, true), "%s is a declared cost" % category)
+	assert_true(EconomyManager.is_declared(EconomyManager.REFUND_CATEGORY, false), "refunds are income")
+
+func test_sales_and_purchases_read_as_a_pair() -> void:
+	assert_eq(EconomyManager.category_label(&"trade"), "Sales")
+	assert_eq(EconomyManager.category_label(&"trade_purchases"), "Purchases")
+
+# --- records ------------------------------------------------------------------------
+
+func _record() -> Dictionary:
+	return {"cycle": 3, "income": {}, "costs": {}}
+
+func test_add_to_record_accumulates_per_category() -> void:
+	var record: Dictionary = _record()
+	EconomyManager.add_to_record(record, "costs", &"wages", 40)
+	EconomyManager.add_to_record(record, "costs", &"wages", 15)
+	EconomyManager.add_to_record(record, "income", &"trade", 250)
+	assert_eq(record["costs"][&"wages"], 55)
+	assert_eq(record["income"][&"trade"], 250)
+
+func test_an_undeclared_category_is_reported_but_still_booked() -> void:
+	# Refusing it would recreate the bug: the money really moved, so the books
+	# must still see it. The error is what catches the authoring mistake.
+	var record: Dictionary = _record()
+	EconomyManager.add_to_record(record, "costs", &"mystery_fee", 30)
+	assert_push_error("undeclared", "a new category that skipped the list is loud")
+	assert_eq(EconomyManager.record_net(record), -30, "and still counts against the net")
+
+func test_record_net_counts_every_category() -> void:
+	var record: Dictionary = _record()
+	EconomyManager.add_to_record(record, "income", &"trade", 250)
+	EconomyManager.add_to_record(record, "costs", &"trade_purchases", 6000)
+	EconomyManager.add_to_record(record, "costs", &"hiring", 800)
+	assert_eq(EconomyManager.record_net(record), 250 - 6000 - 800,
+		"the audit's example: buying 6000 and selling 250 is not a +250 cycle")
+
+func test_a_refunded_hire_nets_to_zero() -> void:
+	var record: Dictionary = _record()
+	EconomyManager.add_to_record(record, "costs", &"hiring", 883)
+	EconomyManager.add_to_record(record, "income", EconomyManager.REFUND_CATEGORY, 883)
+	assert_eq(EconomyManager.record_net(record), 0, "a hire paid and refunded in one cycle cost nothing")
+
+func test_an_empty_record_nets_to_zero() -> void:
+	assert_eq(EconomyManager.record_net({}), 0)
+
+# --- balance change -------------------------------------------------------------------
+
+func test_the_cycle_in_progress_measures_against_the_live_balance() -> void:
+	var record: Dictionary = _record()
+	record[EconomyManager.OPENING_BALANCE] = 1000
+	assert_true(EconomyManager.knows_balance_change(record))
+	assert_eq(EconomyManager.balance_change(record, 800), -200)
+
+func test_a_closed_cycle_measures_against_its_closing_balance() -> void:
+	var record: Dictionary = _record()
+	record[EconomyManager.OPENING_BALANCE] = 1000
+	record[EconomyManager.CLOSING_BALANCE] = 700
+	assert_eq(EconomyManager.balance_change(record, 99999), -300, "the live balance is irrelevant once a cycle closed")
+
+func test_a_record_without_an_opening_balance_knows_no_change() -> void:
+	# A pre-WI-68 record: hidden on the tab, never guessed.
+	assert_false(EconomyManager.knows_balance_change(_record()))
+
+# --- save round trip -----------------------------------------------------------------
+
+func test_a_record_round_trips_through_json_with_its_balances() -> void:
+	var record: Dictionary = _record()
+	EconomyManager.add_to_record(record, "income", &"trade", 250)
+	EconomyManager.add_to_record(record, "costs", &"raid_payoff", 1200)
+	record[EconomyManager.OPENING_BALANCE] = 5000
+	record[EconomyManager.CLOSING_BALANCE] = 4050
+	var parsed: Dictionary = JSON.parse_string(JSON.stringify(EconomyManager.record_to_save(record))) as Dictionary
+	var restored: Dictionary = EconomyManager.record_from_save(parsed, 0)
+	assert_eq(restored["cycle"], 3)
+	assert_eq(restored["income"][&"trade"], 250, "category keys come back as StringName")
+	assert_eq(restored["costs"][&"raid_payoff"], 1200)
+	assert_eq(restored[EconomyManager.OPENING_BALANCE], 5000)
+	assert_eq(restored[EconomyManager.CLOSING_BALANCE], 4050)
+	assert_eq(EconomyManager.balance_change(restored, 0), -950)
+
+func test_a_pre_wi68_record_loads_without_invented_balances() -> void:
+	var restored: Dictionary = EconomyManager.record_from_save({"cycle": 2, "income": {}, "costs": {"wages": 40}}, 0)
+	assert_false(restored.has(EconomyManager.OPENING_BALANCE), "absent stays absent")
+	assert_false(restored.has(EconomyManager.CLOSING_BALANCE))
+	assert_eq(restored["costs"][&"wages"], 40)

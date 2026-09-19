@@ -42,7 +42,7 @@ func _set_door(state: LinkedDoorsState, door_name: StringName, open: bool) -> vo
 
 func on_traverse(_pawn: PawnBase, path_edge: PathComponent.PathTraversalEdgeData, _module: ModuleBase, state: RefCounted) -> void:
 	# Ensure other doors are closed
-	for door_name in state.door_sprites:
+	for door_name: StringName in (state as LinkedDoorsState).door_sprites:
 		if door_name != path_edge.edge_meta:
 			await _set_door(state, door_name, false)
 	# Open this door

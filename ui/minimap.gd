@@ -31,40 +31,11 @@ const BOUNDS_SLACK: float = 0.12
 ## 1 + 2 * BOUNDS_SLACK so a resize can't trigger its own opposite.
 const BOUNDS_SHRINK_RATIO: float = 1.6
 
-## tag -> fill color for built modules. Unlisted tags fall back to HULL_COLOR.
-## Exported so the palette can be retuned without touching code (balance/visuals
-## live in data, per project convention).
-@export var tag_colors: Dictionary[String, Color] = {
-	"Power": Color("f5c542"),
-	"Industrial": Color("d9803a"),
-	"Crew": Color("54b95e"),
-	"Defense": Color("6c8ecf"),
-	"Storage": Color("8f96a3"),
-	"Commerce": Color("c065c0"),
-	"Life Support": Color("46b3a0"),
-	"Logistics": Color("b0a13c"),
-	"Transport": Color("7a86c9"),
-	"Transportation": Color("7a86c9"),
-	"Dock": Color("9aa0a6"),
-	"Core": Color("7d828a"),
-}
-
-@export var hull_color: Color = Color("6f747c")
-## Truss / structural placeholder - the dimmest hull shade.
-@export var structure_color: Color = Color(0.32, 0.34, 0.37)
-@export var blueprint_color: Color = Color(0.42, 0.72, 1.0, 0.9)
-@export var damage_color: Color = Color(1.0, 0.24, 0.18)
-@export var asteroid_color: Color = Color(0.55, 0.5, 0.42)
-@export var asteroid_designated_color: Color = Color(1.0, 0.85, 0.45)
-## Crossing bodies (comets), so a transient prize is distinguishable from the
-## standing belt at a glance. Pale blue against the belt's grey-brown.
-@export var comet_color: Color = Color(0.55, 0.78, 0.95)
-@export var friendly_ship_color: Color = Color(0.45, 0.85, 0.95)
-@export var pirate_ship_color: Color = Color(1.0, 0.4, 0.35)
-@export var viewport_rect_color: Color = Color(1.0, 1.0, 1.0, 0.85)
-## The map's own darker inset inside the readout's surface. The surface itself
-## belongs to [ReadoutPanel] and is not drawn here.
-@export var map_bg_color: Color = Color(0.03, 0.05, 0.07, 0.55)
+# Every colour on the map is a UIPalette MAP_ constant (WI-68 F6). They were
+# @exports here, "so the palette can be retuned without touching code" - but a
+# design token that can be edited per instance is one that drifts per instance,
+# and nothing in ui/ names a colour. Per-module retuning has its own data route,
+# ModuleData.minimap_color, checked first in _module_color.
 
 ## Layers drawn back-to-front so MODULE cells sit on top of the dimmer
 ## corridor/turbolift cells they share a cell with.
@@ -183,7 +154,7 @@ func _map_rect() -> Rect2:
 
 func _draw() -> void:
 	var map_rect: Rect2 = _map_rect()
-	draw_rect(map_rect, map_bg_color)
+	draw_rect(map_rect, UIPalette.MAP_BG)
 	_transform.configure(_content_bounds, map_rect, MIN_WORLD_SPAN)
 	_draw_modules()
 	_draw_asteroids()
@@ -205,30 +176,30 @@ func _draw_modules() -> void:
 			var rect: Rect2 = Rect2(tl, br - tl)
 			if not module.is_complete():
 				# Blueprints / construction sites read as an outline, not a solid.
-				draw_rect(rect, blueprint_color, false, 1.0)
+				draw_rect(rect, UIPalette.MAP_BLUEPRINT, false, 1.0)
 				continue
 			var col: Color = _module_color(module, world)
 			if dim:
 				col = col.darkened(0.4)
 			var frac: float = module.hp_fraction()
 			if frac < 1.0:
-				col = col.lerp(damage_color, (1.0 - frac) * 0.9)
+				col = col.lerp(UIPalette.MAP_DAMAGE, (1.0 - frac) * 0.9)
 			draw_rect(rect, col)
 
 func _module_color(module: ModuleBase, world: WorldManager) -> Color:
 	if module.module_data == null:
-		return hull_color
+		return UIPalette.MAP_HULL
 	if module.module_data == world.replacement_module:
-		return structure_color
+		return UIPalette.MAP_STRUCTURE
 	# A module may name its own colour (WI-47 audit sweep). Checked before the tag
-	# table because that table is authored on this node and a mod can't extend it,
+	# table because that table is a UIPalette constant and a mod can't extend it,
 	# so a modded module's new tag would otherwise always fall through to grey.
 	if module.module_data.minimap_color.a > 0.0:
 		return module.module_data.minimap_color
 	for tag: String in module.module_data.tags:
-		if tag_colors.has(tag):
-			return tag_colors[tag]
-	return hull_color
+		if UIPalette.MAP_TAG_COLORS.has(tag):
+			return UIPalette.MAP_TAG_COLORS[tag]
+	return UIPalette.MAP_HULL
 
 ## Belt rocks are plain dots at their real position. A crossing body outside the
 ## fitted box becomes a rim contact: clamped to the map edge, in the direction it
@@ -243,11 +214,11 @@ func _draw_asteroids() -> void:
 		if not is_instance_valid(asteroid):
 			continue
 		var p: Vector2 = _transform.world_to_map(asteroid.global_position)
-		var tint: Color = asteroid_color
+		var tint: Color = UIPalette.MAP_ASTEROID
 		if asteroid.designated:
-			tint = asteroid_designated_color
+			tint = UIPalette.MAP_ASTEROID_DESIGNATED
 		elif asteroid.map_edge_contact:
-			tint = comet_color
+			tint = UIPalette.MAP_COMET
 		if asteroid.map_edge_contact and MinimapTransform.is_outside(p, map_rect):
 			draw_circle(MinimapTransform.clamp_to_map(p, map_rect), 2.4, tint)
 			continue
@@ -259,7 +230,7 @@ func _draw_ships() -> void:
 		if ship == null or not is_instance_valid(ship):
 			continue
 		var p: Vector2 = _transform.world_to_map(ship.global_position)
-		var col: Color = pirate_ship_color if ship.is_in_group(Groups.PIRATE_SHIP) else friendly_ship_color
+		var col: Color = UIPalette.MAP_PIRATE_SHIP if ship.is_in_group(Groups.PIRATE_SHIP) else UIPalette.MAP_FRIENDLY_SHIP
 		_draw_triangle(p, 4.0, col)
 
 func _draw_triangle(center: Vector2, radius: float, color: Color) -> void:
@@ -278,7 +249,7 @@ func _draw_viewport_rect() -> void:
 	var world_rect: Rect2 = Rect2(cam.global_position - view_size * 0.5, view_size)
 	var tl: Vector2 = _transform.world_to_map(world_rect.position)
 	var br: Vector2 = _transform.world_to_map(world_rect.end)
-	draw_rect(Rect2(tl, br - tl), viewport_rect_color, false, 1.5)
+	draw_rect(Rect2(tl, br - tl), UIPalette.MAP_VIEWPORT_RECT, false, 1.5)
 
 # --- interaction --------------------------------------------------------------
 

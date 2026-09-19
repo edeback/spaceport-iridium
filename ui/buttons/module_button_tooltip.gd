@@ -52,7 +52,7 @@ func set_module_data(module_data: ModuleData, locked: bool = false,
 		# hovering a locked entry raised an alarm about a module the player has
 		# simply not researched yet.
 		var gate: Chip = Chip.create()
-		gate.configure(gating_label, "", Color(0.0, 0.0, 0.0, 0.0), UIPalette.Row.INERT)
+		gate.configure(gating_label, "", Color.TRANSPARENT, UIPalette.Row.INERT)
 		_costs.add_child(gate)
 		return
 	# One chip per resource, in the same descending-amount order the row's meta
@@ -62,7 +62,7 @@ func set_module_data(module_data: ModuleData, locked: bool = false,
 		var amount: int = module_data.resource_costs[resource]
 		var chip: Chip = Chip.create()
 		var affordable: bool = resource.get_total() >= amount
-		chip.configure(resource.name, str(amount), Color(0.0, 0.0, 0.0, 0.0),
+		chip.configure(resource.name, str(amount), Color.TRANSPARENT,
 			UIPalette.Row.INERT if affordable else UIPalette.Row.AMBER)
 		chip.set_icon(resource.icon)
 		_costs.add_child(chip)

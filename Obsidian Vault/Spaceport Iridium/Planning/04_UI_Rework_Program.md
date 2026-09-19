@@ -374,6 +374,8 @@ The audit's verdict on the program itself was good — the port inventory is gen
 
 **The theme: the verification sweeps were code-only.** WI-57 §8's "zero `add_theme_font_size_override` calls" was true and could not see 28 scene-authored ones, six of them at 10px. `test_ui_theme.gd` now sweeps `ui/**.tscn` as text for authored sizes, authored colours and undeclared type variations.
 
+*(WI-68 F6, 2026-09-19.)* **And then the code half was the one left to a grep.** WI-58 made the scene half permanent and left the script half as the one-off sweep WI-57 §8 had run. By the 2026-09-18 audit, **94** literals had crept back into 37 `ui/**.gd` files: geometry numbers, `Color(0,0,0,0)`, two hand-typed "dimmed" modulates and the minimap's thirteen-colour tag table. `test_ui_theme.gd` now sweeps the scripts too, by line, naming each offender. It flags authored font sizes, non-zero constant overrides, `Color(` literals of every spelling, literal `custom_minimum_size` numbers, and string type variations. It allows zero, named engine constants (`Color.TRANSPARENT`, `Color.WHITE`) and comment lines. Its exemptions are the same out-of-game surfaces the scene half has, plus `ui/theme/` (where the tokens live) and the world-space files. **`new_game_setup.gd` (WI-59) is out-of-game flow under the `ui/menus/` exemption**, like the other WI-36 menus. Every literal became a token with its value unchanged: a shared `LINE_GAP` / `ITEM_GAP` / `INLINE_GAP` ladder beside `ROW_GAP`, per-surface `UIMetrics` tokens for the rest, and `UIPalette`'s new `MODULATE_*` and `MAP_*` blocks.
+
 | Area | What changed |
 | --- | --- |
 | **The right column's budget** | `ALERT_FEED_MAX_HEIGHT` (a fixed 400, chosen before the raid readout existed) → `UIMetrics.alert_feed_max_height(raid_visible, screen_height)`, derived from the screen minus the console, the readouts and a new `INSPECTOR_MIN_CONTENT_HEIGHT`. **The feed is the tenant that yields**: it has an overflow row and a history flyout, the inspector has nowhere. A raid over a full feed used to give the inspector a **zero-height** content region with its chrome rendering outside its own rect. |
@@ -386,7 +388,7 @@ The audit's verdict on the program itself was good — the port inventory is gen
 
 **The rules this leaves behind** (they are in CLAUDE.md's UI section too):
 
-1. **A `.tscn` form of a font size, a colour or a type variation is the same violation as its code form.** A sweep that greps `.gd` is half a drift guard.
+1. **A `.tscn` form of a font size, a colour or a type variation is the same violation as its code form.** A sweep that greps `.gd` is half a drift guard, and so is one that reads only `.tscn` (WI-68: both halves are tests now).
 2. **A page wider than its panel widens the panel.** An anchored `Control` clamps its size *up* to its combined minimum, so an over-wide inspector tab does not clip or scroll — the whole 420px selection surface grows. The probe sweeps the seam for it.
 3. **An overrun behaviour without a reserved width collapses a label rather than capping it.** A `Label` with overrun reports a minimum width of ~1, and a `BoxContainer` with no expanding child hands every child exactly its minimum.
 4. **When the sim will not resume, the console says who is holding it.** The pause/speed controls are the one place a player meets a blocked action with no panel to explain it.

@@ -78,7 +78,7 @@ func refresh() -> void:
 	var manager: ContractManager = Global.contract_manager
 	if manager == null or _offers == null:
 		return
-	_reputation.configure("Reputation", str(manager.reputation), Color(0, 0, 0, 0),
+	_reputation.configure("Reputation", str(manager.reputation), Color.TRANSPARENT,
 		UIPalette.Row.LIVE if manager.reputation > 0 else UIPalette.Row.INERT)
 	var blocked: String = manager.accept_block_reason()
 	_blocked_notice.text = blocked
@@ -146,7 +146,7 @@ func _build_offer_row(contract: ContractData) -> Control:
 
 func _build_active_row(contract: ContractData) -> Control:
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 4)
+	box.add_theme_constant_override("separation", UIMetrics.ITEM_GAP)
 	var cycles_left: int = contract.deadline_cycle - Global.time_manager.cycle
 	var final_cycle: bool = cycles_left <= 0
 	var due: String = "final cycle" if final_cycle else \

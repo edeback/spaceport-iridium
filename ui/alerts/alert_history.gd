@@ -42,7 +42,7 @@ var _filter: StringName = FILTER_ALL
 var _refitting: bool = false
 
 static func create() -> AlertHistory:
-	return load(SCENE_PATH).instantiate() as AlertHistory
+	return (load(SCENE_PATH) as PackedScene).instantiate() as AlertHistory
 
 func _ready() -> void:
 	super()
