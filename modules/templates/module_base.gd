@@ -623,17 +623,6 @@ func _eject_stored_resources_as_debris() -> void:
 func on_select(new_selected: bool) -> void:
 	self.selected = new_selected
 	
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta: float) -> void:
-	#if previewing:
-		#can_place = _check_if_placeable()
-	#else:
-		#can_place = true
-	#pass
-	
-#func _physics_process(delta: float) -> void:
-#	pass
-	
 ## The module sprite's shader, or null when there is no sprite or its material is
 ## not a ShaderMaterial. One cast rather than one per parameter write (WI-68 F7).
 func _shader_material() -> ShaderMaterial:
@@ -754,8 +743,6 @@ func get_random_position_on_module() -> Vector2:
 
 func _on_footprint_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton:
-		#if sprite.is_pixel_opaque(sprite.to_local(get_global_mouse_position())):
-			#print("clicked " + module_data.name)
 			if event.is_action_pressed("build"):
 					get_viewport().set_input_as_handled()
 					# Routed through UIMain's click arbiter: stacked footprints

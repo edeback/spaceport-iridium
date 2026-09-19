@@ -60,11 +60,6 @@ func door_disconnected(_cell: Vector2i, _from_layer: WorldManager.StructureLayer
 	
 func set_sprite(_module: ModuleBase) -> void:
 	if _module == null or _module is ModuleTurbolift or _module is CorridorModule:
-		#if Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.CORRIDOR, module_cell) == null:
-			## No corridor behind, this is just a shaft
-			#sprite.region_rect.position.x = Global.CELL_SIZE.x * 2
-			#collision_upper.disabled = false
-		#else:
 		var image_select: int = 0
 		if Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.TURBOLIFT, module_cell + Vector2i(0, -1)) is ModuleTurbolift:
 			# There is a turbolift above this
@@ -88,18 +83,14 @@ func set_door(is_close: bool) -> void:
 	if anim_sprite.is_playing():
 		if anim_sprite.get_playing_speed() > 0 and not is_close or anim_sprite.get_playing_speed() < 0 and is_close:
 			# In progress
-			print(("Closing " if is_close else "Opening ") + "turbolift but it's already being opened")
 			await anim_sprite.animation_finished
 			return
 	if anim_sprite.frame == 0 and is_close:
 		# Already closed
-		print("Closing " + "turbolift but it's already closed")
 		return
 	elif not is_close and (anim_sprite.frame == anim_sprite.sprite_frames.get_frame_count(&"open") - 1):
 		# Already open
-		print("Opening " + "turbolift but it's already open")
 		return
-	print("Starting animation to " + ("close " if is_close else "open ") + "turbolift")
 	anim_sprite.play(&"open", -1 if is_close else 1, is_close)
 	await anim_sprite.animation_finished
 
@@ -150,5 +141,3 @@ func path_exit(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D
 		var ride_request: RideRequest = await shaft.request_ride(_pawn, self, next_node, cancel_signal)
 		if ride_request.cancelled:
 			_pawn.movement_component.cancel()
-	#if _meta == &"turbolift_door":
-		#await set_door(false)

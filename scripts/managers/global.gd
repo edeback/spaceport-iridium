@@ -178,10 +178,6 @@ func _ready() -> void:
 	settings = GameSettings.load_from_file()
 	apply_settings()
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
-
 # --- settings (WI-36) ---------------------------------------------------------
 
 ## Music/Effects buses are created here rather than shipped in a bus layout so

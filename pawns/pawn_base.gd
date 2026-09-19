@@ -152,8 +152,6 @@ func _ready() -> void:
 	add_child(inventory_component)
 	Global.path_manager.add_vertex(self, true, "", current_module == null)
 	SignalBus.module_removed.connect(_on_module_removed)
-	#SignalBus.module_selected.connect(_on_module_selected)
-	pass # Replace with function body.
 	
 
 func _on_module_removed(module: ModuleBase) -> void:
@@ -415,13 +413,6 @@ func interrupt_with_job(new_job: Job) -> void:
 	job_length = 0
 	_begin_job(new_job)
 
-
-#func _exit_tree() -> void:
-	#Global.path_manager.remove_vertex(self)
-	#if current_job != null:
-		#current_job.cancel(true)
-		#current_job = null
-		
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
 		release_stand_anchor()
@@ -591,11 +582,6 @@ func update_layer_and_sprite() -> void:
 		if current_layer != current_module.module_data.interaction_layer:
 			current_layer = current_module.module_data.interaction_layer
 			reparent(Global.world_manager.get_canvas_for_layer(current_layer))
-
-#func _find_next_job() -> void:
-	#if current_job == null:
-		#current_job = Global.job_manager.find_job()
-	#pass
 
 func _on_collision_clicked(viewport: Node, event: InputEvent, shape_idx: int) -> void:
 	if event.is_action_pressed("build"):

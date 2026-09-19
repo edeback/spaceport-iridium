@@ -292,8 +292,6 @@ func update_priority(new_priority: int) -> void:
 		priority = new_priority
 		for data: StorageData in storage_data.values():
 			data.set_job_priority(new_priority)
-		#for job: the haul job in default_import_jobs.values():
-			#job.priority = priority
 
 ## Which station systems eat `resource`, as player-facing phrases; empty when
 ## nothing does (WI-56).
@@ -339,22 +337,12 @@ func can_store_resource(resource: ResourceData) -> bool:
 	if allow_any_resource:
 		return true
 	return storage_data.has(resource)
-	#var has_resource: bool = stored_resources.has(resource)
-	#if resource.base_resource != null:
-		#has_resource = has_resource or stored_resources.has(resource.base_resource)
-	#return has_resource
 
 func can_withdraw(resource: ResourceData, quantity: int, use_reserve: bool = false) -> bool:
 	var data: StorageData = storage_data.get(resource)
 	if data:
 		return data.can_withdraw(quantity, use_reserve)
 	return false
-		
-	#if can_store_resource(resource):
-		#var available: float = cur_stored.get_or_add(resource, 0.0)
-		#if not use_reserve:
-			#available -= cur_reserved_withdraw.get_or_add(resource, 0)
-		#return available + SMALL_FLOAT >= quantity
 	
 func withdraw(resource: ResourceData, quantity: int, use_reserve: bool = false) -> bool:
 	var data: StorageData = storage_data.get(resource)
@@ -365,15 +353,6 @@ func withdraw(resource: ResourceData, quantity: int, use_reserve: bool = false) 
 			resource.needs_recalc = true
 			return true
 	return false
-		
-	#if can_withdraw(resource, quantity, use_reserve):
-		#var new_value: float = max(cur_stored[resource] - quantity, 0)
-		#cur_stored[resource] = new_value
-		#if use_reserve:
-			#cur_reserved_withdraw[resource] = max(cur_reserved_withdraw.get_or_add(resource, 0) - quantity, 0)
-		#storage_changed.emit(resource, new_value)
-		#return true
-	#return false
 	
 func withdraw_up_to(resource: ResourceData, quantity: int, use_reserve: bool = false) -> int:
 	var data: StorageData = storage_data.get(resource)
@@ -385,19 +364,6 @@ func withdraw_up_to(resource: ResourceData, quantity: int, use_reserve: bool = f
 			resource.needs_recalc = true
 		return withdrawn
 	return 0
-	
-	#if  cur_stored.has(resource):
-		#var max_withdrawable: float = max(cur_stored.get_or_add(resource, 0), 0)
-		#if not use_reserve:
-			#max_withdrawable -= cur_reserved_withdraw.get_or_add(resource, 0)
-		#var withdrawn: float = clampf(quantity, 0, max_withdrawable)
-		#cur_stored[resource] -= withdrawn
-		#if use_reserve:
-			#cur_reserved_withdraw[resource] = max(cur_reserved_withdraw.get_or_add(resource, 0) - withdrawn, 0)
-		#storage_changed.emit(resource, cur_stored[resource])
-		#Global.resource_manager.queue_recalc_resource(resource)
-		#return withdrawn
-	#return 0
 	
 # --- WI-44 claim plumbing -----------------------------------------------------
 #
@@ -741,8 +707,13 @@ func withdraw_stacks(resource: ResourceData, quantity: int, use_reserve: bool = 
 	
 	
 # --- persistence ------------------------------------------------------------
-# Reservations and import/export jobs are deliberately NOT saved: jobs aren't
-# persisted, so on load the posting scan re-derives them from stored/desired.
+# Reservations and the board's import/export jobs are not saved in this block.
+# That does NOT mean jobs aren't persisted (the old wording here, false since
+# WI-21): a haul in flight is saved on the pawn carrying it and restored there
+# by SaveManager._load_pawn_jobs, and reservations are re-taken as it resumes.
+# What is re-derived is the board side - the posting scan re-posts from
+# stored/desired. The restored job is not re-linked to import_job/export_job,
+# which is F26 in the 2026-09-18 second-pass audit (03_Bugs_and_Improvements).
 
 ## Shape (WI-45 A4): {"priority": int, "resources": {<id>: {...}}}. The pre-WI-45
 ## shape was the bare resource map with no room for a component-level field;
@@ -838,10 +809,3 @@ func get_ui() -> ModuleComponentUI:
 	panel_element.set_storage_component(self)
 	return panel_element
 			
-#func reserve_stock_for_export(resource: ResourceData, quantity: float = 1.0) -> bool:
-#	stock_reserved[resource] = stock_reserved.get_or_add(resource, 0) + quantity
-#	return true
-	
-#func reserve_space_for_import(resource: ResourceData, quantity: float = 1.0) -> bool:
-#	space_reserved[resource] = space_reserved.get_or_add(resource, 0) + quantity
-#	return true

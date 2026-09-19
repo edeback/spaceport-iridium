@@ -30,14 +30,14 @@ extends RefCounted
 func make_actions(_job: Job) -> Array[ActionBase]:
 	return [] as Array[ActionBase]
 
-## Board-level "is this job still worth existing" - JobBase.is_valid().
+## Board-level "is this job still worth existing".
 ## Checked by JobManager before handing the job out, and by the runner every
 ## frame as the global fail condition. Runs on UNCLAIMED jobs too, so it must not
 ## assume job.pawn is set.
 func is_valid(_job: Job) -> bool:
 	return true
 
-## Per-pawn claimability - JobBase.can_do_job(). Must stay a pure query:
+## Per-pawn claimability. Must stay a pure query:
 ## it runs against every candidate job for every idle pawn.
 func can_do(_job: Job, _pawn: PawnBase) -> bool:
 	return true

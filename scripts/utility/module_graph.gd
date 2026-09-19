@@ -39,7 +39,7 @@ func _flush_subgraphs() -> void:
 
 func add_vertex(vertex: Node2D, is_endpoint: bool = false, group: StringName = "", group_door: int = 0, exterior: bool = false) -> void:
 	if _vertices.has(vertex):
-		print("trying to add existing vertex! skipping. Module: " + vertex.name)
+		push_warning("trying to add existing vertex! skipping. Module: " + vertex.name)
 		return
 	_vertices[vertex] = _make_vertex(vertex, is_endpoint, group, group_door, exterior)
 	_emit_graph_changed()
@@ -200,7 +200,7 @@ func add_edge(start: Node2D, end: Node2D, cost: float, data: StringName = "") ->
 	var start_vertex: ModuleGraphVertex = _vertices.get(start)
 	var end_vertex: ModuleGraphVertex = _vertices.get(end)
 	if (start_vertex == null or end_vertex == null):
-		print("tried to add an edge but missing vertex.")
+		push_warning("tried to add an edge but missing vertex.")
 		return false
 	start_vertex.add_edge(end_vertex, cost, data)
 	end_vertex.add_edge(start_vertex, cost, data)
@@ -216,7 +216,7 @@ func remove_edge(start: Node2D, end: Node2D) -> bool:
 	var start_vertex: ModuleGraphVertex = _vertices.get(start) as ModuleGraphVertex
 	var end_vertex: ModuleGraphVertex = _vertices.get(end)
 	if (start_vertex == null or end_vertex == null):
-		print("tried to remove an edge but missing vertex.")
+		push_warning("tried to remove an edge but missing vertex.")
 		return false
 	start_vertex.edges.erase(end_vertex)
 	end_vertex.edges.erase(start_vertex)

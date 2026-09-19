@@ -113,7 +113,7 @@ func ready_for_construction() -> bool:
 			if material_storage.storage_data[resource].stored < owner_module.module_data.resource_costs[resource]:
 				return false
 		else:
-			print("Failed to setup storage as it cannot contain required materials!")
+			push_warning("Failed to setup storage as it cannot contain required materials!")
 			return false
 	return true
 

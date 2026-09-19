@@ -66,7 +66,6 @@ func _process(delta: float) -> void:
 			var dist_to_move: float = speed * Global.CELL_SIZE.y * sim_delta
 			var dist_left: float = destination_module.global_position.y - get_apparent_position().y
 			# Probably want to recheck where we're going and stopping to pick up people on the way?
-			#var next_floor: ModuleTurbolift = shaft.get_floor_module(Global.world_to_cell(global_position).y + signf(dist_left))
 			
 			if dist_to_move >= absf(dist_left):
 				set_apparent_position_y(destination_module.global_position.y)
@@ -110,21 +109,9 @@ func _ready() -> void:
 	# still safe: TurboliftShaft.create_new_cab add_child()s the cab (running this)
 	# before add_cab() moves its vertex into the shaft's group.
 	Global.path_manager.add_vertex(self, true)
-	#SignalBus.module_removed.connect(module_removed)
 	for marker in standing_locations:
 		assigned_locations[marker] = null
 
-#func module_removed(removed_module: ModuleBase) -> void:
-	#for ride in pickup_requests:
-		#if ride.to_floor == removed_module:
-			## Cancel
-			#ride.pawn.current_module = ride.from_floor
-			#pickup_requests.erase(ride)
-			#ride.finished.emit(false)
-	#if destination_module == removed_module:
-		#destination_module = null
-	#recheck_requests()
-		
 
 func add_pickup_request(request: RideRequest) -> void:
 	pickup_requests.append(request)

@@ -250,8 +250,9 @@ func release_anchor(claimant: Object) -> void:
 
 ## Per-type claim targets for WI-44 jobs, cached so repeat lookups are free.
 ## The pool wraps claim_anchor/release_anchor rather than replacing them - the
-## legacy jobs keep using those directly, and both routes share one _anchor_claims
-## map, so neither system can hand out an anchor the other is standing on.
+## non-job callers (turbolift queue spots, a pawn's idle stand anchor) use those
+## directly, and both routes share one _anchor_claims map, so neither can hand out
+## an anchor the other is standing on.
 var _anchor_pools: Dictionary[int, AnchorPool] = {}
 
 func anchor_pool(type: AnchorDef.AnchorType) -> AnchorPool:

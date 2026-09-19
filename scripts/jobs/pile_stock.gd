@@ -10,10 +10,8 @@ extends RefCounted
 ## hands out one of these per resource and memoises them.
 ##
 ## Deliberately a thin face over the pile's own `reserved` dictionary rather than
-## a second counter. The pile stays authoritative - which is what lets the legacy
-## the pile-collection job and a WI-44 collect job run side by side without either
-## oversubscribing the other's reservations, the same coexistence property
-## SlotPool gives the five slot components.
+## a second counter. The pile stays authoritative: one count, whatever books
+## against it - the same property SlotPool gives the five slot components.
 
 var pile: ResourcePile = null
 var resource: ResourceData = null

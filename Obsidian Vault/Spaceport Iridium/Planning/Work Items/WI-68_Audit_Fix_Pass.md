@@ -1,8 +1,24 @@
 # WI-68 — Audit Fix Pass
 
-> **Status: IN PROGRESS. Stages 1–5 and 3b done (2026-09-18/19); stage 6 not started.** Scoped from the 2026-09-18 pass in [[03_Bugs_and_Improvements]]. The findings are **F1–F20**, plus **F21** (found and fixed during stage 2), **F22–F23** (found during stage 3 and fixed in stage 3b) and **F24** (found during 3b and fixed only where it touched 3b's flow). The three open questions were settled with the author the same day and all three recommended defaults were taken (§0). The finding ids are kept throughout so the audit entries and this doc stay cross-referenced.
+> **Status: ALL STAGES DONE (2026-09-18/19); merged into `main` 2026-09-19. Ready for the author's verification pass.** Scoped from the 2026-09-18 pass in [[03_Bugs_and_Improvements]]. The findings are **F1–F20**, plus **F21** (found and fixed during stage 2), **F22–F23** (found during stage 3 and fixed in stage 3b) and **F24** (found during 3b and fixed only where it touched 3b's flow). The three open questions were settled with the author the same day and all three recommended defaults were taken (§0). The finding ids are kept throughout so the audit entries and this doc stay cross-referenced.
 >
-> **Stage 5 (F6, F7): not yet committed. All three typed warnings are errors in `project.godot`**, applied after the author closed the editor (it rewrites that file from memory). **1,720 GUT tests green at error level** (1,718 + the script sweep's two tests), and the real project boots to the main menu and runs a new game with zero parse or script errors.
+> **Stage 6 (F16–F18, F20, and F35 from the second pass): committed and merged into `main` with the rest of the branch.** `main`, which carries the second-pass audit, was merged first so the two audit docs line up. **1,720 GUT tests green at error level**, the typed census reads zero, and a new game boots clean. The real quicksave then played 20 sim-hours at 4× with a sleeping pod removed mid-run (backfilled with truss, as B5's reordered `remove_module` must), with zero errors and none of the newly promoted warnings firing.
+> - **F16:** the six tracked editor `*.tmp` files are removed, and `*.tmp` is in `.gitignore`.
+> - **F17:** every comment describing JobBase/JobSerializer as still present is gone or reworded (job, job_data, job_driver, slot_pool, pile_stock, workspace, path_component). The doctor driver's warning that `is_patient()` "still walks the LEGACY claims array" was false: it asks the `ClaimRegistry`.
+> - **F18:**
+>   - **B5:** `remove_module` reads everything off the module first and frees it last.
+>   - **B6 + F35:** 25 commented-out code blocks deleted, each range verified to be only comments or blank lines first. Also three empty `_process`es (`world_manager`, `camera`, and the autoload `global`, which ran every frame on the menu too) and two empty template `_ready`s.
+>   - **C8:** `capacitator` → `capacitor`. It is read by nothing, which is noted on the field.
+>   - **C11:** `get_built_modules` uses an instance-id seen-set.
+>   - **Prints:** the soak logs decided the triage. Over 220-plus sim-hours the seven diagnostics never fired (they're now `push_warning`), while the turbolift door chatter printed 236 times (deleted, with "Trader departing").
+> - **F20:** CLAUDE.md's counts (90 suites, 1,720 tests) and coverage list are current.
+>
+> **Stage 6 deviations and notes:**
+> - **F35 folded in.** The second pass's own dead-code list is the B6 class, so it was done in the same sweep. One F35 item was a *false* comment rather than dead code: storage's "jobs aren't persisted". It now says what is true and points at F26.
+> - **Added:** `class_name` on `lighting_component.gd` (`LightingComponent`) and `truss.gd` (`TrussModule`), which the audit's hygiene sweep listed and CLAUDE.md requires; a tab-only line and a discarded `get_instance_id()` call in `world_manager`; and the doctor driver's false NOTE.
+> - **F29's premise on `main` is corrected in place** (a dated note, not a rewrite). In Godot 4.7 a freed object *does* compare `== null`, so it downgrades to hygiene.
+>
+> **Stage 5 (F6, F7): committed `85dd153f`. All three typed warnings are errors in `project.godot`**, applied after the author closed the editor (it rewrites that file from memory). **1,720 GUT tests green at error level** (1,718 + the script sweep's two tests), and the real project boots to the main menu and runs a new game with zero parse or script errors.
 > - **F6:** the script half of the UI drift guard is a test now, next to the scene half. It **failed on 94 sites in 37 files** (the audit's grep had estimated ~50; it missed `Color("hex")` and `custom_minimum_size` forms). Every site became a token with its value unchanged:
 >   - `Color(0,0,0,0)` → `Color.TRANSPARENT`;
 >   - a shared `LINE_GAP` 2 / `ITEM_GAP` 4 / `INLINE_GAP` 8 / `INLINE_ICON` ladder beside the existing `ROW_GAP`;

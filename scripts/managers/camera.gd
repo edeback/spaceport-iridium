@@ -7,14 +7,6 @@ var zoom_max: float = 2.0
 var drag_sensitivity: float = 1.0
 var pan_speed: float = 10.0
 
-# Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	pass # Replace with function body.
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
-
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.is_action_pressed("camera_drag"):
 		position -= (event as InputEventMouseMotion).relative * drag_sensitivity / zoom

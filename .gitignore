@@ -2,6 +2,9 @@
 .godot/
 
 # Godot-specific ignores
+# The editor's atomic-save leftovers (`scene.tscn<digits>.tmp`). Six were once
+# committed by accident (WI-68 F16).
+*.tmp
 .import/
 export.cfg
 export_presets.cfg

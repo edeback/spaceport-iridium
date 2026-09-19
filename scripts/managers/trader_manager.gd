@@ -305,7 +305,6 @@ func _courier_collect(bay: Variant, shuttle: ArrivalShuttle) -> void:
 # --- departure ------------------------------------------------------------------
 
 func _end_visit(reason: String) -> void:
-	print("Trader departing (%s), %.1fh remaining" % [reason, visit_remaining_hours])
 	visit_active = false
 	# Net market settlement, deferred to departure for visit-long price
 	# stability (WI-08 design).

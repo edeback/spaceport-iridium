@@ -4,7 +4,7 @@ extends ComponentBase
 ## Crew assignment for a module (WI-23). A module with assignees only hands its
 ## posted work jobs (manned processors today; mining/repair later) to those
 ## assignees, and assignees prefer their workspace's jobs over equal-priority
-## board work (JobBase.workspace + effective_priority_for). An empty assignment
+## board work (Job.workspace + effective_priority_for). An empty assignment
 ## reopens the jobs to everyone, exactly as if there were no WorkspaceComponent.
 ##
 ## Assignments are held as live pawn references at runtime and persisted as
