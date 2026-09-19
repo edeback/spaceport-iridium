@@ -1,6 +1,8 @@
 # Architecture Review — 2026-09-18
 
 > **Status: review, not a plan.** Written alongside the second-pass audit in [[03_Bugs_and_Improvements]] (findings F25–F37), after WI-68's stages 1–4 and 3b. Nothing here is committed to; §5 suggests how it would bundle into work items if the author agrees with the diagnosis. Where a claim rests on a number, the number was measured on the tree at commit `cc53f388`.
+>
+> **Update (2026-09-19): written up as six work items, [[WI-69_Integration_Test_Fixture]] … [[WI-74_Layering_And_Consolidations]]**, after WI-68 merged. The mapping is in §5 and in [[03_Bugs_and_Improvements]]. Three corrections from scoping them are noted in place below. The review's own numbers stand at `cc53f388`. A new finding, **F38** (a save taken mid-deconstruction loses the refund; confirmed), joined the job-ownership class.
 
 ## 0. Why this document exists
 
@@ -103,11 +105,15 @@ Each entry: what is there, what it costs, what to do, and roughly how big the ch
 
 **Do.** Write the one rule - *nothing holds a typed reference to a `Node` it does not own across a frame boundary without a validity discipline, and the four disciplines are these* - then enforce the greppable halves as source sweeps in the `test_ui_theme` shape: `Dictionary[ModuleBase|PawnBase|ComponentBase,` outside an allowlist; `is_instance_valid(<param>)` where `<param>` is typed (the F24 sweep); `Global\.\w+ (==|!=) null` (F29); `await` outside an allowlist of files that have earned it. Each sweep is twenty lines and each would have failed on a real finding.
 
+> *Correction (2026-09-19):* the `Global\.\w+ (==|!=) null` sweep is dropped. WI-68 established that in Godot 4.7 a freed object compares `== null` as true, so those guards already catch a freed slot. F29 is hygiene, and [[WI-71_Reference_Hygiene]] §7 keeps only the `_exit_tree` nulling. The same fact is why most F24 sites are safe in practice, which is the triage question WI-71 §2 asks of each.
+
 ### A7. Doors are the last suspended coroutine in the movement pipeline
 
 **What.** WI-20 made turbolift rides an explicit `CONVEYED` state because "cancelling a job mid-ride can never strand a suspended coroutine". Door hooks (`path_enter`/`path_exit`/`traverse`) still `await` inside `reached_next_node`, guarded by `_busy_in_hook`, with a cancel signal nobody reads (F28).
 
 **Do.** Finish WI-20: a `DOOR_WAIT` state with a sim-time timer, the door animation kicked off and forgotten, `PathBehaviorContext.cancelled` deleted, `_busy_in_hook` deleted. Then `is_traveling()` is a pure function of `state`, which is what `PawnStatus` and the robot drain want.
+
+> *Correction (2026-09-19):* doors are not the last one. The teleporter's `traverse` awaits its lightning animation, and turbolift *boarding* (the walk to the waiting spot and the wait for a cab) is still an `await` chain; WI-20 made only the ride itself a state. Boarding already re-checks `request.cancelled` and the pawn after every await, so [[WI-71_Reference_Hygiene]] guards the teleporter with the doors and leaves boarding out, with the reason recorded.
 
 ### A8. `SaveManager` is three things, and one of them is the last hand-enumerated chain
 
@@ -149,6 +155,8 @@ Each entry: what is there, what it costs, what to do, and roughly how big the ch
 - **`ClaimRegistry`'s ownership split** (owner authoritative for capacity, registry authoritative for records and release) is exactly right and is why reservation drift has been zero across every soak.
 
 ## 5. If this became work items
+
+> *Update (2026-09-19):* written up in dependency order rather than the order below. The fixture comes first as [[WI-69_Integration_Test_Fixture]], because item 1's verification is defined in terms of it, and item 1 would otherwise have been verified by probes the fixture then replaces. The others follow as [[WI-70_Job_Ownership_Contract]] (now also carrying F38), [[WI-71_Reference_Hygiene]], [[WI-72_Declared_Vocabularies_And_Content_Guards]], [[WI-73_Save_Orchestration]] and [[WI-74_Layering_And_Consolidations]]. F33 moved from the fixture item to WI-74: `main.tscn` boots whole under the fixture, so the path-bound UI node isn't a blocker, and it belongs with A11.
 
 Ordered by defect-class closed per line changed:
 

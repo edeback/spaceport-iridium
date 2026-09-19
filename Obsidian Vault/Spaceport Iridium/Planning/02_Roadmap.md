@@ -140,6 +140,20 @@
 
 ARC relationship arc & independence (turns the WI-25 levy off); expeditions; observatory and research; foreign relations/other stations; pawn factions (faction-styled name generation — WI-22's generator is wrapped for this); module quality tiers (unlocks the deferred Conceited trait); per-pawn sprite variants (asset work); pawn death done properly; crises framework; station warp travel; New Game+ corporations; exotic elements; audio pass (WI-36 creates the Music/Effects buses).
 
+
+## Phase 4.5 — Hardening
+
+*Goal: polish and harden what Phase 4 built. The first six items come from the two audits of 2026-09-18 ([[03_Bugs_and_Improvements]]) and the [[05_Architecture_Review]] written alongside them. They follow [[WI-68_Audit_Fix_Pass]], which fixed the first audit's confirmed bugs and merged on 2026-09-19. Where WI-68 fixed findings one at a time, these close whole classes. Every item is a draft whose §0 decisions are still the author's to settle.*
+
+| # | Work item | Why this order |
+|---|---|---|
+| WI-69 | [[WI-69_Integration_Test_Fixture\|Integration test fixture]] | First, because every item after it is verified against it. Boots the real `main.tscn` under GUT, so the managers, components and pawns (the untested half, where every audit finding lived) get tests. The first audit's runtime probes become permanent, and the open job bugs are pinned as known-broken tests. |
+| WI-70 | [[WI-70_Job_Ownership_Contract\|Job ownership contract]] | The two real bugs: a save taken mid-deconstruction **loses the refund** (F38, confirmed), and an interrupted builder strands the site (F25). Then one `JobSlot` for eleven owners and a declared owner per job type, so a load stops posting duplicates (F26). |
+| WI-71 | [[WI-71_Reference_Hygiene\|Reference hygiene]] | One written rule for holding a node you don't own, the 35-site F24 census triaged, stale alert rows (F27), the door hooks that latch a pawn's travel flag (F28), and source sweeps so it can't erode. |
+| WI-72 | [[WI-72_Declared_Vocabularies_And_Content_Guards\|Declared vocabularies & content guards]] | Stat names become declared (F30), content checks move out of release-stripped `assert` into sweeps (F31), `SignalBus` gets a declared mod API (F11), and the balance literals move to data. Independent of 70 and 71. |
+| WI-73 | [[WI-73_Save_Orchestration\|Save orchestration]] | Pins manager ready order and save-section order with tests, moves the pawn-kind save branches onto the pawn classes, splits `SaveManager`, and corrects four stale persistence statements. After WI-70, which takes the job half of the same path. |
+| WI-74 | [[WI-74_Layering_And_Consolidations\|Layering & consolidations]] | One `start_job` instead of four, content caches that can be invalidated (unblocks WI-47 stage 5), the simulation stops calling the HUD (F33), and three small leftovers (F34, F36, F37). Last, because its job-picking change builds on WI-70. |
+
 ---
 
 ### Standing rules for every work item

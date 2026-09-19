@@ -99,6 +99,8 @@ Still open, and worth a pass:
 
 **F14. A module saved mid-deconstruction finishes deconstructing on load.** [`construction_component.gd:250`](../../../modules/components/construction_component.gd) collapses Deconstructing → Deconstructed, so the remaining teardown work is skipped. It's documented as the mirror of Constructing → NotStarted, but it isn't a mirror: construction keeps its progress, while deconstruction completes. It's a minor save/load shortcut.
 
+> *Correction (2026-09-19, while scoping [[WI-70_Job_Ownership_Contract]]):* **not minor - the collapse loses the whole deconstruction refund.** A module being deconstructed has an empty material bin (`ready_constructed` emptied it), so the save carries nothing for the storage block to restore, and the collapse never deposits the refund the live path would have. The site finds an empty bin and removes itself. Confirmed in a scratch copy: see **F38** in the second-pass section below.
+
 **F15. [`crew_manager.gd:272`](../../../scripts/managers/crew_manager.gd) calls `shuttle.depart()` after a sim-hour await with no `is_instance_valid` guard.** Its twin in `visitor_manager.gd:168` has one.
 
 ### C. Hygiene
@@ -183,7 +185,20 @@ Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", 
 
 **F37. Five per-frame countdowns that the "periodic work goes on `slow_tick`" rule would put on the tick:** `CrewManager._process` (the pending-hire clock), `TraderManager._process` (the visit clock), `EventManager._process` (happiness-effect countdown), `MiningComponent._process` (respawn timer), `VisitorPawn._process` (stay timer). Consistency, not cost.
 
-**Suggested bundling:** F25, F26 and F32 are one item (the job-ownership contract, argued in [[05_Architecture_Review]] §A2); F27, F28 and F29 are one item (reference hygiene, §A6); F30 and F31 are one item (declared vocabularies and content sweeps); F33–F37 are a cleanup commit in WI-68's stage-6 shape.
+### D. Found while scoping the work items (2026-09-19)
+
+**F38. A save taken mid-deconstruction loses the deconstruction refund - confirmed.** The load path collapses `Deconstructing` to `Deconstructed` ([`construction_component.gd:249`](../../../modules/components/construction_component.gd), F14's shortcut) but only the live path deposits the refund (`setup_storage_post_deconstruction`, reached from the `Deconstructing` branch of `_process`). During deconstruction the material bin is empty, so the saved storage block restores nothing; the reloaded site sees an empty bin in `Deconstructed` and removes itself on its next frame, backfilled with truss. **Reproduced in a scratch copy** with two `large_storage` (6 steel each) placed far from the station: the one torn down live refunded its 6 steel (world steel 50 → 56), and a save taken after that restored the refund intact; the one saved in the frame its deconstruction started reloaded as `Deconstructed` with an empty bin, was replaced by truss within 30 frames, and world steel stayed at 56 - **6 of 6 lost**. The probe's first run also hit the realistic player path by accident: the new-game onboarding held the sim paused, so both deconstructions were still in progress when the probe saved, and **both refunds were lost** - pause, order a demolition, quicksave. The window is also wide whenever a teardown stalls: nobody can reach space (the deconstruct job needs an EVA route), or F25 strands its job. Silent resource loss; **the most serious open finding.** Fix and verification in [[WI-70_Job_Ownership_Contract]] §5. A save already written mid-deconstruction still carries `"state": 4` and its `work_done`, so it recovers once the fix lands, provided it hasn't been loaded and re-saved in the meantime.
+
+**Scheduled as work items (2026-09-19):**
+
+| Item | Takes |
+|---|---|
+| [[WI-69_Integration_Test_Fixture]] | [[05_Architecture_Review]] §A1; R4-R7 as permanent tests; F25, F26 and F38 pinned as known-broken; F19's two missing suites |
+| [[WI-70_Job_Ownership_Contract]] | F25, F26, F32, **F38**, F14; §A2-A4; the residual per-load leak (hypothesis) |
+| [[WI-71_Reference_Hygiene]] | the rest of F24 (a 35-site census), F27, F28, F8, F29 as hygiene; §A6-A7 |
+| [[WI-72_Declared_Vocabularies_And_Content_Guards]] | F30, F31, F11, the balance literals; §A12 |
+| [[WI-73_Save_Orchestration]] | §A5, §A8, and four stale persistence statements in CLAUDE.md and the tech spec |
+| [[WI-74_Layering_And_Consolidations]] | F33, F34, F36, F37; §A9-A11 |
 
 ---
 
