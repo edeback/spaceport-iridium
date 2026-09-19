@@ -1,6 +1,6 @@
 # WI-70 — Job Ownership Contract
 
-> **Status: DRAFT (2026-09-19), not started. Depends on [[WI-69_Integration_Test_Fixture]]**, which pins this item's four bugs as known-broken tests for it to flip. Scoped from [[05_Architecture_Review]] §A2–A4 and the second-pass audit in [[03_Bugs_and_Improvements]]. It fixes **F25**, **F26**, **F32** and **F38**, and tests a hypothesis about WI-68's residual per-load leak. §0's three decisions are the author's to settle; the recommended default is marked on each.
+> **Status: DRAFT (2026-09-19), not started. Depends on [[WI-69_Integration_Test_Fixture]]**, which pins this item's four bugs as known-broken tests for it to flip. *(2026-09-19: WI-69 is done. The pins are in `tests/integration/test_known_bugs.gd`: F38 with a live-teardown control beside it, F25, and F26 four times (site, manned processor, repair, pile). Each asserts today's value and says what the fix makes it. `_most_jobs_after_reload()` is the helper for §3's duplicate count, and `StationFixture.live_jobs()` asks the whole station rather than the owner's pointer. A minimal F25 fix and a minimal repair adoption were each confirmed to fail their pin.)* Scoped from [[05_Architecture_Review]] §A2–A4 and the second-pass audit in [[03_Bugs_and_Improvements]]. It fixes **F25**, **F26**, **F32** and **F38**, and tests a hypothesis about WI-68's residual per-load leak. §0's three decisions are the author's to settle; the recommended default is marked on each.
 
 ## Goal
 

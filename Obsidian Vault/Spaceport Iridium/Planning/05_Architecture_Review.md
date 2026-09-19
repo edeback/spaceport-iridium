@@ -71,6 +71,8 @@ Each entry: what is there, what it costs, what to do, and roughly how big the ch
 
 **Size.** Fixture: one file, a day. Converting the first-pass probes into tests: another day. `main.tscn` boots headless today (the probes prove it), so the cost is the fixture, not the scene.
 
+> *Built (2026-09-19) as [[WI-69_Integration_Test_Fixture]].* One correction: **F33 was not a prerequisite.** The fixture boots the whole of `main.tscn`, HUD included, so a manager bound to a UI node by tree path boots fine. F33 is still worth fixing for its own sake, and it stays in WI-74. The fixture's permanent R4 also found a new bug in the first week, **F39**: a restored job lost its DURATION progress on a second save.
+
 ### A2. Job ownership is a contract nine owners each re-implement, and three got it wrong
 
 **What.** A component that posts a job keeps a pointer, connects `job_end` to clear it, and (for pawn-side owners only) has an `adopt_*` hook `SaveManager` calls after a load. Nine owners: `ConstructionComponent`, `ProcessorComponent`, `ModuleBase` (repair), `MedicalComponent`, `StorageData` (×2), `ResourcePile`, `PawnNeedsComponent`, `RobotPowerComponent`, `RobotIntegrityComponent`, `PawnDiseaseComponent`, `PawnSuitComponent`. Three variants of "when do I clear it" (`is_failed()`, `is_ended()`, `== job` guards), two variants of "how do I re-link after a load" (an if-chain in `SaveManager`, or nothing), and two dead hooks.

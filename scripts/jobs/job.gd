@@ -574,8 +574,14 @@ func to_dict() -> Dictionary:
 	# actions and no index to protect - it restores by running from the top.
 	if _started:
 		out["sig"] = _signature()
-		if _elapsed > 0.0:
-			out["elapsed"] = _elapsed
+		# A restored job keeps its progress in _resume_elapsed until its pawn
+		# re-enters the action, and _elapsed is 0 until then. Writing _elapsed alone
+		# lost the progress on any save taken before that - a game saved while
+		# paused, loaded and saved again restarted the wait (F39, found by WI-69's
+		# save/load/save test).
+		var elapsed: float = _resume_elapsed if _resume_elapsed > 0.0 else _elapsed
+		if elapsed > 0.0:
+			out["elapsed"] = elapsed
 		var states: Dictionary = {}
 		for i: int in _actions.size():
 			var state: Dictionary = _actions[i].save_state()

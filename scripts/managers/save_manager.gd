@@ -16,6 +16,13 @@ const SAVE_VERSION: int = 3
 const SAVE_DIR: String = "user://saves/"
 const QUICK_SLOT: String = "quicksave"
 
+## Where slots are read and written. [constant SAVE_DIR] everywhere but the
+## integration suite (WI-69), which points it at a directory of its own so a
+## test's save/reload never lands in the player's real `user://saves/`. Static
+## for the same reason [member _pending_load] is: the path has to be the same on
+## both sides of the scene swap a load performs.
+static var _save_dir: String = SAVE_DIR
+
 signal game_saved(slot: String)
 signal game_loaded(slot: String)
 
@@ -181,6 +188,15 @@ static func sections_in_order() -> Array[SaveSection]:
 ## therefore shared by every suite in a run.
 static func clear_sections_for_test() -> void:
 	_sections = []
+
+## Test seam (WI-69): redirects every slot read, write, listing and delete to
+## `dir`, which must end in a slash. [StationFixture] sets it on boot and passes
+## [constant SAVE_DIR] back on teardown. Nothing in the game calls this.
+static func set_save_dir_for_test(dir: String) -> void:
+	_save_dir = dir
+
+static func save_dir() -> String:
+	return _save_dir
 
 static func has_pending_load() -> bool:
 	return not _pending_load.is_empty()
@@ -459,7 +475,7 @@ func save_slot(slot: String) -> Error:
 		"meta": _get_meta(),
 		"sections": _collect_sections(),
 	}
-	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
+	DirAccess.make_dir_recursive_absolute(_save_dir)
 	var file := FileAccess.open(_slot_path(slot), FileAccess.WRITE)
 	if file == null:
 		push_warning("Could not open save file for writing: " + _slot_path(slot))
@@ -474,7 +490,7 @@ func _slot_path(slot: String) -> String:
 	return slot_path(slot)
 
 static func slot_path(slot: String) -> String:
-	return SAVE_DIR + slot + ".json"
+	return _save_dir + slot + ".json"
 
 ## Headline stats written into the envelope. Kept to values the slot list shows -
 ## anything richer belongs in a section, not here.
@@ -872,7 +888,7 @@ static func read_slot(slot: String) -> Dictionary:
 ## summarized for display - see summarize().
 static func list_slots() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	var dir := DirAccess.open(SAVE_DIR)
+	var dir := DirAccess.open(_save_dir)
 	if dir == null:
 		return out
 	for file_name: String in dir.get_files():

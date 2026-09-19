@@ -1,6 +1,77 @@
 # WI-69 — Integration Test Fixture
 
-> **Status: DRAFT (2026-09-19), not started.** First of six hardening items (WI-69…WI-74) drafted from the second-pass audit in [[03_Bugs_and_Improvements]] and [[05_Architecture_Review]] §A1. §0's three decisions are the author's to settle; the recommended default is marked on each. This item goes first because WI-70…WI-74 are all verified against what it builds.
+> **Status: DONE (2026-09-19), not committed. Ready for the author's verification pass.** First of six hardening items (WI-69…WI-74) drafted from the second-pass audit in [[03_Bugs_and_Improvements]] and [[05_Architecture_Review]] §A1. **§0 was settled on the recommended default for all three decisions** (the author's instruction, 2026-09-19): a separate `tests/integration/` with its own command, the rule change in CLAUDE.md, and the quiet world.
+>
+> **Results.**
+> - **Integration: 9 suites, 31 tests, green twice in a row from a clean `user://`.** 29 s of GUT time, ~35 s wall, against the three-minute target. Per suite: boot 3.5 s, self-checks 4.2 s, known bugs 7.3 s, restored jobs 2.9 s, idempotence 2.5 s, scene cycles 2.8 s, the 24-sim-hour soak 4.4 s, WI-68 regressions 1.8 s.
+> - **Unit: 92 suites, 1,740 tests, green.** That is +20: `test_pawn_opinion.gd` (9), `test_module_graph_vertex.gd` (10) and one F39 test in `test_job_persistence.gd`.
+> - **The player's saves were never touched.** `user://saves/` kept its 16 Sep timestamps through every run, and no `user://gut_saves/` survives a run.
+> - No error or warning reaches the integration log except the self-checks' planted ones.
+>
+> **Verification §3: every guard was seen to fail.** Each fix below was patched out, its suite run, and the file restored byte for byte:
+>
+> | Undone | Suite | Failed with |
+> |---|---|---|
+> | F13's rotation snap | `test_save_idempotence` | three asteroids' rotation one float32 ulp apart (`3538.99926757813 != 3538.9990234375`) |
+> | F2's `change_suit` adoption | `test_restored_jobs` | the component does not know the restored trip; **2** trips, not 1 |
+> | F21's resume-first | `test_restored_jobs` | the first job after the load is `store_inventory`, not `haul_resource` |
+> | F23's pile setter | `test_wi68_regressions` | the pile still holds its freed module |
+> | F22's gateway check | `test_wi68_regressions` | crew 2 → **3** (delivered into the truss), and no refund |
+> | F3's `graph.clear()` ×2 | `test_scene_cycles` | **+35.0** objects per cycle, which is the first audit's own figure for the starter station |
+> | F39 (below) | `test_save_idempotence` | `job_queue[0]/elapsed: only in the first` |
+>
+> The known-bug pins were proven the other way round: applying the audit's one-line F25 fix (`not is_finished()`) fails the F25 pin (the site completes), and a minimal `repair_module` adoption fails the F26 repair pin (1 job, not 2). So an accidental fix fails loudly, as §4 intends.
+>
+> **§3's self-checks, as built.** The spec's three, plus four more:
+> - the spec's three: a runtime script error in a ticked node (Godot 4.7 words it "Cannot call method … on a null value"), a planted `reserved_deposit`, and a pause hold;
+> - an INPUT slot over its cap;
+> - the player's own pause flag;
+> - a pawn stranded on an ended job;
+> - an inner class for errors outside the test body (below).
+>
+> **Deviations and findings:**
+> - **F39 (new, fixed): a restored job's DURATION progress was lost by a second save before it resumed.** `Job.to_dict()` wrote `_elapsed`, which is 0 until the pawn re-enters the action; the progress sits in `_resume_elapsed` until then. So save → load → save before the pawn resumed restarted any mid-way wait, meal or sleep. The realistic path is a game saved while paused, loaded (it reloads paused), and saved again. R4 found it the first time a pawn was mid-DURATION at the save. The first audit's R4 read "identical" only because none was. The fix is one line: write `_resume_elapsed` while one is pending. It is pinned by `test_duration_progress_survives_a_second_save_before_the_resume`, which failed before the fix, and by R4. It is recorded in the audit doc as F39. The fix is outside this item's "one production seam", and is recorded here as §2 asks: R4's strict comparison could not be green without it, and pinning it broken would have left a known save bug in place for no reason.
+> - **The fixture resumes *inside* the frame the game bootstraps.** It uses a `CONNECT_DEFERRED` listener on `game_bootstrapped`, which runs after every manager's own handler and before the sim moves. The first version polled, resumed a frame late, and one frame at 4× changed 23 fields between a save and the save after its reload.
+> - **R4 compares two things.** Two post-load saves are compared exactly. A live save is compared with the post-load save after one documented rewrite: the current job moves to the head of the queue, which is WI-44's restore form and not a defect. Nothing else is normalised.
+> - **R4 had to spin the asteroids to be able to catch F13.** F13 is float32 losing digits at thousands of degrees (3,457° on the real quicksave), and a young station's rocks are all under 360°. With F13 undone, R4 stayed green until the test spawned three rocks and gave each a long session's spin.
+> - **GUT does catch runtime script errors, but only inside a test body.** Errors in `before_each` and `after_each` (a boot, a teardown) go to GUT's "no test" bucket and fail nothing. The fixture therefore installs its own `Logger`, which records exactly those, and `finish()` fails the test on them. It reads GUT 9.7.1's `GutErrorTracker._current_test_id`, and the self-check suite pins both halves.
+> - **Under GUT, `get_tree().current_scene` is null**, not the test runner as §2 expected. `DialogueRunner`'s fallback would mount on the root. With the quiet defaults no balloon opens, and one would mount under `UIMain` anyway (`main.tscn` has its HUD), so nothing needed changing.
+> - **F33 was not a blocker.** `main.tscn` boots whole under the fixture, HUD included. The review's "F33 first" is still worth doing for its own sake (WI-74), but the fixture did not need it.
+> - **The fixture's API grew beyond §1:**
+>   - `corridor()`: `place()` puts a corridor only at a module's own door, so a row of modules is a row of islands until it runs;
+>   - `tick_until()`, which measures elapsed time on the clock, because a tick overshoots by up to a frame;
+>   - `save()` and `read_save()`;
+>   - `live_jobs(type, target)`: the F26 question asked of the board plus every pawn, rather than of the owner's own pointer;
+>   - a structural save `diff()`;
+>   - `pawns()`, `piles()`, `modules()` and `storages()`;
+>   - `check_invariants()`, `describe_pause()`, `build_production_line()` and `finish()`;
+>   - the `on_failure` hook, which the self-checks use to capture a failure instead of failing.
+> - **`test_known_bugs.gd` has seven tests:** F38 and a live-teardown control beside it, F25, and F26 four times. On the starter station the control's refund stays in the site's OUTPUT bin, because the Command Center's 80-unit pool is full, so the site never removes itself; the control waits for `Deconstructed`, not removal.
+> - **Two setup traps, now in CLAUDE.md:**
+>   - A module's first `StorageComponent` is its construction bin, so a processor's intake is `processor.storage`. The F26 processor pin first "deposited" into the construction bin, and waited 14 sim-hours for drones to deliver ore.
+>   - The processor pin uses a slim station (processor and power next to the Command Center), where an operator arrives in about 5 sim-seconds.
+> - **R6's bound is 5 objects per cycle.** The first measurements were +0.5, then 0.0 (3,142 flat over five cycles), and F3 undone gives +35.
+> - **§5, GUT's own exit leak:**
+>
+>   | Run | Leaked at exit |
+>   |---|---|
+>   | no tests at all | **652** |
+>   | one pure suite | 653 |
+>   | the full unit suite | 1,032 (380 above GUT's baseline) |
+>   | the integration suite | 842 (190 above, mostly caches a boot fills for the process's lifetime) |
+>
+>   F19's "~1,000 from tests that don't `autofree`" is therefore about two-thirds GUT and the addons, as the draft expected. Recorded, not chased.
+> - **Timing note:** the unit suite read 37 s of GUT time today against 10.9 s at the start of the session. The identical figure on the pre-WI-69 tree (stashed and re-run) shows it is environmental, not this item's.
+>
+> **Files, as built:**
+> - **New:**
+>   - `tests/integration/`: `station_fixture.gd`, `test_fixture_self_checks.gd`, `test_boot.gd`, `test_save_idempotence.gd`, `test_soak.gd`, `test_scene_cycles.gd`, `test_restored_jobs.gd`, `test_wi68_regressions.gd`, `test_known_bugs.gd`;
+>   - `tests/unit/`: `test_pawn_opinion.gd`, `test_module_graph_vertex.gd`.
+> - **Changed:**
+>   - `scripts/managers/save_manager.gd` (the seam: `_save_dir`, `set_save_dir_for_test()`, `save_dir()`, routed through `slot_path`, `list_slots` and `save_slot`'s mkdir);
+>   - `scripts/jobs/job.gd` (F39);
+>   - `tests/unit/test_job_persistence.gd` (F39);
+>   - `CLAUDE.md`, and the Planning docs (`01` §1.19, `02`, `03`, `05` §A1, WI-70).
 
 ## Goal
 
@@ -11,7 +82,7 @@ This item makes that probe permanent. After it:
 - the first audit's runtime probes (R4 idempotence, R5 invariants, R6 scene cycles, R7 suit trip) are tests that run on every change;
 - the open job-lifecycle bugs (F25, F26, F38) are pinned as tests that assert today's broken behaviour, and WI-70 flips each one as it fixes it.
 
-## 0 — Decisions for the author (not yet settled)
+## 0 — Decisions (settled 2026-09-19: the recommended default on all three)
 
 1. **Integration tests live in `tests/integration/` and run as a second command.** *Recommended.* Booting `main.tscn` costs about a second per test and a soak costs several, so folding them into the unit run would make the fast suite slow. *Alternative:* one directory, one command, and a slower suite.
 2. **CLAUDE.md's "GUT covers pure classes only" becomes "unit suites are pure; integration suites go through the fixture".** *Recommended.* The extraction rule stays for *rules*. What changes is that behaviour between systems is testable without extracting anything. A test must never hand-build a partial scene, because that is exactly the fixture this item exists to replace.

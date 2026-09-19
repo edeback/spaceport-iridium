@@ -17,7 +17,7 @@
 
 - **GUT: 89 suites, 1,672/1,672 passing** (54,286 asserts).
 - **R3:** all 389 resources load and all 142 scenes instantiate; no `ModuleData` lacks a scene.
-- **R4 idempotence:** a save written straight after loading another is identical to it except for F13's float drift. Pawn current jobs come back at the front of the queue with their action index intact, which is equivalent.
+- **R4 idempotence:** a save written straight after loading another is identical to it except for F13's float drift. *(2026-09-19: not quite. [[WI-69_Integration_Test_Fixture]]'s permanent R4 found **F39**, a DURATION job's progress lost by a second save before it resumes. This probe never caught a pawn mid-DURATION.)* Pawn current jobs come back at the front of the queue with their action index intact, which is equivalent.
 - **R4 scene swap:** New Game after Quit to Menu differs from a fresh boot only in random rolls and the static id counters, which keep counting and stay unique. **The A8 class stays fixed.**
 - **R5, 120 sim-hours:** zero script errors, zero reservation drift between `StorageData` and `ClaimRegistry`, zero capacity overfill (pool, output or INPUT cap), zero orphan nodes, and no unexplained drop in any resource's world total (the largest hourly drop was 2 units, a batch). *Caveat:* the quicksave is Tier 1, so the cost streams, the suit rules and trader visits were not exercised by the soak.
 - **Static:**
@@ -126,6 +126,8 @@ Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", 
 
 **F19. Coverage gaps.** `ModuleQueue` (where F1 lived), `ModuleGraphVertex` and `PawnOpinion` have no suite. GUT also leaks about 1,000 objects at exit, from tests that don't `autofree`.
 
+> *Closed (2026-09-19):* `ModuleQueue` got its suite in [[WI-68_Audit_Fix_Pass]], and `test_module_graph_vertex.gd` and `test_pawn_opinion.gd` came with [[WI-69_Integration_Test_Fixture]]. **The leak figure was mostly GUT's own.** GUT with no tests at all leaks 652 objects at exit, so the full unit suite's share of its 1,032 is 380. Recorded, not chased.
+
 **F20. CLAUDE.md is stale.** It says "86 suites, 1624 tests"; the real figures are 89 and 1,672.
 
 **Bundled as [[WI-68_Audit_Fix_Pass]]** (drafted 2026-09-18): F1–F7, F9, F10, F12, F13, F15–F18, and F21 (added during stage 2). F22 and F23 were found during stage 3 and fixed in stage 3b, along with F15 and the shuttle-handler part of F24. The rest of F24 is open. F8, F11, F14 and F19's `PawnOpinion` suite are deliberately left out, with the reasons recorded there.
@@ -189,11 +191,15 @@ Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", 
 
 **F38. A save taken mid-deconstruction loses the deconstruction refund - confirmed.** The load path collapses `Deconstructing` to `Deconstructed` ([`construction_component.gd:249`](../../../modules/components/construction_component.gd), F14's shortcut) but only the live path deposits the refund (`setup_storage_post_deconstruction`, reached from the `Deconstructing` branch of `_process`). During deconstruction the material bin is empty, so the saved storage block restores nothing; the reloaded site sees an empty bin in `Deconstructed` and removes itself on its next frame, backfilled with truss. **Reproduced in a scratch copy** with two `large_storage` (6 steel each) placed far from the station: the one torn down live refunded its 6 steel (world steel 50 → 56), and a save taken after that restored the refund intact; the one saved in the frame its deconstruction started reloaded as `Deconstructed` with an empty bin, was replaced by truss within 30 frames, and world steel stayed at 56 - **6 of 6 lost**. The probe's first run also hit the realistic player path by accident: the new-game onboarding held the sim paused, so both deconstructions were still in progress when the probe saved, and **both refunds were lost** - pause, order a demolition, quicksave. The window is also wide whenever a teardown stalls: nobody can reach space (the deconstruct job needs an EVA route), or F25 strands its job. Silent resource loss; **the most serious open finding.** Fix and verification in [[WI-70_Job_Ownership_Contract]] §5. A save already written mid-deconstruction still carries `"state": 4` and its `work_done`, so it recovers once the fix lands, provided it hasn't been loaded and re-saved in the meantime.
 
+### E. Found by WI-69's integration fixture (2026-09-19)
+
+**F39. A second save before a restored job resumes loses that job's DURATION progress - confirmed and fixed in [[WI-69_Integration_Test_Fixture]].** `Job.to_dict()` ([`job.gd`](../../../scripts/jobs/job.gd)) wrote `_elapsed`, the seconds spent in the current DURATION action (a wait, a meal, a sleep). A restored job keeps that progress in `_resume_elapsed` until its pawn re-enters the action, and `_elapsed` is 0 until then. So save → load → save, with no sim frame in between, wrote the action as not started, and the next load restarted it from zero. The realistic path: a game saved while paused, loaded (it reloads paused, because `paused` is saved), and saved again. It loses progress, not resources. The permanent R4 found it the first time a pawn was mid-DURATION at the save (`job_queue[0]/elapsed: only in the first`). **Fix:** write `_resume_elapsed` while one is pending. It is pinned by a unit test that failed before the fix, and by R4, which fails with the fix undone.
+
 **Scheduled as work items (2026-09-19):**
 
 | Item | Takes |
 |---|---|
-| [[WI-69_Integration_Test_Fixture]] | [[05_Architecture_Review]] §A1; R4-R7 as permanent tests; F25, F26 and F38 pinned as known-broken; F19's two missing suites |
+| [[WI-69_Integration_Test_Fixture]] | [[05_Architecture_Review]] §A1; R4-R7 as permanent tests; F25, F26 and F38 pinned as known-broken; F19's two missing suites. **Done 2026-09-19**, and found and fixed F39 on the way. |
 | [[WI-70_Job_Ownership_Contract]] | F25, F26, F32, **F38**, F14; §A2-A4; the residual per-load leak (hypothesis) |
 | [[WI-71_Reference_Hygiene]] | the rest of F24 (a 35-site census), F27, F28, F8, F29 as hygiene; §A6-A7 |
 | [[WI-72_Declared_Vocabularies_And_Content_Guards]] | F30, F31, F11, the balance literals; §A12 |

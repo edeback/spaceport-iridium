@@ -260,6 +260,32 @@ func test_duration_progress_survives_a_save() -> void:
 	restored.process_job(1.5)
 	assert_true(restored.is_finished(), "and it finishes on the remaining time, not a fresh six seconds")
 
+func test_duration_progress_survives_a_second_save_before_the_resume() -> void:
+	# F39 (WI-69): a restored job holds its progress in _resume_elapsed until its
+	# pawn re-enters the action, and to_dict() used to write only _elapsed - still
+	# 0 then. So save -> load -> save before the pawn resumed (a game saved while
+	# paused, loaded, saved again) wrote the wait as not started. Found by the
+	# integration suite's save/load/save comparison.
+	var job := Job.create(_data())
+	job.registry = registry
+	var driver := StubDriver.new()
+	driver.plan_names = ["wait"]
+	job.install_driver(driver)
+	job.start_job(null)
+	job._actions[0].complete_mode = ActionBase.CompleteMode.DURATION
+	job._actions[0].duration = 6.0
+	job.process_job(4.0)
+	var first: Dictionary = job.to_dict()
+	var restored: Job = _restore(first, ["wait"])
+	assert_eq(restored.to_dict().get("elapsed", 0.0), first.get("elapsed"),
+		"a restored job that has not resumed yet still owes its action four seconds")
+	var twice: Job = _restore(restored.to_dict(), ["wait"])
+	twice._actions[0].complete_mode = ActionBase.CompleteMode.DURATION
+	twice._actions[0].duration = 6.0
+	twice.resume_job(null)
+	twice.process_job(2.5)
+	assert_true(twice.is_finished(), "and after two loads it finishes on the remaining time")
+
 # --- claim re-acquisition -----------------------------------------------------
 
 func test_resume_reacquires_the_claims_the_action_needs() -> void:
