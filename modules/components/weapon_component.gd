@@ -103,13 +103,13 @@ func is_powered() -> bool:
 # --- computed stats (also read by the info-panel UI) --------------------------
 
 func effective_damage() -> float:
-	return _stat(&"weapon_damage", damage)
+	return _stat(Stats.WEAPON_DAMAGE, damage)
 
 func effective_fire_interval() -> float:
-	return _stat(&"weapon_fire_interval", fire_interval)
+	return _stat(Stats.WEAPON_FIRE_INTERVAL, fire_interval)
 
 func effective_range() -> float:
-	return _stat(&"weapon_range", range_px)
+	return _stat(Stats.WEAPON_RANGE, range_px)
 
 func _fire_at(target: PirateShip) -> void:
 	target.apply_damage(effective_damage())

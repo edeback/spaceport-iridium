@@ -16,7 +16,7 @@ extends ComponentBase
 ## Release re-engages only once pressure falls this far below target.
 @export var hysteresis: float = 5.0
 ## Atmosphere units released per game-hour while active - fast enough to
-## visibly fight a breach, via get_effective_stat(&"o2_release_rate").
+## visibly fight a breach, via get_effective_stat(Stats.O2_RELEASE_RATE).
 ## 100 = enough to fill one cell with o2
 @export var release_rate_per_hour: float = 150.0
 ## Atmosphere units one unit of stored oxygen resource expands into.
@@ -67,7 +67,7 @@ func _process(delta: float) -> void:
 		last_error = "No oxygen supply!"
 		return
 	last_error = ""
-	var rate: float = owner_module.get_effective_stat(&"o2_release_rate", release_rate_per_hour)
+	var rate: float = owner_module.get_effective_stat(Stats.O2_RELEASE_RATE, release_rate_per_hour)
 	var release: float = minf(buffer, rate * sim_hours)
 	atmosphere.add_o2(release)
 	buffer -= release

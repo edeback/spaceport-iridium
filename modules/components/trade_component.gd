@@ -35,6 +35,19 @@ var override_ui: bool = false
 
 signal orders_changed
 
+## What this bay's scene needs and does not have (WI-72 §2). Was an `assert`.
+## Both pools, because the bay is the one module that genuinely uses both: zero
+## on either side is half a docking bay, and which half is missing only shows up
+## once trade starts going that way.
+func wiring_fault() -> String:
+	if storage == null:
+		return "a trade bay with no storage has nowhere to stage a sale or receive a purchase"
+	if storage.max_stored <= 0:
+		return "its bin's max_stored is 0, so a sell order could never be staged"
+	if storage.output_capacity <= 0:
+		return "its bin's output_capacity is 0, so a purchase would have nowhere to arrive"
+	return ""
+
 func ready_preview() -> void:
 	override_ui = false
 
@@ -48,8 +61,6 @@ func ready_constructed() -> void:
 	# (kitchen, construction) - see the JobPriorities band table. Arrivals are
 	# unaffected: an OUTPUT slot ships at the floor whatever this is set to.
 	storage.update_priority(JobPriorities.TRADE_EXPORT_BIN)
-	assert(storage.max_stored > 0 and storage.output_capacity > 0,
-		"a trade bay needs both pools: max_stored stages sell orders, output_capacity receives purchases")
 
 # --- order sheet ----------------------------------------------------------------
 

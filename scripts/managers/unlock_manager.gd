@@ -184,6 +184,9 @@ func _load_unlocks() -> void:
 			var unlock := res as UnlockData
 			if not ContentPaths.accept_id(unlock.id, file_path, "UnlockData"):
 				continue
+			for effect: UnlockEffect in unlock.effects:
+				if effect != null:
+					effect.warn_on_undeclared_stats(file_path)
 			_unlocks[unlock.id] = unlock
 			if unlock.unlocked_by_default:
 				force_unlock(unlock)
@@ -195,6 +198,7 @@ func _load_local_upgrades() -> void:
 			var upgrade := res as LocalUpgradeData
 			if not ContentPaths.accept_id(upgrade.id, file_path, "LocalUpgradeData"):
 				continue
+			upgrade.warn_on_undeclared_stats(file_path)
 			_local_upgrades[upgrade.id] = upgrade
 
 func _load_tiers() -> void:

@@ -35,7 +35,7 @@ class PathTraversalEdgeData:
 func get_traversal_speed_mult() -> float:
 	var mult: float = traversal_speed_mult
 	if owner_module != null:
-		mult = owner_module.get_effective_stat(&"traversal_speed_mult", traversal_speed_mult)
+		mult = owner_module.get_effective_stat(Stats.TRAVERSAL_SPEED_MULT, traversal_speed_mult)
 	return maxf(mult, 0.05)
 
 @export var path_points: Array[Vector2i] = []:

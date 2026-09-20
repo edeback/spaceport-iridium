@@ -99,14 +99,26 @@ func ready_blueprint() -> void:
 		set_process(false)
 		_posting_active = false
 
+## A silently-zero output pool is a processor that never produces and a mining
+## bay that never holds ore, with nothing on screen saying so - and it is exactly
+## what a scene edit introduces without a crash. Cost one real defect in WI-65,
+## caught by a screenshot rather than by any check; was an `assert`, which a
+## release export strips (WI-72 §2, F31).
+##
+## Authored roles only, because that is all there is to read before the tree runs.
+## A processor's product slots are derived from its recipe later, so the matching
+## rule for those lives on [ProcessorComponent] - and catches them at `_ready`
+## rather than depending on which component's ready pass ran first.
+func wiring_fault() -> String:
+	if output_capacity > 0:
+		return ""
+	if has_output_slots():
+		return "it has OUTPUT slots but output_capacity is 0, so they can hold nothing"
+	if default_role == StorageData.Role.OUTPUT:
+		return "its default_role is OUTPUT but output_capacity is 0, so it can hold nothing at all"
+	return ""
+
 func ready_constructed() -> void:
-	# A silently-zero output pool is a processor that never produces and a mining
-	# bay that never holds ore, with nothing on screen saying so - and it is
-	# exactly what a scene edit introduces without a crash. Cost one real defect
-	# in WI-65, caught by a screenshot rather than by any check.
-	assert(output_capacity > 0 or not has_output_slots(),
-		"%s has OUTPUT slots but output_capacity = 0, so they can hold nothing"
-			% (owner_module.name if owner_module != null else name))
 	if construction_storage:
 		display_info_panel_ui = false
 		remove_from_group(Groups.RESOURCE_STORAGE)

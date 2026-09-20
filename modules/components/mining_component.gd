@@ -22,23 +22,20 @@ var _respawn_time_left: float = -1.0
 ## processor's recipe or a storefront's shop type, both of which have keys.
 var priority_ore: ResourceData = null
 
-## Stat key for the bay's extraction rate (WI-24): damage/upgrades scale this
-## and the mining job folds it into its per-unit timing. 1.0 base = no-op.
-const STAT_MINING_RATE := &"mining_rate"
-
 ## Effective extraction-rate multiplier for this bay's drones. Reads the module's
 ## modifier layer so a damaged mining bay measurably slows.
 func get_mining_rate() -> float:
 	if owner_module != null:
-		return maxf(owner_module.get_effective_stat(STAT_MINING_RATE, 1.0), 0.05)
+		return maxf(owner_module.get_effective_stat(Stats.MINING_RATE, 1.0), 0.05)
 	return 1.0
 
-
-# Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	super()
-	assert(output_storage != null, "MiningComponent must have output_storage!")
-	assert(power_consumer != null, "MiningComponent must have power_consumer!")
+## What this bay's scene needs and does not have (WI-72 §2). Both were `assert`s.
+func wiring_fault() -> String:
+	if output_storage == null:
+		return "a mining bay with no output_storage has nowhere to put the ore its drones bring back"
+	if power_consumer == null:
+		return "a mining bay with no power_consumer runs for free and never reads as unpowered"
+	return ""
 
 func ready_preview() -> void:
 	set_process(false)

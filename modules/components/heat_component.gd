@@ -153,7 +153,7 @@ func refresh_throttle() -> void:
 	if multiplier <= 1.0:
 		owner_module.stat_modifiers.remove_source(ModuleBase.HEAT_SOURCE)
 		return
-	owner_module.stat_modifiers.set_single_modifier(&"process_time",
+	owner_module.stat_modifiers.set_single_modifier(Stats.PROCESS_TIME,
 		StatModifiers.Op.MULT, multiplier, ModuleBase.HEAT_SOURCE)
 
 ## The throttle as the player reads it: 0 when running at full rate, 0.75 when a

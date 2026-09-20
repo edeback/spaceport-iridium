@@ -8,7 +8,7 @@ extends ComponentBase
 ## module, so one scrubber serves everything connected to it.
 
 ## CO2 units converted to O2 per game-hour. Routed through
-## get_effective_stat(&"scrub_rate") so upgrades apply non-destructively.
+## get_effective_stat(Stats.SCRUB_RATE) so upgrades apply non-destructively.
 @export var scrub_rate_per_hour: float = 40.0
 ## Unpowered scrubbers stop dead - CO2 accumulates (intended death spiral).
 @export var power_consumption_component: PowerConsumptionComponent
@@ -35,5 +35,5 @@ func _process(delta: float) -> void:
 	var atmosphere: AtmosphereComponent = owner_module.get_component_by_type(AtmosphereComponent) as AtmosphereComponent
 	if atmosphere == null:
 		return
-	var rate: float = owner_module.get_effective_stat(&"scrub_rate", scrub_rate_per_hour)
+	var rate: float = owner_module.get_effective_stat(Stats.SCRUB_RATE, scrub_rate_per_hour)
 	atmosphere.convert_co2_to_o2(rate * sim_hours)

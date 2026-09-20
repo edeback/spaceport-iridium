@@ -337,13 +337,31 @@ func is_on_shift() -> bool:
 		return true
 	return schedule.is_work_hour(Global.time_manager.hour)
 
+# --- work rate (WI-05 / WI-22, moved out of code in WI-72 §4) -----------------
+#
+# Three numbers that decide how fast an unhappy or unskilled pawn gets anything
+# done. They were literals inside the two functions below, which made them the
+# only balance in the game that could not be looked at without reading code -
+# and a mod's pawn could not widen the band at all. Defaults are exactly the
+# literals they replaced, so nothing shifted.
+
+## Work-rate multiplier at zero happiness, and at full. The band a miserable
+## pawn and a delighted one sit at either end of; a pawn with no needs at all
+## (a drone) is not on this scale and always works at 1.0.
+@export var work_speed_at_min_mood: float = 0.5
+@export var work_speed_at_max_mood: float = 1.1
+## Floor under the combined mood-times-skill rate, so a miserable unskilled pawn
+## still inches forward rather than effectively stalling. Raising it above
+## work_speed_at_min_mood makes mood stop mattering for unskilled work.
+@export var work_rate_floor: float = 0.3
+
 ## Happiness consequence v1 (WI-05): work-rate multiplier consulted by jobs
 ## (construction for now). Pawns without needs (drones) work at full speed.
 func work_speed() -> float:
 	var needs: PawnNeedsComponent = get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
 	if needs == null:
 		return 1.0
-	return lerpf(0.5, 1.1, needs.happiness)
+	return lerpf(work_speed_at_min_mood, work_speed_at_max_mood, needs.happiness)
 
 ## Lazily-resolved skills component (WI-22). Children run _ready after this
 ## pawn, so it can't be cached in _ready; the flag caches the (possibly null,
@@ -379,7 +397,7 @@ func skill_mult(skill: StringName) -> float:
 ## skill, floored so a miserable unskilled pawn still inches forward rather
 ## than effectively stalling. Unskilled jobs (skill &"") get work_speed() alone.
 func work_rate(skill: StringName) -> float:
-	return maxf(0.3, work_speed() * skill_mult(skill))
+	return maxf(work_rate_floor, work_speed() * skill_mult(skill))
 
 ## Personal wallet spend (WI-33): deducts `amount` if affordable and returns true,
 ## else leaves the wallet untouched and returns false. Shops/hotels/dining call

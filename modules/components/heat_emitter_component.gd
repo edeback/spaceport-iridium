@@ -64,10 +64,6 @@ const TARGET_STEP_F: int = 5
 ## to say "idle" rather than leaving the player wondering why nothing is warming.
 var _thermostat_satisfied: bool = false
 
-## Routed through the module's stat layer so an upgrade (a better-insulated
-## forge, a hotter smelter) can tune output without touching the scene.
-const STAT_HEAT_OUTPUT := &"heat_output"
-
 func ready_constructed() -> void:
 	if Global.heat_manager != null:
 		Global.heat_manager.register_emitter(self)
@@ -133,7 +129,7 @@ func _drain_work() -> float:
 func _effective(base: float) -> float:
 	if owner_module == null or base == 0.0:
 		return base
-	return owner_module.get_effective_stat(STAT_HEAT_OUTPUT, base)
+	return owner_module.get_effective_stat(Stats.HEAT_OUTPUT, base)
 
 # --- persistence (WI-67) -------------------------------------------------------
 #

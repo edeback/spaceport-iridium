@@ -51,10 +51,10 @@ func center() -> Vector2:
 	return owner_module.get_global_center() if owner_module != null else global_position
 
 func radius() -> float:
-	return owner_module.get_effective_stat(&"shield_radius", radius_px) if owner_module != null else radius_px
+	return owner_module.get_effective_stat(Stats.SHIELD_RADIUS, radius_px) if owner_module != null else radius_px
 
 func effective_capacity() -> float:
-	return owner_module.get_effective_stat(&"shield_capacity", capacity) if owner_module != null else capacity
+	return owner_module.get_effective_stat(Stats.SHIELD_CAPACITY, capacity) if owner_module != null else capacity
 
 func charge() -> float:
 	return _charge
@@ -85,7 +85,7 @@ func _on_slow_tick(sim_seconds: float) -> void:
 	var cap: float = effective_capacity()
 	if _charge >= cap:
 		return
-	var per_hour: float = owner_module.get_effective_stat(&"shield_charge_rate", charge_rate_per_hour) if owner_module != null else charge_rate_per_hour
+	var per_hour: float = owner_module.get_effective_stat(Stats.SHIELD_CHARGE_RATE, charge_rate_per_hour) if owner_module != null else charge_rate_per_hour
 	_charge = minf(_charge + per_hour * (sim_seconds / TimeManager.SECONDS_PER_HOUR), cap)
 	_online = ShieldMath.next_online(_online, _charge, cap, reengage_fraction)
 	queue_redraw()

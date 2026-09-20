@@ -94,6 +94,24 @@ func test_every_vanilla_recipe_declares_a_processor() -> void:
 			untagged.append(path.get_file())
 	assert_eq(untagged, [] as Array[String], "untagged recipes: %s" % str(untagged))
 
+## A slot has ONE role (WI-65), so a recipe that names a resource on both sides
+## cannot be given a bin: whichever of INPUT and OUTPUT `_sync_storages` assigned
+## last would win and the other half of the recipe would stop working. This was an
+## `assert` inside `_sync_storages` until WI-72 §2, which means a release export
+## had no check at all - and it only ever saw the recipe a processor happened to
+## be running, never the one sitting in `data/recipes/` waiting to be selected.
+func test_no_recipe_names_a_resource_as_both_an_input_and_an_output() -> void:
+	RecipeData.clear_for_test()
+	var swept: int = 0
+	for path: String in ContentPaths.scan(ContentPaths.RECIPES):
+		var recipe: RecipeData = ResourceLoader.load(path) as RecipeData
+		if recipe == null:
+			continue
+		swept += 1
+		assert_eq(ProcessorComponent.recipe_role_conflict(recipe), "",
+			"%s: %s" % [path.get_file(), ProcessorComponent.recipe_role_conflict(recipe)])
+	assert_gt(swept, 5, "the scan sees data/recipes/")
+
 func test_the_refinery_offers_its_four_ores_in_the_authored_order() -> void:
 	# Four, not five: carbon stopped being an ore, so there is nothing to refine
 	# it from - it is mined as `carbon` and its recipe is gone.

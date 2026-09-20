@@ -111,7 +111,11 @@ const ADJACENCY_SOURCE := &"adjacency"
 ## them. HeatComponent owns every write to it.
 const HEAT_SOURCE := &"heat"
 ## Output multiplier a broken-down module runs at until a repair job clears it.
-const BREAKDOWN_EFFICIENCY := 0.5
+## Per module type since WI-72 §4 - see [member ModuleData.breakdown_efficiency].
+## The fallback covers a module standing without data at all, which is what a
+## bare-scene preview is.
+func breakdown_efficiency() -> float:
+	return module_data.breakdown_efficiency if module_data != null else ModuleData.DEFAULT_BREAKDOWN_EFFICIENCY
 
 ## Current hit points (WI-24). -1 until the module is built, so previews and
 ## blueprints read as undamaged (hp_fraction guards on build state). Set to
@@ -177,6 +181,8 @@ func _ready() -> void:
 func ready_preview() -> void:
 	build_state = BuildState.Preview
 	for component: ComponentBase in components:
+		if component.misconfigured:
+			continue
 		component.ready_preview()
 
 func ready_blueprint() -> void:
@@ -186,6 +192,8 @@ func ready_blueprint() -> void:
 		ready_constructed()
 		return
 	for component: ComponentBase in components:
+		if component.misconfigured:
+			continue
 		component.ready_blueprint()
 	# Structural attachment is physical - it exists the moment the construction
 	# site is placed, not when the module finishes. Forming the structure edges
@@ -206,7 +214,14 @@ func ready_constructed() -> void:
 	# Pull in any global (module-type-wide) stat modifiers unlocked so far.
 	if Global.unlock_manager != null:
 		Global.unlock_manager.apply_global_modifiers(self)
+	# A component whose scene wiring is broken takes no part in the module's life
+	# (WI-72 §2): it never starts processing, never registers with a manager and
+	# never posts a job, so the failure stays where it is instead of surfacing as
+	# a stall somewhere downstream. It said so in the log and in its own
+	# last_error when it readied.
 	for component: ComponentBase in components:
+		if component.misconfigured:
+			continue
 		component.ready_constructed()
 	make_connections()
 	_update_shader()
@@ -242,6 +257,8 @@ func ready_constructed() -> void:
 ## and is restored from there.
 func ready_deconstructing() -> void:
 	for component: ComponentBase in components:
+		if component.misconfigured:
+			continue
 		component.ready_deconstructing()
 
 func is_complete() -> bool:
@@ -328,10 +345,10 @@ func _refresh_damage_modifier() -> void:
 		return
 	var min_eff: float = module_data.min_damaged_efficiency if module_data != null else 0.25
 	var efficiency: float = maxf(lerpf(min_eff, 1.0, frac), 0.05)
-	stat_modifiers.set_single_modifier(&"power_output", StatModifiers.Op.MULT, efficiency, DAMAGE_SOURCE)
-	stat_modifiers.set_single_modifier(&"mining_rate", StatModifiers.Op.MULT, efficiency, DAMAGE_SOURCE)
-	stat_modifiers.set_single_modifier(&"traversal_speed_mult", StatModifiers.Op.MULT, efficiency, DAMAGE_SOURCE)
-	stat_modifiers.set_single_modifier(&"process_time", StatModifiers.Op.MULT, 1.0 / efficiency, DAMAGE_SOURCE)
+	stat_modifiers.set_single_modifier(Stats.POWER_OUTPUT, StatModifiers.Op.MULT, efficiency, DAMAGE_SOURCE)
+	stat_modifiers.set_single_modifier(Stats.MINING_RATE, StatModifiers.Op.MULT, efficiency, DAMAGE_SOURCE)
+	stat_modifiers.set_single_modifier(Stats.TRAVERSAL_SPEED_MULT, StatModifiers.Op.MULT, efficiency, DAMAGE_SOURCE)
+	stat_modifiers.set_single_modifier(Stats.PROCESS_TIME, StatModifiers.Op.MULT, 1.0 / efficiency, DAMAGE_SOURCE)
 
 # --- breakdowns (WI-24) ---------------------------------------------------
 
@@ -345,15 +362,21 @@ func _on_durability_hour_changed(_hour: int) -> void:
 		return
 	if _broken_down:
 		return
-	var chance: float = get_effective_stat(&"breakdown_chance", module_data.breakdown_chance_per_hour)
+	var chance: float = get_effective_stat(Stats.BREAKDOWN_CHANCE, module_data.breakdown_chance_per_hour)
 	if chance > 0.0 and randf() < chance:
 		_trigger_breakdown()
 
-## Rolled effect: half a wear breakdown (direct damage, fixed by HP repair), half
-## a jam (a lingering efficiency modifier cleared only when a repair job finishes).
+## Rolled effect: a WEAR breakdown (direct damage, fixed by an HP repair) or a JAM
+## (a lingering efficiency modifier cleared only when a repair job finishes). The
+## split and the wear damage are per module type since WI-72 §4; both default to
+## what the two literals here used to be, so nothing shifted when they moved.
 func _trigger_breakdown() -> void:
-	if randf() < 0.5:
-		apply_damage(max_hp() * 0.15, &"breakdown")
+	var wear_chance: float = (module_data.breakdown_wear_chance if module_data != null
+		else ModuleData.DEFAULT_BREAKDOWN_WEAR_CHANCE)
+	if randf() < wear_chance:
+		var fraction: float = (module_data.breakdown_wear_damage_fraction if module_data != null
+			else ModuleData.DEFAULT_BREAKDOWN_WEAR_DAMAGE)
+		apply_damage(max_hp() * fraction, &"breakdown")
 	else:
 		_broken_down = true
 		_apply_breakdown_modifier()
@@ -361,9 +384,10 @@ func _trigger_breakdown() -> void:
 		"Module broken down", _display_name(), self, &"", "%d modules have broken down")
 
 func _apply_breakdown_modifier() -> void:
-	stat_modifiers.set_single_modifier(&"power_output", StatModifiers.Op.MULT, BREAKDOWN_EFFICIENCY, BREAKDOWN_SOURCE)
-	stat_modifiers.set_single_modifier(&"mining_rate", StatModifiers.Op.MULT, BREAKDOWN_EFFICIENCY, BREAKDOWN_SOURCE)
-	stat_modifiers.set_single_modifier(&"process_time", StatModifiers.Op.MULT, 1.0 / BREAKDOWN_EFFICIENCY, BREAKDOWN_SOURCE)
+	var efficiency: float = breakdown_efficiency()
+	stat_modifiers.set_single_modifier(Stats.POWER_OUTPUT, StatModifiers.Op.MULT, efficiency, BREAKDOWN_SOURCE)
+	stat_modifiers.set_single_modifier(Stats.MINING_RATE, StatModifiers.Op.MULT, efficiency, BREAKDOWN_SOURCE)
+	stat_modifiers.set_single_modifier(Stats.PROCESS_TIME, StatModifiers.Op.MULT, 1.0 / efficiency, BREAKDOWN_SOURCE)
 
 # --- adjacency (WI-30) ----------------------------------------------------
 
@@ -384,7 +408,7 @@ func _refresh_maintenance_modifier() -> void:
 		stat_modifiers.remove_source(ADJACENCY_SOURCE)
 		return
 	var k: float = module_data.maintenance_breakdown_k if module_data != null else 1.0
-	stat_modifiers.set_single_modifier(&"breakdown_chance", StatModifiers.Op.MULT, 1.0 / (1.0 + maintenance * k), ADJACENCY_SOURCE)
+	stat_modifiers.set_single_modifier(Stats.BREAKDOWN_CHANCE, StatModifiers.Op.MULT, 1.0 / (1.0 + maintenance * k), ADJACENCY_SOURCE)
 
 ## Called by a completing repair job (WI-24). Lifts the lingering breakdown hit.
 func clear_breakdown() -> void:

@@ -9,7 +9,10 @@ extends GutTest
 
 const DAMAGE_SOURCE := &"damage"
 const BREAKDOWN_SOURCE := &"breakdown"
-const BREAKDOWN_EFFICIENCY := 0.5
+## Read from the data default rather than restated, since WI-72 §4 moved it onto
+## [ModuleData]. A mirror that carries its own copy of the number it is mirroring
+## stops being a mirror the moment the real one is tuned.
+const BREAKDOWN_EFFICIENCY: float = ModuleData.DEFAULT_BREAKDOWN_EFFICIENCY
 
 var mods: StatModifiers
 

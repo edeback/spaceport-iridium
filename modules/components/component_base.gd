@@ -42,6 +42,70 @@ func _ready() -> void:
 	owner_module = get_parent_module()
 	if owner_module != null:
 		owner_module.components.append(self)
+	check_wiring()
+
+# --- authored wiring (WI-72 §2) -----------------------------------------------
+#
+# Eleven `assert`s used to guard authored scene wiring: a processor with no
+# recipe, a bin with OUTPUT slots and no pool to hold them in, a mining bay with
+# no storage. An assert is stripped from a release export, so the check that
+# existed to catch a bad scene was absent from exactly the build a player runs -
+# and a scene edit or a mod shipped silently, then failed hours later somewhere
+# else entirely. F31.
+#
+# Each of those rules is now a sentence a component states once, checked twice:
+# by `tests/unit/test_module_content.gd` over every shipped scene, and here at
+# runtime over whatever actually turned up - a mod's module is not in the sweep,
+# which is the whole reason the runtime half exists.
+
+## True once [method check_wiring] has found this component's scene miswired.
+## [ModuleBase] then skips every lifecycle hook on it, so it never starts
+## processing, never registers with a manager and never posts a job: the module
+## stands there inert with a sentence in its inspector. A far better failure than
+## a crash the player cannot read, or - in a release export - no failure at all
+## until something downstream goes wrong for no visible reason.
+var misconfigured: bool = false
+
+## What is wrong with this component's authored scene, as a sentence, or "" when
+## nothing is.
+##
+## Pure, and readable on a scene that has only been INSTANTIATED: the content
+## sweep calls this on every shipped module scene without ever putting one in the
+## tree, so it may only read exported values - never `owner_module`, never
+## anything an `@onready` or a ready pass sets up.
+##
+## Override this rather than re-checking the same thing in `_ready`. The point of
+## F31 was that these rules existed in exactly one place, and that place was
+## compiled out of the shipping build.
+func wiring_fault() -> String:
+	return ""
+
+## Runs [method wiring_fault] once and shuts the component down if it reports
+## something. Called from `_ready`, which is before [ModuleBase] dispatches any
+## lifecycle hook, so a misconfigured component never gets started at all.
+func check_wiring() -> void:
+	if misconfigured:
+		return
+	var fault: String = wiring_fault()
+	if fault.is_empty():
+		return
+	misconfigured = true
+	set_process(false)
+	set_physics_process(false)
+	# The inspector reads last_error, so the player sees this and not only the log.
+	last_error = "Misconfigured: " + fault
+	push_error("%s is misconfigured: %s" % [_wiring_subject(), fault])
+
+## What to call this component in the error, most specific part first: the node
+## path inside the module, then the scene file, which together are enough for
+## whoever authored it to open the right thing.
+func _wiring_subject() -> String:
+	var where: String = name
+	if owner_module != null:
+		where = String(owner_module.get_path_to(self))
+		if not owner_module.scene_file_path.is_empty():
+			where += " in " + owner_module.scene_file_path
+	return where
 
 func ready_preview() -> void:
 	pass

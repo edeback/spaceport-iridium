@@ -36,10 +36,6 @@ var _recipes_resolved: bool = false
 ## producers (no worker -> no shift) and non-food recipes (output_quality_base < 0).
 @export var worker_quality_shift_at_max: float = 0.35
 
-## Stat key routed through the owner module's stat-modifier layer. A MULT < 1
-## from a "faster processing" upgrade shortens the effective processing time.
-const STAT_PROCESS_TIME := &"process_time"
-
 ## Richness assumed for a variant-resource stack that carries no instance
 ## data (ore mined before variance existed, debug-added stock).
 const DEFAULT_RICHNESS: float = 0.5
@@ -108,16 +104,39 @@ signal recipe_changed(new_recipe: RecipeData)
 ## base value if this component isn't attached to a module yet.
 func get_process_time() -> float:
 	if owner_module != null:
-		return owner_module.get_effective_stat(STAT_PROCESS_TIME, time_to_process)
+		return owner_module.get_effective_stat(Stats.PROCESS_TIME, time_to_process)
 	return time_to_process
 
-# Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	assert(recipe != null, "Processor must have recipe!")
-	assert(storage != null, "Processor must have storage!")
-	assert(power_consumer != null, "Processor must have power_consumer!")
-	assert(time_to_process > 0, "Processor time_to_process must be > 0!")
-	super()
+## What this processor's scene needs and does not have (WI-72 §2). Four of these
+## were `assert`s, which a release export strips - so the build a player runs had
+## no check at all and a half-wired processor simply stood there.
+func wiring_fault() -> String:
+	if recipe == null:
+		return "a processor with no recipe has nothing to make"
+	if storage == null:
+		return "a processor with no storage has nowhere to take inputs from or put outputs"
+	if power_consumer == null:
+		return "a processor with no power_consumer runs for free and never reads as unpowered"
+	if time_to_process <= 0.0:
+		return "time_to_process is %s - a batch would take no time at all" % time_to_process
+	return recipe_role_conflict(recipe)
+
+## The resource a recipe names as both an ingredient and a product, as a
+## sentence, or "" when it names none.
+##
+## A slot has ONE role (WI-65), so such a recipe cannot be given a bin: whichever
+## of INPUT and OUTPUT `_sync_storages` assigned last would win, and the other
+## half of the recipe would quietly stop working. Static and pure so the recipe
+## sweep can run it over every shipped recipe, not only the ones a scene is
+## authored with.
+static func recipe_role_conflict(recipe_to_check: RecipeData) -> String:
+	if recipe_to_check == null:
+		return ""
+	for ingredient: ResourceData in recipe_to_check.inputs:
+		if recipe_to_check.outputs.has(ingredient):
+			return ("recipe '%s' names %s as both an input and an output, and a slot has one role"
+				% [recipe_to_check.name, ingredient.name])
+	return ""
 
 func ready_preview() -> void:
 	set_process(false)
@@ -186,6 +205,14 @@ func _resolve_available_recipes() -> Array[RecipeData]:
 	# refinery does nothing" and a diagnosable mistake.
 	var runnable: Array[RecipeData] = []
 	for candidate: RecipeData in out:
+		# A recipe that wants one resource on both sides cannot be given slots at
+		# all (WI-72 §2). Filtered here rather than asserted in _sync_storages,
+		# because a mod's recipe reaching a vanilla processor is content, not a
+		# programming error - and an assert would not exist in a release build.
+		var conflict: String = recipe_role_conflict(candidate)
+		if not conflict.is_empty():
+			push_error("Processor '%s' cannot run %s." % [_module_label(), conflict])
+			continue
 		if storage != null and not recipe_fits(candidate.inputs, storage.max_stored):
 			push_error("Processor '%s' cannot run recipe '%s': one batch needs %d intake capacity, the bay holds %d."
 					% [_module_label(), candidate.name, _batch_size(candidate.inputs), storage.max_stored])
@@ -260,10 +287,13 @@ static func recipe_fits(inputs: Dictionary[ResourceData, int], pool: int) -> boo
 ## are derived here rather than saved so a recipe that changed between builds
 ## cannot restore slots roled for a recipe that no longer exists.
 func _sync_storages() -> void:
-	for ingredient: ResourceData in recipe.inputs:
-		assert(not recipe.outputs.has(ingredient),
-			"Recipe %s names %s as both an input and an output - a slot has one role."
-				% [recipe.name, ingredient.name])
+	# Belt and braces: the selector already filters a self-referencing recipe out,
+	# and an authored one disables the processor at _ready. Reaching here anyway
+	# would role half the bin wrong, so stop instead.
+	var conflict: String = recipe_role_conflict(recipe)
+	if not conflict.is_empty():
+		push_error("Processor '%s': %s - leaving its slots alone." % [_module_label(), conflict])
+		return
 	# Retire slots the new recipe has no use for. An input's leftovers go to the
 	# overflow pile (an INPUT slot cannot export); an output's stock is left
 	# alone until it has drained, since it is already on its way out.

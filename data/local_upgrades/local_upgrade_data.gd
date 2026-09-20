@@ -33,6 +33,17 @@ extends Resource
 ## all share this upgrade's id as their source, tiers stack automatically.
 @export var modifiers: Array[StatModifierSpec] = []
 
+## Say something, once, about any stat this upgrade's tiers name that [Stats] does
+## not declare (WI-72 §0.3). An undeclared stat is written to the module's modifier
+## layer exactly as a declared one is and nothing ever reads it back, so the player
+## pays for a tier that does nothing - silently, which is the whole of F30. A mod's
+## own key is the legitimate case and still works; the warning is what tells the two
+## apart. Called by [UnlockManager] as it scans.
+func warn_on_undeclared_stats(where: String) -> void:
+	for spec: StatModifierSpec in modifiers:
+		if spec != null:
+			Stats.warn_if_undeclared(spec.stat, where)
+
 func matches_module(module_data: ModuleData) -> bool:
 	if module_data == null:
 		return false

@@ -85,7 +85,7 @@ func accepts(pawn: PawnBase) -> bool:
 ## raw export before the component is attached to a module.
 func effective_sleep_quality() -> float:
 	if owner_module != null:
-		return owner_module.get_effective_stat(&"sleep_quality", sleep_quality)
+		return owner_module.get_effective_stat(Stats.SLEEP_QUALITY, sleep_quality)
 	return sleep_quality
 
 ## WI-44 adapter: the uniform name Action_RestoreNeed calls on every provider.
@@ -109,7 +109,7 @@ func sleep_restored_per_hour(sleep_max: float, sleeper: PawnBase = null) -> floa
 ## Effective nightly charge after any suite upgrade.
 func effective_nightly_rate() -> int:
 	if owner_module != null:
-		return int(round(owner_module.get_effective_stat(&"hotel_rate", float(nightly_rate))))
+		return int(round(owner_module.get_effective_stat(Stats.HOTEL_RATE, float(nightly_rate))))
 	return nightly_rate
 
 ## Called by the sleep job when a pawn wakes from a FULL night (never on an early
@@ -119,7 +119,7 @@ func effective_nightly_rate() -> int:
 func complete_stay(pawn: PawnBase) -> int:
 	if pawn == null or not visitor_only or not pawn.is_visitor:
 		return 0
-	var mood: float = owner_module.get_effective_stat(&"hotel_mood", visitor_mood_bonus) if owner_module != null else visitor_mood_bonus
+	var mood: float = owner_module.get_effective_stat(Stats.HOTEL_MOOD, visitor_mood_bonus) if owner_module != null else visitor_mood_bonus
 	if mood != 0.0:
 		var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
 		if needs != null:

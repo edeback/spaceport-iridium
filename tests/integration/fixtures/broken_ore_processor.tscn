@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=3]
+
+; WI-72 §2 (F31): the shipped ore processor with its recipe cleared - the one
+; thing `ProcessorComponent.wiring_fault()` is asked about first.
+;
+; An inherited scene rather than a scene packed at runtime: `PackedScene.pack()`
+; on an instantiated scene loses the base's authored PathComponent anchors, so a
+; repacked module arrives with a broken interior AStar graph and the test would
+; be measuring that instead.
+;
+; This is exactly the shape a mod ships - a real `.tscn` with one export wrong -
+; and it lives under `tests/`, which the export preset excludes and
+; `test_module_content.gd` never walks (that sweep reads `data/modules/`).
+
+[ext_resource type="PackedScene" uid="uid://dvbr2ns4pveve" path="res://modules/industrial_processors/ore_processor.tscn" id="1_base"]
+
+[node name="OreProcessor" instance=ExtResource("1_base")]
+
+[node name="ProcessorComponent" parent="." index="6"]
+recipe = null

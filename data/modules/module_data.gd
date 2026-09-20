@@ -61,7 +61,7 @@ extends Resource
 ## Industrial hardware wears out; roll a breakdown each game-hour when true.
 @export var can_break_down: bool = false
 ## Per-game-hour breakdown probability (0..1) when can_break_down. Read through
-## get_effective_stat(&"breakdown_chance", ...) so WI-30's Maintenance Facility
+## get_effective_stat(Stats.BREAKDOWN_CHANCE, ...) so WI-30's Maintenance Facility
 ## can lower it via adjacency for free.
 @export var breakdown_chance_per_hour: float = 0.0
 ## How strongly a nearby Maintenance Facility's &"maintenance" field suppresses
@@ -69,6 +69,19 @@ extends Resource
 ## 1/(1 + maintenance * k). Higher = more protective. Only matters when
 ## can_break_down.
 @export var maintenance_breakdown_k: float = 1.0
+## Output multiplier a broken-down module runs at until a repair job clears it.
+## Was a code constant on [ModuleBase]; balance belongs in data (WI-72 §4), and a
+## module type that should limp rather than halve can now say so.
+const DEFAULT_BREAKDOWN_EFFICIENCY: float = 0.5
+@export var breakdown_efficiency: float = DEFAULT_BREAKDOWN_EFFICIENCY
+## Of the breakdowns this module rolls, the share that are WEAR - direct damage,
+## fixed by an ordinary HP repair - rather than a JAM, a lingering efficiency hit
+## that only a completed repair job lifts. 0 = always a jam, 1 = always wear.
+const DEFAULT_BREAKDOWN_WEAR_CHANCE: float = 0.5
+@export var breakdown_wear_chance: float = DEFAULT_BREAKDOWN_WEAR_CHANCE
+## How much of max_hp a wear breakdown takes off.
+const DEFAULT_BREAKDOWN_WEAR_DAMAGE: float = 0.15
+@export var breakdown_wear_damage_fraction: float = DEFAULT_BREAKDOWN_WEAR_DAMAGE
 
 ## --- heat (WI-60) -----------------------------------------------------------
 ## Energy it takes to move ONE CELL of this module one degree Fahrenheit. The

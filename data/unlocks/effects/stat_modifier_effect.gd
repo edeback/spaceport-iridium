@@ -16,6 +16,9 @@ extends UnlockEffect
 func apply(manager: UnlockManager, unlock: UnlockData) -> void:
 	manager.register_global_modifier(module_tags, stat, op, value, _source_id(unlock))
 
+func warn_on_undeclared_stats(where: String) -> void:
+	Stats.warn_if_undeclared(stat, where)
+
 func revert(manager: UnlockManager, unlock: UnlockData) -> void:
 	manager.unregister_global_modifier(_source_id(unlock))
 

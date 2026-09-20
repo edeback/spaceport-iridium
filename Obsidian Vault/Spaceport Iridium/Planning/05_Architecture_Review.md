@@ -149,6 +149,8 @@ Each entry: what is there, what it costs, what to do, and roughly how big the ch
 
 ### A12. The stat vocabulary, the mod API, and the balance numbers are undeclared
 
+> **Closed by [[WI-72_Declared_Vocabularies_And_Content_Guards]] (2026-09-20).** `Stats` declares twenty-one names with a three-rule sweep; eleven signals are a documented mod API and the emitter-less one is gone; the balance literals moved to `ModuleData`, `PawnBase` and `MarketManager` exports, and `SECONDS_PER_HOUR` kept its value and lost its stale note. F31's asserts became `wiring_fault()` plus a scene sweep - the piece of A12 that was really a fourth undeclared thing: the rules an authored scene has to satisfy.
+
 **What.** Seventeen stat names are free-form (F30). Ten `SignalBus` signals have no listener and one is never emitted (F11) - if they are the mod API, nothing says so. ~40 balance literals sit in gameplay code (`randf() < 0.5` breakdown split, `max_hp() * 0.15`, `lerpf(0.5, 1.1, happiness)`, `SECONDS_PER_HOUR = 10.0` still marked "temp for testing") against an invariant that says balance lives in data.
 
 **Do.** `Stats` constants + sweep (F30); a `## MOD API` block in `signal_bus.gd` naming the signals a mod may rely on and deleting the rest (F11); a one-time pass moving the balance literals into the `.tres` or an exported var - the invariant is right, it just was never swept.
@@ -171,7 +173,7 @@ Ordered by defect-class closed per line changed:
 1. **Job ownership contract** (A2, A3, A4; fixes F25, F26, F32): `JobSlot`, generic adoption, `did_not_complete()`, the persistence rule in CLAUDE.md. Verified by the integration fixture below on a save with a mid-build site, a manned processor and a repair in flight.
 2. **Integration fixture** (A1; unblocks everything that has been probe-only): `tests/integration/StationFixture`, the first-pass probes as tests, F33 to let `main.tscn` boot without its HUD.
 3. **Reference hygiene** (A6, A7; fixes F27, F28, F29, closes F8 and the rest of F24): the rule, the four sweeps, `_exit_tree` nulling, `DOOR_WAIT`.
-4. **Declared vocabularies** (A12; fixes F30, F31, F11): `Stats`, the content sweep, the mod-API block, asserts to `push_error`.
+4. ~~**Declared vocabularies** (A12; fixes F30, F31, F11): `Stats`, the content sweep, the mod-API block, asserts to `push_error`.~~ **Done 2026-09-20, [[WI-72_Declared_Vocabularies_And_Content_Guards]].**
 5. **Save orchestration** (A5, A8): scene-order test, pawn-kind hooks, `SaveManager` split.
 6. **Small consolidations** (A9, A10, A11) as they are touched.
 

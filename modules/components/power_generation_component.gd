@@ -14,10 +14,18 @@ var force_off: bool = false
 ## Sim-seconds of burn left on the currently loaded fuel unit.
 var _fuel_seconds_left: float = 0.0
 
-# Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	super()
-	assert(seconds_per_resource_consumed == 0.0 or (input_storage != null and resource_consumed != null), "Processor must either not require resource or have resource storage!")
+## What this generator's scene needs and does not have (WI-72 §2). Was an
+## `assert`, and note what a release build did with it stripped: a fuel-burning
+## generator missing either half of its fuel wiring runs as a FREE generator.
+## That is a balance change rather than a crash, which is the worst kind to ship.
+func wiring_fault() -> String:
+	if seconds_per_resource_consumed <= 0.0:
+		return "" # a solar panel: no fuel, nothing to wire
+	if input_storage == null:
+		return "it burns a fuel every %ss but has no input_storage to hold one" % seconds_per_resource_consumed
+	if resource_consumed == null:
+		return "it burns a fuel every %ss but no resource_consumed is set, so it would generate for free" % seconds_per_resource_consumed
+	return ""
 
 func ready_preview() -> void:
 	pass
@@ -48,13 +56,9 @@ func _exit_tree() -> void:
 	if is_instance_valid(Global.power_manager):
 		Global.power_manager.unregister_generator(self)
 
-## Stat key routed through the owner module's modifier layer so damage (WI-24)
-## and future upgrades scale generation without touching the base export.
-const STAT_POWER_OUTPUT := &"power_output"
-
 func get_power_output() -> float:
 	if owner_module != null:
-		return owner_module.get_effective_stat(STAT_POWER_OUTPUT, power_output)
+		return owner_module.get_effective_stat(Stats.POWER_OUTPUT, power_output)
 	return power_output
 
 func disable_generation(disable: bool) -> void:

@@ -16,27 +16,22 @@ extends ComponentBase
 ## default, so no existing module scene needed touching.
 @export var hauler_robot_scene: PackedScene = preload("res://pawns/hauler_robot.tscn")
 
-## Base cap on owned robots; upgrades raise the effective cap via STAT_MAX_ROBOTS.
+## Base cap on owned robots; upgrades raise the effective cap via Stats.LOGISTICS_MAX_ROBOTS.
 @export var max_robots: int = 3
 ## Credits to buy one robot.
 @export var robot_cost: int = 250
 ## Base movement speed / carrying capacity handed to a fresh robot; upgrades scale
-## these through STAT_ROBOT_SPEED / STAT_ROBOT_CAPACITY.
+## these through Stats.ROBOT_SPEED / Stats.ROBOT_CAPACITY.
 @export var robot_base_speed: float = 80.0
 @export var robot_base_capacity: int = 10
 
 var robots: Array[HaulerRobotPawn] = []
 
-## Stat keys (WI-27) read through owner_module.get_effective_stat so local
-## upgrades scale them non-destructively. Independent of the damage/breakdown
-## MULT layers, which don't touch these keys.
-const STAT_ROBOT_SPEED := &"robot_speed"
-const STAT_ROBOT_CAPACITY := &"robot_capacity"
-const STAT_MAX_ROBOTS := &"logistics_max_robots"
-
-func _ready() -> void:
-	super()
-	assert(power_consumer != null, "LogisticsBayComponent must have power_consumer!")
+## What this bay's scene needs and does not have (WI-72 §2). Was an `assert`.
+func wiring_fault() -> String:
+	if power_consumer == null:
+		return "a logistics bay with no power_consumer runs its robots for free"
+	return ""
 
 func ready_preview() -> void:
 	set_process(false)
@@ -63,10 +58,10 @@ func _process(delta: float) -> void:
 	for robot: HaulerRobotPawn in robots:
 		robot.powered = powered
 
-## Effective robot cap after upgrades (STAT_MAX_ROBOTS is an additive tier bump).
+## Effective robot cap after upgrades (Stats.LOGISTICS_MAX_ROBOTS is an additive tier bump).
 func effective_max_robots() -> int:
 	if owner_module != null:
-		return int(owner_module.get_effective_stat(STAT_MAX_ROBOTS, float(max_robots)))
+		return int(owner_module.get_effective_stat(Stats.LOGISTICS_MAX_ROBOTS, float(max_robots)))
 	return max_robots
 
 ## True when another robot can be bought right now: room under the cap and the
@@ -106,8 +101,8 @@ func _apply_robot_stats() -> void:
 func _apply_robot_stats_to(robot: HaulerRobotPawn) -> void:
 	if owner_module == null:
 		return
-	robot.speed = owner_module.get_effective_stat(STAT_ROBOT_SPEED, robot_base_speed)
-	robot.carrying_capacity = int(owner_module.get_effective_stat(STAT_ROBOT_CAPACITY, float(robot_base_capacity)))
+	robot.speed = owner_module.get_effective_stat(Stats.ROBOT_SPEED, robot_base_speed)
+	robot.carrying_capacity = int(owner_module.get_effective_stat(Stats.ROBOT_CAPACITY, float(robot_base_capacity)))
 
 func _on_module_upgraded(module: ModuleBase) -> void:
 	if module == owner_module:

@@ -9,6 +9,12 @@ extends Node
 var _tradable_cache: Array[ResourceData] = []
 @export var purchase_price_multiplier: float = 1.5
 @export var sell_price_multiplier: float = 0.5
+## Share of the gap between a resource's effective supply and its current stock
+## that closes each game-hour - 0.1 is a tenth of the way back per hour. Raise it
+## and the market recovers faster from a big sale; 0 freezes stock where it is.
+## Rounded away from zero (ceili), so a gap of any size moves by at least one unit
+## an hour and the drift cannot stall short of its target (WI-72 §4).
+@export var restock_drift_per_hour: float = 0.1
 
 ## Resource -> Current stock
 var market_data: Dictionary[ResourceData, int] = {}
@@ -48,7 +54,7 @@ func update_market() -> void:
 	for resource: ResourceData in market_data:
 		var cur_stock: int = market_data[resource]
 		var diff: int = effective_supply(resource) - cur_stock
-		market_data[resource] = cur_stock + ceili(diff * 0.1)
+		market_data[resource] = cur_stock + ceili(diff * restock_drift_per_hour)
 	market_updated.emit()
 
 # --- timed supply modifiers (WI-13) -------------------------------------------

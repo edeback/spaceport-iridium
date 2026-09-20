@@ -4,7 +4,7 @@ extends ComponentBase
 ## Moves chosen resources between chosen adjacent storages on rate-limited internal
 ## buffers (WI-27). A conveyor runs one or more independent lanes (ConveyorLane):
 ## each lane is its own (source, destination, resource, buffer) link. A fresh
-## conveyor has one lane; the "Extra Belt" local upgrade (STAT_CONVEYOR_LANES) adds
+## conveyor has one lane; the "Extra Belt" local upgrade (Stats.CONVEYOR_LANES) adds
 ## more, up to MAX_LANES, so a single conveyor can shuttle several resources
 ## between several storage pairs at once.
 ##
@@ -30,10 +30,6 @@ const MAX_LANES: int = 4
 @export var rate_per_hour: float = 60.0
 ## Lanes on a fresh (un-upgraded) conveyor.
 @export var base_lanes: int = 1
-
-## Stat key (WI-27) read through owner_module.get_effective_stat so the Extra Belt
-## upgrade raises the lane count non-destructively.
-const STAT_CONVEYOR_LANES := &"conveyor_lanes"
 
 var lanes: Array[ConveyorLane] = []
 ## Only true once constructed - gates the transfer scan like storage gates posting.
@@ -66,7 +62,7 @@ func ready_constructed() -> void:
 func effective_max_lanes() -> int:
 	var n: int = base_lanes
 	if owner_module != null:
-		n = int(owner_module.get_effective_stat(STAT_CONVEYOR_LANES, float(base_lanes)))
+		n = int(owner_module.get_effective_stat(Stats.CONVEYOR_LANES, float(base_lanes)))
 	return clampi(n, 1, MAX_LANES)
 
 ## Grows the lane list to the effective count (never shrinks - the cap only ever

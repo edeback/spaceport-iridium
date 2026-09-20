@@ -1,6 +1,71 @@
 # WI-72 — Declared Vocabularies and Content Guards
 
-> **Status: DRAFT (2026-09-19), not started.** Independent of WI-70 and WI-71; it needs only the unit suite, plus [[WI-69_Integration_Test_Fixture]] for one runtime check. Scoped from [[05_Architecture_Review]] §A12 and the audits in [[03_Bugs_and_Improvements]]. It closes **F30**, **F31** and **F11**, and sweeps the balance literals the "balance lives in data" invariant never swept. §0's three decisions are the author's to settle; the recommended default is marked on each.
+> **Status: DONE (2026-09-20).** §0's three decisions were all taken as recommended: the
+> listener-less signals are a declared mod API and `special_path_connection_added` is deleted
+> (§0.1), `SECONDS_PER_HOUR` stays 10 with its comment corrected (§0.2), and an undeclared stat
+> warns at runtime rather than failing (§0.3). Closes **F30**, **F31** and **F11**, and swept the
+> balance literals. Verified by **1821 unit tests (99 suites)** and **43 integration tests (11
+> suites)**, both green, with each new sweep re-run against a seeded fault to prove it fails.
+>
+> **What shipped that the plan did not say:**
+> - **The vocabulary is twenty-one stats, not eighteen.** `WeaponComponent` routes
+>   `weapon_damage`, `weapon_fire_interval` and `weapon_range` through a one-line `_stat()`
+>   helper instead of naming `get_effective_stat` at each site, so §1's census — which was a grep
+>   for the call — could not see them. That is the finding, not the miss: a helper can hide a
+>   stat, so `test_stat_content.gd`'s "declared ⇒ read" rule looks for the **constant** appearing
+>   anywhere that is not a write to the modifier layer, rather than for `get_effective_stat(`.
+>   `HeatComponent`'s throttle was a twelfth write site §1's file list did not name.
+> - **The mod API is eleven signals, not ten.** `module_destroyed` is emitted by
+>   `ModuleBase._on_hp_zero` and listened to by nothing — WI-71's F27 deliberately moved
+>   `AlertManager` off it onto `module_removed`, which is what left it listener-less. It is the
+>   same shape as `ship_destroyed` and is declared with the rest.
+> - **The sweep's needles had to distinguish two vocabularies.** §1 says "no `add_modifier(&"` in
+>   `modules/`", but `ShopComponent` and `SleepComponent` both call `needs.add_modifier(&"...")`
+>   with **mood** ids. The needle is `stat_modifiers.add_modifier(&"`, not `add_modifier(&"`.
+> - **The eleven asserts became one virtual, not seven bespoke checks.** `ComponentBase` carries
+>   `wiring_fault() -> String` (the rule, pure and readable on a scene that has only been
+>   instantiated) and `check_wiring()` (runs it in `_ready`, sets `misconfigured`, `last_error`
+>   and one `push_error`). `ModuleBase` then skips **every** lifecycle hook on a misconfigured
+>   component — one place, rather than an early return in each of the seven `ready_constructed`s.
+>   Two components legitimately never call `super()` in `_ready` (`AtmosphereComponent` and
+>   `HeatComponent` are runtime-attached and set `owner_module` themselves); neither states a
+>   rule, and a sweep now fails if a third one does, because that rule would never run.
+> - **`StorageComponent`'s rule moved earlier and split.** Its assert sat in `ready_constructed`
+>   and so raced the processor's `_sync_storages()`, which is what creates the derived OUTPUT
+>   slots. The authored half (`has_output_slots()`, or a `default_role` of OUTPUT, with a zero
+>   pool) is now checked at `_ready`; the derived half is a rule on `ProcessorComponent` — "a
+>   recipe with products needs an output pool" — which is order-independent and names the
+>   processor rather than the bin.
+> - **`PackedScene.pack()` on an instantiated module is lossy.** §"Verification" 2 wanted a
+>   misconfigured scene placed through the fixture. Building it by instantiating the ore
+>   processor, clearing the recipe and repacking produced a module whose PathComponent had lost
+>   its authored anchors — six `AStar2D` "point doesn't exist" errors on placement, present with
+>   or without the recipe change. The fixture is therefore a real inherited `.tscn` under
+>   `tests/integration/fixtures/`, which is also the shape a mod actually ships.
+> - **GUT's `handled` flag is not a removal.** `get_errors()` keeps every error tracked for the
+>   whole test, so a helper that counts unhandled push_errors has to skip `error.handled` or the
+>   second call re-reports the first call's error. Worth knowing for any test that asserts on an
+>   expected error and then asserts that nothing further happened.
+> - **Godot's `RegEx` has no multiline `^` by default,** so a whole-file pattern anchored with
+>   `^func ...` matches nothing and every test written on it passes vacuously. Caught by seeding
+>   the fault; the sweep reads line by line instead.
+> - **§4 found no sites beyond the seven listed.** The grep turned up `path_component`'s
+>   `distance * 0.5` halves, `socialize_component`'s two means, `shield_component`'s draw alpha,
+>   `module_base`'s pile-drop jitter and `pawn_base`'s speed/lane jitter — all averaging or
+>   cosmetic, all left in code as §4 says.
+>
+> **On §"Verification" 3 (balance unchanged).** The soak is **not** seed-stable: crew skill rolls
+> and asteroid composition happen during `boot()`, before a test can call `seed()`, and two runs
+> of the unchanged tree differ on mined ore (iron_ore 3 vs 9 across runs). So the A/B was done on
+> the numbers themselves rather than on the soak's totals: a throwaway integration probe drove
+> market restock over eight hours from a knocked-down stock, forty seeded breakdown rolls (wear/jam
+> split, HP lost, and the jammed module's effective `power_output` and `process_time`), and
+> `work_speed`/`work_rate` at five happiness values and two skill levels including one where the
+> floor binds. Those three signatures are **byte-identical** before and after §4 —
+> `27 45 61 75 88 100 110 119`, `wear=20 jams=20 hp_lost=300.0000 jammed_output=50.0000
+> jammed_time=20.0000`, and the two work-rate rows — run with the literals restored in place and
+> then with the data-driven values. The probe was deleted; defaults equal the literals they
+> replaced, so no authored `.tres` changed.
 
 ## Goal
 
