@@ -7,3 +7,4 @@ Goal: Polish and harden systems created in Phase 4.
 - [[WI-72_Declared_Vocabularies_And_Content_Guards]]: stat names, content checks, the mod-facing signals and the balance literals.
 - [[WI-73_Save_Orchestration]]: the boot and load orderings pinned, and pawn kinds that save themselves.
 - [[WI-74_Layering_And_Consolidations]]: one job picker, invalidatable content caches, and the simulation stops calling the HUD.
+- [[WI-75_Movement_Without_Coroutines]]: every await in the movement pipeline becomes explicit state, finishing what WI-20 started (split out of WI-71, 2026-09-19).

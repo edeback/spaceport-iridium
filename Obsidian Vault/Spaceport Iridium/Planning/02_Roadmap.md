@@ -153,6 +153,7 @@ ARC relationship arc & independence (turns the WI-25 levy off); expeditions; obs
 | WI-72 | [[WI-72_Declared_Vocabularies_And_Content_Guards\|Declared vocabularies & content guards]] | Stat names become declared (F30), content checks move out of release-stripped `assert` into sweeps (F31), `SignalBus` gets a declared mod API (F11), and the balance literals move to data. Independent of 70 and 71. |
 | WI-73 | [[WI-73_Save_Orchestration\|Save orchestration]] | Pins manager ready order and save-section order with tests, moves the pawn-kind save branches onto the pawn classes, splits `SaveManager`, and corrects four stale persistence statements. After WI-70, which takes the job half of the same path. |
 | WI-74 | [[WI-74_Layering_And_Consolidations\|Layering & consolidations]] | One `start_job` instead of four, content caches that can be invalidated (unblocks WI-47 stage 5), the simulation stops calling the HUD (F33), and three small leftovers (F34, F36, F37). Last, because its job-picking change builds on WI-70. |
+| WI-75 | [[WI-75_Movement_Without_Coroutines\|Movement without coroutines]] | Split out of WI-71 on 2026-09-19: doors alone can't finish it, because the movement component awaits `path_exit` and the turbolift awaits through boarding. Takes all 37 awaits in the movement pipeline - doors, teleporter, queueing, boarding, the cab and the component's own chain - so a freed module can't strand a pawn and `is_traveling()` stops lying. The biggest item here and the one WI-69's fixture exists to make affordable. |
 
 ---
 

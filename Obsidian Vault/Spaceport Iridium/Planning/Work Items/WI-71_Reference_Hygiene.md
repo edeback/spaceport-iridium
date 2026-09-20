@@ -17,14 +17,15 @@ The first fact is why F29 turned out to be hygiene rather than a crash: the 218 
 
 1. **Node-keyed member dictionaries (F8): sanction the pairing, don't convert wholesale.** *Recommended.* A long-lived `Dictionary[SomeNode, …]` is allowed when its keys are removed by an explicit lifecycle hook before the node is freed: unregister in `_exit_tree`, `remove_connections` before `queue_free`, or `remove_vertex` on `module_removed`. The allowlist names each dictionary and its hook, and anything without a real pairing converts to `get_instance_id()` keys. This amends the CLAUDE.md sentence under *Tutorial* ("never key a Dictionary on a node") and moves it to *Invariants*, where it belongs. *Alternative:* convert all nine to instance-id keys; this is safer and churns `ModuleGraph`, the most central class in the game.
 2. **Stale alert rows (F27): resolve explicitly *and* sweep.** *Recommended.* Resolve the known families on `module_removed` and `crew_departed`. Also let `AlertManager.sweep()` drop any live row whose object subject is no longer valid; the history log keeps the record, as it does for every resolved alert. The second rule overrides the comment at `_on_module_destroyed` ("never drop an alert because its subject went away"), which already carves out the destroyed-module case for the same reason: a subject that no longer exists has no live condition. *Alternative:* explicit resolves only, extended by hand for each new alert family.
-3. **Doors (F28, A7): guards now, then a timed wait state.** *Recommended.* Stage 4 is small and fixes the defect. Stage 5 finishes WI-20's job for doors by replacing the awaits with a movement state, and deletes the dead cancel plumbing. It is separable: if the author stops after stage 4, the defect is still fixed and the doc says so.
+3. **Doors (F28, A7): guards here, and the coroutines go in [[WI-75_Movement_Without_Coroutines]].** *Settled 2026-09-19, on the author's question.* §5's guards fix the defect and are correct on their own terms. Removing the awaits is **not** a door-sized change: `ModuleBase.path_exit` is awaited for turbolift boarding as well, so `_busy_in_hook` cannot be deleted while any hook still awaits, and a door-only rework buys less than it claims. The whole movement await surface (37 awaits across nine files, one entry point) moves to its own item. *Alternative:* do doors alone anyway, and keep the latch.
 
 ## Scope
 
-**In:** the rule (§1), the F24 triage and its sweep (§2), F8 and its sweep (§3), F27 (§4), F28 guards (§5), the door wait state (§6), F29 (§7), and, if WI-70 §6 didn't close it, the residual per-load leak (§8).
+**In:** the rule (§1), the F24 triage and its sweep (§2), F8 and its sweep (§3), F27 (§4), F28 guards (§5), F29 (§7).
 
 **Out:**
-- turbolift *boarding* (the walk to the waiting spot and the wait for a cab). It is still an `await` chain, contrary to the review's claim that doors are the last one, but it already checks `request.cancelled` and `is_instance_valid(pawn)` after every await, and its teardown goes through `TurboliftManager.remove_turbolift_module`. Recorded, not changed.
+- **every await in the movement pipeline** - doors, the teleporter, turbolift boarding and the movement component's own chain. That is [[WI-75_Movement_Without_Coroutines]] (§6 below), and this item only stops the current ones from resuming on a freed node.
+- the residual per-load leak: WI-70 §6 measured it and it does not exist, so the old §8 has nothing to do.
 - anything job-shaped (WI-70).
 
 ## Design
@@ -83,17 +84,11 @@ Two defects, both small:
 - **`_busy_in_hook` latches.** `PawnMovementComponent` sets it around `path_exit`/`path_enter` and clears it after the await (`pawn_movement_component.gd:271`, `:292`). If the module is freed mid-hook, an `animation_finished` await never resumes, and `is_traveling()` answers true for the rest of the pawn's life. It is read by `PawnStatus` (the roster sentence) and `RobotPowerComponent` (the moving-drain rate). **Fix:** record the hooking module's instance id and clear the flag in the component's existing `module_removed` handler when it matches.
 - **Awaits resume on freed nodes.** `Behavior_SlidingDoor` and `Behavior_LinkedDoors` `await Global.time_manager.sim_seconds(...)` and then touch the door sprite, both in the hooks and in the auto-close lambdas each registers in `create_state`. `ModuleTeleporter.traverse` awaits its lightning sprite. **Fix:** `is_instance_valid(<sprite>)` after every await, returning early.
 
-### 6 — A7, stage 2: doors become a timed movement state
+### 6 — The awaits themselves: [[WI-75_Movement_Without_Coroutines]]
 
-This finishes WI-20 for doors. The constraints:
-- **no coroutine that touches a module node is suspended across a frame in the door path.** The door animation is started and forgotten; the pawn waits in a `DoorWait` movement state whose sim-time timer `_process` ticks;
-- **door visuals are unchanged:** the same open, hold and close, checked by a before/after capture of a crew member crossing an airlock at 1× and 4×;
-- **the turbolift keeps its own `path_exit` override** and its awaitable boarding (§Scope). So `ModuleBase.path_enter`/`path_exit` stay awaitable for it, and only the `PathBehavior` door path changes;
-- **afterwards `is_traveling()` is a pure function of `state`**, and `_busy_in_hook`, `PathBehaviorContext.cancelled` and the `cancel_signal` parameters are deleted. They are dead today: nothing reads `cancelled`.
+Not this item, per §0.3. §5 leaves every await in place and guarded, which is a complete fix for F28's two defects. What it cannot do is delete `_busy_in_hook` or make `is_traveling()` a pure function of `state`: `PawnMovementComponent` awaits `path_exit`, and the turbolift's override of it awaits all the way through boarding, so the latch is still load-bearing for rides. Doing doors alone would leave the same latch, the same dead `PathBehaviorContext.cancelled`, and a second half-measure in the same code.
 
-The auto-close timers move with it: a door's close countdown becomes state on its `LinkedDoorsState` or its sliding equivalent, ticked by the owning `PathComponent`, so it dies with the module instead of resuming in a lambda.
-
-The API shape (whether `PathBehavior` returns a wait duration, or the movement component asks the module for one before crossing) is this stage's first design task. Record the choice in the status block.
+WI-75 takes the whole surface at once, including the auto-close timers and the teleporter.
 
 ### 7 — F29 as hygiene
 
@@ -113,7 +108,7 @@ If WI-70 §6's measurement shows the ~43-object residual wasn't board jobs, the 
 | F24 | the 35 files in the appendix, one or two lines each |
 | F8 | `heat_manager.gd`, `crew_panel.gd`, and any dictionary whose pairing doesn't hold |
 | F27 | `scripts/managers/alert_manager.gd` |
-| F28 / A7 | `pawns/pawn_movement_component.gd`, `scripts/pathing/behavior_sliding_door.gd`, `behavior_linked_doors.gd`, `path_behavior.gd`, `path_behavior_context.gd` (deleted in stage 2), `modules/templates/module_base.gd`, `modules/components/path_component.gd`, `modules/transport/module_teleporter.gd` |
+| F28 (§5) | `pawns/pawn_movement_component.gd`, `scripts/pathing/behavior_sliding_door.gd`, `behavior_linked_doors.gd`, `modules/transport/module_teleporter.gd` |
 | F29 | every manager under `scripts/managers/` that registers into `Global` |
 | Docs | `CLAUDE.md` (§1's rule, the moved dictionary sentence), [[01_Technical_Specification]] §1.4 (movement states) |
 
@@ -124,14 +119,12 @@ If WI-70 §6's measurement shows the ~43-object residual wasn't board jobs, the 
 3. §2: triage, then the sweep. Write the sweep last, so it goes green on the triaged tree rather than red on the first run.
 4. §3.
 5. §7.
-6. §6, stage 2, its own commit, with the before/after capture.
-7. §8 only if needed.
+6. Nothing else: §6 is [[WI-75_Movement_Without_Coroutines]].
 
 ## Edge cases
 
 - **A (b) site whose parameter becomes `Variant`** loses static typing in its body. Cast once to a typed local after the check, so the rest of the function stays typed (warnings are errors since WI-68).
 - **The F24 sweep and lambdas.** A lambda's parameters are parameters too, so the sweep must parse `func(` inside bodies. Or exclude lambdas explicitly and say so in the test's header.
-- **A door already open when stage 2 lands** (mid-crossing at save time) is cosmetic. Doors aren't saved, so a load starts them closed, as today.
 - **An alert whose subject is a Resource** (never freed the way a node is) is left alone by §4's sweep rule. The rule is only for Node subjects.
 
 ## Verification
@@ -142,8 +135,7 @@ If WI-70 §6's measurement shows the ~43-object residual wasn't board jobs, the 
    - deconstruct a module with a live breakdown alert: the row is gone and the history keeps it;
    - a crew member departs with a critical need raised: the row is gone;
    - Quit to Menu, then new game: every `Global` manager slot is valid again.
-3. **Screenshots:** a crew member crossing an airlock at 1× and 4×, before and after stage 2, frame for frame.
-4. The F24 appendix table is filled in, one outcome per site.
+3. The F24 appendix table is filled in, one outcome per site.
 
 ## Appendix — F24's 35 sites (census of 2026-09-19)
 
@@ -192,5 +184,5 @@ Found by a script that parses every function header, keeps parameters typed as a
 ## Related
 
 - [[WI-68_Audit_Fix_Pass]]: F23 and F24's first fixes, and the three Godot facts above.
-- [[WI-20_Movement_and_Animation]]: the `CONVEYED` state §6 extends to doors.
+- [[WI-20_Movement_and_Animation]]: the `CONVEYED` state, and the rule [[WI-75_Movement_Without_Coroutines]] finishes.
 - [[WI-63_Tutorial]]: where the dictionary rule was first written down.

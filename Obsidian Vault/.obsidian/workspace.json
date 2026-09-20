@@ -221,12 +221,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Spaceport Iridium/Planning/Work Items/WI-70_Job_Ownership_Contract.md",
+                "file": "Spaceport Iridium/Planning/Work Items/WI-71_Reference_Hygiene.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "WI-70_Job_Ownership_Contract"
+              "title": "WI-71_Reference_Hygiene"
             }
           }
         ],
@@ -379,6 +379,9 @@
   },
   "active": "bc6388c0b6f2bad8",
   "lastOpenFiles": [
+    "Spaceport Iridium/Planning/Work Items/WI-75_Movement_Without_Coroutines.md",
+    "Spaceport Iridium/Planning/Work Items/WI-75_Movement_Without_Coroutines.md.tmp.19496.311dd714f982",
+    "Spaceport Iridium/Planning/Work Items/WI-70_Job_Ownership_Contract.md",
     "Spaceport Iridium/Planning/Work Items/WI-70_Job_Ownership_Contract.md.tmp.56440.dd6818cb6e3c",
     "Spaceport Iridium/Planning/02_Roadmap.md.tmp.56440.db164fb515e8",
     "Spaceport Iridium/Planning/02_Roadmap.md.tmp.56440.9282ec3e4c63",
@@ -388,10 +391,7 @@
     "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.56440.eb83085dc625",
     "Spaceport Iridium/Planning/01_Technical_Specification.md.tmp.56440.d725e32f6fa0",
     "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md.tmp.56440.83a4454f4f86",
-    "Spaceport Iridium/Planning/03_Bugs_and_Improvements.md.tmp.56440.0958771f18e5",
-    "Spaceport Iridium/Planning/Work Items/WI-71_Reference_Hygiene.md.tmp.56440.701147ab5251",
     "Spaceport Iridium/Planning/Work Items/WI-69_Integration_Test_Fixture.md",
-    "Spaceport Iridium/Planning/Work Items/WI-70_Job_Ownership_Contract.md",
     "Spaceport Iridium/Planning/Work Items/WI-71_Reference_Hygiene.md",
     "Spaceport Iridium/Planning/Work Items/WI-72_Declared_Vocabularies_And_Content_Guards.md",
     "Spaceport Iridium/Planning/05_Architecture_Review.md",

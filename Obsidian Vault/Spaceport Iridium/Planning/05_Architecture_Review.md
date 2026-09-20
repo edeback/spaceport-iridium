@@ -117,7 +117,7 @@ Each entry: what is there, what it costs, what to do, and roughly how big the ch
 
 **Do.** Finish WI-20: a `DOOR_WAIT` state with a sim-time timer, the door animation kicked off and forgotten, `PathBehaviorContext.cancelled` deleted, `_busy_in_hook` deleted. Then `is_traveling()` is a pure function of `state`, which is what `PawnStatus` and the robot drain want.
 
-> *Correction (2026-09-19):* doors are not the last one. The teleporter's `traverse` awaits its lightning animation, and turbolift *boarding* (the walk to the waiting spot and the wait for a cab) is still an `await` chain; WI-20 made only the ride itself a state. Boarding already re-checks `request.cancelled` and the pawn after every await, so [[WI-71_Reference_Hygiene]] guards the teleporter with the doors and leaves boarding out, with the reason recorded.
+> *Correction (2026-09-19):* doors are not the last one. The teleporter's `traverse` awaits its lightning animation, and turbolift *boarding* (the walk to the waiting spot and the wait for a cab) is still an `await` chain; WI-20 made only the ride itself a state. Boarding already re-checks `request.cancelled` and the pawn after every await, so [[WI-71_Reference_Hygiene]] §5 only guards them. **The rework itself is [[WI-75_Movement_Without_Coroutines]]** (2026-09-19): a door-only version cannot delete `_busy_in_hook`, because the movement component awaits `path_exit` and the turbolift overrides it to await through boarding, so the whole surface - 37 awaits over nine files, one entry point - goes at once.
 
 ### A8. `SaveManager` is three things, and one of them is the last hand-enumerated chain
 

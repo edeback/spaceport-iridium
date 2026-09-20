@@ -225,6 +225,7 @@ Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", 
 | [[WI-72_Declared_Vocabularies_And_Content_Guards]] | F30, F31, F11, the balance literals; §A12 |
 | [[WI-73_Save_Orchestration]] | §A5, §A8, and four stale persistence statements in CLAUDE.md and the tech spec |
 | [[WI-74_Layering_And_Consolidations]] | F33, F34, F36, F37; §A9-A11 |
+| [[WI-75_Movement_Without_Coroutines]] | the movement pipeline's 37 awaits; §A7 in full (split out of WI-71, 2026-09-19) |
 
 ---
 
