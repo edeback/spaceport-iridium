@@ -52,6 +52,15 @@ func _ready() -> void:
 	add_child(pawn_brackets)
 	SignalBus.module_selected.connect(_on_module_selected)
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.ui_in_game)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.ui_in_game == self:
+		Global.ui_in_game = null
+
 ## ModuleBase.selected emits on every change, select and deselect alike.
 func _on_module_selected(module: ModuleBase) -> void:
 	if module.selected:
@@ -61,8 +70,11 @@ func _on_module_selected(module: ModuleBase) -> void:
 
 ## Points the pawn brackets at `pawn`, or clears them for null - which is what
 ## selecting a module, an asteroid, a pile or nothing at all passes.
+##
+## The one caller reads the inspector's subject the moment it changes, and the
+## inspector clears itself the frame its subject dies - live or null (WI-71 §2c).
 func set_selected_pawn(pawn: PawnBase) -> void:
-	if pawn == null or not is_instance_valid(pawn):
+	if pawn == null:
 		pawn_brackets.clear()
 		return
 	pawn_brackets.show_around(pawn, _pawn_bracket_rect(pawn))

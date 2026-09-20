@@ -23,8 +23,14 @@ func create_state(pc: PathComponent) -> RefCounted:
 		)
 	return state
 
+## The state is a RefCounted and never dies, but the sprites in it belong to a
+## module that can be destroyed (a raid) or deconstructed while a caller is held
+## in the auto-close wait above or in on_traverse's chain of awaits. Reading a
+## freed value out of a typed Dictionary is safe; touching it is not (WI-71 §5).
 func _set_door(state: LinkedDoorsState, door_name: StringName, open: bool) -> void:
 	var door_sprite_node := state.door_sprites[door_name]
+	if not is_instance_valid(door_sprite_node):
+		return
 	if door_sprite_node.is_playing():
 		if door_sprite_node.get_playing_speed() > 0 and open or door_sprite_node.get_playing_speed() < 0 and not open:
 			# In progress

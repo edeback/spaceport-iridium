@@ -36,6 +36,15 @@ func _ready() -> void:
 	Global.time_manager.slow_tick.connect(_on_slow_tick)
 	SignalBus.station_tier_changed.connect(_on_tier_changed)
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.atmosphere_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.atmosphere_manager == self:
+		Global.atmosphere_manager = null
+
 ## Leaving Tier 1 clears every latch (WI-67), so the first pass at the new tier
 ## raises for every room that is already thin.
 ##

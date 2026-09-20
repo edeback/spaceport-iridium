@@ -26,6 +26,16 @@ func _ready() -> void:
 	# (StorageComponent.update_priority mutates posted jobs' priorities).
 	Global.time_manager.slow_tick.connect(_on_slow_tick)
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.job_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.job_manager == self:
+		Global.job_manager = null
+
+
 func _on_slow_tick(interval: float) -> void:
 	for category: JobData.Category in _board:
 		var queue: Array = _board[category]

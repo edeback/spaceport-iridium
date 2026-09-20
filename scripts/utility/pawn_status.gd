@@ -338,9 +338,14 @@ static func summary_color(summary: Summary) -> Color:
 ## Reads a live pawn into [Facts]. The **only** place in the game that turns a
 ## pawn into a status, so a fourth surface wanting one adds a caller rather than
 ## a fourth set of rules.
+##
+## Every surface that holds a pawn reference checks it before asking (WI-71 §2c):
+## the roster row, the crew tab set's `is_alive()`, the robot vitals tab. The
+## rest read a fresh roster. A freed pawn would be rejected at this call, so the
+## null check is the whole of what this can promise.
 static func facts_for(pawn: PawnBase) -> Facts:
 	var facts := Facts.new()
-	if pawn == null or not is_instance_valid(pawn):
+	if pawn == null:
 		return facts
 	facts.visitor = pawn.is_visitor
 	facts.on_shift = pawn.is_on_shift()
@@ -378,9 +383,9 @@ static func of(pawn: PawnBase) -> Line:
 ## position) versus being outside in vacuum, where Void Sickness accrues. So the
 ## movement state is consulted before falling back to "outside".
 static func location_of(pawn: PawnBase) -> String:
-	if pawn == null or not is_instance_valid(pawn):
+	if pawn == null:
 		return ""
-	if pawn.current_module != null and is_instance_valid(pawn.current_module):
+	if pawn.current_module != null:
 		var data: ModuleData = pawn.current_module.module_data
 		if data != null and data.name != "":
 			return data.name

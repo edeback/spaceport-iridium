@@ -36,6 +36,15 @@ func _ready() -> void:
 	_discover_resources()
 	Global.time_manager.slow_tick.connect(_on_slow_tick)
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.resource_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.resource_manager == self:
+		Global.resource_manager = null
+
 ## Unions the authored list with a scan of every registered content root. The
 ## authored list stays first so its order is preserved; anything a mod added is
 ## appended. Mirrors SaveManager._build_lookups, which scans the same root for

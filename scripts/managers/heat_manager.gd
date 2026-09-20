@@ -68,6 +68,15 @@ func _ready() -> void:
 	SignalBus.module_added.connect(_on_module_added)
 	Global.time_manager.slow_tick.connect(_on_slow_tick)
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.heat_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.heat_manager == self:
+		Global.heat_manager = null
+
 ## Attach to anything that sits on the structure graph - which is everything the
 ## player places, truss and exterior hardware included. One eligibility rule in
 ## one place (the WI-17 pattern); a module never opts in, so a modded one is in
@@ -178,8 +187,18 @@ func _neighbours(component: HeatComponent) -> Array[HeatComponent]:
 	var structure: StructureComponent = module.get_structure_component()
 	if structure == null:
 		return out
-	for neighbour: ModuleBase in structure.module_connections:
-		if neighbour == null or not is_instance_valid(neighbour):
+	# Through `keys()`, with the guard OUTSIDE the indexing (WI-71 §3). Iterating
+	# a `Dictionary[ModuleBase, ...]` directly errors inside `next()` on a freed
+	# key, before any guard in the body can run - so the guard this used to
+	# carry was dead code. `keys()` is the one accessor that hands a freed key
+	# back without complaining. The dictionary belongs to [StructureComponent],
+	# whose own pairing keeps it clean; this is the reader that must not depend
+	# on that holding.
+	for key: Variant in structure.module_connections.keys():
+		if not is_instance_valid(key):
+			continue
+		var neighbour: ModuleBase = key as ModuleBase
+		if neighbour == null:
 			continue
 		var other: HeatComponent = _components.get(neighbour)
 		if other != null:

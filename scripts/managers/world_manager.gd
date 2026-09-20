@@ -41,6 +41,15 @@ func _ready() -> void:
 	# Starting-station spawn is driven from Main._ready (WI-18): the root readies
 	# after every manager, so only there is every Global.* guaranteed registered.
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.world_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.world_manager == self:
+		Global.world_manager = null
+
 ## New-game bootstrap: place the starting station and seed its atmosphere.
 ## Called from Main._ready (see WI-18) - the old _startup ran inside _ready with
 ## a 1.0s create_timer to paper over managers that hadn't registered yet; that
@@ -77,8 +86,11 @@ func get_canvas_for_layer(layer: StructureLayer) -> CanvasLayer:
 ## A pawn spawning into a module does NOT use this - it stages on the SPACE
 ## canvas, because PawnBase.current_layer starts at SPACE and the field has to
 ## match the tree for update_layer_and_sprite() to do the one reparent.
+##
+## The module arrives live or null - a component's `owner_module`, a pawn's
+## `current_module` (nulled on `module_removed`), or a lookup (WI-71 §2c).
 func get_canvas_for_module(module: ModuleBase) -> CanvasLayer:
-	if not is_instance_valid(module) or module.module_data == null:
+	if module == null or module.module_data == null:
 		return get_canvas_for_layer(StructureLayer.SPACE)
 	return get_canvas_for_layer(module.module_data.interaction_layer)
 

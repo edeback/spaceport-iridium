@@ -228,15 +228,28 @@ func _tick_lane(lane: ConveyorLane, interval: float) -> void:
 ## Drops references to endpoints whose module was deconstructed out from under a
 ## lane (freed component). The lane half-clears and idles until reconfigured.
 func _validate_lane(lane: ConveyorLane) -> void:
-	if lane.source != null and not _endpoint_alive(lane.source):
+	if _endpoint_dead(lane.source):
 		lane.source = null
 		lane.status = "Source removed"
-	if lane.destination != null and not _endpoint_alive(lane.destination):
+	if _endpoint_dead(lane.destination):
 		lane.destination = null
 		lane.status = "Destination removed"
 
-func _endpoint_alive(endpoint: ComponentBase) -> bool:
-	return is_instance_valid(endpoint) and endpoint.owner_module != null and is_instance_valid(endpoint.owner_module)
+## Whether an endpoint was configured and has since been freed.
+##
+## Variant, and asked without a `!= null` pre-guard, because a freed object
+## compares equal to null in Godot 4 (WI-71 §1): the old
+## `lane.source != null and not _endpoint_alive(lane.source)` was false for
+## exactly the case it existed to catch, so a deconstructed endpoint left a
+## dangling reference on the lane and the status line never said so. A never-set
+## endpoint is null, not removed, which is the case the pre-guard was for.
+func _endpoint_dead(endpoint: Variant) -> bool:
+	if typeof(endpoint) != TYPE_OBJECT:
+		return false
+	if not is_instance_valid(endpoint):
+		return true
+	var part: ComponentBase = endpoint as ComponentBase
+	return part == null or not is_instance_valid(part.owner_module)
 
 # --- typed endpoint accessors (StorageComponent | ConveyorComponent) --------
 

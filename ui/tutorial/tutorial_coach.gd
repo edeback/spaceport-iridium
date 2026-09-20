@@ -286,8 +286,10 @@ func _resolve_rect() -> Rect2:
 			return _subject_rect()
 	return Rect2()
 
+## The target is re-resolved from the live HUD every frame, so each lookup above
+## answers with a control that is in the tree or with null (WI-71 §2c).
 func _control_rect(control: Control) -> Rect2:
-	if control == null or not is_instance_valid(control) or not control.is_visible_in_tree():
+	if control == null or not control.is_visible_in_tree():
 		return Rect2()
 	return control.get_global_rect()
 

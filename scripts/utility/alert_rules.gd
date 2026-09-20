@@ -238,6 +238,22 @@ static func expired(alerts: Array[AlertData], now_seconds: float,
 			out.append(alert)
 	return out
 
+## The members of `alerts` whose subject is an object that has been freed.
+##
+## An alert about something that no longer exists has no live condition left to
+## report, and its JUMP goes nowhere (WI-71 F27). A plain id or a null subject is
+## left alone, and so is a [Resource] subject - the alert's own reference keeps
+## it alive, so a refcounted subject can never reach the invalid branch below.
+static func orphaned(alerts: Array[AlertData]) -> Array[AlertData]:
+	var out: Array[AlertData] = []
+	for alert: AlertData in alerts:
+		if typeof(alert.subject) != TYPE_OBJECT:
+			continue
+		if is_instance_valid(alert.subject):
+			continue
+		out.append(alert)
+	return out
+
 ## What survives `CLEAR ALL` - the outstanding criticals, and nothing else.
 static func survives_clear(alerts: Array[AlertData]) -> Array[AlertData]:
 	var out: Array[AlertData] = []

@@ -99,6 +99,16 @@ func _ready() -> void:
 	speed_changed.connect(_resync_sim_animations)
 	pause_state_changed.connect(_resync_sim_animations)
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.time_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.time_manager == self:
+		Global.time_manager = null
+
+
 func _process(delta: float) -> void:
 	sim_delta = scale(delta)
 	if sim_delta <= 0.0:

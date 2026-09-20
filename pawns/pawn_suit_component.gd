@@ -173,8 +173,15 @@ func _evaluate(sim_hours: float) -> void:
 ## Reads the RAW room rather than either pawn component's felt value - those
 ## report ideal conditions while the suit is on, so a suited pawn would never
 ## learn its room had recovered.
+##
+## The module always arrives live or null (WI-71 §2c): every caller here passes
+## `owner_pawn.current_module`, which [method PawnBase._on_module_removed] nulls
+## on `module_removed` - before the free, so a freed module never reaches these.
+## A plain null check is what that guarantee is worth; `is_instance_valid` on a
+## typed parameter would be dead code either way, since a freed object is
+## rejected at the call.
 func _environment_of(module: ModuleBase) -> SuitRules.RoomState:
-	if module == null or not is_instance_valid(module):
+	if module == null:
 		return SuitRules.RoomState.UNKNOWN
 	var atmosphere: AtmosphereComponent = null
 	if Global.atmosphere_manager != null:
@@ -215,7 +222,7 @@ func _is_conveyed() -> bool:
 	return owner_pawn.movement_component.state == PawnMovementComponent.State.Conveyed
 
 static func _is_airlock(module: ModuleBase) -> bool:
-	return module != null and is_instance_valid(module) and module.is_in_group(Groups.AIRLOCK)
+	return module != null and module.is_in_group(Groups.AIRLOCK)
 
 # --- the trip -----------------------------------------------------------------
 
@@ -315,7 +322,7 @@ func _raise_alert(module: ModuleBase, environment: SuitRules.RoomState, stranded
 	var words: String = SuitRules.reason_text(reason)
 	if not words.is_empty():
 		title += " — " + words
-	var where: String = module._display_name() if module != null and is_instance_valid(module) else "outside"
+	var where: String = module._display_name() if module != null else "outside"
 	var detail: String = "%s · %s" % [owner_pawn.pawn_name, where]
 	if stranded:
 		detail += " · no reachable airlock"
@@ -326,7 +333,7 @@ func _raise_alert(module: ModuleBase, environment: SuitRules.RoomState, stranded
 		"%d crew are suiting up")
 
 func _reason_for(module: ModuleBase) -> SuitRules.Reason:
-	if module == null or not is_instance_valid(module):
+	if module == null:
 		return SuitRules.Reason.NONE
 	var atmosphere: AtmosphereComponent = null
 	if Global.atmosphere_manager != null:
@@ -340,7 +347,7 @@ func _reason_for(module: ModuleBase) -> SuitRules.Reason:
 		thresholds(), atmosphere != null, heat != null)
 
 func _reading(module: ModuleBase, reason: SuitRules.Reason) -> String:
-	if module == null or not is_instance_valid(module):
+	if module == null:
 		return ""
 	if reason == SuitRules.Reason.NO_AIR:
 		var atmosphere: AtmosphereComponent = null

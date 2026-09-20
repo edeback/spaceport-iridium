@@ -115,10 +115,18 @@ func _draw_label(font: Font, world_center: Vector2, text: String) -> void:
 
 # --- helpers ------------------------------------------------------------------
 
-func _endpoint_module(endpoint: ComponentBase) -> ModuleBase:
-	if endpoint == null or not is_instance_valid(endpoint) or not is_instance_valid(endpoint.owner_module):
+## Variant, because the endpoints come straight out of another component's
+## stored [ConveyorLane] fields (WI-71 §2b): a lane keeps its reference until the
+## owning conveyor's next validation tick, so this redraw can be handed an
+## endpoint whose module was deconstructed a moment ago - and a typed parameter
+## would reject it at the call, aborting the whole overlay pass.
+func _endpoint_module(endpoint: Variant) -> ModuleBase:
+	if not is_instance_valid(endpoint):
 		return null
-	return endpoint.owner_module
+	var part: ComponentBase = endpoint as ComponentBase
+	if part == null or not is_instance_valid(part.owner_module):
+		return null
+	return part.owner_module
 
 func _center(module: ModuleBase) -> Vector2:
 	return module.get_global_center()

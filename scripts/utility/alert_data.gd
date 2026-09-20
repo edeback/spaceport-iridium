@@ -48,11 +48,15 @@ var detail: String = ""
 ## The [PawnBase] / [ModuleBase] / [Node2D] this alert is about, or null.
 ##
 ## A **live object reference**, not an id, and therefore `is_instance_valid`
-## checked at click time and at render time: a breached module can be destroyed
-## while its alert sits unacknowledged in the feed, and a history row routinely
-## outlives its subject. Losing the subject costs the row its jump affordance and
-## nothing else - an alert is never dropped because the thing it is about went
-## away, which is how a critical alert would disappear before being read.
+## checked at click time and at render time: a history row routinely outlives its
+## subject.
+##
+## A *live* row does not (WI-71 F27). An alert is never dropped because its
+## condition might still be true and unread - but a subject that has been freed
+## has no condition left to be true, and its JUMP goes nowhere, so
+## [method AlertManager.sweep] drops those and [method AlertManager.resolve_for_subject]
+## does it immediately on the removals and departures that can be seen coming.
+## The history log keeps the record, exactly as it does for a resolved alert.
 var subject: Variant = null
 
 ## A mode the row opens instead of jumping, for an alert about something with no

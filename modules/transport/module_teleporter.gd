@@ -31,12 +31,16 @@ func traverse(_pawn: PawnBase, _path_edge: PathComponent.PathTraversalEdgeData) 
 			lightning_sprite.visible = true
 			lightning_sprite.play(&"teleport", -1, 1)
 			await lightning_sprite.animation_finished
+			if not is_instance_valid(lightning_sprite):
+				return  # the teleporter was destroyed mid-animation (WI-71 §5)
 			lightning_sprite.visible = false
 		else:
 			# Starting teleportation
 			lightning_sprite.visible = true
 			lightning_sprite.play(&"teleport")
 			await lightning_sprite.animation_finished
+			if not is_instance_valid(lightning_sprite):
+				return  # the teleporter was destroyed mid-animation (WI-71 §5)
 			lightning_sprite.visible = false
 
 func path_enter(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D, cancel_signal: Signal) -> void:

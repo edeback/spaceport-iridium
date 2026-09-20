@@ -74,6 +74,15 @@ func _ready() -> void:
 	Global.time_manager.pause_state_changed.connect(_on_pause_state_changed)
 	apply(Global.get_star_system())
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.stellar_background)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.stellar_background == self:
+		Global.stellar_background = null
+
 ## Rebuilds both bodies from `system`. Idempotent - the cheats re-apply live.
 func apply(system: StarSystemData) -> void:
 	_clear()

@@ -109,6 +109,8 @@ Each entry: what is there, what it costs, what to do, and roughly how big the ch
 
 **Do.** Write the one rule - *nothing holds a typed reference to a `Node` it does not own across a frame boundary without a validity discipline, and the four disciplines are these* - then enforce the greppable halves as source sweeps in the `test_ui_theme` shape: `Dictionary[ModuleBase|PawnBase|ComponentBase,` outside an allowlist; `is_instance_valid(<param>)` where `<param>` is typed (the F24 sweep); `Global\.\w+ (==|!=) null` (F29); `await` outside an allowlist of files that have earned it. Each sweep is twenty lines and each would have failed on a real finding.
 
+> *Done by [[WI-71_Reference_Hygiene]] (2026-09-19).* The rule is in CLAUDE.md's *Invariants*, with the four disciplines and the five Godot facts under them. **Two of the four sweeps shipped**, in `tests/unit/test_reference_hygiene.gd`: the node-keyed dictionary one (with `PAIRED` naming each pairing) and the F24 one, which allows a check after an `await` and one inside a lambda by construction rather than by allowlist. The `Global` sweep was dropped by the correction below. The `await` sweep belongs with [[WI-75_Movement_Without_Coroutines]], which is the item that decides which files have earned one.
+
 > *Correction (2026-09-19):* the `Global\.\w+ (==|!=) null` sweep is dropped. WI-68 established that in Godot 4.7 a freed object compares `== null` as true, so those guards already catch a freed slot. F29 is hygiene, and [[WI-71_Reference_Hygiene]] §7 keeps only the `_exit_tree` nulling. The same fact is why most F24 sites are safe in practice, which is the triage question WI-71 §2 asks of each.
 
 ### A7. Doors are the last suspended coroutine in the movement pipeline
@@ -116,6 +118,8 @@ Each entry: what is there, what it costs, what to do, and roughly how big the ch
 **What.** WI-20 made turbolift rides an explicit `CONVEYED` state because "cancelling a job mid-ride can never strand a suspended coroutine". Door hooks (`path_enter`/`path_exit`/`traverse`) still `await` inside `reached_next_node`, guarded by `_busy_in_hook`, with a cancel signal nobody reads (F28).
 
 **Do.** Finish WI-20: a `DOOR_WAIT` state with a sim-time timer, the door animation kicked off and forgotten, `PathBehaviorContext.cancelled` deleted, `_busy_in_hook` deleted. Then `is_traveling()` is a pure function of `state`, which is what `PawnStatus` and the robot drain want.
+
+> *Guards done by [[WI-71_Reference_Hygiene]] (2026-09-19); the rework is [[WI-75_Movement_Without_Coroutines]].* The latch is cleared on `module_removed` (by instance id) and every await in the two door behaviours and the teleporter re-checks its sprite. `is_traveling()` is still not a pure function of `state`, and that is WI-75's to fix.
 
 > *Correction (2026-09-19):* doors are not the last one. The teleporter's `traverse` awaits its lightning animation, and turbolift *boarding* (the walk to the waiting spot and the wait for a cab) is still an `await` chain; WI-20 made only the ride itself a state. Boarding already re-checks `request.cancelled` and the pawn after every await, so [[WI-71_Reference_Hygiene]] §5 only guards them. **The rework itself is [[WI-75_Movement_Without_Coroutines]]** (2026-09-19): a door-only version cannot delete `_busy_in_hook`, because the movement component awaits `path_exit` and the turbolift overrides it to await through boarding, so the whole surface - 37 awaits over nine files, one entry point - goes at once.
 

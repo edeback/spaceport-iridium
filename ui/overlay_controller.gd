@@ -364,8 +364,10 @@ func refresh_all() -> void:
 	if _mode == Mode.LOGISTICS and _flow_layer != null:
 		_flow_layer.queue_redraw()
 
+## The three callers are signal handlers, so the module is the live payload of a
+## signal that has just fired (WI-71 §2c).
 func _refresh_one(module: ModuleBase) -> void:
-	if _mode == Mode.NONE or not is_instance_valid(module):
+	if _mode == Mode.NONE or module == null:
 		return
 	module.set_overlay_color(_color_for(module))
 	if _mode == Mode.LOGISTICS and _flow_layer != null:

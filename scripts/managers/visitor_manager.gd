@@ -67,6 +67,15 @@ func _ready() -> void:
 
 # --- pure pacing math (WI-19 testable, no Global) -----------------------------
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.visitor_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.visitor_manager == self:
+		Global.visitor_manager = null
+
 ## Expected guest arrivals per cycle. 0 unless the visitor tier is met AND there's
 ## both lodging (a hard cap - guests must be able to sleep) and at least one shop
 ## (somewhere to spend). Otherwise: a reputation-independent floor plus a

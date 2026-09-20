@@ -44,6 +44,15 @@ func _ready() -> void:
 
 # --- emitter registration -----------------------------------------------------
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.adjacency_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.adjacency_manager == self:
+		Global.adjacency_manager = null
+
 ## Called by an AdjacencyEmitterComponent when its module finishes construction.
 func register_emitter(emitter: AdjacencyEmitterComponent) -> void:
 	if emitter == null or _emitters.has(emitter):

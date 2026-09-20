@@ -74,7 +74,10 @@ func _refresh() -> void:
 ## roster is a column of exactly this text and a second opinion about what a
 ## drone is doing would be visible forty rows deep. Kept as a wrapper because
 ## "state text" is what the two callers here want and neither needs the tone.
+##
+## Both callers check their stored robot first - `_refresh()` here and
+## `is_alive()` in the crew tab set - so it arrives live or null (WI-71 §2c).
 static func state_text(robot: RobotPawnBase) -> String:
-	if robot == null or not is_instance_valid(robot):
+	if robot == null:
 		return ""
 	return PawnStatus.of(robot).text

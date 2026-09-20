@@ -21,7 +21,17 @@ func on_enter(pawn: PawnBase, door_index: int, meta: StringName, module: ModuleB
 	door.play("open")
 	await Global.time_manager.sim_seconds(open_seconds)
 
-func set_door(door: AnimatedSprite2D, open: bool) -> void:
+## Takes the door as Variant on purpose (WI-71 §1): every caller reaches here
+## after an await - the auto-close hold above, or on_traverse - so the sprite can
+## have been freed in the meantime (a raid destroying the module, a
+## deconstruction), and a typed Object parameter would error at the call itself
+## before this body could check anything.
+func set_door(door_variant: Variant, open: bool) -> void:
+	if not is_instance_valid(door_variant):
+		return
+	var door: AnimatedSprite2D = door_variant as AnimatedSprite2D
+	if door == null:
+		return
 	if door.is_playing():
 		if door.get_playing_speed() > 0 and open or door.get_playing_speed() < 0 and not open:
 			# In progress

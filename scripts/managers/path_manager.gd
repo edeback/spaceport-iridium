@@ -21,6 +21,13 @@ func _ready() -> void:
 ## to Menu leaks the station's whole path graph (WI-68 F3).
 func _exit_tree() -> void:
 	graph.clear()
+	# Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as
+	# `== null`, so the guards around the game already take their null branch
+	# after a Quit to Menu - but `is_instance_valid(Global.path_manager)` and the
+	# debugger both lie until the slot is actually cleared. `== self` because a
+	# second scene can register before this one leaves.
+	if Global.path_manager == self:
+		Global.path_manager = null
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.

@@ -774,9 +774,11 @@ func offer_to_owner(holder: PawnBase) -> bool:
 func _offer_to_target(slot: JobTarget) -> bool:
 	return slot != null and _offer(slot.object())
 
+## Both callers hand this a live object or null - the pawn's own component list,
+## and [method JobTarget.object], which answers null for a dead target - so the
+## null check is the whole of the guarantee (WI-71 §2c).
 func _offer(candidate: Object) -> bool:
-	if candidate == null or not is_instance_valid(candidate) \
-			or not candidate.has_method(&"adopt_restored_job"):
+	if candidate == null or not candidate.has_method(&"adopt_restored_job"):
 		return false
 	return bool(candidate.call(&"adopt_restored_job", self))
 

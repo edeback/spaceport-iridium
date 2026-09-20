@@ -455,7 +455,9 @@ func fire(id: StringName, subject: Node = null) -> void:
 	# An advisory about a specific pawn or module, with neither, would read "that
 	# has not eaten" - and would have spent itself to say it. Leave it armed: the
 	# advice has not been given, so the next occurrence should still get it.
-	if hint.has_subject and (subject == null or not is_instance_valid(subject)):
+	# Live or null: every caller passes a signal payload, a node out of a group
+	# scan, or the cheat console's nearest-crew lookup (WI-71 §2c).
+	if hint.has_subject and subject == null:
 		push_warning("TutorialManager: '%s' needs a subject and got none - staying armed"
 			% hint.id)
 		return

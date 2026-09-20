@@ -176,8 +176,10 @@ func _muted_label(text: String, colour: Color) -> Label:
 	label.add_theme_color_override("font_color", colour)
 	return label
 
+## The names come from a fresh `get_crew()` roster and from this tab's own pawn,
+## which its handlers check before repainting - live or null (WI-71 §2c).
 func _display_name(target: PawnBase) -> String:
-	if target == null or not is_instance_valid(target):
+	if target == null:
 		return "Crew member"
 	return target.pawn_name if not target.pawn_name.is_empty() else "Crew member"
 

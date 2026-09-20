@@ -179,11 +179,15 @@ static func priority_color(priority: int) -> Color:
 ##    cards at the top of the first station's list and pushed the two bins that
 ##    actually held something below the fold. A construction bin on a *blueprint*
 ##    is still listed: that one is a live construction site.
+##
+## Every entry point walks a live set - `WorldManager.id_to_module`, a module's
+## own component list, a group scan - so a component reaches these queries live
+## or null (WI-71 §2c). A freed one would be rejected at the call.
 static func lists(component: StorageComponent) -> bool:
-	if component == null or not is_instance_valid(component):
+	if component == null:
 		return false
 	var module: ModuleBase = component.owner_module
-	if module == null or not is_instance_valid(module):
+	if module == null:
 		return false
 	if module.build_state == ModuleBase.BuildState.Preview:
 		return false
@@ -210,7 +214,7 @@ static func lists(component: StorageComponent) -> bool:
 ##
 ## **Priority is deliberately not on this list** - see [method priority_editable].
 static func contents_editable(component: StorageComponent) -> bool:
-	if component == null or not is_instance_valid(component):
+	if component == null:
 		return false
 	return component.player_configurable
 
@@ -233,7 +237,7 @@ static func contents_editable(component: StorageComponent) -> bool:
 ## [method contents_editable] is stated once, in the model, instead of as a
 ## comment in each of the surfaces that would otherwise be tempted to "fix" it.
 static func priority_editable(component: StorageComponent) -> bool:
-	return component != null and is_instance_valid(component) and component.has_intake_slots()
+	return component != null and component.has_intake_slots()
 
 ## The number a bin actually routes at, for any surface that shows or sorts by one.
 ##
@@ -250,7 +254,7 @@ static func routing_priority(component: StorageComponent) -> int:
 static func priority_locked_reason(component: StorageComponent) -> String:
 	if priority_editable(component):
 		return ""
-	if component == null or not is_instance_valid(component):
+	if component == null:
 		return "This bin is gone"
 	return "This module only exports goods and does not have its own priority"
 
@@ -269,19 +273,18 @@ static func priority_locked_reason(component: StorageComponent) -> String:
 static func locked_reason(component: StorageComponent) -> String:
 	if contents_editable(component):
 		return ""
-	if component == null or not is_instance_valid(component):
+	if component == null:
 		return "This bin is gone"
 	if not priority_locked_reason(component).is_empty():
 		return ""
 	var module: ModuleBase = component.owner_module
-	if module != null and is_instance_valid(module) and not module.is_complete():
+	if module != null and not module.is_complete():
 		return "Construction site — the build decides what it imports"
 	# The docking bay is driven end to end by the order sheet (WI-65): sell orders
 	# create its staging slots and size them, purchases create its arrival slots. It
 	# used to be player_configurable as WELL, which meant two authorities on one bin
 	# and the sheet silently winning every recalculation.
-	if module != null and is_instance_valid(module) \
-			and module.get_component_by_type(TradeComponent) != null:
+	if module != null and module.get_component_by_type(TradeComponent) != null:
 		return "Set by the trade sheet — its priority is still yours"
 	return "Contents set by the module — its priority is still yours"
 

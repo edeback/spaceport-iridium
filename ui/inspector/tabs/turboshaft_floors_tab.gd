@@ -6,7 +6,6 @@ extends VBoxContainer
 ## sorted by cell Y, so the list reads the way the shaft looks.
 
 var _shaft: TurboliftShaft = null
-var _rows: Dictionary[ModuleTurbolift, CheckButton] = {}
 
 func set_shaft(shaft: TurboliftShaft) -> void:
 	name = "Floors"
@@ -19,7 +18,6 @@ func rebuild() -> void:
 	for child: Node in get_children():
 		remove_child(child)
 		child.queue_free()
-	_rows.clear()
 	if _shaft == null:
 		return
 	for lift: ModuleTurbolift in _shaft.floors:
@@ -29,4 +27,3 @@ func rebuild() -> void:
 		row.set_pressed_no_signal(lift.floor_enabled)
 		row.toggled.connect(func(toggled_on: bool) -> void: lift.floor_enabled = toggled_on)
 		add_child(row)
-		_rows[lift] = row

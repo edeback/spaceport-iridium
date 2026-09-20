@@ -31,6 +31,11 @@ var _pending_speed: float = 1.0
 var _pending_end_in_space: bool = false
 var _pending_anchor: AnchorDef = null
 var _busy_in_hook: bool = false   ## suspended inside path_exit/path_enter/traverse right now
+## Instance id of the module whose hook we are suspended in, 0 when we aren't.
+## A hook that awaits a door animation never resumes if its module is freed
+## under us, so module_removed clears the latch instead - otherwise
+## is_traveling() answers true for the rest of the pawn's life (WI-71 F28).
+var _hook_module_id: int = 0
 
 signal path_invalidated # Re-running pathfinding but not canceled yet
 signal movement_ended(as_success: bool)
@@ -190,6 +195,13 @@ func run_pathfinding() -> void:
 	
 		
 func module_removed(removed_module: ModuleBase) -> void:
+	if _hook_module_id != 0 and removed_module.get_instance_id() == _hook_module_id:
+		# We are suspended inside this module's path_enter/path_exit. Its door
+		# animation will never finish now, so the await never resumes and the
+		# latch would stay set forever - is_traveling() feeds the roster sentence
+		# and the robot moving-drain, so it has to be told the truth (WI-71 F28).
+		# Movement itself recovers below: the repath starts a fresh move().
+		_exit_hook()
 	if removed_module == target:
 		# Target is gone, we can't ever get there. While Conveyed this fires
 		# movement_ended now; the ride still completes to its next stop and
@@ -260,6 +272,17 @@ static func _has_custom_pathing(node: Node2D) -> bool:
 	var module: ModuleBase = node as ModuleBase
 	return module != null and module.has_custom_pathing()
 
+## The latch that makes is_traveling() true while a door/boarding hook is
+## suspended. Remembering the module by id (never by reference - the node can be
+## freed while we wait) is what lets module_removed unstick us (WI-71 F28).
+func _enter_hook(module: ModuleBase) -> void:
+	_busy_in_hook = true
+	_hook_module_id = module.get_instance_id()
+
+func _exit_hook() -> void:
+	_busy_in_hook = false
+	_hook_module_id = 0
+
 func reached_next_node() -> void:
 	if next_path_index >= 0 and _has_custom_pathing(path[next_path_index].node):
 		var door: int = 0
@@ -267,9 +290,9 @@ func reached_next_node() -> void:
 			door = sub_path[sub_path.size() - 1].end_index
 		var leaving_module: ModuleBase = path[next_path_index].node as ModuleBase
 		var next_module: Node2D = path[next_path_index + 1].node if path.size() > (next_path_index + 1) else null
-		_busy_in_hook = true
+		_enter_hook(leaving_module)
 		await leaving_module.path_exit(owner_pawn, door, path[next_path_index].edge_meta, next_module, path_invalidated)
-		_busy_in_hook = false
+		_exit_hook()
 		# Conveyed: the hook boarded us onto a carrier - the whole call chain
 		# unwinds here and exit_conveyed resumes the movement later (WI-20).
 		if target == null or state == State.Conveyed:
@@ -288,9 +311,9 @@ func reached_next_node() -> void:
 			door = sub_path[0].end_index
 		var entering_module: ModuleBase = path[next_path_index].node as ModuleBase
 		var next_module: Node2D = path[next_path_index + 1].node if path.size() > (next_path_index + 1) else null
-		_busy_in_hook = true
+		_enter_hook(entering_module)
 		await entering_module.path_enter(owner_pawn, door, path[next_path_index - 1].edge_meta, next_module, path_invalidated)
-		_busy_in_hook = false
+		_exit_hook()
 		if target == null or state == State.Conveyed:
 			return
 		

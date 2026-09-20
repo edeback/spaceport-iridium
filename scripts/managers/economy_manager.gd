@@ -154,6 +154,15 @@ func _ready() -> void:
 	Global.time_manager.cycle_changed.connect(_on_cycle_changed)
 	SignalBus.game_bootstrapped.connect(_on_game_bootstrapped)
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.economy_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.economy_manager == self:
+		Global.economy_manager = null
+
 ## A new game's first cycle opens with the starting balance. Stamped here and not
 ## in _ready: this manager readies before SaveManager resets the credit totals,
 ## so _ready would read 0 - or, after Quit to Menu, the previous run's balance.
@@ -548,8 +557,12 @@ func severance_for(pawn: PawnBase) -> int:
 
 ## Fires `pawn`: charges severance (if any) then routes the departure through
 ## CrewManager's non-morale fire flow. Fired pawns stop drawing wages next cycle.
+##
+## The one caller is the inspector's FIRE confirmation, which checks the pawn it
+## captured before the dialog opened - the discipline a captured reference owes
+## a typed parameter (WI-71 §2c).
 func fire_pawn(pawn: PawnBase) -> void:
-	if pawn == null or not is_instance_valid(pawn):
+	if pawn == null:
 		return
 	var severance: int = severance_for(pawn)
 	if severance > 0:

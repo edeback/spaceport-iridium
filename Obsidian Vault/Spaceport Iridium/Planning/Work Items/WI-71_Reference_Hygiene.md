@@ -1,19 +1,75 @@
 # WI-71 — Reference Hygiene
 
-> **Status: DRAFT (2026-09-19), not started. Depends on [[WI-69_Integration_Test_Fixture]]** (verification) **and should follow [[WI-70_Job_Ownership_Contract]]**, which converts several of the same files. Scoped from [[05_Architecture_Review]] §A6–A7 and the audits in [[03_Bugs_and_Improvements]]. It closes the rest of **F24**, **F27**, **F28** and **F8**, and **F29** as hygiene. §0's three decisions are the author's to settle; the recommended default is marked on each.
+> **Status: DONE (2026-09-19).** §0's three decisions were taken as recommended: the pairing
+> allowlist (§0.1), explicit resolves *and* a sweep (§0.2), guards-only for doors with the
+> coroutines left to [[WI-75_Movement_Without_Coroutines]] (§0.3, already settled). Closes the
+> rest of **F24** (36 sites triaged, not 35 — WI-70 added one), **F27**, **F28**'s two defects,
+> **F8** and **F29**. Verified by 1782 unit tests (96 suites) and 41 integration tests (10
+> suites), both green, plus each new test re-run against the un-fixed code to prove it fails.
+>
+> **What shipped that the plan did not say:**
+> - **Two more Godot 4.7 facts, both measured** (probe in the scratchpad, not kept). **`as` on a
+>   freed object is a script error** — `"Trying to cast a freed object"` — which aborts the
+>   calling function, so every cast belongs *after* its validity check, never before. And the
+>   typed-dictionary error is about the **dictionary's key type**, not the loop variable's: an
+>   untyped `for k in d` errors too, `d[freed_key]` and `d.duplicate()` error, while `keys()`,
+>   `values()`, `size()`, `has()`, `get()` and `erase()` are all safe. That last fact is what
+>   makes `for k in d.keys(): if not is_instance_valid(k): continue` the one safe way to walk a
+>   node-keyed dictionary you do not own, and it is how `HeatManager._neighbours` now reads.
+> - **The lambda carve-out runs the other way.** §"Edge cases" worried that a lambda's own
+>   parameters would be missed. The real case is the reverse: `StorageOverlays.open_edit` and
+>   `open_resource` check `is_instance_valid(component)` *inside* a `dialog.confirmed` lambda,
+>   where `component` is a **captured local**, not a parameter crossing a typed boundary — that
+>   is discipline 4, so the sweep skips lambda bodies and says so in its header.
+> - **§2's triage found one more live defect than the plan expected.** Three (b) sites, not the
+>   "typically" of the design: `CrewManager._spawn_starting_crew` (bound into a `call_deferred`),
+>   `OverlayFlowLayer._endpoint_module` (reads another component's stored `ConveyorLane`
+>   endpoints, so the whole overlay pass aborted if one had been deconstructed), and
+>   `ConveyorComponent._endpoint_alive`, which was **inert**: `lane.source != null and not
+>   _endpoint_alive(lane.source)` is false for a freed endpoint, because a freed object compares
+>   equal to null — so the one function written to notice a dead endpoint never did, and the
+>   lane kept its dangling reference with no status line. It is now `_endpoint_dead(Variant)`
+>   asked without a pre-guard. `TraderManager._courier_collect` checked its shuttle *before* a
+>   one-hour `await` and touched it *after*; the hire and visitor shuttles had always had that
+>   guard on the correct side.
+> - **§3 found eleven node-keyed member dictionaries, not nine.** `TurboliftCab.assigned_locations`
+>   (allowlisted: the keys are the cab's own child markers) and `TurboshaftFloorsTab._rows`, which
+>   turned out to be **write-only** — assigned and cleared, never read — so it was deleted rather
+>   than allowlisted. `CrewPanel._rows` was the one with no real pairing and is now keyed on
+>   `get_instance_id()`: `refresh()` early-returns while the roster is off screen, so a crew
+>   member who dies with the HIRE tab open leaves a dangling key that `_paint_selection` iterates
+>   on the next click.
+> - **§4 resolves by subject rather than by family.** The design listed four module families and
+>   three pawn ones; a list of eleven strings in a third file is a list that goes stale, so
+>   `AlertManager.resolve_for_subject(subject)` drops every live row about the thing instead. The
+>   sweep half is `AlertRules.orphaned()`, pure and unit-tested. `module_destroyed` now has **no
+>   listener at all** — it joins F11's dead-signal list for [[WI-72_Declared_Vocabularies_And_Content_Guards]].
+> - **§7 covers 27 slots, not 27 lines of managers only.** `Global.ui_main`, `Global.ui_in_game`
+>   and `Global.stellar_background` self-register the same way and get the same treatment; three
+>   managers already had an `_exit_tree` and had the two lines appended to it.
+> - **§8 was dropped**, as its own note said it should be: WI-70 §6 measured that there is no
+>   per-load leak to hunt.
+> - **In-game check of the one visible surface.** `CrewPanel._rows` is the only change a screenshot could speak to, so the game was driven through the menu into a new game, `C` opened Crew, and a roster row was clicked: the panel headers, filters, sort, both rows, the summary line and the footer all render, and the click raised the inspector with the crew rail - so `_paint_selection` walks the id-keyed dictionary correctly. The game log was clean through the whole session. (A trap worth knowing: the roster rebuilds its rows on every slow tick, so a synthesised press and release seconds apart land on two different Buttons and nothing fires. Pause the sim first.) `TurboshaftFloorsTab._rows` needed none: nothing read it.
+>
+> Scoped from [[05_Architecture_Review]] §A6–A7 and the audits in [[03_Bugs_and_Improvements]].
+> Depends on [[WI-69_Integration_Test_Fixture]] (verification) and follows
+> [[WI-70_Job_Ownership_Contract]].
+
 
 ## Goal
 
-Nine of the last findings came down to one question answered wrongly: *is this thing I'm holding still alive?* That covers F22–F24 and F28 here, plus F25/F26's job-shaped cousins, which WI-70 takes. The codebase has four good answers, each used in some places and not others, and one sentence in CLAUDE.md that covers one of the four. This item writes the rule once, applies it to the 35 sites the census found, fixes the two live defects in the class (F27, F28), and adds source sweeps so the rule can't erode.
+Nine of the last findings came down to one question answered wrongly: *is this thing I'm holding still alive?* That covers F22–F24 and F28 here, plus F25/F26's job-shaped cousins, which WI-70 takes. The codebase has four good answers, each used in some places and not others, and one sentence in CLAUDE.md that covers one of the four. This item writes the rule once, applies it to the 36 sites the census found, fixes the live defects in the class (F27, F28, and three more the triage turned up), and adds source sweeps so the rule can't erode.
 
-**Three Godot 4.7 facts this item rests on, all verified during WI-68:**
-- a freed object compares `== null` as **true**, typed or untyped, and is falsy;
+**Five Godot 4.7 facts this item rests on.** The first three were verified during WI-68; the last two, and the correction to the third, were measured during this item:
+- a freed object compares `== null` as **true**, typed or untyped, and is falsy — and it can be held in a typed local, read out of a typed `Dictionary`'s **values**, and passed to a `Variant` parameter, all without complaint;
 - a freed object passed to a **typed** Object parameter errors *at the call*, before the body runs, so an `is_instance_valid(param)` inside is dead code (F24);
-- iterating a `Dictionary[SomeNode, …]` with a typed loop variable errors on a freed key before any guard inside the loop runs.
+- iterating a `Dictionary[SomeNode, …]` errors on a freed key inside `Dictionary.next()`. **Corrected:** the check is on the *dictionary's* key type, not the loop variable's, so an untyped loop variable errors too. `d[freed_key]` and `d.duplicate()` error as well; `keys()`, `values()`, `size()`, `has()`, `get()` and `erase()` do not — which makes `for k in d.keys(): if not is_instance_valid(k): continue` the one safe walk;
+- **`as` on a freed object is a script error** (`"Trying to cast a freed object"`) that aborts the calling function, so a cast always goes *after* its validity check — which is why every `Variant` parameter in §2 checks first and casts second;
+- a freed object still reports `typeof(...) == TYPE_OBJECT`, which is how `_endpoint_dead` and `AlertRules.orphaned` tell "was set and has died" from "was never set".
 
 The first fact is why F29 turned out to be hygiene rather than a crash: the 218 `== null` guards do catch a freed `Global` slot. It is also why most F24 sites are safe in practice: a caller that compares to null before calling filters the freed object out.
 
-## 0 — Decisions for the author (not yet settled)
+## 0 — Decisions for the author (all settled 2026-09-19, each taken as recommended)
 
 1. **Node-keyed member dictionaries (F8): sanction the pairing, don't convert wholesale.** *Recommended.* A long-lived `Dictionary[SomeNode, …]` is allowed when its keys are removed by an explicit lifecycle hook before the node is freed: unregister in `_exit_tree`, `remove_connections` before `queue_free`, or `remove_vertex` on `module_removed`. The allowlist names each dictionary and its hook, and anything without a real pairing converts to `get_instance_id()` keys. This amends the CLAUDE.md sentence under *Tutorial* ("never key a Dictionary on a node") and moves it to *Invariants*, where it belongs. *Alternative:* convert all nine to instance-id keys; this is safer and churns `ModuleGraph`, the most central class in the game.
 2. **Stale alert rows (F27): resolve explicitly *and* sweep.** *Recommended.* Resolve the known families on `module_removed` and `crew_departed`. Also let `AlertManager.sweep()` drop any live row whose object subject is no longer valid; the history log keeps the record, as it does for every resolved alert. The second rule overrides the comment at `_on_module_destroyed` ("never drop an alert because its subject went away"), which already carves out the destroyed-module case for the same reason: a subject that no longer exists has no live condition. *Alternative:* explicit resolves only, extended by hand for each new alert family.
@@ -44,7 +100,7 @@ Replaces the node-keyed-dictionary sentence in CLAUDE.md and goes under *Invaria
 
 ### 2 — F24: triage the 35 sites, then sweep
 
-The census (script in the appendix; run on the 2026-09-19 tree) finds **35** functions that take a typed Object parameter and check `is_instance_valid` on it. Each gets one of three outcomes:
+The census (now `tests/unit/test_reference_hygiene.gd`, which re-derives it on every run) finds **36** functions that take a typed Object parameter and check `is_instance_valid` on it. Each gets one of three outcomes:
 - **(a) The check follows an `await`.** It is legitimate: the parameter was live when the call started and may have died since. Keep it. Four sites: `crew_manager._on_shuttle_docked`, `visitor_manager._on_shuttle_docked`, `trader_manager._courier_collect`, `turbolift_shaft.request_ride`.
 - **(b) A caller can pass a freed reference without comparing it to null first**, typically a stored field, a bound argument or a signal payload. Change the parameter to `Variant` and cast after the check (the F24 pattern WI-68 used for `module_ref`).
 - **(c) Every caller passes a live object or null.** Replace `is_instance_valid(p)` with `p != null`, so the function stops claiming protection it doesn't have. Behaviour is identical.
@@ -137,49 +193,71 @@ If WI-70 §6's measurement shows the ~43-object residual wasn't board jobs, the 
    - Quit to Menu, then new game: every `Global` manager slot is valid again.
 3. The F24 appendix table is filled in, one outcome per site.
 
-## Appendix — F24's 35 sites (census of 2026-09-19)
+## Appendix — F24's sites (census of 2026-09-19, triaged 2026-09-19)
 
-Found by a script that parses every function header, keeps parameters typed as an Object class, and flags an `is_instance_valid(<param>)` in the body. The logic belongs in §2's sweep. **(a)** marks the four with an `await` before the check. The rest need their callers read (§2).
+Found by a script that parses every function header, keeps parameters typed as an Object class, and flags an `is_instance_valid(<param>)` in the body. The logic is now §2's sweep, `tests/unit/test_reference_hygiene.gd`, which re-derives this list on every run.
+
+**36 sites, not 35:** WI-70 added `Job._offer` between the census and this pass. Outcomes: **4 (a)**, **2 (lambda)**, **3 (b)**, **27 (c)**.
 
 | Site | Parameter | Outcome |
 |---|---|---|
-| `modules/components/conveyor_component.gd:238` `_endpoint_alive` | `endpoint: ComponentBase` | |
-| `modules/transport/turbolift_shaft.gd:54` `request_ride` | `pawn: PawnBase` | (a) |
-| `pawns/pawn_suit_component.gd:176` `_environment_of` | `module: ModuleBase` | |
-| `pawns/pawn_suit_component.gd:217` `_is_airlock` | `module: ModuleBase` | |
-| `pawns/pawn_suit_component.gd:317` `_raise_alert` | `module: ModuleBase` | |
-| `pawns/pawn_suit_component.gd:336` `_reason_for` | `module: ModuleBase` | |
-| `pawns/pawn_suit_component.gd:350` `_reading` | `module: ModuleBase` | |
-| `scripts/jobs/finders/finder_airlock.gd:47` `is_habitable` | `module: ModuleBase` | |
-| `scripts/managers/alert_manager.gd:426` `_pawn_label` | `pawn: PawnBase` | |
-| `scripts/managers/claim_registry.gd:206` `_is_claimable` | `target: Object` | |
-| `scripts/managers/crew_manager.gd:96` `_spawn_starting_crew` | `home: ModuleBase` | |
-| `scripts/managers/crew_manager.gd:289` `_on_shuttle_docked` | `shuttle: ArrivalShuttle` | (a) |
-| `scripts/managers/crew_manager.gd:376` `fire_crew` | `pawn: PawnBase` | |
-| `scripts/managers/economy_manager.gd:551` `fire_pawn` | `pawn: PawnBase` | |
-| `scripts/managers/trader_manager.gd:294` `_courier_collect` | `shuttle: ArrivalShuttle` | (a) |
-| `scripts/managers/tutorial_manager.gd:450` `fire` | `subject: Node` | |
-| `scripts/managers/visitor_manager.gd:168` `_on_shuttle_docked` | `shuttle: ArrivalShuttle` | (a) |
-| `scripts/managers/world_manager.gd:80` `get_canvas_for_module` | `module: ModuleBase` | |
-| `scripts/utility/pawn_status.gd:341` `facts_for` | `pawn: PawnBase` | |
-| `scripts/utility/pawn_status.gd:380` `location_of` | `pawn: PawnBase` | |
-| `scripts/utility/stores_model.gd:182` `lists` | `component: StorageComponent` | |
-| `scripts/utility/stores_model.gd:212` `contents_editable` | `component: StorageComponent` | |
-| `scripts/utility/stores_model.gd:235` `priority_editable` | `component: StorageComponent` | |
-| `scripts/utility/stores_model.gd:250` `priority_locked_reason` | `component: StorageComponent` | |
-| `scripts/utility/stores_model.gd:269` `locked_reason` | `component: StorageComponent` | |
-| `ui/dialogue/balloon.gd:307` `start` | `with_dialogue_resource: DialogueResource` | |
-| `ui/inspector/tabs/robot_vitals_tab.gd:77` `state_text` | `robot: RobotPawnBase` | |
-| `ui/overlay_controller.gd:367` `_refresh_one` | `module: ModuleBase` | |
-| `ui/overlay_flow_layer.gd:118` `_endpoint_module` | `endpoint: ComponentBase` | |
-| `ui/pawns/pawn_social_tab.gd:179` `_display_name` | `target: PawnBase` | |
-| `ui/tutorial/tutorial_coach.gd:289` `_control_rect` | `control: Control` | |
-| `ui/ui_in_game.gd:64` `set_selected_pawn` | `pawn: PawnBase` | |
-| `ui/windows/crew_panel.gd:551` `_apply_action` | `button: ActionButton` | |
-| `ui/windows/storage_overlays.gd:78` `open_edit` | `component: StorageComponent` | |
-| `ui/windows/storage_overlays.gd:191` `open_resource` | `component: StorageComponent` | |
+| `modules/components/conveyor_component.gd` `_endpoint_alive` | `endpoint: ComponentBase` | **(b)** — now `_endpoint_dead(Variant)`, asked with no `!= null` pre-guard: the old form was false for exactly the freed endpoint it existed to catch |
+| `modules/transport/turbolift_shaft.gd` `request_ride` | `pawn: PawnBase` | (a) |
+| `pawns/pawn_suit_component.gd` `_environment_of` | `module: ModuleBase` | (c) — `owner_pawn.current_module`, nulled by `PawnBase._on_module_removed` before the free |
+| `pawns/pawn_suit_component.gd` `_is_airlock` | `module: ModuleBase` | (c) — same source |
+| `pawns/pawn_suit_component.gd` `_raise_alert` | `module: ModuleBase` | (c) — same source |
+| `pawns/pawn_suit_component.gd` `_reason_for` | `module: ModuleBase` | (c) — same source |
+| `pawns/pawn_suit_component.gd` `_reading` | `module: ModuleBase` | (c) — same source |
+| `scripts/jobs/finders/finder_airlock.gd` `is_habitable` | `module: ModuleBase` | (c) — a group scan, and `JobTarget.module()`, which answers null for a dead target |
+| `scripts/jobs/job.gd` `_offer` *(new since the census)* | `candidate: Object` | (c) — the pawn's own component list, and `JobTarget.object()` |
+| `scripts/managers/alert_manager.gd` `_pawn_label` | `pawn: PawnBase` | (c) — live signal payloads only |
+| `scripts/managers/claim_registry.gd` `_is_claimable` | `target: Object` | (c) — a driver's action, or a `ClaimSpec` already asked `is_alive()` |
+| `scripts/managers/crew_manager.gd` `_spawn_starting_crew` | `home: ModuleBase` | **(b)** — `call_deferred`, so the module can be gone a frame later |
+| `scripts/managers/crew_manager.gd` `_on_shuttle_docked` | `shuttle: ArrivalShuttle` | (a) |
+| `scripts/managers/crew_manager.gd` `fire_crew` | `pawn: PawnBase` | (c) — via `fire_pawn`, whose caller checks its captured pawn |
+| `scripts/managers/economy_manager.gd` `fire_pawn` | `pawn: PawnBase` | (c) — the inspector's FIRE confirmation checks first |
+| `scripts/managers/trader_manager.gd` `_courier_collect` | `shuttle: ArrivalShuttle` | (a) — **after** moving the check to the far side of the one-hour await, where the hire and visitor shuttles already had it |
+| `scripts/managers/tutorial_manager.gd` `fire` | `subject: Node` | (c) — signal payloads, a group scan, the cheat console's nearest-crew lookup |
+| `scripts/managers/visitor_manager.gd` `_on_shuttle_docked` | `shuttle: ArrivalShuttle` | (a) |
+| `scripts/managers/world_manager.gd` `get_canvas_for_module` | `module: ModuleBase` | (c) — an `owner_module`, a `current_module` or a lookup |
+| `scripts/utility/pawn_status.gd` `facts_for` | `pawn: PawnBase` | (c) — every surface holding a pawn checks it first; the rest read a fresh roster |
+| `scripts/utility/pawn_status.gd` `location_of` | `pawn: PawnBase` | (c) — reached only through a guarded `refresh()` |
+| `scripts/utility/stores_model.gd` `lists` | `component: StorageComponent` | (c) — the entry points all walk a live set |
+| `scripts/utility/stores_model.gd` `contents_editable` | `component: StorageComponent` | (c) — same |
+| `scripts/utility/stores_model.gd` `priority_editable` | `component: StorageComponent` | (c) — same |
+| `scripts/utility/stores_model.gd` `priority_locked_reason` | `component: StorageComponent` | (c) — same; its "This bin is gone" branch now answers for null, which is what it can honestly answer for |
+| `scripts/utility/stores_model.gd` `locked_reason` | `component: StorageComponent` | (c) — same |
+| `ui/dialogue/balloon.gd` `start` | `with_dialogue_resource: DialogueResource` | (c) — a Resource is refcounted and cannot be freed under a live reference |
+| `ui/inspector/tabs/robot_vitals_tab.gd` `state_text` | `robot: RobotPawnBase` | (c) — both callers check their stored robot first |
+| `ui/overlay_controller.gd` `_refresh_one` | `module: ModuleBase` | (c) — three signal handlers |
+| `ui/overlay_flow_layer.gd` `_endpoint_module` | `endpoint: ComponentBase` | **(b)** — reads another component's stored `ConveyorLane` endpoints, which keep their reference until that conveyor's next validation tick |
+| `ui/pawns/pawn_social_tab.gd` `_display_name` | `target: PawnBase` | (c) — a fresh `get_crew()` roster, and this tab's own guarded pawn |
+| `ui/tutorial/tutorial_coach.gd` `_control_rect` | `control: Control` | (c) — the target is re-resolved from the live HUD every frame |
+| `ui/ui_in_game.gd` `set_selected_pawn` | `pawn: PawnBase` | (c) — the inspector clears itself the frame its subject dies |
+| `ui/windows/crew_panel.gd` `_apply_action` | `button: ActionButton` | (c) — the panel's own child |
+| `ui/windows/storage_overlays.gd` `open_edit` | `component: StorageComponent` | **(lambda)** — checked inside `dialog.confirmed`, where it is a captured local |
+| `ui/windows/storage_overlays.gd` `open_resource` | `component: StorageComponent` | **(lambda)** — same |
 
-`ui/dialogue/balloon.gd` sits in the vendored Dialogue Manager balloon the project customised (WI-62). Triage it like the rest; the directory rule excludes `addons/`, not this file.
+`ui/dialogue/balloon.gd` sits in the vendored Dialogue Manager balloon the project customised (WI-62); the directory rule excludes `addons/`, not this file, and it was triaged like the rest.
+
+### §3's eleven, and their pairings
+
+Nine are allowlisted in `test_reference_hygiene.gd`'s `PAIRED` with the hook named; the sweep fails on a tenth that is not, and on a listed one whose field has gone (a pairing for a dictionary that no longer exists allows nothing, and would hide the same field under a new name).
+
+| Dictionary | Outcome |
+|---|---|
+| `PathComponent.module_connections` | paired — `remove_connections()` / `disconnect_from()`, from `WorldManager.remove_module` before the `queue_free` |
+| `StructureComponent.module_connections` | paired — the same path |
+| `TurboliftCab.assigned_locations` *(not on the plan's list)* | paired — the keys are the cab's own `standing_locations` markers |
+| `AtmosphereManager._components`, `._low_o2_alerted` | paired — `unregister_component()` from the component's `_exit_tree`, which runs at the `remove_child` inside `remove_module` |
+| `HeatManager._components` | paired — the same |
+| `ModuleGraph._vertices` | paired — `remove_vertex()` on `module_removed`, on a pawn's `PREDELETE`, on an asteroid's or cab's teardown, plus `clear()` (WI-68 F3). Never iterated as keys, only through `.values()` |
+| `ModuleTabSet._errors` | paired — the keys are the bound module's own components, and `InspectorPanel` clears the set the frame `is_alive()` turns false |
+| `StoresPanel._cards` | paired — `_rebuild()` clears it, and every lookup uses a component taken fresh from `_collect_entries()` in the same call |
+| `CrewPanel._rows` | **converted** to `Dictionary[int, CrewRosterRow]` — `refresh()` early-returns while the roster is off screen, so the pairing does not hold |
+| `TurboshaftFloorsTab._rows` *(not on the plan's list)* | **deleted** — written and cleared, never read |
+
+`HeatManager._neighbours` iterates a dictionary it does **not** own, which is where a slip becomes a crash; it now walks `structure.module_connections.keys()` with the guard outside the indexing.
 
 ## Related
 

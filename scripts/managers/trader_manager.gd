@@ -61,6 +61,16 @@ func _ready() -> void:
 	hours_to_next_visit = first_visit_hours
 	Global.time_manager.slow_tick.connect(_on_slow_tick)
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.trader_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.trader_manager == self:
+		Global.trader_manager = null
+
+
 func _process(delta: float) -> void:
 	var sim_hours: float = Global.time_manager.scale(delta) / TimeManager.SECONDS_PER_HOUR
 	if sim_hours <= 0.0:
@@ -296,10 +306,14 @@ func _courier_collect(bay: Variant, shuttle: ArrivalShuttle) -> void:
 		var bay_trade: TradeComponent = (bay as ModuleBase).get_component_by_type(TradeComponent) as TradeComponent
 		if bay_trade != null:
 			Global.contract_manager.collect_contract_goods(bay_trade)
-	if shuttle != null and is_instance_valid(shuttle):
+	if shuttle != null:
 		# Linger briefly at the dock before flying off, like the hire shuttle.
 		await Global.time_manager.sim_seconds(TimeManager.SECONDS_PER_HOUR)
-		shuttle.depart()
+		# Re-checked AFTER the wait, not before it (WI-71 §1): a sim hour passes
+		# inside that await and the shuttle can be freed in it. The hire and
+		# visitor shuttles have always had the guard on this side.
+		if is_instance_valid(shuttle):
+			shuttle.depart()
 	_courier_active = false
 
 # --- departure ------------------------------------------------------------------

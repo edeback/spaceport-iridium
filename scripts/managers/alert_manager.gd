@@ -108,6 +108,13 @@ func _exit_tree() -> void:
 	# TimeManager goes with it, so this is belt-and-braces - but a manager that
 	# can stop the game must not be able to leave it stopped.
 	_release_pause()
+	# Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as
+	# `== null`, so the guards around the game already take their null branch
+	# after a Quit to Menu - but `is_instance_valid(Global.alert_manager)` and the
+	# debugger both lie until the slot is actually cleared. `== self` because a
+	# second scene can register before this one leaves.
+	if Global.alert_manager == self:
+		Global.alert_manager = null
 
 # --- the static entry point -----------------------------------------------------
 
@@ -311,14 +318,43 @@ func resolve(id: StringName) -> void:
 	_drop(alert)
 	_changed()
 
-## Ages out the expired LOW alerts. On a real-time timer; see [member sweep_interval].
+## Ages out the expired LOW alerts, and drops the rows whose subject has been
+## freed. On a real-time timer; see [member sweep_interval].
+##
+## The orphan half is WI-71 F27. It is the general form of the carve-out
+## [method _on_module_removed] documents: the "never drop an alert because its
+## subject went away" rule exists so a *live* condition cannot vanish unread, and
+## a subject that no longer exists has no live condition. The signal handlers
+## below resolve the cases they can see immediately; this catches everything
+## freed without one - a visitor despawning, a robot lost, a pawn removed by a
+## load. The history log keeps the record either way.
 func sweep() -> void:
 	var stale: Array[AlertData] = AlertRules.expired(_live, _now(), low_ttl_seconds)
+	stale.append_array(AlertRules.orphaned(_live))
 	if stale.is_empty():
 		return
 	for alert: AlertData in stale:
 		_drop(alert)
 	_changed()
+
+## Drops every live alert about `subject`, whatever family it belongs to.
+##
+## Written against the subject rather than a list of families (WI-71 F27) so a
+## new alert about a module or a pawn is covered the day it is written: the
+## module families are breach / low_o2 / breakdown / cut_vertex / wreckage, and
+## the pawn ones need_* / suit_up / disease_caught / disease_worse / no_medbay /
+## pawn_temperature / robot_*, and a list of eleven strings in a third file is a
+## list that goes stale.
+func resolve_for_subject(subject: Variant) -> void:
+	if typeof(subject) != TYPE_OBJECT:
+		return
+	var dropped: bool = false
+	for alert: AlertData in _live.duplicate():
+		if alert.subject == subject:
+			_drop(alert)
+			dropped = true
+	if dropped:
+		_changed()
 
 func _drop(alert: AlertData) -> void:
 	_live.erase(alert)
@@ -409,7 +445,7 @@ func _connect_sources() -> void:
 	SignalBus.trader_arrived.connect(_on_trader_arrived)
 	SignalBus.trader_departed.connect(_on_trader_departed)
 	SignalBus.module_breach_sealed.connect(_on_breach_sealed)
-	SignalBus.module_destroyed.connect(_on_module_destroyed)
+	SignalBus.module_removed.connect(_on_module_removed)
 	SignalBus.raid_ended.connect(_on_raid_ended)
 	SignalBus.game_bootstrapped.connect(_on_game_bootstrapped)
 
@@ -423,8 +459,10 @@ func _on_game_bootstrapped() -> void:
 func _on_station_alert(message: String) -> void:
 	raise(StringName(message), AlertData.Priority.LOW, message)
 
+## Every caller is one of the crew signal handlers below, so the pawn is the
+## live payload of a signal that has just fired (WI-71 §2c).
 func _pawn_label(pawn: PawnBase) -> String:
-	if pawn == null or not is_instance_valid(pawn):
+	if pawn == null:
 		return "A crew member"
 	return pawn.pawn_name if not pawn.pawn_name.is_empty() else "A crew member"
 
@@ -448,8 +486,13 @@ func _on_crew_resignation_cancelled(pawn: PawnBase) -> void:
 	raise(AlertRules.make_id(&"stayed", pawn), AlertData.Priority.LOW,
 		"Resignation withdrawn", "%s decided to stay" % _pawn_label(pawn), pawn)
 
+## The pawn is queue_free'd immediately after this fires, so every row about it
+## is about to become a row with a dead subject: a critical need, a suit-up
+## order, an untreated disease (WI-71 F27). Resolved *before* the departure
+## notice is raised, so the notice itself survives - it is news about the
+## departure, not a condition of the pawn.
 func _on_crew_departed(pawn: PawnBase) -> void:
-	resolve(AlertRules.make_id(&"resigning", pawn))
+	resolve_for_subject(pawn)
 	raise(AlertRules.make_id(&"departed", pawn), AlertData.Priority.LOW,
 		"Crew departed", "%s has left the station" % _pawn_label(pawn))
 
@@ -489,18 +532,25 @@ func _docking_bay() -> ModuleBase:
 func _on_breach_sealed(module: ModuleBase) -> void:
 	resolve(AlertRules.make_id(&"breach", module))
 
-## A destroyed module's problems are no longer problems, and the destruction is
-## the news. This is the one case that overrides "never drop an alert because its
-## subject went away": the rule exists so a *live* condition cannot vanish
-## unread, and a module that no longer exists has no live condition - leaving an
-## outstanding CRITICAL about a breach in something that has already been
-## replaced by truss would hold the sim on a fact that has stopped being true.
+## A removed module's problems are no longer problems. This overrides "never
+## drop an alert because its subject went away": that rule exists so a *live*
+## condition cannot vanish unread, and a module that no longer exists has no live
+## condition - leaving an outstanding CRITICAL about a breach in something that
+## has already been replaced by truss would hold the sim on a fact that has
+## stopped being true.
 ##
-## Fired just before `remove_module` tears the module down, so the ids still
-## resolve.
-func _on_module_destroyed(module: ModuleBase) -> void:
-	for family: StringName in [&"breach", &"low_o2", &"breakdown", &"cut_vertex"]:
-		resolve(AlertRules.make_id(family, module))
+## `module_removed` rather than `module_destroyed` (WI-71 F27): destruction is
+## only one of the ways a module goes. Deconstruction ends in
+## `remove_module(owner_module, false)` with no `module_destroyed` - that signal
+## fires only from `_on_hp_zero` - so a deconstructed module used to leave its
+## breakdown, low-O2, cut-vertex and breach rows in the feed with a freed
+## subject. `module_removed` is a superset of the destruction path, since
+## `_on_hp_zero` removes the module it just announced.
+##
+## Emitted just before `remove_module` frees the module, so the subject still
+## matches the live rows.
+func _on_module_removed(module: ModuleBase) -> void:
+	resolve_for_subject(module)
 
 func _on_raid_ended(_outcome: StringName) -> void:
 	resolve(&"raid")

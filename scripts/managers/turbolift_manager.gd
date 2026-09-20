@@ -14,6 +14,16 @@ func _ready() -> void:
 	# After world: shafts have re-merged from module adjacency by now.
 	SaveManager.register_section(&"turbolifts", 80, get_save_data, load_save_data)
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.turbolift_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.turbolift_manager == self:
+		Global.turbolift_manager = null
+
+
 func add_turbolift_module(module: ModuleTurbolift) -> void:
 	var module_cell := module.module_cell
 	var module_above_cell := module_cell + Vector2i(0, -1)

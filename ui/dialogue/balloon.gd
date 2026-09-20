@@ -307,7 +307,9 @@ func _apply_indicator() -> void:
 func start(with_dialogue_resource: DialogueResource = null, cue: String = "", extra_game_states: Array = []) -> void:
 	temporary_game_states = [self] + extra_game_states
 	is_waiting_for_input = false
-	if is_instance_valid(with_dialogue_resource):
+	# A DialogueResource is refcounted and never freed under a live reference;
+	# callers pass a loaded resource or nothing (WI-71 §2c).
+	if with_dialogue_resource != null:
 		dialogue_resource = with_dialogue_resource
 	if not cue.is_empty():
 		start_from_cue = cue

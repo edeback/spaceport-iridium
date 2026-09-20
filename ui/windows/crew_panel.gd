@@ -99,7 +99,13 @@ var _filter: PawnStatus.Filter = PawnStatus.Filter.ALL
 var _sort: PawnStatus.Sort = PawnStatus.Sort.STATUS
 ## Pawn -> its row, so a selection change can repaint one row rather than rebuild
 ## the list under the player's cursor.
-var _rows: Dictionary[PawnBase, CrewRosterRow] = {}
+## Rows by pawn **instance id**, not by pawn (WI-71 §3). The pairing a node key
+## would need is a hook that drops the key before the pawn is freed, and this
+## has none: [method refresh] early-returns while the roster is off screen (the
+## HIRE tab, or a closed panel), so a crew member who dies in that window leaves
+## a dangling key behind - and a `Dictionary[PawnBase, ...]` errors on the freed
+## key the moment anything iterates it.
+var _rows: Dictionary[int, CrewRosterRow] = {}
 
 ## Builds the frame and mounts this body in it. One call, like the widgets have -
 ## [UIMain] stays a mount table.
@@ -473,7 +479,7 @@ func refresh() -> void:
 		row.pressed.connect(_on_row_pressed.bind(pawn))
 		if selected == pawn:
 			row.set_selected(true)
-		_rows[pawn] = row
+		_rows[pawn.get_instance_id()] = row
 		shown += 1
 	if shown == 0:
 		_list.add_child(_empty_line(crew.is_empty()))
@@ -548,9 +554,11 @@ func _refresh_actions() -> void:
 ## A blocked action wears its blocker as its caption; an available one wears its
 ## verb. The tooltip keeps the sentence too, because the label ellipses on a
 ## 660px panel and the tooltip does not.
+##
+## The button is this panel's own child and outlives every call (WI-71 §2c).
 func _apply_action(button: ActionButton, verb: String, reason: String,
 		ready_tooltip: String = "") -> void:
-	if button == null or not is_instance_valid(button):
+	if button == null:
 		return
 	var blocked: bool = reason != ""
 	button.disabled = blocked
@@ -598,12 +606,13 @@ func _on_row_pressed(pawn: PawnBase) -> void:
 ## Repaints the two rows that can have changed rather than rebuilding the list,
 ## so a click does not shuffle the row out from under the cursor.
 func _paint_selection(selected: PawnBase) -> void:
-	for pawn: PawnBase in _rows:
-		var row: CrewRosterRow = _rows[pawn]
+	var selected_id: int = selected.get_instance_id() if selected != null else 0
+	for pawn_id: int in _rows:
+		var row: CrewRosterRow = _rows[pawn_id]
 		if not is_instance_valid(row):
 			continue
 		row.refresh()
-		if pawn == selected:
+		if pawn_id == selected_id:
 			row.set_selected(true)
 
 func _selected_subject() -> Variant:

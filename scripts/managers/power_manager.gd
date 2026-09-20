@@ -34,6 +34,16 @@ func _ready() -> void:
 # Registration goes through these methods rather than exposing the arrays so that
 # priority-ordered insertion has exactly one place to land later.
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.power_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.power_manager == self:
+		Global.power_manager = null
+
+
 func register_generator(generator: PowerGenerationComponent) -> void:
 	if generator != null and not power_generators.has(generator):
 		power_generators.append(generator)

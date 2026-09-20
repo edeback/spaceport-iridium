@@ -75,6 +75,15 @@ func _ready() -> void:
 
 # --- lifecycle ----------------------------------------------------------------
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.raid_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.raid_manager == self:
+		Global.raid_manager = null
+
 ## Auto-size a raid from current station value. -1 to compute_strength() callers
 ## pass their own number; this is the default event/cheat path.
 func compute_strength() -> float:

@@ -63,6 +63,16 @@ func _ready() -> void:
 	# After world, before pawns: mining jobs resolve their asteroid by id.
 	SaveManager.register_section(&"asteroids", 70, get_save_data, load_save_data)
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.asteroid_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.asteroid_manager == self:
+		Global.asteroid_manager = null
+
+
 
 func _process(delta: float) -> void:
 	var sim_delta: float = Global.time_manager.scale(delta)

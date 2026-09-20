@@ -44,9 +44,13 @@ func find(_job: Job, pawn: PawnBase) -> JobTarget:
 ## Static and shared with Action_ChangeSuit, which re-asks at the moment of the
 ## change: conditions can turn during the walk, and a pawn must not strip in an
 ## airlock that has vented since they set out.
+##
+## Both callers pass a live module or null - the group scan above, and
+## [method JobTarget.module], which answers null for a dead target - so the null
+## check is the whole of the guarantee (WI-71 §2c).
 static func is_habitable(pawn: PawnBase, module: ModuleBase) -> bool:
 	var suit: PawnSuitComponent = pawn.get_component_by_type(PawnSuitComponent) as PawnSuitComponent
-	if suit == null or module == null or not is_instance_valid(module):
+	if suit == null or module == null:
 		return false
 	var atmosphere: AtmosphereComponent = null
 	if Global.atmosphere_manager != null:

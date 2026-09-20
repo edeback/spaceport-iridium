@@ -68,6 +68,16 @@ func _ready() -> void:
 
 var _starting_crew_spawned: bool = false
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.crew_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.crew_manager == self:
+		Global.crew_manager = null
+
+
 func _on_module_added_for_start(module: ModuleBase) -> void:
 	if _starting_crew_spawned:
 		return
@@ -93,14 +103,22 @@ func _on_module_added_for_start(module: ModuleBase) -> void:
 ## The top-up afterwards is not defensive padding: it is the path that keeps
 ## playing main.tscn directly from the editor working, which stages nothing at
 ## all. An empty staged list reproduces the pre-WI-59 behaviour exactly.
-func _spawn_starting_crew(home: ModuleBase) -> void:
+##
+## `home` is a Variant because this is reached through `call_deferred` a frame
+## after `module_added` (WI-71 §2b): the module can be gone by the time the
+## deferred call runs, and a typed parameter would reject a freed one at the
+## call, before the check below.
+func _spawn_starting_crew(home: Variant) -> void:
 	if not is_instance_valid(home):
+		return
+	var module: ModuleBase = home as ModuleBase
+	if module == null:
 		return
 	var picked: Array[HireCandidate] = Global.take_staged_crew()
 	for candidate: HireCandidate in picked:
-		spawn_crew(home, candidate)
+		spawn_crew(module, candidate)
 	for i: int in maxi(starting_crew - picked.size(), 0):
-		spawn_crew(home)
+		spawn_crew(module)
 
 # --- roster -------------------------------------------------------------------
 
@@ -373,8 +391,11 @@ func _on_crew_resigned(pawn: PawnBase) -> void:
 ## wage from the next cycle (get_crew(false) filters it out) and blocks its needs
 ## component from also running the misery-resignation path. The severance charge
 ## itself lives in EconomyManager.fire_pawn, which calls this.
+##
+## Reached from [method EconomyManager.fire_pawn], whose own caller checks the
+## pawn it captured before passing it on, so it arrives live or null (WI-71 §2c).
 func fire_crew(pawn: PawnBase) -> void:
-	if pawn == null or not is_instance_valid(pawn):
+	if pawn == null:
 		return
 	var needs: PawnNeedsComponent = pawn.get_component_by_type(PawnNeedsComponent) as PawnNeedsComponent
 	if needs != null:

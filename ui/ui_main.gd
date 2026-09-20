@@ -62,6 +62,16 @@ func _ready() -> void:
 
 # --- console & modes ----------------------------------------------------------
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.ui_main)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.ui_main == self:
+		Global.ui_main = null
+
+
 func _setup_console() -> void:
 	_panel_layer = Control.new()
 	_panel_layer.name = "PanelLayer"

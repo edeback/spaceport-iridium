@@ -225,6 +225,16 @@ func _ready() -> void:
 		# before sections start mutating state.
 		call_deferred("_apply_pending_load")
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.save_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.save_manager == self:
+		Global.save_manager = null
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	# Mark handled BEFORE acting: load_slot frees this scene immediately
 	# (reload_current_scene), after which get_viewport() is null.

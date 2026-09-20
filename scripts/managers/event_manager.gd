@@ -51,6 +51,16 @@ func _ready() -> void:
 	SignalBus.crew_hired.connect(_on_crew_hired)
 	_roll_midcycle_hour()
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.event_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.event_manager == self:
+		Global.event_manager = null
+
+
 func _process(delta: float) -> void:
 	var sim_hours: float = Global.time_manager.scale(delta) / TimeManager.SECONDS_PER_HOUR
 	if sim_hours <= 0.0:

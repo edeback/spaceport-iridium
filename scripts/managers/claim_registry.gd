@@ -43,6 +43,15 @@ func _ready() -> void:
 
 # --- claiming -----------------------------------------------------------------
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.claim_registry)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.claim_registry == self:
+		Global.claim_registry = null
+
 ## Whether `target` would accept this claim right now. Pure query - no side
 ## effects, safe from can_do()/is_valid() scans.
 func can_claim(target: Object, kind: ClaimSpec.Kind, amount: int = 1) -> bool:
@@ -203,8 +212,11 @@ func jobs_holding(target: Object, kind: ClaimSpec.Kind) -> Array[Job]:
 func claiming_job_count() -> int:
 	return _by_job.size()
 
+## The four callers pass a target straight from a driver's action or from a
+## [ClaimSpec] they have already asked `is_alive()`, so it arrives live or null
+## (WI-71 §2c). A spec's own target is a stored field and is checked as one.
 func _is_claimable(target: Object) -> bool:
-	return target != null and is_instance_valid(target) \
+	return target != null \
 		and target.has_method(&"can_take_claim") \
 		and target.has_method(&"take_claim") \
 		and target.has_method(&"release_claim")

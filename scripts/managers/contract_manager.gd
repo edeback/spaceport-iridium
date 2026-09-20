@@ -61,6 +61,16 @@ func _ready() -> void:
 	Global.time_manager.cycle_changed.connect(_on_cycle_changed)
 	Global.time_manager.slow_tick.connect(_on_slow_tick)
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.contract_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.contract_manager == self:
+		Global.contract_manager = null
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	# A developer key, not a player one (WI-68 F5); see EventManager's twin.
 	if not OS.is_debug_build():

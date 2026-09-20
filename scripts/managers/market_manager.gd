@@ -30,6 +30,16 @@ func _ready() -> void:
 	# Market supply drifts back toward default once per game-hour.
 	Global.time_manager.hour_changed.connect(_on_hour_changed)
 
+## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
+## so the guards around the game already take their null branch after a Quit to
+## Menu - but `is_instance_valid(Global.market_manager)` and the debugger both lie until
+## the slot is actually cleared. `== self` because a second scene can register
+## before this one leaves.
+func _exit_tree() -> void:
+	if Global.market_manager == self:
+		Global.market_manager = null
+
+
 func _on_hour_changed(_hour: int) -> void:
 	_expire_supply_modifiers(1.0)
 	update_market()
