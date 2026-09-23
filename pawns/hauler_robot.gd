@@ -39,6 +39,19 @@ func _notify_owner_removed() -> void:
 
 # --- persistence ------------------------------------------------------------
 
+## The Logistics Bay's component, as a component ref - the same shape a mining
+## drone saves its bay in. No bay, no key.
+func save_kind_data(entry: Dictionary) -> void:
+	super(entry)
+	if parent_bay != null:
+		entry["logistics_bay"] = SaveRefs.component_ref(parent_bay)
+
+## Re-registers with the bay so it re-owns and powers this robot. A ref that no
+## longer resolves leaves the robot ownerless, as it does a drone.
+func load_kind_data(entry: Dictionary) -> void:
+	super(entry)
+	set_owner_component(SaveRefs.resolve_component_ref(entry.get("logistics_bay", {})) as LogisticsBayComponent)
+
 ## Modules load before pawns, so a restored robot re-registers with its bay
 ## (mirrors MiningDronePawn.set_owner_component).
 func set_owner_component(bay: LogisticsBayComponent) -> void:

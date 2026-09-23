@@ -33,7 +33,7 @@ func _ready() -> void:
 	Global.world_manager = self
 	# Before asteroids/piles/pawns: jobs restored onto pawns resolve their targets
 	# (modules, asteroids, piles), so the modules have to exist first.
-	SaveManager.register_section(&"world", 60, get_save_data, load_save_data)
+	SaveManager.register_section(&"world", SaveManager.SECTION_ORDER[&"world"], get_save_data, load_save_data)
 	for layer in module_layers:
 		var new_data: LayerData = LayerData.new()
 		new_data.canvas = module_layers[layer]

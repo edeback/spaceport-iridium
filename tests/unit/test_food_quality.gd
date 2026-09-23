@@ -55,7 +55,7 @@ func test_to_dict_round_trips_through_save_manager() -> void:
 	resource.instance_data_script = FoodInstanceData
 	var dict := _food(0.63, &"meat").to_dict()
 	assert_eq(String(dict.get("type", "")), "food", "tagged as food for readability")
-	var restored := SaveManager.instance_from_dict(resource, dict) as FoodInstanceData
+	var restored := SaveRefs.instance_from_dict(resource, dict) as FoodInstanceData
 	assert_not_null(restored, "instance_from_dict rebuilds a FoodInstanceData")
 	assert_almost_eq(restored.quality, 0.63, 0.0001, "quality survives the round-trip")
 	assert_eq(restored.food_type, &"meat", "food_type survives the round-trip")
@@ -65,7 +65,7 @@ func test_a_resource_with_no_instance_script_drops_variance_but_keeps_the_stack(
 	# survivable; losing the resources would not be.
 	var resource := ResourceData.new()
 	resource.id = &"biomass"
-	assert_null(SaveManager.instance_from_dict(resource, _food(0.63).to_dict()))
+	assert_null(SaveRefs.instance_from_dict(resource, _food(0.63).to_dict()))
 
 # --- static effect mappings (Action_Eat) --------------------------------------
 

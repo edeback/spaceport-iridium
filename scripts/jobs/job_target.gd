@@ -187,15 +187,15 @@ func to_dict() -> Dictionary:
 	var out: Dictionary = {}
 	match kind:
 		Kind.MODULE:
-			out = SaveManager.module_ref(_object as ModuleBase)
+			out = SaveRefs.module_ref(_object as ModuleBase)
 		Kind.COMPONENT:
-			out = SaveManager.component_ref(_object as ComponentBase)
+			out = SaveRefs.component_ref(_object as ComponentBase)
 		Kind.PAWN:
-			out = SaveManager.pawn_ref(_object as PawnBase)
+			out = SaveRefs.pawn_ref(_object as PawnBase)
 		Kind.ASTEROID:
-			out = SaveManager.asteroid_ref(_object as AsteroidBase)
+			out = SaveRefs.asteroid_ref(_object as AsteroidBase)
 		Kind.PILE:
-			out = SaveManager.pile_ref(_object as ResourcePile)
+			out = SaveRefs.pile_ref(_object as ResourcePile)
 		Kind.CELL:
 			out = {"cell": [_cell.x, _cell.y]}
 	if out.is_empty():
@@ -213,15 +213,15 @@ static func from_dict(data: Dictionary) -> JobTarget:
 	t.fail_on_lost = not bool(data.get("soft", false))
 	match decoded_kind:
 		Kind.MODULE:
-			t._object = SaveManager.resolve_module_ref(data)
+			t._object = SaveRefs.resolve_module_ref(data)
 		Kind.COMPONENT:
-			t._object = SaveManager.resolve_component_ref(data)
+			t._object = SaveRefs.resolve_component_ref(data)
 		Kind.PAWN:
-			t._object = SaveManager.resolve_pawn_ref(data)
+			t._object = SaveRefs.resolve_pawn_ref(data)
 		Kind.ASTEROID:
-			t._object = SaveManager.resolve_asteroid_ref(data)
+			t._object = SaveRefs.resolve_asteroid_ref(data)
 		Kind.PILE:
-			t._object = SaveManager.resolve_pile_ref(data)
+			t._object = SaveRefs.resolve_pile_ref(data)
 		Kind.CELL:
 			var cell_arr: Array = data.get("cell", [])
 			if cell_arr.size() == 2:

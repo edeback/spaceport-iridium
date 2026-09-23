@@ -42,16 +42,14 @@ extends Node
 ## twenty separate call sites, which is the only way the durable half stays in
 ## step with the transient one.
 
-## The alert history's save section. Late: it depends on nothing and nothing
-## depends on it, and it must restore after the calendar so a stamp reads right.
+## The alert history's save section. Its order is [constant
+## SaveManager.SECTION_ORDER]'s; see the registration for why it sits where it does.
 const SAVE_SECTION: StringName = &"alerts"
-const SAVE_ORDER: int = 210
 
 ## The transmission log's own section, beside the alert log for the same reasons.
 ## Absent key = an empty log, so a pre-WI-57 save loads and `SAVE_VERSION` stays
 ## put.
 const TRANSMISSION_SECTION: StringName = &"transmissions"
-const TRANSMISSION_ORDER: int = 215
 
 ## This manager's entry in [TimeManager]'s hold set. One hold for the whole
 ## queue, not one per alert: three simultaneous criticals stop the sim once and
@@ -92,8 +90,11 @@ var _armed: bool = false
 
 func _ready() -> void:
 	Global.alert_manager = self
-	SaveManager.register_section(SAVE_SECTION, SAVE_ORDER, get_save_data, load_save_data, {})
-	SaveManager.register_section(TRANSMISSION_SECTION, TRANSMISSION_ORDER,
+	# Late, both of them: they depend on nothing and nothing depends on them, and
+	# they must restore after the calendar so a stamp reads right.
+	SaveManager.register_section(SAVE_SECTION, SaveManager.SECTION_ORDER[SAVE_SECTION],
+		get_save_data, load_save_data, {})
+	SaveManager.register_section(TRANSMISSION_SECTION, SaveManager.SECTION_ORDER[TRANSMISSION_SECTION],
 		get_transmission_save_data, load_transmission_save_data, {})
 	_connect_sources()
 	var timer := Timer.new()

@@ -155,7 +155,7 @@ func _ready() -> void:
 	Global.unlock_manager = self
 	# Before world: ready_constructed applies global modifiers and granted-module
 	# checks as each module restores.
-	SaveManager.register_section(&"unlocks", 20, get_save_data, load_save_data)
+	SaveManager.register_section(&"unlocks", SaveManager.SECTION_ORDER[&"unlocks"], get_save_data, load_save_data)
 	_load_unlocks()
 	_load_local_upgrades()
 	_load_tiers()

@@ -103,6 +103,8 @@ Each entry: what is there, what it costs, what to do, and roughly how big the ch
 
 **Do.** The cheapest guard: a GUT test that loads `main.tscn` as a `PackedScene`, walks its `Managers/` children, and asserts the order against a declared list in `Global` (or in the test), so a drag in the editor fails a test rather than a load. The better shape, later: sections declare `after: [&"world"]` rather than `60`, and the registry topologically sorts - numbers were chosen because a mod needs to slot in, and "after everything vanilla" is easier to say by name than by picking 1000.
 
+> *Done by [[WI-73_Save_Orchestration]] (2026-09-22), the cheap way.* `test_manager_order.gd` reads the scene's state and pins the only two positions that matter (TimeManager first, SaveManager last); the declared list it checks against is **CLAUDE.md's**, which had drifted by two. The section numbers moved into one table, `SaveManager.SECTION_ORDER`, and `test_save_section_order.gd` pins every stated constraint as a pair. Named dependencies stay deferred: they change the mod API, and nothing needs them yet. Reading every load for the pairs found two stated constraints that were not real (asteroids and raid "after world"), now documented as none.
+
 ### A6. Freed-object hygiene is four rules where it should be one
 
 **What.** F8 (node-keyed dictionaries), F23/F24 (typed parameters), F28 (awaits on freeable nodes), F29 (`Global` slots). CLAUDE.md has one sentence for the first. The sanctioned patterns already exist: `JobTarget` for references a job holds, `*_ref` for anything saved, `get_instance_id()` keys for dictionaries, `Variant` parameters with `is_instance_valid` for anything bound to a signal.
@@ -128,6 +130,8 @@ Each entry: what is there, what it costs, what to do, and roughly how big the ch
 **What.** 1,171 lines: slot IO and migration (static), the ref helpers (static), and the pawn and pile sections. WI-47 M2 replaced `ModuleBase`'s hand-written component chain with `save_key()`/`save_order()` hooks and did the same for pawn *components* - but the pawn *kinds* are still an `if pawn is X` chain in `SaveManager` (`:696-706` on save, `:1062-1110` on load): `robot_index`, `mining_comp`, `logistics_bay`, `visitor`. A modded pawn kind with one field of its own cannot persist it, which is exactly the hole M2 closed for components.
 
 **Do.** `PawnBase.get_save_data()`/`load_save_data()` virtuals with the subclasses overriding (`RobotPawnBase` → `robot_index`, `MiningDronePawn` → its bay ref, `VisitorPawn` → its visit block), and the pawn section becomes a walk. Then the slot IO and the ref helpers can be their own files (`SaveSlots`, `SaveRefs`) and `SaveManager` is the orchestrator it says it is.
+
+> *Done by [[WI-73_Save_Orchestration]] (2026-09-22).* Four hooks rather than two - `is_saved`, `save_kind_data`, `load_kind_data_before_tree`, `load_kind_data` - because a robot's number has to land before `add_child` and a bay re-registration after it; the common fields stay in the section for the same reason. The split landed as proposed, with no forwarding shims. Deleting the `is` chain had one side effect nobody predicted: it had been loading `LogisticsBayComponent` ahead of `HaulerRobotPawn`, which hid a preload cycle between them (F41, fixed).
 
 ### A9. Job picking is a template method written three times
 
@@ -174,7 +178,7 @@ Ordered by defect-class closed per line changed:
 2. **Integration fixture** (A1; unblocks everything that has been probe-only): `tests/integration/StationFixture`, the first-pass probes as tests, F33 to let `main.tscn` boot without its HUD.
 3. **Reference hygiene** (A6, A7; fixes F27, F28, F29, closes F8 and the rest of F24): the rule, the four sweeps, `_exit_tree` nulling, `DOOR_WAIT`.
 4. ~~**Declared vocabularies** (A12; fixes F30, F31, F11): `Stats`, the content sweep, the mod-API block, asserts to `push_error`.~~ **Done 2026-09-20, [[WI-72_Declared_Vocabularies_And_Content_Guards]].**
-5. **Save orchestration** (A5, A8): scene-order test, pawn-kind hooks, `SaveManager` split.
+5. ~~**Save orchestration** (A5, A8): scene-order test, pawn-kind hooks, `SaveManager` split.~~ **Done 2026-09-22, [[WI-73_Save_Orchestration]].**
 6. **Small consolidations** (A9, A10, A11) as they are touched.
 
 WI-68's stages 5 and 6 (F6, F7, F16–F18) stand as they are and should land first: the typed-warnings-as-errors flip in particular changes what every item above compiles against.

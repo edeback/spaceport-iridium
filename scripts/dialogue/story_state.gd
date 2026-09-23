@@ -19,10 +19,9 @@ extends Node
 ## conversation may *do*. Two aliases because they are two jobs: one changes the
 ## world, one remembers it.
 
+## After events in [constant SaveManager.SECTION_ORDER], so a scheduled event
+## restored here lands on a manager whose own cooldown table is already back.
 const SAVE_SECTION: StringName = &"story"
-## After events (130), so a scheduled event restored here lands on a manager whose
-## own cooldown table is already back.
-const SAVE_ORDER: int = 135
 
 var flags: StoryFlags = StoryFlags.new()
 var standing: FactionStanding = FactionStanding.new()
@@ -34,7 +33,8 @@ var _factions: Dictionary[StringName, FactionData] = {}
 func _ready() -> void:
 	Global.story_state = self
 	_load_factions()
-	SaveManager.register_section(SAVE_SECTION, SAVE_ORDER, get_save_data, load_save_data)
+	SaveManager.register_section(SAVE_SECTION, SaveManager.SECTION_ORDER[SAVE_SECTION],
+		get_save_data, load_save_data)
 
 func _exit_tree() -> void:
 	if Global.story_state == self:

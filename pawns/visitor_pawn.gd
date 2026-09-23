@@ -123,20 +123,28 @@ func _report_departure() -> void:
 func _label() -> String:
 	return pawn_name if pawn_name != "" else "A visitor"
 
-# --- persistence (WI-33) ------------------------------------------------------
+# --- persistence (WI-33, onto the pawn-kind hooks in WI-73) -------------------
 # Guests are saved in the pawn section (unlike the ARC inspector). Wallet, name,
 # tint, needs, health, disease all ride the generic pawn entry; only the visit
 # state is guest-specific. On load a mid-walk-out guest resumes leaving, and the
 # reputation-reported latch prevents a double count.
 
-func get_visitor_save_data() -> Dictionary:
-	return {
+## The visit, as one `visitor` block: stay timer, leaving latch, reported latch.
+func save_kind_data(entry: Dictionary) -> void:
+	super(entry)
+	entry["visitor"] = {
 		"stay": stay_hours_remaining,
 		"leaving": _leaving,
 		"reported": _departure_reported,
 	}
 
-func load_visitor_save_data(data: Dictionary) -> void:
+## A guest saved mid-walk-out resumes leaving. No block (a pre-WI-33 save) keeps
+## the scene's defaults: a fresh stay, not leaving, nothing reported.
+func load_kind_data(entry: Dictionary) -> void:
+	super(entry)
+	if not entry.has("visitor"):
+		return
+	var data: Dictionary = entry["visitor"]
 	stay_hours_remaining = float(data.get("stay", stay_hours_remaining))
 	_leaving = bool(data.get("leaving", false))
 	_departure_reported = bool(data.get("reported", false))

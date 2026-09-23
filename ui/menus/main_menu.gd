@@ -85,7 +85,7 @@ func _build_shell() -> void:
 		_panel.visible = false
 		_load_menu.open(SaveLoadMenu.Mode.LOAD))
 	# Nothing to load on a first run - say so rather than opening an empty list.
-	load_button.disabled = SaveManager.list_slots().is_empty()
+	load_button.disabled = SaveSlots.list_slots().is_empty()
 	if load_button.disabled:
 		load_button.tooltip_text = "No saved games yet."
 	_add_button(_button_container, "Settings", func() -> void:

@@ -43,8 +43,8 @@ func test_an_hour_of_play_leaves_the_station_clean() -> void:
 	assert_eq(Global.crew_manager.crew_count(), 2)
 
 func test_saves_go_to_the_fixture_directory() -> void:
-	assert_eq(SaveManager.save_dir(), StationFixture.SAVE_DIR)
+	assert_eq(SaveSlots.save_dir(), StationFixture.SAVE_DIR)
 	assert_true(fx.save())
 	assert_true(FileAccess.file_exists(StationFixture.SAVE_DIR + StationFixture.SLOT + ".json"))
-	assert_false(FileAccess.file_exists(SaveManager.SAVE_DIR + StationFixture.SLOT + ".json"),
+	assert_false(FileAccess.file_exists(SaveSlots.SAVE_DIR + StationFixture.SLOT + ".json"),
 		"nothing lands in the player's saves")

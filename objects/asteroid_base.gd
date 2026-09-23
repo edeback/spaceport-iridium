@@ -7,7 +7,7 @@ extends ObjectBase
 ## and by the fields below.
 ##
 ## The name stays "asteroid" deliberately. Renaming to something neutral would
-## churn Groups.ASTEROID, JobTarget.Kind.ASTEROID, SaveManager.asteroid_ref, the
+## churn Groups.ASTEROID, JobTarget.Kind.ASTEROID, SaveRefs.asteroid_ref, the
 ## &"mine_asteroid" job id and the "asteroids" save section - three of which are
 ## save-format identifiers - for a rename the player can never see. The
 ## player-facing noun lives in [member body_name] instead; the code-facing one is
@@ -34,7 +34,7 @@ var resource_total_weights: float = 0
 
 ## Stable save id (WI-21), assigned by AsteroidManager at spawn. -1 = never
 ## registered (a bare instance not owned by the manager). Jobs that target this
-## rock persist it as SaveManager.asteroid_ref({"id": asteroid_id}).
+## rock persist it as SaveRefs.asteroid_ref({"id": asteroid_id}).
 var asteroid_id: int = -1
 
 ## Which [SpaceBodyProfile] spawned this (WI-61). Saved, and the only thing a

@@ -755,7 +755,7 @@ func get_save_data() -> Dictionary:
 		var data: StorageData = storage_data[resource]
 		resources[String(resource.id)] = {
 			"desired": data.desired,
-			"stacks": SaveManager.stacks_to_dicts(data.stacks),
+			"stacks": SaveRefs.stacks_to_dicts(data.stacks),
 			"autodump_above": data.autodump_above,
 		}
 	# Roles are deliberately NOT saved (WI-65): a slot's role comes from whatever
@@ -801,7 +801,7 @@ func load_save_data(data: Dictionary) -> void:
 		var entry: Dictionary = resources[id_str]
 		slot.desired = int(entry.get("desired", slot.desired))
 		for stack_dict: Dictionary in entry.get("stacks", []):
-			var stack: ResourceStack = SaveManager.stack_from_dict(resource, stack_dict)
+			var stack: ResourceStack = SaveRefs.stack_from_dict(resource, stack_dict)
 			if stack.amount > 0:
 				slot.add_stack(stack)
 		# Legacy (pre-WI-65): a bare `autodump: true` meant "destroy everything over

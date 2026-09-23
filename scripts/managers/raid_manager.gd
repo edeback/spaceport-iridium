@@ -67,10 +67,12 @@ var _orbit_radius: float = 600.0
 
 func _ready() -> void:
 	Global.raid_manager = self
-	# After world: an in-progress raid respawns its ships against the restored
-	# station geometry. Events don't re-fire effects on load, so there's no risk of
+	# No constraint. An in-progress raid respawns its ships around the centre and
+	# radius it saved rather than re-measuring the station, and a turret restored
+	# after it re-derives its aim in ready_constructed without the raid_started
+	# this load emits. Events don't re-fire effects on load, so there's no risk of
 	# a second raid spawning alongside the restored one (WI-32 edge case).
-	SaveManager.register_section(&"raid", 150, get_save_data, load_save_data)
+	SaveManager.register_section(&"raid", SaveManager.SECTION_ORDER[&"raid"], get_save_data, load_save_data)
 	raids_enabled = Global.difficulty_raids_enabled()
 
 # --- lifecycle ----------------------------------------------------------------
@@ -102,7 +104,7 @@ func start_raid(strength: float = -1.0) -> bool:
 		# Peaceful, so a hit is either the debug cheat or a raid path that forgot its
 		# condition - both worth seeing in the log.
 		print("RaidManager: raid suppressed - %s difficulty has raids disabled" %
-			SaveManager.difficulty_label(Global.difficulty_id()))
+			SaveSlots.difficulty_label(Global.difficulty_id()))
 		return false
 	if active:
 		return false

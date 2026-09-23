@@ -62,7 +62,7 @@ func _ready() -> void:
 	Global.visitor_manager = self
 	# Reputation + arrival pacing only; the guest pawns themselves ride in the
 	# pawns section. Independent of every other section's order.
-	SaveManager.register_section(&"visitors", 160, get_save_data, load_save_data)
+	SaveManager.register_section(&"visitors", SaveManager.SECTION_ORDER[&"visitors"], get_save_data, load_save_data)
 	Global.time_manager.slow_tick.connect(_on_slow_tick)
 
 # --- pure pacing math (WI-19 testable, no Global) -----------------------------

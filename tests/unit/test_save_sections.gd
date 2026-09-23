@@ -90,28 +90,28 @@ func test_a_section_whose_owner_was_freed_is_pruned() -> void:
 # No mods are loaded in a test run, so every saved record reads as missing.
 
 func test_a_save_with_no_mods_never_drifts() -> void:
-	assert_eq(SaveManager.mod_drift([]), PackedStringArray())
+	assert_eq(SaveSlots.mod_drift([]), PackedStringArray())
 
 func test_a_pre_wi47_save_reads_as_no_mods() -> void:
 	# The key is absent entirely on legacy saves; summarize() defaults it to [].
 	# If that read as "mods missing", every legacy save would warn.
-	var info: Dictionary = SaveManager.summarize({"version": SaveManager.SAVE_VERSION}, "legacy")
+	var info: Dictionary = SaveSlots.summarize({"version": SaveSlots.SAVE_VERSION}, "legacy")
 	assert_eq(info.get("mods", null), [], "absent means no mods, not unknown mods")
-	assert_eq(SaveManager.mod_drift(info.get("mods", [])), PackedStringArray())
+	assert_eq(SaveSlots.mod_drift(info.get("mods", [])), PackedStringArray())
 
 func test_a_missing_mod_is_named_with_its_version() -> void:
-	var drift: PackedStringArray = SaveManager.mod_drift([{"id": "coolmod", "version": "1.2.0"}])
+	var drift: PackedStringArray = SaveSlots.mod_drift([{"id": "coolmod", "version": "1.2.0"}])
 	assert_eq(drift.size(), 1)
 	assert_string_contains(drift[0], "coolmod")
 	assert_string_contains(drift[0], "1.2.0")
 
 func test_every_missing_mod_is_listed_not_counted() -> void:
 	# "2 mods missing" is not actionable; the player needs the names.
-	var drift: PackedStringArray = SaveManager.mod_drift([
+	var drift: PackedStringArray = SaveSlots.mod_drift([
 		{"id": "one", "version": "1"}, {"id": "two", "version": "2"}])
 	assert_eq(drift.size(), 2)
 
 func test_a_malformed_record_is_skipped_not_crashed_on() -> void:
 	# Hand-edited and truncated saves reach this too. A junk entry is dropped
 	# rather than reported as a missing mod the player can't possibly install.
-	assert_eq(SaveManager.mod_drift([null, "nonsense", {}, {"id": ""}]), PackedStringArray())
+	assert_eq(SaveSlots.mod_drift([null, "nonsense", {}, {"id": ""}]), PackedStringArray())

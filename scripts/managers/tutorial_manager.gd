@@ -50,10 +50,13 @@ const ONBOARDING_CUE: String = "intro"
 ## What the Comms feed files SAI's advice under.
 const HINT_FAMILY: StringName = &"advisory"
 
+## Its order is [constant SaveManager.SECTION_ORDER]'s, and it has no constraint.
+## The load restores the ledger and nothing else; the watchers arm against a
+## finished station because they arm on `game_bootstrapped`, which fires after
+## every section. (This used to claim a place "above every vanilla section", which
+## stopped being true when the vitals, alert and transmission sections landed
+## above it - and never mattered, for the same reason.)
 const SAVE_SECTION: StringName = &"tutorial"
-## Above every vanilla section (visitors is 160): the watchers arm against a
-## finished station, so everything they scan has to be back first.
-const SAVE_ORDER: int = 170
 
 ## The alias a `.dialogue` file reaches the interface through.
 const GUIDE_CONTEXT: String = "guide"
@@ -104,7 +107,8 @@ func _ready() -> void:
 	_skip_requested = Global.skip_onboarding()
 	_load_hints()
 	_build_bridge()
-	SaveManager.register_section(SAVE_SECTION, SAVE_ORDER, get_save_data, load_save_data,
+	SaveManager.register_section(SAVE_SECTION, SaveManager.SECTION_ORDER[SAVE_SECTION],
+		get_save_data, load_save_data,
 		# A missing section is not an empty one. The marker is explicit so the
 		# migration decision is readable at the registration site rather than
 		# inferred from a dictionary that happens to have no keys.

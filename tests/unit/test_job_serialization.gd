@@ -133,13 +133,13 @@ func test_a_haul_from_before_origin_restores_as_nobodys() -> void:
 # --- SaveManager ref-helper null guards ---------------------------------------
 
 func test_component_ref_null_is_empty() -> void:
-	assert_eq(SaveManager.component_ref(null), {}, "null component -> empty ref")
+	assert_eq(SaveRefs.component_ref(null), {}, "null component -> empty ref")
 
 func test_asteroid_ref_null_is_empty() -> void:
-	assert_eq(SaveManager.asteroid_ref(null), {}, "null asteroid -> empty ref")
+	assert_eq(SaveRefs.asteroid_ref(null), {}, "null asteroid -> empty ref")
 
 func test_pile_ref_null_is_empty() -> void:
-	assert_eq(SaveManager.pile_ref(null), {}, "null pile -> empty ref")
+	assert_eq(SaveRefs.pile_ref(null), {}, "null pile -> empty ref")
 
 # --- freed references (WI-68 F23) -------------------------------------------------
 #
@@ -153,23 +153,23 @@ func _freed(node: Node) -> Node:
 	return node
 
 func test_module_ref_of_a_freed_module_is_empty() -> void:
-	assert_eq(SaveManager.module_ref(_freed(ModuleBase.new())), {}, "freed module -> empty ref, not an error")
+	assert_eq(SaveRefs.module_ref(_freed(ModuleBase.new())), {}, "freed module -> empty ref, not an error")
 
 func test_pawn_ref_of_a_freed_pawn_is_empty() -> void:
-	assert_eq(SaveManager.pawn_ref(_freed(PawnBase.new())), {})
+	assert_eq(SaveRefs.pawn_ref(_freed(PawnBase.new())), {})
 
 func test_pile_ref_of_a_freed_pile_is_empty() -> void:
-	assert_eq(SaveManager.pile_ref(_freed(ResourcePile.new())), {})
+	assert_eq(SaveRefs.pile_ref(_freed(ResourcePile.new())), {})
 
 func test_asteroid_ref_of_a_freed_asteroid_is_empty() -> void:
-	assert_eq(SaveManager.asteroid_ref(_freed(AsteroidBase.new())), {})
+	assert_eq(SaveRefs.asteroid_ref(_freed(AsteroidBase.new())), {})
 
 func test_component_ref_of_a_freed_component_is_empty() -> void:
-	assert_eq(SaveManager.component_ref(_freed(ComponentBase.new())), {})
+	assert_eq(SaveRefs.component_ref(_freed(ComponentBase.new())), {})
 
 func test_module_ref_of_the_wrong_kind_is_empty() -> void:
 	var node: Node2D = autofree(Node2D.new())
-	assert_eq(SaveManager.module_ref(node), {}, "a live node that isn't a module refers to nothing")
+	assert_eq(SaveRefs.module_ref(node), {}, "a live node that isn't a module refers to nothing")
 
 # --- a pile lets go of a module that leaves (WI-68 F23) ------------------------------
 
@@ -197,7 +197,7 @@ func test_nothing_is_a_gateway_that_cannot_receive_crew() -> void:
 	assert_false(CrewManager._is_gateway(autofree(ModuleBase.new())), "a module with no recruitment component - the truss the bay became")
 
 func test_resolve_empty_refs_return_null() -> void:
-	assert_null(SaveManager.resolve_module_ref({}), "empty module ref -> null")
-	assert_null(SaveManager.resolve_component_ref({}), "empty component ref -> null")
-	assert_null(SaveManager.resolve_asteroid_ref({}), "empty asteroid ref -> null")
-	assert_null(SaveManager.resolve_pile_ref({}), "empty pile ref -> null")
+	assert_null(SaveRefs.resolve_module_ref({}), "empty module ref -> null")
+	assert_null(SaveRefs.resolve_component_ref({}), "empty component ref -> null")
+	assert_null(SaveRefs.resolve_asteroid_ref({}), "empty asteroid ref -> null")
+	assert_null(SaveRefs.resolve_pile_ref({}), "empty pile ref -> null")

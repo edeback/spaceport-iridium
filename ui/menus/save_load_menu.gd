@@ -40,7 +40,7 @@ func open(new_mode: Mode) -> void:
 		# keypress. Selected rather than just filled: grab_focus below puts the
 		# caret in a field the player may want to replace wholesale, and typing
 		# should overwrite the suggestion rather than append to it.
-		_new_slot_edit.text = SaveManager.sanitize_slot_name(Global.station_display_name())
+		_new_slot_edit.text = SaveSlots.sanitize_slot_name(Global.station_display_name())
 		_new_slot_edit.grab_focus()
 		_new_slot_edit.select_all()
 
@@ -139,7 +139,7 @@ func refresh() -> void:
 		child.queue_free()
 	_title.text = "Save Game" if mode == Mode.SAVE else "Load Game"
 	_new_slot_row.visible = mode == Mode.SAVE
-	var slots: Array[Dictionary] = SaveManager.list_slots()
+	var slots: Array[Dictionary] = SaveSlots.list_slots()
 	_empty_hint.visible = slots.is_empty()
 	for info: Dictionary in slots:
 		_list.add_child(_build_row(info))
@@ -159,7 +159,7 @@ func _build_row(info: Dictionary) -> Control:
 	name_label.add_theme_font_size_override("font_size", 18)
 	text_box.add_child(name_label)
 	var detail := Label.new()
-	detail.text = SaveManager.describe_slot(info)
+	detail.text = SaveSlots.describe_slot(info)
 	detail.add_theme_color_override("font_color", UIPalette.TEXT_SECONDARY)
 	text_box.add_child(detail)
 	var stamp := Label.new()
@@ -169,7 +169,7 @@ func _build_row(info: Dictionary) -> Control:
 	# Mods this save used that aren't loaded now (WI-47 M11). Shown on the row
 	# rather than at load time so the player finds out BEFORE committing - the
 	# whole reason the mod list lives in the cheap meta block.
-	var drift: PackedStringArray = SaveManager.mod_drift(info.get("mods", []))
+	var drift: PackedStringArray = SaveSlots.mod_drift(info.get("mods", []))
 	if not drift.is_empty():
 		var warning := Label.new()
 		warning.text = "⚠ " + ", ".join(drift)
@@ -199,17 +199,17 @@ func _build_row(info: Dictionary) -> Control:
 	delete_btn.text = "Delete"
 	delete_btn.pressed.connect(func() -> void:
 		_ask("Delete '%s'?" % slot, "This cannot be undone.", func() -> void:
-			SaveManager.delete_slot(slot)
+			SaveSlots.delete_slot(slot)
 			refresh()))
 	row.add_child(delete_btn)
 	return row_panel
 
 func _on_new_slot_pressed() -> void:
-	var slot: String = SaveManager.sanitize_slot_name(_new_slot_edit.text)
+	var slot: String = SaveSlots.sanitize_slot_name(_new_slot_edit.text)
 	if slot.is_empty():
 		return
 	_new_slot_edit.text = ""
-	if SaveManager.slot_exists(slot):
+	if SaveSlots.slot_exists(slot):
 		_ask("Overwrite '%s'?" % slot, "That save will be replaced by the current game.",
 			func() -> void: slot_chosen.emit(slot))
 		return

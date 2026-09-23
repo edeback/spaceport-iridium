@@ -16,6 +16,13 @@ func _ready() -> void:
 	super()
 	tint = ARC_TINT
 
+## Never saved (WI-26). The inspector is driven by a runtime-only InspectionRunner
+## that a load doesn't restore, so a saved inspector would dangle; instead the
+## in-progress inspection cancels cleanly on load and the offer re-rolls. Guest
+## visitors, whose behaviour is their own needs, ARE saved.
+func is_saved() -> bool:
+	return false
+
 ## Only ever run what the runner explicitly queued (a follow-up leg); otherwise
 ## hold position. Deliberately does NOT consult JobManager or wander, mirroring
 ## MiningDronePawn's narrowed start_job.

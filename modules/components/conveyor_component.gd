@@ -389,11 +389,11 @@ func get_save_data() -> Dictionary:
 		if lane.resource != null and lane.resource.id != &"":
 			d["resource"] = String(lane.resource.id)
 		if lane.source != null and is_instance_valid(lane.source):
-			d["source"] = SaveManager.component_ref(lane.source)
+			d["source"] = SaveRefs.component_ref(lane.source)
 		if lane.destination != null and is_instance_valid(lane.destination):
-			d["destination"] = SaveManager.component_ref(lane.destination)
+			d["destination"] = SaveRefs.component_ref(lane.destination)
 		if not lane.buffer.is_empty():
-			d["buffer"] = SaveManager.stacks_to_dicts(lane.buffer.stacks)
+			d["buffer"] = SaveRefs.stacks_to_dicts(lane.buffer.stacks)
 		lane_dicts.append(d)
 	return {"buffer_size": buffer_size, "lanes": lane_dicts}
 
@@ -411,11 +411,11 @@ func load_save_data(data: Dictionary) -> void:
 		if res_id != "":
 			lane.resource = Global.save_manager.get_resource_by_id(StringName(res_id))
 			lane.buffer.resource_data = lane.resource
-		lane.source = SaveManager.resolve_component_ref(d.get("source", {}))
-		lane.destination = SaveManager.resolve_component_ref(d.get("destination", {}))
+		lane.source = SaveRefs.resolve_component_ref(d.get("source", {}))
+		lane.destination = SaveRefs.resolve_component_ref(d.get("destination", {}))
 		if lane.resource != null:
 			for stack_dict: Dictionary in d.get("buffer", []):
-				var stack: ResourceStack = SaveManager.stack_from_dict(lane.resource, stack_dict)
+				var stack: ResourceStack = SaveRefs.stack_from_dict(lane.resource, stack_dict)
 				if stack.amount > 0:
 					lane.buffer.add_stack(stack)
 	lanes_changed.emit()

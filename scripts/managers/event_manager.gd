@@ -44,7 +44,7 @@ func _ready() -> void:
 	Global.event_manager = self
 	# After pawns: station-wide happiness effects re-apply to the loaded crew.
 	# After market: supply shocks re-register without re-snapping stock.
-	SaveManager.register_section(&"events", 130, get_save_data, load_save_data)
+	SaveManager.register_section(&"events", SaveManager.SECTION_ORDER[&"events"], get_save_data, load_save_data)
 	_load_events()
 	Global.time_manager.cycle_changed.connect(_on_cycle_changed)
 	Global.time_manager.hour_changed.connect(_on_hour_changed)

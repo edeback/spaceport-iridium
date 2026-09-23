@@ -30,7 +30,9 @@ signal market_updated
 
 func _ready() -> void:
 	Global.market_manager = self
-	SaveManager.register_section(&"market", 40, get_save_data, load_save_data)
+	# Before traders and events: a visit's price snapshot and an event's supply
+	# shock both restore against the stock this puts back.
+	SaveManager.register_section(&"market", SaveManager.SECTION_ORDER[&"market"], get_save_data, load_save_data)
 	for resource: ResourceData in _tradable_resources():
 		market_data[resource] = resource.default_market_supply
 	# Market supply drifts back toward default once per game-hour.

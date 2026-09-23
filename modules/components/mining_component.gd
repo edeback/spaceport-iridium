@@ -3,9 +3,15 @@ extends ComponentBase
 
 @export var output_storage: StorageComponent
 @export var power_consumer: PowerConsumptionComponent
-## Exported so a mod's mining module can fly its own drone (WI-47 M6); the vanilla
-## scene is the default, so no existing module scene needed touching.
-@export var mining_drone_scene: PackedScene = preload("res://pawns/mining_drone_pawn.tscn")
+## Exported so a mod's mining module can fly its own drone (WI-47 M6). Left empty,
+## the bay flies the vanilla drone, so no existing module scene needed touching.
+##
+## Empty rather than a preload for the reason LogisticsBayComponent's hauler scene
+## is (WI-73): mining_drone_pawn.gd names this class, and a preload made the pair a
+## load cycle. This one never fired only because MiningComponent sorts before
+## MiningDronePawn in the global class list the dialogue plugin walks.
+@export var mining_drone_scene: PackedScene = null
+const DEFAULT_DRONE_SCENE: String = "res://pawns/mining_drone_pawn.tscn"
 @export var max_drones: int = 3
 @export var drone_respawn_seconds: float = 5.0
 
@@ -75,6 +81,8 @@ func _process(delta: float) -> void:
 		_respawn_time_left = -1.0
 
 func build_drone() -> void:
+	if mining_drone_scene == null:
+		mining_drone_scene = load(DEFAULT_DRONE_SCENE) as PackedScene
 	var new_drone: MiningDronePawn = mining_drone_scene.instantiate() as MiningDronePawn
 	new_drone.global_position = Global.cell_to_world(owner_module.module_cell, true)
 	new_drone.parent_mining_component = self

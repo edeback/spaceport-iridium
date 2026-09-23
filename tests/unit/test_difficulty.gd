@@ -128,11 +128,11 @@ func test_wage_scaling_composes_with_the_wage_fraction() -> void:
 	assert_eq(EconomyManager.scaled_cost(base, 1.35), 54, "Hard pays 54")
 	assert_eq(EconomyManager.scaled_cost(base, 0.8), 32, "Easy pays 32")
 
-# --- save round-trip (SaveManager.read_difficulty / summarize) ----------------
+# --- save round-trip (SaveSlots.read_difficulty / summarize) ----------------
 
 func _envelope(sections: Dictionary, meta: Dictionary = {}) -> Dictionary:
 	var data: Dictionary = {
-		"version": SaveManager.SAVE_VERSION,
+		"version": SaveSlots.SAVE_VERSION,
 		"timestamp": "2026-07-22T10:11:12",
 		"sections": sections,
 	}
@@ -141,31 +141,31 @@ func _envelope(sections: Dictionary, meta: Dictionary = {}) -> Dictionary:
 	return data
 
 func test_difficulty_reads_from_the_sections_field() -> void:
-	assert_eq(SaveManager.read_difficulty(_envelope({"difficulty": "hard"})), &"hard")
+	assert_eq(SaveSlots.read_difficulty(_envelope({"difficulty": "hard"})), &"hard")
 
 func test_sections_field_wins_over_meta() -> void:
 	# meta is a display summary; the section is the authoritative field.
 	var data: Dictionary = _envelope({"difficulty": "hard"}, {"difficulty": "peaceful"})
-	assert_eq(SaveManager.read_difficulty(data), &"hard")
+	assert_eq(SaveSlots.read_difficulty(data), &"hard")
 
 func test_difficulty_falls_back_to_meta() -> void:
-	assert_eq(SaveManager.read_difficulty(_envelope({}, {"difficulty": "easy"})), &"easy")
+	assert_eq(SaveSlots.read_difficulty(_envelope({}, {"difficulty": "easy"})), &"easy")
 
 func test_pre_wi37_saves_load_as_normal() -> void:
 	# Neither key present anywhere - the migration default.
-	assert_eq(SaveManager.read_difficulty(_envelope({"time": {"cycle": 3}})), DifficultyData.DEFAULT_ID)
+	assert_eq(SaveSlots.read_difficulty(_envelope({"time": {"cycle": 3}})), DifficultyData.DEFAULT_ID)
 
 func test_slot_summary_carries_the_difficulty() -> void:
-	var info: Dictionary = SaveManager.summarize(_envelope({"difficulty": "peaceful"}), "alpha")
+	var info: Dictionary = SaveSlots.summarize(_envelope({"difficulty": "peaceful"}), "alpha")
 	assert_eq(String(info["difficulty"]), "peaceful")
-	assert_string_contains(SaveManager.describe_slot(info), "Peaceful",
+	assert_string_contains(SaveSlots.describe_slot(info), "Peaceful",
 		"the slot subtitle names the difficulty it was played at")
 
 func test_slot_summary_of_a_legacy_save_reads_normal() -> void:
-	var info: Dictionary = SaveManager.summarize(_envelope({}), "legacy")
+	var info: Dictionary = SaveSlots.summarize(_envelope({}), "legacy")
 	assert_eq(String(info["difficulty"]), String(DifficultyData.DEFAULT_ID))
 
 func test_difficulty_label_falls_back_to_the_raw_id() -> void:
-	assert_eq(SaveManager.difficulty_label(&"hard"), "Hard")
-	assert_eq(SaveManager.difficulty_label(&"brutal"), "Brutal",
+	assert_eq(SaveSlots.difficulty_label(&"hard"), "Hard")
+	assert_eq(SaveSlots.difficulty_label(&"brutal"), "Brutal",
 		"an id with no surviving .tres still renders readably")

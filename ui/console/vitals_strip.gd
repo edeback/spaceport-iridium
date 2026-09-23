@@ -47,11 +47,10 @@ const DERIVED_ICONS: Dictionary[StringName, Texture2D] = {
 	LedgerModel.DERIVED_CREW: preload("res://ui/icons/console/crew.svg"),
 }
 
-## Save section id and restore order. Late: pins only need resource ids to
-## resolve against, and those come from a content scan rather than from another
-## section, so nothing here constrains anything else.
+## Save section id. Its order is [constant SaveManager.SECTION_ORDER]'s, and it has
+## no constraint: pins only need resource ids to resolve against, and those come
+## from a content scan rather than from another section.
 const SAVE_SECTION: StringName = &"vitals"
-const SAVE_ORDER: int = 200
 
 # --- tuning -------------------------------------------------------------------
 # Exported rather than const because these are the numbers a playtest moves, and
@@ -98,7 +97,8 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_build_frame()
-	SaveManager.register_section(SAVE_SECTION, SAVE_ORDER, get_save_data, load_save_data)
+	SaveManager.register_section(SAVE_SECTION, SaveManager.SECTION_ORDER[SAVE_SECTION],
+		get_save_data, load_save_data)
 	_connect_sources()
 	# The designed six until a save says otherwise. A load overwrites this one
 	# deferred tick later through the section; a new game keeps it.

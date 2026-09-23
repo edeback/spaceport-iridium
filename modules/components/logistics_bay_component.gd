@@ -12,9 +12,16 @@ extends ComponentBase
 
 ## Which robot this bay builds. Exported so a mod's logistics module can ship its
 ## own hauler (WI-47 M6) - it was a hardcoded res:// path string with a static
-## cache, which nothing outside this file could reach. The vanilla scene is the
-## default, so no existing module scene needed touching.
-@export var hauler_robot_scene: PackedScene = preload("res://pawns/hauler_robot.tscn")
+## cache, which nothing outside this file could reach. Left empty, the bay builds
+## the vanilla hauler, so no existing module scene needed touching.
+##
+## Empty rather than a preload of the vanilla scene (WI-73): hauler_robot.gd names
+## this class, so a preload here made the two scripts a load cycle, and loading the
+## robot's script first failed with "Busy" on hauler_robot.tscn. Nothing loaded it
+## first until WI-73 - SaveManager's pawn section named every pawn kind and pulled
+## this bay in ahead of it - so the cycle was there all along, hidden by load order.
+@export var hauler_robot_scene: PackedScene = null
+const DEFAULT_HAULER_SCENE: String = "res://pawns/hauler_robot.tscn"
 
 ## Base cap on owned robots; upgrades raise the effective cap via Stats.LOGISTICS_MAX_ROBOTS.
 @export var max_robots: int = 3
@@ -81,6 +88,8 @@ func buy_robot() -> bool:
 	return true
 
 func _spawn_robot() -> HaulerRobotPawn:
+	if hauler_robot_scene == null:
+		hauler_robot_scene = load(DEFAULT_HAULER_SCENE) as PackedScene
 	var robot: HaulerRobotPawn = hauler_robot_scene.instantiate() as HaulerRobotPawn
 	robot.parent_bay = self
 	# Add to the tree before assigning current_module: its setter reparents to the

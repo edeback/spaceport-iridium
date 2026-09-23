@@ -41,6 +41,20 @@ func _notify_owner_removed() -> void:
 
 # --- persistence ------------------------------------------------------------
 
+## The bay's MiningComponent, as a component ref. A drone with no bay writes no
+## key, which reads back as no bay.
+func save_kind_data(entry: Dictionary) -> void:
+	super(entry)
+	if parent_mining_component != null:
+		entry["mining_comp"] = SaveRefs.component_ref(parent_mining_component)
+
+## Modules load before pawns, so the bay is already placed and the drone can
+## re-register with it. A ref that no longer resolves hands set_owner_component a
+## null, which leaves the drone ownerless rather than erroring.
+func load_kind_data(entry: Dictionary) -> void:
+	super(entry)
+	set_owner_component(SaveRefs.resolve_component_ref(entry.get("mining_comp", {})) as MiningComponent)
+
 ## Modules load before pawns, so register this drone with its MiningComponent
 func set_owner_component(mining_component: MiningComponent) -> void:
 	if mining_component:

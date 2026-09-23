@@ -249,7 +249,7 @@ func _upkeep_detail(economy: EconomyManager) -> Control:
 	# the charged total above them.
 	var scaled: int = economy.upkeep_total()
 	if scaled != base:
-		var difficulty_name: String = SaveManager.difficulty_label(Global.difficulty_id())
+		var difficulty_name: String = SaveSlots.difficulty_label(Global.difficulty_id())
 		box.add_child(_line("    %s rate" % difficulty_name, "%+d" % (base - scaled), UIPalette.TEXT_SECONDARY))
 	return box
 

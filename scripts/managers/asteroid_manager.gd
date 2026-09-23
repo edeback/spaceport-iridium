@@ -48,7 +48,7 @@ var _spawn_gaps: Dictionary[StringName, float] = {}
 ## Monotonic id source for asteroid save refs (WI-21). Instance-scoped so a
 ## fresh scene starts clean; load_save_data restores it past every saved id so
 ## post-load spawns never collide with restored asteroids. One id space across
-## every kind of body, which is why SaveManager.asteroid_ref needed no edit.
+## every kind of body, which is why SaveRefs.asteroid_ref needed no edit.
 var _next_asteroid_id: int = 0
 
 ## Scanned profiles, id-ordered. See _profiles().
@@ -60,8 +60,10 @@ const LEGACY_PROFILE_ID: StringName = &"asteroid"
 
 func _ready() -> void:
 	Global.asteroid_manager = self
-	# After world, before pawns: mining jobs resolve their asteroid by id.
-	SaveManager.register_section(&"asteroids", 70, get_save_data, load_save_data)
+	# Before pawns: restored mining jobs resolve their asteroid by id. Its place
+	# after world is not a constraint - nothing in this load reads a module, and
+	# nothing in the world's load reads a body.
+	SaveManager.register_section(&"asteroids", SaveManager.SECTION_ORDER[&"asteroids"], get_save_data, load_save_data)
 
 ## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
 ## so the guards around the game already take their null branch after a Quit to
@@ -364,7 +366,7 @@ func _gap_for(profile: SpaceBodyProfile) -> float:
 	return _spawn_gaps[profile.id]
 
 ## Live asteroid with this save id, or null (mined dry / despawned / bad ref).
-## Backs SaveManager.resolve_asteroid_ref for mining-job restore.
+## Backs SaveRefs.resolve_asteroid_ref for mining-job restore.
 func get_asteroid_by_id(id: int) -> AsteroidBase:
 	if id < 0:
 		return null

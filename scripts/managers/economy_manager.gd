@@ -149,7 +149,7 @@ func _ready() -> void:
 	# After resources: the ledger/loan/insolvency counters restore against the
 	# restored balances. No phantom settlement fires - time's restore above
 	# announces the calendar rather than replaying cycle_changed (WI-38 A3).
-	SaveManager.register_section(&"economy", 50, get_save_data, load_save_data)
+	SaveManager.register_section(&"economy", SaveManager.SECTION_ORDER[&"economy"], get_save_data, load_save_data)
 	_current = _new_record(Global.time_manager.cycle)
 	Global.time_manager.cycle_changed.connect(_on_cycle_changed)
 	SignalBus.game_bootstrapped.connect(_on_game_bootstrapped)

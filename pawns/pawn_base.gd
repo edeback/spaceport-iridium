@@ -28,10 +28,10 @@ extends Node2D
 ## What this pawn cost to hire (WI-22), stored so WI-25 wages can read it.
 ## Starting crew get the base hire_cost; hires get their candidate's price.
 @export var hire_price: int = 0
-## Visitor pawns (WI-26 ARC inspector; WI-33 guests reuse this) are transient:
-## not crew, never saved, never draw a wage. CrewManager.get_crew and the
-## SaveManager pawn section both skip them, the same way both skip drones.
-## WI-33 does save GUEST visitors (see SaveManager); the inspector stays unsaved.
+## Visitor pawns (WI-26 ARC inspector; WI-33 guests reuse this) are not crew and
+## never draw a wage: CrewManager.get_crew skips them, the same way it skips
+## drones. Whether one is SAVED is a different question, answered by is_saved():
+## a guest is (WI-33), the inspector is not.
 @export var is_visitor: bool = false
 ## Personal wallet (WI-33). Crew accumulate this as WI-25 wages route to the pawn
 ## instead of vanishing, and spend it at shops/hotels/dining (money returns to
@@ -609,6 +609,43 @@ func update_layer_and_sprite() -> void:
 		if current_layer != current_module.module_data.interaction_layer:
 			current_layer = current_module.module_data.interaction_layer
 			reparent(Global.world_manager.get_canvas_for_layer(current_layer))
+
+# --- persistence: what a pawn KIND adds (WI-73 §3) -----------------------------
+#
+# A pawn's save entry is three layers. The fields every pawn has - name, id, tint,
+# wallet, position, schedule, carried stacks - are SaveManager's pawn section's,
+# because several have to be set before add_child and that ordering reads best in
+# one place. Each component writes its own block (WI-47 M2). What is left is the
+# handful of fields one kind has and the others don't, and those are these four
+# hooks. They were an `if pawn is X` chain in SaveManager, which a modded pawn
+# kind could not join: this is the hole M2 closed for components, one level up.
+#
+# An override that adds a field calls super() first, so a robot subclass keeps
+# its base's keys and writes them in the same place in the entry. The key names
+# are in every save ever written; test_pawn_kind_save.gd pins them.
+
+## Whether this pawn is written to the save at all. Asked before anything else, so
+## a pawn that says no costs nothing and leaves no entry.
+func is_saved() -> bool:
+	return true
+
+## Adds this kind's own fields to `entry`. Called after the component blocks and
+## before the jobs, which is where these keys have always sat in the entry.
+func save_kind_data(_entry: Dictionary) -> void:
+	pass
+
+## Reads this kind's fields that `_ready` needs to see, before add_child. Only for
+## a field `_ready` would otherwise allocate or overwrite - everything else waits
+## for [method load_kind_data], when the pawn is in the tree.
+func load_kind_data_before_tree(_entry: Dictionary) -> void:
+	pass
+
+## Reads this kind's own fields back. Called in the tree, after the component
+## blocks, the schedule and the carried stacks, and before the jobs - so a kind
+## that re-registers with an owner here is registered by the time its restored job
+## is offered back to that owner.
+func load_kind_data(_entry: Dictionary) -> void:
+	pass
 
 func _on_collision_clicked(viewport: Node, event: InputEvent, shape_idx: int) -> void:
 	if event.is_action_pressed("build"):

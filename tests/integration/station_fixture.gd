@@ -108,7 +108,7 @@ func boot(options: Dictionary = {}) -> bool:
 	if _errors == null:
 		_errors = ErrorLog.new()
 		OS.add_logger(_errors)
-	SaveManager.set_save_dir_for_test(SAVE_DIR)
+	SaveSlots.set_save_dir_for_test(SAVE_DIR)
 	_delete_save_dir()
 	SaveManager.clear_pending_load()
 	Global.clear_staged_start()
@@ -159,9 +159,9 @@ func save() -> bool:
 
 ## The fixture slot's parsed envelope, or {} if nothing has been saved.
 func read_save() -> Dictionary:
-	if not SaveManager.slot_exists(SLOT):
+	if not SaveSlots.slot_exists(SLOT):
 		return {}
-	return SaveManager.read_slot(SLOT)
+	return SaveSlots.read_slot(SLOT)
 
 ## Errors raised outside any test body since boot - what [method finish] will
 ## report. The self-check suite reads this to prove the path works.
@@ -179,7 +179,7 @@ func clear_errors_outside_test() -> void:
 func teardown() -> void:
 	await _free_scene()
 	_delete_save_dir()
-	SaveManager.set_save_dir_for_test(SaveManager.SAVE_DIR)
+	SaveSlots.set_save_dir_for_test(SaveSlots.SAVE_DIR)
 	SaveManager.clear_pending_load()
 	Global.clear_staged_start()
 	Global.clear_difficulty()

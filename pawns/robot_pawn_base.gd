@@ -59,9 +59,10 @@ func _ready() -> void:
 	super()
 	# Identity: nothing else names a robot, and an unnamed pawn shows up as an
 	# anonymous "Crew member" everywhere. A loaded robot arrives with both fields
-	# already set (SaveManager writes them before add_child) and skips this; a
-	# save from before robots were named has neither, so its robots get numbered
-	# here, in load order, exactly like freshly built ones.
+	# already set (the pawn section writes the name, load_kind_data_before_tree the
+	# number, both before add_child) and skips this; a save from before robots
+	# were named has neither, so its robots get numbered here, in load order,
+	# exactly like freshly built ones.
 	if robot_index <= 0:
 		robot_index = _allocate_robot_index()
 	if pawn_name.is_empty():
@@ -92,6 +93,20 @@ func _ready() -> void:
 	integrity_component.reset_full()
 	components.append(integrity_component)
 	add_child(integrity_component)
+
+## Robot number ("Mining Droid 2" -> 2), saved with the name it built so a robot
+## produced after the load can't be handed a number a restored robot is already
+## wearing.
+func save_kind_data(entry: Dictionary) -> void:
+	super(entry)
+	entry["robot_index"] = robot_index
+
+## Before add_child, for the same reason pawn_id is: _ready allocates a number only
+## when it arrives unset. A save from before robots were named has no key, reads
+## back 0, and gets numbered at _ready in load order, as if just built.
+func load_kind_data_before_tree(entry: Dictionary) -> void:
+	super(entry)
+	robot_index = int(entry.get("robot_index", 0))
 
 ## Designation shown in UI: the scene's override first, then the per-class default.
 func get_designation() -> String:

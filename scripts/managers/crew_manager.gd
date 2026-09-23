@@ -56,8 +56,11 @@ var _game_over_fired: bool = false
 
 func _ready() -> void:
 	Global.crew_manager = self
-	# After world: pending hires resolve their bay by layer+cell at arrival.
-	SaveManager.register_section(&"crew", 110, get_save_data, load_save_data)
+	# After world and pawns. Nothing resolves during the load itself - a pending
+	# hire finds its bay by layer+cell when its shuttle lands - but the load ends
+	# on hire_candidates_changed, which has the Crew panel re-read the crew count
+	# and the bunks, and both of those have to be back by then.
+	SaveManager.register_section(&"crew", SaveManager.SECTION_ORDER[&"crew"], get_save_data, load_save_data)
 	SignalBus.crew_resigned.connect(_on_crew_resigned)
 	# A trader visit refreshes the recruitment offers (WI-22).
 	SignalBus.trader_arrived.connect(_on_trader_arrived)
@@ -198,7 +201,7 @@ func request_hire(bay: ModuleBase, candidate: HireCandidate) -> bool:
 	Global.resource_manager.credit_resource.force_withdraw(candidate.price)
 	Global.economy_manager.record_external_cost(candidate.price, &"hiring") # WI-68 F4
 	_candidates.erase(candidate)
-	_pending.add(SaveManager.module_ref(bay), candidate.to_dict(), arrival_delay_hours)
+	_pending.add(SaveRefs.module_ref(bay), candidate.to_dict(), arrival_delay_hours)
 	SignalBus.hire_candidates_changed.emit()
 	return true
 
@@ -254,7 +257,7 @@ func _process(delta: float) -> void:
 ## The hire's delay is up. It stays pending until it is settled here or when its
 ## shuttle docks - never in between, or the lose check sees an empty station.
 func _arrive(hire: Dictionary) -> void:
-	var bay: ModuleBase = SaveManager.resolve_module_ref(hire.get("bay", {}))
+	var bay: ModuleBase = SaveRefs.resolve_module_ref(hire.get("bay", {}))
 	var candidate: HireCandidate = HireCandidate.from_dict(hire.get("candidate", {}))
 	if not _is_gateway(bay):
 		_pending.settle(hire)

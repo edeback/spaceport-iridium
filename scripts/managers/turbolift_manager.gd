@@ -12,7 +12,7 @@ var last_turboshaft: int = 0
 func _ready() -> void:
 	Global.turbolift_manager = self
 	# After world: shafts have re-merged from module adjacency by now.
-	SaveManager.register_section(&"turbolifts", 80, get_save_data, load_save_data)
+	SaveManager.register_section(&"turbolifts", SaveManager.SECTION_ORDER[&"turbolifts"], get_save_data, load_save_data)
 
 ## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
 ## so the guards around the game already take their null branch after a Quit to

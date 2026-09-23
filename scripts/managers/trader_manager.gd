@@ -57,7 +57,7 @@ func _ready() -> void:
 	Global.trader_manager = self
 	# After world AND market: an active visit re-parks its shuttle at the bay, and
 	# its price snapshot/stock restore by resource id.
-	SaveManager.register_section(&"traders", 120, get_save_data, load_save_data)
+	SaveManager.register_section(&"traders", SaveManager.SECTION_ORDER[&"traders"], get_save_data, load_save_data)
 	hours_to_next_visit = first_visit_hours
 	Global.time_manager.slow_tick.connect(_on_slow_tick)
 
@@ -107,7 +107,7 @@ func _begin_visit() -> void:
 	else:
 		trader = _build_generic_trader()
 	_snapshot_prices()
-	_bay_ref = SaveManager.module_ref(bay)
+	_bay_ref = SaveRefs.module_ref(bay)
 	cargo_used = 0
 	committed_buys.clear()
 	committed_sells.clear()
@@ -166,7 +166,7 @@ func find_trade_bay() -> ModuleBase:
 	return null
 
 func active_bay_trade_component() -> TradeComponent:
-	var bay: ModuleBase = SaveManager.resolve_module_ref(_bay_ref)
+	var bay: ModuleBase = SaveRefs.resolve_module_ref(_bay_ref)
 	if bay == null or not is_instance_valid(bay):
 		return null
 	return bay.get_component_by_type(TradeComponent) as TradeComponent
@@ -386,7 +386,7 @@ func load_save_data(data: Dictionary) -> void:
 	_bay_ref = visit.get("bay", {})
 	_departure_warned = bool(visit.get("warned", false))
 	# Re-spawn the shuttle already parked at the dock (no fly-in, no popup).
-	var bay: ModuleBase = SaveManager.resolve_module_ref(_bay_ref)
+	var bay: ModuleBase = SaveRefs.resolve_module_ref(_bay_ref)
 	if bay != null and trader_shuttle_scene != null:
 		_shuttle = trader_shuttle_scene.instantiate() as ArrivalShuttle
 		Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE).add_child(_shuttle)
