@@ -38,7 +38,7 @@ func test_a_save_written_straight_after_a_load_is_the_save_that_was_loaded() -> 
 
 	assert_eq(StationFixture.diff(first_after_load["sections"], second_after_load["sections"]),
 		PackedStringArray(), "post-load saves are identical")
-	assert_eq(StationFixture.diff(restored_form(live["sections"]), first_after_load["sections"]),
+	assert_eq(StationFixture.diff(StationFixture.restored_form(live["sections"]), first_after_load["sections"]),
 		PackedStringArray(), "the live save differs only by where the in-flight job sits")
 	assert_true(fx.check_invariants("after two reloads"))
 	assert_true(await fx.tick(5.0), "and the reloaded station runs")
@@ -65,19 +65,6 @@ func test_the_in_flight_job_moves_to_the_head_of_the_queue() -> void:
 			assert_eq(StationFixture.diff(before["current_job"], queue[0]), PackedStringArray())
 			moved += 1
 	assert_gt(moved, 0, "at least one in-flight job was saved")
-
-## The live save rewritten into the form a load produces: each pawn's current
-## job moved to the head of its queue.
-static func restored_form(sections: Dictionary) -> Dictionary:
-	var out: Dictionary = sections.duplicate(true)
-	for entry: Dictionary in out.get("pawns", []):
-		if not entry.has("current_job"):
-			continue
-		var queue: Array = [entry["current_job"]]
-		queue.append_array(entry.get("job_queue", []))
-		entry.erase("current_job")
-		entry["job_queue"] = queue
-	return out
 
 ## A blueprint that needs hauling and a pile to collect, then sim until some pawn
 ## holds a job that saves.

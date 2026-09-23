@@ -79,21 +79,34 @@ func _get_shaft_at_cell(cell: Vector2i) -> TurboliftShaft:
 
 # --- persistence ------------------------------------------------------------
 
-## Per-shaft state (cab count, force shutdown), keyed by the shaft's topmost
-## floor cell. Shafts rebuild from module adjacency during the world load, so
-## group ids regenerate fresh - nothing persists them, which also sidesteps
-## any id-collision worries between runs. floor_enabled travels in each
+## Per-shaft state (cab count, force shutdown, and the cabs themselves), keyed by
+## the shaft's topmost floor cell. Shafts rebuild from module adjacency during the
+## world load, so group ids regenerate fresh - nothing persists them, which also
+## sidesteps any id-collision worries between runs. floor_enabled travels in each
 ## module's own save entry.
+##
+## The cabs are saved as they stand since WI-75: where each is in the shaft, what
+## it is doing, how long its door has left and the order its rides are in. Before,
+## a load rebuilt none and a pawn aboard one reloaded standing on a floor; now the
+## ride carries on from where it was, which is what `cab_list` is for. `cabs` keeps
+## its old meaning, the budget.
 func get_save_data() -> Dictionary:
 	var shafts_out: Array = []
 	for shaft: TurboliftShaft in _turbolift_shafts:
 		if shaft.floors.is_empty():
 			continue
-		shafts_out.append({
+		var entry: Dictionary = {
 			"cell": [shaft.floors[0].module_cell.x, shaft.floors[0].module_cell.y],
 			"cabs": shaft.max_cabs,
 			"force_shutdown": shaft.force_shutdown,
-		})
+		}
+		var cab_list: Array = []
+		for cab: TurboliftCab in shaft.cabs:
+			if is_instance_valid(cab):
+				cab_list.append(cab.to_dict())
+		if not cab_list.is_empty():
+			entry["cab_list"] = cab_list
+		shafts_out.append(entry)
 	return {"shafts": shafts_out}
 
 ## Runs after the world section: modules are placed and shafts re-merged, so
@@ -115,6 +128,33 @@ func load_save_data(data: Dictionary) -> void:
 		# one cab per floor. The save is the authority. Floored at 1 because a
 		# shaft with no cab budget serves nobody, and a pre-WI-45 save has no key.
 		shaft.max_cabs = maxi(int(entry.get("cabs", 1)), 1)
+		# The cabs as they stood (WI-75), in the shaft's order - _best_cab_for
+		# breaks ties by it. Their rides come back with their pawns, which load
+		# after this section, and slot into the order each cab saved.
+		for cab_data: Dictionary in entry.get("cab_list", []):
+			shaft.create_new_cab()
+			shaft.cabs[shaft.cabs.size() - 1].load_dict(cab_data)
+
+## A save's name for a cab: its shaft's topmost floor cell and its place in that
+## shaft's list. A ride holds its cab through this (WI-75).
+func cab_ref(cab: Variant) -> Dictionary:
+	if not is_instance_valid(cab):
+		return {}
+	var live_cab: TurboliftCab = cab as TurboliftCab
+	if live_cab == null or live_cab.shaft == null or live_cab.shaft.floors.is_empty():
+		return {}
+	var top: Vector2i = live_cab.shaft.floors[0].module_cell
+	return {"shaft": [top.x, top.y], "index": live_cab.shaft.cabs.find(live_cab)}
+
+func resolve_cab_ref(ref: Dictionary) -> TurboliftCab:
+	var cell_arr: Array = ref.get("shaft", [])
+	if cell_arr.size() != 2:
+		return null
+	var shaft: TurboliftShaft = _get_shaft_at_cell(Vector2i(int(cell_arr[0]), int(cell_arr[1])))
+	var index: int = int(ref.get("index", -1))
+	if shaft == null or index < 0 or index >= shaft.cabs.size():
+		return null
+	return shaft.cabs[index]
 
 func _merge_shafts(primary_shaft: TurboliftShaft, secondary_shaft: TurboliftShaft) -> TurboliftShaft:
 	if primary_shaft == secondary_shaft:

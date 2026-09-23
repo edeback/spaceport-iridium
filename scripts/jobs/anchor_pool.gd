@@ -26,12 +26,20 @@ class Claim:
 
 var path: PathComponent = null
 var type: AnchorDef.AnchorType = AnchorDef.AnchorType.STAND
+## The anchor the next claim should get if it is free - see prefer().
+var _preferred: AnchorDef = null
 
 static func make(path_component: PathComponent, anchor_type: AnchorDef.AnchorType) -> AnchorPool:
 	var pool := AnchorPool.new()
 	pool.path = path_component
 	pool.type = anchor_type
 	return pool
+
+## Asks the next claim for `anchor` specifically, if it is this pool's type and
+## nobody holds it. A resumed walk re-takes the bunk it was heading to this way
+## (WI-75). One claim only: the preference is spent whether or not it is honoured.
+func prefer(anchor: AnchorDef) -> void:
+	_preferred = anchor if anchor != null and anchor.type == type else null
 
 func can_take_claim(kind: int, _amount: int) -> bool:
 	return kind == ClaimSpec.Kind.ANCHOR and path != null and is_instance_valid(path)
@@ -44,7 +52,12 @@ func take_claim(kind: int, amount: int) -> Variant:
 	if not can_take_claim(kind, amount):
 		return null
 	var holder := Claim.new()
-	holder.anchor = path.claim_anchor(type, holder)
+	var preferred: AnchorDef = _preferred
+	_preferred = null
+	if preferred != null and path.claim_specific_anchor(preferred, holder):
+		holder.anchor = preferred
+	else:
+		holder.anchor = path.claim_anchor(type, holder)
 	return holder
 
 func release_claim(_kind: int, _amount: int, payload: Variant) -> void:

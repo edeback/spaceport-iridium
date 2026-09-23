@@ -182,6 +182,8 @@ Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", 
 
 > *Closed by [[WI-71_Reference_Hygiene]] (2026-09-19).* The two defects only. `PawnMovementComponent` records the hooking module's instance id and clears the latch from its existing `module_removed` handler; the two door behaviours and the teleporter re-check their sprite after every await (`Behavior_SlidingDoor.set_door` takes it as `Variant`, since every caller reaches it after one). **The coroutines themselves are [[WI-75_Movement_Without_Coroutines]]**, per the WI's §0.3: `_busy_in_hook` and `PathBehaviorContext.cancelled` both stay until the whole movement await surface goes at once.
 
+> *Rework done by [[WI-75_Movement_Without_Coroutines]] (2026-09-23).* The hooks answer with a `PathHookResult` instead of being awaited, and a pawn at a door is in the movement component's `Waiting` state, which a removed module ends on the pawn's next frame. The latch, `PathBehaviorContext` and its `cancelled` signal are deleted; `is_traveling()` is `state != Idle`. WI-71's two F28 tests now drive a real crew member to the starting airlock and destroy it under them.
+
 
 ### B. Invariant violations / design debt
 
@@ -250,6 +252,14 @@ Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", 
 
 **F42. The v1→v2 save migration has never run - found by WI-73, left as it is.** `SaveSlots._migrate_1_to_2` (it moved out of `SaveManager` in WI-73 §4, unchanged) erases `current_job`/`job_queue` from `data["pawns"]`, but the pawns of every envelope ever written are under `data["sections"]["pawns"]`. So the step only bumps the version. Nothing is lost by it: a v1 job entry has a `type` and no `def`, `Job.from_dict` resolves `def` through `JobDataRegistry`, gets nothing, and drops the job silently - which is exactly what the migration meant to do. It is recorded rather than fixed because §4 was meant to be a pure move, and a migration fix wants its own test. It matters mainly as a template: it is the only migration with no test, and the next one will be written by copying one of these two.
 
+### H. Found by WI-75 (2026-09-23)
+
+**F43. Saves wrote floats to 14 significant digits, so every timer came back slightly off - confirmed and fixed in [[WI-75_Movement_Without_Coroutines]].** `SaveSlots.write_slot` used `JSON.stringify(data, "\t")`, whose default writes a float with 14 significant digits; a double needs 17 to round-trip. Measured with a probe: 1.0 minus seventeen sixtieths saved as `0.716666666666666` and loaded unequal. The error is a few 1e-15, invisible everywhere - until WI-75 made a reload promise to change nothing: a door wait or a cab's stop whose time left sits within that error of a frame boundary ends a frame early or late after a load, which is exactly what WI-75's save forks compare. Fixed before the forks were first run, so they never saw it. **Fix:** full precision (`JSON.stringify(data, "\t", true, true)`). Old saves load as before; new ones are a little larger. R4's "post-load against post-load is exact" was never affected - a value that has been through the text once is stable - which is why nothing caught it.
+
+**F44. A pawn's walk-speed jitter changed on every load - read from code, fixed in [[WI-75_Movement_Without_Coroutines]].** `PawnBase._ready` hashed the ±5-10% cosmetic speed jitter (WI-16) from `get_instance_id()`, which a load regenerates, so a reloaded pawn walked at a different speed and arrived everywhere at a different time. It is hashed from the saved `pawn_id` now, which the load sets before `_ready`. The render-lane offset hashed with it moved too; both are still unsaved, and now stable.
+
+**F45. A pawn whose job changed while it waited for a turbolift still rode to the old floor - read from code, fixed in [[WI-75_Movement_Without_Coroutines]].** The movement component passed `path_invalidated` into `path_exit` as a cancel signal, and `TurboliftShaft.request_ride` never read it. A `move_to()` or `cancel()` during the queue walk or the wait therefore only set a pending target; the pawn stayed suspended in the ride's coroutine, boarded, rode to the destination it no longer wanted, and started the new walk from there. **Fix:** a ride not yet boarded is let go of at once - queue spot freed, pawn stood on its floor, the new walk starting from the queue spot. One already boarding or aboard still rides to the cab's next stop, never between floors.
+
 **Scheduled as work items (2026-09-19):**
 
 | Item | Takes |
@@ -260,7 +270,7 @@ Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", 
 | [[WI-72_Declared_Vocabularies_And_Content_Guards]] | F30, F31, F11, the balance literals; §A12 — **done 2026-09-20** |
 | [[WI-73_Save_Orchestration]] | §A5, §A8, and four stale persistence statements in CLAUDE.md and the tech spec. **Done 2026-09-22**; found and fixed F41 (a preload cycle its own §3 unmasked) and recorded F42. |
 | [[WI-74_Layering_And_Consolidations]] | F33, F34, F36, F37; §A9-A11. **Done 2026-09-22**; F34 settled by the author as a full refund for any unfinished blueprint and for a finished deconstruction. |
-| [[WI-75_Movement_Without_Coroutines]] | the movement pipeline's 37 awaits; §A7 in full (split out of WI-71, 2026-09-19) |
+| [[WI-75_Movement_Without_Coroutines]] | the movement pipeline's 37 awaits; §A7 in full (split out of WI-71, 2026-09-19). **Done 2026-09-23**; the author settled §0.3 as "save the ride", with the rule that a save and reload must not change the game - so the whole walk, cabs and doors are saved too - and found and fixed F43-F45 on the way. |
 
 ---
 

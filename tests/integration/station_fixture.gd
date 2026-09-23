@@ -146,6 +146,20 @@ func save_and_reload() -> bool:
 		return false
 	return await _instance()
 
+## Frees the scene and loads the slot written by the last [method save], without
+## saving again. With it a test can fork one save: carry the live game on, then
+## come back to the moment of the save and run the same stretch again from the
+## load (WI-75's "a reload changes nothing").
+func reload_saved() -> bool:
+	if not SaveSlots.slot_exists(SLOT):
+		_fail("StationFixture.reload_saved: nothing has been saved")
+		return false
+	await _free_scene()
+	if not SaveManager.stage_load(SLOT):
+		_fail("StationFixture.reload_saved: stage_load refused the fixture slot")
+		return false
+	return await _instance()
+
 ## Writes the fixture slot. Public so a test can save without reloading.
 func save() -> bool:
 	if scene == null:
@@ -426,6 +440,21 @@ static func diff(a: Variant, b: Variant, path: String = "") -> PackedStringArray
 		return out
 	if typeof(a) != typeof(b) or a != b:
 		out.append("%s: %s != %s" % [path, a, b])
+	return out
+
+## A live save's sections rewritten into the form a load produces: each pawn's
+## current job moved to the head of its queue, where a load restores it to resume
+## first (WI-68 F21). The one documented way a save written straight after a load
+## differs from the save that was loaded - R4's equivalence, and WI-75's.
+static func restored_form(sections: Dictionary) -> Dictionary:
+	var out: Dictionary = sections.duplicate(true)
+	for entry: Dictionary in out.get("pawns", []):
+		if not entry.has("current_job"):
+			continue
+		var queue: Array = [entry["current_job"]]
+		queue.append_array(entry.get("job_queue", []))
+		entry.erase("current_job")
+		entry["job_queue"] = queue
 	return out
 
 ## Objects that are neither Nodes nor Resources - the first audit's leak metric

@@ -6,6 +6,9 @@ extends GutTest
 ##   `_busy_in_hook` latched, so `is_traveling()` answered true for the rest of
 ##   that pawn's life - the roster sentence and the robot moving-drain both read
 ##   it. Movement itself always recovered, which is why nothing visibly stuck.
+##   WI-75 took the hook's await out, and the latch with it: a pawn at a door is
+##   in the movement component's Waiting state now, so the two F28 tests drive a
+##   real crew member to a real airlock door instead of poking at the latch.
 ## - **F27a:** a module's breach / low-O2 / breakdown / cut-vertex rows were
 ##   resolved on `module_destroyed` only. **Deconstruction** ends in
 ##   `remove_module(module, false)` with no `module_destroyed`, so a deconstructed
@@ -38,57 +41,67 @@ func before_each() -> void:
 func after_each() -> void:
 	await fx.finish()
 
-# --- F28: the door-hook latch ---------------------------------------------------
+# --- F28: a module freed while a pawn waits at its door -------------------------
 
-## Driven through the component's own hook entry rather than by walking a pawn
-## into a door: the hook's window is one `sim_seconds(open_seconds)` wait, which
-## at any tick rate is a handful of frames in the middle of a walk, and a test
-## that has to land inside it is a test that fails on a scheduling change. What
-## the fix owns is the pair `_enter_hook(module)` / `module_removed`, and that is
-## exactly what runs here - with the real signal, from the real removal.
-func test_a_module_freed_mid_hook_does_not_latch_the_pawn_as_travelling() -> void:
-	assert_true(await fx.boot())
+## Sends the first crew member out through the starting airlock to a pile in open
+## space, and returns once they are standing at one of its doors (WI-75's Waiting
+## state). Null if they never got there.
+func _pawn_waiting_at_the_airlock() -> PawnBase:
 	var pawn: PawnBase = fx.pawns()[0]
-	var movement: PawnMovementComponent = pawn.movement_component
-	assert_not_null(movement, "the pawn moves")
-	var door_module: ModuleBase = fx.place(&"hallway_mdata", Vector2i(40, 20))
-	assert_not_null(door_module, "a module to be suspended in")
+	var canvas: CanvasLayer = Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.SPACE)
+	var pile := ResourcePile.spawn(canvas, Global.cell_to_world(Vector2i(24, 9), true))
+	pile.add_amount(fx.resource(&"iron_ore"), 1)
+	pawn.interrupt_with_job(Job.of(&"move_to_location").with_target_a(JobTarget.of_pile(pile)))
+	var waiting: bool = await fx.tick_until(func() -> bool:
+		return pawn.movement_component.state == PawnMovementComponent.State.Waiting,
+		30.0, 1.0 / 60.0, 1.0)
+	return pawn if waiting else null
 
-	movement._enter_hook(door_module)
-	assert_true(movement._busy_in_hook, "latched into the hook")
-	assert_true(movement.is_traveling(), "and suspended in a hook counts as travelling")
-
-	assert_true(Global.world_manager.remove_module(door_module, false),
-		"the module is destroyed under the pawn")
-	assert_false(movement._busy_in_hook,
-		"the latch is cleared by module_removed - the hook's await will never resume")
-	assert_eq(movement._hook_module_id, 0, "and it is not pointing at the dead module")
-	assert_true(await fx.tick(TimeManager.SECONDS_PER_HOUR), "and an hour of play is clean")
-	# The latch contributes nothing from here on: whatever the pawn is doing an
-	# hour later, is_traveling() is exactly what its movement state says. Before
-	# the fix it was stuck true whether the pawn was walking, idle or asleep -
-	# and asserting `not is_traveling()` instead would only pass on the runs where
-	# the pawn happened to be standing still.
-	var state: PawnMovementComponent.State = movement.state
-	var by_state: bool = state == PawnMovementComponent.State.Moving \
-			or state == PawnMovementComponent.State.Paused \
-			or state == PawnMovementComponent.State.Conveyed
-	assert_eq(movement.is_traveling(), by_state,
-		"is_traveling() is a pure read of the movement state once the latch is gone")
-
-## The other half: a module removed while a *different* module's hook is held must
-## leave the latch alone, or a busy corridor would unstick every pawn on the
-## station.
-func test_removing_another_module_leaves_the_latch_alone() -> void:
+## A door wait that outlived its module was F28's coroutine: it never resumed, and
+## the latch it set said "travelling" for good. Now the wait is a state, and
+## removing the module under it re-plans on the next frame - including when the
+## module is the one the pawn is standing in.
+func test_a_module_freed_while_a_pawn_waits_at_its_door_releases_the_pawn() -> void:
 	assert_true(await fx.boot())
-	var movement: PawnMovementComponent = fx.pawns()[0].movement_component
-	var held: ModuleBase = fx.place(&"hallway_mdata", Vector2i(40, 20))
+	var pawn: PawnBase = await _pawn_waiting_at_the_airlock()
+	assert_not_null(pawn, "a crew member stops at the airlock's door")
+	if pawn == null:
+		return
+	var movement: PawnMovementComponent = pawn.movement_component
+	var airlock: ModuleBase = pawn.current_module
+	assert_true(airlock != null and airlock.is_in_group(Groups.AIRLOCK), "standing in the airlock")
+	if airlock == null:
+		return
+	assert_true(movement.is_traveling(), "and waiting at a door counts as travelling")
+
+	assert_true(Global.world_manager.remove_module(airlock, false),
+		"the airlock is destroyed under the pawn")
+	assert_true(await fx.tick(0.1, 1.0), "a moment on")
+	assert_ne(movement.state, PawnMovementComponent.State.Waiting,
+		"the wait ended with the module - a suspended hook would never have resumed")
+	assert_true(await fx.tick(TimeManager.SECONDS_PER_HOUR), "and an hour of play is clean")
+	assert_ne(movement.state, PawnMovementComponent.State.Waiting,
+		"nobody is left waiting at a door that is gone")
+	assert_eq(movement.is_traveling(), movement.state != PawnMovementComponent.State.Idle,
+		"is_traveling() is a pure read of the movement state")
+
+## The other half: a module removed while a pawn waits at a *different* module's
+## door must leave the wait alone, or a busy station would unstick every pawn at
+## every airlock whenever anything was demolished.
+func test_removing_another_module_leaves_the_wait_alone() -> void:
+	assert_true(await fx.boot())
 	var other: ModuleBase = fx.place(&"hallway_mdata", Vector2i(42, 20))
-	movement._enter_hook(held)
+	var pawn: PawnBase = await _pawn_waiting_at_the_airlock()
+	assert_not_null(pawn, "a crew member stops at the airlock's door")
+	if pawn == null:
+		return
+	var movement: PawnMovementComponent = pawn.movement_component
+	var left: float = movement._wait_left
 	assert_true(Global.world_manager.remove_module(other, false))
-	assert_true(movement._busy_in_hook, "still suspended in the module it is actually in")
-	assert_eq(movement._hook_module_id, held.get_instance_id(), "and still pointing at it")
-	movement._exit_hook()
+	assert_eq(movement.state, PawnMovementComponent.State.Waiting, "still waiting at the airlock")
+	assert_almost_eq(movement._wait_left, left, 0.0001, "with the same time left")
+	assert_true(await fx.tick(1.0 / 60.0, 1.0))
+	assert_eq(movement.state, PawnMovementComponent.State.Waiting, "and the next frame too")
 
 # --- F27: alerts about things that are gone -------------------------------------
 

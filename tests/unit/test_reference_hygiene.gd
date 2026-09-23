@@ -20,8 +20,9 @@ extends GutTest
 ## Two placements are legitimate and are not flagged:
 ## - **after the function's first `await`.** The parameter was live when the call
 ##   started and may have died while the coroutine was suspended; re-checking is
-##   exactly the rule. `TraderManager._courier_collect`, the two shuttle-docked
-##   handlers and `TurboliftShaft.request_ride` are all this.
+##   exactly the rule. `TraderManager._courier_collect` and the two shuttle-docked
+##   handlers are this. `TurboliftShaft.request_ride` was too, until WI-75 took
+##   its awaits out: a ride is phases now, and nothing is left to re-check.
 ## - **inside a lambda in the body.** A lambda runs later, and what it sees is a
 ##   *captured local*, not a parameter crossing a typed boundary at that moment -
 ##   checking it is discipline 4, not a violation of it.
@@ -250,11 +251,11 @@ func test_no_typed_object_parameter_is_checked_for_validity() -> void:
 	assert_gt(checks, 3, "and found the legitimate checks it is meant to allow")
 
 func test_the_legitimate_checks_are_still_there() -> void:
-	# An allowance nothing exercises allows nothing. These four re-check a
+	# An allowance nothing exercises allows nothing. These three re-check a
 	# parameter *after* an await, which is the discipline rather than a breach of
 	# it - if one is rewritten the sweep should be re-read, not silently relaxed.
+	# (A fourth, TurboliftShaft.request_ride, went with WI-75's awaits.)
 	var expected: Dictionary[String, String] = {
-		"res://modules/transport/turbolift_shaft.gd": "request_ride",
 		"res://scripts/managers/crew_manager.gd": "_on_shuttle_docked",
 		"res://scripts/managers/visitor_manager.gd": "_on_shuttle_docked",
 		"res://scripts/managers/trader_manager.gd": "_courier_collect",

@@ -53,15 +53,12 @@ signal personal_credits_changed(new_total: int)
 var movement_component: PawnMovementComponent
 var inventory_component: PawnInventoryComponent
 
-## Cosmetic de-overlap (WI-16), both hashed from the instance id in _ready so
+## Cosmetic de-overlap (WI-16), both hashed from the pawn's save id in _ready so
 ## they're stable per pawn without being saved. The lane offset moves only the
 ## sprite - logical position stays exactly on the path for pathfinding/save.
 var speed_jitter: float = 1.0
 var lane_offset: float = 0.0
 var _sprite_base_position: Vector2 = Vector2.ZERO
-## Set while walk_straight_to() drives the pawn so the suspended movement
-## component doesn't stomp the walk animation with set_idle() every frame.
-var in_manual_walk: bool = false
 
 ## Movement speed multiplier (WI-28). Default 1.0 = no-op for crew and normal
 ## pawns; a robot at zero energy sets this below 1.0 so it crawls to a charger
@@ -135,8 +132,11 @@ func _ready() -> void:
 	if schedule != null:
 		schedule = schedule.duplicate(true)
 	# ±5-10% walk speed and a ±1-3px render lane, hashed so two pawns sharing a
-	# route drift apart instead of marching as one sprite (WI-16).
-	var h: int = absi(hash(get_instance_id()))
+	# route drift apart instead of marching as one sprite (WI-16). Hashed from the
+	# save id, which a load restores before this runs, rather than the instance id,
+	# which a load changes: jitter is a walking speed, and a reloaded pawn walking
+	# at a different one arrived everywhere at a different time (WI-75).
+	var h: int = absi(hash(pawn_id))
 	speed_jitter = 1.0 + (0.05 + float(h % 100) * 0.0005) * (1.0 if (h >> 7) % 2 == 0 else -1.0)
 	lane_offset = (1.0 + float((h >> 9) % 100) * 0.02) * (1.0 if (h >> 16) % 2 == 0 else -1.0)
 	if animated_sprite != null:
@@ -227,6 +227,15 @@ func _end_current_job() -> void:
 ## 6. [method _claim_work_job] - the board, a bay's own job, or nothing.
 ## 7. [method _fallback_job] - wander, or an idle pose.
 func start_job() -> void:
+	_pick_job()
+	# A walk restored from a save (WI-75) belongs to the job it was saved with.
+	# Whatever this pick began has claimed it by now, or never will.
+	if movement_component != null:
+		movement_component.close_adoption()
+
+## The seven steps above. Separate from start_job only so that every one of its
+## returns reaches the adoption close.
+func _pick_job() -> void:
 	if _gate_before_resume():
 		return
 	if _resume_restored_job():
@@ -536,25 +545,6 @@ func move_to(new_pos: Vector2, use_exact_position: bool = false) -> void:
 		elif travel.length_squared() > 0.01:
 			animated_sprite.position = _sprite_base_position + travel.orthogonal().normalized() * lane_offset
 	global_position = new_pos
-
-## Straight-line cosmetic walk (WI-16) for short legs that happen while the
-## movement component is suspended in a path hook (turbolift queue spots, cab
-## boarding). Interiors are open boxes, so the straight line is safe.
-func walk_straight_to(dest: Vector2) -> void:
-	var tree: SceneTree = get_tree()
-	in_manual_walk = true
-	while true:
-		if not is_instance_valid(self) or not is_inside_tree():
-			in_manual_walk = false
-			return
-		var sim_delta: float = Global.time_manager.scale(get_process_delta_time())
-		if sim_delta > 0.0:
-			move_to(global_position.move_toward(dest, speed * speed_jitter * sim_delta))
-			if global_position.distance_squared_to(dest) < 0.25:
-				break
-		await tree.process_frame
-	in_manual_walk = false
-	set_idle()
 
 ## Claim a STAND spot in the current module for idle spreading; returns null
 ## when the module has no free spot (caller just stays put - never block on

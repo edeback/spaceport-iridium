@@ -61,7 +61,11 @@ static func write_slot(slot: String, data: Dictionary) -> Error:
 	if file == null:
 		push_warning("Could not open save file for writing: " + slot_path(slot))
 		return FileAccess.get_open_error()
-	file.store_string(JSON.stringify(data, "\t"))
+	# Full precision (WI-75): the default writes a float to 14 significant digits,
+	# so a timer came back a few 1e-15 off - enough to end a door wait or a cab's
+	# stop a frame early or late after a load, which is exactly the difference a
+	# reload must not make. 17 digits round-trip every double exactly.
+	file.store_string(JSON.stringify(data, "\t", true, true))
 	file.close()
 	return OK
 

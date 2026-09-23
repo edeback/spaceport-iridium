@@ -32,6 +32,8 @@ func _module_components() -> Dictionary[String, ComponentBase]:
 		# WI-60/WI-67, pinned by WI-68 F9.
 		"heat": autofree(HeatComponent.new()),
 		"heat_emitter": autofree(HeatEmitterComponent.new()),
+		# WI-75: an airlock's doors, half open or held open.
+		"path": autofree(PathComponent.new()),
 	}
 	return out
 

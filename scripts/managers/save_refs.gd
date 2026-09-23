@@ -136,6 +136,52 @@ static func resolve_pile_ref(ref: Dictionary) -> ResourcePile:
 			return pile
 	return null
 
+## Reference to any node a pawn's walk can name (WI-75): a path point or a walk's
+## destination. That is a module, a pawn (a path starting in open space starts at
+## the pawn itself), a pile, an asteroid, a turbolift cab, or one of the Node2Ds a
+## module's SPACE door stands in open space - named by its module and door.
+## Empty for null, a freed node, or anything else.
+static func node_ref(node: Variant) -> Dictionary:
+	if not _live(node, "path node"):
+		return {}
+	if node is ModuleBase:
+		return {"module": module_ref(node)}
+	if node is PawnBase:
+		return pawn_ref(node)
+	if node is ResourcePile:
+		return {"pile": pile_ref(node)}
+	if node is AsteroidBase:
+		return {"asteroid": asteroid_ref(node)}
+	if node is TurboliftCab:
+		return {"cab": Global.turbolift_manager.cab_ref(node)} if Global.turbolift_manager != null else {}
+	var point: Node2D = node as Node2D
+	var owner_module: ModuleBase = point.get_parent() as ModuleBase if point != null else null
+	if owner_module != null and owner_module.get_path_component() != null:
+		var door: int = owner_module.get_path_component().door_of_space_node(point)
+		if door >= 0:
+			return {"space": module_ref(owner_module), "door": door}
+	return {}
+
+static func resolve_node_ref(ref: Dictionary) -> Node2D:
+	if ref.is_empty():
+		return null
+	if ref.has("module"):
+		return resolve_module_ref(ref["module"])
+	if ref.has("pawn"):
+		return resolve_pawn_ref(ref)
+	if ref.has("pile"):
+		return resolve_pile_ref(ref["pile"])
+	if ref.has("asteroid"):
+		return resolve_asteroid_ref(ref["asteroid"])
+	if ref.has("cab"):
+		return Global.turbolift_manager.resolve_cab_ref(ref["cab"]) if Global.turbolift_manager != null else null
+	if ref.has("space"):
+		var owner_module: ModuleBase = resolve_module_ref(ref["space"])
+		if owner_module == null or owner_module.get_path_component() == null:
+			return null
+		return owner_module.get_path_component().space_node_for_door(int(ref.get("door", -1)))
+	return null
+
 # --- resource stacks -----------------------------------------------------------------
 
 static func stacks_to_dicts(stacks: Array[ResourceStack]) -> Array:

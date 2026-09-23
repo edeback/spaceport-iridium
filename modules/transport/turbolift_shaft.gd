@@ -5,7 +5,6 @@ var group_id: StringName
 # All turbolift modules in this shaft (by floor/cell)
 var floors: Array[ModuleTurbolift] = []
 var cabs: Array[TurboliftCab] = []
-var open_requests: Array[RideRequest] = []
 ## Shaft-wide force shutdown (WI-11 panel): mirrors PowerConsumptionComponent
 ## force_off across every floor, and onto floors that join later.
 var force_shutdown: bool = false
@@ -51,48 +50,45 @@ func on_floor_toggled(_module: ModuleTurbolift) -> void:
 	for cab in cabs:
 		cab.recheck_requests()
 
-func request_ride(pawn: PawnBase, from_floor: ModuleBase, to_floor: ModuleBase, cancel_signal: Signal) -> RideRequest:
+## Starts a ride from `from_floor` to `to_floor` and hands the pawn to it
+## (WI-75 §5): it claims a queue spot, sets the pawn walking there, and returns.
+## Nothing awaits - the ride goes on as the phases of the returned request, and
+## [method dispatch] puts it on a cab when the queue walk ends.
+##
+## An already-CANCELLED request comes back when a floor can't board or alight
+## (switched off, or not this shaft's), so the caller fails the movement and the
+## pawn re-plans, by the stairs if there are any.
+func request_ride(pawn: PawnBase, from_floor: ModuleTurbolift, to_floor: ModuleTurbolift) -> RideRequest:
 	var request := RideRequest.new()
 	request.pawn = pawn
 	request.from_floor = from_floor
 	request.to_floor = to_floor
-	# Disabled floors can't board or alight; hand back an already-cancelled
-	# request so the caller's movement fails and the pawn re-plans via stairs.
 	if not is_floor_served(from_floor) or not is_floor_served(to_floor):
+		request.phase = RideRequest.Phase.CANCELLED
 		request.cancelled = true
 		return request
 	if cabs.size() < max_cabs:
 		create_new_cab(from_floor)
-	# Walk to the waiting spot BEFORE registering with a cab: nothing can emit
-	# request.finished until the request is on a cab, so a cancel can't slip
-	# past while we're not yet awaiting the signal.
-	await request.from_floor.assign_waiting_slot(request)
-	if not is_instance_valid(pawn):
-		request.cancelled = true
-		request.release_queue_anchor()
-		return request
-	var best_cab: TurboliftCab = _best_cab_for(request)
-	if best_cab == null:
-		# Every cab at capacity and none allowed to spawn: fail the boarding
-		# rather than awaiting a signal nothing will ever emit.
-		request.cancelled = true
-		request.release_queue_anchor()
-		return request
-	best_cab.add_pickup_request(request)
-	# Awaits only until boarding resolves (WI-20): finished(true) means the
-	# pawn is onboard and Conveyed - the cab drives the ride from here and
-	# calls exit_conveyed at drop-off; nothing awaits the ride itself.
-	await request.finished
-	# Backstop - normally released at boarding or by the cancel path.
-	request.release_queue_anchor()
+	var queue_spot: Vector2 = from_floor.assign_waiting_slot(request)
+	request.phase = RideRequest.Phase.QUEUEING
+	pawn.movement_component.begin_ride(request, queue_spot)
 	return request
 
-func _cancel(request: RideRequest) -> void:
-	if request.cancelled:
+## The pawn has reached its queue spot: put the ride on the best cab, or fail it
+## if the floors stopped serving it on the way or no cab can take it - every cab
+## full and none allowed to spawn. The queue walk used to end inside
+## request_ride's coroutine; this is the rest of that function.
+func dispatch(request: RideRequest) -> void:
+	if not is_instance_valid(request.from_floor) or not is_floor_served(request.from_floor) \
+			or not is_instance_valid(request.to_floor) or not is_floor_served(request.to_floor):
+		request.fail()
 		return
-	for cab in cabs:
-		if cab.cancel_request(request):
-			return
+	var best_cab: TurboliftCab = _best_cab_for(request)
+	if best_cab == null:
+		request.fail()
+		return
+	request.phase = RideRequest.Phase.WAITING
+	best_cab.add_pickup_request(request)
 
 func _best_cab_for(request: RideRequest) -> TurboliftCab:
 	# 1. idle cab nearest from_floor

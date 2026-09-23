@@ -396,20 +396,13 @@ func _get_pawns_save() -> Array:
 					"resource": String(resource.id),
 					"stacks": SaveRefs.stacks_to_dicts(pawn.inventory_component.carried[resource].stacks),
 				})
-		# Conveyed pawns (WI-15, formalized by WI-20): rides aren't serialized -
-		# a pawn a carrier owns saves as standing at the cab's current floor
-		# module, never a mid-shaft position. If ride state ever does get
-		# saved (WI-21+), RideRequest.to_floor is the module ref to record.
+		# Where the pawn actually is, a turbolift rider included: rides are saved
+		# since WI-75 (in the movement block below), so a pawn part way up a shaft
+		# loads part way up it, in its cab. They used to be flattened onto the
+		# cab's current floor, and a ride a load could not restore still is - see
+		# PawnMovementComponent._stand_down_from_lost_ride.
 		var save_module: ModuleBase = pawn.current_module
 		var save_position: Vector2 = pawn.global_position
-		var cab: TurboliftCab = pawn.path_position_override as TurboliftCab
-		if cab != null:
-			var ride_floor: ModuleTurbolift = cab.current_turbolift
-			if ride_floor == null and cab.shaft != null:
-				ride_floor = cab.get_closest_exit()
-			if ride_floor != null:
-				save_module = ride_floor
-				save_position = ride_floor.get_global_center()
 
 		var entry: Dictionary = {
 			"scene": pawn.scene_file_path,
@@ -454,6 +447,12 @@ func _get_pawns_save() -> Array:
 		var queue_data: Array = _serialize_job_queue(pawn.job_queue)
 		if not queue_data.is_empty():
 			entry["job_queue"] = queue_data
+		# The walk in progress (WI-75): its path and place on it, a door wait, a
+		# turbolift ride at whatever phase. Written only while the pawn is going
+		# somewhere; restored after every pawn is back (see _load_pawns).
+		var movement: Dictionary = pawn.movement_component.get_save_data() if pawn.movement_component != null else {}
+		if not movement.is_empty():
+			entry["movement"] = movement
 		out.append(entry)
 	return out
 
@@ -618,6 +617,11 @@ func _load_piles(data: Array) -> void:
 		ResourcePile._next_pile_id = maxi(ResourcePile._next_pile_id, max_saved_id + 1)
 
 func _load_pawns(data: Array) -> void:
+	# Walks restore in a second pass, once every pawn is back: a walk can target
+	# another pawn, and a turbolift ride takes its place in a cab's lists by the
+	# pawns ahead of it (WI-75).
+	var walking: Array[PawnBase] = []
+	var walks: Array[Dictionary] = []
 	for entry: Dictionary in data:
 		var scene_path: String = String(entry.get("scene", ""))
 		var scene: PackedScene = load(scene_path) if scene_path != "" else null
@@ -696,6 +700,16 @@ func _load_pawns(data: Array) -> void:
 		# and are dropped. A target that is another pawn resolves only if that
 		# pawn loaded first; no job type targets a pawn today.
 		_load_pawn_jobs(pawn, entry)
+		var movement: Dictionary = entry.get("movement", {})
+		if not movement.is_empty():
+			walking.append(pawn)
+			walks.append(movement)
+	# The walks themselves, now that everything they can name is back: modules,
+	# asteroids and piles by the sections before this one, cabs by the turbolift
+	# section, pawns above. Each restored walk waits for its pawn's restored job
+	# to claim it on the first job pick (PawnMovementComponent.can_adopt).
+	for index: int in walking.size():
+		walking[index].movement_component.load_save_data(walks[index])
 
 ## Rebuilds current_job + job_queue onto a freshly restored pawn, and hands each
 ## restored job back to whoever posted it (WI-70 §3).

@@ -762,27 +762,41 @@ func has_custom_pathing() -> bool:
 	var pc := get_path_component()
 	return pc != null and (not pc.door_behaviors.is_empty() or not pc.edge_behaviors.is_empty())
 	
-func traverse(pawn: PawnBase, edge: PathComponent.PathTraversalEdgeData) -> void:
+# --- path hooks (WI-75 §1) -----------------------------------------------------
+#
+# A pawn crossing this module asks these, and they answer with a verdict instead
+# of awaiting: carry on, wait so long, a carrier has taken over, or fail. They
+# used to be coroutines the pawn's movement component sat suspended inside, which
+# could not be saved and never resumed if this module was freed first (F28). The
+# base versions forward to the module's PathBehaviors and wake the path component
+# so any door they set swinging ticks.
+
+func traverse(pawn: PawnBase, edge: PathComponent.PathTraversalEdgeData) -> PathHookResult:
 	var pc := get_path_component()
 	var behavior := pc.get_edge_behavior(edge)
-	if behavior:
-		await behavior.on_traverse(pawn, edge, self, pc.get_behavior_state(behavior))
+	if behavior == null:
+		return PathHookResult.proceed()
+	var result: PathHookResult = behavior.on_traverse(pawn, edge, self, pc.get_behavior_state(behavior))
+	pc.wake_behaviors()
+	return result
 
-func path_enter(pawn: PawnBase, door: int, meta: StringName, next_node: Node2D, cancel_signal: Signal) -> void:
+func path_enter(pawn: PawnBase, door: int, meta: StringName, next_node: Node2D) -> PathHookResult:
 	var pc := get_path_component()
 	var behavior: PathBehavior = pc.door_behaviors.get(door)
-	if behavior:
-		await behavior.on_enter(pawn, door, meta, self, next_node, pc.get_behavior_state(behavior))
+	if behavior == null:
+		return PathHookResult.proceed()
+	var result: PathHookResult = behavior.on_enter(pawn, door, meta, self, next_node, pc.get_behavior_state(behavior))
+	pc.wake_behaviors()
+	return result
 
-func path_exit(pawn: PawnBase, door: int, meta: StringName, next_node: Node2D, cancel_signal: Signal) -> void:
+func path_exit(pawn: PawnBase, door: int, meta: StringName, next_node: Node2D) -> PathHookResult:
 	var pc := get_path_component()
 	var behavior: PathBehavior = pc.door_behaviors.get(door)
-	if behavior:
-		var ctx := PathBehaviorContext.new()
-		ctx.next_node = next_node
-		ctx.state = pc.get_behavior_state(behavior)
-		ctx.cancelled = cancel_signal
-		await behavior.on_exit(pawn, door, meta, self, ctx)
+	if behavior == null:
+		return PathHookResult.proceed()
+	var result: PathHookResult = behavior.on_exit(pawn, door, meta, self, next_node, pc.get_behavior_state(behavior))
+	pc.wake_behaviors()
+	return result
 	
 func get_or_create_overflow_pile() -> ResourcePile:
 	if not is_instance_valid(overflow_pile):

@@ -105,6 +105,9 @@ func _ready() -> void:
 		_ensure_behavior_state(behavior)
 	for behavior: PathBehavior in edge_behaviors.values():
 		_ensure_behavior_state(behavior)
+	# Idle until a hook starts something (wake_behaviors), so the hundreds of
+	# modules with nothing to swing cost nothing a frame.
+	set_process(false)
 
 func _ensure_behavior_state(behavior: PathBehavior) -> void:
 	if Engine.is_editor_hint():
@@ -115,6 +118,64 @@ func _ensure_behavior_state(behavior: PathBehavior) -> void:
 
 func get_behavior_state(behavior: PathBehavior) -> RefCounted:
 	return _behavior_states.get(behavior)
+
+## Starts ticking this module's behavior states - called after a hook has asked a
+## door to move (WI-75 §3). The doors used to run themselves off their sprites'
+## `animation_finished`, which is why nothing had to tick them.
+func wake_behaviors() -> void:
+	if not Engine.is_editor_hint() and not _behavior_states.is_empty():
+		set_process(true)
+
+## Door swings and holds run in sim time, here, and stop when nothing is moving.
+## Dies with the module, which is what the old auto-close lambda could not do: it
+## resumed on a freed sprite when an airlock was destroyed during its hold.
+func _process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		set_process(false)
+		return
+	var sim_delta: float = Global.time_manager.scale(delta)
+	if sim_delta <= 0.0:
+		return
+	var moving: bool = false
+	for behavior: PathBehavior in _behavior_states:
+		if behavior.tick_state(_behavior_states[behavior], sim_delta):
+			moving = true
+	if not moving:
+		set_process(false)
+
+# --- persistence (WI-75 §3) ------------------------------------------------------
+#
+# Behavior states - an airlock's doors, half open or held open with the auto-close
+# half run down. Keyed by position in _behavior_states, which is built in the same
+# order from the scene's own door and edge tables every time the module readies.
+
+func save_key() -> StringName:
+	return &"path"
+
+## Depends on nothing else in the module: a door is a door whatever the module
+## holds. Its own number only because vanilla never shares one.
+func save_order() -> int:
+	return 140
+
+func get_save_data() -> Dictionary:
+	var states: Dictionary = {}
+	var index: int = 0
+	for behavior: PathBehavior in _behavior_states:
+		var block: Dictionary = behavior.save_state(_behavior_states[behavior])
+		if not block.is_empty():
+			states[str(index)] = block
+		index += 1
+	return {"behaviors": states} if not states.is_empty() else {}
+
+func load_save_data(data: Dictionary) -> void:
+	var states: Dictionary = data.get("behaviors", {})
+	var index: int = 0
+	for behavior: PathBehavior in _behavior_states:
+		var key: String = str(index)
+		if states.has(key):
+			behavior.load_state(_behavior_states[behavior], states[key])
+		index += 1
+	wake_behaviors()
 		
 func ready_preview() -> void:
 	pass
@@ -247,6 +308,43 @@ func claim_anchor(type: AnchorDef.AnchorType, claimant: Object) -> AnchorDef:
 func release_anchor(claimant: Object) -> void:
 	if claimant != null:
 		_anchor_claims.erase(claimant.get_instance_id())
+
+## Claims `anchor` itself for `claimant` if nobody holds it, and returns whether
+## it did. A load re-takes the exact queue spot a saved turbolift ride was
+## standing on (WI-75 §5), and a restored walk the exact bunk it was heading to,
+## rather than whichever is first free.
+func claim_specific_anchor(anchor: AnchorDef, claimant: Object) -> bool:
+	if anchor == null or claimant == null:
+		return false
+	for id: int in _anchor_claims:
+		if _anchor_claims[id] == anchor and id != claimant.get_instance_id():
+			return false
+	_anchor_claims[claimant.get_instance_id()] = anchor
+	return true
+
+## A save's name for one of this module's anchors: its index among the authored
+## ones, or its type and index among the generated ones. {} for null.
+func anchor_ref(anchor: AnchorDef) -> Dictionary:
+	if anchor == null:
+		return {}
+	var authored: int = anchors.find(anchor)
+	if authored >= 0:
+		return {"authored": authored}
+	var generated: Array[AnchorDef] = get_generated_anchors(anchor.type)
+	var at: int = generated.find(anchor)
+	if at >= 0:
+		return {"type": int(anchor.type), "generated": at}
+	return {}
+
+func resolve_anchor_ref(ref: Dictionary) -> AnchorDef:
+	if ref.has("authored"):
+		var index: int = int(ref["authored"])
+		return anchors[index] if index >= 0 and index < anchors.size() else null
+	if ref.has("generated"):
+		var generated: Array[AnchorDef] = get_generated_anchors(int(ref.get("type", 0)) as AnchorDef.AnchorType)
+		var at: int = int(ref["generated"])
+		return generated[at] if at >= 0 and at < generated.size() else null
+	return null
 
 ## Per-type claim targets for WI-44 jobs, cached so repeat lookups are free.
 ## The pool wraps claim_anchor/release_anchor rather than replacing them - the
@@ -460,6 +558,21 @@ func connect_doors() -> void:
 				data = module.get_path_component().get_door_data_to(owner_module)
 			Global.path_manager.add_connection(owner_module, module, 1, data)
 	check_doors()
+
+## The space node this module's SPACE door `door_index` made in connect_doors, or
+## null. A path through open space runs through these, so a saved path names one
+## as its module and door (WI-75).
+func space_node_for_door(door_index: int) -> Node2D:
+	for node: Node2D in space_connections:
+		if is_instance_valid(node) and int(module_connections.get(node, -1)) == door_index:
+			return node
+	return null
+
+## The door index behind one of this module's space nodes, or -1.
+func door_of_space_node(node: Node2D) -> int:
+	if not space_connections.has(node):
+		return -1
+	return int(module_connections.get(node, -1))
 
 func has_door_connected() -> bool:
 	var connected_indices: Array[int] = module_connections.values()

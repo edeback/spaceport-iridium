@@ -50,11 +50,18 @@ func on_start(job: Job) -> Status:
 		return Status.FAILED
 	return Status.ONGOING
 
-## Deliberately the same as on_start: re-pathing from wherever the pawn actually
-## loaded is both correct and cheap, and matches the CONVEYED contract (WI-20),
-## which already re-runs pathfinding from the drop-off floor rather than resuming
-## a path index. Full path persistence was considered and rejected in the WI.
+## A walk saved with the pawn is picked up where it stood (WI-75) - part way along
+## its path, waiting at an airlock door, in a turbolift queue or aboard a cab -
+## so a reload changes nothing. Asked before on_start's "already there" check on
+## purpose: a pawn saved crossing the module it is bound for is not there yet.
+## With no walk to pick up (a save from before WI-75, or one written the frame the
+## pawn arrived), this is on_start, which re-paths from wherever the pawn loaded.
 func on_resume(job: Job) -> Status:
+	var destination: JobTarget = job.target(slot)
+	if destination != null and destination.is_alive():
+		var in_space: bool = force_exterior or destination.is_exterior()
+		if job.resume_movement(destination.move_node(), speed, in_space):
+			return Status.ONGOING
 	return on_start(job)
 
 ## A destination the job declared survivable can be freed mid-walk - an asteroid

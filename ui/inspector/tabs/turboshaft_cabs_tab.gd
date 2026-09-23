@@ -80,8 +80,10 @@ func _cab_state_name(cab: TurboliftCab) -> String:
 	match cab.state:
 		TurboliftCab.CabState.MOVING:
 			return "moving up" if cab.moving_up() else "moving down"
-		TurboliftCab.CabState.DOORS_OPEN, TurboliftCab.CabState.WAITING:
-			return "doors open"
+		TurboliftCab.CabState.ARRIVED, TurboliftCab.CabState.DOORS_OPENING:
+			return "doors opening"
+		TurboliftCab.CabState.BOARDING:
+			return "boarding"
 		_:
 			return "idle"
 

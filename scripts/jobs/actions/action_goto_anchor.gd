@@ -48,6 +48,22 @@ func on_start(job: Job) -> Status:
 		return Status.FAILED
 	return Status.ONGOING
 
+## Resuming a walk saved with the pawn (WI-75): claim the anchor that walk was
+## heading to rather than whichever is first free, so on_start's begin_movement
+## picks the walk up where it stood. Claims are never saved, so the anchor is
+## re-taken here; if somebody took it first, on_start claims another and the pawn
+## re-paths to that one instead.
+func on_resume(job: Job) -> Status:
+	var destination: JobTarget = job.target(slot)
+	if destination != null and destination.is_alive() and job.pawn != null \
+			and job.pawn.movement_component != null and claimed_anchor(job) == null:
+		var module: ModuleBase = destination.module()
+		var path: PathComponent = module.get_path_component() if module != null else null
+		var restored: AnchorDef = job.pawn.movement_component.restored_anchor(module)
+		if path != null and restored != null:
+			path.anchor_pool(anchor_type).prefer(restored)
+	return on_start(job)
+
 ## The anchor this job already holds on the target's module, if any. Resume goes
 ## through here so a re-entered action walks to the SAME bunk rather than
 ## claiming a second one.

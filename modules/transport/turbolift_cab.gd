@@ -12,13 +12,39 @@ extends Node2D
 var shaft: TurboliftShaft
 var onboard: Array[RideRequest] = []
 var pickup_requests: Array[RideRequest] = []
-enum CabState { WAITING, IDLE, MOVING, DOORS_OPEN }
+## What the cab is doing (WI-75 §5). A stop used to be a coroutine: DOORS_OPEN
+## awaited the floor's door, unloaded, then awaited each boarding pawn's walk in
+## turn with the cab parked in a WAITING state that meant "suspended". Each of
+## those waits is a state of its own now, and a save carries the cab through all
+## of them.
+## - IDLE: nothing to do; picks a destination when there is one.
+## - MOVING: travelling to destination_module.
+## - ARRIVED: just stopped at a floor; asks its door open.
+## - DOORS_OPENING: waiting out the door, `_door_left` sim-seconds.
+## - BOARDING: passengers for this floor are off; the ones waiting here walk in,
+##   one at a time, each a straight walk the cab watches for.
+## The doors are not waited shut before moving off - they never were: the floor's
+## door closes itself behind the cab.
+enum CabState { IDLE, MOVING, ARRIVED, DOORS_OPENING, BOARDING }
 var state: CabState = CabState.IDLE
 var assigned_locations: Dictionary[Marker2D, RideRequest] = {}
 var current_turbolift: ModuleTurbolift = null
 
 # Destination floor when moving
 var destination_module: ModuleTurbolift
+
+## Sim-seconds until the floor's door is open, while DOORS_OPENING.
+var _door_left: float = 0.0
+## The rides that were waiting at this floor when the doors opened, still to
+## board, in order. A snapshot, as the old loop's was: a pawn who reaches the
+## queue after the doors open waits for the next visit.
+var _boarding_queue: Array[RideRequest] = []
+## The ride walking in right now, or null.
+var _boarding: RideRequest = null
+## The order the save had the cab's rides in, by pawn id, until each ride is put
+## back (see restore_request). Rides restore pawn by pawn, in the pawn section's
+## order, and the cab's lists have to come back in theirs.
+var _saved_order: Dictionary = {}
 
 # This is the grid-aligned position for use in cell calculation
 # as opposed to the visual position (which is centered at global_position)
@@ -29,7 +55,7 @@ func get_apparent_position() -> Vector2:
 
 func set_apparent_position(new_pos: Vector2) -> void:
 	global_position = new_pos + offset
-	
+
 func set_apparent_position_y(new_y: float) -> void:
 	global_position.y = new_y + offset.y
 
@@ -38,8 +64,6 @@ func _process(delta: float) -> void:
 	if sim_delta <= 0.0:
 		return
 	match state:
-		CabState.WAITING:
-			pass
 		CabState.IDLE:
 			if shaft != null and shaft.try_consume_pending_removal(self):
 				return
@@ -62,35 +86,115 @@ func _process(delta: float) -> void:
 				return
 			# lerp global_position.y toward the next target floor's y at cab speed;
 			# also update global_position for every request in `onboard` to follow the cab.
-			# On arrival at a floor that's in `stops`: state = State.DOORS_OPEN.
+			# On arrival at a floor that's in `stops`: state = CabState.ARRIVED.
 			var dist_to_move: float = speed * Global.CELL_SIZE.y * sim_delta
 			var dist_left: float = destination_module.global_position.y - get_apparent_position().y
 			# Probably want to recheck where we're going and stopping to pick up people on the way?
-			
+
 			if dist_to_move >= absf(dist_left):
 				set_apparent_position_y(destination_module.global_position.y)
-				state = CabState.DOORS_OPEN
+				state = CabState.ARRIVED
 			else:
 				global_position.y += dist_to_move * signf(dist_left)
 			current_turbolift = shaft.get_floor_module(Global.world_to_cell(global_position).y)
-		CabState.DOORS_OPEN:
-			if current_turbolift != null:
-				state = CabState.WAITING
-				await current_turbolift.set_door(false)
-				unload_passengers(current_turbolift)
-				await pickup_passengers(current_turbolift)
-				if onboard.size() > 0:
-					destination_module = onboard[0].to_floor
-					state = CabState.MOVING
-				else:
-					state = CabState.IDLE
-			else:
-				state = CabState.IDLE
-			# Drop off onboard requests whose to_floor == current floor -> request.arrived.emit().
-			# Pick up waiting requests at this floor, up to capacity -> onboard.append(...).
-			# After a short timer: state = State.IDLE.
-			pass
+		CabState.ARRIVED:
+			_arrive()
+		CabState.DOORS_OPENING:
+			_door_left -= sim_delta
+			if _door_left <= 0.0:
+				_door_left = 0.0
+				_doors_opened()
+		CabState.BOARDING:
+			_watch_boarding()
 
+## Stopped at a floor: ask its door open. An open door (still held from the last
+## stop here) lets everyone move in the same frame, as the old await on an
+## already-open door did.
+func _arrive() -> void:
+	if current_turbolift == null:
+		state = CabState.IDLE
+		return
+	_door_left = current_turbolift.open_door()
+	state = CabState.DOORS_OPENING
+	if _door_left <= 0.0:
+		_door_left = 0.0
+		_doors_opened()
+
+## Drop off whoever is getting off here, then start boarding whoever is waiting.
+func _doors_opened() -> void:
+	unload_passengers(current_turbolift)
+	_boarding_queue.clear()
+	for ride: RideRequest in pickup_requests:
+		if ride.from_floor == current_turbolift:
+			_boarding_queue.append(ride)
+	_boarding = null
+	state = CabState.BOARDING
+	_board_next()
+
+## Starts the next waiting pawn walking in, or leaves when there is none.
+func _board_next() -> void:
+	while not _boarding_queue.is_empty():
+		var ride: RideRequest = _boarding_queue.pop_front()
+		if not pickup_requests.has(ride):
+			continue  # dropped since the doors opened
+		if not is_instance_valid(ride.pawn):
+			pickup_requests.erase(ride)
+			ride.release_queue_anchor()
+			continue
+		# Boarding frees the queue spot for the next caller (WI-16).
+		ride.release_queue_anchor()
+		var free_marker: Marker2D = null
+		for marker in assigned_locations:
+			if assigned_locations[marker] == null:
+				free_marker = marker
+				break
+		if free_marker == null:
+			# No spot to walk to: straight on, as the old loop did.
+			ride.phase = RideRequest.Phase.BOARDING
+			_finish_boarding(ride)
+			continue
+		assigned_locations[free_marker] = ride
+		ride.stand_position = free_marker
+		# Walk from the waiting spot into the cab, one pawn at a time (WI-16) -
+		# the doors stay open (the cab is BOARDING) while we board.
+		ride.phase = RideRequest.Phase.BOARDING
+		ride.pawn.movement_component.walk_to(free_marker.global_position)
+		_boarding = ride
+		return
+	_boarding = null
+	if onboard.size() > 0:
+		destination_module = onboard[0].to_floor
+		state = CabState.MOVING
+	else:
+		state = CabState.IDLE
+
+## The one boarding pawn: in when its walk is done, skipped if it was freed on the
+## way.
+func _watch_boarding() -> void:
+	if _boarding == null:
+		_board_next()
+		return
+	var ride: RideRequest = _boarding
+	if not is_instance_valid(ride.pawn):
+		if ride.stand_position != null:
+			assigned_locations[ride.stand_position] = null
+		pickup_requests.erase(ride)
+		_boarding = null
+		_board_next()
+		return
+	if ride.pawn.movement_component.is_holding_for(ride):
+		_boarding = null
+		_finish_boarding(ride)
+		_board_next()
+
+## Boarding complete: the cab owns the pawn's position from here (WI-20), and
+## drives the ride until exit_conveyed at the drop-off.
+func _finish_boarding(ride: RideRequest) -> void:
+	pickup_requests.erase(ride)
+	onboard.append(ride)
+	ride.phase = RideRequest.Phase.ONBOARD
+	ride.pawn.reparent(self)
+	ride.pawn.movement_component.enter_conveyed(self)
 
 func floor_has_requests(next_floor: ModuleTurbolift) -> bool:
 	for ride in onboard:
@@ -114,45 +218,18 @@ func _ready() -> void:
 
 
 func add_pickup_request(request: RideRequest) -> void:
+	request.cab = self
 	pickup_requests.append(request)
-	
-func pickup_passengers(cur_module: ModuleTurbolift) -> void:
-	var entering_passengers: Array[RideRequest] = []
-	for ride in pickup_requests:
-		if ride.from_floor == cur_module:
-			entering_passengers.append(ride)
-			
-	for ride in entering_passengers:
-		if not is_instance_valid(ride.pawn):
-			pickup_requests.erase(ride)
-			ride.release_queue_anchor()
-			continue
-		# Boarding frees the queue spot for the next caller (WI-16).
-		ride.release_queue_anchor()
-		var free_marker: Marker2D = null
-		for marker in assigned_locations:
-			if assigned_locations[marker] == null:
-				free_marker = marker
-				break
-		if free_marker != null:
-			assigned_locations[free_marker] = ride
-			ride.stand_position = free_marker
-			# Walk from the waiting spot into the cab, one pawn at a time
-			# (WI-16) - the doors stay open (cab is WAITING) while we board.
-			await ride.pawn.walk_straight_to(free_marker.global_position)
-			if ride.cancelled or not is_instance_valid(ride.pawn):
-				# Cancelled mid-boarding (floor toggled, cab destroyed): the
-				# cancel path already emitted finished - don't board a dead ride.
-				assigned_locations[free_marker] = null
-				continue
-		pickup_requests.erase(ride)
-		onboard.append(ride)
-		ride.pawn.reparent(self)
-		# Boarding complete: the cab owns the pawn's position from here (WI-20).
-		# finished(true) ends the awaited part of request_ride - the ride itself
-		# is cab-driven and resolved via exit_conveyed at drop-off.
-		ride.pawn.movement_component.enter_conveyed(self)
-		ride.finished.emit(true)
+
+## Takes a ride that has not boarded off this cab's lists - the pawn let go of it,
+## or it failed. Idempotent.
+func drop_request(request: RideRequest) -> void:
+	pickup_requests.erase(request)
+	_boarding_queue.erase(request)
+	if _boarding == request:
+		_boarding = null
+	if request.stand_position != null and assigned_locations.get(request.stand_position) == request:
+		assigned_locations[request.stand_position] = null
 
 func get_closest_exit() -> ModuleTurbolift:
 	var best_lift: ModuleTurbolift = null
@@ -198,51 +275,46 @@ func recheck_requests() -> void:
 			else:
 				state = CabState.IDLE
 
+## A ride this cab holds can no longer be served as asked. One not yet boarded is
+## dropped and its movement failed; one boarding or aboard is committed and gets
+## off at the next stop instead - never between floors.
 func cancel_request(request: RideRequest) -> bool:
-	request.cancelled = true
-	if pickup_requests.has(request):
-		pickup_requests.erase(request)          # never picked up — just drop it
-		request.release_queue_anchor()
-		request.pawn.current_module = request.from_floor
-		request.finished.emit(false)
-		return true
-	if onboard.has(request):
-		request.to_floor = null       # already riding — don't yank them out mid-shaft;
-		return true                   # drop at whatever floor we next open doors at
-	return false
+	if not pickup_requests.has(request) and not onboard.has(request):
+		return false
+	if request.is_committed():
+		request.call_off()
+	else:
+		request.fail()
+	return true
 
 # Unload all passengers that want to exit at this floor
 func unload_passengers(cur_module: ModuleTurbolift) -> void:
 	for request: RideRequest in onboard.duplicate():
 		if request.to_floor == cur_module or request.to_floor == null:
 			onboard.erase(request)
-			assigned_locations[request.stand_position] = null
+			if request.stand_position != null:
+				assigned_locations[request.stand_position] = null
 			if not is_instance_valid(request.pawn):
 				continue
 			request.actual_dropoff_floor = cur_module
+			request.phase = RideRequest.Phase.DONE
 			request.pawn.current_module = cur_module
 			request.pawn.reparent(cur_module.get_parent())
 			# Normal arrival and a cancelled ride's next-stop drop are the same
 			# handoff (WI-20): exit_conveyed repaths from this floor, so a
 			# diverted drop-off self-corrects and a dead target just fails.
 			request.pawn.movement_component.exit_conveyed()
-			
-			
-func get_onboard_request_for(pawn: PawnBase) -> RideRequest:
-	for request in onboard:
-		if request.pawn == pawn:
-			return request
-	return null
+
 
 func is_idle() -> bool:
 	return state == CabState.IDLE
-	
+
 # Only valid if actually moving
 func moving_up() -> bool:
 	if destination_module != null:
 		return destination_module.global_position.y < get_apparent_position().y
 	return false
-	
+
 
 # Check if the cab is available
 func is_available() -> bool:
@@ -260,10 +332,10 @@ func destroy() -> void:
 	assigned_locations.clear()
 	for request in onboard:
 		request.cancelled = true
+		request.phase = RideRequest.Phase.DONE
 		if not is_instance_valid(request.pawn):
 			continue
 		# Dump into hallway if it exists, will fallback to space automatically.
-		# No finished emit - boarding already resolved it (WI-20).
 		request.pawn.current_module = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.CORRIDOR, Global.world_to_cell(global_position))
 		if request.pawn.get_parent() == self:
 			# The module-change setter only reparents on a layer change; force
@@ -271,11 +343,94 @@ func destroy() -> void:
 			request.pawn.reparent(Global.world_manager.get_canvas_for_layer(request.pawn.current_layer))
 		request.pawn.movement_component.exit_conveyed()
 	onboard.clear()
-	for request in pickup_requests:
-		request.release_queue_anchor()
-		request.pawn.current_module = request.from_floor
-		request.cancelled = true
-		request.finished.emit(false)
+	# Everyone not yet aboard - waiting, or part way through walking in - is
+	# dropped where they stand, and their movement fails (WI-75: a destroyed cab
+	# mid-boarding leaves the pawn in the corridor).
+	var not_aboard: Array[RideRequest] = pickup_requests.duplicate()
 	pickup_requests.clear()
+	_boarding_queue.clear()
+	_boarding = null
+	for request in not_aboard:
+		request.cab = null
+		request.fail()
 	shaft = null
 	queue_free()
+
+# --- persistence (WI-75) ----------------------------------------------------------
+#
+# Written per shaft by TurboliftManager, in the turbolifts section - which loads
+# before the pawns, so the cab is standing where it was, doing what it was doing,
+# before any ride is put back on it. The rides themselves are in their pawns'
+# movement blocks; the cab keeps only the order they stand in, by pawn id.
+
+func to_dict() -> Dictionary:
+	var out: Dictionary = {
+		"position": [global_position.x, global_position.y],
+		"state": int(state),
+	}
+	if current_turbolift != null:
+		out["at"] = SaveRefs.module_ref(current_turbolift)
+	if destination_module != null:
+		out["to"] = SaveRefs.module_ref(destination_module)
+	if _door_left > 0.0:
+		out["door"] = _door_left
+	var pickup: Array = _pawn_ids(pickup_requests)
+	if not pickup.is_empty():
+		out["pickup"] = pickup
+	var aboard: Array = _pawn_ids(onboard)
+	if not aboard.is_empty():
+		out["onboard"] = aboard
+	var boarding: Array = _pawn_ids(_boarding_queue)
+	if not boarding.is_empty():
+		out["boarding"] = boarding
+	return out
+
+func load_dict(data: Dictionary) -> void:
+	var at: Array = data.get("position", [])
+	if at.size() == 2:
+		global_position = Vector2(float(at[0]), float(at[1]))
+	state = int(data.get("state", CabState.IDLE)) as CabState
+	current_turbolift = SaveRefs.resolve_module_ref(data.get("at", {})) as ModuleTurbolift
+	destination_module = SaveRefs.resolve_module_ref(data.get("to", {})) as ModuleTurbolift
+	_door_left = maxf(float(data.get("door", 0.0)), 0.0)
+	_saved_order = {}
+	for key: String in ["pickup", "onboard", "boarding"]:
+		var ids: Array[int] = []
+		for id: Variant in data.get(key, []):
+			ids.append(int(id))
+		_saved_order[key] = ids
+
+## Puts one restored ride back on this cab's lists, where the save had it
+## (RideRequest.restore calls this, once per pawn).
+func restore_request(request: RideRequest) -> void:
+	match request.phase:
+		RideRequest.Phase.WAITING, RideRequest.Phase.BOARDING:
+			_insert_in_saved_order(pickup_requests, request, "pickup")
+			var queued: Array[int] = _saved_order.get("boarding", [] as Array[int])
+			if queued.has(request.pawn.pawn_id):
+				_insert_in_saved_order(_boarding_queue, request, "boarding")
+			if request.phase == RideRequest.Phase.BOARDING:
+				_boarding = request
+		RideRequest.Phase.ONBOARD:
+			_insert_in_saved_order(onboard, request, "onboard")
+	if request.stand_position != null:
+		assigned_locations[request.stand_position] = request
+
+func _insert_in_saved_order(list: Array[RideRequest], request: RideRequest, key: String) -> void:
+	var order: Array[int] = _saved_order.get(key, [] as Array[int])
+	var rank: int = order.find(request.pawn.pawn_id)
+	var at: int = list.size()
+	if rank >= 0:
+		for index: int in list.size():
+			var other: int = order.find(list[index].pawn.pawn_id) if is_instance_valid(list[index].pawn) else -1
+			if other > rank:
+				at = index
+				break
+	list.insert(at, request)
+
+static func _pawn_ids(rides: Array[RideRequest]) -> Array:
+	var out: Array = []
+	for ride: RideRequest in rides:
+		if is_instance_valid(ride.pawn):
+			out.append(ride.pawn.pawn_id)
+	return out

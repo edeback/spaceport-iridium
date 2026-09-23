@@ -459,6 +459,19 @@ func begin_movement(node: Node2D, speed: float = 1.0, in_space: bool = false, an
 	pawn.movement_component.move_to(node, speed, in_space, anchor)
 	return true
 
+## Picks up the walk this job's pawn was on when the game was saved, if it is
+## heading to exactly this node (WI-75): arms the arrival watch and returns true,
+## and the pawn carries on from where it stands - part way along its path, at a
+## door, in a turbolift queue. False when there is no such walk; the caller starts
+## one. A resuming goto asks this before anything else, so a pawn restored in the
+## middle of the module it was crossing does not stop there as "already present".
+func resume_movement(node: Node2D, speed: float = 1.0, in_space: bool = false, anchor: AnchorDef = null) -> bool:
+	if pawn == null or pawn.movement_component == null or node == null:
+		return false
+	if not pawn.movement_component.can_adopt(node, in_space, anchor):
+		return false
+	return begin_movement(node, speed, in_space, anchor)
+
 ## Pose handling for CompleteMode-agnostic "hold this animation while the action
 ## runs". Only ever touches the sprite when the action asked for a pose.
 func _play_action_animation(action: ActionBase) -> void:

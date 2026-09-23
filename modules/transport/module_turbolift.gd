@@ -5,9 +5,17 @@ extends ModuleBase
 @export var collision_upper: CollisionShape2D
 @export var collision_lower: CollisionShape2D
 @export var door_sprite: AnimatedSprite2D
+## How long this floor's door stands open after a cab stops, before shutting
+## itself. It was a literal in the door's auto-close lambda.
+@export var door_hold_seconds: float = 2.0
 
 var shaft: TurboliftShaft
-var open_requests: Array[RideRequest] = []
+## The floor's door, as state (WI-75 §3): a cab asks it open and waits the answer
+## out, and it shuts itself after door_hold_seconds. It used to be the sprite's
+## playback, awaited by the cab and closed by an animation_finished lambda.
+var _door: DoorMotion = null
+
+const DOOR_ANIMATION: StringName = &"open"
 
 ## Skip-floor toggle (WI-11): a disabled floor stays a physical shaft cell
 ## (cabs ride through it) but pawns can't board or alight there.
@@ -36,13 +44,12 @@ func _ready() -> void:
 	get_path_component().door_connected.connect(door_connected)
 	get_path_component().door_disconnected.connect(door_disconnected)
 	set_sprite(null)
-	# Door open/close is a gameplay-blocking wait: play it at sim speed (WI-20).
-	Global.time_manager.sync_animation(door_sprite)
-	door_sprite.animation_finished.connect(func() -> void:
-		if door_sprite.frame != 0:
-			await Global.time_manager.sim_seconds(2.0)
-			set_door(true)
-	)
+	# The door is state now, ticked in sim time below; the sprite only draws it.
+	door_sprite.stop()
+	_door = DoorMotion.make(DoorMotion.animation_seconds(door_sprite.sprite_frames, DOOR_ANIMATION),
+		door_hold_seconds)
+	_draw_door()
+	set_process(false)
 	Global.turbolift_manager.add_turbolift_module(self)
 
 func pre_delete() -> void:
@@ -78,37 +85,60 @@ func set_sprite(_module: ModuleBase) -> void:
 			
 		queue_redraw()
 
-func set_door(is_close: bool) -> void:
-	var anim_sprite: AnimatedSprite2D = door_sprite
-	if anim_sprite.is_playing():
-		if anim_sprite.get_playing_speed() > 0 and not is_close or anim_sprite.get_playing_speed() < 0 and is_close:
-			# In progress
-			await anim_sprite.animation_finished
-			return
-	if anim_sprite.frame == 0 and is_close:
-		# Already closed
+## Opens this floor's door for a cab that has just stopped, and returns the
+## sim-seconds until it is fully open - what the cab waits before anyone gets on
+## or off. 0 if it is open already (the hold from the last stop keeps running).
+func open_door() -> float:
+	var seconds: float = _door.request(true)
+	_draw_door()
+	set_process(_door.needs_tick())
+	return seconds
+
+func _process(delta: float) -> void:
+	if Engine.is_editor_hint() or _door == null or not _door.needs_tick():
+		set_process(false)
 		return
-	elif not is_close and (anim_sprite.frame == anim_sprite.sprite_frames.get_frame_count(&"open") - 1):
-		# Already open
+	var sim_delta: float = Global.time_manager.scale(delta)
+	if sim_delta <= 0.0:
 		return
-	anim_sprite.play(&"open", -1 if is_close else 1, is_close)
-	await anim_sprite.animation_finished
+	_door.tick(sim_delta)
+	_draw_door()
+	if not _door.needs_tick():
+		set_process(false)
+
+func _draw_door() -> void:
+	if door_sprite == null or door_sprite.sprite_frames == null \
+			or not door_sprite.sprite_frames.has_animation(DOOR_ANIMATION):
+		return
+	door_sprite.animation = DOOR_ANIMATION
+	door_sprite.frame = DoorMotion.frame_for(_door.openness,
+		door_sprite.sprite_frames.get_frame_count(DOOR_ANIMATION))
 
 func get_save_data() -> Dictionary:
 	var data: Dictionary = super()
 	if not floor_enabled:
 		data["floor_enabled"] = false
+	# A door part way through a stop - opening, or held open with its auto-close
+	# half run down - carries on from there after a load (WI-75).
+	var door: Dictionary = _door.to_dict() if _door != null else {}
+	if not door.is_empty():
+		data["door"] = door
 	return data
 
 func load_save_data(data: Dictionary) -> void:
 	super(data)
 	floor_enabled = bool(data.get("floor_enabled", true))
+	if _door != null:
+		_door.load_dict(data.get("door", {}))
+		_draw_door()
+		set_process(_door.needs_tick())
 
-## Walk the pawn to a claimed QUEUE spot in the corridor behind this floor
-## (WI-16) - replaces the old position teleport. Falls back to a small random
-## sidestep when there's no corridor or no free anchor: anchor scarcity must
-## never block the ride.
-func assign_waiting_slot(request: RideRequest) -> void:
+## Claims a QUEUE spot for the ride in the corridor behind this floor (WI-16)
+## and returns where it is, for the pawn to walk to - the walk itself is the
+## pawn's ManualWalk state now, not an await in here (WI-75 §6). Falls back to a
+## small random sidestep when there's no corridor or no free anchor: anchor
+## scarcity must never block the ride.
+func assign_waiting_slot(request: RideRequest) -> Vector2:
 	var pawn: PawnBase = request.pawn
 	var dest: Vector2 = pawn.global_position + Vector2(randi_range(-10, 10), randi_range(0, 5))
 	var corridor: ModuleBase = Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.CORRIDOR, module_cell)
@@ -120,24 +150,27 @@ func assign_waiting_slot(request: RideRequest) -> void:
 			if request.queue_anchor != null:
 				request.queue_path = pc
 				dest = pc.get_anchor_global_position(request.queue_anchor)
-	await pawn.walk_straight_to(dest)
+	return dest
 
 func has_custom_pathing() -> bool:
 	return true
 
-func traverse(_pawn: PawnBase, _path_edge: PathComponent.PathTraversalEdgeData) -> void:
-	pass
+func traverse(_pawn: PawnBase, _path_edge: PathComponent.PathTraversalEdgeData) -> PathHookResult:
+	return PathHookResult.proceed()
 
-func path_enter(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D, cancel_signal: Signal) -> void:
-	if next_node is ModuleTurbolift:
-		pass
-	pass
-	
-func path_exit(_pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D, cancel_signal: Signal) -> void:
-	if next_node is ModuleTurbolift:
-		# Awaits only through boarding (WI-20): on success the pawn comes back
-		# Conveyed and the movement chain unwinds here; the cab drives the ride
-		# and calls exit_conveyed at the drop-off floor, which repaths from there.
-		var ride_request: RideRequest = await shaft.request_ride(_pawn, self, next_node, cancel_signal)
-		if ride_request.cancelled:
-			_pawn.movement_component.cancel()
+func path_enter(_pawn: PawnBase, _door: int, _meta: StringName, _next_node: Node2D) -> PathHookResult:
+	return PathHookResult.proceed()
+
+## Leaving this floor for another of the shaft's is a ride (WI-75 §5). The shaft
+## takes the pawn - a queue walk, a wait, a walk into the cab, the ride - and the
+## path is finished with until the cab drops it and exit_conveyed re-paths from
+## that floor. A ride that cannot start (a floor switched off) fails the move, and
+## the pawn re-plans.
+func path_exit(pawn: PawnBase, _door: int, _meta: StringName, next_node: Node2D) -> PathHookResult:
+	var next_floor: ModuleTurbolift = next_node as ModuleTurbolift
+	if next_floor == null or shaft == null:
+		return PathHookResult.proceed()
+	var request: RideRequest = shaft.request_ride(pawn, self, next_floor)
+	if request.phase == RideRequest.Phase.CANCELLED:
+		return PathHookResult.fail()
+	return PathHookResult.taken_over()

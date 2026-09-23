@@ -1,55 +1,104 @@
 class_name Behavior_LinkedDoors
 extends PathBehavior
 
+## An airlock's pair of doors: crossing one shuts every other first, then opens
+## it, so the station is never open to vacuum.
+##
+## Each door is a [DoorMotion] ticked by the owning [PathComponent] (WI-75 §3).
+## They used to be their sprites' playback, driven by `await animation_finished`
+## and closed again by an `animation_finished` lambda awaiting `sim_seconds` -
+## which resumed on a freed sprite if the airlock was destroyed during the hold,
+## and could not be saved at all. The timing is the same: a door swings in its
+## animation's length at sim speed, stands open for [member open_seconds], then
+## shuts itself.
+
 class LinkedDoorsState:
 	var door_sprites: Dictionary[StringName, AnimatedSprite2D] = {}
+	var motions: Dictionary[StringName, DoorMotion] = {}
 
 @export var doors: Dictionary[StringName, NodePath]
+## How long a door stands fully open before shutting itself.
 @export var open_seconds: float = 0.4
+
+const DOOR_ANIMATION: StringName = &"open"
 
 func create_state(pc: PathComponent) -> RefCounted:
 	var state := LinkedDoorsState.new()
-	for door_name in doors:
-		var door_sprite: AnimatedSprite2D = pc.get_node(doors[door_name])
+	for door_name: StringName in doors:
+		var door_sprite: AnimatedSprite2D = pc.get_node(doors[door_name]) as AnimatedSprite2D
+		if door_sprite == null:
+			continue
+		# The sprite only draws the door now, so it never plays on its own.
+		door_sprite.stop()
 		state.door_sprites[door_name] = door_sprite
-		# Gameplay-blocking wait (airlock cycles ride on these): sim speed,
-		# frozen while paused (WI-20). The auto-close hold is already sim_seconds.
-		Global.time_manager.sync_animation(door_sprite)
-		# Automatically close the door after the timeout
-		door_sprite.animation_finished.connect(func() -> void:
-			if door_sprite.frame != 0:
-				await Global.time_manager.sim_seconds(open_seconds)
-				_set_door(state, door_name, false)
-		)
+		state.motions[door_name] = DoorMotion.make(
+			DoorMotion.animation_seconds(door_sprite.sprite_frames, DOOR_ANIMATION), open_seconds)
+		_draw(door_sprite, state.motions[door_name])
 	return state
 
-## The state is a RefCounted and never dies, but the sprites in it belong to a
-## module that can be destroyed (a raid) or deconstructed while a caller is held
-## in the auto-close wait above or in on_traverse's chain of awaits. Reading a
-## freed value out of a typed Dictionary is safe; touching it is not (WI-71 §5).
-func _set_door(state: LinkedDoorsState, door_name: StringName, open: bool) -> void:
-	var door_sprite_node := state.door_sprites[door_name]
-	if not is_instance_valid(door_sprite_node):
-		return
-	if door_sprite_node.is_playing():
-		if door_sprite_node.get_playing_speed() > 0 and open or door_sprite_node.get_playing_speed() < 0 and not open:
-			# In progress
-			await door_sprite_node.animation_finished
-			return
-	if door_sprite_node.frame == 0 and not open:
-		# Already closed
-		return
-	elif open and (door_sprite_node.frame == door_sprite_node.sprite_frames.get_frame_count(&"open") - 1):
-		# Already open
-		return
-	# Start animation
-	door_sprite_node.play(&"open", 1 if open else -1, not open)
-	await door_sprite_node.animation_finished
-
-func on_traverse(_pawn: PawnBase, path_edge: PathComponent.PathTraversalEdgeData, _module: ModuleBase, state: RefCounted) -> void:
-	# Ensure other doors are closed
-	for door_name: StringName in (state as LinkedDoorsState).door_sprites:
+## Every other door shuts, one after another, and then this one opens - the order
+## the awaits used to run in. The pawn waits for all of it.
+func on_traverse(_pawn: PawnBase, path_edge: PathComponent.PathTraversalEdgeData, _module: ModuleBase,
+		state: RefCounted) -> PathHookResult:
+	var doors_state: LinkedDoorsState = state as LinkedDoorsState
+	if doors_state == null or not doors_state.motions.has(path_edge.edge_meta):
+		return PathHookResult.proceed()
+	var ready_in: float = 0.0
+	for door_name: StringName in doors_state.motions:
 		if door_name != path_edge.edge_meta:
-			await _set_door(state, door_name, false)
-	# Open this door
-	await _set_door(state, path_edge.edge_meta, true)
+			ready_in = doors_state.motions[door_name].request(false, ready_in)
+	var open_in: float = doors_state.motions[path_edge.edge_meta].request(true, ready_in)
+	_draw_all(doors_state)
+	return PathHookResult.wait(open_in)
+
+func tick_state(state: RefCounted, delta: float) -> bool:
+	var doors_state: LinkedDoorsState = state as LinkedDoorsState
+	if doors_state == null:
+		return false
+	var moving: bool = false
+	for door_name: StringName in doors_state.motions:
+		var motion: DoorMotion = doors_state.motions[door_name]
+		if not motion.needs_tick():
+			continue
+		motion.tick(delta)
+		_draw(doors_state.door_sprites.get(door_name), motion)
+		moving = moving or motion.needs_tick()
+	return moving
+
+func save_state(state: RefCounted) -> Dictionary:
+	var doors_state: LinkedDoorsState = state as LinkedDoorsState
+	var out: Dictionary = {}
+	if doors_state == null:
+		return out
+	for door_name: StringName in doors_state.motions:
+		var block: Dictionary = doors_state.motions[door_name].to_dict()
+		if not block.is_empty():
+			out[String(door_name)] = block
+	return out
+
+func load_state(state: RefCounted, data: Dictionary) -> void:
+	var doors_state: LinkedDoorsState = state as LinkedDoorsState
+	if doors_state == null:
+		return
+	for key: String in data:
+		var door_name := StringName(key)
+		if doors_state.motions.has(door_name):
+			doors_state.motions[door_name].load_dict(data[key])
+	_draw_all(doors_state)
+
+func _draw_all(doors_state: LinkedDoorsState) -> void:
+	for door_name: StringName in doors_state.motions:
+		_draw(doors_state.door_sprites.get(door_name), doors_state.motions[door_name])
+
+## Takes the sprite as Variant (WI-71): it is read out of a stored dictionary, and
+## a typed Object parameter would error at the call on a freed one.
+static func _draw(sprite_variant: Variant, motion: DoorMotion) -> void:
+	if not is_instance_valid(sprite_variant):
+		return
+	var door_sprite: AnimatedSprite2D = sprite_variant as AnimatedSprite2D
+	if door_sprite == null or door_sprite.sprite_frames == null \
+			or not door_sprite.sprite_frames.has_animation(DOOR_ANIMATION):
+		return
+	door_sprite.animation = DOOR_ANIMATION
+	door_sprite.frame = DoorMotion.frame_for(motion.openness,
+		door_sprite.sprite_frames.get_frame_count(DOOR_ANIMATION))
