@@ -386,4 +386,4 @@ func test_job_data_registry_returns_null_for_unknown_ids() -> void:
 	JobDataRegistry.register_for_test(_data())
 	assert_not_null(JobDataRegistry.get_data(&"test_job"), "a registered type resolves")
 	assert_null(JobDataRegistry.get_data(&"not_a_real_job"), "an unknown type is null, not an error")
-	JobDataRegistry.clear_for_test()
+	ContentPaths.invalidate()

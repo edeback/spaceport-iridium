@@ -10,7 +10,8 @@ func before_each() -> void:
 	RecipeData.clear_for_test()
 
 func after_each() -> void:
-	RecipeData.clear_for_test()
+	# Puts the shipped content back in every cache at once (WI-74 §2).
+	ContentPaths.invalidate()
 
 func _recipe(recipe_name: String, tags: Array[String], sort_order: int = 0) -> RecipeData:
 	var recipe := RecipeData.new()

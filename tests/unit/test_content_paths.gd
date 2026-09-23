@@ -30,6 +30,30 @@ func test_registering_the_same_root_twice_does_not_duplicate_it() -> void:
 	ContentPaths.register_mod_root(MOD_ROOT, &"testmod")
 	assert_eq(ContentPaths.roots().size(), 2)
 
+# --- generation (WI-74 §2) ------------------------------------------------------
+
+func test_a_new_root_moves_the_generation_on() -> void:
+	var before: int = ContentPaths.generation
+	ContentPaths.register_mod_root(MOD_ROOT, &"testmod")
+	assert_gt(ContentPaths.generation, before, "new content is possible, so every cache must rescan")
+
+func test_re_registering_a_root_leaves_the_generation_alone() -> void:
+	ContentPaths.register_mod_root(MOD_ROOT, &"testmod")
+	var before: int = ContentPaths.generation
+	ContentPaths.register_mod_root(MOD_ROOT, &"testmod")
+	assert_eq(ContentPaths.generation, before, "nothing changed, so nothing need rescan")
+
+func test_dropping_the_mod_roots_moves_the_generation_on() -> void:
+	ContentPaths.register_mod_root(MOD_ROOT, &"testmod")
+	var before: int = ContentPaths.generation
+	ContentPaths.clear_mod_roots()
+	assert_gt(ContentPaths.generation, before, "the mod's content is gone from every cache")
+
+func test_invalidate_moves_the_generation_on() -> void:
+	var before: int = ContentPaths.generation
+	ContentPaths.invalidate()
+	assert_eq(ContentPaths.generation, before + 1)
+
 func test_a_root_is_normalised_to_a_trailing_slash() -> void:
 	ContentPaths.register_mod_root("res://mods/testmod/data", &"testmod")
 	assert_eq(ContentPaths.roots()[1], MOD_ROOT)

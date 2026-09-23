@@ -1,11 +1,15 @@
 class_name PathManager
 extends Node
 
-@onready var ui_in_game: UIInGame = $"../../ForegroundLayers/UiInGameLayer/UiInGame"
-
 var graph:ModuleGraph = ModuleGraph.new()
+## The multi-select path preview: the route through every selected module in
+## selection order, in cells. [UIInGame] draws it; this manager only computes it
+## and says when it changed, so it binds no UI node (WI-74 §3, F33) and runs the
+## same with no HUD in the tree.
 var debug_path: PackedVector2Array
 var selected_modules: Array[Node2D] = []
+
+signal debug_path_changed
 
 var recheck_pathfinding: bool = false
 
@@ -136,14 +140,10 @@ func _update_disconnected_indicators() -> void:
 
 
 func check_pathfinding() -> void:
-	if selected_modules.size() > 1:
-		debug_path = []
-		for index in range(selected_modules.size() - 1):
-			debug_path.append_array(run_pathfinding(selected_modules[index], selected_modules[index + 1]))
-		ui_in_game.debug_path_cell = debug_path
-	else:
-		debug_path = []
-		ui_in_game.debug_path_cell = debug_path
+	debug_path = []
+	for index in range(selected_modules.size() - 1):
+		debug_path.append_array(run_pathfinding(selected_modules[index], selected_modules[index + 1]))
+	debug_path_changed.emit()
 	
 func _module_path_to_point_path(path: Array[ModuleGraph.PathPoint], use_global_position: bool = false) -> PackedVector2Array:
 	var point_path: PackedVector2Array = []

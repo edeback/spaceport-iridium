@@ -4,11 +4,6 @@ extends Control
 @onready var selector: Node2D = $Selector
 @onready var preview_module: PreviewModule = $Selector/PreviewModule
 
-var debug_path_cell: PackedVector2Array:
-	set(new_path):
-		debug_path_cell = new_path
-		queue_redraw()
-		
 var debug_path_position: PackedVector2Array:
 	set(new_path):
 		debug_path_position = new_path
@@ -51,6 +46,10 @@ func _ready() -> void:
 	pawn_brackets.padding = 0
 	add_child(pawn_brackets)
 	SignalBus.module_selected.connect(_on_module_selected)
+	# The multi-select path preview is PathManager's to compute and ours to draw
+	# (WI-74 §3, F33): we listen, it never reaches for us. Managers ready first.
+	if Global.path_manager != null:
+		Global.path_manager.debug_path_changed.connect(queue_redraw)
 
 ## Hands the slot back (WI-71 §7). Godot 4.7 reports a freed object as `== null`,
 ## so the guards around the game already take their null branch after a Quit to
@@ -245,6 +244,7 @@ func update_structure_placement() -> void:
 
 func _draw() -> void:	 		
 	var last_point: Variant = null
+	var debug_path_cell: PackedVector2Array = Global.path_manager.debug_path if Global.path_manager != null else PackedVector2Array()
 	for next_point in debug_path_cell:
 		if last_point == null:
 			last_point = next_point

@@ -7,7 +7,7 @@ extends PawnBase
 ## shopping (paid recreation), sleeping (a hotel room, billed on wake), eating
 ## (a paid meal) - so the whole behavior loop is need-driven with money gates.
 ##
-## It never pulls station work off the board (start_job below, like the inspector /
+## It never pulls station work off the board (_claim_work_job below, like the inspector /
 ## mining drone), and it leaves when its stay timer runs out, its wallet empties,
 ## or it turns miserable - walking out via the docking bay (no escape pod: a guest
 ## needs a real exit, and lingers stranded, alerting, if none is reachable).
@@ -17,7 +17,7 @@ extends PawnBase
 const GUEST_TINT: Color = Color(0.98, 0.85, 0.55)
 
 ## Game-hours left in the visit before the guest heads home regardless of mood.
-## Set by VisitorManager at spawn; ticked down in _process; saved.
+## Set by VisitorManager at spawn; ticked down on the slow tick; saved.
 var stay_hours_remaining: float = 24.0
 ## Happiness at/below which the guest cuts the visit short (miserable).
 @export var leave_happiness_threshold: float = 0.35
@@ -41,21 +41,23 @@ var _retry_cooldown: float = 0.0
 func _ready() -> void:
 	super()
 	tint = GUEST_TINT
+	if Global.time_manager != null:
+		Global.time_manager.slow_tick.connect(_on_slow_tick)
 
 ## Configure a freshly-spawned guest (VisitorManager): starting wallet + stay length.
 func setup(wallet: int, stay_hours: float) -> void:
 	personal_credits = maxi(wallet, 0)
 	stay_hours_remaining = maxf(stay_hours, 0.0)
 
-func _process(delta: float) -> void:
-	super(delta)  # needs decay, animation, and current-job processing (PawnBase)
-	var sim_delta: float = Global.time_manager.scale(delta)
-	if sim_delta <= 0.0:
-		return
+## The stay and stranded-retry clocks ride the slow tick rather than the frame
+## (WI-74 §6, F37), so they pause and scale like every other periodic system. Only
+## the countdowns moved: the guest's needs and jobs still run per frame in
+## [method PawnBase._process].
+func _on_slow_tick(interval: float) -> void:
 	if _retry_cooldown > 0.0:
-		_retry_cooldown = maxf(0.0, _retry_cooldown - sim_delta)
+		_retry_cooldown = maxf(0.0, _retry_cooldown - interval)
 	if not _leaving:
-		stay_hours_remaining -= sim_delta / TimeManager.SECONDS_PER_HOUR
+		stay_hours_remaining -= interval / TimeManager.SECONDS_PER_HOUR
 		if _should_leave():
 			_leaving = true
 			_go_to_exit()
@@ -149,26 +151,9 @@ func load_kind_data(entry: Dictionary) -> void:
 	_leaving = bool(data.get("leaving", false))
 	_departure_reported = bool(data.get("reported", false))
 
-## Guests never pull station work off the board (mirrors InspectorPawn /
-## MiningDronePawn): run only queued need jobs, otherwise wander. Leaving is driven
-## by _process, not the board.
-func start_job() -> void:
-	# A restored in-flight job first, as for crew (WI-68 F21).
-	if _resume_restored_job():
-		return
-	if inventory_component != null and not inventory_component.is_empty():
-		var return_job: Job = _make_store_inventory_job()
-		if return_job.can_do_job(self):
-			_begin_job(return_job)
-			return
-	while not job_queue.is_empty():
-		var queued_job: Job = job_queue.pop_front()
-		if queued_job.is_valid() and queued_job.can_do_job(self):
-			_begin_job(queued_job)
-			return
-		queued_job.cancel(true)
-	var idle_job: Job = Job.of(&"idle_wander")
-	if idle_job.can_do_job(self):
-		_begin_job(idle_job)
-	elif animated_sprite != null:
-		animated_sprite.play("idle")
+## Guests never pull station work off the board: they run their queued need jobs
+## and otherwise wander, exactly as crew do off the clock. Leaving is driven by the
+## stay clock, not the board. Everything else about picking a job is crew's
+## (WI-74 §1).
+func _claim_work_job() -> bool:
+	return false

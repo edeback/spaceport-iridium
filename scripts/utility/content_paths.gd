@@ -75,6 +75,27 @@ static var _roots: Array[String] = [BASE_ROOT]
 ## root -> owning mod id. The base root maps to &"", the reserved namespace.
 static var _mod_id_by_root: Dictionary[String, StringName] = {BASE_ROOT: &""}
 
+## Moves on every time what [method scan] would find may have changed (WI-74 §2).
+##
+## Thirteen static caches read content through this class - one per kind of
+## scanned definition, from [SkillData] to [JobDataRegistry] - and each used to
+## scan once per process and never again, which is what blocked WI-47's patch ops
+## and any mod toggled at runtime. Each now remembers the generation it scanned at
+## and rescans on its next read when this has moved on, so one [method invalidate]
+## reaches all of them without this class naming any.
+##
+## A counter rather than a registry of caches, because the thirteen have
+## different shapes (a registry and an order, a tag index, a modifier index) and a
+## shared base class would force them into one. Read it; only
+## [method invalidate] writes it. `tests/unit/test_content_caches.gd` fails on a
+## static cache that doesn't compare against it.
+static var generation: int = 0
+
+## Marks every static content cache stale. Each rescans on its next read, which is
+## also how a test that planted a fake in a registry puts the real content back.
+static func invalidate() -> void:
+	generation += 1
+
 # --- roots --------------------------------------------------------------------
 
 ## Adds a mod's content root, after its pack has been mounted. Idempotent: a
@@ -86,6 +107,7 @@ static func register_mod_root(root: String, mod_id: StringName) -> void:
 		return
 	_roots.append(normalized)
 	_mod_id_by_root[normalized] = mod_id
+	invalidate()
 
 ## Drops every mod root, leaving the base game. For tests and for a reload of the
 ## mod list; note that the packs themselves cannot be unmounted, so this only
@@ -93,6 +115,7 @@ static func register_mod_root(root: String, mod_id: StringName) -> void:
 static func clear_mod_roots() -> void:
 	_roots = [BASE_ROOT]
 	_mod_id_by_root = {BASE_ROOT: &""}
+	invalidate()
 
 static func roots() -> Array[String]:
 	return _roots.duplicate()

@@ -1,8 +1,6 @@
 class_name StructureManager
 extends Node
 
-@onready var ui_in_game: UIInGame = $"../../ForegroundLayers/UiInGameLayer/UiInGame"
-
 var graph:ModuleGraph = ModuleGraph.new()
 
 # Called when the node enters the scene tree for the first time.

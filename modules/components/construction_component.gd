@@ -93,6 +93,12 @@ func _process(delta: float) -> void:
 				current_state = ConstructionState.Deconstructed
 				deconstruction_finished.emit()
 				setup_storage_post_deconstruction()
+				# The credits come back with the materials, at the moment the
+				# teardown is done rather than when the bin is hauled empty
+				# (WI-74 §4). A save before this line still owes them - the site
+				# restores Deconstructing with credits_paid intact - and one
+				# after it has already paid, so a load never refunds twice.
+				owner_module.refund_credits()
 				work_seconds_done = 0
 				current_state = ConstructionState.Deconstructed
 		ConstructionState.Deconstructed:

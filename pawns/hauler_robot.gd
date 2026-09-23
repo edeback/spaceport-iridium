@@ -18,18 +18,18 @@ var parent_bay: LogisticsBayComponent = null
 func default_designation() -> String:
 	return "Hauling Droid"
 
-## HAUL-only board claim (WI-27). The shared RobotPawnBase.start_job handles the
-## cargo sweep, personal queue, and the WI-28 energy gates; this hook supplies the
-## board claim, filtered to HAUL - never BUILD/WORK/NEEDS, which crew keep. Priority
-## bands are untouched because robots claim from the same board crew do. No shift
-## gate or idle-wander fallback (robots just hold an idle pose when the board is empty).
-func _claim_work_job() -> void:
+## HAUL-only board claim (WI-27). The one PawnBase.start_job handles the cargo
+## sweep and personal queue, and RobotPawnBase's hooks the WI-28 energy gates;
+## this hook supplies the board claim, filtered to HAUL - never BUILD/WORK/NEEDS,
+## which crew keep. Priority bands are untouched because robots claim from the
+## same board crew do. No shift gate, and no haul waiting falls through to the
+## robot's idle pose rather than a wander.
+func _claim_work_job() -> bool:
 	current_job = Global.job_manager.find_job(self, [JobData.Category.HAUL])
-	if current_job != null:
-		current_job.start_job(self)
-	elif animated_sprite != null:
-		# No haul waiting - idle pose (no wandering; robots stay put).
-		animated_sprite.play("idle")
+	if current_job == null:
+		return false
+	current_job.start_job(self)
+	return true
 
 ## Destroyed (WI-28): drop off the bay's roster so it frees a slot under the cap
 ## and the player can buy a replacement.

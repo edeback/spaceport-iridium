@@ -129,9 +129,14 @@ func withdraw_cost() -> void:
 		resource.force_withdraw(resource_costs[resource])
 
 func withdraw_credit_cost() -> void:
-	var cost: int = int(resource_costs.get(Global.resource_manager.credit_resource, 0))
+	var cost: int = credit_cost()
 	if cost > 0:
 		Global.resource_manager.credit_resource.force_withdraw(cost)
+
+## The credit part of [member resource_costs] - what placing one charges up front,
+## before any material is delivered.
+func credit_cost() -> int:
+	return int(resource_costs.get(Global.resource_manager.credit_resource, 0))
 
 func is_unlocked() -> bool:
 	if unlocked_by_default:

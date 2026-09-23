@@ -8,7 +8,8 @@ func before_each() -> void:
 	ShipData.clear_for_test()
 
 func after_each() -> void:
-	ShipData.clear_for_test()
+	# Puts the shipped content back in every cache at once (WI-74 §2).
+	ContentPaths.invalidate()
 
 func _ship(id: String, weight: float = 1.0, min_strength: float = 0.0) -> ShipData:
 	var ship := ShipData.new()

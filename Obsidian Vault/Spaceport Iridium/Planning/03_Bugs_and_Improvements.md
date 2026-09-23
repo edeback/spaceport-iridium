@@ -206,7 +206,11 @@ Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", 
 
 **F33. `PathManager` and `StructureManager` bind a UI node by relative tree path** (`@onready var ui_in_game: UIInGame = $"../../ForegroundLayers/UiInGameLayer/UiInGame"`, [`path_manager.gd:4`](../../../scripts/managers/path_manager.gd), `structure_manager.gd:4`). PathManager writes debug paths into it (`:136-139`); StructureManager's is unused. A simulation manager that depends on the HUD's position in the tree is the layering running backwards, and it is the first thing a headless sim fixture (see the architecture review) would have to stub. **Fix:** delete StructureManager's; PathManager's debug output goes through `Global.ui_in_game` behind `is_instance_valid`, or a signal.
 
+> *Fixed (2026-09-22, [[WI-74_Layering_And_Consolidations]] §3):* `StructureManager`'s binding is deleted, and `PathManager` keeps the preview in `debug_path` and emits `debug_path_changed`, which `UIInGame` listens for and reads when it draws - the signal route rather than a guarded `Global.ui_in_game` write, so the manager names no UI at all. The four world objects that called `Global.ui_main.*_clicked` emit `SignalBus.world_object_clicked` instead. `test_sim_ui_layering.gd` sweeps for both.
+
 **F34. Cancelling a never-built blueprint forfeits its credit cost - a design gap, not a bug.** `purchase_and_add_module` ([`world_manager.gd:107-119`](../../../scripts/managers/world_manager.gd)) withdraws credits at placement; `remove_module` on a blueprint returns the delivered materials to a pile (`module_base.gd:609-621`) and returns no credits. D4 (refunds on *deconstruction*) is open by design; a blueprint cancelled a second after placement is a misclick tax with no rule stating it. Decide and document; `record_refund` now exists if the answer is a refund.
+
+> *Decided and fixed (2026-09-22, [[WI-74_Layering_And_Consolidations]] §4):* the author chose more than the recommendation. A blueprint cancelled before it is finished refunds its **whole** credit cost however much work was done on it; a **finished deconstruction** refunds it too (D4, closed); only a **demolished** built module loses its credits, with its materials. What is refunded is a per-module receipt, `ModuleBase.credits_paid`, set by `purchase_and_add_module` and saved - not the module's price, because truss (5 cr) and corridors (10 cr) are placed for free all the time and refunding their price would print money. Stated in the Build panel's footer and on the DECONSTRUCT/DEMOLISH tooltips.
 
 ### C. Hygiene
 
@@ -214,7 +218,11 @@ Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", 
 
 **F36. `UnlockManager.suits_mandatory()` `push_warning`s on every call when the tier has no data** ([`unlock_manager.gd:147-152`](../../../scripts/managers/unlock_manager.gd)). It is called per slow tick per crew member and per tick by `AtmosphereManager`, so a missing tier `.tres` floods the log at ~40 lines a second. Warn once.
 
+> *Fixed (2026-09-22, [[WI-74_Layering_And_Consolidations]] §5):* warns once per missing tier, then answers quietly.
+
 **F37. Five per-frame countdowns that the "periodic work goes on `slow_tick`" rule would put on the tick:** `CrewManager._process` (the pending-hire clock), `TraderManager._process` (the visit clock), `EventManager._process` (happiness-effect countdown), `MiningComponent._process` (respawn timer), `VisitorPawn._process` (stay timer). Consistency, not cost.
+
+> *Fixed (2026-09-22, [[WI-74_Layering_And_Consolidations]] §6):* all five integrate the slow tick's interval. `test_wi74_layering.gd` times each against its configured duration: every one fires within a tick (plus a frame's measurement slack) of it.
 
 ### D. Found while scoping the work items (2026-09-19)
 
@@ -251,7 +259,7 @@ Separately, `global.gd:266` says `NON_REMAPPABLE_ACTIONS` holds "the AIDE key", 
 | [[WI-71_Reference_Hygiene]] | the rest of F24 (36 sites triaged), F27, F28's two defects, F8, F29 as hygiene; §A6 and §A7's guards. **Done 2026-09-19**; found three more live defects on the way (an inert conveyor-endpoint check, the flow overlay aborting on a deconstructed endpoint, a courier shuttle guarded on the wrong side of an await) and two more Godot facts. |
 | [[WI-72_Declared_Vocabularies_And_Content_Guards]] | F30, F31, F11, the balance literals; §A12 — **done 2026-09-20** |
 | [[WI-73_Save_Orchestration]] | §A5, §A8, and four stale persistence statements in CLAUDE.md and the tech spec. **Done 2026-09-22**; found and fixed F41 (a preload cycle its own §3 unmasked) and recorded F42. |
-| [[WI-74_Layering_And_Consolidations]] | F33, F34, F36, F37; §A9-A11 |
+| [[WI-74_Layering_And_Consolidations]] | F33, F34, F36, F37; §A9-A11. **Done 2026-09-22**; F34 settled by the author as a full refund for any unfinished blueprint and for a finished deconstruction. |
 | [[WI-75_Movement_Without_Coroutines]] | the movement pipeline's 37 awaits; §A7 in full (split out of WI-71, 2026-09-19) |
 
 ---

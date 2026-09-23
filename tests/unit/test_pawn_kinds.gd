@@ -7,7 +7,8 @@ func before_each() -> void:
 	PawnData.clear_for_test()
 
 func after_each() -> void:
-	PawnData.clear_for_test()
+	# Puts the shipped content back in every cache at once (WI-74 §2).
+	ContentPaths.invalidate()
 
 func _kind(id: String, role: PawnData.Role, weight: float = 1.0, price_mult: float = 1.0) -> PawnData:
 	var kind := PawnData.new()

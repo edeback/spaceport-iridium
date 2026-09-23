@@ -16,7 +16,9 @@ extends PawnBase
 ## bay just means its implicit charger is unavailable.
 ##
 ## Subclasses differ only in how they source work (_claim_work_job) and which
-## component owns them (set_owner_component). Everything shared lives here.
+## component owns them (set_owner_component). Everything shared lives here, and
+## the job pick itself is PawnBase.start_job's one ordering with this class's
+## energy gates hooked into it (WI-74 §1).
 
 ## Set by the owning bay each tick to reflect whether the home bay has power. No
 ## longer a freeze gate (WI-28) - it feeds the home charger's availability only.
@@ -154,42 +156,29 @@ func notify_destroyed_by_integrity() -> void:
 func _notify_owner_removed() -> void:
 	pass
 
-## Shared claim ordering (WI-28). Layered on top of the WI-27 pattern with the
-## energy gates: a drained robot heads straight for a charger and takes nothing
-## else; a low-but-not-empty robot delivers its cargo and recharges before pulling
-## any new board work. Subclasses supply only the normal-work branch.
-func start_job() -> void:
-	# Zero energy = emergency backup power: recharge and nothing else. Skip the
-	# cargo sweep and the work board entirely.
+## The energy gates on [method PawnBase.start_job]'s one ordering (WI-28, hooks
+## since WI-74 §1). A drained robot heads straight for a charger and takes nothing
+## else - not even the job it was restored mid-way through, whose cargo can wait; a
+## low-but-not-empty robot delivers its cargo and runs its queue (where the
+## recharge is) before pulling any new work. Subclasses supply only the work.
+func _gate_before_resume() -> bool:
+	# Zero energy = emergency backup power: recharge and nothing else.
 	if power_component != null and power_component.must_recharge():
 		_start_recharge_only()
-		return
-	# Then the job this robot was doing when the save was written (WI-68 F21):
-	# the cargo it carries is that job's, not leftovers for the sweep below. After
-	# the emergency gate deliberately - a drained robot still recharges first.
-	if _resume_restored_job():
-		return
-	# Return carried cargo first so a robot never sits on stock it could deposit.
-	if inventory_component != null and not inventory_component.is_empty():
-		var return_job: Job = _make_store_inventory_job()
-		if return_job.can_do_job(self):
-			_begin_job(return_job)
-			return
-		# Nowhere takes it right now - fall through rather than stalling the robot.
-	# Personal queue next: chained followups, queued needs (recharge/repair).
-	while not job_queue.is_empty():
-		var queued_job: Job = job_queue.pop_front()
-		if queued_job.can_begin(self):
-			_begin_job(queued_job)
-			return
-		queued_job.cancel(true) # cancel implies end_job (lifecycle contract)
-	# Below the recharge threshold: don't pull new board work - wait for the queued
-	# recharge to become runnable (no board jobs below threshold until charged).
+		return true
+	return false
+
+## Below the recharge threshold: wait for the queued recharge to become runnable
+## rather than pulling new work (no work below threshold until charged).
+func _gate_before_work() -> bool:
 	if power_component != null and power_component.wants_recharge():
-		if animated_sprite != null:
-			animated_sprite.play("idle")
-		return
-	_claim_work_job()
+		_idle_pose()
+		return true
+	return false
+
+## Robots never wander: an idle robot holds position until its source has work.
+func _fallback_job() -> void:
+	_idle_pose()
 
 ## Zero-energy state: run a recharge job and nothing else. Prefer one already
 ## queued; RobotPowerComponent's escalation otherwise preempts us with a fresh one,
@@ -204,11 +193,10 @@ func _start_recharge_only() -> void:
 				return
 			job.cancel(true)
 			break
-	if animated_sprite != null:
-		animated_sprite.play("idle")
+	_idle_pose()
 
 ## Normal-work claim, overridden per robot (drone: parent bay; hauler: HAUL board).
-## Base idles.
-func _claim_work_job() -> void:
-	if animated_sprite != null:
-		animated_sprite.play("idle")
+## A robot kind that sources no work of its own takes none - never the shared
+## board, which is the crew's.
+func _claim_work_job() -> bool:
+	return false

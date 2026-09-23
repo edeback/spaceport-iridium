@@ -247,11 +247,11 @@ func make_roller() -> CandidateRoller:
 func _generate_candidate() -> HireCandidate:
 	return make_roller().roll()
 
-func _process(delta: float) -> void:
-	var sim_hours: float = Global.time_manager.scale(delta) / TimeManager.SECONDS_PER_HOUR
-	if sim_hours <= 0.0:
-		return
-	for hire: Dictionary in _pending.advance(sim_hours):
+## The pending-hire clock rides the slow tick rather than the frame (WI-74 §6,
+## F37), so it pauses and scales like every other periodic system. A tick is a
+## quarter sim-second; a shuttle launches at most that much later than it did.
+func _advance_pending_hires(interval: float) -> void:
+	for hire: Dictionary in _pending.advance(interval / TimeManager.SECONDS_PER_HOUR):
 		_arrive(hire)
 
 ## The hire's delay is up. It stays pending until it is settled here or when its
@@ -405,8 +405,13 @@ func fire_crew(pawn: PawnBase) -> void:
 		needs.resigned = true
 	SignalBus.crew_resigned.emit(pawn)
 
-func _on_slow_tick(_interval: float) -> void:
+## Connected once the station exists (see [method _on_module_added_for_start]).
+## The lose check runs before the hires advance, the order the two ran in when
+## the hire clock was a `_process` - TimeManager emits the tick ahead of every
+## other node's frame.
+func _on_slow_tick(interval: float) -> void:
 	_check_lose_condition()
+	_advance_pending_hires(interval)
 
 func _check_lose_condition() -> void:
 	if _game_over_fired:

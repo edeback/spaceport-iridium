@@ -130,6 +130,11 @@ var _inspection_cooldown_cycles: int = 0
 ## reading READY rather than `INSPECTOR ABOARD`, and that is correct rather than a
 ## bug**: the tour is gone, so asking for another one is the only sensible state.
 var _inspection_in_progress: bool = false
+## Tiers [method suits_mandatory] has already complained about (F36, WI-74).
+## It is asked per crew member per slow tick and per atmosphere tick, so an
+## unlatched warning wrote ~40 lines a second for one missing .tres. Runtime-only:
+## a reload may warn once more, which is the point of a warning.
+var _warned_missing_tiers: Dictionary[int, bool] = {}
 
 ## For the Comms panel: is an inspector currently aboard the station?
 func is_inspection_active() -> bool:
@@ -147,7 +152,9 @@ func is_inspection_active() -> bool:
 func suits_mandatory() -> bool:
 	var data: TierData = current_tier_data()
 	if data == null:
-		push_warning("UnlockManager: no TierData for tier %d" % current_tier)
+		if not _warned_missing_tiers.has(current_tier):
+			_warned_missing_tiers[current_tier] = true
+			push_warning("UnlockManager: no TierData for tier %d" % current_tier)
 		return false
 	return data.suits_mandatory
 

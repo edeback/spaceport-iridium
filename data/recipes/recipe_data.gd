@@ -26,17 +26,20 @@ extends Resource
 @export var sort_order: int = 0
 
 # --- reverse index --------------------------------------------------------------
-# Scanned once and cached on the data class, the way SkillData and
+# Scanned once per ContentPaths.generation and cached on the data class, the way SkillData and
 # BuildCategoryData are. A processor asks "which recipes claim any of my module's
 # tags", instead of a scene array answering "which recipes do I offer".
 
 static var _by_tag: Dictionary[String, Array] = {}
-static var _scanned: bool = false
+## The [member ContentPaths.generation] this cache last scanned at, -1 for never.
+## A stale one rescans on the next read (WI-74 §2).
+static var _scanned_generation: int = -1
 
 static func _ensure_scanned() -> void:
-	if _scanned:
+	if _scanned_generation == ContentPaths.generation:
 		return
-	_scanned = true
+	_scanned_generation = ContentPaths.generation
+	_by_tag.clear()
 	for path: String in ContentPaths.scan(ContentPaths.RECIPES):
 		var res: Resource = ResourceLoader.load(path)
 		if res is not RecipeData:
@@ -64,7 +67,7 @@ static func for_tags(tags: Array[String]) -> Array[RecipeData]:
 
 ## Test seam - the index is static and shared by every suite in a run.
 static func register_for_test(recipe: RecipeData) -> void:
-	_scanned = true
+	_scanned_generation = ContentPaths.generation
 	for tag: String in recipe.processor_tags:
 		var bucket: Array = _by_tag.get_or_add(tag, [])
 		if not bucket.has(recipe):
@@ -72,7 +75,7 @@ static func register_for_test(recipe: RecipeData) -> void:
 
 static func clear_for_test() -> void:
 	_by_tag.clear()
-	_scanned = false
+	_scanned_generation = -1
 
 ## Output scaling across input richness: a batch of richness 0.0 yields
 ## outputs × min_yield_mult, richness 1.0 yields × max_yield_mult (lerped

@@ -139,17 +139,23 @@ Each entry: what is there, what it costs, what to do, and roughly how big the ch
 
 **Do.** One `start_job` in `PawnBase` with overridable steps (`_before_sweep()`, `_board_categories()`, `_fallback_job()`), or a `JobPicker` strategy object. Small, and it makes the next policy change one edit.
 
+> *Done by [[WI-74_Layering_And_Consolidations]] (2026-09-22)* as the template method, with five hooks: `_gate_before_resume`, `_sweeps_cargo`, `_gate_before_work`, `_claim_work_job` and `_fallback_job`. There were four copies, not three - the inspector had a narrower one.
+
 ### A10. Content registries are twelve copies of one static cache
 
 **What.** `BuildCategoryData`, `DifficultyData`, `DiseaseData`, `PawnData`, `PlanetVariant`, `ShipData`, `ShopTypeData`, `SkillData`, `StarClass`, `TraitData`, `RecipeData`, `JobDataRegistry`, `MoodCatalog`, `NameGenerator` each hold `static var _registry/_ordered/_scanned` and a `clear_for_test`. None is ever invalidated in a running process, so WI-47's deferred stage 5 (patch ops) and any runtime mod enable/disable would have to reach fourteen statics.
 
 **Do.** One `ContentRegistry` base (or a `ContentPaths.invalidated` hook every static subscribes to) so "the content set changed" is one call. Pairs naturally with WI-47 stage 5 when it is picked up.
 
+> *Done by [[WI-74_Layering_And_Consolidations]] (2026-09-22)* as a generation counter rather than a base class: each of the thirteen caches compares `ContentPaths.generation` with the one it scanned at. `NameGenerator` reads its addon, not `ContentPaths`, and was left alone. A source sweep fails on a fourteenth cache written the old way.
+
 ### A11. The simulation reaches up into the HUD in six places
 
 **What.** `ModuleBase._on_footprint_input_event` → `Global.ui_main.module_clicked`; `PawnBase._on_collision_clicked` → `Global.ui_main.pawn_clicked`; `ResourcePile` → `Global.ui_main.resource_pile_clicked`; `AsteroidBase` likewise; `PathManager`/`StructureManager` (F33); `ModuleTurbolift`. World objects deciding what a click means is the sim depending on the UI.
 
 **Do.** World objects emit one `SignalBus.world_object_clicked(object)`; `UIMain` subscribes. Then a headless fixture (A1) needs no `UIMain` at all, and the click-cycle logic lives in one place.
+
+> *Done by [[WI-74_Layering_And_Consolidations]] (2026-09-22)* exactly so, with F33. `ModuleTurbolift` no longer reached the HUD by then: the inspector's TURBOSHAFT kind had already absorbed it.
 
 ### A12. The stat vocabulary, the mod API, and the balance numbers are undeclared
 
@@ -179,6 +185,6 @@ Ordered by defect-class closed per line changed:
 3. **Reference hygiene** (A6, A7; fixes F27, F28, F29, closes F8 and the rest of F24): the rule, the four sweeps, `_exit_tree` nulling, `DOOR_WAIT`.
 4. ~~**Declared vocabularies** (A12; fixes F30, F31, F11): `Stats`, the content sweep, the mod-API block, asserts to `push_error`.~~ **Done 2026-09-20, [[WI-72_Declared_Vocabularies_And_Content_Guards]].**
 5. ~~**Save orchestration** (A5, A8): scene-order test, pawn-kind hooks, `SaveManager` split.~~ **Done 2026-09-22, [[WI-73_Save_Orchestration]].**
-6. **Small consolidations** (A9, A10, A11) as they are touched.
+6. ~~**Small consolidations** (A9, A10, A11) as they are touched.~~ **Done 2026-09-22, [[WI-74_Layering_And_Consolidations]].**
 
 WI-68's stages 5 and 6 (F6, F7, F16–F18) stand as they are and should land first: the typed-warnings-as-errors flip in particular changes what every item above compiles against.

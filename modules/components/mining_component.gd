@@ -43,21 +43,15 @@ func wiring_fault() -> String:
 		return "a mining bay with no power_consumer runs for free and never reads as unpowered"
 	return ""
 
-func ready_preview() -> void:
-	set_process(false)
-
-func ready_blueprint() -> void:
-	set_process(false)
-
 func ready_constructed() -> void:
-	set_process(true)
 	add_to_group(Groups.PROCESSOR)
+	# The respawn clock and the power mirror ride the slow tick rather than the
+	# frame (WI-74 §6, F37). A tick is a quarter sim-second, so a drone builds at
+	# most that much later than it did, and a drone learns its bay lost power
+	# within one tick - the same cadence PowerManager balances the grid on.
+	Global.time_manager.slow_tick.connect(_on_slow_tick)
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	var sim_delta: float = Global.time_manager.scale(delta)
-	if sim_delta <= 0.0:
-		return
+func _on_slow_tick(interval: float) -> void:
 	# Reflect bay power onto drones (WI-28): this no longer freezes them - drones
 	# run on their own battery - it just tracks whether the bay's implicit charger
 	# is available. An unpowered bay still can't build a new drone, so respawn
@@ -73,7 +67,7 @@ func _process(delta: float) -> void:
 	if drones.size() < max_drones:
 		if _respawn_time_left < 0.0:
 			_respawn_time_left = drone_respawn_seconds
-		_respawn_time_left -= sim_delta
+		_respawn_time_left -= interval
 		if _respawn_time_left <= 0.0:
 			_respawn_time_left = -1.0
 			build_drone()

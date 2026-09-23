@@ -54,7 +54,7 @@ func energy_percent() -> float:
 	return energy / energy_max * 100.0 if energy_max > 0.0 else 100.0
 
 ## Below the seek threshold: the robot wants to recharge and shouldn't pull new
-## board work (RobotPawnBase.start_job gates on this).
+## board work (RobotPawnBase._gate_before_work gates on this).
 func wants_recharge() -> bool:
 	return energy_percent() < seek_threshold_percent
 

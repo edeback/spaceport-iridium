@@ -257,7 +257,9 @@ static func _disease_for(id: StringName) -> DiseaseData:
 ## the same reason - statics survive a scene reload, so it costs one directory
 ## walk per process rather than one per selection.
 static var _event_by_modifier: Dictionary[StringName, EventData] = {}
-static var _events_scanned: bool = false
+## The [member ContentPaths.generation] the event scan last ran at, -1 for never.
+## A stale one rescans on the next read (WI-74 §2).
+static var _events_scanned_generation: int = -1
 
 static func _event_for(id: StringName) -> EventData:
 	_ensure_events_scanned()
@@ -270,9 +272,10 @@ static func _event_for(id: StringName) -> EventData:
 	return _event_by_modifier.get(StringName(text.substr(EVENT_PREFIX.length())), null)
 
 static func _ensure_events_scanned() -> void:
-	if _events_scanned:
+	if _events_scanned_generation == ContentPaths.generation:
 		return
-	_events_scanned = true
+	_events_scanned_generation = ContentPaths.generation
+	_event_by_modifier.clear()
 	for path: String in ContentPaths.scan(ContentPaths.EVENTS):
 		var res: Resource = ResourceLoader.load(path)
 		var event := res as EventData
@@ -285,7 +288,8 @@ static func _ensure_events_scanned() -> void:
 			if not mood_id.is_empty():
 				_event_by_modifier[StringName(mood_id)] = event
 
-## Drops the event scan, so a test (or a mod mount) can force it to run again.
+## Drops the event scan, so a test can force it to run again. A mod mount does
+## the same through [method ContentPaths.invalidate].
 static func reset_event_cache() -> void:
 	_event_by_modifier.clear()
-	_events_scanned = false
+	_events_scanned_generation = -1

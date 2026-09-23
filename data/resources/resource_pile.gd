@@ -69,7 +69,6 @@ var pile_id: int = -1
 
 signal despawning
 signal pile_changed(resource: ResourceData, new_amount: int)
-signal resource_pile_clicked(resource_pile: ResourcePile)
 
 func _ready() -> void:
 	add_to_group(Groups.RESOURCE_DEBRIS)
@@ -78,8 +77,7 @@ func _ready() -> void:
 func _on_click_area_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
 	if event.is_action_pressed("build"):
 		get_viewport().set_input_as_handled()
-		resource_pile_clicked.emit(self)
-		Global.ui_main.resource_pile_clicked(self)
+		SignalBus.world_object_clicked.emit(self)
 
 func get_total(resource: ResourceData) -> int:
 	var container: ResourceStackContainer = contents.get(resource)

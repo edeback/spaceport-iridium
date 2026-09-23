@@ -123,6 +123,9 @@ func purchase_and_add_module(module_data: ModuleData, cell: Vector2i, flipped: b
 		module_data.withdraw_cost()
 	else:
 		module_data.withdraw_credit_cost()
+	# The receipt: a cancelled blueprint or a finished deconstruction refunds
+	# exactly this (WI-74 §4). Only this path pays, so only this path records.
+	new_module.credits_paid = module_data.credit_cost()
 
 func add_module(module_data: ModuleData, cell: Vector2i, flipped: bool = false, defer_ready: bool = false, force_complete: bool = false) -> ModuleBase:
 	var module_scene: PackedScene = module_data.scene
@@ -188,6 +191,14 @@ func remove_module(module: ModuleBase, structure_check: bool = true) -> bool:
 	# the last thing that happens (WI-68 F18/B5). queue_free defers to the end of
 	# the frame, so reading `module` after it happened to work - until someone
 	# swaps it for free().
+	# A blueprint removed before it was finished is a cancelled order, and the
+	# whole fee comes back whatever work was done on it (WI-74 §4, F34) - its
+	# delivered materials come back too, as the pile pre_delete ejects. That is a
+	# right-click, and a module placed over an unbuilt truss. A built module
+	# removed here is a demolition or a destruction and refunds nothing; a
+	# finished deconstruction was refunded as it finished.
+	if not module.is_complete():
+		module.refund_credits()
 	var data: ModuleData = module.module_data
 	var replacement_location: Vector2i = module.module_cell
 	var replacement_points: Array[Vector2i] = []

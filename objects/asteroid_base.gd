@@ -79,7 +79,6 @@ var designated: bool = false:
 const DESIGNATED_TINT := Color(1.3, 1.15, 0.7)
 
 signal despawning
-signal asteroid_clicked(asteroid: AsteroidBase)
 signal contents_changed
 
 func _ready() -> void:
@@ -95,8 +94,7 @@ func _ready() -> void:
 func _on_click_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event.is_action_pressed("build"):
 		get_viewport().set_input_as_handled()
-		asteroid_clicked.emit(self)
-		Global.ui_main.asteroid_clicked(self)
+		SignalBus.world_object_clicked.emit(self)
 
 func _update_designation_visual() -> void:
 	sprite.modulate = DESIGNATED_TINT if designated else Color.WHITE

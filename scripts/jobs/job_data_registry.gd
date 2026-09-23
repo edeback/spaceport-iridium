@@ -13,12 +13,15 @@ extends RefCounted
 ## runs before most managers have finished restoring.
 
 static var _by_id: Dictionary[StringName, JobData] = {}
-static var _scanned: bool = false
+## The [member ContentPaths.generation] this cache last scanned at, -1 for never.
+## A stale one rescans on the next read (WI-74 §2).
+static var _scanned_generation: int = -1
 
 static func _ensure_scanned() -> void:
-	if _scanned:
+	if _scanned_generation == ContentPaths.generation:
 		return
-	_scanned = true
+	_scanned_generation = ContentPaths.generation
+	_by_id.clear()
 	for file_path: String in ContentPaths.scan(ContentPaths.JOBS):
 		var res: Resource = ResourceLoader.load(file_path)
 		if res is JobData:
@@ -49,10 +52,10 @@ static func all() -> Array[JobData]:
 ## Test seam: registers a definition without touching the filesystem, and marks
 ## the registry scanned so a later lookup doesn't pull the real directory in.
 static func register_for_test(job_data: JobData) -> void:
-	_scanned = true
+	_scanned_generation = ContentPaths.generation
 	if job_data != null and job_data.id != &"":
 		_by_id[job_data.id] = job_data
 
 static func clear_for_test() -> void:
 	_by_id.clear()
-	_scanned = false
+	_scanned_generation = -1

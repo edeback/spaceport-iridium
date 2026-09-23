@@ -61,12 +61,16 @@ func has_acquisition(tag: StringName) -> bool:
 
 static var _registry: Dictionary[StringName, DiseaseData] = {}
 static var _ordered: Array[DiseaseData] = []
-static var _scanned: bool = false
+## The [member ContentPaths.generation] this cache last scanned at, -1 for never.
+## A stale one rescans on the next read (WI-74 §2).
+static var _scanned_generation: int = -1
 
 static func _ensure_scanned() -> void:
-	if _scanned:
+	if _scanned_generation == ContentPaths.generation:
 		return
-	_scanned = true
+	_scanned_generation = ContentPaths.generation
+	_registry.clear()
+	_ordered.clear()
 	for path: String in ContentPaths.scan(ContentPaths.DISEASES):
 		var res: Resource = ResourceLoader.load(path)
 		if res is DiseaseData:

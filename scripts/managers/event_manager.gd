@@ -48,6 +48,7 @@ func _ready() -> void:
 	_load_events()
 	Global.time_manager.cycle_changed.connect(_on_cycle_changed)
 	Global.time_manager.hour_changed.connect(_on_hour_changed)
+	Global.time_manager.slow_tick.connect(_on_slow_tick)
 	SignalBus.crew_hired.connect(_on_crew_hired)
 	_roll_midcycle_hour()
 
@@ -61,11 +62,10 @@ func _exit_tree() -> void:
 		Global.event_manager = null
 
 
-func _process(delta: float) -> void:
-	var sim_hours: float = Global.time_manager.scale(delta) / TimeManager.SECONDS_PER_HOUR
-	if sim_hours <= 0.0:
-		return
-	_tick_happiness_effects(sim_hours)
+## The happiness countdown rides the slow tick rather than the frame (WI-74 §6,
+## F37), so it pauses and scales like every other periodic system.
+func _on_slow_tick(interval: float) -> void:
+	_tick_happiness_effects(interval / TimeManager.SECONDS_PER_HOUR)
 
 func _unhandled_input(event: InputEvent) -> void:
 	# A developer key, not a player one (WI-68 F5): false only in a release
@@ -276,7 +276,10 @@ func _on_crew_hired(pawn: PawnBase) -> void:
 		_apply_to_pawn(pawn, id, float(effect["value"]), float(effect["remaining"]))
 
 ## Only the manager-side countdown: each pawn's modifier ticks itself down in
-## PawnNeedsComponent. Kept in sync because both consume the same sim-hours.
+## PawnNeedsComponent. Kept in sync because both consume the same sim-hours - the
+## pawns' per frame, this one per slow tick, so this record can outlive theirs by
+## one tick. The only reader that notices is a crew member hired in that quarter
+## sim-second, who gets the effect's last quarter sim-second.
 func _tick_happiness_effects(sim_hours: float) -> void:
 	for id: StringName in _happiness_effects.keys():
 		var effect: Dictionary = _happiness_effects[id]

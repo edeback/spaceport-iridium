@@ -157,7 +157,7 @@ func icon_texture() -> Texture2D:
 		return null
 	return _module.module_data.icon
 
-## DECONSTRUCT recovers materials; DEMOLISH does not. Both are destructive, so
+## DECONSTRUCT recovers materials and credits; DEMOLISH neither (WI-74 §4). Both are destructive, so
 ## both are outline-only - [ActionButton] is where that invariant is enforced, so
 ## asking for the weight is all this has to do. They hang under the Upkeep page,
 ## never on the identity strip (2026-09-13).
@@ -172,12 +172,17 @@ func page_footer(id: StringName) -> Control:
 	if construction == null or construction.current_state != ConstructionComponent.ConstructionState.Built:
 		return null
 	var out: Array[Control] = []
+	# The credits named are what was actually paid (WI-74 §4): a module the game
+	# placed for free - the starting station, a door's corridor - refunds none.
+	var paid: int = _module.credits_paid
 	var deconstruct: ActionButton = ActionButton.create("Deconstruct", ActionButton.Weight.DESTRUCTIVE)
-	deconstruct.tooltip_text = "Take the module apart and recover its materials."
+	deconstruct.tooltip_text = ("Take the module apart and recover its materials and the %d cr it cost." % paid) \
+		if paid > 0 else "Take the module apart and recover its materials."
 	deconstruct.pressed.connect(construction.start_deconstruction)
 	out.append(deconstruct)
 	var demolish: ActionButton = ActionButton.create("Demolish", ActionButton.Weight.DESTRUCTIVE)
-	demolish.tooltip_text = "Remove the module immediately. Its materials are lost."
+	demolish.tooltip_text = ("Remove the module immediately. Its materials and the %d cr it cost are lost." % paid) \
+		if paid > 0 else "Remove the module immediately. Its materials are lost."
 	demolish.pressed.connect(_on_demolish)
 	out.append(demolish)
 	return action_row(out)

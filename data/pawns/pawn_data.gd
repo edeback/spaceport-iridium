@@ -43,12 +43,16 @@ enum Role {
 
 static var _registry: Dictionary[StringName, PawnData] = {}
 static var _ordered: Array[PawnData] = []
-static var _scanned: bool = false
+## The [member ContentPaths.generation] this cache last scanned at, -1 for never.
+## A stale one rescans on the next read (WI-74 §2).
+static var _scanned_generation: int = -1
 
 static func _ensure_scanned() -> void:
-	if _scanned:
+	if _scanned_generation == ContentPaths.generation:
 		return
-	_scanned = true
+	_scanned_generation = ContentPaths.generation
+	_registry.clear()
+	_ordered.clear()
 	for path: String in ContentPaths.scan(ContentPaths.PAWNS):
 		var res: Resource = ResourceLoader.load(path)
 		if res is not PawnData:
@@ -91,7 +95,7 @@ static func roll_for_role(role: Role) -> PawnData:
 	return pick(for_role(role), randf())
 
 static func register_for_test(pawn_data: PawnData) -> void:
-	_scanned = true
+	_scanned_generation = ContentPaths.generation
 	if pawn_data != null and pawn_data.id != &"":
 		_registry[pawn_data.id] = pawn_data
 		_ordered.append(pawn_data)
@@ -99,4 +103,4 @@ static func register_for_test(pawn_data: PawnData) -> void:
 static func clear_for_test() -> void:
 	_registry.clear()
 	_ordered.clear()
-	_scanned = false
+	_scanned_generation = -1

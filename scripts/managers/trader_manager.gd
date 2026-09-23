@@ -71,10 +71,11 @@ func _exit_tree() -> void:
 		Global.trader_manager = null
 
 
-func _process(delta: float) -> void:
-	var sim_hours: float = Global.time_manager.scale(delta) / TimeManager.SECONDS_PER_HOUR
-	if sim_hours <= 0.0:
-		return
+## The visit and arrival clocks ride the slow tick rather than the frame (WI-74
+## §6, F37), so they pause and scale like every other periodic system. The
+## departure warning at "an hour left" can fire one quarter sim-second later than
+## it did, which nobody can see.
+func _advance_clocks(sim_hours: float) -> void:
 	if not visit_active:
 		if _inbound:
 			return # shuttle already on its way in
@@ -198,16 +199,19 @@ func cargo_space() -> int:
 		return 0
 	return maxi(trader.cargo_hold - cargo_used, 0)
 
-func _on_slow_tick(_interval: float) -> void:
-	if not visit_active:
-		return
-	var bay_trade: TradeComponent = active_bay_trade_component()
-	if bay_trade == null:
-		# Bay deconstructed mid-visit: depart immediately, settling whatever
-		# already fulfilled (WI-08 edge case).
-		_end_visit("docking bay lost")
-		return
-	_fulfill(bay_trade)
+## Fulfilment first, then the clocks: the order the two ran in while the clocks
+## were a `_process`, since TimeManager emits the tick ahead of every other node's
+## frame.
+func _on_slow_tick(interval: float) -> void:
+	if visit_active:
+		var bay_trade: TradeComponent = active_bay_trade_component()
+		if bay_trade == null:
+			# Bay deconstructed mid-visit: depart immediately, settling whatever
+			# already fulfilled (WI-08 edge case).
+			_end_visit("docking bay lost")
+		else:
+			_fulfill(bay_trade)
+	_advance_clocks(interval / TimeManager.SECONDS_PER_HOUR)
 
 func _fulfill(bay_trade: TradeComponent) -> void:
 	var credits: ResourceData = Global.resource_manager.credit_resource

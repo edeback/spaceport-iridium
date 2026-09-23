@@ -24,14 +24,15 @@ func is_saved() -> bool:
 	return false
 
 ## Only ever run what the runner explicitly queued (a follow-up leg); otherwise
-## hold position. Deliberately does NOT consult JobManager or wander, mirroring
-## MiningDronePawn's narrowed start_job.
-func start_job() -> void:
-	while not job_queue.is_empty():
-		var queued_job: Job = job_queue.pop_front()
-		if queued_job.is_valid() and queued_job.can_do_job(self):
-			_begin_job(queued_job)
-			return
-		queued_job.cancel(true)
-	if animated_sprite != null:
-		animated_sprite.play("idle")
+## hold position. Three hooks on the one PawnBase.start_job (WI-74 §1): no cargo
+## sweep, no work, and an idle pose rather than a wander - so a gap between legs
+## can never send it off to do chores. It has no restored job to resume, since it
+## is never saved.
+func _sweeps_cargo() -> bool:
+	return false
+
+func _claim_work_job() -> bool:
+	return false
+
+func _fallback_job() -> void:
+	_idle_pose()

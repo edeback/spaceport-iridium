@@ -29,17 +29,21 @@ const UNKNOWN_SORT_ORDER: int = 9999
 @export var cat_icon: Texture2D
 
 # --- shared registry ------------------------------------------------------------
-# Same shape as SkillData/TraitData: scanned once, cached on the data class, and
+# Same shape as SkillData/TraitData: scanned once per ContentPaths.generation, cached on the data class, and
 # surviving the scene swap because statics do.
 
 static var _registry: Dictionary[StringName, BuildCategoryData] = {}
 static var _ordered: Array[BuildCategoryData] = []
-static var _scanned: bool = false
+## The [member ContentPaths.generation] this cache last scanned at, -1 for never.
+## A stale one rescans on the next read (WI-74 §2).
+static var _scanned_generation: int = -1
 
 static func _ensure_scanned() -> void:
-	if _scanned:
+	if _scanned_generation == ContentPaths.generation:
 		return
-	_scanned = true
+	_scanned_generation = ContentPaths.generation
+	_registry.clear()
+	_ordered.clear()
 	for path: String in ContentPaths.scan(ContentPaths.BUILD_CATEGORIES):
 		var res: Resource = ResourceLoader.load(path)
 		if res is BuildCategoryData:
@@ -82,7 +86,7 @@ static func icon_of(category_id: StringName) -> Texture2D:
 ## Test seam, mirroring JobDataRegistry's: the registry is static and shared by
 ## every suite in a run.
 static func register_for_test(category: BuildCategoryData) -> void:
-	_scanned = true
+	_scanned_generation = ContentPaths.generation
 	if category != null and category.id != &"":
 		_registry[category.id] = category
 		_ordered.append(category)
@@ -90,4 +94,4 @@ static func register_for_test(category: BuildCategoryData) -> void:
 static func clear_for_test() -> void:
 	_registry.clear()
 	_ordered.clear()
-	_scanned = false
+	_scanned_generation = -1

@@ -42,16 +42,20 @@ extends Resource
 @export var salvage_amount: Vector2i = Vector2i(-1, -1)
 
 # --- registry -------------------------------------------------------------------
-# Scanned once and cached, the way SkillData / BuildCategoryData / RecipeData are.
+# Scanned once per ContentPaths.generation and cached, the way SkillData / BuildCategoryData / RecipeData are.
 
 static var _registry: Dictionary[StringName, ShipData] = {}
 static var _ordered: Array[ShipData] = []
-static var _scanned: bool = false
+## The [member ContentPaths.generation] this cache last scanned at, -1 for never.
+## A stale one rescans on the next read (WI-74 §2).
+static var _scanned_generation: int = -1
 
 static func _ensure_scanned() -> void:
-	if _scanned:
+	if _scanned_generation == ContentPaths.generation:
 		return
-	_scanned = true
+	_scanned_generation = ContentPaths.generation
+	_registry.clear()
+	_ordered.clear()
 	for path: String in ContentPaths.scan(ContentPaths.SHIPS):
 		var res: Resource = ResourceLoader.load(path)
 		if res is not ShipData:
@@ -94,7 +98,7 @@ static func pick(pool: Array[ShipData], roll: float) -> ShipData:
 	return pool[index] if index >= 0 else null
 
 static func register_for_test(ship: ShipData) -> void:
-	_scanned = true
+	_scanned_generation = ContentPaths.generation
 	if ship != null and ship.id != &"":
 		_registry[ship.id] = ship
 		_ordered.append(ship)
@@ -102,4 +106,4 @@ static func register_for_test(ship: ShipData) -> void:
 static func clear_for_test() -> void:
 	_registry.clear()
 	_ordered.clear()
-	_scanned = false
+	_scanned_generation = -1

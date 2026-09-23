@@ -207,47 +207,99 @@ func _end_current_job() -> void:
 	# Intentionally don't start the next job immediately
 		
 
+## Picks this pawn's next job. **The one copy** (WI-74 §1): crew, robots, guests
+## and the ARC inspector all run these steps in this order, and differ only in the
+## five hooks below - which is what "a specialisation differs by where it sources
+## jobs, not by behaviour overrides" means in code. Before WI-74 there were four
+## copies, and WI-68 F21's restored-job resume had to be patched into three of
+## them by hand. Override a hook, never this.
+##
+## 1. [method _gate_before_resume] - may take the pick outright (a drained robot
+##    recharges and does nothing else).
+## 2. The job this pawn was doing when the save was written - ahead of the sweep,
+##    which would otherwise take the cargo that job is carrying (WI-68 F21).
+## 3. The cargo sweep, if [method _sweeps_cargo]: carried leftovers go to storage
+##    first. If nowhere takes them, the pick carries on rather than stalling.
+## 4. The personal queue - chained followups and queued needs, checked once here
+##    rather than polled every frame by whatever queued them.
+## 5. [method _gate_before_work] - may stop short of new work (a low robot waits
+##    for its queued recharge).
+## 6. [method _claim_work_job] - the board, a bay's own job, or nothing.
+## 7. [method _fallback_job] - wander, or an idle pose.
 func start_job() -> void:
-	# The job this pawn was doing when the save was written goes first - ahead of
-	# the sweep below, which would otherwise take the cargo that job is carrying.
+	if _gate_before_resume():
+		return
 	if _resume_restored_job():
 		return
-	# If we have an inventory, try to store it ASAP
-	if inventory_component != null and not inventory_component.is_empty():
+	if _sweeps_cargo() and inventory_component != null and not inventory_component.is_empty():
 		var return_job: Job = _make_store_inventory_job()
 		if return_job.can_do_job(self):
 			_begin_job(return_job)
 			return
 		# No storage will take what we're carrying right now — fall through and
 		# look for a normal job anyway rather than stalling the pawn entirely.
-	# Personal queue next - chained followups and queued needs. Checked once
-	# here rather than polled every frame by whatever queued them.
 	while not job_queue.is_empty():
 		var queued_job: Job = job_queue.pop_front()
 		if queued_job.can_begin(self):
 			_begin_job(queued_job)
 			return
 		queued_job.cancel(true) # cancel implies end_job (lifecycle contract)
+	if _gate_before_work():
+		return
+	if _claim_work_job():
+		return
+	_fallback_job()
+
+# --- job-picking hooks (WI-74 §1) ---------------------------------------------
+#
+# A pawn kind states how it differs from crew here and nowhere else. Each hook's
+# base body is what crew do.
+
+## Step 1: true to end the pick before anything else is considered - the hook has
+## started whatever this pawn must do instead, or chosen to do nothing. Crew have
+## no such gate.
+func _gate_before_resume() -> bool:
+	return false
+
+## Step 3: whether carried cargo is swept to storage before the queue. The
+## inspector carries nothing and must never wander off to put something away.
+func _sweeps_cargo() -> bool:
+	return true
+
+## Step 5: true to stop after the queue, taking no new work and no fallback. Crew
+## have no such gate.
+func _gate_before_work() -> bool:
+	return false
+
+## Step 6: claim and start this pawn's next piece of work, returning whether it
+## did. Crew take the shared board, filtered by shift: off shift (WI-06) only
+## needs and errand categories, which rarely sit on the board, so an off-shift pick
+## usually falls through to wandering. A running job is never interrupted by
+## shift end; the filter only applies to picking the NEXT job.
+func _claim_work_job() -> bool:
 	if is_on_shift():
 		current_job = Global.job_manager.find_job(self)
 	else:
-		# Off-shift (WI-06): no station work - only needs/errand categories,
-		# which rarely sit on the shared board, so this usually falls through
-		# to wandering. A running job is never interrupted by shift end; this
-		# gate only applies when picking the NEXT job.
 		var off_shift: Array[JobData.Category] = [JobData.Category.NEEDS, JobData.Category.MOVE, JobData.Category.MISC]
 		current_job = Global.job_manager.find_job(self, off_shift)
-	if current_job:
-		current_job.start_job(self)
+	if current_job == null:
+		return false
+	current_job.start_job(self)
+	return true
+
+## Step 7: nothing else to do. Crew wander, or hold an idle pose if they cannot
+## move anywhere.
+func _fallback_job() -> void:
+	var idle_job: Job = Job.of(&"idle_wander")
+	if idle_job.can_do_job(self):
+		_begin_job(idle_job)
 	else:
-		# Wander!
-		var idle_job: Job = Job.of(&"idle_wander")
-		if idle_job.can_do_job(self):
-			_begin_job(idle_job)
-		else:
-			# Can't even move anywhere, idle pose
-			if animated_sprite != null:
-				animated_sprite.play("idle")
+		_idle_pose()
+
+## Stand still, visibly. What every "nothing to do" branch ends in.
+func _idle_pose() -> void:
+	if animated_sprite != null:
+		animated_sprite.play("idle")
 
 ## Marks `job` - already restored to the front of the queue - as the one this
 ## pawn was doing when the save was written (WI-68 F21). Only
@@ -650,4 +702,4 @@ func load_kind_data(_entry: Dictionary) -> void:
 func _on_collision_clicked(viewport: Node, event: InputEvent, shape_idx: int) -> void:
 	if event.is_action_pressed("build"):
 		get_viewport().set_input_as_handled()
-		Global.ui_main.pawn_clicked(self)
+		SignalBus.world_object_clicked.emit(self)

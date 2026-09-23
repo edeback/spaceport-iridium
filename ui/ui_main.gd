@@ -27,6 +27,10 @@ const LEDGER_SCENE: PackedScene = preload("res://ui/console/resource_ledger.tscn
 const INSPECTOR_SCENE: PackedScene = preload("res://ui/inspector/inspector_panel.tscn")
 const GAME_OVER_SCENE: PackedScene = preload("res://ui/game_over_screen.tscn")
 
+## What a module's credits do when it goes away (WI-74 §4, F34), in the Build
+## panel's footer. [ModuleBase.credits_paid] is the rule's one implementation.
+const BUILD_REFUND_RULE: String = "Right-click a blueprint to cancel it for a full refund · Deconstruct returns credits and materials, Demolish neither"
+
 var console: ConsoleBar
 var mode_manager: ModeManager
 ## Every mode panel is mounted here rather than directly on the HUD, so that
@@ -43,6 +47,7 @@ var _build_menu: BuildMenu
 func _ready() -> void:
 	Global.ui_main = self
 	SignalBus.game_over.connect(_on_game_over)
+	SignalBus.world_object_clicked.connect(_on_world_object_clicked)
 	_setup_console()
 	_setup_overlay_ui()
 	_setup_build_cursor_hint()
@@ -141,8 +146,10 @@ func _make_build_panel() -> Control:
 	# flyout closed, so the ninth panel opened with none at all.
 	# `show_details` (Tab by default) is the third bound hotkey the HUD never
 	# printed anywhere. Read from the live InputMap so a rebind follows.
-	panel.footer_text = "Pick a category, then a module · %s holds the station's labels open" % (
-		ModeManager.action_hotkey_label(&"show_details"))
+	# The second line is the refund rule (WI-74 §4, F34), here because this is the
+	# panel a player is in when they misclick - the moment it matters.
+	panel.footer_text = "Pick a category, then a module · %s holds the station's labels open\n%s" % [
+		ModeManager.action_hotkey_label(&"show_details"), BUILD_REFUND_RULE]
 	panel.footer_variation = UIType.BODY
 	_build_menu = BUILD_MENU_SCENE.instantiate() as BuildMenu
 	_build_menu.flyout_anchor = panel
@@ -565,18 +572,21 @@ func _sync_feed_to_selection() -> void:
 	_alert_feed.compact = inspector.has_selection()
 	_queue_column_layout()
 
-func pawn_clicked(pawn: PawnBase) -> void:
-	inspector.select(pawn)
-
-func resource_pile_clicked(pile: ResourcePile) -> void:
-	inspector.select(pile)
-
-func asteroid_clicked(asteroid: AsteroidBase) -> void:
-	inspector.select(asteroid)
+## Every click on the world lands here (WI-74 §3). The clicked object emits
+## [signal SignalBus.world_object_clicked] from its own input handler, so it is
+## live for this call and the typed parameter is honest. A pawn, pile or asteroid
+## goes straight to the inspector; a module goes through the stacked-cell
+## arbiter first. Anything the inspector has no page for is ignored rather than
+## passed on, because selecting it would clear the current selection.
+func _on_world_object_clicked(object: Node2D) -> void:
+	if object is ModuleBase:
+		_module_clicked(object as ModuleBase)
+	elif InspectorPanel.kind_of(object) != InspectorPanel.SelectionKind.NONE:
+		inspector.select(object)
 
 var _click_cycler: ClickCycler = ClickCycler.new()
 
-## Entry point for module footprint clicks. [ClickCycler] still arbitrates
+## Module footprint clicks. [ClickCycler] still arbitrates
 ## stacked cells and cycles through them on repeated clicks (WI-10) - that is a
 ## different problem from what the panel does with the answer, which is why it
 ## survives the collapse unchanged.
@@ -584,7 +594,7 @@ var _click_cycler: ClickCycler = ClickCycler.new()
 ## Turbolifts need no branch here any more: [InspectorPanel.kind_of] resolves a
 ## finished lift to the TURBOSHAFT tab set, so "a lift opens something else" is a
 ## property of the selection rather than of this handler.
-func module_clicked(module: ModuleBase) -> void:
+func _module_clicked(module: ModuleBase) -> void:
 	var cell: Vector2i = Global.world_to_cell(module.get_global_mouse_position())
 	var target: ModuleBase = _click_cycler.handle_click(
 		module, cell, inspector.selected_subject() is ModuleBase)

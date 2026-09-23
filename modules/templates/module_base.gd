@@ -128,6 +128,18 @@ var _repair_slot: JobSlot = JobSlot.new()
 ## when a repair job completes; persisted so a broken machine stays broken across
 ## a save. Direct-damage breakdowns don't set this - HP repair fixes those.
 var _broken_down: bool = false
+## Credits the player paid to place this module (WI-74 §4, F34): what a
+## blueprint cancelled before completion, or a finished deconstruction, hands
+## back in full. A built module that is demolished instead loses it, with its
+## materials.
+##
+## A record of what was actually paid, not a reading of the module's price. The
+## game places plenty of modules for free - the starting station, the truss
+## backfilled under a removed room, the corridor a door lays down - and a truss
+## costs 5 credits: refunding the price would make "place a room, deconstruct it,
+## deconstruct the truss it leaves" print money. Zero for anything placed for
+## free, and zero again once refunded, so nothing pays out twice. Saved.
+var credits_paid: int = 0
 
 var previewing: bool = false:
 	get:
@@ -513,6 +525,11 @@ func get_save_data() -> Dictionary:
 		data["hp"] = hp
 	if _broken_down:
 		data["broken_down"] = true
+	# Only while something is owed. A save from before WI-74 has no key, so its
+	# modules read as paid-for-nothing: nothing recorded what they cost, and
+	# guessing would refund the free ones too.
+	if credits_paid > 0:
+		data["credits_paid"] = credits_paid
 	return data
 
 ## Restore per-instance state. Call AFTER the ready pass (ready_constructed /
@@ -529,6 +546,7 @@ func load_save_data(data: Dictionary) -> void:
 	if bool(data.get("broken_down", false)):
 		_broken_down = true
 		_apply_breakdown_modifier()
+	credits_paid = int(data.get("credits_paid", 0))
 	_refresh_damage_modifier()
 	_update_shader()
 
@@ -634,6 +652,23 @@ func on_place() -> void:
 
 func pre_delete() -> void:
 	_eject_stored_resources_as_debris()
+
+## Gives back [member credits_paid] and books it as a refund: the player's own
+## money coming back, so income that the levy never skims (WI-68 F4). Returns the
+## amount, which is 0 for a module nobody paid for or one already refunded.
+##
+## The two callers are the two ways a player gets their money back (WI-74 §4):
+## [method WorldManager.remove_module] on a blueprint, and
+## [ConstructionComponent] as a deconstruction finishes.
+func refund_credits() -> int:
+	var amount: int = credits_paid
+	credits_paid = 0
+	if amount <= 0:
+		return 0
+	Global.resource_manager.credit_resource.change_global_total(amount)
+	if Global.economy_manager != null:
+		Global.economy_manager.record_refund(amount)
+	return amount
 
 func _eject_stored_resources_as_debris() -> void:
 	for component: ComponentBase in components:
@@ -773,8 +808,10 @@ func _on_footprint_input_event(_viewport: Node, event: InputEvent, _shape_idx: i
 					get_viewport().set_input_as_handled()
 					# Routed through UIMain's click arbiter: stacked footprints
 					# (corridor/turbolift/module on one cell) all receive this
-					# event, and repeated clicks cycle the stack (WI-10).
-					Global.ui_main.module_clicked(self)
+					# event, and repeated clicks cycle the stack (WI-10). A
+					# signal rather than a call, so the module never names the
+					# HUD (WI-74 §3).
+					SignalBus.world_object_clicked.emit(self)
 			if event.is_action_pressed("remove"):
 				get_viewport().set_input_as_handled()
 				Global.world_manager.remove_module(self)

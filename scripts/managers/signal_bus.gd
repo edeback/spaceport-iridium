@@ -149,6 +149,14 @@ signal station_tier_progress_changed
 ## per-visitor signals are a MOD API and live below.
 @warning_ignore("unused_signal")
 signal visitors_changed
+## The player clicked something in the world - a module footprint, a pawn, a pile
+## or an asteroid (WI-74 §3). Emitted by the clicked object itself, so it is live
+## for the call; [UIMain] dispatches it by type to the inspector, and a stacked
+## module cell still goes through its click cycler. This is how the simulation
+## reports a click without naming the HUD: no world object calls
+## `Global.ui_main` any more, which is what lets the station run without one.
+@warning_ignore("unused_signal")
+signal world_object_clicked(object: Node2D)
 
 # --- MOD API (WI-72) ----------------------------------------------------------
 #

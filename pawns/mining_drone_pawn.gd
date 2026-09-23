@@ -11,16 +11,16 @@ func default_designation() -> String:
 	return "Mining Droid"
 
 ## Drones only mine, and only for their own bay - never the shared board. The
-## shared RobotPawnBase.start_job handles the cargo sweep, personal queue, and the
-## WI-28 energy gates; these two hooks supply the drone-specific bits.
-func _claim_work_job() -> void:
+## one PawnBase.start_job handles the cargo sweep and personal queue, and
+## RobotPawnBase's hooks the WI-28 energy gates and the idle pose; these two hooks
+## supply the drone-specific bits.
+func _claim_work_job() -> bool:
 	if parent_mining_component != null:
 		current_job = parent_mining_component.get_next_job(self)
-	if current_job != null:
-		current_job.start_job(self)
-	elif animated_sprite != null:
-		# No job, idle pose
-		animated_sprite.play("idle")
+	if current_job == null:
+		return false
+	current_job.start_job(self)
+	return true
 
 ## Drones head for their own bay's output storage first. Pre-setting the target
 ## is enough: the sweep's finder skips a slot that is already resolved. If the bay
