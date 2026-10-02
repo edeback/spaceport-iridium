@@ -1,6 +1,8 @@
 [gd_resource type="Resource" script_class="TierData" format=3]
 
 [ext_resource type="Script" path="res://data/tiers/tier_data.gd" id="1_tier"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="2_mdata"]
+[ext_resource type="Resource" path="res://data/modules/industrial_processors/silicon_furnace_mdata.tres" id="3_furnace"]
 
 [resource]
 script = ExtResource("1_tier")
@@ -12,3 +14,4 @@ export_goals = Dictionary[StringName, int]({
 &"steel": 60
 })
 inspection_tags = Array[String](["Industrial", "Crew", "Power"])
+granted_modules = Array[ExtResource("2_mdata")]([ExtResource("3_furnace")])

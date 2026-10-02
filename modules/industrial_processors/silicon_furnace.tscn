@@ -1,0 +1,89 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" uid="uid://curt1htey1bfn" path="res://modules/templates/module_2x3.tscn" id="1_base"]
+[ext_resource type="Shader" uid="uid://qktdg3aw7k37" path="res://shaders/previewable.gdshader" id="2_shader"]
+[ext_resource type="Texture2D" uid="uid://s0dfehst6ygv" path="res://modules/textures/construction_noise.tres" id="3_noise"]
+[ext_resource type="Texture2D" uid="uid://0scst3tvfpt3" path="res://assets/sprites/silicon_furnace.png" id="4_sprite"]
+[ext_resource type="PackedScene" uid="uid://c3a066r5j2dga" path="res://modules/components/power_consumption_component.tscn" id="5_power"]
+[ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="6_light"]
+[ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="7_storage"]
+[ext_resource type="PackedScene" uid="uid://c63swhm7yiir" path="res://modules/components/processor_component.tscn" id="8_proc"]
+[ext_resource type="Resource" uid="uid://b4lv88exgb0hi" path="res://data/recipes/refining/silicon_refining_recipe.tres" id="9_recipe"]
+[ext_resource type="Script" uid="uid://c2qsvh4rhb1ta" path="res://scripts/pathing/anchor_def.gd" id="10_anchor"]
+[ext_resource type="Script" uid="uid://d4aeiirm7ox7s" path="res://modules/components/workspace_component.gd" id="11_wksp"]
+[ext_resource type="PackedScene" path="res://modules/components/adjacency_emitter_component.tscn" id="12_adjem"]
+[ext_resource type="Script" uid="uid://b2cqiums4fmk0" path="res://modules/components/adjacency_effect_spec.gd" id="13_adjsp"]
+[ext_resource type="PackedScene" path="res://modules/components/heat_emitter_component.tscn" id="14_heatem"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_furnace"]
+shader = ExtResource("2_shader")
+shader_parameter/PREVIEW = false
+shader_parameter/PLACEABLE = true
+shader_parameter/SELECTED = false
+shader_parameter/PROGRESS = 1.0
+shader_parameter/DAMAGE = 0.0
+shader_parameter/OVERLAY_COLOR = Vector4(0, 0, 0, 0)
+shader_parameter/gradient_texture = ExtResource("3_noise")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_furnace"]
+resource_local_to_scene = true
+size = Vector2(126, 190)
+
+[sub_resource type="Resource" id="Resource_wkstn"]
+script = ExtResource("10_anchor")
+type = 0
+offset = Vector2(64, 0)
+animation = &"interact"
+metadata/_custom_type_script = "uid://c2qsvh4rhb1ta"
+
+[sub_resource type="Resource" id="Resource_vibration"]
+script = ExtResource("13_adjsp")
+effect_id = &"vibration"
+metadata/_custom_type_script = "uid://b2cqiums4fmk0"
+
+[node name="SiliconFurnace" instance=ExtResource("1_base")]
+
+[node name="Sprite" parent="Offset" index="0"]
+material = SubResource("ShaderMaterial_furnace")
+texture = ExtResource("4_sprite")
+region_enabled = false
+
+[node name="CollisionShape2D" parent="Offset/Footprint" index="0"]
+shape = SubResource("RectangleShape2D_furnace")
+
+[node name="PathComponent" parent="." index="1"]
+path_points = Array[Vector2i]([Vector2i(32, 160)])
+anchors = Array[ExtResource("10_anchor")]([SubResource("Resource_wkstn")])
+
+[node name="StructureComponent" parent="." index="2"]
+visible = false
+
+[node name="PowerConsumptionComponent" parent="." instance=ExtResource("5_power")]
+power_consumption = 80.0
+
+[node name="LightingComponent" parent="." node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("6_light")]
+position = Vector2(64, 96)
+scale = Vector2(2, 3)
+power_consumption_component = NodePath("../PowerConsumptionComponent")
+
+[node name="Storage Bay" parent="." instance=ExtResource("7_storage")]
+max_stored = 30
+output_capacity = 20
+default_role = 2
+
+[node name="ProcessorComponent" parent="." node_paths=PackedStringArray("storage", "power_consumer") instance=ExtResource("8_proc")]
+recipe = ExtResource("9_recipe")
+storage = NodePath("../Storage Bay")
+time_to_process = 30.0
+power_consumer = NodePath("../PowerConsumptionComponent")
+requires_worker = true
+
+[node name="WorkspaceComponent" type="Node2D" parent="."]
+script = ExtResource("11_wksp")
+
+[node name="AdjacencyEmitterComponent" parent="." instance=ExtResource("12_adjem")]
+effects = Array[ExtResource("13_adjsp")]([SubResource("Resource_vibration")])
+
+[node name="HeatEmitterComponent" parent="." node_paths=PackedStringArray("processor") instance=ExtResource("14_heatem")]
+heat_per_batch = 1000.0
+processor = NodePath("../ProcessorComponent")

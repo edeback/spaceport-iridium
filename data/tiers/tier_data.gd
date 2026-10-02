@@ -43,6 +43,18 @@ extends Resource
 ## so accepting an inspection can't instant-fail on a missing facility.
 @export var inspection_tags: Array[String] = []
 
+## Modules licensed the moment the station reaches this tier (2026-10-02): no
+## research node, no cost. Each should be authored `unlocked_by_default = false`,
+## or the grant has nothing to unlock (`test_station_tiers.gd` sweeps for that).
+##
+## A promotion is the one thing every station does, so this is where a module
+## the whole ladder expects belongs. A module the player may *choose* to buy
+## stays an [UnlockData] with a [GrantModuleEffect].
+##
+## Derived, never saved: [UnlockManager] re-grants every tier at or below the
+## saved one on load, the way it re-runs an owned unlock's effects.
+@export var granted_modules: Array[ModuleData] = []
+
 ## True on the highest tier: no further advancement, goals ignored.
 func is_max_goal() -> bool:
 	return export_goals.is_empty() and inspection_tags.is_empty()
@@ -61,3 +73,20 @@ func goals_reached(export_progress: Dictionary, tag_counts: Dictionary) -> bool:
 		if int(tag_counts.get(tag, 0)) <= 0:
 			return false
 	return true
+
+## Every module licensed by a tier at or below `tier` - what a station at that
+## tier holds by right, so a load can rebuild it from the tier number alone.
+## Pure, so it's unit-testable without Global. Ladder order, each module once;
+## null entries (in the ladder or in a tier's list) are skipped.
+static func modules_granted_through(tiers: Array[TierData], tier: int) -> Array[ModuleData]:
+	var ladder: Array[TierData] = []
+	for data: TierData in tiers:
+		if data != null and data.tier <= tier:
+			ladder.append(data)
+	ladder.sort_custom(func(a: TierData, b: TierData) -> bool: return a.tier < b.tier)
+	var out: Array[ModuleData] = []
+	for data: TierData in ladder:
+		for module: ModuleData in data.granted_modules:
+			if module != null and not out.has(module):
+				out.append(module)
+	return out

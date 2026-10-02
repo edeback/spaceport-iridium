@@ -283,7 +283,7 @@ static func recipe_fits(inputs: Dictionary[ResourceData, int], pool: int) -> boo
 ## Reconfigures the bin's slots and their roles to match the current recipe.
 ##
 ## Ingredients become INPUT and products become OUTPUT, on ONE component - the
-## roles are what let a single bin pull ore in while pushing iron out, and they
+## roles are what let a single bin pull ore in while pushing metal out, and they
 ## are derived here rather than saved so a recipe that changed between builds
 ## cannot restore slots roled for a recipe that no longer exists.
 func _sync_storages() -> void:
@@ -714,8 +714,9 @@ func _load_recipe(path: String, queued: bool) -> void:
 	if path == "":
 		return
 	# load() returns the cached instance, so equality against the resolved
-	# eligible set holds.
-	var loaded: RecipeData = load(path) as RecipeData
+	# eligible set holds. Ask exists() first: load() on a removed .tres is an
+	# engine error, not a null, and a removed recipe is a case this answers.
+	var loaded: RecipeData = load(path) as RecipeData if ResourceLoader.exists(path) else null
 	if loaded == null or not get_available_recipes().has(loaded):
 		push_warning("Saved processor %s not available, ignoring: %s" % ["pending recipe" if queued else "recipe", path])
 		return

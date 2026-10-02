@@ -51,8 +51,8 @@ static func find_source(pawn: PawnBase, resource: ResourceData, trip_cap: int,
 		# StorageComponent would otherwise be a nil-access crash here.
 		if storage == null:
 			continue
-		# Per-resource since WI-65: one component can refuse to export iron ore
-		# (it is an ingredient there) while exporting iron (it is a product).
+		# Per-resource since WI-65: one component can refuse to export gold ore
+		# (it is an ingredient there) while exporting gold (it is a product).
 		if not source_qualifies(storage.export_priority(resource), below_priority):
 			continue
 		var available: int = storage.total_stored_by_resource(resource)

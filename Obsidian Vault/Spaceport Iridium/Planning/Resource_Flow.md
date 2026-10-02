@@ -17,7 +17,7 @@ flowchart LR
     r_gold_ore(["Gold Ore"]):::res
     r_carbon(["Carbon"]):::res
     r_iridium_ore(["Iridium Ore"]):::res
-    r_silicon_ore(["Silicon Ore"]):::res
+    r_silicates(["Silicates"]):::res
     r_ice(["Ice"]):::res
     r_uranium_ore(["Uranium Ore"]):::res
   end
@@ -25,7 +25,7 @@ flowchart LR
     direction TB
     r_ice(["Ice"]):::res
     r_carbon(["Carbon"]):::res
-    r_silicon_ore(["Silicon Ore"]):::res
+    r_silicates(["Silicates"]):::res
   end
   subgraph g_algae_tank["Algae Tank"]
     direction TB
@@ -35,21 +35,20 @@ flowchart LR
     direction TB
     p_hydroponics_bay_grow_plants["Grow Plants"]:::proc
   end
-  subgraph g_ice_processor["Ice Processor"]
+  subgraph g_ice_purifier["Ice Purifier"]
     direction TB
-    p_ice_processor_melt_ice["Melt Ice"]:::proc
-    p_ice_processor_purify_ice["Purify Ice"]:::proc
+    p_ice_purifier_melt_ice["Melt Ice"]:::proc
+    p_ice_purifier_purify_ice["Purify Ice"]:::proc
   end
-  subgraph g_ore_processor["Ore Processor"]
+  subgraph g_foundry["Foundry"]
     direction TB
-    p_ore_processor_refine_iron["Refine Iron"]:::proc
-    p_ore_processor_refine_silicon["Refine Silicon"]:::proc
-    p_ore_processor_refine_gold["Refine Gold"]:::proc
-    p_ore_processor_refine_iridium["Refine Iridium"]:::proc
+    p_foundry_forge_steel["Forge Steel"]:::proc
+    p_foundry_refine_gold["Refine Gold"]:::proc
+    p_foundry_refine_iridium["Refine Iridium"]:::proc
   end
-  subgraph g_forge["Forge"]
+  subgraph g_silicon_furnace["Silicon Furnace"]
     direction TB
-    p_forge_forge_steel["Forge Steel"]:::proc
+    p_silicon_furnace_refine_silicon["Refine Silicon"]:::proc
   end
   subgraph g_electrolyzer["Electrolyzer"]
     direction TB
@@ -92,22 +91,21 @@ flowchart LR
   r_water(["Water"]):::res -->|1| p_hydroponics_bay_grow_plants
   r_carbon(["Carbon"]):::res -->|1| p_hydroponics_bay_grow_plants
   p_hydroponics_bay_grow_plants -->|3| r_biomass(["Biomass"]):::res
-  r_ice(["Ice"]):::res -->|1| p_ice_processor_melt_ice
-  p_ice_processor_melt_ice -->|1| r_water(["Water"]):::res
-  r_ice(["Ice"]):::res -. 2 .-> p_ice_processor_purify_ice
-  p_ice_processor_purify_ice -. 2 .-> r_water(["Water"]):::res
-  p_ice_processor_purify_ice -. 1 .-> r_carbon(["Carbon"]):::res
-  r_iron_ore(["Iron Ore"]):::res -->|2| p_ore_processor_refine_iron
-  p_ore_processor_refine_iron -->|1| r_iron(["Iron"]):::res
-  r_silicon_ore(["Silicon Ore"]):::res -->|2| p_ore_processor_refine_silicon
-  p_ore_processor_refine_silicon -->|1| r_silicon(["Silicon"]):::res
-  r_gold_ore(["Gold Ore"]):::res -->|2| p_ore_processor_refine_gold
-  p_ore_processor_refine_gold -->|1| r_gold(["Gold"]):::res
-  r_iridium_ore(["Iridium Ore"]):::res -->|2| p_ore_processor_refine_iridium
-  p_ore_processor_refine_iridium -->|1| r_iridium(["Iridium"]):::res
-  r_carbon(["Carbon"]):::res -->|1| p_forge_forge_steel
-  r_iron(["Iron"]):::res -->|2| p_forge_forge_steel
-  p_forge_forge_steel -->|2| r_steel(["Steel"]):::res
+  r_ice(["Ice"]):::res -->|1| p_ice_purifier_melt_ice
+  p_ice_purifier_melt_ice -->|1| r_water(["Water"]):::res
+  r_ice(["Ice"]):::res -. 2 .-> p_ice_purifier_purify_ice
+  p_ice_purifier_purify_ice -. 2 .-> r_water(["Water"]):::res
+  p_ice_purifier_purify_ice -. 1 .-> r_carbon(["Carbon"]):::res
+  r_carbon(["Carbon"]):::res -->|1| p_foundry_forge_steel
+  r_iron_ore(["Iron Ore"]):::res -->|2| p_foundry_forge_steel
+  p_foundry_forge_steel -->|2| r_steel(["Steel"]):::res
+  r_gold_ore(["Gold Ore"]):::res -->|2| p_foundry_refine_gold
+  p_foundry_refine_gold -->|1| r_gold(["Gold"]):::res
+  r_iridium_ore(["Iridium Ore"]):::res -->|2| p_foundry_refine_iridium
+  p_foundry_refine_iridium -->|1| r_iridium(["Iridium"]):::res
+  r_silicates(["Silicates"]):::res -->|2| p_silicon_furnace_refine_silicon
+  r_carbon(["Carbon"]):::res -->|1| p_silicon_furnace_refine_silicon
+  p_silicon_furnace_refine_silicon -->|1| r_silicon(["Silicon"]):::res
   r_water(["Water"]):::res -->|2| p_electrolyzer_electrolyze_water
   p_electrolyzer_electrolyze_water -->|1| r_oxygen(["Oxygen"]):::res
   p_electrolyzer_electrolyze_water -->|2| r_hydrogen(["Hydrogen"]):::res
@@ -140,6 +138,6 @@ flowchart LR
   r_polymer(["Polymer"]):::res -. 1 .-> p_fabricator_make_luxury_goods
   r_gold(["Gold"]):::res -. 2 .-> p_fabricator_make_luxury_goods
   p_fabricator_make_luxury_goods -. 1 .-> r_luxury_goods(["Luxury Goods"]):::res
-  class r_uranium_ore,p_ice_processor_purify_ice,p_isotope_separator_enrich_uranium,p_nuclear_fission_plant_fission_cycle,p_electronics_assembler_assemble_electronics,p_advanced_circuitry_fabricator_fabricate_data_core,p_kiln_fire_ceramics,p_chemical_plant_compound_fuel,p_chemical_plant_mix_coolant,p_chemical_plant_synthesise_polymer,p_fabricator_make_consumer_goods,p_fabricator_make_luxury_goods planned;
+  class r_uranium_ore,p_ice_purifier_purify_ice,p_isotope_separator_enrich_uranium,p_nuclear_fission_plant_fission_cycle,p_electronics_assembler_assemble_electronics,p_advanced_circuitry_fabricator_fabricate_data_core,p_kiln_fire_ceramics,p_chemical_plant_compound_fuel,p_chemical_plant_mix_coolant,p_chemical_plant_synthesise_polymer,p_fabricator_make_consumer_goods,p_fabricator_make_luxury_goods planned;
 ```
 

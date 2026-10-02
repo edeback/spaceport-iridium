@@ -198,7 +198,7 @@ static func lists(component: StorageComponent) -> bool:
 ##
 ## This is what `player_configurable` means and the only thing it means: a
 ## multipurpose bin (a Storage module, a Docking Bay) holds whatever the player
-## says, while a Forge always takes iron and carbon and always emits steel, and
+## says, while a Foundry takes what its recipe needs and emits what it makes, and
 ## a construction site holds exactly what its build requires. Those contents are
 ## the *module's* decision, so the controls that change them are not offered.
 ##

@@ -27,17 +27,17 @@ func before_each() -> void:
 func after_each() -> void:
 	await fx.finish()
 
-## The path to the miswired scene: the shipped ore processor, inherited, with its
-## recipe cleared. A file rather than a `PackedScene.pack()` of a live tree -
+## The path to the miswired scene: the shipped silicon furnace, inherited, with
+## its recipe cleared. A file rather than a `PackedScene.pack()` of a live tree -
 ## repacking an instantiated module loses the base scene's authored PathComponent
 ## anchors, and the test would then be measuring a broken AStar graph instead.
-const BROKEN_SCENE: String = "res://tests/integration/fixtures/broken_ore_processor.tscn"
+const BROKEN_SCENE: String = "res://tests/integration/fixtures/broken_silicon_furnace.tscn"
 
 ## A [ModuleData] for that scene, under its own id so nothing else in the run can
-## find it. Everything else about it is the real ore processor's.
+## find it. Everything else about it is the real silicon furnace's.
 func _broken_processor_data() -> ModuleData:
-	var original: ModuleData = Global.save_manager.get_module_data_by_id(&"ore_processor_mdata")
-	assert_not_null(original, "the shipped ore processor is there to base it on")
+	var original: ModuleData = Global.save_manager.get_module_data_by_id(&"silicon_furnace_mdata")
+	assert_not_null(original, "the shipped silicon furnace is there to base it on")
 	if original == null:
 		return null
 	var scene: PackedScene = load(BROKEN_SCENE) as PackedScene
@@ -71,7 +71,7 @@ func test_a_miswired_module_says_so_once_stops_and_leaves_the_station_running() 
 	var data: ModuleData = _broken_processor_data()
 	if data == null:
 		return
-	var module: ModuleBase = Global.world_manager.add_module(data, Vector2i(10, 9), false, false, true)
+	var module: ModuleBase = Global.world_manager.add_module(data, Vector2i(10, 7), false, false, true)
 	assert_not_null(module, "the module still places - a bad scene is not a placement failure")
 	if module == null:
 		return
@@ -106,7 +106,7 @@ func test_a_miswired_module_says_so_once_stops_and_leaves_the_station_running() 
 ## `wiring_fault()` that complained about everything.
 func test_the_same_module_unbroken_says_nothing_and_runs() -> void:
 	assert_true(await fx.boot(), "the station is up")
-	var module: ModuleBase = fx.place(&"ore_processor_mdata", Vector2i(10, 9))
+	var module: ModuleBase = fx.place(&"silicon_furnace_mdata", Vector2i(10, 7))
 	assert_not_null(module, "the shipped processor places")
 	if module == null:
 		return

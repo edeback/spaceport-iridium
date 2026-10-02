@@ -5,7 +5,7 @@ extends GutTest
 ##
 ## The first audit ran this for 120 sim-hours on the real quicksave and found the
 ## station clean; this keeps it running on every change. A mining bay feeds ore
-## to a manned ore processor and a storeroom, which is enough to exercise
+## to a manned silicon furnace and a storeroom, which is enough to exercise
 ## hauling, reservations on both ends, OUTPUT and INPUT slots and a robot
 ## workforce at once.
 

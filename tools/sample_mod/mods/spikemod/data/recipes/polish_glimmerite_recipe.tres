@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://by2n6rwcttgyx" path="res://data/recipes/recipe_data.gd" id="1_recipe"]
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_res"]
 [ext_resource type="Resource" path="res://mods/spikemod/data/resources/glimmerite.tres" id="3_glimmerite"]
-[ext_resource type="Resource" uid="uid://bdtv1cjftf2g1" path="res://data/resources/iron.tres" id="4_iron"]
+[ext_resource type="Resource" uid="uid://ch50ffvxkt7qe" path="res://data/resources/silicon.tres" id="4_silicon"]
 
 [resource]
 script = ExtResource("1_recipe")
@@ -12,7 +12,7 @@ inputs = Dictionary[ExtResource("2_res"), int]({
 ExtResource("3_glimmerite"): 2
 })
 outputs = Dictionary[ExtResource("2_res"), int]({
-ExtResource("4_iron"): 1
+ExtResource("4_silicon"): 1
 })
 min_yield_mult = 0.6
 max_yield_mult = 1.4

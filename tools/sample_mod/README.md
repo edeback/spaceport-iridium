@@ -42,7 +42,7 @@ Stage 4's extension points, added once all five landed:
 | `data/modules/shimmer_collector_mdata.tres` + `scenes/shimmer_collector.tscn` | a modded **module**: an inherited scene off `module_base.tscn` plus one added component. Inheritance is why this file is six lines — the base carries sprite, footprint, path, structure and construction |
 | `scripts/shimmer_collector_component.gd` | **M2**: a mod component that owns save state, via `save_key()` + `get_save_data()`/`load_save_data()` |
 | `data/build_categories/glimmer.tres` | **M5**: a mod **build-menu category**, slotted at `sort_order = 55` between vanilla Mining (50) and Storage (60) |
-| `data/recipes/polish_glimmerite_recipe.tres` | **M8**: a recipe that attaches itself to the **vanilla ore processor** by declaring `processor_tags = ["Refinery"]` — no replacement refinery scene, so it can't conflict with another mod doing the same |
+| `data/recipes/polish_glimmerite_recipe.tres` | **M8**: a recipe that attaches itself to the **vanilla silicon furnace** (the ore processor until 2026-10-02) by declaring `processor_tags = ["Refinery"]` — no replacement refinery scene, so it can't conflict with another mod doing the same |
 | `data/ships/glimmer_corsair.tres` | **M7**: a raider variant in the wave pool |
 | `data/pawns/glimmer_hand.tres` | **M10**: a crew kind in the hire pool, at a 1.4× price band |
 | `data/unlocks/glimmer_tech.tres` | a **tech node** on the vanilla `industry` tree granting the mod's module |

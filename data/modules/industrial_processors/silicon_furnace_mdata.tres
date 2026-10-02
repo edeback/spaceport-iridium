@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ModuleData" format=3]
+
+[ext_resource type="Texture2D" uid="uid://0scst3tvfpt3" path="res://assets/sprites/silicon_furnace.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="2_res"]
+[ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="3_steel"]
+[ext_resource type="PackedScene" path="res://modules/industrial_processors/silicon_furnace.tscn" id="4_scene"]
+[ext_resource type="Script" uid="uid://vwmofdckg7hu" path="res://data/modules/module_data.gd" id="5_mdata"]
+
+[resource]
+script = ExtResource("5_mdata")
+id = &"silicon_furnace_mdata"
+name = "Silicon Furnace"
+description = "Refines raw silicates into blocks of refined silicon."
+scene = ExtResource("4_scene")
+icon = ExtResource("1_icon")
+instant_build = false
+resource_costs = Dictionary[ExtResource("2_res"), int]({
+ExtResource("3_steel"): 8
+})
+tags = Array[String](["Industrial", "Refinery"])
+category_id = &"industry"
+unlocked_by_default = false
+can_break_down = true
+breakdown_chance_per_hour = 0.006
+throttles_when_hot = true
+heat_throttle_start_f = 150.0
+heat_throttle_full_f = 350.0
+upkeep_per_cycle = 10

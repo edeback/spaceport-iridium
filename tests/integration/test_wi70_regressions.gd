@@ -154,17 +154,18 @@ func test_f26_a_site_mid_build_keeps_one_builder_after_a_load() -> void:
 ## F26: the operator's restored job fills the processor's slot, so nobody else
 ## walks to the machine to fail on its one operator slot.
 func test_f26_a_manned_processor_keeps_one_operator_job_after_a_load() -> void:
-	var cell := Vector2i(13, 9)
-	fx.place(&"ore_processor_mdata", cell)
+	# Three cells tall from row 7, so its door is on the corridor at row 9.
+	var cell := Vector2i(13, 7)
+	fx.place(&"silicon_furnace_mdata", cell)
 	fx.place(&"debug_power", Vector2i(12, 9))
 	fx.corridor(9, 12, 15)
 	var processor: ProcessorComponent = _processor_at(cell)
-	var ore: ResourceData = fx.resource(&"iron_ore")
 	# The processor's own intake, not the module's first StorageComponent - that is
-	# the construction bin.
+	# the construction bin. Every ingredient, or no batch starts and nobody works.
 	var intake: StorageComponent = processor.storage
-	assert_gt(intake.room_for(ore), 0)
-	intake.deposit(ore, intake.room_for(ore))
+	for ingredient: ResourceData in processor.recipe.inputs:
+		assert_gt(intake.room_for(ingredient), 0, "room for %s" % ingredient.id)
+		intake.deposit(ingredient, intake.room_for(ingredient))
 	var operator: PawnBase = await _pawn_on(&"work_processor", func() -> Object: return processor)
 	assert_not_null(operator, "a crew member is working the processor")
 	if operator == null:
@@ -328,9 +329,11 @@ func test_f40_a_collector_restored_on_its_way_to_the_pile_resumes() -> void:
 ## form of the four tests above, asked of whatever happened to be in flight.
 func test_no_owner_has_a_second_job_after_a_load() -> void:
 	fx.build_production_line()
-	var ore: ResourceData = fx.resource(&"iron_ore")
 	var canvas: CanvasLayer = Global.world_manager.get_canvas_for_layer(WorldManager.StructureLayer.MODULE)
-	ResourcePile.spawn(canvas, Global.cell_to_world(Vector2i(14, 9), true)).add_amount(ore, 20)
+	# Both of the furnace's ingredients, so its operator has a batch to run.
+	var pile := ResourcePile.spawn(canvas, Global.cell_to_world(Vector2i(14, 9), true))
+	pile.add_amount(fx.resource(&"silicon_ore"), 20)
+	pile.add_amount(fx.resource(&"carbon"), 10)
 	assert_true(await fx.tick(40.0), "the line runs for a while")
 	assert_eq(_owners_holding_two(), PackedStringArray(), "the control: no duplicates before the save")
 	var restored_before: int = _restored_owned_jobs()

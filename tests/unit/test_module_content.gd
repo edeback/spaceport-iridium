@@ -75,7 +75,7 @@ func _walk(node: Node) -> Array[Node]:
 func test_the_sweep_finds_the_module_scenes() -> void:
 	var scenes: Dictionary[String, PackedScene] = _module_scenes()
 	assert_gt(scenes.size(), 30, "the scan sees data/modules/ and the scenes it points at")
-	assert_true(scenes.has("res://modules/industrial_processors/ore_processor.tscn"),
+	assert_true(scenes.has("res://modules/industrial_processors/silicon_furnace.tscn"),
 		"including a processor, which is what half the rules below are about")
 
 func test_every_module_data_points_at_a_scene() -> void:

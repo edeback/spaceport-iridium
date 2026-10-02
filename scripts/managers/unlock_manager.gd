@@ -166,6 +166,7 @@ func _ready() -> void:
 	_load_unlocks()
 	_load_local_upgrades()
 	_load_tiers()
+	_grant_tier_modules()
 	SignalBus.resources_exported.connect(_on_resources_exported)
 	# Offer pacing rides the calendar (WI-26), so it can't roll while paused.
 	Global.time_manager.cycle_changed.connect(_on_cycle_changed)
@@ -398,12 +399,24 @@ func advance_tier() -> void:
 	_inspection_cooldown_cycles = 0
 	if was_first and Global.economy_manager != null:
 		Global.economy_manager.enable_recurring_costs()
+	# Before the tier signal, so the build menu's re-derivation on it already
+	# sees this tier's modules as buildable.
+	_grant_tier_modules()
 	var data: TierData = current_tier_data()
 	var label: String = data.display_name if data != null and data.display_name != "" else str(current_tier)
 	SignalBus.station_tier_changed.emit(current_tier)
 	var body: String = ("This station is rated Tier %d%s. New licences follow; so does a heavier"
 		+ " share of the Corporation's overheads.") \
 		% [current_tier, (" — " + label) if label != "" else ""]
+	# A module that appears in the build menu unannounced is easy to miss, and
+	# nothing else tells the player a promotion brought one.
+	var licensed: PackedStringArray = []
+	if data != null:
+		for module: ModuleData in data.granted_modules:
+			if module != null:
+				licensed.append(module.name)
+	if not licensed.is_empty():
+		body += " Licensed for construction from today: %s." % ", ".join(licensed)
 	# WI-67: the one line a player who skipped the tutorial still sees about the
 	# suits coming off. Only on the promotion that changes the rule - this body is
 	# shared by every tier-up, and saying it at Tier 4 would be noise.
@@ -537,7 +550,18 @@ func on_inspection_failed(_reason: String) -> void:
 	_inspection_cooldown_cycles = inspection_reoffer_cooldown_cycles
 	SignalBus.station_tier_progress_changed.emit()
 
-## Called by GrantModuleEffect. Marks a module buildable and notifies its UI.
+## Grants every module licensed by a tier at or below the current one
+## ([member TierData.granted_modules]). Idempotent - [method grant_module] skips a
+## module already granted - so it runs wherever the tier is set: at boot, on a
+## promotion, and after a load has cleared the granted set and restored the tier.
+func _grant_tier_modules() -> void:
+	var ladder: Array[TierData] = []
+	ladder.assign(_tiers.values())
+	for module: ModuleData in TierData.modules_granted_through(ladder, current_tier):
+		grant_module(module)
+
+## Called by GrantModuleEffect and by tier grants. Marks a module buildable and
+## notifies its UI.
 func grant_module(module: ModuleData) -> void:
 	if module == null or _granted_modules.has(module):
 		return
@@ -585,7 +609,8 @@ func _constructed_modules() -> Array[ModuleBase]:
 
 # --- persistence ----------------------------------------------------------
 # Only the set of unlocked ids is stored; granted modules and global stat
-# modifiers are derived by re-running each unlock's effects on load. A central
+# modifiers are derived by re-running each unlock's effects on load, plus the
+# grants of every tier up to the saved one. A central
 # save system can call get_save_data()/load_save_data() and fold the result into
 # its own file; the *_file helpers are a self-contained convenience.
 
@@ -626,6 +651,9 @@ func load_save_data(data: Dictionary) -> void:
 	for id_str: String in progress:
 		_export_progress[StringName(id_str)] = int(progress[id_str])
 	_inspection_cooldown_cycles = int(data.get("inspection_cooldown", 0))
+	# _clear_unlock_state dropped the tier grants with the rest; the saved tier
+	# is all they need to come back.
+	_grant_tier_modules()
 	SignalBus.station_tier_changed.emit(current_tier)
 
 ## Reset all owned/derived global-unlock state. Intended for a fresh load; if

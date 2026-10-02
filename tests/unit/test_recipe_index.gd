@@ -113,10 +113,18 @@ func test_no_recipe_names_a_resource_as_both_an_input_and_an_output() -> void:
 			"%s: %s" % [path.get_file(), ProcessorComponent.recipe_role_conflict(recipe)])
 	assert_gt(swept, 5, "the scan sees data/recipes/")
 
-func test_the_refinery_offers_its_four_ores_in_the_authored_order() -> void:
-	# Four, not five: carbon stopped being an ore, so there is nothing to refine
-	# it from - it is mined as `carbon` and its recipe is gone.
+func test_the_foundry_offers_steel_then_the_precious_metals() -> void:
+	# Steel feeds straight on iron ore since there stopped being an iron step
+	# (2026-10-02), and gold and iridium moved here from the retired ore processor.
+	RecipeData.clear_for_test()
+	var names: Array[String] = _names(RecipeData.for_tags(["Industrial", "Forge"]))
+	assert_eq(names, ["Forge Steel", "Refine Gold", "Refine Iridium"] as Array[String],
+		"the Foundry's selector, in its authored order")
+
+func test_the_silicon_furnace_has_one_recipe() -> void:
+	# One recipe is what keeps the furnace's selector off the panel
+	# (ProcessorComponent.can_select_recipes), so a second "Refinery" recipe is a
+	# UI change as well as a content one.
 	RecipeData.clear_for_test()
 	var names: Array[String] = _names(RecipeData.for_tags(["Industrial", "Refinery"]))
-	assert_eq(names.size(), 4, "four refining recipes: %s" % str(names))
-	assert_true(names[0].to_lower().contains("iron"), "iron still leads the selector: %s" % str(names))
+	assert_eq(names, ["Refine Silicon"] as Array[String], "silicon and nothing else")

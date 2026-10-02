@@ -296,12 +296,15 @@ func corridor(row: int, from_x: int, to_x: int) -> void:
 		if Global.world_manager.get_module_by_cell(WorldManager.StructureLayer.CORRIDOR, cell) == null:
 			place(&"hallway_mdata", cell)
 
-## A storeroom, a manned ore processor at (10, 9), a mining bay, a bunk and
-## power, west of the starting station along its corridor row - a station with
-## hauling, INPUT and OUTPUT slots and a robot workforce all running.
+## A storeroom, a manned silicon furnace at (10, 7) - three cells tall, so its
+## door is on row 9 with everyone else's - a mining bay, a bunk and power, west
+## of the starting station along its corridor row: a station with hauling, INPUT
+## and OUTPUT slots and a robot workforce all running. The furnace was the ore
+## processor until 2026-10-02; it is the processor that touches no steel, which
+## the soak's conservation check depends on.
 func build_production_line() -> void:
 	place(&"large_storage", Vector2i(12, 8))
-	place(&"ore_processor_mdata", Vector2i(10, 9))
+	place(&"silicon_furnace_mdata", Vector2i(10, 7))
 	place(&"mining_bay_mdata", Vector2i(8, 8))
 	place(&"sleeping_pod_mdata", Vector2i(7, 9))
 	place(&"debug_power", Vector2i(6, 9))

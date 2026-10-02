@@ -3,7 +3,7 @@ extends ResourceStackContainer
 
 ## Which directions hauling may move this resource (WI-65). Replaces the
 ## component-level accepts_imports/accepts_exports pair, which could not express
-## "this bin pulls iron ore in AND pushes iron out" - the reason a refinery
+## "this bin pulls gold ore in AND pushes gold out" - the reason a refinery
 ## needed two StorageComponents.
 ##
 ## Four values, not three, because two booleans have four states: EXCLUDED is

@@ -111,7 +111,7 @@ func test_every_real_resource_lands_in_exactly_one_column() -> void:
 			placed += 1
 	var expected: int = _listed_resources().size()
 	assert_eq(placed, expected, "every ledger-visible resource is in a column")
-	assert_eq(expected, 17, "the base game ships 17 player-facing resources")
+	assert_eq(expected, 16, "the base game ships 16 player-facing resources")
 
 func test_the_basic_and_goods_columns_are_authored() -> void:
 	var all: Array[ResourceData] = _real_resources()

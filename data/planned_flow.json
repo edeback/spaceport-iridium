@@ -7,7 +7,7 @@
 
 	"modules": [
 		{
-			"name": "Ice Processor",
+			"name": "Ice Purifier",
 			"recipes": [
 				{ "name": "Purify Ice", "inputs": { "Ice": 2 }, "outputs": { "Water": 2, "Carbon": 1 } }
 			]

@@ -208,7 +208,7 @@ func test_a_module_owned_bin_does_not() -> void:
 	var component: StorageComponent = _component(module)
 	component.player_configurable = false
 	assert_false(StoresModel.contents_editable(component),
-		"a forge always takes iron and carbon and always emits steel")
+		"a Foundry takes what its recipe needs and emits what it makes")
 
 ## The asymmetry, and the point of having two functions: priority is the routing
 ## language of the whole hauling system, so it is the player's on every bin that

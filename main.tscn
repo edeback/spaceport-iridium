@@ -52,7 +52,6 @@
 [ext_resource type="Resource" uid="uid://ca8p6gjch4cea" path="res://data/resources/water.tres" id="22_d2t1y"]
 [ext_resource type="Resource" uid="uid://r1wxv54l67wc" path="res://data/resources/biomass.tres" id="23_gngh3"]
 [ext_resource type="AudioStream" uid="uid://6j2kp23eqf8s" path="res://assets/external/sci_fi_music_pack/Sci-Fi 1 Loop.ogg" id="26_0rl1p"]
-[ext_resource type="Resource" uid="uid://bdtv1cjftf2g1" path="res://data/resources/iron.tres" id="30_4w656"]
 [ext_resource type="Texture2D" uid="uid://rts0ktv4mj0v" path="res://assets/sprites/truss_structure_new.png" id="31_4k2k6"]
 [ext_resource type="Script" uid="uid://bhfs7qjh80a6p" path="res://scripts/managers/unlock_manager.gd" id="31_come4"]
 [ext_resource type="Resource" uid="uid://cnje5k2redpx0" path="res://data/resources/gold_ore.tres" id="32_blkrb"]
@@ -466,12 +465,12 @@ script = ExtResource("8_wi44cr")
 
 [node name="ResourceManager" type="Node" parent="Managers" unique_id=1368405648]
 script = ExtResource("9_074og")
-storable_resources = Array[ExtResource("13_4k2k6")]([ExtResource("23_gngh3"), ExtResource("17_b1qrp"), ExtResource("16_b1qrp"), ExtResource("30_4w656"), ExtResource("14_0rl1p"), ExtResource("35_4w656"), ExtResource("21_0cp0l"), ExtResource("32_blkrb"), ExtResource("20_4lmeg"), ExtResource("34_6iyjs"), ExtResource("18_come4"), ExtResource("16_facbu"), ExtResource("22_d2t1y"), ExtResource("15_ok6jj"), ExtResource("19_h8e4i")])
+storable_resources = Array[ExtResource("13_4k2k6")]([ExtResource("23_gngh3"), ExtResource("17_b1qrp"), ExtResource("16_b1qrp"), ExtResource("14_0rl1p"), ExtResource("35_4w656"), ExtResource("21_0cp0l"), ExtResource("32_blkrb"), ExtResource("20_4lmeg"), ExtResource("34_6iyjs"), ExtResource("18_come4"), ExtResource("16_facbu"), ExtResource("22_d2t1y"), ExtResource("15_ok6jj"), ExtResource("19_h8e4i")])
 credit_resource = ExtResource("13_facbu")
 
 [node name="MarketManager" type="Node" parent="Managers" unique_id=386020720]
 script = ExtResource("12_d13ii")
-market_resources = Array[ExtResource("13_4k2k6")]([ExtResource("17_b1qrp"), ExtResource("23_gngh3"), ExtResource("16_b1qrp"), ExtResource("30_4w656"), ExtResource("14_0rl1p"), ExtResource("35_4w656"), ExtResource("21_0cp0l"), ExtResource("32_blkrb"), ExtResource("20_4lmeg"), ExtResource("34_6iyjs"), ExtResource("18_come4"), ExtResource("16_facbu"), ExtResource("22_d2t1y"), ExtResource("15_ok6jj"), ExtResource("19_h8e4i")])
+market_resources = Array[ExtResource("13_4k2k6")]([ExtResource("17_b1qrp"), ExtResource("23_gngh3"), ExtResource("16_b1qrp"), ExtResource("14_0rl1p"), ExtResource("35_4w656"), ExtResource("21_0cp0l"), ExtResource("32_blkrb"), ExtResource("20_4lmeg"), ExtResource("34_6iyjs"), ExtResource("18_come4"), ExtResource("16_facbu"), ExtResource("22_d2t1y"), ExtResource("15_ok6jj"), ExtResource("19_h8e4i")])
 
 [node name="EconomyManager" type="Node" parent="Managers" unique_id=386020721]
 script = ExtResource("12_economymgr")

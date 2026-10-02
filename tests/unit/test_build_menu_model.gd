@@ -113,12 +113,12 @@ func test_every_vanilla_category_declares_a_label() -> void:
 
 func test_filter_matches_case_insensitively() -> void:
 	var modules: Array[ModuleData] = [
-		_mod("Ore Processor", &"industry"),
-		_mod("Ice Processor", &"industry"),
+		_mod("Ice Purifier", &"industry"),
+		_mod("Air Purifier", &"life_support"),
 		_mod("Solar Panel", &"power"),
 	]
-	var hits := BuildMenuModel.filter_by_name(modules, "pRoCeSs")
-	assert_eq(hits.size(), 2, "case-insensitive substring matches both processors")
+	var hits := BuildMenuModel.filter_by_name(modules, "pUrIfIeR")
+	assert_eq(hits.size(), 2, "case-insensitive substring matches both purifiers")
 
 func test_filter_empty_query_returns_nothing() -> void:
 	var modules: Array[ModuleData] = [_mod("Solar Panel", &"power")]

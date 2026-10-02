@@ -70,9 +70,9 @@ Transport capacity should become the mid-game bottleneck the way elevators are i
 
 **Raw:** Ore (elemental breakdown varies per batch), Ice (mostly water), Carbon (mined as-is - there is no carbon ore and no carbon refining step), gases from solar wind (hydrogen, oxygen).
 
-**Refined from ore:** Iron, Gold, Iridium, Silicon; from ice: Water; from water: Hydrogen + Oxygen (electrolysis).
+**Refined from ore:** Gold, Iridium (Foundry); Silicon (silicates + carbon, Silicon Furnace); from ice: Water; from water: Hydrogen + Oxygen (electrolysis). Iron ore is not refined on its own - it goes straight into steel (2026-10-02).
 
-**Manufactured:** Steel (iron+carbon), Polymers (carbon), Electronics (silicon+gold), Biomass (carbon+water), Food (grown; carries quality).
+**Manufactured:** Steel (iron ore + carbon), Polymers (carbon), Electronics (silicon+gold), Biomass (carbon+water), Food (grown; carries quality).
 
 **Exotic Elements** — late-game, source TBD ("island of stability" flavor).
 

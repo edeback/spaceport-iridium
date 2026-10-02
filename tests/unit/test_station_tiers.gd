@@ -1,8 +1,10 @@
 extends GutTest
 
 ## Unit tests for the WI-26 station-tier pure logic (WI-19 followup): the
-## per-node tier gate (UnlockData.available_at_tier) and the promotion-goal check
-## (TierData.goals_reached). Both are pure - constructed directly, no Global.
+## per-node tier gate (UnlockData.available_at_tier), the promotion-goal check
+## (TierData.goals_reached) and the modules a tier licenses
+## (TierData.modules_granted_through). All pure - constructed directly, no Global
+## - plus a content sweep over the shipped ladder's grants.
 
 # --- tier gate (UnlockData.available_at_tier) ---------------------------------
 
@@ -109,3 +111,104 @@ func test_cap_tier_never_reached() -> void:
 	var data := _tier({}, [])
 	assert_true(data.is_max_goal())
 	assert_false(data.goals_reached({}, {}), "cap tier is never 'reached'")
+
+# --- modules a tier licenses (TierData.modules_granted_through, 2026-10-02) ----
+
+func _module(id: StringName) -> ModuleData:
+	var module := ModuleData.new()
+	module.id = id
+	module.unlocked_by_default = false
+	return module
+
+func _granting(tier: int, modules: Array) -> TierData:
+	var data := TierData.new()
+	data.tier = tier
+	var typed: Array[ModuleData] = []
+	typed.assign(modules)
+	data.granted_modules = typed
+	return data
+
+func _ladder(tiers: Array) -> Array[TierData]:
+	var out: Array[TierData] = []
+	out.assign(tiers)
+	return out
+
+func test_a_tier_grants_its_own_modules_and_every_lower_tiers() -> void:
+	var furnace := _module(&"furnace")
+	var kiln := _module(&"kiln")
+	var ladder := _ladder([_granting(1, []), _granting(2, [furnace]), _granting(3, [kiln])])
+	assert_eq(TierData.modules_granted_through(ladder, 1), [] as Array[ModuleData],
+		"Tier 1 licenses nothing here")
+	assert_eq(TierData.modules_granted_through(ladder, 2), [furnace] as Array[ModuleData],
+		"reaching Tier 2 licenses its module")
+	assert_eq(TierData.modules_granted_through(ladder, 3), [furnace, kiln] as Array[ModuleData],
+		"and a higher tier keeps every lower tier's - a load rebuilds them from the number alone")
+
+func test_grants_come_back_in_ladder_order_whatever_the_scan_order() -> void:
+	var furnace := _module(&"furnace")
+	var kiln := _module(&"kiln")
+	# The manager hands over a Dictionary's values, which promise no order.
+	var ladder := _ladder([_granting(3, [kiln]), _granting(2, [furnace])])
+	assert_eq(TierData.modules_granted_through(ladder, 5), [furnace, kiln] as Array[ModuleData])
+
+func test_a_module_two_tiers_grant_is_listed_once() -> void:
+	var furnace := _module(&"furnace")
+	var ladder := _ladder([_granting(2, [furnace]), _granting(4, [furnace])])
+	assert_eq(TierData.modules_granted_through(ladder, 4), [furnace] as Array[ModuleData])
+
+func test_null_tiers_and_null_grants_are_skipped() -> void:
+	var furnace := _module(&"furnace")
+	var ladder := _ladder([null, _granting(2, [null, furnace])])
+	assert_eq(TierData.modules_granted_through(ladder, 2), [furnace] as Array[ModuleData],
+		"authoring placeholders count for nothing")
+
+# --- the shipped ladder's grants (content) ------------------------------------
+
+func _shipped_tier(tier: int) -> TierData:
+	var data: TierData = load("res://data/tiers/tier_%d.tres" % tier) as TierData
+	assert_not_null(data, "tier_%d.tres loads" % tier)
+	return data
+
+func test_tier_two_licenses_the_silicon_furnace() -> void:
+	var data: TierData = _shipped_tier(2)
+	if data == null:
+		return
+	var ids: Array[StringName] = []
+	for module: ModuleData in data.granted_modules:
+		ids.append(module.id if module != null else &"")
+	assert_eq(ids, [&"silicon_furnace_mdata"] as Array[StringName], "the furnace comes with the promotion")
+
+func test_every_module_a_tier_grants_starts_locked() -> void:
+	# A module that is buildable from the start gains nothing from a grant, and
+	# whoever wrote the grant meant something by it - so the data is wrong.
+	var swept: int = 0
+	for tier: int in range(1, 6):
+		var data: TierData = _shipped_tier(tier)
+		if data == null:
+			continue
+		for module: ModuleData in data.granted_modules:
+			assert_not_null(module, "tier_%d.tres grants no null module" % tier)
+			if module == null:
+				continue
+			swept += 1
+			assert_false(module.unlocked_by_default,
+				"%s is granted at Tier %d, so it must start locked" % [module.id, tier])
+	assert_gt(swept, 0, "the sweep saw at least one grant")
+
+func test_no_research_node_sells_a_module_a_tier_grants() -> void:
+	# A tier grant is free; a node selling the same module would charge the player
+	# for something the promotion hands over anyway.
+	var granted: Array[ModuleData] = []
+	for tier: int in range(1, 6):
+		var data: TierData = _shipped_tier(tier)
+		if data != null:
+			granted.append_array(data.granted_modules)
+	for path: String in ContentPaths.scan(ContentPaths.UNLOCKS):
+		var unlock: UnlockData = ResourceLoader.load(path) as UnlockData
+		if unlock == null:
+			continue
+		for effect: UnlockEffect in unlock.effects:
+			var grant: GrantModuleEffect = effect as GrantModuleEffect
+			if grant != null and grant.module != null:
+				assert_false(granted.has(grant.module),
+					"%s sells %s, which a tier already grants" % [path.get_file(), grant.module.id])

@@ -35,10 +35,10 @@ func _desired(pairs: Array, pool: int) -> Array[int]:
 # --- the allocator ------------------------------------------------------------------
 
 func test_every_ingredient_gets_the_same_number_of_runs() -> void:
-	# Forge Steel: 1 carbon + 2 iron into a 30-unit bay.
-	var inputs: Dictionary[ResourceData, int] = _inputs([["carbon", 1], ["iron", 2]])
+	# Forge Steel: 1 carbon + 2 iron ore into a 30-unit bay.
+	var inputs: Dictionary[ResourceData, int] = _inputs([["carbon", 1], ["iron_ore", 2]])
 	assert_eq(ProcessorComponent.runs_for(inputs, 30), 10, "30 / 3 = ten batches")
-	var allocated: Array[int] = _desired([["carbon", 1], ["iron", 2]], 30)
+	var allocated: Array[int] = _desired([["carbon", 1], ["iron_ore", 2]], 30)
 	assert_eq(allocated, [10, 20], "and each ingredient holds ten batches' worth")
 
 func test_the_shares_can_never_sum_above_the_pool() -> void:

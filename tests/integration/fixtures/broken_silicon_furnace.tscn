@@ -1,7 +1,8 @@
 [gd_scene load_steps=2 format=3]
 
-; WI-72 §2 (F31): the shipped ore processor with its recipe cleared - the one
-; thing `ProcessorComponent.wiring_fault()` is asked about first.
+; WI-72 §2 (F31): the shipped silicon furnace with its recipe cleared - the one
+; thing `ProcessorComponent.wiring_fault()` is asked about first. (It was the ore
+; processor until that module was retired on 2026-10-02.)
 ;
 ; An inherited scene rather than a scene packed at runtime: `PackedScene.pack()`
 ; on an instantiated scene loses the base's authored PathComponent anchors, so a
@@ -12,9 +13,9 @@
 ; and it lives under `tests/`, which the export preset excludes and
 ; `test_module_content.gd` never walks (that sweep reads `data/modules/`).
 
-[ext_resource type="PackedScene" uid="uid://dvbr2ns4pveve" path="res://modules/industrial_processors/ore_processor.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://modules/industrial_processors/silicon_furnace.tscn" id="1_base"]
 
-[node name="OreProcessor" instance=ExtResource("1_base")]
+[node name="SiliconFurnace" instance=ExtResource("1_base")]
 
-[node name="ProcessorComponent" parent="." index="6"]
+[node name="ProcessorComponent" parent="."]
 recipe = null
