@@ -217,6 +217,43 @@ func test_an_unavailable_mode_does_not_close_the_open_one() -> void:
 	assert_eq(manager.current(), ModeManager.Mode.BUILD,
 		"a dead button must not close the panel the player was using")
 
+## A mode the station loses access to (R&D's tier gate, 2026-10-02) closes if it
+## is open: its button is about to go dead, and only Esc could shut it then.
+func test_declaring_the_open_mode_unavailable_closes_it() -> void:
+	var manager := _manager()
+	var panel := _hook_panel()
+	manager.register(ModeManager.Mode.RND, _counting_factory(panel))
+	manager.open(ModeManager.Mode.RND)
+	watch_signals(manager)
+	manager.register_unavailable(ModeManager.Mode.RND, "Unlocks at Tier 2")
+	assert_eq(manager.current(), ModeManager.Mode.NONE, "the gated mode is closed")
+	assert_false(panel.visible, "its panel is hidden")
+	assert_eq(panel.closed, 1, "and told, so a live subscription is dropped")
+	assert_signal_emitted_with_parameters(manager, "mode_changed",
+		[ModeManager.Mode.NONE, ModeManager.Mode.RND], 0)
+
+## Gating one mode leaves another open one alone.
+func test_declaring_another_mode_unavailable_leaves_the_open_one() -> void:
+	var manager := _manager()
+	manager.register(ModeManager.Mode.BUILD, _counting_factory(_panel()))
+	manager.register(ModeManager.Mode.RND, _counting_factory(_panel()))
+	manager.open(ModeManager.Mode.BUILD)
+	manager.register_unavailable(ModeManager.Mode.RND, "Unlocks at Tier 2")
+	assert_eq(manager.current(), ModeManager.Mode.BUILD, "build stays open")
+
+## A gate that lifts keeps the panel it already built: re-registering the same
+## factory must not rebuild it.
+func test_a_gate_that_lifts_reuses_the_built_panel() -> void:
+	var manager := _manager()
+	var factory: Callable = _counting_factory(_panel())
+	manager.register(ModeManager.Mode.RND, factory)
+	manager.open(ModeManager.Mode.RND)
+	manager.register_unavailable(ModeManager.Mode.RND, "Unlocks at Tier 2")
+	manager.register(ModeManager.Mode.RND, factory)
+	manager.open(ModeManager.Mode.RND)
+	assert_eq(manager.current(), ModeManager.Mode.RND, "open again")
+	assert_eq(_built, 1, "on the same panel")
+
 # --- the open/closed hooks ----------------------------------------------------
 
 func test_hooks_fire_on_open_and_close() -> void:

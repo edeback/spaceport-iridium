@@ -34,6 +34,29 @@ extends Resource
 func available_at_tier(current_tier: int) -> bool:
 	return current_tier >= min_tier
 
+## The station tier the R&D panel opens at (2026-10-02): the lowest `min_tier` of
+## any node that does not start owned. Below it the panel holds nothing the player
+## can buy, so the console disables it rather than open onto a wall of locks.
+##
+## Read off the data rather than a `current_tier < 2` test, for the WI-26 reason
+## [member TierData.suits_mandatory] gives: a mod - or a rebalance - that moves a
+## node to Tier 1 opens R&D at Tier 1 without anyone remembering this rule.
+##
+## Prerequisites are deliberately not walked. A node whose own gate is lower than
+## a prerequisite's can open the panel a tier early, onto nothing affordable; the
+## min_tier alone can never open it late, which is the direction that would hide
+## something the player could buy. No purchasable node at all is no gate - a
+## panel with nothing to sell is still the tree.
+static func research_opens_at(unlocks: Array[UnlockData]) -> int:
+	var lowest: int = 0
+	var found: bool = false
+	for unlock: UnlockData in unlocks:
+		if unlock == null or unlock.unlocked_by_default:
+			continue
+		lowest = mini(lowest, unlock.min_tier) if found else unlock.min_tier
+		found = true
+	return maxi(lowest, 1)
+
 func can_afford() -> bool:
 	for resource: ResourceData in cost:
 		if resource.get_total() < cost[resource]:

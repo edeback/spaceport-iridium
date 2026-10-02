@@ -122,15 +122,22 @@ func register(mode: Mode, factory: Callable) -> void:
 	_unavailable.erase(mode)
 	registry_changed.emit()
 
-## Declares `mode` as a console slot that is deliberately not built yet (STORES,
-## until WI-56). `reason` becomes the disabled button's tooltip.
+## Declares `mode` as a console slot that cannot be opened right now - one not
+## built yet (STORES, until WI-56), or one the station has not earned (R&D below
+## the tier its first node needs, 2026-10-02). `reason` becomes the disabled
+## button's tooltip; [method register] with the factory opens it again.
 ##
 ## This exists so [open] can tell "declared, not ready" apart from "nobody ever
 ## registered this", which is a typo and must be loud. A no-op that looks like
 ## success is exactly the WI-41 `build_module` probe trap.
+##
+## Closes the mode if it is the open one: its button is about to go dead, and a
+## panel left up behind a disabled button could only be shut with Esc.
 func register_unavailable(mode: Mode, reason: String) -> void:
 	if mode == Mode.NONE:
 		return
+	if _current == mode:
+		close()
 	_unavailable[mode] = reason
 	_factories.erase(mode)
 	registry_changed.emit()

@@ -283,9 +283,11 @@ func _refresh_active() -> void:
 	for mode: ModeManager.Mode in _mode_buttons:
 		_mode_buttons[mode].active = _manager != null and _manager.is_open(mode)
 
-## A mode with no panel yet (STORES, until WI-56) renders disabled with its
-## reason as the tooltip. Re-run on every registry change, and it clears as well
-## as sets - a mode that gains a panel has to get its button back.
+## A mode that cannot be opened (STORES until WI-56 gave it a panel; R&D until
+## the station reaches the tier its research needs) renders disabled with its
+## reason as the tooltip. Re-run on every
+## registry change, and it clears as well as sets - a mode that opens up has to
+## get its button, and its ordinary tooltip, back.
 func _refresh_availability() -> void:
 	if _manager == null:
 		return

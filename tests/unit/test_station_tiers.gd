@@ -22,6 +22,45 @@ func test_tier_gate_opens_at_and_above_min_tier() -> void:
 	assert_true(unlock.available_at_tier(3), "opens exactly at its min tier")
 	assert_true(unlock.available_at_tier(5), "stays open above its min tier")
 
+# --- the tier R&D opens at (UnlockData.research_opens_at, 2026-10-02) ----------
+
+func _node(min_tier: int, by_default: bool = false) -> UnlockData:
+	var unlock := UnlockData.new()
+	unlock.min_tier = min_tier
+	unlock.unlocked_by_default = by_default
+	return unlock
+
+func _catalog(nodes: Array) -> Array[UnlockData]:
+	var out: Array[UnlockData] = []
+	out.assign(nodes)
+	return out
+
+func test_research_opens_at_the_lowest_purchasable_tier() -> void:
+	var catalog: Array[UnlockData] = _catalog([_node(3), _node(2), _node(5)])
+	assert_eq(UnlockData.research_opens_at(catalog), 2, "the lowest gate among nodes to buy")
+
+func test_starting_nodes_do_not_open_research() -> void:
+	# The shipped tree: the default nodes carry min_tier 1, everything else 2+.
+	var catalog: Array[UnlockData] = _catalog([_node(1, true), _node(1, true), _node(2), _node(3)])
+	assert_eq(UnlockData.research_opens_at(catalog), 2,
+		"a node the station starts owning has nothing to buy, whatever its gate")
+
+func test_one_tier_one_node_opens_research_from_the_start() -> void:
+	var catalog: Array[UnlockData] = _catalog([_node(1, true), _node(1), _node(2)])
+	assert_eq(UnlockData.research_opens_at(catalog), 1, "moving one node to Tier 1 opens R&D at Tier 1")
+
+func test_a_tree_with_nothing_to_buy_has_no_gate() -> void:
+	assert_eq(UnlockData.research_opens_at(_catalog([_node(1, true)])), 1, "only starting nodes")
+	assert_eq(UnlockData.research_opens_at(_catalog([])), 1, "no nodes at all")
+
+func test_a_sub_one_min_tier_reads_as_tier_one() -> void:
+	var catalog: Array[UnlockData] = _catalog([_node(3), _node(0)])
+	assert_eq(UnlockData.research_opens_at(catalog), 1, "there is no tier below 1 to open at")
+
+func test_null_entries_are_ignored() -> void:
+	var catalog: Array[UnlockData] = _catalog([null, _node(4), null])
+	assert_eq(UnlockData.research_opens_at(catalog), 4, "authoring placeholders count for nothing")
+
 # --- promotion goals (TierData.goals_reached) ---------------------------------
 
 func _tier(goals: Dictionary, tags: Array) -> TierData:

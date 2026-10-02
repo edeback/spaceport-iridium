@@ -283,6 +283,12 @@ func has_affordable_unlock() -> bool:
 			return true
 	return false
 
+## The tier the R&D panel opens at - [method UnlockData.research_opens_at] over
+## the loaded catalog, mods included. Ownership plays no part, so buying out a
+## tier can never shut the panel again.
+func research_opens_at_tier() -> int:
+	return UnlockData.research_opens_at(get_all_unlocks())
+
 ## How many of a tree's nodes are researched, as `[done, total]`. The R&D panel's
 ## per-tab subtitle; here because "which unlocks are in this tree" is catalog
 ## state and the panel should not have to re-scan for a headline.

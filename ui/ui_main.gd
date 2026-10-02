@@ -31,6 +31,10 @@ const GAME_OVER_SCENE: PackedScene = preload("res://ui/game_over_screen.tscn")
 ## panel's footer. [ModuleBase.credits_paid] is the rule's one implementation.
 const BUILD_REFUND_RULE: String = "Right-click a blueprint to cancel it for a full refund · Deconstruct returns credits and materials, Demolish neither"
 
+## The R&D button's tooltip while the station is below the tier its research
+## opens at ([method _gate_research]).
+const RESEARCH_LOCKED_REASON: String = "Unlocks at Tier %d"
+
 var console: ConsoleBar
 var mode_manager: ModeManager
 ## Every mode panel is mounted here rather than directly on the HUD, so that
@@ -118,10 +122,27 @@ func _setup_modes() -> void:
 	mode_manager.register(ModeManager.Mode.CREW, _make_crew_panel)
 	mode_manager.register(ModeManager.Mode.STORES, _make_stores_panel)
 	mode_manager.register(ModeManager.Mode.TRADE, _make_trade_panel)
-	mode_manager.register(ModeManager.Mode.RND, _make_research_panel)
+	_gate_research()
 	mode_manager.register(ModeManager.Mode.COMMS, _make_comms_panel)
 	mode_manager.register(ModeManager.Mode.OVERLAY, overlay_controller.panel)
 	mode_manager.register(ModeManager.Mode.AIDE, _make_aide_panel)
+	# A load emits this with the saved tier, after the HUD is up; a promotion
+	# emits it in play. Tiers only rise within a scene, but the gate re-derives
+	# either way rather than assuming so.
+	SignalBus.station_tier_changed.connect(_gate_research.unbind(1))
+
+## R&D is disabled until the station reaches [method
+## UnlockManager.research_opens_at_tier] (2026-10-02): every node that does not
+## start owned needs Tier 2, so before that the panel would open onto nothing the
+## player can buy. The tier is the tree's, not a constant here.
+func _gate_research() -> void:
+	var manager: UnlockManager = Global.unlock_manager
+	var opens_at: int = manager.research_opens_at_tier() if manager != null else 1
+	var tier: int = manager.current_tier if manager != null else 1
+	if tier < opens_at:
+		mode_manager.register_unavailable(ModeManager.Mode.RND, RESEARCH_LOCKED_REASON % opens_at)
+	elif not mode_manager.is_available(ModeManager.Mode.RND):
+		mode_manager.register(ModeManager.Mode.RND, _make_research_panel)
 
 ## The Build panel's menu body, or null before BUILD has ever been opened - it is
 ## built by a lazy factory like every other panel. A caller that needs a row out
