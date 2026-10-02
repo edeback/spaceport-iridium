@@ -6,7 +6,7 @@
 [ext_resource type="Resource" uid="uid://ck2rd8h1twq4v" path="res://data/modules/life_support/radiator_mdata.tres" id="4_mod"]
 [ext_resource type="Script" uid="uid://byjsbe8qb3i7t" path="res://data/unlocks/effects/grant_module_effect.gd" id="5_grant"]
 [ext_resource type="Script" uid="uid://co6152j7b38nw" path="res://data/unlocks/unlock_data.gd" id="6_unlock"]
-[ext_resource type="Texture2D" path="res://assets/sprites/module_generic_yellow.png" id="7_icon"]
+[ext_resource type="Texture2D" uid="uid://beq5cwfdlfv54" path="res://assets/sprites/module_generic_yellow.png" id="7_icon"]
 
 [sub_resource type="Resource" id="Resource_grant"]
 script = ExtResource("5_grant")
@@ -16,7 +16,6 @@ metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
 [resource]
 script = ExtResource("6_unlock")
 id = &"radiator_unlock"
-min_tier = 1
 name = "Radiator"
 description = "Thermal fins that dump waste heat into space. Effectiveness scales with how much open vacuum surrounds them, so they belong on the hull, not buried in the station."
 icon = ExtResource("7_icon")
@@ -25,4 +24,5 @@ cost = Dictionary[ExtResource("1_res"), int]({
 ExtResource("3_cred"): 250
 })
 effects = Array[ExtResource("2_eff")]([SubResource("Resource_grant")])
+min_tier = 2
 metadata/_custom_type_script = "uid://co6152j7b38nw"

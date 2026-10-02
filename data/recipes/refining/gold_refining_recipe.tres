@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="RecipeData" format=3]
+[gd_resource type="Resource" script_class="RecipeData" format=3 uid="uid://bb54j5dg7eabh"]
 
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_rdata"]
 [ext_resource type="Script" uid="uid://by2n6rwcttgyx" path="res://data/recipes/recipe_data.gd" id="2_recipe"]
@@ -14,8 +14,8 @@ ExtResource("3_input"): 2
 outputs = Dictionary[ExtResource("1_rdata"), int]({
 ExtResource("4_output"): 1
 })
+processor_tags = Array[String](["Forge"])
+sort_order = 40
 min_yield_mult = 0.5
 max_yield_mult = 1.5
 metadata/_custom_type_script = "uid://by2n6rwcttgyx"
-processor_tags = Array[String](["Refinery"])
-sort_order = 40

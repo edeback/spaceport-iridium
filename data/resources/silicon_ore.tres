@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("2_ohxop")
 id = &"silicon_ore"
-name = "Silicon Ore"
+name = "Silicates"
 icon = ExtResource("1_cfxov")
 default_market_supply = 200
 has_variance = true

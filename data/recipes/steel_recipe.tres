@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://bdyegqvn4wcld" path="res://data/resources/resource_data.gd" id="1_vpk8h"]
 [ext_resource type="Script" uid="uid://by2n6rwcttgyx" path="res://data/recipes/recipe_data.gd" id="2_4k3vq"]
 [ext_resource type="Resource" uid="uid://537kofkc4wn1" path="res://data/resources/carbon.tres" id="3_mpb2s"]
-[ext_resource type="Resource" uid="uid://bdtv1cjftf2g1" path="res://data/resources/iron.tres" id="3_oq1vj"]
+[ext_resource type="Resource" uid="uid://8lxcuc68y27m" path="res://data/resources/iron_ore.tres" id="3_oq1vj"]
 [ext_resource type="Resource" uid="uid://rjmkhu8it1sc" path="res://data/resources/steel.tres" id="4_uddw8"]
 
 [resource]
@@ -16,6 +16,6 @@ ExtResource("3_oq1vj"): 2
 outputs = Dictionary[ExtResource("1_vpk8h"), int]({
 ExtResource("4_uddw8"): 2
 })
-metadata/_custom_type_script = "uid://by2n6rwcttgyx"
 processor_tags = Array[String](["Forge"])
 sort_order = 10
+metadata/_custom_type_script = "uid://by2n6rwcttgyx"

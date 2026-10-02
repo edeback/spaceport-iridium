@@ -18,4 +18,4 @@ resource_costs = Dictionary[ExtResource("2_lqadu"), int]({
 ExtResource("3_lqadu"): 1
 })
 tags = Array[String](["Storage"])
-category_id = &"storage"
+category_id = &"logistics"

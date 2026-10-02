@@ -14,9 +14,11 @@ shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/DAMAGE = 0.0
+shader_parameter/OVERLAY_COLOR = Vector4(0, 0, 0, 0)
 shader_parameter/gradient_texture = ExtResource("3_mosq2")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_38nig"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mosq2"]
 resource_local_to_scene = true
 size = Vector2(192, 128)
 
@@ -28,7 +30,7 @@ texture = ExtResource("3_47vfk")
 region_enabled = false
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_38nig")
+shape = SubResource("RectangleShape2D_mosq2")
 
 [node name="LightingComponent" parent="Offset" parent_id_path=PackedInt32Array(498681270) index="2" unique_id=407950967 node_paths=PackedStringArray("power_consumption_component") instance=ExtResource("3_vjd6y")]
 scale = Vector2(3, 2)

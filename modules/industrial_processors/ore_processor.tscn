@@ -8,12 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://bdhxtl1pfbray" path="res://modules/components/lighting_component.tscn" id="4_ohxey"]
 [ext_resource type="PackedScene" uid="uid://rxfwstm02i00" path="res://modules/components/storage_component.tscn" id="5_83mgx"]
 [ext_resource type="PackedScene" uid="uid://c63swhm7yiir" path="res://modules/components/processor_component.tscn" id="6_av0o4"]
-[ext_resource type="Script" uid="uid://bp7alyjs2p267" path="res://data/resources/resource_stack.gd" id="12_8w55x"]
-[ext_resource type="Script" uid="uid://by2n6rwcttgyx" path="res://data/recipes/recipe_data.gd" id="14_rcpd"]
-[ext_resource type="Resource" path="res://data/recipes/refining/iron_refining_recipe.tres" id="15_rfiron"]
-[ext_resource type="Resource" path="res://data/recipes/refining/silicon_refining_recipe.tres" id="17_rfsilicon"]
-[ext_resource type="Resource" path="res://data/recipes/refining/gold_refining_recipe.tres" id="18_rfgold"]
-[ext_resource type="Resource" path="res://data/recipes/refining/iridium_refining_recipe.tres" id="19_rfiridium"]
+[ext_resource type="Resource" uid="uid://dhsl3dgjnyll" path="res://data/recipes/refining/iron_refining_recipe.tres" id="15_rfiron"]
 [ext_resource type="Script" uid="uid://c2qsvh4rhb1ta" path="res://scripts/pathing/anchor_def.gd" id="20_anchor"]
 [ext_resource type="Script" uid="uid://d4aeiirm7ox7s" path="res://modules/components/workspace_component.gd" id="21_wksp"]
 [ext_resource type="PackedScene" path="res://modules/components/adjacency_emitter_component.tscn" id="22_adjem"]
@@ -26,9 +21,11 @@ shader_parameter/PREVIEW = false
 shader_parameter/PLACEABLE = true
 shader_parameter/SELECTED = false
 shader_parameter/PROGRESS = 1.0
+shader_parameter/DAMAGE = 0.0
+shader_parameter/OVERLAY_COLOR = Vector4(0, 0, 0, 0)
 shader_parameter/gradient_texture = ExtResource("3_arklq")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_q5qum"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pj0q4"]
 resource_local_to_scene = true
 size = Vector2(126, 62)
 
@@ -42,9 +39,6 @@ metadata/_custom_type_script = "uid://c2qsvh4rhb1ta"
 [sub_resource type="Resource" id="Resource_vibration"]
 script = ExtResource("23_adjsp")
 effect_id = &"vibration"
-intensity = 1.0
-range_hops = 3
-falloff = 0.5
 metadata/_custom_type_script = "uid://b2cqiums4fmk0"
 
 [node name="OreProcessor" unique_id=749258774 instance=ExtResource("1_06jma")]
@@ -55,7 +49,7 @@ texture = ExtResource("3_pj0q4")
 region_enabled = false
 
 [node name="CollisionShape2D" parent="Offset/Footprint" parent_id_path=PackedInt32Array(875436500) index="0" unique_id=1484891778]
-shape = SubResource("RectangleShape2D_q5qum")
+shape = SubResource("RectangleShape2D_pj0q4")
 
 [node name="PathComponent" parent="." index="1" unique_id=1088376714]
 anchors = Array[ExtResource("20_anchor")]([SubResource("Resource_wkstn")])
@@ -84,9 +78,9 @@ requires_worker = true
 [node name="WorkspaceComponent" type="Node2D" parent="." index="7" unique_id=771230001]
 script = ExtResource("21_wksp")
 
-[node name="AdjacencyEmitterComponent" parent="." instance=ExtResource("22_adjem")]
+[node name="AdjacencyEmitterComponent" parent="." index="9" unique_id=75750392 instance=ExtResource("22_adjem")]
 effects = Array[ExtResource("23_adjsp")]([SubResource("Resource_vibration")])
 
-[node name="HeatEmitterComponent" parent="." node_paths=PackedStringArray("processor") instance=ExtResource("24_heatem")]
+[node name="HeatEmitterComponent" parent="." index="10" unique_id=749218459 node_paths=PackedStringArray("processor") instance=ExtResource("24_heatem")]
 heat_per_batch = 170.0
 processor = NodePath("../ProcessorComponent")

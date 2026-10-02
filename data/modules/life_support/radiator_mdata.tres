@@ -25,5 +25,5 @@ tags = Array[String](["Life Support", "Thermal"])
 category_id = &"life_support"
 unlocked_by_default = false
 max_hp = 40.0
-upkeep_per_cycle = 2
 heat_radiation_mult = 12.0
+upkeep_per_cycle = 2

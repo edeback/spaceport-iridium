@@ -9,7 +9,7 @@
 [resource]
 script = ExtResource("3_3caao")
 id = &"ice_processor_mdata"
-name = "Ice Processor"
+name = "Ice Purifier"
 description = "Filters dirty space ice into pure water."
 scene = ExtResource("2_skbq3")
 icon = ExtResource("1_bhv6k")
@@ -19,6 +19,6 @@ ExtResource("3_lbwgg"): 4
 })
 tags = Array[String](["Industrial", "IceProcessing"])
 category_id = &"industry"
-upkeep_per_cycle = 6
 can_break_down = true
 breakdown_chance_per_hour = 0.006
+upkeep_per_cycle = 6

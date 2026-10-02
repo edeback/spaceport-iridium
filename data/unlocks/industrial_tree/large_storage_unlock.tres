@@ -17,7 +17,6 @@ metadata/_custom_type_script = "uid://byjsbe8qb3i7t"
 [resource]
 script = ExtResource("7_wvunh")
 id = &"large_storage_unlock"
-min_tier = 3
 name = "Large Storage"
 description = "The biggest, most efficient storage."
 icon = ExtResource("6_ftsw1")
@@ -27,4 +26,5 @@ ExtResource("2_y65rx"): 1000
 })
 prerequisites = Array[ExtResource("7_wvunh")]([ExtResource("8_rulft")])
 effects = Array[ExtResource("3_gmruc")]([SubResource("Resource_ggx5n")])
+min_tier = 3
 metadata/_custom_type_script = "uid://co6152j7b38nw"

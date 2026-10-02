@@ -18,6 +18,6 @@ resource_costs = Dictionary[ExtResource("2_2vdph"), int]({
 ExtResource("3_2vdph"): 8
 })
 tags = Array[String](["Industrial"])
-category_id = &"mining"
+category_id = &"industry"
 can_break_down = true
 breakdown_chance_per_hour = 0.006

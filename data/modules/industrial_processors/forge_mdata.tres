@@ -9,8 +9,8 @@
 [resource]
 script = ExtResource("5_xgu85")
 id = &"forge_mdata"
-name = "Forge"
-description = "Processes iron and carbon into steel."
+name = "Foundry"
+description = "Processes ores into ingots of refined metal."
 scene = ExtResource("4_plfav")
 icon = ExtResource("1_3qdf5")
 instant_build = false
@@ -19,9 +19,9 @@ ExtResource("3_onh7b"): 8
 })
 tags = Array[String](["Industrial", "Forge"])
 category_id = &"industry"
-upkeep_per_cycle = 10
 can_break_down = true
 breakdown_chance_per_hour = 0.006
 throttles_when_hot = true
 heat_throttle_start_f = 150.0
 heat_throttle_full_f = 350.0
+upkeep_per_cycle = 10
